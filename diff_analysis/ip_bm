@@ -1,0 +1,1000 @@
+        
+        # Create sub-tabs for the NetAnalysis & Emulation tab
+        net_subtabs = QTabWidget()
+        
+        # Create individual sub-tab widgets
+        traffic_capture_tab = QWidget()
+        ssl_tls_tab = QWidget()
+        license_emulation_tab = QWidget()
+        
+        # 1. Traffic Capture & Analysis sub-tab
+        traffic_layout = QVBoxLayout(traffic_capture_tab)
+        
+        # Packet Capture Controls section
+        capture_group = QGroupBox("Packet Capture Controls")
+        capture_layout = QVBoxLayout(capture_group)
+        
+        interface_layout = QHBoxLayout()
+        interface_layout.addWidget(QLabel("Select Network Interface:"))
+        interface_combo = QComboBox()
+        # Will be populated with available network interfaces
+        interface_layout.addWidget(interface_combo)
+        
+        filter_layout = QHBoxLayout()
+        filter_layout.addWidget(QLabel("Capture Filter:"))
+        filter_input = QLineEdit()
+        filter_layout.addWidget(filter_input)
+        
+        capture_buttons_layout = QHBoxLayout()
+        
+        start_capture_btn = QPushButton("Start Network Capture")
+        start_capture_btn.clicked.connect(self.start_network_capture)
+        
+        stop_capture_btn = QPushButton("Stop Network Capture")
+        stop_capture_btn.clicked.connect(self.stop_network_capture)
+        
+        clear_capture_btn = QPushButton("Clear Captured Data")
+        clear_capture_btn.clicked.connect(self.clear_network_capture)
+        
+        capture_buttons_layout.addWidget(start_capture_btn)
+        capture_buttons_layout.addWidget(stop_capture_btn)
+        capture_buttons_layout.addWidget(clear_capture_btn)
+        
+        capture_layout.addLayout(interface_layout)
+        capture_layout.addLayout(filter_layout)
+        capture_layout.addLayout(capture_buttons_layout)
+        
+        traffic_layout.addWidget(capture_group)
+        
+        # Live Traffic Display table
+        self.traffic_table = QTableWidget()
+        self.traffic_table.setColumnCount(5)
+        self.traffic_table.setHorizontalHeaderLabels(["Time", "Source", "Destination", "Protocol", "Info"])
+        traffic_layout.addWidget(self.traffic_table)
+        
+        # Analysis buttons
+        analysis_buttons_layout = QHBoxLayout()
+        
+        analyze_traffic_btn = QPushButton("Analyze Captured Traffic")
+        generate_report_btn = QPushButton("Generate Network Traffic Report...")
+        
+        analysis_buttons_layout.addWidget(analyze_traffic_btn)
+        analysis_buttons_layout.addWidget(generate_report_btn)
+        
+        traffic_layout.addLayout(analysis_buttons_layout)
+        
+        # 2. SSL/TLS Interception sub-tab
+        ssl_layout = QVBoxLayout(ssl_tls_tab)
+        
+        # Interceptor Controls section
+        interceptor_group = QGroupBox("Interceptor Controls")
+        interceptor_layout = QVBoxLayout(interceptor_group)
+        
+        listen_port_layout = QHBoxLayout()
+        listen_port_layout.addWidget(QLabel("Listen Port:"))
+        listen_port_input = QLineEdit()
+        listen_port_input.setText("8443")  # Default port
+        listen_port_layout.addWidget(listen_port_input)
+        
+        target_host_layout = QHBoxLayout()
+        target_host_layout.addWidget(QLabel("Target Host (optional):"))
+        target_host_input = QLineEdit()
+        target_host_layout.addWidget(target_host_input)
+        
+        target_port_layout = QHBoxLayout()
+        target_port_layout.addWidget(QLabel("Target Port:"))
+        target_port_input = QLineEdit()
+        target_port_input.setText("443")  # Default HTTPS port
+        target_port_layout.addWidget(target_port_input)
+        
+        start_interceptor_btn = QPushButton("Start/Stop SSL/TLS Interceptor")
+        start_interceptor_btn.clicked.connect(self.run_ssl_tls_interceptor)
+        
+        interceptor_layout.addLayout(listen_port_layout)
+        interceptor_layout.addLayout(target_host_layout)
+        interceptor_layout.addLayout(target_port_layout)
+        interceptor_layout.addWidget(start_interceptor_btn)
+        
+        ssl_layout.addWidget(interceptor_group)
+        
+        # CA Certificate settings
+        ca_cert_layout = QHBoxLayout()
+        ca_cert_layout.addWidget(QLabel("CA Certificate Path:"))
+        ca_cert_label = QLabel("Not generated")
+        ca_cert_layout.addWidget(ca_cert_label)
+        
+        generate_ca_btn = QPushButton("Generate New CA Certificate")
+        
+        ssl_layout.addLayout(ca_cert_layout)
+        ssl_layout.addWidget(generate_ca_btn)
+        
+        # Log area
+        ssl_log = QTextEdit()
+        ssl_log.setReadOnly(True)
+        ssl_layout.addWidget(QLabel("Intercepted SSL/TLS Communications:"))
+        ssl_layout.addWidget(ssl_log)
+        
+        # 3. License Emulation & Fingerprinting sub-tab
+        license_layout = QVBoxLayout(license_emulation_tab)
+        
+        # Network License Server Emulator section
+        server_group = QGroupBox("Network License Server Emulator")
+        server_layout = QVBoxLayout(server_group)
+        
+        port_layout = QHBoxLayout()
+        port_layout.addWidget(QLabel("Listen Port(s) (comma-separated):"))
+        port_input = QLineEdit()
+        port_input.setText("1234,5678")  # Example ports
+        port_layout.addWidget(port_input)
+        
+        learning_mode_cb = QCheckBox("Enable Learning Mode")
+        
+        start_server_btn = QPushButton("Start/Stop License Server Emulator")
+        start_server_btn.clicked.connect(self.run_network_license_server)
+        
+        protocol_layout = QHBoxLayout()
+        protocol_layout.addWidget(QLabel("Select Protocol to Emulate:"))
+        protocol_combo = QComboBox()
+        protocol_combo.addItems(["FlexLM", "HASP", "CodeMeter", "Generic"])
+        protocol_layout.addWidget(protocol_combo)
+        
+        server_layout.addLayout(port_layout)
+        server_layout.addWidget(learning_mode_cb)
+        server_layout.addWidget(start_server_btn)
+        server_layout.addLayout(protocol_layout)
+        
+        license_layout.addWidget(server_group)
+        
+        # Cloud License Response Generator section
+        cloud_group = QGroupBox("Cloud License Response Generator")
+        cloud_layout = QVBoxLayout(cloud_group)
+        
+        proxy_layout = QHBoxLayout()
+        proxy_layout.addWidget(QLabel("Proxy Port:"))
+        proxy_input = QLineEdit()
+        proxy_input.setText("8080")  # Default proxy port
+        proxy_layout.addWidget(proxy_input)
+        
+        cloud_learning_cb = QCheckBox("Enable Learning Mode")
+        
+        start_proxy_btn = QPushButton("Start/Stop Cloud Response Proxy")
+        start_proxy_btn.clicked.connect(self.run_cloud_license_hooker)
+        
+        cloud_layout.addLayout(proxy_layout)
+        cloud_layout.addWidget(cloud_learning_cb)
+        cloud_layout.addWidget(start_proxy_btn)
+        
+        license_layout.addWidget(cloud_group)
+        
+        # Protocol Fingerprinting section
+        fingerprint_group = QGroupBox("Protocol Fingerprinting")
+        fingerprint_layout = QVBoxLayout(fingerprint_group)
+        
+        run_fingerprint_btn = QPushButton("Run Protocol Fingerprinter")
+        run_fingerprint_btn.clicked.connect(self.run_protocol_fingerprinter)
+        
+        fingerprint_learning_cb = QCheckBox("Enable Learning Mode for Fingerprinter")
+        
+        fingerprint_layout.addWidget(run_fingerprint_btn)
+        fingerprint_layout.addWidget(fingerprint_learning_cb)
+        
+        license_layout.addWidget(fingerprint_group)
+        
+        # Log area
+        license_log = QTextEdit()
+        license_log.setReadOnly(True)
+        license_layout.addWidget(QLabel("Logs from Emulators and Generators:"))
+        license_layout.addWidget(license_log)
+        
+        # Add all sub-tabs to the tab widget
+        net_subtabs.addTab(traffic_capture_tab, "Traffic Capture & Analysis")
+        net_subtabs.addTab(ssl_tls_tab, "SSL/TLS Interception")
+        net_subtabs.addTab(license_emulation_tab, "License Emulation & Fingerprinting")
+        
+        # Add the tab widget to the main layout
+        layout.addWidget(net_subtabs)
+        
+    def setup_tools_plugins_tab(self):
+        """Sets up the Tools & Plugins tab with utility tools and plugin management features."""
+        # Create main layout
+        layout = QVBoxLayout(self.tools_plugins_tab)
+        
+        # Create sub-tabs for the Tools & Plugins tab
+        tools_subtabs = QTabWidget()
+        
+        # Create individual sub-tab widgets
+        hex_editor_tab = QWidget()
+        plugin_manager_tab = QWidget()
+        integrated_utils_tab = QWidget()
+        generators_reports_tab = QWidget()
+        
+        # 1. Hex Editor sub-tab
+        hex_layout = QVBoxLayout(hex_editor_tab)
+        
+        hex_buttons_layout = QHBoxLayout()
+        
+        view_mode_btn = QPushButton("Open File in Hex Editor (View Mode)")
+        view_mode_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer("", True))
+        
+        edit_mode_btn = QPushButton("Open File in Hex Editor (Edit Mode)")
+        edit_mode_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer("", False))
+        
+        hex_buttons_layout.addWidget(view_mode_btn)
+        hex_buttons_layout.addWidget(edit_mode_btn)
+        
+        binary_hex_buttons_layout = QHBoxLayout()
+        
+        view_binary_btn = QPushButton("View Current Binary in Hex Editor")
+        view_binary_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(self.binary_path, True))
+        
+        edit_binary_btn = QPushButton("Edit Current Binary in Hex Editor")
+        edit_binary_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(self.binary_path, False))
+        
+        binary_hex_buttons_layout.addWidget(view_binary_btn)
+        binary_hex_buttons_layout.addWidget(edit_binary_btn)
+        
+        hex_layout.addLayout(hex_buttons_layout)
+        hex_layout.addLayout(binary_hex_buttons_layout)
+        
+        # Embedded Hex Viewer placeholder (will be initialized with real HexViewerWidget)
+        hex_viewer_placeholder = QFrame()
+        hex_viewer_placeholder.setFrameShape(QFrame.StyledPanel)
+        hex_viewer_placeholder.setMinimumHeight(300)
+        
+        placeholder_layout = QVBoxLayout(hex_viewer_placeholder)
+        placeholder_layout.addWidget(QLabel("Hex Viewer will be displayed here when a file is loaded"))
+        
+        hex_layout.addWidget(hex_viewer_placeholder)
+        
+        # 2. Plugin Manager sub-tab
+        plugin_layout = QVBoxLayout(plugin_manager_tab)
+        
+        # Inner tabs for plugin types
+        plugin_subtabs = QTabWidget()
+        
+        # Frida Scripts tab
+        frida_scripts_tab = QWidget()
+        frida_layout = QVBoxLayout(frida_scripts_tab)
+        
+        frida_list = QListWidget()
+        frida_layout.addWidget(frida_list)
+        
+        frida_buttons_layout = QHBoxLayout()
+        
+        run_frida_btn = QPushButton("Run Selected Frida Script")
+        run_frida_btn.clicked.connect(lambda: self.run_frida_plugin_from_file(frida_list.currentItem().text() if frida_list.currentItem() else ""))
+        
+        edit_frida_btn = QPushButton("Edit Selected Frida Script")
+        edit_frida_btn.clicked.connect(lambda: self.edit_plugin_file(frida_list.currentItem().text() if frida_list.currentItem() else ""))
+        
+        import_frida_btn = QPushButton("Import Frida Script...")
+        import_frida_btn.clicked.connect(lambda: self.import_plugin("frida"))
+        
+        create_frida_btn = QPushButton("Create New Frida Script...")
+        create_frida_btn.clicked.connect(lambda: self.create_new_plugin("frida"))
+        
+        frida_buttons_layout.addWidget(run_frida_btn)
+        frida_buttons_layout.addWidget(edit_frida_btn)
+        frida_buttons_layout.addWidget(import_frida_btn)
+        frida_buttons_layout.addWidget(create_frida_btn)
+        
+        frida_layout.addLayout(frida_buttons_layout)
+        
+        # Ghidra Scripts tab
+        ghidra_scripts_tab = QWidget()
+        ghidra_layout = QVBoxLayout(ghidra_scripts_tab)
+        
+        ghidra_list = QListWidget()
+        ghidra_layout.addWidget(ghidra_list)
+        
+        ghidra_buttons_layout = QHBoxLayout()
+        
+        run_ghidra_btn = QPushButton("Run Selected Ghidra Script")
+        run_ghidra_btn.clicked.connect(lambda: self.run_ghidra_plugin_from_file(ghidra_list.currentItem().text() if ghidra_list.currentItem() else ""))
+        
+        edit_ghidra_btn = QPushButton("Edit Selected Ghidra Script")
+        edit_ghidra_btn.clicked.connect(lambda: self.edit_plugin_file(ghidra_list.currentItem().text() if ghidra_list.currentItem() else ""))
+        
+        import_ghidra_btn = QPushButton("Import Ghidra Script...")
+        import_ghidra_btn.clicked.connect(lambda: self.import_plugin("ghidra"))
+        
+        create_ghidra_btn = QPushButton("Create New Ghidra Script...")
+        create_ghidra_btn.clicked.connect(lambda: self.create_new_plugin("ghidra"))
+        
+        ghidra_buttons_layout.addWidget(run_ghidra_btn)
+        ghidra_buttons_layout.addWidget(edit_ghidra_btn)
+        ghidra_buttons_layout.addWidget(import_ghidra_btn)
+        ghidra_buttons_layout.addWidget(create_ghidra_btn)
+        
+        ghidra_layout.addLayout(ghidra_buttons_layout)
+        
+        # Custom Python Plugins tab
+        custom_plugins_tab = QWidget()
+        custom_layout = QVBoxLayout(custom_plugins_tab)
+        
+        custom_list = QListWidget()
+        custom_layout.addWidget(custom_list)
+        
+        custom_buttons_layout = QHBoxLayout()
+        
+        run_custom_btn = QPushButton("Run Selected Custom Plugin")
+        run_custom_btn.clicked.connect(lambda: self.run_custom_plugin(custom_list.currentItem().text() if custom_list.currentItem() else ""))
+        
+        edit_custom_btn = QPushButton("Edit Selected Custom Plugin")
+        edit_custom_btn.clicked.connect(lambda: self.edit_plugin_file(custom_list.currentItem().text() if custom_list.currentItem() else ""))
+        
+        import_custom_btn = QPushButton("Import Custom Plugin...")
+        import_custom_btn.clicked.connect(lambda: self.import_plugin("custom"))
+        
+        create_custom_btn = QPushButton("Create New Custom Plugin...")
+        create_custom_btn.clicked.connect(lambda: self.create_new_plugin("custom"))
+        
+        custom_buttons_layout.addWidget(run_custom_btn)
+        custom_buttons_layout.addWidget(edit_custom_btn)
+        custom_buttons_layout.addWidget(import_custom_btn)
+        custom_buttons_layout.addWidget(create_custom_btn)
+        
+        custom_layout.addLayout(custom_buttons_layout)
+        
+        # Add plugin sub-tabs
+        plugin_subtabs.addTab(frida_scripts_tab, "Frida Scripts")
+        plugin_subtabs.addTab(ghidra_scripts_tab, "Ghidra Scripts")
+        plugin_subtabs.addTab(custom_plugins_tab, "Custom Python Plugins")
+        
+        plugin_layout.addWidget(plugin_subtabs)
+        
+        # Built-in Quick Actions/Scripts section
+        builtin_group = QGroupBox("Built-in Quick Actions/Scripts")
+        builtin_layout = QVBoxLayout(builtin_group)
+        
+        hwid_spoofer_btn = QPushButton("HWID Spoofer")
+        hwid_spoofer_btn.clicked.connect(lambda: self.run_plugin("HWID Spoofer"))
+        
+        anti_debugger_btn = QPushButton("Anti-Debugger Bypass")
+        anti_debugger_btn.clicked.connect(lambda: self.run_plugin("Anti-Debugger"))
+        
+        time_bomb_btn = QPushButton("Time Bomb Defuser")
+        time_bomb_btn.clicked.connect(lambda: self.run_plugin("Time Bomb Defuser"))
+        
+        telemetry_btn = QPushButton("Telemetry Blocker")
+        telemetry_btn.clicked.connect(lambda: self.run_plugin("Telemetry Blocker"))
+        
+        builtin_layout.addWidget(hwid_spoofer_btn)
+        builtin_layout.addWidget(anti_debugger_btn)
+        builtin_layout.addWidget(time_bomb_btn)
+        builtin_layout.addWidget(telemetry_btn)
+        
+        plugin_layout.addWidget(builtin_group)
+        
+        # 3. Integrated Utilities sub-tab
+        utils_layout = QVBoxLayout(integrated_utils_tab)
+        
+        # Adobe Creative Cloud Tools section
+        adobe_group = QGroupBox("Adobe Creative Cloud Tools")
+        adobe_layout = QVBoxLayout(adobe_group)
+        
+        adobe_status_layout = QHBoxLayout()
+        adobe_status_layout.addWidget(QLabel("AdobeLicenseX Status:"))
+        self.adobe_status_label = QLabel("Not Active")
+        adobe_status_layout.addWidget(self.adobe_status_label)
+        
+        adobe_action_layout = QHBoxLayout()
+        adobe_action_layout.addWidget(QLabel("Select Adobe Action:"))
+        self.adobe_action_combo = QComboBox()
+        self.adobe_action_combo.addItems(["Deploy AdobeLicenseX", "Patch Adobe Licensing", "Reset Adobe Trial"])
+        adobe_action_layout.addWidget(self.adobe_action_combo)
+        
+        execute_adobe_btn = QPushButton("Execute Adobe Action")
+        execute_adobe_btn.clicked.connect(self.execute_adobe_action)
+        
+        adobe_layout.addLayout(adobe_status_layout)
+        adobe_layout.addLayout(adobe_action_layout)
+        adobe_layout.addWidget(execute_adobe_btn)
+        
+        utils_layout.addWidget(adobe_group)
+        
+        # Windows Tools section
+        windows_group = QGroupBox("Windows Tools")
+        windows_layout = QVBoxLayout(windows_group)
+        
+        windows_activator_btn = QPushButton("Windows Activator")
+        windows_activator_btn.clicked.connect(self.run_windows_activator)
+        
+        windows_layout.addWidget(windows_activator_btn)
+        
+        utils_layout.addWidget(windows_group)
+        
+        # 4. Generators & Reports sub-tab
+        generators_layout = QVBoxLayout(generators_reports_tab)
+        
+        # Key Generator section
+        keygen_group = QGroupBox("Key Generator")
+        keygen_layout = QVBoxLayout(keygen_group)
+        
+        product_name_layout = QHBoxLayout()
+        product_name_layout.addWidget(QLabel("Product Name:"))
+        self.keygen_input_name = QLineEdit()
+        product_name_layout.addWidget(self.keygen_input_name)
+        
+        version_layout = QHBoxLayout()
+        version_layout.addWidget(QLabel("Version:"))
+        self.keygen_input_version = QLineEdit()
+        version_layout.addWidget(self.keygen_input_version)
+        
+        key_format_layout = QHBoxLayout()
+        key_format_layout.addWidget(QLabel("Key Format:"))
+        self.key_format_dropdown = QComboBox()
+        self.key_format_dropdown.addItems(["XXXX-XXXX-XXXX-XXXX", "XXX-XXXXXXX-XXX", "Custom"])
+        key_format_layout.addWidget(self.key_format_dropdown)
+        
+        advanced_options_cb = QCheckBox("Advanced Options")
+        
+        advanced_frame = QFrame()
+        advanced_frame.setFrameShape(QFrame.StyledPanel)
+        advanced_frame.setVisible(False)
+        advanced_frame_layout = QVBoxLayout(advanced_frame)
+        
+        seed_layout = QHBoxLayout()
+        seed_layout.addWidget(QLabel("Custom Seed:"))
+        self.keygen_seed = QLineEdit()
+        seed_layout.addWidget(self.keygen_seed)
+        
+        advanced_frame_layout.addLayout(seed_layout)
+        
+        advanced_options_cb.toggled.connect(advanced_frame.setVisible)
+        
+        generate_key_btn = QPushButton("Generate License Key")
+        generate_key_btn.clicked.connect(self.generate_key)
+        
+        self.keygen_results = QTextEdit()
+        self.keygen_results.setReadOnly(True)
+        
+        keygen_layout.addLayout(product_name_layout)
+        keygen_layout.addLayout(version_layout)
+        keygen_layout.addLayout(key_format_layout)
+        keygen_layout.addWidget(advanced_options_cb)
+        keygen_layout.addWidget(advanced_frame)
+        keygen_layout.addWidget(generate_key_btn)
+        keygen_layout.addWidget(QLabel("Generated Keys:"))
+        keygen_layout.addWidget(self.keygen_results)
+        
+        generators_layout.addWidget(keygen_group)
+        
+        # Report Management section
+        report_group = QGroupBox("Report Management")
+        report_layout = QVBoxLayout(report_group)
+        
+        template_layout = QHBoxLayout()
+        template_layout.addWidget(QLabel("Report Template:"))
+        self.report_template_combo = QComboBox()
+        self.report_template_combo.addItems(["Standard Analysis", "Extended Analysis", "Executive Summary", "Technical Details"])
+        template_layout.addWidget(self.report_template_combo)
+        
+        format_layout = QHBoxLayout()
+        format_layout.addWidget(QLabel("Output Format:"))
+        self.report_format_combo = QComboBox()
+        self.report_format_combo.addItems(["PDF", "HTML", "Markdown", "Text"])
+        format_layout.addWidget(self.report_format_combo)
+        
+        sections_group = QGroupBox("Include Sections")
+        sections_layout = QVBoxLayout(sections_group)
+        
+        binary_info_cb = QCheckBox("Binary Info")
+        binary_info_cb.setChecked(True)
+        patches_cb = QCheckBox("Patches")
+        patches_cb.setChecked(True)
+        graphs_cb = QCheckBox("Graphs")
+        network_analysis_cb = QCheckBox("Network Analysis")
+        
+        sections_layout.addWidget(binary_info_cb)
+        sections_layout.addWidget(patches_cb)
+        sections_layout.addWidget(graphs_cb)
+        sections_layout.addWidget(network_analysis_cb)
+        
+        generate_report_btn = QPushButton("Generate Report")
+        generate_report_btn.clicked.connect(self.run_report_generation)
+        
+        report_layout.addLayout(template_layout)
+        report_layout.addLayout(format_layout)
+        report_layout.addWidget(sections_group)
+        report_layout.addWidget(generate_report_btn)
+        
+        # Saved Reports section
+        saved_reports_group = QGroupBox("Saved Reports")
+        saved_reports_layout = QVBoxLayout(saved_reports_group)
+        
+        self.reports_table = QTableWidget()
+        self.reports_table.setColumnCount(4)
+        self.reports_table.setHorizontalHeaderLabels(["Name", "Date", "Type", "Actions"])
+        
+        reports_actions_layout = QHBoxLayout()
+        
+        refresh_reports_btn = QPushButton("Refresh Reports List")
+        refresh_reports_btn.clicked.connect(self.refresh_reports_list)
+        
+        import_report_btn = QPushButton("Import Report...")
+        import_report_btn.clicked.connect(self.import_report)
+        
+        reports_actions_layout.addWidget(refresh_reports_btn)
+        reports_actions_layout.addWidget(import_report_btn)
+        
+        saved_reports_layout.addWidget(self.reports_table)
+        saved_reports_layout.addLayout(reports_actions_layout)
+        
+        report_layout.addWidget(saved_reports_group)
+        
+        generators_layout.addWidget(report_group)
+        
+        # Add all sub-tabs to the tab widget
+        tools_subtabs.addTab(hex_editor_tab, "Hex Editor")
+        tools_subtabs.addTab(plugin_manager_tab, "Plugin Manager")
+        tools_subtabs.addTab(integrated_utils_tab, "Integrated Utilities")
+        tools_subtabs.addTab(generators_reports_tab, "Generators & Reports")
+        
+        # Add the tab widget to the main layout
+        layout.addWidget(tools_subtabs)
+        
+    def setup_binary_tools_tab(self):
+        """Sets up the Binary Tools Tab with hex viewer, disassembler, and memory tools."""
+        # Create main layout
+        layout = QVBoxLayout()
+        
+        # Create sidebar layout with tool selection
+        main_splitter = QSplitter(Qt.Horizontal)
+        
+        # Left sidebar for tool selection
+        tool_sidebar = QWidget()
+        sidebar_layout = QVBoxLayout(tool_sidebar)
+        sidebar_layout.setContentsMargins(5, 5, 5, 5)
+        
+        # Tool category: Viewing & Editing
+        view_edit_group = QGroupBox("Viewing & Editing")
+        view_edit_layout = QVBoxLayout()
+        
+        # Tool buttons
+        hex_viewer_btn = QPushButton("Hex Viewer & Editor")
+        hex_viewer_btn.setIcon(QIcon.fromTheme("accessories-text-editor"))
+        hex_viewer_btn.clicked.connect(lambda: self.switch_binary_tool(0))
+        
+        disasm_btn = QPushButton("Disassembler")
+        disasm_btn.clicked.connect(lambda: self.switch_binary_tool(1))
+        
+        struct_analyzer_btn = QPushButton("Structure Analyzer")
+        struct_analyzer_btn.clicked.connect(lambda: self.switch_binary_tool(2))
+        
+        view_edit_layout.addWidget(hex_viewer_btn)
+        view_edit_layout.addWidget(disasm_btn)
+        view_edit_layout.addWidget(struct_analyzer_btn)
+        view_edit_group.setLayout(view_edit_layout)
+        
+        # Tool category: Memory Tools
+        memory_group = QGroupBox("Memory Tools")
+        memory_layout = QVBoxLayout()
+        
+        memory_viewer_btn = QPushButton("Memory Viewer")
+        memory_viewer_btn.clicked.connect(lambda: self.switch_binary_tool(3))
+        
+        memory_patch_btn = QPushButton("Memory Patcher")
+        memory_patch_btn.clicked.connect(lambda: self.switch_binary_tool(4))
+        
+        memory_dump_btn = QPushButton("Memory Dump")
+        memory_dump_btn.clicked.connect(lambda: self.switch_binary_tool(5))
+        
+        memory_layout.addWidget(memory_viewer_btn)
+        memory_layout.addWidget(memory_patch_btn)
+        memory_layout.addWidget(memory_dump_btn)
+        memory_group.setLayout(memory_layout)
+        
+        # Add tool categories to sidebar
+        sidebar_layout.addWidget(view_edit_group)
+        sidebar_layout.addWidget(memory_group)
+        sidebar_layout.addStretch(1)
+        
+        # Add file info panel to sidebar
+        file_info_group = QGroupBox("Current File")
+        file_info_layout = QVBoxLayout()
+        
+        self.binary_tool_file_label = QLabel("No file selected")
+        self.binary_tool_file_info = QTextEdit()
+        self.binary_tool_file_info.setReadOnly(True)
+        self.binary_tool_file_info.setMaximumHeight(100)
+        
+        select_file_btn = QPushButton("Select File")
+        select_file_btn.clicked.connect(self.select_binary_tool_file)
+        
+        file_info_layout.addWidget(self.binary_tool_file_label)
+        file_info_layout.addWidget(self.binary_tool_file_info)
+        file_info_layout.addWidget(select_file_btn)
+        file_info_group.setLayout(file_info_layout)
+        
+        sidebar_layout.addWidget(file_info_group)
+        
+        # Tool content area with stacked widget
+        content_area = QWidget()
+        content_layout = QVBoxLayout(content_area)
+        
+        self.binary_tool_stack = QtWidgets.QStackedWidget()
+        
+        # 1. Hex Viewer & Editor
+        hex_viewer_widget = QWidget()
+        hex_layout = QVBoxLayout(hex_viewer_widget)
+        
+        # Header section
+        header_layout = QHBoxLayout()
+        header_label = QLabel("<h2>Hex Viewer & Editor</h2>")
+        header_layout.addWidget(header_label)
+        header_layout.addStretch(1)
+        hex_layout.addLayout(header_layout)
+        
+        description_label = QLabel("Examine and edit binary files at the byte level")
+        description_label.setWordWrap(True)
+        hex_layout.addWidget(description_label)
+        
+        # File Operations Group
+        operations_group = QGroupBox("File Operations")
+        operations_layout = QGridLayout()
+        
+        open_view_btn = QPushButton("Open File (View Mode)")
+        open_view_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(True))
+        
+        open_edit_btn = QPushButton("Open File (Edit Mode)")
+        open_edit_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(False))
+        
+        self.view_current_btn = QPushButton("View Current Binary")
+        self.view_current_btn.clicked.connect(lambda: self.show_current_binary_in_hex(True))
+        
+        self.edit_current_btn = QPushButton("Edit Current Binary")
+        self.edit_current_btn.clicked.connect(lambda: self.show_current_binary_in_hex(False))
+        
+        # Update buttons' enabled state based on binary_path
+        self.view_current_btn.setEnabled(self.binary_path is not None)
+        self.edit_current_btn.setEnabled(self.binary_path is not None)
+        
+        operations_layout.addWidget(open_view_btn, 0, 0)
+        operations_layout.addWidget(open_edit_btn, 0, 1)
+        operations_layout.addWidget(self.view_current_btn, 1, 0)
+        operations_layout.addWidget(self.edit_current_btn, 1, 1)
+        
+        operations_group.setLayout(operations_layout)
+        hex_layout.addWidget(operations_group)
+        
+        # Display Options Group
+        display_group = QGroupBox("Display Options")
+        display_layout = QGridLayout()
+        
+        display_layout.addWidget(QLabel("View Mode:"), 0, 0)
+        view_mode_combo = QComboBox()
+        view_mode_combo.addItems(["Hexadecimal", "Decimal", "Binary", "ASCII"])
+        display_layout.addWidget(view_mode_combo, 0, 1)
+        
+        display_layout.addWidget(QLabel("Bytes per Row:"), 1, 0)
+        bytes_row_spin = QSpinBox()
+        bytes_row_spin.setRange(8, 32)
+        bytes_row_spin.setValue(16)
+        display_layout.addWidget(bytes_row_spin, 1, 1)
+        
+        display_layout.addWidget(QLabel("Font Size:"), 2, 0)
+        font_size_spin = QSpinBox()
+        font_size_spin.setRange(8, 20)
+        font_size_spin.setValue(12)
+        display_layout.addWidget(font_size_spin, 2, 1)
+        
+        display_group.setLayout(display_layout)
+        hex_layout.addWidget(display_group)
+        
+        # Features description
+        features_label = QLabel("<b>Features:</b><ul>"
+                               "<li>Memory-efficient file handling</li>"
+                               "<li>Multiple display modes</li>"
+                               "<li>Search functionality</li>"
+                               "<li>Region highlighting</li>"
+                               "<li>Customizable display options</li>"
+                               "</ul>")
+        features_label.setWordWrap(True)
+        hex_layout.addWidget(features_label)
+        
+        hex_layout.addStretch(1)
+        
+        # 2. Disassembler View
+        disasm_widget = QWidget()
+        disasm_layout = QVBoxLayout(disasm_widget)
+        
+        # Header
+        disasm_header_layout = QHBoxLayout()
+        disasm_header_label = QLabel("<h2>Disassembler</h2>")
+        disasm_header_layout.addWidget(disasm_header_label)
+        disasm_header_layout.addStretch(1)
+        disasm_layout.addLayout(disasm_header_layout)
+        
+        disasm_desc_label = QLabel("View and analyze assembly code from binary files")
+        disasm_desc_label.setWordWrap(True)
+        disasm_layout.addWidget(disasm_desc_label)
+        
+        # Disassembler controls
+        disasm_controls_group = QGroupBox("Disassembler Controls")
+        disasm_controls_layout = QHBoxLayout()
+        
+        disasm_file_btn = QPushButton("Load File")
+        disasm_arch_combo = QComboBox()
+        disasm_arch_combo.addItems(["x86", "x86-64", "ARM", "ARM64", "MIPS", "Auto-detect"])
+        disasm_controls_layout.addWidget(disasm_file_btn)
+        disasm_controls_layout.addWidget(QLabel("Architecture:"))
+        disasm_controls_layout.addWidget(disasm_arch_combo)
+        
+        disasm_controls_group.setLayout(disasm_controls_layout)
+        disasm_layout.addWidget(disasm_controls_group)
+        
+        # Disassembly view with split layout
+        disasm_view_splitter = QSplitter(Qt.Horizontal)
+        
+        # Function list
+        function_list_group = QGroupBox("Functions")
+        function_list_layout = QVBoxLayout()
+        
+        function_filter = QLineEdit()
+        function_filter.setPlaceholderText("Filter functions...")
+        
+        function_list = QListWidget()
+        for i in range(10):  # Placeholder items
+            function_list.addItem(f"function_{i:04x}(...)")
+        
+        function_list_layout.addWidget(function_filter)
+        function_list_layout.addWidget(function_list)
+        function_list_group.setLayout(function_list_layout)
+        
+        # Disassembly content
+        disasm_content_group = QGroupBox("Disassembly")
+        disasm_content_layout = QVBoxLayout()
+        
+        disasm_text = QTextEdit()
+        disasm_text.setReadOnly(True)
+        disasm_text.setFont(QFont("Courier New", 10))
+        
+        # Placeholder disassembly content
+        placeholder_asm = (
+            "0x00401000: push   rbp\n"
+            "0x00401001: mov    rbp, rsp\n"
+            "0x00401004: sub    rsp, 0x20\n"
+            "0x00401008: mov    DWORD PTR [rbp-0x14], edi\n"
+            "0x0040100b: mov    QWORD PTR [rbp-0x20], rsi\n"
+            "0x0040100f: mov    edi, 0x4020a0\n"
+            "0x00401014: call   0x401050\n"
+            "0x00401019: mov    eax, 0x0\n"
+            "0x0040101e: leave\n"
+            "0x0040101f: ret\n"
+        )
+        disasm_text.setText(placeholder_asm)
+        
+        disasm_content_layout.addWidget(disasm_text)
+        disasm_content_group.setLayout(disasm_content_layout)
+        
+        disasm_view_splitter.addWidget(function_list_group)
+        disasm_view_splitter.addWidget(disasm_content_group)
+        disasm_view_splitter.setSizes([150, 450])
+        
+        disasm_layout.addWidget(disasm_view_splitter)
+        
+        # 3. Structure Analyzer
+        struct_widget = QWidget()
+        struct_layout = QVBoxLayout(struct_widget)
+        
+        # Header
+        struct_header_layout = QHBoxLayout()
+        struct_header_label = QLabel("<h2>Structure Analyzer</h2>")
+        struct_header_layout.addWidget(struct_header_label)
+        struct_header_layout.addStretch(1)
+        struct_layout.addLayout(struct_header_layout)
+        
+        struct_desc_label = QLabel("Analyze binary file structure and metadata")
+        struct_desc_label.setWordWrap(True)
+        struct_layout.addWidget(struct_desc_label)
+        
+        # Structure controls
+        struct_controls_group = QGroupBox("File Controls")
+        struct_controls_layout = QHBoxLayout()
+        
+        struct_file_btn = QPushButton("Load File")
+        struct_format_combo = QComboBox()
+        struct_format_combo.addItems(["PE/EXE", "ELF", "Mach-O", "Auto-detect"])
+        struct_controls_layout.addWidget(struct_file_btn)
+        struct_controls_layout.addWidget(QLabel("Format:"))
+        struct_controls_layout.addWidget(struct_format_combo)
+        
+        struct_controls_group.setLayout(struct_controls_layout)
+        struct_layout.addWidget(struct_controls_group)
+        
+        # Structure view with tabs
+        struct_tabs = QTabWidget()
+        
+        # Headers tab
+        headers_tab = QWidget()
+        headers_layout = QVBoxLayout(headers_tab)
+        
+        headers_tree = QTreeWidget()
+        headers_tree.setHeaderLabels(["Field", "Value", "Description"])
+        
+        # Placeholder header data
+        root_item = QTreeWidgetItem(["File Header", "", ""])
+        root_item.addChild(QTreeWidgetItem(["Magic", "MZ", "DOS Magic number"]))
+        root_item.addChild(QTreeWidgetItem(["PE Offset", "0x00000080", "Offset to PE header"]))
+        
+        pe_item = QTreeWidgetItem(["PE Header", "", ""])
+        pe_item.addChild(QTreeWidgetItem(["Machine", "0x014c (x86)", "Target machine"]))
+        pe_item.addChild(QTreeWidgetItem(["TimeDateStamp", "0x5F8D7B3C", "2020-10-19 15:43:24"]))
+        
+        headers_tree.addTopLevelItem(root_item)
+        headers_tree.addTopLevelItem(pe_item)
+        headers_tree.expandAll()
+        
+        headers_layout.addWidget(headers_tree)
+        
+        # Sections tab
+        sections_tab = QWidget()
+        sections_layout = QVBoxLayout(sections_tab)
+        
+        sections_table = QTableWidget()
+        sections_table.setColumnCount(5)
+        sections_table.setHorizontalHeaderLabels(["Name", "Virtual Address", "Size", "Characteristics", "Entropy"])
+        
+        # Placeholder section data
+        sections_table.setRowCount(4)
+        sections = [
+            [".text", "0x1000", "0x5000", "CODE,EXECUTE", "6.8"],
+            [".data", "0x6000", "0x1000", "DATA,READ,WRITE", "4.2"],
+            [".rdata", "0x7000", "0x3000", "DATA,READ", "5.7"],
+            [".rsrc", "0xA000", "0x2000", "DATA,READ", "3.9"]
+        ]
+        
+        for i, section in enumerate(sections):
+            for j, value in enumerate(section):
+                sections_table.setItem(i, j, QTableWidgetItem(value))
+        
+        sections_layout.addWidget(sections_table)
+        
+        # Resources tab
+        resources_tab = QWidget()
+        resources_layout = QVBoxLayout(resources_tab)
+        
+        resources_tree = QTreeWidget()
+        resources_tree.setHeaderLabels(["Type", "Name", "Size", "Language"])
+        
+        # Placeholder resource data
+        icon_item = QTreeWidgetItem(["Icon", "", "", ""])
+        icon_item.addChild(QTreeWidgetItem(["Icon", "1", "1024 bytes", "Neutral"]))
+        icon_item.addChild(QTreeWidgetItem(["Icon", "2", "4096 bytes", "Neutral"]))
+        
+        version_item = QTreeWidgetItem(["Version", "VS_VERSION_INFO", "512 bytes", "Neutral"])
+        
+        resources_tree.addTopLevelItem(icon_item)
+        resources_tree.addTopLevelItem(version_item)
+        
+        resources_layout.addWidget(resources_tree)
+        
+        struct_tabs.addTab(headers_tab, "Headers")
+        struct_tabs.addTab(sections_tab, "Sections")
+        struct_tabs.addTab(resources_tab, "Resources")
+        
+        struct_layout.addWidget(struct_tabs)
+        
+        # 4. Memory Viewer
+        memory_viewer_widget = QWidget()
+        memory_layout = QVBoxLayout(memory_viewer_widget)
+        
+        memory_layout.addWidget(QLabel("<h2>Memory Viewer</h2>"))
+        memory_layout.addWidget(QLabel("View live memory of running processes"))
+        
+        # Process selection
+        process_group = QGroupBox("Process Selection")
+        process_layout = QHBoxLayout()
+        
+        process_combo = QComboBox()
+        process_combo.addItems(["explorer.exe (PID: 1234)", "chrome.exe (PID: 2345)", "notepad.exe (PID: 3456)"])
+        refresh_process_btn = QPushButton("Refresh")
+        attach_btn = QPushButton("Attach")
+        
+        process_layout.addWidget(QLabel("Process:"))
+        process_layout.addWidget(process_combo, 1)
+        process_layout.addWidget(refresh_process_btn)
+        process_layout.addWidget(attach_btn)
+        
+        process_group.setLayout(process_layout)
+        memory_layout.addWidget(process_group)
+        
+        # Memory map view
+        memory_map_group = QGroupBox("Memory Map")
+        memory_map_layout = QVBoxLayout()
+        
+        memory_table = QTableWidget()
+        memory_table.setColumnCount(5)
+        memory_table.setHorizontalHeaderLabels(["Address", "Size", "Protection", "Type", "Module"])
+        
+        # Placeholder memory regions
+        memory_table.setRowCount(4)
+        memory_regions = [
+            ["0x00400000", "0x00100000", "RX", "Image", "app.exe"],
+            ["0x10000000", "0x00050000", "RW", "Private", ""],
+            ["0x7FFE0000", "0x00010000", "RW", "Mapped", "ntdll.dll"],
+            ["0x7FFF0000", "0x00008000", "RW", "Stack", ""]
+        ]
+        
+        for i, region in enumerate(memory_regions):
+            for j, value in enumerate(region):
+                memory_table.setItem(i, j, QTableWidgetItem(value))
+        
+        memory_map_layout.addWidget(memory_table)
+        
+        # Memory view controls
+        memory_view_controls = QHBoxLayout()
+        memory_view_controls.addWidget(QLabel("Address:"))
+        memory_addr_edit = QLineEdit("0x00400000")
+        memory_view_controls.addWidget(memory_addr_edit)
+        memory_view_btn = QPushButton("View")
+        memory_view_controls.addWidget(memory_view_btn)
+        memory_view_controls.addStretch(1)
+        
+        memory_map_layout.addLayout(memory_view_controls)
+        
+        memory_map_group.setLayout(memory_map_layout)
+        memory_layout.addWidget(memory_map_group)
+        
+        # 5. Memory Patcher  
+        memory_patch_widget = QWidget()
+        memory_patch_layout = QVBoxLayout(memory_patch_widget)
+        
+        memory_patch_layout.addWidget(QLabel("<h2>Memory Patcher</h2>"))
+        memory_patch_layout.addWidget(QLabel("Patch memory in running processes"))
+        
+        memory_patch_layout.addWidget(QLabel("<i>This tool will be integrated in a future update.</i>"))
+        memory_patch_layout.addStretch(1)
+        
+        # Add all widgets to stacked widget
+        self.binary_tool_stack.addWidget(hex_viewer_widget)
+        self.binary_tool_stack.addWidget(disasm_widget)
+        self.binary_tool_stack.addWidget(struct_widget)
+        self.binary_tool_stack.addWidget(memory_viewer_widget)
+        self.binary_tool_stack.addWidget(memory_patch_widget)
+        
+        # Add a placeholder for Memory Dump tool
+        memory_dump_widget = QWidget()
+        memory_dump_layout = QVBoxLayout(memory_dump_widget)
+        memory_dump_layout.addWidget(QLabel("<h2>Memory Dump</h2>"))
+        memory_dump_layout.addWidget(QLabel("Create and analyze memory dumps"))
+        memory_dump_layout.addWidget(QLabel("<i>This tool will be integrated in a future update.</i>"))
+        memory_dump_layout.addStretch(1)
+        
+        self.binary_tool_stack.addWidget(memory_dump_widget)
+        
+        content_layout.addWidget(self.binary_tool_stack)
+        
+        # Add sidebar and content area to main splitter
+        main_splitter.addWidget(tool_sidebar)
+        main_splitter.addWidget(content_area)
+        main_splitter.setSizes([200, 800])
+        
+        layout.addWidget(main_splitter)
+        
+        # Set the layout for the tab
+        self.binary_tools_tab.setLayout(layout)
+        
+    def switch_binary_tool(self, tool_index):
+        """Switch between different binary tools."""
+        self.binary_tool_stack.setCurrentIndex(tool_index)
+        
+    def select_binary_tool_file(self):
+        """Select a file for binary tools."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Select File", "", "All Files (*)"
+        )
+        
+        if file_path:
+            # Update file info display
+            file_info = QtCore.QFileInfo(file_path)
+            file_name = file_info.fileName()
+            file_size = file_info.size()
+            
+            self.binary_tool_file_label.setText(file_name)
+            self.binary_tool_file_info.setText(f"Path: {file_path}\nSize: {file_size} bytes\nType: Binary File")
+            
+    def show_enhanced_hex_viewer(self, read_only=True):
+        """Show the enhanced hex viewer dialog."""
+        # This functionality comes from the existing hex viewer tab

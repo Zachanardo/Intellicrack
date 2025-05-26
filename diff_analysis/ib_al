@@ -1,0 +1,1000 @@
+                # Process based on command
+                if cmd_code == 0x01:  # LOGIN
+                    response = self._handle_login(initial_data)
+                elif cmd_code == 0x02:  # LOGOUT
+                    response = self._handle_logout(initial_data)
+                elif cmd_code == 0x03:  # GET_KEY
+                    response = self._handle_get_key(initial_data)
+                elif cmd_code == 0x04:  # GET_INFO
+                    response = self._handle_get_info(initial_data)
+                elif cmd_code == 0x05:  # ENCRYPT
+                    response = self._handle_encrypt(initial_data)
+                elif cmd_code == 0x06:  # DECRYPT
+                    response = self._handle_decrypt(initial_data)
+                elif cmd_code == 0x07:  # READ_MEMORY
+                    response = self._handle_read_memory(initial_data)
+                elif cmd_code == 0x08:  # WRITE_MEMORY
+                    response = self._handle_write_memory(initial_data)
+                else:
+                    self.logger.warning(f"Unsupported HASP command: {cmd_name}")
+                    response = self._generate_error_response(0x03)  # Unsupported command
+
+                # Send response
+                socket.sendall(response)
+
+            except Exception as e:
+                self.logger.error(f"Error handling HASP connection: {str(e)}")
+                try:
+                    socket.sendall(self._generate_error_response(0x01))  # Generic error
+                except:
+                    pass
+
+        def _handle_login(self, request_data):
+            """Handle a HASP login request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            # In a real implementation, we would parse vendor IDs and features
+            # For now, create a session and return success
+            session_id = self.session_counter
+            self.session_counter += 1
+
+            # Record active session
+            self.active_sessions[session_id] = {
+                "created": time.time(),
+                "product_id": 0x1234  # Default to first product
+            }
+
+            # If the request data has product ID (bytes 2-3), use it
+            if len(request_data) >= 4:
+                product_id = (request_data[2] << 8) | request_data[3]
+                if product_id in self.product_keys:
+                    self.active_sessions[session_id]["product_id"] = product_id
+
+            # Create response with session ID
+            response = bytearray(self.response_templates["login_success"])
+            # Set session ID (bytes 2-5)
+            response[2] = (session_id >> 24) & 0xFF
+            response[3] = (session_id >> 16) & 0xFF
+            response[4] = (session_id >> 8) & 0xFF
+            response[5] = session_id & 0xFF
+
+            self.logger.info(f"HASP login successful, session ID: {session_id}")
+            return bytes(response)
+
+        def _handle_logout(self, request_data):
+            """Handle a HASP logout request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            # Extract session ID if available (bytes 2-5)
+            session_id = None
+            if len(request_data) >= 6:
+                session_id = (request_data[2] << 24) | (request_data[3] << 16) | (request_data[4] << 8) | request_data[5]
+
+                # Remove session
+                if session_id in self.active_sessions:
+                    del self.active_sessions[session_id]
+                    self.logger.info(f"HASP session {session_id} logged out")
+                else:
+                    self.logger.warning(f"Logout for unknown HASP session: {session_id}")
+
+            return bytes(self.response_templates["logout_success"])
+
+        def _handle_get_key(self, request_data):
+            """Handle a request for the HASP key data.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response with key data
+            """
+            # Extract session ID if available (bytes 2-5)
+            session_id = None
+            product_id = 0x1234  # Default product
+
+            if len(request_data) >= 6:
+                session_id = (request_data[2] << 24) | (request_data[3] << 16) | (request_data[4] << 8) | request_data[5]
+
+                # Get product ID from session
+                if session_id in self.active_sessions:
+                    product_id = self.active_sessions[session_id].get("product_id", 0x1234)
+
+            # Create response with key data
+            response = bytearray(self.response_templates["key_data"])
+
+            # Set product ID (bytes 2-3)
+            response[2] = (product_id >> 8) & 0xFF
+            response[3] = product_id & 0xFF
+
+            # Set key data (bytes 4-11)
+            key_data = self.product_keys.get(product_id, {"key": b"HASP0000DEFAULT"})["key"]
+            key_bytes = key_data[:8].ljust(8, b'\x00')
+            for i in range(8):
+                response[4 + i] = key_bytes[i]
+
+            self.logger.info(f"HASP key data returned for product 0x{product_id:04x}")
+            return bytes(response)
+
+        def _handle_get_info(self, request_data):
+            """Handle a request for the HASP key info.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response with info data
+            """
+            # Simply return the predefined info response
+            self.logger.info("HASP info data returned")
+            return bytes(self.response_templates["info_data"])
+
+        def _handle_encrypt(self, request_data):
+            """Handle a HASP encryption request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response with encrypted data
+            """
+            # Extract data to encrypt (after the command and session ID)
+            if len(request_data) < 10:
+                return self._generate_error_response(0x02)  # Invalid format
+
+            # Get the data length (bytes 6-7)
+            data_len = (request_data[6] << 8) | request_data[7]
+
+            # Get the data (bytes 8+)
+            if len(request_data) < 8 + data_len:
+                return self._generate_error_response(0x02)  # Invalid format
+
+            data = request_data[8:8+data_len]
+
+            # "Encrypt" the data (XOR with a fixed key)
+            encrypted_data = bytearray(data_len)
+            for i in range(data_len):
+                encrypted_data[i] = data[i] ^ 0xA5
+
+            # Build response
+            response = bytearray([
+                0x05,  # ENCRYPT response
+                0x00,  # Status OK
+                request_data[6], request_data[7]  # Same data length
+            ])
+            response.extend(encrypted_data)
+
+            self.logger.info(f"HASP encrypted {data_len} bytes of data")
+            return bytes(response)
+
+        def _handle_decrypt(self, request_data):
+            """Handle a HASP decryption request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response with decrypted data
+            """
+            # Similar to encrypt but with "decryption" operation
+            # Extract data to decrypt (after the command and session ID)
+            if len(request_data) < 10:
+                return self._generate_error_response(0x02)  # Invalid format
+
+            # Get the data length (bytes 6-7)
+            data_len = (request_data[6] << 8) | request_data[7]
+
+            # Get the data (bytes 8+)
+            if len(request_data) < 8 + data_len:
+                return self._generate_error_response(0x02)  # Invalid format
+
+            data = request_data[8:8+data_len]
+
+            # "Decrypt" the data (XOR with the same key used for encryption)
+            decrypted_data = bytearray(data_len)
+            for i in range(data_len):
+                decrypted_data[i] = data[i] ^ 0xA5
+
+            # Build response
+            response = bytearray([
+                0x06,  # DECRYPT response
+                0x00,  # Status OK
+                request_data[6], request_data[7]  # Same data length
+            ])
+            response.extend(decrypted_data)
+
+            self.logger.info(f"HASP decrypted {data_len} bytes of data")
+            return bytes(response)
+
+        def _handle_read_memory(self, request_data):
+            """Handle a HASP memory read request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response with memory data
+            """
+            # Extract address and length
+            if len(request_data) < 8:
+                return self._generate_error_response(0x02)  # Invalid format
+
+            # Get address (bytes 2-5)
+            address = (request_data[2] << 24) | (request_data[3] << 16) | (request_data[4] << 8) | request_data[5]
+
+            # Get length (bytes 6-7)
+            length = (request_data[6] << 8) | request_data[7]
+
+            # Generate "memory" data (just a pattern based on address)
+            memory_data = bytearray(length)
+            for i in range(length):
+                memory_data[i] = (address + i) & 0xFF
+
+            # Build response
+            response = bytearray([
+                0x07,  # READ_MEMORY response
+                0x00,  # Status OK
+                request_data[6], request_data[7]  # Same data length
+            ])
+            response.extend(memory_data)
+
+            self.logger.info(f"HASP read {length} bytes from memory at 0x{address:08x}")
+            return bytes(response)
+
+        def _handle_write_memory(self, request_data):
+            """Handle a HASP memory write request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            # In a real implementation we would validate and store the data
+            # Here we just acknowledge the write
+            if len(request_data) < 8:
+                return self._generate_error_response(0x02)  # Invalid format
+
+            # Get address (bytes 2-5)
+            address = (request_data[2] << 24) | (request_data[3] << 16) | (request_data[4] << 8) | request_data[5]
+
+            # Get length (bytes 6-7)
+            length = (request_data[6] << 8) | request_data[7]
+
+            # Build response
+            response = bytearray([
+                0x08,  # WRITE_MEMORY response
+                0x00,  # Status OK
+            ])
+
+            self.logger.info(f"HASP acknowledged write of {length} bytes to memory at 0x{address:08x}")
+            return bytes(response)
+
+        def _generate_error_response(self, error_code):
+            """Generate an error response with the given error code.
+
+            Args:
+                error_code: The error code
+
+            Returns:
+                bytes: The binary response
+            """
+            response = bytearray(self.response_templates["error"])
+            response[1] = error_code
+            return bytes(response)
+
+        def generate_response(self, request_data):
+            """Generate a response for the given request data.
+
+            This method is called when we don't have a direct socket connection,
+            but need to generate a response based on captured data.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            try:
+                # If request is too short, return error
+                if not request_data or len(request_data) < 2:
+                    return self._generate_error_response(0x02)  # Invalid format
+
+                # Extract command code from the first byte
+                cmd_code = request_data[0]
+
+                # Process based on command
+                if cmd_code == 0x01:  # LOGIN
+                    return self._handle_login(request_data)
+                elif cmd_code == 0x02:  # LOGOUT
+                    return self._handle_logout(request_data)
+                elif cmd_code == 0x03:  # GET_KEY
+                    return self._handle_get_key(request_data)
+                elif cmd_code == 0x04:  # GET_INFO
+                    return self._handle_get_info(request_data)
+                elif cmd_code == 0x05:  # ENCRYPT
+                    return self._handle_encrypt(request_data)
+                elif cmd_code == 0x06:  # DECRYPT
+                    return self._handle_decrypt(request_data)
+                elif cmd_code == 0x07:  # READ_MEMORY
+                    return self._handle_read_memory(request_data)
+                elif cmd_code == 0x08:  # WRITE_MEMORY
+                    return self._handle_write_memory(request_data)
+                else:
+                    return self._generate_error_response(0x03)  # Unsupported command
+            except Exception as e:
+                import logging
+                logging.error(f"Error in generate_response: {e}")
+                return self._generate_error_response(0x01)  # Generic error
+
+    class CodeMeterProtocolHandler(LicenseProtocolHandler):
+        """
+        Handler for CodeMeter license protocol operations.
+
+        Manages CodeMeter-specific firm codes, product mappings, and active license
+        tracking for Intellicrack.
+        """
+        def __init__(self):
+            """
+            Initialize the CodeMeterProtocolHandler.
+
+            Sets up logging, firm code definitions, and active license tracking
+            for CodeMeter protocol emulation.
+            """
+            super().__init__()
+            self.logger = logging.getLogger("IntellicrackLogger.CodeMeter")
+            self.firm_codes = {
+                100001: {"name": "Software Company A", "products": [1001, 1002, 1003]},
+                100002: {"name": "Software Company B", "products": [2001, 2002]},
+                100003: {"name": "Software Company C", "products": [3001, 3002, 3003, 3004]}
+            }
+            self.active_licenses = {}
+
+            # CodeMeter TCP packet structure constants
+            self.PACKET_MAGIC = b'WBCM'  # CodeMeter packet magic
+
+            # CodeMeter command codes
+            self.COMMANDS = {
+                0x01: "CM_QUERY_INFO",
+                0x05: "CM_GET_LICENSE",
+                0x06: "CM_CHECK_LICENSE",
+                0x07: "CM_RETURN_LICENSE",
+                0x10: "CM_GET_BOXINFO",
+                0x12: "CM_GET_VERSION",
+                0x20: "CM_ENCRYPT",
+                0x21: "CM_DECRYPT"
+            }
+
+            # Initialize response templates
+            self._init_response_templates()
+
+        def _init_response_templates(self):
+            """Initialize CodeMeter response templates"""
+            # CodeMeter uses a binary protocol with a header and variable-length payload
+            self.response_templates = {
+                "cm_info": self._build_cm_packet(0x01, bytearray([
+                    0x00, 0x01,  # Status OK
+                    0x01, 0x00,  # 1 CodeMeter license server
+                    0x01, 0x00,  # 1 CodeMeter container
+                    0x03, 0x00,  # 3 Firms
+                    0x0A, 0x00,  # 10 Products
+                    0xFF, 0xFF, 0xFF, 0xFF,  # Serial number
+                    0x20, 0x25, 0x04, 0x25  # Date (2025-04-25)
+                ])),
+                "cm_license": self._build_cm_packet(0x05, bytearray([
+                    0x00, 0x01,  # Status OK
+                    0xFF, 0xFF, 0xFF, 0xFF,  # License ID
+                    0x00, 0x00, 0x00, 0x00,  # Firm code (to be filled)
+                    0x00, 0x00,  # Product code (to be filled)
+                    0xFF, 0xFF,  # Feature mask (all features enabled)
+                    0x80, 0x00,  # License quantity (128 licenses)
+                    0xFF, 0xFF, 0xFF, 0xFF,  # Expiration date (never)
+                    0x01, 0x00,  # License flags (can be borrowed)
+                ])),
+                "cm_check": self._build_cm_packet(0x06, bytearray([
+                    0x00, 0x01,  # Status OK
+                    0x01, 0x00,  # License valid
+                ])),
+                "cm_return": self._build_cm_packet(0x07, bytearray([
+                    0x00, 0x01,  # Status OK
+                ])),
+                "cm_boxinfo": self._build_cm_packet(0x10, bytearray([
+                    0x00, 0x01,  # Status OK
+                    0x01,  # Box type: Software
+                    0xFF, 0xFF, 0xFF, 0xFF,  # Serial number
+                    0x01, 0x00,  # 1 container
+                    0x00, 0x00, 0x00, 0x00,  # No hardware features
+                    0x00, 0x00, 0x00, 0x00,  # Reserved
+                    0xFF, 0xFF,  # Max license entries
+                ])),
+                "cm_version": self._build_cm_packet(0x12, bytearray([
+                    0x00, 0x01,  # Status OK
+                    0x07, 0x02,  # Version 7.2
+                    0x00, 0x00,  # Build number
+                ])),
+                "cm_encrypt": self._build_cm_packet(0x20, bytearray([
+                    0x00, 0x01,  # Status OK
+                    0x00, 0x00,  # Data length (to be filled)
+                    # Data follows (to be filled)
+                ])),
+                "cm_decrypt": self._build_cm_packet(0x21, bytearray([
+                    0x00, 0x01,  # Status OK
+                    0x00, 0x00,  # Data length (to be filled)
+                    # Data follows (to be filled)
+                ])),
+                "cm_error": self._build_cm_packet(0xFF, bytearray([
+                    0x01, 0x00,  # Status Error
+                    0x00, 0x00   # Error code (to be filled)
+                ]))
+            }
+
+        def _build_cm_packet(self, command_code, payload):
+            """Build a CodeMeter packet with header and payload.
+
+            Args:
+                command_code: The command code
+                payload: The payload data
+
+            Returns:
+                bytearray: The complete packet
+            """
+            packet = bytearray(self.PACKET_MAGIC)  # Magic 'WBCM'
+
+            # Add packet length (header + payload)
+            header_size = 16
+            packet_len = header_size + len(payload)
+            packet.extend([
+                packet_len & 0xFF,
+                (packet_len >> 8) & 0xFF,
+                (packet_len >> 16) & 0xFF,
+                (packet_len >> 24) & 0xFF
+            ])
+
+            # Add command code
+            packet.extend([
+                command_code & 0xFF,
+                (command_code >> 8) & 0xFF
+            ])
+
+            # Add padding to complete header (16 bytes total)
+            packet.extend([0x00] * 6)
+
+            # Add payload
+            packet.extend(payload)
+
+            return packet
+
+        def handle_connection(self, socket, initial_data):
+            """Handle a CodeMeter protocol connection with proper implementation.
+
+            Args:
+                socket: The connected client socket
+                initial_data: Initial data received from the client
+            """
+            self.logger.info("CodeMeter connection received")
+
+            try:
+                # Parse initial request
+                if not initial_data or len(initial_data) < 16:
+                    self.logger.warning("Invalid CodeMeter request (too short)")
+                    socket.sendall(self._generate_error_response(0x0101))  # Invalid format
+                    return
+
+                # Check magic
+                if initial_data[0:4] != self.PACKET_MAGIC:
+                    self.logger.warning("Invalid CodeMeter request (wrong magic)")
+                    socket.sendall(self._generate_error_response(0x0101))  # Invalid format
+                    return
+
+                # Extract packet length
+                packet_len = initial_data[4] | (initial_data[5] << 8) | (initial_data[6] << 16) | (initial_data[7] << 24)
+
+                # Validate packet length
+                if len(initial_data) != packet_len:
+                    self.logger.warning(f"Packet length mismatch: expected {packet_len}, got {len(initial_data)}")
+                    socket.sendall(self._generate_error_response(0x0101))  # Invalid format
+                    return
+
+                # Extract command code
+                cmd_code = initial_data[8] | (initial_data[9] << 8)
+                cmd_name = self.COMMANDS.get(cmd_code, "UNKNOWN")
+                self.logger.info(f"CodeMeter command: {cmd_name} (0x{cmd_code:02x})")
+
+                # Process based on command
+                if cmd_code == 0x01:  # CM_QUERY_INFO
+                    response = self.response_templates["cm_info"]
+                elif cmd_code == 0x05:  # CM_GET_LICENSE
+                    response = self._handle_get_license(initial_data)
+                elif cmd_code == 0x06:  # CM_CHECK_LICENSE
+                    response = self._handle_check_license(initial_data)
+                elif cmd_code == 0x07:  # CM_RETURN_LICENSE
+                    response = self._handle_return_license(initial_data)
+                elif cmd_code == 0x10:  # CM_GET_BOXINFO
+                    response = self.response_templates["cm_boxinfo"]
+                elif cmd_code == 0x12:  # CM_GET_VERSION
+                    response = self.response_templates["cm_version"]
+                elif cmd_code == 0x20:  # CM_ENCRYPT
+                    response = self._handle_encrypt(initial_data)
+                elif cmd_code == 0x21:  # CM_DECRYPT
+                    response = self._handle_decrypt(initial_data)
+                else:
+                    self.logger.warning(f"Unsupported CodeMeter command: {cmd_name}")
+                    response = self._generate_error_response(0x0102)  # Unsupported command
+
+                # Send response
+                socket.sendall(response)
+
+            except Exception as e:
+                self.logger.error(f"Error handling CodeMeter connection: {str(e)}")
+                try:
+                    socket.sendall(self._generate_error_response(0x0100))  # Generic error
+                except:
+                    pass
+
+        def _handle_get_license(self, request_data):
+            """Handle a CodeMeter license request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            # Extract firm code and product code from the request
+            if len(request_data) < 24:  # header + minimum payload
+                return self._generate_error_response(0x0101)  # Invalid format
+
+            # Firm code is typically at offset 16-19
+            firm_code = request_data[16] | (request_data[17] << 8) | (request_data[18] << 16) | (request_data[19] << 24)
+
+            # Product code is typically at offset 20-21
+            product_code = request_data[20] | (request_data[21] << 8)
+
+            # Check if firm code exists
+            if firm_code not in self.firm_codes:
+                # Use the first firm code as fallback
+                firm_code = list(self.firm_codes.keys())[0]
+
+            # Check if product code exists for this firm
+            firm_info = self.firm_codes[firm_code]
+            if product_code not in firm_info["products"]:
+                # Use the first product code for this firm
+                product_code = firm_info["products"][0]
+
+            # Generate a license ID
+            license_id = random.randint(1000000, 9999999)
+
+            # Record the license
+            self.active_licenses[license_id] = {
+                "firm_code": firm_code,
+                "product_code": product_code,
+                "issued": time.time()
+            }
+
+            # Create response with the license data
+            response = bytearray(self.response_templates["cm_license"])
+
+            # Set license ID (offset 18-21)
+            response[18] = license_id & 0xFF
+            response[19] = (license_id >> 8) & 0xFF
+            response[20] = (license_id >> 16) & 0xFF
+            response[21] = (license_id >> 24) & 0xFF
+
+            # Set firm code (offset 22-25)
+            response[22] = firm_code & 0xFF
+            response[23] = (firm_code >> 8) & 0xFF
+            response[24] = (firm_code >> 16) & 0xFF
+            response[25] = (firm_code >> 24) & 0xFF
+
+            # Set product code (offset 26-27)
+            response[26] = product_code & 0xFF
+            response[27] = (product_code >> 8) & 0xFF
+
+            self.logger.info(f"CodeMeter license granted: Firm {firm_code}, Product {product_code}, ID {license_id}")
+            return bytes(response)
+
+        def _handle_check_license(self, request_data):
+            """Handle a CodeMeter license check request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            # Extract license ID from the request
+            if len(request_data) < 20:  # header + minimum payload
+                return self._generate_error_response(0x0101)  # Invalid format
+
+            # License ID is typically at offset 16-19
+            license_id = request_data[16] | (request_data[17] << 8) | (request_data[18] << 16) | (request_data[19] << 24)
+
+            # Check if license exists
+            if license_id in self.active_licenses:
+                self.logger.info(f"CodeMeter license check passed for ID {license_id}")
+                return self.response_templates["cm_check"]
+            else:
+                # Return valid anyway (we're emulating)
+                self.logger.info(f"CodeMeter license check passed for unknown ID {license_id}")
+                return self.response_templates["cm_check"]
+
+        def _handle_return_license(self, request_data):
+            """Handle a CodeMeter license return request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            # Extract license ID from the request
+            if len(request_data) < 20:  # header + minimum payload
+                return self._generate_error_response(0x0101)  # Invalid format
+
+            # License ID is typically at offset 16-19
+            license_id = request_data[16] | (request_data[17] << 8) | (request_data[18] << 16) | (request_data[19] << 24)
+
+            # Remove the license if it exists
+            if license_id in self.active_licenses:
+                del self.active_licenses[license_id]
+                self.logger.info(f"CodeMeter license {license_id} returned")
+            else:
+                self.logger.info(f"CodeMeter return for unknown license ID {license_id}")
+
+            return self.response_templates["cm_return"]
+
+        def _handle_encrypt(self, request_data):
+            """Handle a CodeMeter data encryption request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            # Extract data from the request
+            if len(request_data) < 20:  # header + minimum payload with length
+                ret
+urn self._generate_error_response(0x0101)  # Invalid format
+
+            # Data length is typically at offset 16-17
+            data_len = request_data[16] | (request_data[17] << 8)
+
+            # Check if request contains enough data
+            if len(request_data) < 18 + data_len:
+                return self._generate_error_response(0x0101)  # Invalid format
+
+            # Get the data to encrypt
+            data = request_data[18:18+data_len]
+
+            # "Encrypt" the data (XOR with a fixed key)
+            encrypted_data = bytearray(data_len)
+            for i in range(data_len):
+                encrypted_data[i] = data[i] ^ 0x55
+
+            # Build response
+            response = bytearray(self.response_templates["cm_encrypt"][:18])  # Copy header + status + length fields
+
+            # Set data length
+            response[16] = data_len & 0xFF
+            response[17] = (data_len >> 8) & 0xFF
+
+            # Add encrypted data
+            response.extend(encrypted_data)
+
+            self.logger.info(f"CodeMeter encrypted {data_len} bytes of data")
+            return bytes(response)
+
+        def _handle_decrypt(self, request_data):
+            """Handle a CodeMeter data decryption request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            # Similar to encrypt
+            if len(request_data) < 20:  # header + minimum payload with length
+                return self._generate_error_response(0x0101)  # Invalid format
+
+            # Data length is typically at offset 16-17
+            data_len = request_data[16] | (request_data[17] << 8)
+
+            # Check if request contains enough data
+            if len(request_data) < 18 + data_len:
+                return self._generate_error_response(0x0101)  # Invalid format
+
+            # Get the data to decrypt
+            data = request_data[18:18+data_len]
+
+            # "Decrypt" the data (XOR with the same key)
+            decrypted_data = bytearray(data_len)
+            for i in range(data_len):
+                decrypted_data[i] = data[i] ^ 0x55
+
+            # Build response
+            response = bytearray(self.response_templates["cm_decrypt"][:18])  # Copy header + status + length fields
+
+            # Set data length
+            response[16] = data_len & 0xFF
+            response[17] = (data_len >> 8) & 0xFF
+
+            # Add decrypted data
+            response.extend(decrypted_data)
+
+            self.logger.info(f"CodeMeter decrypted {data_len} bytes of data")
+            return bytes(response)
+
+        def _generate_error_response(self, error_code):
+            """Generate an error response with the given error code.
+
+            Args:
+                error_code: The error code (16-bit)
+
+            Returns:
+                bytes: The binary response
+            """
+            response = bytearray(self.response_templates["cm_error"])
+
+            # Set error code (offset 18-19)
+            response[18] = error_code & 0xFF
+            response[19] = (error_code >> 8) & 0xFF
+
+            return bytes(response)
+
+        def generate_response(self, request_data):
+            """Generate a response for the given request data.
+
+            This method is called when we don't have a direct socket connection,
+            but need to generate a response based on captured data.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            try:
+                # Parse initial request
+                if not request_data or len(request_data) < 16:
+                    return self._generate_error_response(0x0101)  # Invalid format
+
+                # Check magic
+                if request_data[0:4] != self.PACKET_MAGIC:
+                    return self._generate_error_response(0x0101)  # Invalid format
+
+                # Extract command code
+                cmd_code = request_data[8] | (request_data[9] << 8)
+
+                # Process based on command
+                if cmd_code == 0x01:  # CM_QUERY_INFO
+                    return self.response_templates["cm_info"]
+                elif cmd_code == 0x05:  # CM_GET_LICENSE
+                    return self._handle_get_license(request_data)
+                elif cmd_code == 0x06:  # CM_CHECK_LICENSE
+                    return self._handle_check_license(request_data)
+                elif cmd_code == 0x07:  # CM_RETURN_LICENSE
+                    return self._handle_return_license(request_data)
+                elif cmd_code == 0x10:  # CM_GET_BOXINFO
+                    return self.response_templates["cm_boxinfo"]
+                elif cmd_code == 0x12:  # CM_GET_VERSION
+                    return self.response_templates["cm_version"]
+                elif cmd_code == 0x20:  # CM_ENCRYPT
+                    return self._handle_encrypt(request_data)
+                elif cmd_code == 0x21:  # CM_DECRYPT
+                    return self._handle_decrypt(request_data)
+                else:
+                    return self._generate_error_response(0x0102)  # Unsupported command
+            except Exception as e:
+                import logging
+                logging.error(f"Error in generate_response (CM): {e}")
+                return self._generate_error_response(0x0100)  # Generic error
+
+    emulator.register_protocol_handler('flexlm', FlexLMProtocolHandler)
+    emulator.register_protocol_handler('hasp', HASPProtocolHandler)
+    emulator.register_protocol_handler('codemeter', CodeMeterProtocolHandler)
+
+    # Start the emulator
+    if emulator.start():
+        app.update_output.emit(log_message("[License Server] Started on port " + str(port)))
+        app.license_server_instance = emulator
+
+        # Add to analyze results
+        if not hasattr(app, "analyze_results"):
+            app.analyze_results = []
+
+        app.analyze_results.append("\n=== NETWORK LICENSE SERVER EMULATOR ===")
+        app.analyze_results.append(f"Server running on port {port}")
+        app.analyze_results.append("Server will respond with valid license to all requests")
+        app.analyze_results.append("Learning mode: " + ("Enabled" if learning_mode else "Disabled"))
+        app.analyze_results.append("\nTo use:")
+        app.analyze_results.append(f"1. Configure your application to use localhost:{port} as the license server")
+        app.analyze_results.append("2. The server will automatically respond with valid license data")
+        app.analyze_results.append("3. Supported protocols: FlexLM, HASP, CodeMeter, and generic protocols")
+    else:
+        app.update_output.emit(log_message("[License Server] Failed to start"))
+
+
+    def _generate_mitm_script(self):
+        """Generate a custom mitmproxy script for license interception"""
+        self.logger.info("Generating mitmproxy script for license interception.")
+        script = """
+import mitmproxy.http
+from mitmproxy import ctx
+import re
+
+class LicenseInterceptor:
+    def __init__(self):
+        self.license_patterns = [
+            r'license',
+            r'activation',
+            r'auth',
+            r'key',
+            r'serial'
+        ]
+        self.stats = {
+            'intercepted_requests': 0,
+            'modified_responses': 0
+        }
+
+    def response(self, flow: mitmproxy.http.HTTPFlow) -> None:
+        self.stats['intercepted_requests'] += 1
+
+        # Check if this is a license-related request
+        is_license_request = False
+        url = flow.request.pretty_url
+
+        for pattern in self.license_patterns:
+            if re.search(pattern, url, re.IGNORECASE):
+                is_license_request = True
+                break
+
+        if not is_license_request:
+            # Check request body
+            if flow.request.content:
+                content = flow.request.content.decode('utf-8', errors='ignore')
+                for pattern in self.license_patterns:
+                    if re.search(pattern, content, re.IGNORECASE):
+                        is_license_request = True
+                        break
+
+        if is_license_request:
+            ctx.log.info(f"License-related request detected: {url}")
+
+            # Modify response based on content type
+            content_type = flow.response.headers.get('Content-Type', '')
+
+            if 'application/json' in content_type:
+                try:
+                    data = json.loads(flow.response.content.decode('utf-8', errors='ignore'))
+
+                    # Modify license-related fields
+                    if isinstance(data, dict):
+                        if 'license' in data:
+                            data['license'] = 'valid'
+                        if 'status' in data:
+                            data['status'] = 'success'
+                        if 'valid' in data:
+                            data['valid'] = True
+                        if 'expires' in data:
+                            data['expires'] = '2099-12-31'
+                        if 'activated' in data:
+                            data['activated'] = True
+
+                    # Replace response
+                    flow.response.content = json.dumps(data).encode('utf-8')
+                    self.stats['modified_responses'] += 1
+                    ctx.log.info(f"Modified JSON response for {url}")
+
+                except Exception as e:
+                    ctx.log.error(f"Error modifying JSON response: {e}")
+
+            elif 'application/xml' in content_type or 'text/xml' in content_type:
+                # Simple string replacement for XML
+                content = flow.response.content.decode('utf-8', errors='ignore')
+
+                # Replace common license status indicators
+                content = re.sub(r'<license[^>]*valid=["\']false["\'][^>]*>', '<license valid="true">', content, flags=re.IGNORECASE)
+                content = re.sub(r'<status>(?:invalid|expired|error)</status>', '<status>valid</status>', content, flags=re.IGNORECASE)
+                content = re.sub(r'<activated>false</activated>', '<activated>true</activated>', content, flags=re.IGNORECASE)
+
+                flow.response.content = content.encode('utf-8')
+                self.stats['modified_responses'] += 1
+                ctx.log.info(f"Modified XML response for {url}")
+
+            else:
+                # For other content types, try simple string replacement
+                content = flow.response.content.decode('utf-8', errors='ignore')
+
+                # Replace common license status indicators
+                content = re.sub(r'(license|status|valid)[ \t\n\r\f\v]*[:=][ \t\n\r\f\v]*(invalid|false|0|expired|error)', r'\1=valid', content, flags=re.IGNORECASE)
+
+                flow.response.content = content.encode('utf-8')
+                self.stats['modified_responses'] += 1
+                ctx.log.info(f"Modified generic response for {url}")
+
+addons = [LicenseInterceptor()]
+        """
+
+        self.logger.debug("mitmproxy script generation complete.")
+        return script
+
+    def _find_executable(self, executable):
+        """Find the path to an executable"""
+        self.logger.debug(f"Searching for executable: {executable}")
+        if os.name == 'nt':  # Windows
+            executable += '.exe'
+
+        # Check if executable is in PATH
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_path = os.path.join(path, executable)
+            if os.path.isfile(exe_path) and os.access(exe_path, os.X_OK):
+                self.logger.debug(f"Found executable at: {exe_path}")
+                return exe_path
+
+        # If not found, try common locations
+        self.logger.debug(f"{executable} not in PATH, checking common locations.")
+        common_locations = [
+            os.path.join(os.path.expanduser("~"), ".local", "bin"),
+            os.path.join(os.path.expanduser("~"), "AppData", "Local", "Programs", "Python"),
+            "/usr/local/bin",
+            "/opt/local/bin"
+        ]
+
+        for location in common_locations:
+            if os.path.exists(location):
+                for root, dirs, files in os.walk(location):
+                    # Filter out hidden and system directories
+                    dirs[:] = [d for d in dirs if not d.startswith('.') and d.lower() not in ('windows', 'program files', 'program files (x86)', 'system32')]
+                    if executable in files:
+                        exe_path = os.path.join(root, executable)
+                        if os.access(exe_path, os.X_OK):
+                            return exe_path
+
+        # If still not found, return just the executable name and hope it's in PATH
+        self.logger.warning(f"Executable '{executable}' not found. Returning original name.")
+        return executable
+
+def run_ssl_tls_interceptor(app):
+    """Initialize and run the SSL/TLS interceptor"""
+
+    # If interceptor is already running, stop it
+    if hasattr(app, "ssl_interceptor_instance") and app.ssl_interceptor_instance:
+        app.update_output.emit(log_message("[SSL Interceptor] Stopping existing interceptor..."))
+        app.ssl_interceptor_instance.stop()
+        app.ssl_interceptor_instance = None
+        app.update_output.emit(log_message("[SSL Interceptor] Interceptor stopped"))
+        return
+
+    # Ask for port
+    port, ok = QInputDialog.getInt(app, "SSL/TLS Interceptor Port", "Enter port number:", 8443, 1024, 65535)
+    if not ok:
+        app.update_output.emit(log_message("[SSL Interceptor] Cancelled"))
+        return
+
+    # Ask for target host (optional)
+    target_host, ok = QInputDialog.getText(app, "Target Host", "Enter target host (leave empty for transparent mode):")
+    if not ok:
+        app.update_output.emit(log_message("[SSL Interceptor] Cancelled"))
+        return
+
+    target_port = 443
+    if target_host:
+        # Ask for target port
+        target_port, ok = QInputDialog.getInt(app, "Target Port", "Enter target port:", 443, 1, 65535)
+        if not ok:
+            app.update_output.emit(log_message("[SSL Interceptor] Cancelled"))
+            return
+
+    # Create and configure the interceptor
+    interceptor = SSLTLSInterceptor({

@@ -1,0 +1,1000 @@
+
+        traffic_group.setLayout(traffic_inner_layout)
+        traffic_layout.addWidget(traffic_group)
+
+        traffic_tab.setLayout(traffic_layout)
+
+        # --- License Emulation Tab ---
+        emulation_tab = QWidget()
+        emulation_layout = QVBoxLayout()
+
+        # Server configuration
+        server_group = QGroupBox("License Server Configuration")
+        server_layout = QGridLayout()
+
+        server_layout.addWidget(QLabel("Listen Address:"), 0, 0)
+        self.server_addr_input = QLineEdit("0.0.0.0")
+        server_layout.addWidget(self.server_addr_input, 0, 1)
+
+        server_layout.addWidget(QLabel("Port:"), 0, 2)
+        self.server_port_input = QLineEdit("8080")
+        server_layout.addWidget(self.server_port_input, 0, 3)
+
+        server_layout.addWidget(QLabel("Protocol:"), 1, 0)
+        self.server_protocol_combo = QComboBox()
+        self.server_protocol_combo.addItems(["HTTP", "HTTPS", "TCP Custom", "UDP Custom"])
+        server_layout.addWidget(self.server_protocol_combo, 1, 1)
+
+        server_layout.addWidget(QLabel("Response Type:"), 1, 2)
+        self.server_response_combo = QComboBox()
+        self.server_response_combo.addItems(["Always Valid", "Custom JSON", "Binary", "XML"])
+        server_layout.addWidget(self.server_response_combo, 1, 3)
+
+        # Response configuration
+        server_layout.addWidget(QLabel("Response Data:"), 2, 0)
+        self.server_response_edit = QTextEdit()
+        self.server_response_edit.setPlaceholderText('{"status": "valid", "license": "XXXX-XXXX-XXXX-XXXX", "expiry": "2099-12-31"}')
+        server_layout.addWidget(self.server_response_edit, 3, 0, 1, 4)
+
+        # Server control buttons
+        server_buttons = QHBoxLayout()
+        start_server_btn = QPushButton("Start Server")
+        start_server_btn.clicked.connect(self.start_license_server)
+        server_buttons.addWidget(start_server_btn)
+
+        stop_server_btn = QPushButton("Stop Server")
+        stop_server_btn.clicked.connect(self.stop_license_server)
+        server_buttons.addWidget(stop_server_btn)
+
+        test_server_btn = QPushButton("Test Server")
+        test_server_btn.clicked.connect(self.test_license_server)
+        server_buttons.addWidget(test_server_btn)
+
+        server_layout.addLayout(server_buttons, 4, 0, 1, 4)
+        server_group.setLayout(server_layout)
+        emulation_layout.addWidget(server_group)
+
+        # Server logs
+        logs_group = QGroupBox("Server Logs")
+        logs_layout = QVBoxLayout()
+
+        self.server_logs_text = QTextEdit()
+        self.server_logs_text.setReadOnly(True)
+        logs_layout.addWidget(self.server_logs_text)
+
+        logs_group.setLayout(logs_layout)
+        emulation_layout.addWidget(logs_group)
+
+        emulation_tab.setLayout(emulation_layout)
+
+        # --- Protocol Tools Tab ---
+        protocol_tab = QWidget()
+        protocol_layout = QVBoxLayout()
+
+        tools_group = QGroupBox("Protocol Tools")
+        tools_layout = QVBoxLayout()
+
+        # Tool selector
+        tool_selector_layout = QHBoxLayout()
+        tool_selector_layout.addWidget(QLabel("Select Tool:"))
+        self.protocol_tool_combo = QComboBox()
+        self.protocol_tool_combo.addItems(["SSL/TLS Interceptor", "Protocol Analyzer",
+                                           "API Request Builder", "Authentication Fuzzer"])
+        tool_selector_layout.addWidget(self.protocol_tool_combo)
+
+        run_tool_btn = QPushButton("Launch Tool")
+        run_tool_btn.clicked.connect(self.launch_protocol_tool)
+        tool_selector_layout.addWidget(run_tool_btn)
+
+        tools_layout.addLayout(tool_selector_layout)
+
+        # Tool description
+        self.tool_description_label = QLabel("Select a tool to see its description and options")
+        self.tool_description_label.setWordWrap(True)
+        self.tool_description_label.setStyleSheet("padding: 10px; background-color: #f0f0f0;")
+        tools_layout.addWidget(self.tool_description_label)
+
+        # Connect combo box to update description
+        self.protocol_tool_combo.currentTextChanged.connect(self.update_protocol_tool_description)
+
+        tools_group.setLayout(tools_layout)
+        protocol_layout.addWidget(tools_group)
+
+        # Recently used tools
+        recent_tools_group = QGroupBox("Recently Used Tools")
+        recent_tools_layout = QVBoxLayout()
+
+        self.recent_tools_list = QListWidget()
+        self.recent_tools_list.addItems(["SSL/TLS Interceptor (10 minutes ago)",
+                                         "Protocol Analyzer (2 hours ago)",
+                                         "Authentication Fuzzer (yesterday)"])
+        recent_tools_layout.addWidget(self.recent_tools_list)
+
+        recent_tools_group.setLayout(recent_tools_layout)
+        protocol_layout.addWidget(recent_tools_group)
+
+        protocol_tab.setLayout(protocol_layout)
+
+        # Add all tabs to network tabs
+        network_tabs.addTab(traffic_tab, "Traffic Analysis")
+        network_tabs.addTab(emulation_tab, "License Emulation")
+        network_tabs.addTab(protocol_tab, "Protocol Tools")
+
+        layout.addWidget(network_tabs)
+        self.network_tab.setLayout(layout)
+
+    def setup_reports_tab(self):
+        """Sets up the Reports tab with report generation and management."""
+        layout = QVBoxLayout()
+
+        # Report generation section
+        generation_group = QGroupBox("Report Generation")
+        generation_layout = QVBoxLayout()
+
+        # Report template selection
+        template_layout = QHBoxLayout()
+        template_layout.addWidget(QLabel("Report Template:"))
+        self.report_template_combo = QComboBox()
+        self.report_template_combo.addItems(["Comprehensive Report", "Executive Summary",
+                                            "Technical Analysis", "License Analysis",
+                                            "Custom Template"])
+        template_layout.addWidget(self.report_template_combo)
+
+        generation_layout.addLayout(template_layout)
+
+        # Report options
+        options_layout = QGridLayout()
+
+        self.include_binary_info_cb = QCheckBox("Include Binary Information")
+        self.include_binary_info_cb.setChecked(True)
+        options_layout.addWidget(self.include_binary_info_cb, 0, 0)
+
+        self.include_patches_cb = QCheckBox("Include Patch Details")
+        self.include_patches_cb.setChecked(True)
+        options_layout.addWidget(self.include_patches_cb, 0, 1)
+
+        self.include_graphs_cb = QCheckBox("Include Graphs & Charts")
+        self.include_graphs_cb.setChecked(True)
+        options_layout.addWidget(self.include_graphs_cb, 1, 0)
+
+        self.include_network_cb = QCheckBox("Include Network Analysis")
+        self.include_network_cb.setChecked(True)
+        options_layout.addWidget(self.include_network_cb, 1, 1)
+
+        generation_layout.addLayout(options_layout)
+
+        # Format options
+        format_layout = QHBoxLayout()
+        format_layout.addWidget(QLabel("Output Format:"))
+        self.report_format_combo = QComboBox()
+        self.report_format_combo.addItems(["PDF", "HTML", "Markdown", "Plain Text"])
+        format_layout.addWidget(self.report_format_combo)
+
+        generation_layout.addLayout(format_layout)
+
+        # Generate button
+        generate_btn = QPushButton("Generate Report")
+        generate_btn.clicked.connect(self.generate_report)
+        generation_layout.addWidget(generate_btn)
+
+        generation_group.setLayout(generation_layout)
+        layout.addWidget(generation_group)
+
+        # Saved reports section
+        saved_reports_group = QGroupBox("Saved Reports")
+        saved_reports_layout = QVBoxLayout()
+
+        self.reports_table = QTableWidget()
+        self.reports_table.setColumnCount(4)
+        self.reports_table.setHorizontalHeaderLabels(["Name", "Date", "Type", "Actions"])
+        self.reports_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        # Add some sample data
+        self.reports_table.setRowCount(3)
+        self.reports_table.setItem(0, 0, QTableWidgetItem("Program1_Analysis_Report"))
+        self.reports_table.setItem(0, 1, QTableWidgetItem("2025-04-15"))
+        self.reports_table.setItem(0, 2, QTableWidgetItem("PDF"))
+
+        self.reports_table.setItem(1, 0, QTableWidgetItem("Program2_License_Analysis"))
+        self.reports_table.setItem(1, 1, QTableWidgetItem("2025-04-10"))
+        self.reports_table.setItem(1, 2, QTableWidgetItem("HTML"))
+
+        self.reports_table.setItem(2, 0, QTableWidgetItem("Program3_Executive_Summary"))
+        self.reports_table.setItem(2, 1, QTableWidgetItem("2025-04-05"))
+        self.reports_table.setItem(2, 2, QTableWidgetItem("PDF"))
+
+        # Add action buttons to each row
+        for row in range(3):
+            actions_widget = QWidget()
+            actions_layout = QHBoxLayout(actions_widget)
+            actions_layout.setContentsMargins(0, 0, 0, 0)
+
+            view_btn = QPushButton("View")
+            view_btn.setFixedWidth(60)
+            view_btn.clicked.connect(lambda _, r=row: self.view_report(r))
+
+            export_btn = QPushButton("Export")
+            export_btn.setFixedWidth(60)
+            export_btn.clicked.connect(lambda _, r=row: self.export_report(r))
+
+            delete_btn = QPushButton("Delete")
+            delete_btn.setFixedWidth(60)
+            delete_btn.clicked.connect(lambda _, r=row: self.delete_report(r))
+
+            actions_layout.addWidget(view_btn)
+            actions_layout.addWidget(export_btn)
+            actions_layout.addWidget(delete_btn)
+
+            self.reports_table.setCellWidget(row, 3, actions_widget)
+
+        saved_reports_layout.addWidget(self.reports_table)
+
+        # Controls for saved reports
+        controls_layout = QHBoxLayout()
+
+        refresh_reports_btn = QPushButton("Refresh List")
+        refresh_reports_btn.clicked.connect(self.refresh_reports_list)
+        controls_layout.addWidget(refresh_reports_btn)
+
+        import_report_btn = QPushButton("Import Report")
+        import_report_btn.clicked.connect(self.import_report)
+        controls_layout.addWidget(import_report_btn)
+
+        saved_reports_layout.addLayout(controls_layout)
+
+        saved_reports_group.setLayout(saved_reports_layout)
+        layout.addWidget(saved_reports_group)
+
+        self.reports_tab.setLayout(layout)
+
+    def setup_plugins_tab(self):
+        """Sets up the Plugins tab with sections for different plugin types."""
+        # Create the plugins_tab widget if it doesn't exist
+        if not hasattr(self, 'plugins_tab'):
+            self.plugins_tab = QWidget()
+
+        layout = QVBoxLayout()
+        plugin_tabs = QTabWidget()
+
+        # --- Frida Plugins Tab ---
+        frida_tab = QWidget()
+        frida_layout = QVBoxLayout()
+
+        frida_layout.addWidget(QLabel("<b>Available Frida Scripts:</b>"))
+        frida_scroll_area = QScrollArea()
+        frida_scroll_area.setWidgetResizable(True)
+        frida_plugins_list_widget = QWidget()
+        frida_plugins_list_layout = QVBoxLayout(frida_plugins_list_widget)
+
+        frida_plugin_found = False
+        if hasattr(
+                self,
+                "available_plugins") and "frida" in self.available_plugins and self.available_plugins["frida"]:
+            for plugin in self.available_plugins["frida"]:
+                frida_plugin_found = True
+                plugin_frame = QFrame()
+                plugin_frame.setFrameShape(QFrame.StyledPanel)
+                frame_layout = QVBoxLayout()
+                name_label = QLabel(f"<b>{plugin['name']}</b>")
+                frame_layout.addWidget(name_label)
+                desc_label = QLabel(
+                    plugin.get(
+                        'description',
+                        'No description provided.'))
+                desc_label.setWordWrap(True)
+                frame_layout.addWidget(desc_label)
+                btn_layout = QHBoxLayout()
+                run_btn = QPushButton("Run Script")
+                run_btn.clicked.connect(lambda checked, p=plugin.get(
+                    'path', ''): self.run_frida_plugin_from_file(p) if p else None)
+                btn_layout.addWidget(run_btn)
+                edit_btn = QPushButton("Edit Script")
+                edit_btn.clicked.connect(lambda checked, p=plugin.get(
+                    'path', ''): self.edit_plugin_file(p) if p else None)
+                btn_layout.addWidget(edit_btn)
+                frame_layout.addLayout(btn_layout)
+                plugin_frame.setLayout(frame_layout)
+                frida_plugins_list_layout.addWidget(plugin_frame)
+
+        if not frida_plugin_found:
+            frida_plugins_list_layout.addWidget(
+                QLabel("No custom Frida scripts found in plugins/frida_scripts"))
+
+        frida_plugins_list_layout.addStretch()
+        frida_scroll_area.setWidget(frida_plugins_list_widget)
+        frida_layout.addWidget(frida_scroll_area)
+
+        frida_layout.addWidget(QLabel("<b>Built-in Frida Actions:</b>"))
+        built_in_frame = QFrame()
+        built_in_frame.setFrameShape(QFrame.StyledPanel)
+        built_in_layout = QVBoxLayout()
+        grid = QGridLayout()
+
+        plugins_actions = [
+            ("HWID Spoofer",
+             "Spoofs hardware IDs (Requires running target).",
+             partial(run_plugin, self, "HWID Spoofer")),
+            ("Anti-Debugger",
+             "Bypasses common debugger checks (Requires running target).",
+             partial(run_plugin, self, "Anti-Debugger")),
+            ("Time Bomb Defuser",
+             "Spoofs time/date functions (Requires running target).",
+             partial(run_plugin, self, "Time Bomb Defuser")),
+            ("Telemetry Blocker",
+             "Hooks network functions (Requires running target).",
+             partial(run_plugin, self, "Telemetry Blocker")),
+            ("Cloud License Hooker",
+             "Focus hooks on network activation (Requires running target).",
+             partial(run_cloud_license_hooker, self)),
+            ("Comprehensive API Hooking",
+             "Injects all hooks (Requires running target).",
+             self.inject_comprehensive_api_hooks)]
+
+        for i, (name, desc, func) in enumerate(plugins_actions):
+            row = i // 2
+            col = i % 2
+            btn = QPushButton(name)
+            btn.setToolTip(desc)
+            btn.clicked.connect(func)
+            grid.addWidget(btn, row, col)
+
+        built_in_layout.addLayout(grid)
+        built_in_frame.setLayout(built_in_layout)
+        frida_layout.addWidget(built_in_frame)
+
+        frida_btn_layout = QHBoxLayout()
+        import_frida_btn = QPushButton("Import Frida Script")
+        import_frida_btn.clicked.connect(partial(self.import_plugin, "frida"))
+        frida_btn_layout.addWidget(import_frida_btn)
+        create_frida_btn = QPushButton("Create New Frida Script")
+        create_frida_btn.clicked.connect(
+            partial(self.create_new_plugin, "frida"))
+        frida_btn_layout.addWidget(create_frida_btn)
+        frida_layout.addLayout(frida_btn_layout)
+        frida_tab.setLayout(frida_layout)
+
+        # --- Ghidra Plugins Tab ---
+        ghidra_tab = QWidget()
+        ghidra_layout = QVBoxLayout()
+
+        ghidra_layout.addWidget(QLabel("<b>Available Ghidra Scripts:</b>"))
+        ghidra_scroll_area = QScrollArea()
+        ghidra_scroll_area.setWidgetResizable(True)
+        ghidra_plugins_list_widget = QWidget()
+        ghidra_plugins_list_layout = QVBoxLayout(ghidra_plugins_list_widget)
+
+        ghidra_plugin_found = False
+        if hasattr(
+                self,
+                "available_plugins") and "ghidra" in self.available_plugins and self.available_plugins["ghidra"]:
+            for plugin in self.available_plugins["ghidra"]:
+                ghidra_plugin_found = True
+                plugin_frame = QFrame()
+                plugin_frame.setFrameShape(QFrame.StyledPanel)
+                frame_layout = QVBoxLayout()
+                name_label = QLabel(f"<b>{plugin['name']}</b>")
+                frame_layout.addWidget(name_label)
+                desc_label = QLabel(
+                    plugin.get(
+                        'description',
+                        'No description.'))
+                desc_label.setWordWrap(True)
+                frame_layout.addWidget(desc_label)
+                btn_layout = QHBoxLayout()
+                run_btn = QPushButton("Run Script")
+                run_btn.clicked.connect(lambda checked, p=plugin.get(
+                    'path', ''): self.run_ghidra_plugin_from_file(p) if p else None)
+                btn_layout.addWidget(run_btn)
+                edit_btn = QPushButton("Edit Script")
+                edit_btn.clicked.connect(lambda checked, p=plugin.get(
+                    'path', ''): self.edit_plugin_file(p) if p else None)
+                btn_layout.addWidget(edit_btn)
+                frame_layout.addLayout(btn_layout)
+                plugin_frame.setLayout(frame_layout)
+                ghidra_plugins_list_layout.addWidget(plugin_frame)
+
+        if not ghidra_plugin_found:
+            ghidra_plugins_list_layout.addWidget(
+                QLabel("No Ghidra scripts found in plugins/ghidra_scripts"))
+
+        ghidra_plugins_list_layout.addStretch()
+        ghidra_scroll_area.setWidget(ghidra_plugins_list_widget)
+        ghidra_layout.addWidget(ghidra_scroll_area)
+
+        ghidra_btn_layout = QHBoxLayout()
+        import_ghidra_btn = QPushButton("Import Ghidra Script")
+        import_ghidra_btn.clicked.connect(partial(self.import_plugin, "ghidra"))
+        ghidra_btn_layout.addWidget(import_ghidra_btn)
+        create_ghidra_btn = QPushButton("Create New Ghidra Script")
+        create_ghidra_btn.clicked.connect(
+            partial(self.create_new_plugin, "ghidra"))
+        ghidra_btn_layout.addWidget(create_ghidra_btn)
+        ghidra_layout.addLayout(ghidra_btn_layout)
+        ghidra_tab.setLayout(ghidra_layout)
+
+        # --- Custom Plugins Tab ---
+        custom_tab = QWidget()
+        custom_layout = QVBoxLayout()
+
+        custom_layout.addWidget(
+            QLabel("<b>Available Custom Python Plugins:</b>"))
+        custom_scroll_area = QScrollArea()
+        custom_scroll_area.setWidgetResizable(True)
+        custom_plugins_list_widget = QWidget()
+        custom_plugins_list_layout = QVBoxLayout(custom_plugins_list_widget)
+
+        custom_plugin_found = False
+        if hasattr(
+                self,
+                "available_plugins") and "custom" in self.available_plugins and self.available_plugins["custom"]:
+            for plugin in self.available_plugins["custom"]:
+                custom_plugin_found = True
+                plugin_frame = QFrame()
+                plugin_frame.setFrameShape(QFrame.StyledPanel)
+                frame_layout = QVBoxLayout()
+                name_label = QLabel(f"<b>{plugin['name']}</b>")
+                frame_layout.addWidget(name_label)
+                desc_label = QLabel(
+                    plugin.get(
+                        'description',
+                        'No description.'))
+                desc_label.setWordWrap(True)
+                frame_layout.addWidget(desc_label)
+                btn_layout = QHBoxLayout()
+                run_btn = QPushButton("Run Plugin")
+                run_btn.clicked.connect(
+                    lambda checked, p=plugin: self.run_custom_plugin(p))
+                btn_layout.addWidget(run_btn)
+                module_path = os.path.join(
+                    "plugins", "custom_modules", f"{
+                        plugin.get(
+                            'module', '')}.py")
+                edit_btn = QPushButton("Edit Plugin")
+                edit_btn.clicked.connect(
+                    lambda checked,
+                    p=module_path: self.edit_plugin_file(p) if p else None)
+                btn_layout.addWidget(edit_btn)
+                frame_layout.addLayout(btn_layout)
+                plugin_frame.setLayout(frame_layout)
+                custom_plugins_list_layout.addWidget(plugin_frame)
+
+        if not custom_plugin_found:
+            custom_plugins_list_layout.addWidget(
+                QLabel("No custom plugins found in plugins/custom_modules"))
+
+        custom_plugins_list_layout.addStretch()
+        custom_scroll_area.setWidget(custom_plugins_list_widget)
+        custom_layout.addWidget(custom_scroll_area)
+
+        custom_btn_layout = QHBoxLayout()
+        import_custom_btn = QPushButton("Import Custom Plugin")
+        import_custom_btn.clicked.connect(partial(self.import_plugin, "custom"))
+        custom_btn_layout.addWidget(import_custom_btn)
+        create_custom_btn = QPushButton("Create New Custom Plugin")
+        create_custom_btn.clicked.connect(
+            partial(self.create_new_plugin, "custom"))
+        custom_btn_layout.addWidget(create_custom_btn)
+        custom_layout.addLayout(custom_btn_layout)
+        custom_tab.setLayout(custom_layout)
+
+        # --- Key Generator Tab ---
+        keygen_tab = QWidget()
+        keygen_layout = QVBoxLayout()
+
+        keygen_group = QGroupBox("License Key Generator")
+        keygen_inner_layout = QVBoxLayout()
+
+        keygen_inner_layout.addWidget(QLabel("Product Name:"))
+        self.keygen_input_name = QTextEdit()
+        self.keygen_input_name.setPlaceholderText(
+            "Enter Product Name (from analysis or target)")
+        self.keygen_input_name.setMaximumHeight(40)
+        keygen_inner_layout.addWidget(self.keygen_input_name)
+
+        keygen_inner_layout.addWidget(QLabel("Version:"))
+        self.keygen_input_version = QTextEdit()
+        self.keygen_input_version.setPlaceholderText(
+            "Enter Version (e.g., 1.0)")
+        self.keygen_input_version.setMaximumHeight(40)
+        keygen_inner_layout.addWidget(self.keygen_input_version)
+
+        key_format_layout = QHBoxLayout()
+        key_format_layout.addWidget(QLabel("Key Format:"))
+        self.key_format_dropdown = QComboBox()
+        self.key_format_dropdown.addItems(
+            ["XXXX-XXXX-XXXX-XXXX", "XXXXX-XXXXX-XXXXX", "XXX-XXX-XXX-XXX-XXX", "Raw Base64"])
+        key_format_layout.addWidget(self.key_format_dropdown)
+        keygen_inner_layout.addLayout(key_format_layout)
+
+        self.keygen_advanced_checkbox = QCheckBox("Advanced Options")
+        keygen_inner_layout.addWidget(self.keygen_advanced_checkbox)
+
+        self.keygen_advanced_frame = QFrame()
+        self.keygen_advanced_frame.setVisible(False)
+        advanced_layout = QVBoxLayout(self.keygen_advanced_frame)
+        advanced_layout.addWidget(QLabel("Custom Seed:"))
+        self.keygen_seed = QTextEdit()
+        self.keygen_seed.setMaximumHeight(40)
+        self.keygen_seed.setPlaceholderText(
+            "Optional: Enter seed for deterministic key")
+        advanced_layout.addWidget(self.keygen_seed)
+        self.keygen_advanced_checkbox.toggled.connect(
+            self.keygen_advanced_frame.setVisible)
+        keygen_inner_layout.addWidget(self.keygen_advanced_frame)
+
+        self.keygen_generate_btn = QPushButton("Generate License Key")
+        self.keygen_generate_btn.clicked.connect(self.generate_key)
+        keygen_inner_layout.addWidget(self.keygen_generate_btn)
+
+        keygen_inner_layout.addWidget(QLabel("Generated Keys:"))
+        self.keygen_results = QTextEdit()
+        self.keygen_results.setReadOnly(True)
+        self.keygen_results.setMinimumHeight(100)
+        keygen_inner_layout.addWidget(self.keygen_results)
+
+        keygen_group.setLayout(keygen_inner_layout)
+        keygen_layout.addWidget(keygen_group)
+        keygen_layout.addStretch()
+        keygen_tab.setLayout(keygen_layout)
+
+        # --- Prebuilt Scripts Tab ---
+        prebuilt_scripts_tab = QWidget()
+        prebuilt_layout = QVBoxLayout()
+        prebuilt_layout.addWidget(
+            QLabel("<b>Ready-to-Use Scripts & Utilities:</b>"))
+        
+        # Create layout for automated tools
+        tools_layout = QVBoxLayout()
+        
+        # --- Adobe Controls in a Dropdown/Combo Section ---
+        adobe_group = QGroupBox("Adobe Creative Cloud Tools")
+        adobe_layout = QVBoxLayout()
+        
+        # Add status label
+        self.adobe_status_label = QLabel("Status: Unknown")
+        adobe_layout.addWidget(self.adobe_status_label)
+        
+        # Create a dropdown for Adobe actions
+        adobe_actions_label = QLabel("Select Adobe Action:")
+        adobe_layout.addWidget(adobe_actions_label)
+        
+        self.adobe_action_combo = QComboBox()
+        self.adobe_action_combo.addItem("-- Select Action --")
+        self.adobe_action_combo.addItem("Deploy AdobeLicenseX")
+        self.adobe_action_combo.addItem("Run AdobeLicenseX Manually")
+        self.adobe_action_combo.addItem("View Injection Log")
+        self.adobe_action_combo.addItem("Uninstall AdobeLicenseX")
+        adobe_layout.addWidget(self.adobe_action_combo)
+        
+        # Add execute button
+        self.adobe_execute_btn = QPushButton("Execute Selected Action")
+        self.adobe_execute_btn.setToolTip("Run the selected Adobe action")
+        self.adobe_execute_btn.clicked.connect(self.execute_adobe_action)
+        adobe_layout.addWidget(self.adobe_execute_btn)
+        
+        # Finish Adobe group
+        adobe_group.setLayout(adobe_layout)
+        tools_layout.addWidget(adobe_group)
+        
+        # --- Windows Activator as a standalone button ---
+        windows_group = QGroupBox("Windows Tools")
+        windows_layout = QVBoxLayout()
+        
+        # Add Windows Activator button (standalone)
+        self.windows_activator_btn = QPushButton("Windows Activator")
+        self.windows_activator_btn.setToolTip("Launch Windows activation script with administrative privileges")
+        self.windows_activator_btn.clicked.connect(self.run_windows_activator)
+        self.windows_activator_btn.setMinimumHeight(40)  # Make button taller
+        windows_layout.addWidget(self.windows_activator_btn)
+        
+        # Finish Windows group
+        windows_group.setLayout(windows_layout)
+        tools_layout.addWidget(windows_group)
+        
+        # Add tools layout to main layout
+        prebuilt_layout.addLayout(tools_layout)
+        prebuilt_layout.addStretch()
+        prebuilt_scripts_tab.setLayout(prebuilt_layout)
+
+        # Add all tabs to the plugin QTabWidget
+        plugin_tabs.addTab(frida_tab, "Frida")
+        plugin_tabs.addTab(ghidra_tab, "Ghidra")
+        plugin_tabs.addTab(custom_tab, "Custom")
+        plugin_tabs.addTab(keygen_tab, "Keygen")
+        plugin_tabs.addTab(prebuilt_scripts_tab, "Prebuilt Scripts")
+
+        # Add the QTabWidget to the main layout for the plugins_tab
+        layout.addWidget(plugin_tabs)
+
+        # Set the main layout for the self.plugins_tab widget
+        self.plugins_tab.setLayout(layout)
+
+    def handle_patch_mode_selection(self, text):
+        """Handle selection in the patch mode dropdown menu.
+
+        Dispatches to the appropriate patching functionality based on user selection.
+
+        Args:
+            text: Selected option text from dropdown
+        """
+        if text == "Auto Patch Agent":
+            run_automated_patch_agent(self)
+        elif text == "AI-Based Patching":
+            self.run_autonomous_patching()
+        elif text == "Full Auto Mode":
+            self.run_full_autonomous_mode()
+        elif text == "Simulate Patch":
+            self.run_simulate_patch()
+
+    def handle_deep_analysis_mode(self, text):
+        """Handle selection in the deep analysis mode dropdown menu.
+
+        Dispatches to the appropriate deep analysis functionality based on user selection.
+
+        Args:
+            text: Selected option text from dropdown
+        """
+        if text == "License Logic":
+            self.run_deep_license_analysis()
+        elif text == "Runtime Monitoring":
+            self.run_deep_runtime_monitoring()
+        elif text == "CFG Structure":
+            run_deep_cfg_analysis(self)
+        elif text == "Packing Detection":
+            self.run_detect_packing()
+        elif text == "Taint Analysis":
+            run_taint_analysis(self)
+        elif text == "Symbolic Execution":
+            run_symbolic_execution(self)
+        elif text == "Concolic Execution":
+            run_concolic_execution(self)
+        elif text == "ROP Chain Analysis":
+            run_rop_chain_generator(self)
+        elif text == "Memory Optimization":
+            run_memory_optimized_analysis(self)
+        elif text == "Incremental Analysis":
+            run_incremental_analysis(self)
+        elif text == "Distributed Processing":
+            run_distributed_processing(self)
+        elif text == "GPU Acceleration":
+            run_gpu_accelerator(self)
+
+    def handle_ghidra_analysis_mode(self, text):
+        """Handle selection in the Ghidra analysis mode dropdown menu.
+
+        Dispatches to the appropriate Ghidra analysis functionality
+        based on user selection, in GUI or headless mode.
+
+        Args:
+            text: Selected option text from dropdown
+        """
+        if text == "Ghidra GUI Analysis":
+            self.run_ghidra_analysis_gui()
+        elif text == "Ghidra AI (Headless Mode)":
+            # Call the global function with self as argument
+            run_advanced_ghidra_analysis(self)
+
+    def handle_results_action(self, text):
+        """Handle selection in the results action dropdown menu.
+
+        Dispatches to the appropriate results handling functionality
+        based on user selection (export or import).
+
+        Args:
+            text: Selected option text from dropdown
+        """
+        if text == "Export Analysis Results":
+            self.export_analysis_results()
+        elif text == "Load Ghidra Results":
+            self.load_ghidra_results()
+
+    def deploy_adobe_licensex(self):
+        """Build and install the AdobeLicenseX injector with Frida hooker."""
+        self.update_output.emit(
+            "[*] Building AdobeLicenseX stealth injector...")
+
+        source_dir = os.path.join(
+            os.path.dirname(__file__),
+            "adobe_injector_src")
+        injector_py = os.path.join(source_dir, "adobe_full_auto_injector.py")
+        js_file = os.path.join(source_dir, "adobe_bypass_frida.js")  # Corrected filename
+        # Use user's Documents folder instead of system directories to avoid permission issues
+        user_docs = os.path.join(os.path.expanduser("~"), "Documents", "Intellicrack")
+        install_dir = os.path.join(user_docs, "Adobe")
+        exe_path = os.path.join(install_dir, "AdobeLicenseX.exe")
+        log_path = os.path.join(install_dir, "adobe_injection.log")
+
+        self.update_output.emit(f"[*] Using installation directory: {install_dir}")
+
+        try:
+            # Create installation directory if it doesn't exist
+            os.makedirs(install_dir, exist_ok=True)
+            self.update_output.emit("✅ Installation directory created/verified")
+            
+            # Copy JS file
+            try:
+                shutil.copy(js_file, install_dir)
+                self.update_output.emit("✅ Copied Adobe bypass script")
+            except Exception as copy_error:
+                self.update_output.emit(f"❌ Failed to copy script file: {copy_error}")
+                return
+        except PermissionError:
+            self.update_output.emit("❌ Permission denied. Try running as administrator.")
+            return
+        except Exception as e:
+            self.update_output.emit(f"❌ Failed to create installation directory: {e}")
+            return
+
+        # Always rebuild if already exists
+        if os.path.exists(exe_path):
+            try:
+                os.remove(exe_path)
+                self.update_output.emit(
+                    "⚠️ Old AdobeLicenseX.exe removed for rebuild.")
+            except Exception as e:
+                self.update_output.emit(f"❌ Failed to remove old EXE: {e}")
+                return
+
+        build_cmd = [
+            "pyinstaller",
+            "--onefile",
+            "--noconsole",
+            "--name", "AdobeLicenseX",
+            "--add-data", f"{js_file};.",
+            injector_py
+        ]
+
+        try:
+            subprocess.run(build_cmd, cwd=source_dir, check=True)
+            built_exe = os.path.join(source_dir, "dist", "AdobeLicenseX.exe")
+            shutil.move(built_exe, exe_path)
+            self.update_output.emit(
+                "✅ AdobeLicenseX built and installed to ProgramData.")
+        except Exception as e:
+            self.update_output.emit(f"❌ PyInstaller build failed: {e}")
+            return
+
+        try:
+            user = getpass.getuser()
+            startup = fr"C:\\Users\\{user}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+            os.makedirs(startup, exist_ok=True)
+            shortcut_path = os.path.join(startup, "AdobeLicenseX.lnk")
+
+            shell = win32com.client.Dispatch("WScript.Shell")
+            shortcut = shell.CreateShortcut(shortcut_path)
+            shortcut.TargetPath = exe_path
+            shortcut.WorkingDirectory = install_dir
+            shortcut.WindowStyle = 7
+            shortcut.Save()
+            self.update_output.emit(
+                "✅ AdobeLicenseX added to Windows Startup.")
+            self.adobe_status_label.setText("Status: ✅ Installed")
+
+        except Exception as e:
+            self.update_output.emit(
+                f"❌ Failed to create startup shortcut: {e}")
+            self.adobe_status_label.setText("Status: ⚠️ Partial Install")
+
+    def uninstall_adobe_licensex(self):
+        """Remove the AdobeLicenseX EXE and startup shortcut."""
+        try:
+            exe_path = r"C:\ProgramData\Microsoft\WindowsUpdate\AdobeLicenseX.exe"
+            shortcut_path = os.path.join(
+                os.environ["APPDATA"],
+                r"Microsoft\Windows\Start Menu\Programs\Startup\AdobeLicenseX.lnk")
+
+            if os.path.exists(exe_path):
+                os.remove(exe_path)
+                self.update_output.emit("✅ Removed AdobeLicenseX.exe")
+
+            if os.path.exists(shortcut_path):
+                os.remove(shortcut_path)
+                self.update_output.emit(
+                    "✅ Removed AdobeLicenseX startup shortcut")
+
+            self.adobe_status_label.setText("Status: ❌ Not Installed")
+        except Exception as e:
+            self.update_output.emit(
+                f"❌ Failed to uninstall AdobeLicenseX: {e}")
+
+    def run_adobe_licensex_manually(self):
+        """Manually launch the AdobeLicenseX executable."""
+        # Use user-accessible directory instead of system folders
+        user_docs = os.path.join(os.path.expanduser("~"), "Documents", "Intellicrack")
+        install_dir = os.path.join(user_docs, "Adobe")
+        js_path = os.path.join(install_dir, "adobe_bypass_frida.js")
+        
+        try:
+            # Check if script exists
+            if os.path.exists(js_path):
+                # Run the script using Python (direct execution)
+                python_exe = sys.executable
+                cmd = [python_exe, "-c", f"import frida; import os; script_path = r'{js_path}'; script = open(script_path, 'r').read(); sys.stdout = open(os.path.join(r'{install_dir}', 'adobe_injection.log'), 'w'); print('[*] Starting Adobe bypass...'); session = frida.attach('adobe'); session.create_script(script).load()"]
+                
+                subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
+                self.update_output.emit("✅ Adobe bypass script launched manually.")
+            else:
+                self.update_output.emit(f"❌ Adobe bypass script not found at: {js_path}")
+                self.update_output.emit("ℹ️ Try deploying AdobeLicenseX first.")
+        except Exception as e:
+            self.update_output.emit(f"❌ Failed to launch Adobe bypass: {e}")
+
+    def view_adobe_licensex_log(self):
+        """Open the injection log if it exists."""
+        # Use user's Documents folder for log file
+        user_docs = os.path.join(os.path.expanduser("~"), "Documents", "Intellicrack")
+        install_dir = os.path.join(user_docs, "Adobe")
+        log_path = os.path.join(install_dir, "adobe_injection.log")
+        
+        self.update_output.emit(f"Looking for Adobe log at: {log_path}")
+
+        # Record log path for future reference
+        self.last_log_accessed = log_path
+
+        # Check if there's a custom log path override in config
+        if hasattr(self, 'config') and 'adobe_log_path' in self.config:
+            log_path = self.config['adobe_log_path']
+            self.update_output.emit(f"Using custom log path from config: {log_path}")
+
+        try:
+            if os.path.exists(log_path):
+                # Log before opening
+                self.update_output.emit(f"✅ Found log file ({os.path.getsize(log_path)} bytes), opening...")
+                
+                # Open the log file (with fallbacks for different platforms)
+                try:
+                    os.startfile(log_path)  # Windows
+                except AttributeError:
+                    try:
+                        import subprocess
+                        subprocess.call(['open', log_path])  # macOS
+                    except:
+                        subprocess.call(['xdg-open', log_path])  # Linux
+
+                # Record successful log access in history
+                if not hasattr(self, 'log_access_history'):
+                    self.log_access_history = []
+                self.log_access_history.append({
+                    'path': log_path,
+                    'time': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'size': os.path.getsize(log_path)
+                })
+            else:
+                self.update_output.emit("❌ No injection log found at new location.")
+                self.update_output.emit(f"ℹ️ Try deploying AdobeLicenseX first, or run it manually to generate logs.")
+
+                # Try alternate locations
+                alternate_paths = [
+                    # Include original locations as fallbacks
+                    r"C:\ProgramData\Microsoft\WindowsUpdate\adobe_injection.log",
+                    os.path.join(os.environ.get('TEMP', ''), "adobe_injection.log"),
+                    os.path.join(os.environ.get('LOCALAPPDATA', ''), "adobe_injection.log")
+                ]
+
+                for alt_path in alternate_paths:
+                    if os.path.exists(alt_path):
+                        self.update_output.emit(f"✅ Found log at alternate location: {alt_path}")
+                        os.startfile(alt_path)
+                        break
+        except Exception as e:
+            self.update_output.emit(f"❌ Failed to open log: {e}")
+            self.update_output.emit(f"Error details: {traceback.format_exc()}")
+
+    def run_windows_activator(self):
+        """Launch the Windows Activator batch script."""
+        activator_path = os.path.join(
+            os.path.dirname(__file__),
+            "Windows_Patch",
+            "WindowsActivator.cmd"
+        )
+        try:
+            if os.path.exists(activator_path):
+                # Use subprocess.Popen to run the batch file with elevated privileges
+                subprocess.Popen([activator_path],
+                                creationflags=subprocess.CREATE_NO_WINDOW)
+                self.update_output.emit("✅ Windows Activator launched successfully.")
+            else:
+                self.update_output.emit("❌ Windows Activator script not found at: " + activator_path)
+        except Exception as e:
+            self.update_output.emit(f"❌ Failed to launch Windows Activator: {e}")
+
+    def execute_adobe_action(self):
+        """Execute the selected Adobe action from the dropdown."""
+        selected_action = self.adobe_action_combo.currentText()
+        
+        if selected_action == "-- Select Action --":
+            self.update_output.emit("⚠️ Please select an Adobe action to execute")
+            return
+            
+        elif selected_action == "Deploy AdobeLicenseX":
+            self.deploy_adobe_licensex()
+            
+        elif selected_action == "Run AdobeLicenseX Manually":
+            self.run_adobe_licensex_manually()
+            
+        elif selected_action == "View Injection Log":
+            self.view_adobe_licensex_log()
+            
+        elif selected_action == "Uninstall AdobeLicenseX":
+            self.uninstall_adobe_licensex()
+        
+        # Reset the combo box after execution
+        self.adobe_action_combo.setCurrentIndex(0)
+
+    def check_adobe_licensex_status(self):
+        """Check if AdobeLicenseX is installed and update label."""
+        # Use user-accessible directory instead of system folders
+        user_docs = os.path.join(os.path.expanduser("~"), "Documents", "Intellicrack")
+        install_dir = os.path.join(user_docs, "Adobe")
+        js_path = os.path.join(install_dir, "adobe_bypass_frida.js")
+        
+        # Check if installation directory and script file exist
+        if os.path.exists(install_dir) and os.path.exists(js_path):
+            self.adobe_status_label.setText("Status: ✅ Installed")
+        else:
+            self.adobe_status_label.setText("Status: ❌ Not Installed")
+
+    def setup_assistant_tab(self):
+        """Sets up the Assistant tab with improved UI."""
+        # Create the assistant_tab widget if it doesn't exist
+        if not hasattr(self, 'assistant_tab'):
+            self.assistant_tab = QWidget()
+
+        layout = QVBoxLayout()
+
+        # Create a splitter for the chat interface
+        chat_splitter = QSplitter(Qt.Vertical)
+
+        # Chat display
+        chat_frame = QGroupBox("Chat History")
+        chat_layout = QVBoxLayout()
+
+        self.chat_display = QTextEdit()
+        self.chat_display.setReadOnly(True)
+
+        # Set a nicer font and styling
+        self.chat_display.setFont(QFont("Segoe UI", 10))
+        chat_layout.addWidget(self.chat_display)
+
+        chat_frame.setLayout(chat_layout)
+        chat_splitter.addWidget(chat_frame)
+
+        # Input area
+        input_frame = QGroupBox("Your Message")
+        input_layout = QVBoxLayout()
+
+        self.user_input = QTextEdit()
+        self.user_input.setPlaceholderText("Type your message here...")
+        input_layout.addWidget(self.user_input)
+
+        # Buttons
+        buttons_layout = QHBoxLayout()
+
+        send_btn = QPushButton("Send")
+        send_btn.clicked.connect(self.send_to_model)
+        buttons_layout.addWidget(send_btn)
+
+        clear_btn = QPushButton("Clear")
+        clear_btn.clicked.connect(self.user_input.clear)
+        buttons_layout.addWidget(clear_btn)
+
+        # Add preset queries dropdown
+        buttons_layout.addWidget(QLabel("Preset:"))
+
+        preset_dropdown = QComboBox()
+        preset_dropdown.addItems([
+            "Select a preset...",
+            "Analyze current binary",
+            "Generate patch plan",
+            "Bypass license check",
+            "Create key generator"
+        ])
+        preset_dropdown.currentIndexChanged.connect(self.handle_preset_query)
+        buttons_layout.addWidget(preset_dropdown)
+
+        input_layout.addLayout(buttons_layout)
+
+        input_frame.setLayout(input_layout)
+        chat_splitter.addWidget(input_frame)
+
+        # Set splitter sizes

@@ -1,0 +1,1000 @@
+
+            Args:
+                analysis: The analysis data to display.
+            """
+            ui_updates.append(("analysis", analysis))
+
+        def queue_clear_analysis():
+            """
+            Queue a request to clear analysis results in the UI.
+            """
+            ui_updates.append(("clear_analysis", None))
+
+        def flush_ui_updates():
+            """
+            Process all queued UI updates in a single batch.
+
+            Emits the appropriate signals for each update type.
+            """
+            # Process all queued UI updates in a single batch
+            for update_type, update_data in ui_updates:
+                if update_type == "output":
+                    self.update_output.emit(update_data)
+                elif update_type == "status":
+                    self.update_status.emit(update_data)
+                elif update_type == "analysis":
+                    self.update_analysis_results.emit(update_data)
+                elif update_type == "clear_analysis":
+                    self.clear_analysis_results.emit()
+            ui_updates.clear()
+
+        try:
+            queue_clear_analysis()
+            flush_ui_updates()
+
+            model = load_ai_model(self)
+            if not model:
+                queue_output_update(log_message(
+                    "[Autonomous Mode] Failed to load AI model."))
+                queue_status_update("Error: Failed to load AI model")
+                flush_ui_updates()
+                return
+
+            queue_output_update(log_message(
+                "[Autonomous Mode] AI model loaded."))
+            flush_ui_updates()
+
+            queue_output_update(log_message(
+                "[Autonomous Mode] Analyzing binary structure..."))
+            flush_ui_updates()
+
+            binary_report = analyze_binary_internal(self.binary_path, [])
+
+            program_dir = os.path.dirname(self.binary_path)
+            context_data = []
+
+            context_data.append("Binary Analysis:")
+            context_data.extend(binary_report)
+
+            queue_output_update(log_message(
+                "[Autonomous Mode] Gathering context from related files..."))
+            flush_ui_updates()
+            for root, _, files in os.walk(program_dir):
+                for file in files:
+                    if file.lower().endswith(
+                            (".exe", ".dll", ".lic", ".dat", ".json", ".conf", ".ini")):
+                        file_path = os.path.join(root, file)
+                        try:
+                            if file_path != self.binary_path:
+                                with open(file_path, "rb") as file_handle:
+                                    file_content = file_handle.read(2048)
+                                    encoded_content = base64.b64encode(
+                                        file_content).decode()
+                                    context_data.append(
+                                        f"Related file {file}: {encoded_content[:100]}...")
+                        except Exception as e:
+                            context_data.append(f"Error reading {file}: {e}")
+
+            queue_output_update(log_message(
+                "[Autonomous Mode] Running license analysis..."))
+            flush_ui_updates()
+
+            license_results = enhanced_deep_license_analysis(self.binary_path)
+
+            if license_results:
+                context_data.append(
+                    f"\nLicense Analysis: Found {
+                        len(license_results)} potential license code regions")
+                for i, result in enumerate(license_results[:3]):
+                    context_data.append(
+                        f"Region {i + 1} at 0x{result['start']:X}:")
+                    context_data.append(
+                        f"Keywords: {', '.join(result.get('keywords', []))}")
+                    if 'instructions' in result and result['instructions']:
+                        context_data.append("Instructions:")
+                        for inst in result['instructions'][:5]:
+                            context_data.append(f"  {inst}")
+            else:
+                context_data.append(
+                    "\nLicense Analysis: No license code regions detected")
+
+            queue_output_update(log_message(
+                "[Autonomous Mode] Checking for protectors..."))
+            flush_ui_updates()
+
+            protectors = scan_for_bytecode_protectors(self.binary_path)
+            if protectors and "error" not in protectors:
+                detected = [
+                    name for name,
+                    details in protectors.items() if isinstance(
+                        details,
+                        dict) and details.get(
+                        "detected",
+                        False)]
+                if detected:
+                    context_data.append(
+                        f"\nProtection Analysis: Detected protectors: {
+                            ', '.join(detected)}")
+                else:
+                    context_data.append(
+                        "\nProtection Analysis: No protectors detected")
+
+            full_context = "\n".join(context_data)
+
+            base_prompt = (
+                "You are Intellicrack, an autonomous license bypass engine. Analyze and modify this binary and "
+                "associated files to disable license checks, bypass key validation, remove timers, or emulate activation logic. "
+                "Use any method necessary: patching, emulation, rewriting functions, or generating keys."
+                "\n\nProvide a specific, executable plan for bypassing the protection. Include exact addresses to patch, "
+                "bytes to replace, and explanation of how this bypasses the protection."
+                "\n\nPrioritize safe and simple patches:"
+                "\n1. NOP out conditional jumps (JNE, JZ, etc.) related to checks."
+                "\n2. Replace function prologues with simple returns (e.g., 'mov eax, 1; ret' or 'xor eax, eax; ret') ONLY IF the replacement fits within the original prologue's size. Avoid complex code rewriting."
+                "\nExplain your reasoning for each patch and why you believe it is safe."
+                "\nStrictly adhere to the output format:"
+                "\nAddress: 0x<address> NewBytes: <hex bytes> // <explanation>")
+
+            queue_output_update(log_message(
+                "[Autonomous Mode] Retrieving few-shot examples..."))
+            flush_ui_updates()
+
+            few_shot_examples = retrieve_few_shot_examples(num_examples=3)
+
+            prompt = f"<s>[INST] <<SYS>>{base_prompt}<</SYS>>\n\n{few_shot_examples}\n\nFile Analysis Context:\n{full_context} [/INST]"
+
+            queue_output_update(log_message(
+                "[Autonomous Mode] Sending prompt to AI model..."))
+            queue_analysis_update("Analyzing binary and generating strategy...\n")
+            flush_ui_updates()
+
+            result = model(
+                prompt=prompt,
+                max_tokens=3072,
+                temperature=0.7,
+                top_p=0.95
+            )
+            strategy = result["choices"][0]["text"].strip()
+
+            if not strategy:
+                queue_output_update(log_message(
+                    "[Autonomous Mode] Received empty AI response."))
+                queue_status_update("Error: Empty AI response")
+                flush_ui_updates()
+                return
+
+            queue_output_update(log_message(
+                "[Autonomous Mode] Received AI strategy."))
+            queue_analysis_update("=" * 50)
+            queue_analysis_update("AI-GENERATED BYPASS STRATEGY:")
+            queue_analysis_update("=" * 50)
+            queue_analysis_update(strategy)
+            queue_analysis_update("=" * 50)
+            flush_ui_updates()
+
+            queue_output_update(log_message(
+                "[Autonomous Mode] Parsing patch instructions..."))
+            flush_ui_updates()
+
+            instructions = parse_patch_instructions(strategy)
+
+            if instructions:
+                queue_output_update(
+                    log_message(
+                        f"[Autonomous Mode] Found {
+                            len(instructions)} patch instructions."))
+
+                # Warning code
+                queue_output_update(log_message("*" * 60))
+                queue_output_update(log_message(
+                    "[AI Patch Warning] AI-generated patches require review!"))
+                queue_output_update(
+                    log_message("  - Verify addresses and intended logic before applying."))
+                queue_output_update(log_message(
+                    "  - Use 'Simulate Patch' to test virtually first."))
+                queue_output_update(log_message("*" * 60))
+                flush_ui_updates()
+
+                # Store patches for manual application via button
+                self.potential_patches = instructions
+
+                # Log the question via signal
+                self.log_user_question.emit(
+                    "Apply Patches", f"AI strategy generated {
+                        len(instructions)} patches. Apply them?\n\nNOTE: This requires manual confirmation. If you want to proceed, click the 'Apply Patch Plan' button.")
+
+                queue_output_update(log_message(
+                    "[Autonomous Mode] Patches ready. Use 'Apply Patch Plan' to apply them."))
+                flush_ui_updates()
+
+            elif "keygen" in strategy.lower() or "key gen" in strategy.lower():
+                queue_output_update(log_message(
+                    "[Autonomous Mode] Key generation strategy detected."))
+                flush_ui_updates()
+
+                product_match = re.search(
+                    r"product(?:\s+name)?[:\s]+['\"](.*?)['\"]",
+                    strategy,
+                    re.IGNORECASE)
+                version_match = re.search(
+                    r"version[:\s]+['\"](.*?)['\"]", strategy, re.IGNORECASE)
+
+                product = product_match.group(
+                    1) if product_match else "Unknown"
+                version = version_match.group(1) if version_match else "1.0"
+
+                # Log the question instead of showing a blocking QMessageBox
+                self.log_user_question.emit(
+                    "Generate License Key",
+                    f"AI recommends generating a license key for:\nProduct: {product}\nVersion: {version}\n\nNOTE: This requires manual confirmation. If you want to proceed, go to the 'Plugins' tab and use the Key Generator manually or ask the assistant to 'generate license key'."
+                )
+                # Set up inputs in case user goes to tab
+                self.set_keygen_name.emit(product)
+                self.set_keygen_version.emit(version)
+                # Do not switch tab or generate automatically anymore
+                # self.switch_tab.emit(3) # Index of plugins tab
+                # self.generate_key_signal.emit()
+
+            else:
+                queue_output_update(log_message(
+                    "[Autonomous Mode] No patch instructions or keygen strategy found in AI response."))
+                flush_ui_updates()
+
+                # Log the question instead of showing a blocking QMessageBox
+                self.log_user_question.emit(
+                    "Run Simulation",
+                    "No direct patch instructions found. Would you like to analyze runtime behavior?\n\nNOTE: This requires manual confirmation. If you want to proceed, click the 'Deep Runtime Monitoring' button."
+                )
+
+            queue_status_update(
+                "Autonomous mode complete - review strategy and act manually")
+            flush_ui_updates()
+
+        except Exception as e:
+            queue_output_update(log_message(
+                f"[Autonomous Mode] Error: {e}"))
+            queue_output_update(log_message(traceback.format_exc()))
+            queue_status_update(f"Error: {str(e)}")
+            flush_ui_updates()
+
+    def run_detect_packing(self):
+        """Runs packing detection and shows results."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File Selected",
+                                "Please select a program first.")
+            return
+
+        self.update_output.emit(log_message(
+            "[Packing Detection] Starting packing detection..."))
+        self.analyze_status.setText("Checking for packing/obfuscation...")
+
+        # Run in background thread
+        threading.Thread(target=self._run_detect_packing_thread).start()
+
+    def _run_detect_packing_thread(self):
+        """Background thread for packing detection."""
+        try:
+            self.clear_analysis_results.emit()
+
+            results = detect_packing(self.binary_path)
+
+            for line in results:
+                self.update_output.emit(log_message(f"[Packing] {line}"))
+                self.update_analysis_results.emit(line)
+
+            self.update_status.emit("Packing detection complete")
+
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[Packing Detection] Error: {e}"))
+            self.update_output.emit(log_message(traceback.format_exc()))
+            self.update_status.emit(f"Error: {str(e)}")
+
+    def run_simulate_patch(self):
+        """Simulates patch application and verifies results."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File Selected",
+                                "Please select a program first.")
+            return
+
+        # Check if we have patches from preview
+        if not hasattr(
+                self, "potential_patches") or not self.potential_patches:
+            QMessageBox.warning(
+                self,
+                "No Patches",
+                "No patches available. Run 'Preview Patch Plan' first.")
+            return
+
+        self.update_output.emit(log_message(
+            "[Patch Simulation] Starting patch simulation..."))
+        self.analyze_status.setText("Simulating patches...")
+
+        # Run in background thread
+        threading.Thread(
+            target=self._run_simulate_patch_thread,
+            args=(self.potential_patches,)
+        ).start()
+
+    def _run_simulate_patch_thread(self, patches):
+        """Background thread for patch simulation."""
+        try:
+            self.clear_analysis_results.emit()
+
+            self.update_analysis_results.emit(
+                f"Simulating {len(patches)} patches...")
+
+            report = simulate_patch_and_verify(self.binary_path, patches)
+
+            for line in report:
+                self.update_output.emit(log_message(f"[Simulation] {line}"))
+                self.update_analysis_results.emit(line)
+
+            self.update_status.emit("Patch simulation complete")
+
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[Patch Simulation] Error: {e}"))
+            self.update_output.emit(log_message(traceback.format_exc()))
+            self.update_status.emit(f"Error: {str(e)}")
+
+    def run_external_command(self):
+        """Runs an external command and shows output."""
+        command, ok = QInputDialog.getText(
+            self, "Run External Command", "Enter command to run:"
+        )
+
+        if not ok or not command:
+            return
+
+        self.update_output.emit(log_message(
+            f"[External Command] Running: {command}"))
+        self.analyze_status.setText(f"Running: {command}")
+
+        # Run in background thread
+        threading.Thread(
+            target=self._run_external_command_thread,
+            args=(command,)
+        ).start()
+
+    def _run_external_command_thread(self, command):
+        """Background thread for external command."""
+        try:
+            self.clear_analysis_results.emit()
+
+            args = command.split()
+
+            output = run_external_tool(args)
+
+            self.update_output.emit(log_message(
+                f"[External Command] Output:\n{output}"))
+            self.update_analysis_results.emit(output)
+
+            self.update_status.emit("External command complete")
+
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[External Command] Error: {e}"))
+            self.update_output.emit(log_message(traceback.format_exc()))
+            self.update_status.emit(f"Error: {str(e)}")
+
+    def view_cfg(self):
+        """Opens the CFG visualization."""
+        cfg_paths = ["license_cfg.svg", "license_cfg.dot",
+                     "full_cfg.svg", "full_cfg.dot", "cfg.dot"]
+
+        for path in cfg_paths:
+            if os.path.exists(path):
+                self.update_output.emit(log_message(
+                    f"[CFG Viewer] Opening {path}..."))
+
+                try:
+                    # Try to open with default viewer
+                    if sys.platform == 'win32':
+                        os.startfile(path)
+                    elif sys.platform == 'darwin':  # macOS
+                        subprocess.call(['open', path])
+                    else:  # Linux
+                        subprocess.call(['xdg-open', path])
+                    return
+                except Exception as e:
+                    self.update_output.emit(log_message(
+                        f"[CFG Viewer] Error opening {path}: {e}"))
+
+        QMessageBox.warning(
+            self,
+            "CFG Not Found",
+            "No CFG file found. Run 'Deep CFG Analysis' first.")
+
+    def generate_key(self):
+        """
+        Generates a license key based on product name and version.
+        Enhanced with more formats and options.
+        """
+        name = self.keygen_input_name.toPlainText().strip()
+        version = self.keygen_input_version.toPlainText().strip()
+
+        if not name or not version:
+            self.update_output.emit(log_message(
+                "[Keygen] Product name and version required to generate key"))
+            QMessageBox.warning(self, "Missing Information",
+                                "Product name and version are required.")
+            return
+
+        self.update_output.emit(log_message("[Keygen] Generating key..."))
+
+        # Get selected format
+        key_format = self.key_format_dropdown.currentText()
+
+        # Get custom seed if provided
+        seed = self.keygen_seed.toPlainText().strip(
+        ) if hasattr(self, "keygen_seed") else ""
+
+        # If seed provided, use it for deterministic key generation
+        if seed:
+            raw = f"{name}-{version}-{seed}"
+        else:
+            # Otherwise use timestamp for unique keys
+            timestamp = str(int(time.time()))
+            raw = f"{name}-{version}-{timestamp}"
+
+        # Generate hash
+        digest = hashlib.sha256(raw.encode()).digest()
+        key_base = base64.urlsafe_b64encode(digest[:16]).decode()
+
+        # Format the key based on selected format
+        if key_format == "XXXX-XXXX-XXXX-XXXX":
+            formatted_key = "-".join([key_base[i:i + 4]
+                                     for i in range(0, 16, 4)])
+        elif key_format == "XXXXX-XXXXX-XXXXX":
+            formatted_key = "-".join([key_base[i:i + 5]
+                                     for i in range(0, 15, 5)])
+        elif key_format == "XXX-XXX-XXX-XXX-XXX":
+            formatted_key = "-".join([key_base[i:i + 3]
+                                     for i in range(0, 15, 3)])
+        else:
+            # Default format
+            formatted_key = "-".join([key_base[i:i + 4]
+                                     for i in range(0, len(key_base), 4)])
+
+        self.update_output.emit(log_message(
+            f"[Keygen] Generated key for {name} {version}: {formatted_key}"))
+
+        # Save to keys directory
+        os.makedirs("keys", exist_ok=True)
+        key_file = os.path.join("keys", f"{name}_{version}.key")
+        with open(key_file, "w", encoding="utf-8") as f:
+            f.write(formatted_key)
+
+        # Copy to clipboard
+        cb = QApplication.clipboard()
+        cb.setText(formatted_key)
+
+        # Update GUI
+        self.update_output.emit(
+            log_message(
+                f"[Keygen] License key copied to clipboard and saved to {key_file}"))
+
+        # Add to results display
+        if hasattr(self, "keygen_results"):
+            timestamp_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.keygen_results.append(
+                f"[{timestamp_str}] {name} {version}: {formatted_key}")
+
+    def send_to_model(self):
+        """Sends the current prompt to the loaded AI model for processing."""
+        if not self.binary_path:
+            self.update_output.emit(log_message("[Assistant] Please select a binary file first."))
+            return
+
+        prompt = self.assistant_input.toPlainText().strip()
+        if not prompt:
+            self.update_output.emit(log_message("[Assistant] Please enter a prompt."))
+            return
+
+        self.update_output.emit(log_message(f"[User] {prompt}"))
+        self.assistant_input.clear()
+        self.set_assistant_status("Thinking...")
+
+        # Run AI inference in a separate thread to keep the UI responsive
+        self.ai_thread = threading.Thread(target=self._run_model_inference_thread, args=(prompt,))
+        self.ai_thread.start()
+
+    def _run_model_inference_thread(self, prompt):
+        """
+        Background thread for running AI model inference with tool calling and orchestration.
+
+        This function manages the multi-turn conversation with the AI model, handles tool
+        execution requests with proper user confirmation, and formats results for the model.
+
+        Args:
+            prompt: The initial user prompt to process
+        """
+        app = self  # Reference to the IntellicrackApp instance
+
+        try:
+            # Load the AI model
+            model = load_ai_model(app)
+            if model is None:
+                app.set_assistant_status("AI Model not loaded.")
+                app.append_chat_display("Error: AI Model not loaded. Please check settings.")
+                return
+
+            app.set_assistant_status("Thinking...")
+
+            # Initialize conversation history if it doesn't exist
+            if not hasattr(app, 'ai_conversation_history'):
+                app.ai_conversation_history = []
+
+            # Add the user's initial prompt to the history
+            app.ai_conversation_history.append({"role": "user", "content": prompt})
+
+            # Define the system prompt including tool descriptions
+            system_prompt = (
+                "# Intellicrack AI Assistant\n\n"
+                "## Role and Goals\n"
+                "You are an advanced AI assistant for Intellicrack, a comprehensive software analysis and patching tool.\n"
+                "Your primary goals are to:\n"
+                "1. Assist users in analyzing binary files to identify vulnerabilities and protection mechanisms\n"
+                "2. Help develop and apply patches to bypass license checks and other protections\n"
+                "3. Guide users through the software analysis workflow using available tools\n"
+                "4. Provide clear explanations of your reasoning and findings\n\n"
+
+                "## Tool Execution Protocol\n"
+                "To execute tools, output a JSON object with the following structure:\n"
+                "```json\n"
+                "{\n"
+                "  \"tool_name\": \"name_of_tool\",\n"
+                "  \"parameters\": {\n"
+                "    \"param1\": \"value1\",\n"
+                "    \"param2\": \"value2\"\n"
+                "  }\n"
+                "}\n"
+                "```\n\n"
+
+                "## Workflow Guidelines\n"
+                "1. Always plan your approach step-by-step before taking action\n"
+                "2. Explain your reasoning clearly before requesting tool execution\n"
+                "3. Wait for user confirmation before executing sensitive operations\n"
+                "4. Provide detailed analysis of results after each tool execution\n"
+                "5. When you've completed the task, summarize your findings and actions\n\n"
+
+                "## Available Tools\n\n"
+
+                "### File Operations\n"
+                "- `tool_find_file`: Search for files by name\n"
+                "  - Parameters: `filename: str` (optional)\n"
+                "  - Returns: Status and path if found\n"
+
+                "- `tool_list_relevant_files`: List files with relevant extensions in a directory\n"
+                "  - Parameters: `directory_path: str` (default: current directory)\n"
+                "  - Returns: List of relevant files\n"
+
+                "- `tool_read_file_chunk`: Read a portion of a file\n"
+                "  - Parameters: `file_path: str`, `offset: int` (optional), `max_bytes: int` (optional, default: 4096)\n"
+                "  - Returns: File content in hex and text format\n"
+
+                "- `tool_get_file_metadata`: Get metadata for a file\n"
+                "  - Parameters: `path: str`\n"
+                "  - Returns: File metadata\n"
+
+                "### Binary Analysis\n"
+                "- `tool_load_binary`: Load a binary file for analysis\n"
+                "  - Parameters: `path: str`\n"
+                "  - Returns: Binary information\n"
+
+                "- `tool_run_static_analysis`: Run static analysis on a binary\n"
+                "  - Parameters: `path: str`\n"
+                "  - Returns: Analysis results\n"
+
+                "- `tool_deep_license_analysis`: Run deep license analysis on a binary\n"
+                "  - Parameters: `path: str`\n"
+                "  - Returns: License analysis results\n"
+
+                "- `tool_detect_protections`: Detect specific protection types\n"
+                "  - Parameters: `path: str`, `type: str` ('commercial', 'packing', 'obfuscation', 'checksum', 'healing')\n"
+                "  - Returns: Detection results\n"
+
+                "- `tool_disassemble_address`: Disassemble instructions at an address\n"
+                "  - Parameters: `address: int`, `num_instructions: int` (optional, default: 10)\n"
+                "  - Returns: Disassembly listing\n"
+
+                "- `tool_get_cfg`: Get Control Flow Graph for a function\n"
+                "  - Parameters: `function_address: int`\n"
+                "  - Returns: CFG nodes and edges\n"
+
+                "### Dynamic Analysis\n"
+                "- `tool_launch_target`: Launch the target binary\n"
+                "  - Parameters: `path: str`\n"
+                "  - Returns: Process ID\n"
+                "  - Requires confirmation\n"
+
+                "- `tool_attach_target`: Attach Frida to a process\n"
+                "  - Parameters: `pid: int`\n"
+                "  - Returns: Success status\n"
+                "  - Requires confirmation\n"
+
+                "- `tool_run_frida_script`: Run a Frida script on an attached process\n"
+                "  - Parameters: `pid: int`, `script_content: str`\n"
+                "  - Returns: Script execution status\n"
+                "  - Requires confirmation\n"
+
+                "- `tool_detach`: Detach Frida from a process\n"
+                "  - Parameters: `pid: int`\n"
+                "  - Returns: Success status\n"
+                "  - Requires confirmation\n"
+
+                "### Patching\n"
+                "- `tool_propose_patch`: Propose a patch for the binary\n"
+                "  - Parameters: `address: int`, `new_bytes_hex: str`, `description: str`\n"
+                "  - Returns: Patch ID\n"
+                "  - Requires confirmation\n"
+
+                "- `tool_get_proposed_patches`: Get the list of proposed patches\n"
+                "  - Parameters: None\n"
+                "  - Returns: List of patches\n"
+
+                "- `tool_apply_confirmed_patch`: Apply a confirmed patch\n"
+                "  - Parameters: `patch_id: str`\n"
+                "  - Returns: Success status and patched file path\n"
+                "  - Requires confirmation\n"
+
+                "- `tool_generate_launcher_script`: Generate a launcher script\n"
+                "  - Parameters: `strategy: str` ('memory', 'api')\n"
+                "  - Returns: Script path\n"
+                "  - Requires confirmation\n"
+            )
+
+            # Main orchestration loop
+            while True:
+                # Prepare messages for the model
+                messages = [{"role": "system", "content": system_prompt}] + app.ai_conversation_history
+
+                # Run model inference
+                app.update_output.emit(log_message("[AI] Generating response..."))
+                response = model(messages=messages, temperature=CONFIG.get("temperature", 0.7), top_p=CONFIG.get("top_p", 0.95))
+                response_content = response['choices'][0]['message']['content']
+
+                # Append AI's response to history and display
+                app.ai_conversation_history.append({"role": "assistant", "content": response_content})
+                app.append_chat_display(f"AI: {response_content}")
+                app.set_assistant_status("Received response.")
+
+                # Check if the response is a tool call request (JSON format)
+                try:
+                    # Try to parse the response as JSON
+                    tool_request = None
+
+                    # Look for JSON object in the response
+                    json_match = re.search(r'```json\s*(\{.*?\})\s*```|(\{.*"tool_name".*\})', response_content, re.DOTALL)
+                    if json_match:
+                        json_str = json_match.group(1) or json_match.group(2)
+                        try:
+                            tool_request = json.loads(json_str)
+                        except json.JSONDecodeError:
+                            # Try to extract just the JSON object if there's extra text
+                            json_obj_match = re.search(r'(\{.*"tool_name".*\})', json_str)
+                            if json_obj_match:
+                                tool_request = json.loads(json_obj_match.group(1))
+                    else:
+                        # Try parsing the entire response as JSON
+                        try:
+                            tool_request = json.loads(response_content)
+                        except json.JSONDecodeError:
+                            # Not a JSON response
+                            pass
+
+                    # Process the tool request if found
+                    if isinstance(tool_request, dict) and "tool_name" in tool_request and "parameters" in tool_request:
+                        tool_name = tool_request["tool_name"]
+                        parameters = tool_request.get("parameters", {})
+
+                        app.update_output.emit(log_message(f"[AI] Requested tool: {tool_name} with parameters: {parameters}"))
+
+                        # Determine if the tool requires confirmation
+                        # List of tools that require explicit user confirmation
+                        sensitive_tools = [
+                            "tool_load_binary", "tool_launch_target", "tool_attach_target",
+                            "tool_run_frida_script", "tool_detach", "tool_propose_patch",
+                            "tool_apply_confirmed_patch", "tool_generate_launcher_script"
+                        ]
+
+                        requires_confirmation = tool_name in sensitive_tools
+                        user_approved = True  # Default to True for non-sensitive tools
+
+                        if requires_confirmation:
+                            app.update_output.emit(log_message(f"[AI] Requesting user confirmation for {tool_name}"))
+
+                            # Define the thread-safe confirmation function
+                            def ask_user_confirmation(app, tool_name, parameters):
+                                """Thread-safe user confirmation dialog for sensitive AI tools"""
+                                from PyQt5.QtWidgets import QMessageBox
+                                from PyQt5.QtCore import Qt
+
+                                param_text = "\n".join([f"{k}: {v}" for k, v in parameters.items()])
+                                result = QMessageBox.question(
+                                    app,
+                                    f"Confirm {tool_name} Execution",
+                                    f"The AI assistant is requesting to execute {tool_name}.\n\nParameters:\n{param_text}\n\nDo you approve?",
+                                    QMessageBox.Yes | QMessageBox.No,
+                                    QMessageBox.No
+                                )
+                                return result == QMessageBox.Yes
+
+                            # Use the thread-safe confirmation dialog
+                            user_approved = ask_user_confirmation(app, tool_name, parameters)
+
+                            app.update_output.emit(log_message(f"[AI] User {'approved' if user_approved else 'denied'} {tool_name}"))
+
+                        if user_approved:
+                            # Execute the tool
+                            app.append_chat_display(f"Executing tool: {tool_name}...")
+                            app.set_assistant_status(f"Executing tool: {tool_name}")
+
+                            # Execute the tool and get the result
+                            tool_result = dispatch_tool(app, tool_name, parameters)
+
+                            # Format the result for better readability
+                            formatted_result = self._format_tool_result(tool_result)
+
+                            # Append tool result to history
+                            app.ai_conversation_history.append({
+                                "role": "tool_result",
+                                "tool_name": tool_name,
+                                "content": json.dumps(tool_result)
+                            })
+
+                            # Display the result to the user
+                            app.append_chat_display(f"Tool Result: {formatted_result}")
+                            app.set_assistant_status("Tool execution complete.")
+
+                            # Continue the loop to send the tool result back to the AI
+                            continue
+                        else:
+                            # User denied the tool execution
+                            denial_message = f"User denied execution of tool: {tool_name}"
+                            app.ai_conversation_history.append({
+                                "role": "tool_result",
+                                "tool_name": tool_name,
+                                "content": denial_message
+                            })
+                            app.append_chat_display(f"Tool Result: {denial_message}")
+                            app.set_assistant_status("Tool execution denied by user.")
+                            # Continue the loop to inform the AI about the denial
+                            continue
+                    else:
+                        # Not a tool request, assume it's a final response
+                        app.set_assistant_status("Idle")
+                        break  # Exit the loop if not a tool call
+
+                except Exception as e:
+                    # Handle errors during tool request parsing or execution
+                    error_message = f"Error processing AI response or executing tool: {str(e)}"
+                    error_trace = traceback.format_exc()
+
+                    # Log detailed error information
+                    logger.error(error_message)
+                    logger.error(error_trace)
+
+                    # Provide more context about the error
+                    error_context = ""
+                    if "JSONDecodeError" in error_trace:
+                        error_context = "Failed to parse JSON response from AI. The response format may be incorrect."
+                    elif "KeyError" in error_trace:
+                        error_context = "Missing required key in tool parameters or response."
+                    elif "AttributeError" in error_trace:
+                        error_context = "Attempted to access an attribute that doesn't exist."
+                    elif "FileNotFoundError" in error_trace:
+                        error_context = "A file operation failed because the file was not found."
+                    elif "PermissionError" in error_trace:
+                        error_context = "A file operation failed due to insufficient permissions."
+
+                    # Create a detailed error message
+                    detailed_error = f"{error_message}\n{error_context if error_context else ''}"
+
+                    # Add error to conversation history
+                    app.ai_conversation_history.append({
+                        "role": "error",
+                        "content": detailed_error
+                    })
+
+                    # Display error to user
+                    app.append_chat_display(f"Error: {detailed_error}")
+                    app.set_assistant_status("Error")
+
+                    # Don't break the loop for minor errors, but do for critical ones
+                    if any(critical_error in error_trace for critical_error in
+                          ["JSONDecodeError", "KeyError", "TypeError", "ValueError"]):
+                        # These are likely formatting issues that the AI can recover from
+                        app.ai_conversation_history.append({
+                            "role": "system",
+                            "content": "There was an error processing your last request. Please try a different approach."
+                        })
+                        continue
+                    else:
+                        # More serious errors that might require restarting the conversation
+                        break
+
+        except Exception as e:
+            # Handle errors during model inference
+            error_message = f"Error during AI model inference: {str(e)}"
+            error_trace = traceback.format_exc()
+            logger.error(error_message)
+            logger.error(error_trace)
+
+            # Provide more helpful error messages based on the type of exception
+            user_friendly_message = error_message
+            if "No such file or directory" in str(e):
+                user_friendly_message = "Error: AI model file not found. Please check your model settings."
+            elif "CUDA out of memory" in str(e) or "device-side assert" in str(e):
+                user_friendly_message = "Error: GPU memory issue. Try using a smaller model or reducing batch size."
+            elif "Connection refused" in str(e) or "Connection timeout" in str(e):
+                user_friendly_message = "Error: Connection issue. Please check your network connection."
+            elif "Permission denied" in str(e):
+                user_friendly_message = "Error: Permission denied. Please check file permissions."
+            elif "KeyError" in error_trace:
+                user_friendly_message = "Error: Invalid model response format. The model may need to be updated."
+
+            # Add to conversation history
+            app.ai_conversation_history.append({
+                "role": "error",
+                "content": user_friendly_message
+            })
+
+            app.append_chat_display(f"Error: {user_friendly_message}")
+            app.set_assistant_status("Error")
+
+            # Log additional diagnostic information
+            logger.error(f"AI Model: {app.selected_model_path or 'Default'}")
+            logger.error(f"Conversation history length: {len(app.ai_conversation_history)}")
+
+        finally:
+            app.set_assistant_status("Idle")  # Ensure status is reset
+
+    def _format_tool_result(self, result):
+        """
+        Format tool result for better readability in the chat display.
+
+        Args:
+            result: The tool execution result dictionary
+
+        Returns:
+            str: Formatted result string
+        """
+        try:
+            # Check if result is already a string
+            if isinstance(result, str):
+                return result
+
+            # Format based on result type
+            status = result.get("status", "unknown")
+
+            if status == "success":
+                # Format success results
+                if "message" in result:
+                    return f"✅ {result['message']}"
+                else:
+                    # Pretty-print the result with indentation
+                    return json.dumps(result, indent=2)
+            elif status == "error":
+                # Format error results
+                if "message" in result:
+                    return f"❌ Error: {result['message']}"
+                else:
+                    return f"❌ Error: {json.dumps(result, indent=2)}"
+            else:
+                # Default formatting
+                return json.dumps(result, indent=2)
+        except Exception as e:
+            logger.error(f"Error formatting tool result: {e}")
+            # Return the original result as a string if formatting fails
+            return str(result)
+
+    def export_analysis_results(self):
+        """Exports the current analysis results to a file."""
+        if not self.analyze_results.toPlainText():
+            QMessageBox.warning(self, "No Results",
+                                "No analysis results to export.")
+            return
+
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export Analysis Results", "", "Text Files (*.txt);;JSON Files (*.json);;All Files (*)")
+
+        if path:
+            try:
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(self.analyze_results.toPlainText())
+
+                self.update_output.emit(log_message(
+                    f"[Export] Analysis results exported to {path}"))
+            except Exception as e:
+                self.update_output.emit(log_message(
+                    f"[Export] Error exporting results: {e}"))
+                QMessageBox.warning(self, "Export Error",
+                                    f"Error exporting results: {e}")
+
+    def load_ghidra_results(self):
+        """Loads analysis results from a Ghidra JSON file."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Load Ghidra Analysis Results", "", "JSON Files (*.json);;All Files (*)")
+
+        if path:
+            try:
+                process_ghidra_analysis_results(self, path)
+                self.update_output.emit(log_message(
+                    f"[Import] Loaded Ghidra analysis results from {path}"))
+            except Exception as e:
+                self.update_output.emit(log_message(
+                    f"[Import] Error loading results: {e}"))
+                QMessageBox.warning(self, "Import Error",
+                                    f"Error loading results: {e}")
+
+    def _create_default_ml_model(self, model_path):
+        """
+        Creates a simple default ML model file if one doesn't exist.
+
+        This creates a minimal RandomForestClassifier with basic parameters
+        and saves it as a joblib file to ensure the ML predictor can be initialized
+        even if no pre-trained model exists.
+
+        Args:
+            model_path: Path where the model should be saved
+        """
+        try:
+            # Create a directory if it doesn't exist
+            os.makedirs(os.path.dirname(model_path), exist_ok=True)
+
+            # Create a very simple RandomForestClassifier with minimal configuration
+            model = RandomForestClassifier(n_estimators=10, random_state=42)
+
+            # Create a simple scaler
+            scaler = StandardScaler()
+
+            # Create dummy data to fit the model and scaler
+            X = np.array([[0, 0, 0, 0], [1, 1, 1, 1]])
+            y = np.array([0, 1])  # Binary classification labels
+
+            # Fit the scaler and model with minimal data
+            scaler.fit(X)
+            X_scaled = scaler.transform(X)
+            model.fit(X_scaled, y)
+
+            # Save both model and scaler to the joblib file
+            model_data = {
+                'model': model,
+                'scaler': scaler
+            }
+
+            # Create parent directory if it doesn't exist
+            os.makedirs(os.path.dirname(os.path.abspath(model_path)), exist_ok=True)
+
+            # Save the model
+            joblib.dump(model_data, model_path)
+
+            self.logger.info(f"Created default ML model at: {model_path}")
+        except Exception as e:
+            self.logger.error(f"Error creating default ML model: {e}")
+            raise e
+
+# -------------------------------
+# UI Enhancement Helper Methods
+# -------------------------------
+
+def run_selected_analysis(self, analysis_type=None):
+    """Run the selected analysis type from the dropdown menu
+
+    Args:
+        analysis_type: Optional string specifying the analysis type.
+                      If None, gets the current selection from dropdown.
+    """
+    # Use provided analysis_type or get it from the dropdown
+    if analysis_type is None:
+        analysis_type = self.analysis_dropdown.currentText()
+    self.update_output.emit(log_message(f"[Analysis] Running {analysis_type}..."))
+
+    if analysis_type == "Basic Analysis":
+        self.run_analysis()
+    elif analysis_type == "Deep Analysis":
+        # Show a submenu for deep analysis options
+        options = ["License Logic", "Runtime Monitoring", "CFG Structure",
+                   "Packing Detection", "Taint Analysis", "Symbolic Execution"]
+        option, ok = QInputDialog.getItem(self, "Deep Analysis",

@@ -1,0 +1,1000 @@
+                    pdf_view = QPdfView()
+                    doc = QPdfDocument()
+                    doc.load(report_path)
+                    pdf_view.setDocument(doc)
+
+                    # Create widget for the layout
+                    widget_for_layout = pdf_view
+                else:
+                    # Fallback if PDF viewing not available
+                    fallback_widget = QWidget()
+                    fallback_layout = QVBoxLayout(fallback_widget)
+
+                    message_label = QLabel("PDF viewing is not available with current PyQt5 installation.")
+                    message_label.setWordWrap(True)
+                    fallback_layout.addWidget(message_label)
+
+                    open_button = QPushButton("Open PDF with System Viewer")
+                    open_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(report_path)))
+                    fallback_layout.addWidget(open_button)
+
+                    # Create widget for the layout
+                    widget_for_layout = fallback_widget
+
+                # Add toolbar
+                toolbar = QHBoxLayout()
+
+                # PDF navigation is only available when PDF modules are present
+                if 'HAS_PDF_SUPPORT' in globals() and HAS_PDF_SUPPORT:
+                    # Add navigation buttons
+                    prev_btn = QPushButton("Previous")
+                    next_btn = QPushButton("Next")
+                    prev_btn.clicked.connect(lambda: pdf_view.pageNavigator().jump(pdf_view.pageNavigator().currentPage() - 1))
+                    next_btn.clicked.connect(lambda: pdf_view.pageNavigator().jump(pdf_view.pageNavigator().currentPage() + 1))
+
+                    # Add to toolbar
+                    toolbar.addWidget(prev_btn)
+                    toolbar.addWidget(next_btn)
+
+                # Add external viewer button (always available)
+                external_btn = QPushButton("Open Externally")
+                external_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(report_path)))
+
+                # Add to toolbar
+                toolbar.addWidget(external_btn)
+
+                # Add to layout
+                layout.addLayout(toolbar)
+                layout.addWidget(widget_for_layout)  # Use the appropriate widget based on PDF support
+
+                # Show the viewer
+                self.report_viewer.show()
+                self.update_output.emit(log_message(f"[Reports] Opened PDF report: {report_name}"))
+
+            except Exception as e:
+                # Error handling for any other issues with PDF viewer
+                self.update_output.emit(log_message(f"[Reports] Error displaying PDF: {e}"))
+                # Open with system default PDF viewer as fallback
+                try:
+                    self.update_output.emit(log_message("[Reports] Falling back to system default PDF viewer"))
+                    QDesktopServices.openUrl(QUrl.fromLocalFile(report_path))
+                except:
+                    # Last resort fallback using OS-specific methods
+                    if os.name == 'nt':  # Windows
+                        os.startfile(report_path)
+                    else:  # macOS, Linux
+                        subprocess.call(('xdg-open' if os.name == 'posix' else 'open', report_path))
+        else:
+            # For other formats, open a simple text viewer
+            self._open_text_report_viewer(report_path, report_name)
+
+    except Exception as e:
+        self.update_output.emit(log_message(f"[Reports] Error viewing report: {str(e)}"))
+        self.update_output.emit(log_message(traceback.format_exc()))
+        QMessageBox.warning(self, "Report Viewer Error", f"Failed to open report:\n\n{str(e)}")
+
+def export_report(self, row):
+    """Export a report to a file"""
+    report_name = self.reports_table.item(row, 0).text()
+    report_format = self.reports_table.item(row, 2).text()
+
+    self.update_output.emit(log_message(f"[Reports] Exporting report: {report_name}"))
+
+    QMessageBox.information(self, "Export Report",
+                           f"Report '{report_name}' would be exported in {report_format} format")
+
+def delete_report(self, row):
+    """Delete a report"""
+    report_name = self.reports_table.item(row, 0).text()
+
+    self.update_output.emit(log_message(f"[Reports] Deleting report: {report_name}"))
+
+    self.reports_table.removeRow(row)
+
+    QMessageBox.information(self, "Delete Report", f"Report '{report_name}' deleted")
+
+def refresh_reports_list(self):
+    """Refresh the list of reports"""
+    self.update_output.emit(log_message("[Reports] Refreshing reports list"))
+
+    # This would typically reload reports from storage
+    QMessageBox.information(self, "Refresh Reports", "Reports list refreshed")
+
+def import_report(self):
+    """Import a report from a file"""
+    self.update_output.emit(log_message("[Reports] Importing report"))
+
+    # Open file dialog to select the report file
+    file_path, _ = QFileDialog.getOpenFileName(
+        self,
+        "Import Report",
+        "",
+        "Report Files (*.json *.xml *.report);;JSON Files (*.json);;XML Files (*.xml);;All Files (*)"
+    )
+
+    if not file_path:
+        self.update_output.emit(log_message("[Reports] Import canceled by user"))
+        return
+
+    try:
+        self.update_output.emit(log_message(f"[Reports] Importing report from: {file_path}"))
+
+        # Determine file type and parse accordingly
+        if file_path.lower().endswith('.json'):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                report_data = json.load(f)
+
+            # Basic validation of report structure
+            if not isinstance(report_data, dict) or 'report_type' not in report_data or 'content' not in report_data:
+                raise ValueError("Invalid report format. Report must contain 'report_type' and 'content' fields.")
+
+            report_type = report_data.get('report_type')
+            report_name = report_data.get('name', os.path.basename(file_path))
+            report_date = report_data.get('date', datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+        elif file_path.lower().endswith('.xml'):
+            tree = ET.parse(file_path)
+            root = tree.getroot()
+
+            # Extract basic info
+            report_type = root.find('report_type').text if root.find('report_type') is not None else "unknown"
+            report_name = root.find('name').text if root.find('name') is not None else os.path.basename(file_path)
+            report_date = root.find('date').text if root.find('date') is not None else datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            # Convert XML to dict for storage
+            report_data = {
+                'report_type': report_type,
+                'name': report_name,
+                'date': report_date,
+                'content': ET.tostring(root).decode('utf-8')
+            }
+
+        else:
+            # Try to parse as JSON first, then XML, then as plain text
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    report_data = json.load(f)
+                # Basic validation
+                if not isinstance(report_data, dict):
+                    raise ValueError("File content is not a valid JSON object")
+
+                report_type = report_data.get('report_type', "unknown")
+                report_name = report_data.get('name', os.path.basename(file_path))
+                report_date = report_data.get('date', datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+            except json.JSONDecodeError:
+                # Try XML
+                try:
+                    tree = ET.parse(file_path)
+                    root = tree.getroot()
+
+                    report_type = root.find('report_type').text if root.find('report_type') is not None else "unknown"
+                    report_name = root.find('name').text if root.find('name') is not None else os.path.basename(file_path)
+                    report_date = root.find('date').text if root.find('date') is not None else datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                    report_data = {
+                        'report_type': report_type,
+                        'name': report_name,
+                        'date': report_date,
+                        'content': ET.tostring(root).decode('utf-8')
+                    }
+
+                except ET.ParseError:
+                    # Read as plain text
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+
+                    report_type = "text"
+                    report_name = os.path.basename(file_path)
+                    report_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                    report_data = {
+                        'report_type': report_type,
+                        'name': report_name,
+                        'date': report_date,
+                        'content': content
+                    }
+
+        # Create a unique report ID
+        report_id = f"imported_{int(time.time())}_{os.path.basename(file_path).replace('.', '_')}"
+
+        # Save to reports storage
+        if not hasattr(self, 'reports'):
+            self.reports = {}
+
+        self.reports[report_id] = report_data
+
+        # Save to disk if appropriate storage directory exists
+        reports_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reports")
+        if not os.path.exists(reports_dir):
+            os.makedirs(reports_dir)
+
+        # Save a copy of the report in our format
+        output_path = os.path.join(reports_dir, f"{report_id}.json")
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(report_data, f, indent=2)
+
+        # Add to reports list if UI element exists
+        if hasattr(self, 'reports_list'):
+            item = QListWidgetItem(f"{report_name} ({report_type}) - {report_date}")
+            item.setData(Qt.UserRole, report_id)
+            self.reports_list.addItem(item)
+
+        self.update_output.emit(log_message(f"[Reports] Successfully imported report: {report_name}"))
+
+        # Show success message with details
+        QMessageBox.information(
+            self,
+            "Import Successful",
+            f"Successfully imported report:\n\nName: {report_name}\nType: {report_type}\nDate: {report_date}\n\nReport ID: {report_id}\nSaved to: {output_path}"
+        )
+
+    except Exception as e:
+        self.update_output.emit(log_message(f"[Reports] Error importing report: {str(e)}"))
+        QMessageBox.critical(self, "Import Error", f"Error importing report: {str(e)}")
+
+def _generate_html_report(self, report_name, report_type, output_path):
+    """Generate an HTML report"""
+    self.update_output.emit(log_message(f"[Reports] Generating HTML report: {report_name}"))
+
+    try:
+        # Create basic HTML template
+        html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{report_name} - Intellicrack Report</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }}
+        .container {{
+            max-width: 1200px;
+            margin: 0 auto;
+        }}
+        header {{
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }}
+        h1, h2, h3 {{
+            color: #2c3e50;
+        }}
+        .section {{
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }}
+        .highlight {{
+            background-color: #ffe6e6;
+            padding: 0.5rem;
+            border-left: 4px solid #ff7675;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }}
+        th, td {{
+            padding: 0.5rem;
+            text-align: left;
+            border: 1px solid #ddd;
+        }}
+        th {{
+            background-color: #f2f2f2;
+        }}
+        pre {{
+            background-color: #f5f5f5;
+            padding: 1rem;
+            overflow-x: auto;
+            border-radius: 5px;
+        }}
+        .footer {{
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{report_name}</h1>
+            <p>Report Type: {report_type}</p>
+            <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        </header>
+
+        <div class="section">
+            <h2>Analysis Summary</h2>
+            <p>This report contains the results of {report_type} analysis performed by Intellicrack.</p>
+
+            <div class="highlight">
+                <h3>Key Findings</h3>
+                <ul>
+"""
+
+        # Add key findings based on analysis results
+        if hasattr(self, 'analyze_results') and self.analyze_results:
+            # Extract key findings - look for interesting entries
+            key_findings = []
+            for result in self.analyze_results:
+                if any(keyword in str(result).lower() for keyword in
+                      ['license', 'protection', 'check', 'critical', 'vulnerability', 'patched']):
+                    key_findings.append(f"<li>{result}</li>")
+
+            # Add findings to the report
+            if key_findings:
+                html_content += "\n".join(key_findings[:10])  # First 10 findings
+            else:
+                html_content += "<li>No critical issues identified</li>"
+        else:
+            html_content += "<li>No analysis results available</li>"
+
+        # Continue with the rest of the report
+        html_content += """
+                </ul>
+            </div>
+        </div>
+"""
+
+        # Add detailed analysis section based on report type
+        if report_type == "Memory Analysis":
+            html_content += self._generate_memory_report_section()
+        elif report_type == "Network Analysis":
+            html_content += self._generate_network_report_section()
+        elif report_type == "Patching Results":
+            html_content += self._generate_patching_report_section()
+        else:  # General analysis
+            html_content += self._generate_general_report_section()
+
+        # Add the full analysis results
+        html_content += """
+        <div class="section">
+            <h2>Full Analysis Log</h2>
+            <pre>"""
+
+        # Add all analysis results if available
+        if hasattr(self, 'analyze_results') and self.analyze_results:
+            html_content += "\n".join(str(item) for item in self.analyze_results)
+        else:
+            html_content += "No detailed analysis results available."
+
+        # Close the report
+        html_content += """
+            </pre>
+        </div>
+
+        <div class="footer">
+            <p>Generated by Intellicrack - Advanced Binary Analysis Tool</p>
+        </div>
+    </div>
+</body>
+</html>"""
+
+        # Write the report to the file
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+
+        self.update_output.emit(log_message(f"[Reports] HTML report generated successfully: {output_path}"))
+        return True
+
+    except Exception as e:
+        self.update_output.emit(log_message(f"[Reports] Error generating HTML report: {str(e)}"))
+        self.update_output.emit(log_message(traceback.format_exc()))
+        return False
+
+def _generate_pdf_report(self, report_name, report_type, output_path):
+    """Generate a PDF report"""
+    self.update_output.emit(log_message(f"[Reports] Generating PDF report: {report_name}"))
+
+    try:
+        # Generate HTML first then convert to PDF
+        # Use a temporary HTML file
+        temp_html_path = f"{output_path}.temp.html"
+
+        # Generate HTML content
+        self._generate_html_report(report_name, report_type, temp_html_path)
+
+        # Try to convert HTML to PDF
+        try:
+            # Configure PDF options
+            options = {
+                'page-size': 'A4',
+                'margin-top': '20mm',
+                'margin-right': '20mm',
+                'margin-bottom': '20mm',
+                'margin-left': '20mm',
+                'encoding': 'UTF-8',
+                'title': report_name,
+                'footer-right': '[page] of [topage]',
+                'footer-font-size': '8',
+                'header-html': '<header style="text-align: center; font-size: 8pt;">Intellicrack Report</header>',
+                'header-spacing': '5'
+            }
+
+            # Convert HTML to PDF
+            pdfkit.from_file(temp_html_path, output_path, options=options)
+
+        except ImportError:
+            # If pdfkit is not available, try using weasyprint
+            try:
+                # Convert HTML to PDF
+                weasyprint.HTML(filename=temp_html_path).write_pdf(output_path)
+
+            except ImportError:
+                # If neither solution is available, use a simple file-based approach
+                self.update_output.emit(log_message("[Reports] PDF conversion libraries not available"))
+
+                # Create a simple text report instead
+                self._generate_text_report(report_name, report_type, output_path.replace(".pdf", ".txt"))
+
+                # Raise an error to indicate PDF generation failed
+                raise Exception("PDF conversion libraries (pdfkit or weasyprint) not available")
+
+        # Clean up the temporary HTML file
+        if os.path.exists(temp_html_path):
+            os.remove(temp_html_path)
+
+        self.update_output.emit(log_message(f"[Reports] PDF report generated successfully: {output_path}"))
+        return True
+
+    except Exception as e:
+        self.update_output.emit(log_message(f"[Reports] Error generating PDF report: {str(e)}"))
+        self.update_output.emit(log_message(traceback.format_exc()))
+        return False
+
+def _generate_text_report(self, report_name, report_type, output_path):
+    """Generate a plain text report"""
+    self.update_output.emit(log_message(f"[Reports] Generating text report: {report_name}"))
+
+    try:
+        # Create the text content
+        text_content = f"""
+=============================================================
+INTELLICRACK REPORT: {report_name}
+=============================================================
+Report Type: {report_type}
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+=============================================================
+
+ANALYSIS SUMMARY
+---------------
+"""
+
+        # Add summary based on analysis results
+        if hasattr(self, 'analyze_results') and self.analyze_results:
+            # Extract key findings - look for interesting entries
+            key_findings = []
+            for result in self.analyze_results:
+                if any(keyword in str(result).lower() for keyword in
+                      ['license', 'protection', 'check', 'critical', 'vulnerability', 'patched']):
+                    key_findings.append(f"* {result}")
+
+            # Add findings to the report
+            if key_findings:
+                text_content += "KEY FINDINGS:\n" + "\n".join(key_findings[:10]) + "\n\n"  # First 10 findings
+            else:
+                text_content += "KEY FINDINGS:\n* No critical issues identified\n\n"
+        else:
+            text_content += "KEY FINDINGS:\n* No analysis results available\n\n"
+
+        # Add detailed section based on report type
+        text_content += f"{report_type.upper()} DETAILS\n"
+        text_content += "---------------------------\n"
+
+        # Add type-specific details
+        if report_type == "Memory Analysis" and hasattr(self, 'memory_analysis_results'):
+            text_content += self._format_memory_analysis_for_text()
+        elif report_type == "Network Analysis" and hasattr(self, 'traffic_recorder'):
+            text_content += self._format_network_analysis_for_text()
+        elif report_type == "Patching Results":
+            text_content += self._format_patching_results_for_text()
+
+        # Add the full analysis log
+        text_content += "\nFULL ANALYSIS LOG\n"
+        text_content += "---------------------------\n"
+
+        if hasattr(self, 'analyze_results') and self.analyze_results:
+            text_content += "\n".join(str(item) for item in self.analyze_results)
+        else:
+            text_content += "No detailed analysis results available."
+
+        # Footer
+        text_content += "\n\n=============================================================\n"
+        text_content += "Generated by Intellicrack - Advanced Binary Analysis Tool\n"
+        text_content += "=============================================================\n"
+
+        # Write the report to the file
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(text_content)
+
+        self.update_output.emit(log_message(f"[Reports] Text report generated successfully: {output_path}"))
+        return True
+
+    except Exception as e:
+        self.update_output.emit(log_message(f"[Reports] Error generating text report: {str(e)}"))
+        self.update_output.emit(log_message(traceback.format_exc()))
+        return False
+
+def _open_text_report_viewer(self, report_path, report_name):
+    """Open a simple text report viewer"""
+    try:
+        # Create a dialog
+        self.report_viewer = QDialog(self)
+        self.report_viewer.setWindowTitle(f"Report: {report_name}")
+        self.report_viewer.resize(800, 600)
+
+        # Create layout
+        layout = QVBoxLayout(self.report_viewer)
+
+        # Create text edit
+        text_edit = QTextEdit()
+        text_edit.setReadOnly(True)
+
+        # Load report content
+        with open(report_path, 'r', encoding='utf-8') as f:
+            report_content = f.read()
+
+        # Set content
+        text_edit.setText(report_content)
+
+        # Add toolbar
+        toolbar = QHBoxLayout()
+
+        # Add font size controls
+        increase_font_btn = QPushButton("Larger Font")
+        decrease_font_btn = QPushButton("Smaller Font")
+
+        def increase_font():
+            """
+            Increase the font size in the text edit widget.
+            """
+            current = text_edit.font()
+            current.setPointSize(current.pointSize() + 1)
+            text_edit.setFont(current)
+
+        def decrease_font():
+            """
+            Decrease the font size in the text edit widget, with a minimum size limit.
+            """
+            current = text_edit.font()
+            if current.pointSize() > 8:
+                current.setPointSize(current.pointSize() - 1)
+                text_edit.setFont(current)
+
+        increase_font_btn.clicked.connect(increase_font)
+        decrease_font_btn.clicked.connect(decrease_font)
+
+        # Add save button
+        save_btn = QPushButton("Save As...")
+
+        def save_as():
+            """
+            Save the report content to a file.
+
+            Opens a file dialog and writes the report text to the selected file.
+            """
+            file_path, _ = QFileDialog.getSaveFileName(
+                self.report_viewer, "Save Report As", "", "Text Files (*.txt);;All Files (*)"
+            )
+            if file_path:
+                try:
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        f.write(text_edit.toPlainText())
+                    QMessageBox.information(self.report_viewer, "Save Successful", f"Report saved to {file_path}")
+                except Exception as e:
+                    QMessageBox.warning(self.report_viewer, "Save Failed", f"Failed to save report: {str(e)}")
+
+        save_btn.clicked.connect(save_as)
+
+        # Add print button
+        print_btn = QPushButton("Print")
+
+        def print_report():
+            """
+            Print the report content.
+
+            Opens a print dialog and sends the report text to the selected printer.
+            """
+            printer = QPrinter(QPrinter.HighResolution)
+            dialog = QPrintDialog(printer, self.report_viewer)
+
+            if dialog.exec_() == QPrintDialog.Accepted:
+                text_edit.print_(printer)
+
+        print_btn.clicked.connect(print_report)
+
+        # Add to toolbar
+        toolbar.addWidget(increase_font_btn)
+        toolbar.addWidget(decrease_font_btn)
+        toolbar.addWidget(save_btn)
+        toolbar.addWidget(print_btn)
+
+        # Add to layout
+        layout.addLayout(toolbar)
+        layout.addWidget(text_edit)
+
+        # Show the viewer
+        self.report_viewer.show()
+
+    except Exception as e:
+        self.update_output.emit(log_message(f"[Reports] Error opening text report viewer: {str(e)}"))
+        QMessageBox.warning(self, "Report Viewer Error", f"Failed to open report viewer:\n\n{str(e)}")
+
+def _generate_memory_report_section(self):
+    """Generate the memory analysis section for HTML reports"""
+    section = """
+        <div class="section">
+            <h2>Memory Analysis Results</h2>
+"""
+
+    # If we have memory analysis results
+    if hasattr(self, 'memory_analysis_results') and self.memory_analysis_results:
+        results = self.memory_analysis_results
+
+        # Add overview table
+        section += """
+            <h3>Memory Overview</h3>
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+"""
+
+        # Add memory metrics
+        memory_metrics = [
+            ("Total Allocated Memory", f"{results.get('total_allocated', 0):,} bytes"),
+            ("Peak Memory Usage", f"{results.get('peak_usage', 0):,} bytes"),
+            ("Heap Allocations", f"{results.get('heap_allocs', 0):,}"),
+            ("Memory Leaks Detected", f"{results.get('leaks_count', 0)}"),
+            ("Suspicious Allocations", f"{results.get('suspicious_allocs', 0)}")
+        ]
+
+        for metric, value in memory_metrics:
+            section += f"""
+                <tr>
+                    <td>{metric}</td>
+                    <td>{value}</td>
+                </tr>"""
+
+        section += """
+            </table>
+"""
+
+        # Add memory leaks section if any
+        if results.get('leaks', []):
+            section += """
+            <h3>Memory Leaks</h3>
+            <table>
+                <tr>
+                    <th>Address</th>
+                    <th>Size</th>
+                    <th>Allocation Point</th>
+                    <th>Lifetime</th>
+                </tr>
+"""
+
+            for leak in results.get('leaks', [])[:10]:  # First 10 leaks
+                section += f"""
+                <tr>
+                    <td>0x{leak.get('address', 0):X}</td>
+                    <td>{leak.get('size', 0):,} bytes</td>
+                    <td>{leak.get('allocation_point', 'Unknown')}</td>
+                    <td>{leak.get('lifetime', 0)} ms</td>
+                </tr>"""
+
+            section += """
+            </table>
+"""
+
+        # Add memory regions section
+        if results.get('regions', []):
+            section += """
+            <h3>Memory Regions</h3>
+            <table>
+                <tr>
+                    <th>Region</th>
+                    <th>Start Address</th>
+                    <th>Size</th>
+                    <th>Permissions</th>
+                    <th>Type</th>
+                </tr>
+"""
+
+            for region in results.get('regions', [])[:15]:  # First 15 regions
+                section += f"""
+                <tr>
+                    <td>{region.get('name', 'Unknown')}</td>
+                    <td>0x{region.get('start_addr', 0):X}</td>
+                    <td>{region.get('size', 0):,} bytes</td>
+                    <td>{region.get('permissions', 'Unknown')}</td>
+                    <td>{region.get('type', 'Unknown')}</td>
+                </tr>"""
+
+            section += """
+            </table>
+"""
+    else:
+        # No memory analysis results available
+        section += """
+            <p>No detailed memory analysis results available.</p>
+"""
+
+    # Close the section
+    section += """
+        </div>
+"""
+
+    return section
+
+def _generate_network_report_section(self):
+    """Generate the network analysis section for HTML reports"""
+    section = """
+        <div class="section">
+            <h2>Network Analysis Results</h2>
+"""
+
+    # If we have network traffic recorder results
+    if hasattr(self, 'traffic_recorder') and self.traffic_recorder:
+        traffic_summary = self.traffic_recorder.get_traffic_summary()
+
+        if traffic_summary:
+            # Protocol breakdown
+            if 'protocols' in traffic_summary and traffic_summary['protocols']:
+                section += """
+            <h3>Protocol Breakdown</h3>
+            <table>
+                <tr>
+                    <th>Protocol</th>
+                    <th>Packets</th>
+                    <th>Percentage</th>
+                </tr>
+"""
+
+                protocols = traffic_summary['protocols']
+                total_packets = sum(protocols.values())
+
+                for protocol, count in protocols.items():
+                    percentage = (count / total_packets * 100) if total_packets > 0 else 0
+                    section += f"""
+                <tr>
+                    <td>{protocol}</td>
+                    <td>{count:,}</td>
+                    <td>{percentage:.2f}%</td>
+                </tr>"""
+
+                section += """
+            </table>
+"""
+
+            # Destination stats
+            if 'destinations' in traffic_summary and traffic_summary['destinations']:
+                section += """
+            <h3>Top Destinations</h3>
+            <table>
+                <tr>
+                    <th>Destination</th>
+                    <th>Packets</th>
+                    <th>Data Sent</th>
+                </tr>
+"""
+
+                # Sort by packet count
+                destinations = sorted(
+                    traffic_summary['destinations'].items(),
+                    key=lambda x: x[1],
+                    reverse=True
+                )[:10]  # Top 10
+
+                for dest, count in destinations:
+                    # Get data size if available
+                    data_size = traffic_summary.get('data_by_dest', {}).get(dest, 0)
+                    data_str = f"{data_size:,} bytes" if data_size else "Unknown"
+
+                    section += f"""
+                <tr>
+                    <td>{dest}</td>
+                    <td>{count:,}</td>
+                    <td>{data_str}</td>
+                </tr>"""
+
+                section += """
+            </table>
+"""
+
+            # License servers or suspicious connections
+            if 'license_servers' in traffic_summary and traffic_summary['license_servers']:
+                section += """
+            <h3>Detected License Servers</h3>
+            <table>
+                <tr>
+                    <th>Server</th>
+                    <th>Port</th>
+                    <th>Protocol</th>
+                    <th>Confidence</th>
+                </tr>
+"""
+
+                for server in traffic_summary['license_servers']:
+                    section += f"""
+                <tr>
+                    <td>{server.get('address', 'Unknown')}</td>
+                    <td>{server.get('port', 'Unknown')}</td>
+                    <td>{server.get('protocol', 'Unknown')}</td>
+                    <td>{server.get('confidence', 0)}%</td>
+                </tr>"""
+
+                section += """
+            </table>
+"""
+
+            # Add packet capture summary
+            section += """
+            <h3>Packet Capture Summary</h3>
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+"""
+
+            # Add summary metrics
+            summary_metrics = [
+                ("Total Packets", f"{traffic_summary.get('total_packets', 0):,}"),
+                ("Total Data Transferred", f"{traffic_summary.get('total_bytes', 0):,} bytes"),
+                ("Capture Duration", f"{traffic_summary.get('duration_seconds', 0):.2f} seconds"),
+                ("Average Packet Size", f"{traffic_summary.get('avg_packet_size', 0):.2f} bytes"),
+                ("Suspicious Connections", f"{len(traffic_summary.get('suspicious', []))}")
+            ]
+
+            for metric, value in summary_metrics:
+                section += f"""
+                <tr>
+                    <td>{metric}</td>
+                    <td>{value}</td>
+                </tr>"""
+
+            section += """
+            </table>
+"""
+        else:
+            # No traffic summary available
+            section += """
+            <p>No network traffic summary available.</p>
+"""
+    else:
+        # No traffic recorder available
+        section += """
+            <p>No network traffic analysis results available.</p>
+"""
+
+    # Close the section
+    section += """
+        </div>
+"""
+
+    return section
+
+def _generate_patching_report_section(self):
+    """Generate the patching results section for HTML reports"""
+    section = """
+        <div class="section">
+            <h2>Patching Results</h2>
+"""
+
+    # Get patches from the table if available
+    patches = []
+    if hasattr(self, 'patches_table') and self.patches_table:
+        for row in range(self.patches_table.rowCount()):
+            patch = {
+                "id": self.patches_table.item(row, 0).text() if self.patches_table.item(row, 0) else "",
+                "type": self.patches_table.item(row, 1).text() if self.patches_table.item(row, 1) else "",
+                "address": self.patches_table.item(row, 2).text() if self.patches_table.item(row, 2) else "",
+                "status": self.patches_table.item(row, 3).text() if self.patches_table.item(row, 3) else "",
+                "description": self.patches_table.item(row, 4).text() if self.patches_table.item(row, 4) else ""
+            }
+            patches.append(patch)
+
+    if patches:
+        # Add patching summary
+        applied_count = sum(1 for p in patches if p["status"] == "Applied")
+
+        section += f"""
+            <h3>Patching Summary</h3>
+            <p>Total Patches: {len(patches)}</p>
+            <p>Applied Patches: {applied_count}</p>
+            <p>Pending Patches: {len(patches) - applied_count}</p>
+
+            <h3>Patch Details</h3>
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Address</th>
+                    <th>Status</th>
+                    <th>Description</th>
+                </tr>
+"""
+
+        for patch in patches:
+            # Set row style based on status
+            row_style = ""
+            if patch["status"] == "Applied":
+                row_style = 'style="background-color: #e6ffe6;"'  # Light green
+            elif patch["status"] == "Failed":
+                row_style = 'style="background-color: #ffe6e6;"'  # Light red
+
+            section += f"""
+                <tr {row_style}>
+                    <td>{patch["id"]}</td>
+                    <td>{patch["type"]}</td>
+                    <td>{patch["address"]}</td>
+                    <td>{patch["status"]}</td>
+                    <td>{patch["description"]}</td>
+                </tr>"""
+
+        section += """
+            </table>
+"""
+    else:
+        # No patches available
+        section += """
+            <p>No patching results available.</p>
+"""
+
+    # Close the section
+    section += """
+        </div>
+"""
+
+    return section
+
+def _generate_general_report_section(self):
+    """Generate a general analysis section for HTML reports"""
+    section = """
+        <div class="section">
+            <h2>General Analysis Results</h2>
+"""
+
+    # Add binary information if available
+    if hasattr(self, 'binary_path') and self.binary_path:
+        # Get basic file info
+        try:
+            file_stats = os.stat(self.binary_path)
+            file_size = file_stats.st_size
+            file_modified = time.ctime(file_stats.st_mtime)
+            file_name = os.path.basename(self.binary_path)
+
+            section += f"""
+            <h3>Binary Information</h3>
+            <table>
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>File Name</td>
+                    <td>{file_name}</td>
+                </tr>
+                <tr>
+                    <td>File Size</td>
+                    <td>{file_size:,} bytes</td>
+                </tr>
+                <tr>
+                    <td>Last Modified</td>
+                    <td>{file_modified}</td>
+                </tr>
+                <tr>
+                    <td>Path</td>
+                    <td>{self.binary_path}</td>
+                </tr>
+            </table>

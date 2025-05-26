@@ -1,0 +1,1000 @@
+        update_layout = QVBoxLayout()
+        
+        auto_update_check = QCheckBox("Automatically Check for Updates")
+        auto_update_check.setChecked(True)
+        notify_updates_check = QCheckBox("Notify About Available Updates")
+        notify_updates_check.setChecked(True)
+        
+        update_channel_layout = QHBoxLayout()
+        update_channel_layout.addWidget(QLabel("Update Channel:"))
+        update_channel_combo = QComboBox()
+        update_channel_combo.addItems(["Stable", "Beta", "Development"])
+        update_channel_layout.addWidget(update_channel_combo)
+        
+        check_updates_btn = QPushButton("Check for Updates Now")
+        
+        update_layout.addWidget(auto_update_check)
+        update_layout.addWidget(notify_updates_check)
+        update_layout.addLayout(update_channel_layout)
+        update_layout.addWidget(check_updates_btn)
+        
+        update_group.setLayout(update_layout)
+        external_layout.addWidget(update_group)
+        
+        # 5. Advanced tab
+        advanced_tab = QWidget()
+        advanced_layout = QVBoxLayout(advanced_tab)
+        
+        # Debug options
+        debug_group = QGroupBox("Debug Options")
+        debug_layout = QVBoxLayout()
+        
+        debug_level_layout = QHBoxLayout()
+        debug_level_layout.addWidget(QLabel("Logging Level:"))
+        debug_level_combo = QComboBox()
+        debug_level_combo.addItems(["Error", "Warning", "Info", "Debug", "Trace"])
+        debug_level_layout.addWidget(debug_level_combo)
+        
+        verbose_logging_check = QCheckBox("Enable Verbose Logging")
+        developer_mode_check = QCheckBox("Developer Mode")
+        enable_assertions_check = QCheckBox("Enable Assertions")
+        
+        debug_output_path = QHBoxLayout()
+        debug_output_path.addWidget(QLabel("Log File:"))
+        log_path_edit = QLineEdit("logs/intellicrack.log")
+        debug_output_path.addWidget(log_path_edit)
+        
+        debug_layout.addLayout(debug_level_layout)
+        debug_layout.addWidget(verbose_logging_check)
+        debug_layout.addWidget(developer_mode_check)
+        debug_layout.addWidget(enable_assertions_check)
+        debug_layout.addLayout(debug_output_path)
+        
+        debug_group.setLayout(debug_layout)
+        advanced_layout.addWidget(debug_group)
+        
+        # System integration
+        sys_integration_group = QGroupBox("System Integration")
+        sys_integration_layout = QVBoxLayout()
+        
+        file_assoc_check = QCheckBox("Associate with .icf Files")
+        file_assoc_check.setChecked(True)
+        
+        context_menu_check = QCheckBox("Add to Explorer Context Menu")
+        context_menu_check.setChecked(True)
+        
+        admin_mode_check = QCheckBox("Always Run as Administrator")
+        admin_mode_check.setChecked(False)
+        
+        sys_integration_layout.addWidget(file_assoc_check)
+        sys_integration_layout.addWidget(context_menu_check)
+        sys_integration_layout.addWidget(admin_mode_check)
+        
+        sys_integration_group.setLayout(sys_integration_layout)
+        advanced_layout.addWidget(sys_integration_group)
+        
+        # Reset and export
+        reset_group = QGroupBox("Reset and Configuration")
+        reset_layout = QVBoxLayout()
+        
+        reset_buttons = QHBoxLayout()
+        factory_reset_btn = QPushButton("Factory Reset")
+        export_config_btn = QPushButton("Export Configuration")
+        import_config_btn = QPushButton("Import Configuration")
+        
+        reset_buttons.addWidget(factory_reset_btn)
+        reset_buttons.addWidget(export_config_btn)
+        reset_buttons.addWidget(import_config_btn)
+        
+        reset_layout.addLayout(reset_buttons)
+        reset_group.setLayout(reset_layout)
+        advanced_layout.addWidget(reset_group)
+        
+        # Add all tabs to the settings tabbed widget
+        settings_tabs.addTab(ai_tab, "AI Configuration")
+        settings_tabs.addTab(interface_tab, "Interface")
+        settings_tabs.addTab(performance_tab, "Performance")
+        settings_tabs.addTab(external_tab, "External Tools")
+        settings_tabs.addTab(advanced_tab, "Advanced")
+        
+        scroll_layout.addWidget(settings_tabs)
+        
+        # Add apply/cancel buttons
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addStretch(1)
+        
+        apply_btn = QPushButton("Apply")
+        cancel_btn = QPushButton("Cancel")
+        ok_btn = QPushButton("OK")
+        
+        buttons_layout.addWidget(apply_btn)
+        buttons_layout.addWidget(cancel_btn)
+        buttons_layout.addWidget(ok_btn)
+        
+        scroll_layout.addLayout(buttons_layout)
+        
+        # Set the scroll widget and add to main layout
+        scroll_area.setWidget(scroll_widget)
+        layout.addWidget(scroll_area)
+        
+        # Set the layout for the tab
+        self.settings_tab.setLayout(layout)
+        
+        # Apply any settings that need to be initialized
+        self.apply_theme_settings()
+        
+        # Check license status
+        self.check_adobe_licensex_status()
+
+        # Create the menu bar
+        self.create_menu_bar()
+
+        self.statusBar().showMessage("Ready")
+
+        self.available_plugins = load_plugins()
+        if isinstance(self.available_plugins, dict) and sum(len(plugins)
+                                                            for plugins in self.available_plugins.values()) > 0:
+            self.update_output.emit(log_message(
+                f"Loaded {sum(len(plugins) for plugins in self.available_plugins.values())} plugins"))
+
+        # Initialize enhanced hex viewer integration
+        try:
+            # Use the integration module to fully integrate the hex viewer
+            integrate_with_intellicrack(self)
+
+            # Register enhanced hex viewer AI tools explicitly
+            register_hex_viewer_ai_tools(self)
+
+            # Initialize hex viewer dialogs list
+            self._hex_viewer_dialogs = []
+
+            self.update_output.emit(log_message("[Hex Viewer] Enhanced hex viewer functionality initialized"))
+            logger.info("Enhanced hex viewer functionality fully integrated")
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Hex Viewer] Error initializing enhanced hex viewer: {str(e)}"))
+            logger.error(f"Error initializing enhanced hex viewer: {e}")
+            logger.error(traceback.format_exc())
+
+        ml_model_path = CONFIG.get("ml_model_path")
+        if ml_model_path and os.path.exists(ml_model_path):
+            try:
+                self.ml_predictor = MLVulnerabilityPredictor(
+                    model_path=ml_model_path)
+                self.update_output.emit(
+                    log_message(
+                        f"[ML] Predictor loaded at startup with model: {ml_model_path}"))
+            except NameError:
+                self.update_output.emit(log_message(
+                    "[ML Init Error] MLVulnerabilityPredictor class not found. Import it first."))
+            except Exception as e_ml_init:
+                self.update_output.emit(
+                    log_message(
+                        f"[ML Init Error] Failed to auto-load predictor model: {e_ml_init}"))
+                self.ml_predictor = None
+        else:
+            # Create models directory if it doesn't exist
+            os.makedirs("models", exist_ok=True)
+
+            # Set default model path
+            default_ml_path = os.path.join("models", "vuln_predict_model.joblib")
+
+            try:
+                # Create default model if it doesn't exist
+                if not os.path.exists(default_ml_path):
+                    self._create_default_ml_model(default_ml_path)
+
+                # Initialize predictor with the model
+                self.ml_predictor = MLVulnerabilityPredictor(default_ml_path)
+
+                # Update config with the new path
+                CONFIG["ml_model_path"] = default_ml_path
+                self.save_config()
+
+                self.update_output.emit(log_message(
+                    f"[ML] Using model at: {default_ml_path}"))
+            except Exception as e:
+                self.update_output.emit(log_message(
+                    f"[ML] Could not create initial model: {str(e)}"))
+                self.ml_predictor = None
+
+    # Add stub methods for functions that don't exist but are referenced elsewhere
+    def create_new_plugin(self, plugin_type):
+        """Creates a new plugin file of the specified type with a template."""
+        plugin_dir = "plugins"
+
+        # Define templates for different plugin types
+        templates = {
+            "frida": """// Frida script template
+// Description: Add your description here
+'use strict';
+
+// This function will be called when the script is loaded
+function main() {
+    console.log("Frida script loaded!");
+
+    // Example: Hook a function
+    /*
+    Interceptor.attach(Module.findExportByName(null, 'function_name'), {
+        onEnter: function(args) {
+            console.log("Function called with args:", args[0].toString());
+        },
+        onLeave: function(retval) {
+            console.log("Function returned:", retval);
+            // Modify return value: retval.replace(0);
+        }
+    });
+    */
+}
+
+// Start the script
+main();""",
+
+            "ghidra": """//Ghidra script template
+//Description: Add your description here
+
+import ghidra.app.script.GhidraScript;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
+import ghidra.program.model.address.*;
+
+public class NewGhidraScript extends GhidraScript {
+    @Override
+    public void run() throws Exception {
+        println("Ghidra script started!");
+
+        // Example: Find functions with specific name pattern
+        FunctionManager functionManager = currentProgram.getFunctionManager();
+        FunctionIterator functions = functionManager.getFunctions(true);
+        for (Function function : functions) {
+            String name = function.getName();
+            if (name.contains("license") || name.contains("auth")) {
+                println("Found interesting function: " + name + " at " + function.getEntryPoint());
+            }
+        }
+    }
+}""",
+
+            "custom": """# Custom Python plugin template
+# Description: Add your description here
+
+class CustomPlugin:
+    def __init__(self):
+        self.name = "New Custom Plugin"
+        self.description = "Add your description here"
+
+    def analyze(self, binary_path):
+        # Analyze the binary and return results
+        results = []
+        results.append(f"Analyzing {binary_path}")
+        # Add your analysis code here
+        return results
+
+    def patch(self, binary_path):
+        # Patch the binary and return results
+        results = []
+        results.append(f"Patching {binary_path}")
+        # Add your patching code here
+        return results
+
+def register():
+    # Register the plugin
+    return CustomPlugin()"""
+        }
+
+        # Create plugin directory if it doesn't exist
+        if not os.path.exists(plugin_dir):
+            os.makedirs(plugin_dir)
+
+        # Create subdirectory if it doesn't exist
+        subdir_map = {
+            "frida": "frida_scripts",
+            "ghidra": "ghidra_scripts",
+            "custom": "custom_modules"
+        }
+
+        subdir = subdir_map.get(plugin_type)
+        if not subdir:
+            self.update_output.emit(log_message(f"Invalid plugin type: {plugin_type}"))
+            return
+
+        subdir_path = os.path.join(plugin_dir, subdir)
+        if not os.path.exists(subdir_path):
+            os.makedirs(subdir_path)
+
+        # Get plugin name from user
+        plugin_name, ok = QInputDialog.getText(
+            self, f"New {plugin_type.title()} Plugin", "Enter plugin name:"
+        )
+
+        if not ok or not plugin_name:
+            return
+
+        # Format plugin name and create file path
+        plugin_name = plugin_name.replace(" ", "_").lower()
+
+        # Add appropriate extension
+        extensions = {
+            "frida": ".js",
+            "ghidra": ".java",
+            "custom": ".py"
+        }
+
+        file_path = os.path.join(subdir_path, plugin_name + extensions[plugin_type])
+
+        # Check if file already exists
+        if os.path.exists(file_path):
+            response = QMessageBox.question(
+                self,
+                "File Exists",
+                f"The file {file_path} already exists. Overwrite?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+
+            if response != QMessageBox.Yes:
+                return
+
+        # Write template to file
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(templates[plugin_type])
+
+            self.update_output.emit(log_message(f"Created new {plugin_type} plugin at {file_path}"))
+
+            # Open the file for editing
+            self.edit_plugin_file(file_path)
+
+        except Exception as e:
+            self.update_output.emit(log_message(f"Error creating plugin file: {e}"))
+
+    def edit_plugin_file(self, path):
+        """Opens the specified file in a text editor."""
+        if not os.path.exists(path):
+            self.update_output.emit(log_message(f"File not found: {path}"))
+            return
+
+        try:
+            # Create a simple text editor dialog
+            editor_dialog = QDialog(self)
+            editor_dialog.setWindowTitle(f"Editing {os.path.basename(path)}")
+            editor_dialog.resize(800, 600)
+
+            layout = QVBoxLayout()
+
+            # Create text editor
+            editor = QTextEdit()
+
+            # Load file content
+            with open(path, "r", encoding="utf-8") as f:
+                editor.setPlainText(f.read())
+
+            layout.addWidget(editor)
+
+            # Create buttons
+            button_layout = QHBoxLayout()
+
+            save_btn = QPushButton("Save")
+            cancel_btn = QPushButton("Cancel")
+
+            button_layout.addWidget(save_btn)
+            button_layout.addWidget(cancel_btn)
+
+            layout.addLayout(button_layout)
+
+            editor_dialog.setLayout(layout)
+
+            # Connect buttons
+            def save_file():
+                """
+                Save the contents of the editor to the file.
+
+                This function writes the current text from the editor to the specified file path,
+                emits a success message to the application log, and closes the editor dialog.
+                If the save operation fails, an error message is displayed.
+
+                Args:
+                    None: Uses file path and editor from enclosing scope
+
+                Returns:
+                    None
+
+                Raises:
+                    No exceptions are propagated as they are caught and logged internally
+                """
+                try:
+                    with open(path, "w", encoding="utf-8") as f:
+                        f.write(editor.toPlainText())
+                    self.update_output.emit(log_message(f"Saved changes to {path}"))
+                    editor_dialog.accept()
+                except Exception as e:
+                    self.update_output.emit(log_message(f"Error saving file: {e}"))
+
+            save_btn.clicked.connect(save_file)
+            cancel_btn.clicked.connect(editor_dialog.reject)
+
+            # Show dialog
+            editor_dialog.exec_()
+
+        except Exception as e:
+            self.update_output.emit(log_message(f"Error editing file: {e}"))
+
+    def import_plugin(self, plugin_type):
+        """Imports a file as a plugin of the specified type."""
+        # Define file filters based on plugin type
+        filters = {
+            "frida": "JavaScript Files (*.js)",
+            "ghidra": "Java Files (*.java)",
+            "custom": "Python Files (*.py)"
+        }
+
+        # Get file from user
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            f"Import {plugin_type.title()} Plugin",
+            "",
+            filters.get(plugin_type, "All Files (*)")
+        )
+
+        if not file_path:
+            return
+
+        # Create plugin directory if it doesn't exist
+        plugin_dir = "plugins"
+        if not os.path.exists(plugin_dir):
+            os.makedirs(plugin_dir)
+
+        # Create subdirectory if it doesn't exist
+        subdir_map = {
+            "frida": "frida_scripts",
+            "ghidra": "ghidra_scripts",
+            "custom": "custom_modules"
+        }
+
+        subdir = subdir_map.get(plugin_type)
+        if not subdir:
+            self.update_output.emit(log_message(f"Invalid plugin type: {plugin_type}"))
+            return
+
+        subdir_path = os.path.join(plugin_dir, subdir)
+        if not os.path.exists(subdir_path):
+            os.makedirs(subdir_path)
+
+        # Get destination file path
+        dest_file = os.path.join(subdir_path, os.path.basename(file_path))
+
+        # Check if file already exists
+        if os.path.exists(dest_file) and os.path.abspath(file_path) != os.path.abspath(dest_file):
+            response = QMessageBox.question(
+                self,
+                "File Exists",
+                f"The file {dest_file} already exists. Overwrite?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+
+            if response != QMessageBox.Yes:
+                return
+
+        # Copy file
+        try:
+            if os.path.abspath(file_path) != os.path.abspath(dest_file):
+                shutil.copy2(file_path, dest_file)
+                self.update_output.emit(log_message(f"Imported {plugin_type} plugin to {dest_file}"))
+            else:
+                self.update_output.emit(log_message(f"File is already in the plugins directory"))
+
+            # Reload plugins
+            self.available_plugins = load_plugins()
+
+        except Exception as e:
+            self.update_output.emit(log_message(f"Error importing plugin: {e}"))
+
+    def create_menu_bar(self):
+        """Creates the main menu bar with all menu options."""
+        menubar = self.menuBar()
+
+        # File menu
+        file_menu = menubar.addMenu("File")
+
+        open_action = QAction("Open Binary", self)
+        open_action.setShortcut("Ctrl+O")
+        open_action.triggered.connect(self.select_program)
+        file_menu.addAction(open_action)
+
+        # Recent files submenu (populated dynamically)
+        recent_menu = file_menu.addMenu("Recent Files")
+        if hasattr(self, "recent_files") and self.recent_files:
+            for idx, file_path in enumerate(self.recent_files[:5]):  # Show up to 5 recent files
+                # Add position number to recent file entries
+                display_name = f"{idx+1}. {os.path.basename(file_path)}"
+                recent_action = QAction(display_name, self)
+                recent_action.setToolTip(file_path)
+
+                # Set shortcut for first 5 items using idx (1-5)
+                if idx < 5:
+                    recent_action.setShortcut(f"Ctrl+{idx+1}")
+
+                # Set priority based on how recent the file is
+                recent_action.setPriority(QAction.Priority(QAction.HighPriority if idx == 0 else
+                                                          QAction.NormalPriority if idx < 3 else
+                                                          QAction.LowPriority))
+
+                recent_action.triggered.connect(lambda checked, path=file_path: self.load_binary(path))
+                recent_menu.addAction(recent_action)
+
+                # Log recently loaded files
+                self.logger.debug(f"Added recent file #{idx+1}: {file_path}")
+        else:
+            no_recent_action = QAction("No Recent Files", self)
+            no_recent_action.setEnabled(False)
+            recent_menu.addAction(no_recent_action)
+
+        save_results_action = QAction("Save Analysis Results", self)
+        save_results_action.setShortcut("Ctrl+S")
+        save_results_action.triggered.connect(self.save_analysis_results)
+        file_menu.addAction(save_results_action)
+
+        export_report_action = QAction("Export Report", self)
+        export_report_action.triggered.connect(self.run_report_generation)
+        file_menu.addAction(export_report_action)
+
+        file_menu.addSeparator()
+
+        exit_action = QAction("Exit", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+
+        # Edit menu
+        edit_menu = menubar.addMenu("Edit")
+
+        preferences_action = QAction("Preferences", self)
+        preferences_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.settings_tab)))
+        edit_menu.addAction(preferences_action)
+
+        config_profiles_menu = edit_menu.addMenu("Configuration Profiles")
+        for profile in ["Default Configuration", "Maximum Security", "Performance Optimized", "Deep Analysis", "Basic Analysis"]:
+            profile_action = QAction(profile, self)
+            profile_action.triggered.connect(lambda checked, p=profile: self.apply_config_preset(p))
+            config_profiles_menu.addAction(profile_action)
+
+        # View menu
+        view_menu = menubar.addMenu("View")
+
+        # Tab navigation actions
+        dashboard_action = QAction("Dashboard", self)
+        dashboard_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.project_dashboard_tab)))
+        view_menu.addAction(dashboard_action)
+
+        analysis_results_action = QAction("Analysis Results", self)
+        analysis_results_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.analysis_tab)))
+        view_menu.addAction(analysis_results_action)
+
+        live_logs_action = QAction("Live Logs", self)
+        live_logs_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.logs_tab)))
+        view_menu.addAction(live_logs_action)
+        
+        # Add Hex Viewer tab to View menu
+        hex_viewer_action = QAction("Hex Viewer", self)
+        hex_viewer_action.triggered.connect(self.open_hex_viewer_tab)
+        view_menu.addAction(hex_viewer_action)
+
+        view_menu.addSeparator()
+
+        # Dark Mode toggle
+        dark_mode_action = QAction("Dark Mode", self)
+        dark_mode_action.setCheckable(True)
+        dark_mode_action.setChecked(self.current_theme == "dark")
+        dark_mode_action.triggered.connect(self.toggle_dark_mode)
+        view_menu.addAction(dark_mode_action)
+
+        # Analysis menu
+        analysis_menu = menubar.addMenu("Analysis")
+
+        basic_analysis_action = QAction("Basic Analysis", self)
+        basic_analysis_action.triggered.connect(self.run_analysis)
+        analysis_menu.addAction(basic_analysis_action)
+
+        deep_analysis_menu = analysis_menu.addMenu("Deep Analysis")
+        for analysis_type in ["License Logic", "Runtime Monitoring", "CFG Structure", "Packing Detection",
+                              "Taint Analysis", "Symbolic Execution", "Concolic Execution"]:
+            analysis_action = QAction(analysis_type, self)
+            analysis_action.triggered.connect(lambda checked, a=analysis_type: self.handle_deep_analysis_mode(a))
+            deep_analysis_menu.addAction(analysis_action)
+
+        custom_analysis_action = QAction("Custom Analysis", self)
+        custom_analysis_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.analysis_tab)))
+        analysis_menu.addAction(custom_analysis_action)
+
+        similarity_search_action = QAction("Similarity Search", self)
+        similarity_search_action.triggered.connect(self.open_similarity_search)
+        analysis_menu.addAction(similarity_search_action)
+
+        # Patching menu
+        patching_menu = menubar.addMenu("Patching")
+
+        auto_patch_action = QAction("Auto Patch", self)
+        auto_patch_action.triggered.connect(lambda: run_automated_patch_agent(self))
+        patching_menu.addAction(auto_patch_action)
+
+        manual_patch_action = QAction("Manual Patch", self)
+        manual_patch_action.triggered.connect(self.preview_patch)
+        patching_menu.addAction(manual_patch_action)
+
+        visual_editor_action = QAction("Visual Patch Editor", self)
+        visual_editor_action.triggered.connect(self.open_visual_patch_editor)
+        patching_menu.addAction(visual_editor_action)
+
+        patch_testing_action = QAction("Patch Testing", self)
+        patch_testing_action.triggered.connect(self.run_simulate_patch)
+        patching_menu.addAction(patch_testing_action)
+
+        # Tools menu
+        tools_menu = menubar.addMenu("Tools")
+
+        network_tools_menu = tools_menu.addMenu("Network Tools")
+        for network_tool in ["License Server Emulator", "SSL/TLS Interceptor", "Cloud Response Generator",
+                           "Protocol Fingerprinter", "Network Traffic Analyzer"]:
+            tool_action = QAction(network_tool, self)
+            tool_action.triggered.connect(lambda checked, t=network_tool: self.network_tools_combo.setCurrentText(t) or self.launch_network_tool())
+            network_tools_menu.addAction(tool_action)
+
+        license_analysis_action = QAction("License Analysis", self)
+        license_analysis_action.triggered.connect(self.run_deep_license_analysis)
+        tools_menu.addAction(license_analysis_action)
+
+        plugin_management_action = QAction("Plugin Management", self)
+        plugin_management_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.plugins_tab)))
+        tools_menu.addAction(plugin_management_action)
+
+        model_management_action = QAction("Model Management", self)
+        model_management_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.settings_tab)))
+        tools_menu.addAction(model_management_action)
+
+        # Help menu
+        help_menu = menubar.addMenu("Help")
+
+        # Guided Wizard now in Help menu
+        guided_wizard_action = QAction("Guided Wizard", self)
+        guided_wizard_action.triggered.connect(self.start_guided_wizard)
+        help_menu.addAction(guided_wizard_action)
+
+        documentation_action = QAction("Documentation", self)
+        documentation_action.triggered.connect(self.show_documentation)
+        help_menu.addAction(documentation_action)
+
+        tutorials_action = QAction("Tutorials", self)
+        tutorials_action.triggered.connect(self.show_tutorials)
+        help_menu.addAction(tutorials_action)
+
+        help_menu.addSeparator()
+
+        about_action = QAction("About", self)
+        about_action.triggered.connect(self.show_about_dialog)
+        help_menu.addAction(about_action)
+
+        # Removed hex viewer menu registration (now using dedicated tab)
+        # self.register_hex_viewer_menu(menubar)
+        logger.debug("Hex viewer menu not registered (now using dedicated tab)")
+
+    def register_hex_viewer_menu(self, menubar):
+        """Register the enhanced hex viewer menu items (disabled to avoid duplication)."""
+        # Removed hex viewer from tools menu since we have a dedicated tab now
+        logger.debug("Hex viewer menu items not added to Tools menu (using tab instead)")
+        
+    def setup_hex_viewer_tab(self):
+        """Sets up the dedicated Hex Viewer tab with view and edit functionality."""
+        logger.info("Setting up Hex Viewer tab")
+        
+        # Create main layout for the tab
+        layout = QVBoxLayout()
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
+        
+        # Create header with title and description
+        header_layout = QVBoxLayout()
+        title = QLabel("<h2>Hex Viewer & Editor</h2>")
+        title.setTextFormat(Qt.RichText)
+        description = QLabel("View and edit binary files in hexadecimal format.")
+        header_layout.addWidget(title)
+        header_layout.addWidget(description)
+        layout.addLayout(header_layout)
+        
+        # Create control panel
+        controls_layout = QHBoxLayout()
+        
+        # File controls
+        file_box = QGroupBox("File Operations")
+        file_layout = QVBoxLayout()
+        
+        # Open file in view mode button
+        open_view_btn = QPushButton("Open File (View Mode)")
+        open_view_btn.setToolTip("Open a binary file in read-only mode")
+        open_view_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(None, True))
+        file_layout.addWidget(open_view_btn)
+        
+        # Open file in edit mode button
+        open_edit_btn = QPushButton("Open File (Edit Mode)")
+        open_edit_btn.setToolTip("Open a binary file in editable mode")
+        open_edit_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(None, False))
+        file_layout.addWidget(open_edit_btn)
+        
+        # View current binary button
+        if hasattr(self, 'binary_path') and self.binary_path:
+            current_binary_btn = QPushButton(f"View Current Binary")
+            current_binary_btn.setToolTip(f"View the current binary: {os.path.basename(self.binary_path)}")
+            current_binary_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(self.binary_path, True))
+            file_layout.addWidget(current_binary_btn)
+            
+            edit_binary_btn = QPushButton(f"Edit Current Binary")
+            edit_binary_btn.setToolTip(f"Edit the current binary: {os.path.basename(self.binary_path)}")
+            edit_binary_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(self.binary_path, False))
+            file_layout.addWidget(edit_binary_btn)
+        
+        file_box.setLayout(file_layout)
+        controls_layout.addWidget(file_box)
+        
+        # Options and preferences
+        options_box = QGroupBox("Display Options")
+        options_layout = QVBoxLayout()
+        
+        # View mode selector
+        view_mode_layout = QHBoxLayout()
+        view_mode_layout.addWidget(QLabel("Default View Mode:"))
+        
+        view_mode_combo = QComboBox()
+        view_mode_combo.addItems(["Hexadecimal", "Decimal", "Binary", "ASCII"])
+        view_mode_combo.setCurrentIndex(0)
+        view_mode_layout.addWidget(view_mode_combo)
+        options_layout.addLayout(view_mode_layout)
+        
+        # Bytes per row
+        bytes_row_layout = QHBoxLayout()
+        bytes_row_layout.addWidget(QLabel("Bytes per Row:"))
+        
+        bytes_spin = QSpinBox()
+        bytes_spin.setRange(8, 32)
+        bytes_spin.setSingleStep(4)
+        bytes_spin.setValue(16)
+        bytes_row_layout.addWidget(bytes_spin)
+        options_layout.addLayout(bytes_row_layout)
+        
+        # Font size
+        font_layout = QHBoxLayout()
+        font_layout.addWidget(QLabel("Font Size:"))
+        
+        font_spin = QSpinBox()
+        font_spin.setRange(8, 20)
+        font_spin.setValue(12)
+        font_layout.addWidget(font_spin)
+        options_layout.addLayout(font_layout)
+        
+        options_box.setLayout(options_layout)
+        controls_layout.addWidget(options_box)
+        
+        layout.addLayout(controls_layout)
+        
+        # Information area
+        info_layout = QVBoxLayout()
+        info_text = QLabel("""
+        <b>Features:</b>
+        • View and edit binary files with memory-efficient handling
+        • Multiple display modes (hex, decimal, binary)
+        • Search for patterns in binary data
+        • Highlight regions of interest
+        • Customizable display options
+        """)
+        info_text.setTextFormat(Qt.RichText)
+        info_text.setWordWrap(True)
+        info_layout.addWidget(info_text)
+        
+        layout.addLayout(info_layout)
+        layout.addStretch()
+        
+        # Set the layout for the tab
+        self.hex_viewer_tab.setLayout(layout)
+        logger.debug("Hex Viewer tab setup complete")
+
+    def show_editable_hex_viewer(self):
+        """
+        Compatibility method to bridge with hexview integration.
+        
+        This method ensures compatibility with the hexview module which expects
+        a show_editable_hex_viewer method. It simply calls show_enhanced_hex_viewer
+        with the current binary path and editable mode.
+        """
+        return self.show_enhanced_hex_viewer(
+            self.binary_path if hasattr(self, "binary_path") else None, False
+        )
+        
+        
+    def show_enhanced_hex_viewer(self, file_path=None, read_only=False):
+        """
+        Show the enhanced hex viewer/editor dialog.
+
+        Args:
+            file_path: Path to the file to view/edit (defaults to current binary)
+            read_only: Whether to open in read-only mode
+        """
+        # Use the function from hexview.integration to show the dialog
+        try:
+            # If no file specified, use the current binary
+            if file_path is None:
+                if hasattr(self, "binary_path") and self.binary_path:
+                    file_path = self.binary_path
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "No File Loaded",
+                        "Please load a binary file first or specify a file path."
+                    )
+                    return
+
+            # Call the function from hexview.integration
+            dialog = show_enhanced_hex_viewer(self, file_path, read_only)
+
+            # Keep track of the dialog to prevent garbage collection
+            if not hasattr(self, "_hex_viewer_dialogs"):
+                self._hex_viewer_dialogs = []
+            self._hex_viewer_dialogs.append(dialog)
+
+            self.update_output.emit(log_message(f"[Hex Viewer] Opened {os.path.basename(file_path)} in {'read-only' if read_only else 'editable'} mode"))
+            logger.info(f"Opened enhanced hex viewer for {file_path}")
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Error Opening Hex Viewer",
+                f"Failed to open the hex viewer: {str(e)}"
+            )
+            logger.error(f"Error opening hex viewer: {e}")
+            logger.error(traceback.format_exc())
+
+    def create_toolbar(self):
+        """Creates the main toolbar with quick access to common functions."""
+        toolbar = QToolBar("Main Toolbar")
+        toolbar.setIconSize(QSize(24, 24))
+        self.addToolBar(toolbar)
+
+        # Dashboard action
+        dashboard_action = QAction("Dashboard", self)
+        dashboard_action.setToolTip("Go to Dashboard")
+        dashboard_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.project_dashboard_tab)))
+        toolbar.addAction(dashboard_action)
+
+        toolbar.addSeparator()
+
+        # Open binary action
+        open_action = QAction("Open Binary", self)
+        open_action.setToolTip("Select a program to analyze")
+        open_action.triggered.connect(self.select_program)
+        toolbar.addAction(open_action)
+
+        # Run analysis action
+        analyze_action = QAction("Analyze", self)
+        analyze_action.setToolTip("Perform analysis on the selected program")
+        analyze_action.triggered.connect(self.run_analysis)
+        toolbar.addAction(analyze_action)
+
+        # Automated patch action
+        patch_action = QAction("Patch", self)
+        patch_action.setToolTip("Apply automated patches")
+        patch_action.triggered.connect(lambda: run_automated_patch_agent(self))
+        toolbar.addAction(patch_action)
+
+        # Preview patches action
+        preview_action = QAction("Preview", self)
+        preview_action.setToolTip("Preview potential patches")
+        preview_action.triggered.connect(self.preview_patch)
+        toolbar.addAction(preview_action)
+
+        toolbar.addSeparator()
+
+        # One-Click Analysis & Patch
+        auto_action = QAction("One-Click Analysis & Patch", self)
+        auto_action.setToolTip("Full analysis and patching")
+        auto_action.triggered.connect(self.run_autonomous_crack)
+        toolbar.addAction(auto_action)
+
+        toolbar.addSeparator()
+
+        # Report generation
+        report_action = QAction("Generate Report", self)
+        report_action.setToolTip("Generate comprehensive PDF report")
+        report_action.triggered.connect(self.run_report_generation)
+        toolbar.addAction(report_action)
+        # Hex Viewer button removed (now using dedicated tab)
+        # add_hex_viewer_toolbar_button(self, toolbar)
+        logger.debug("Hex Viewer toolbar button not added (using dedicated tab instead)")
+
+
+
+    def append_output(self, text):
+        """
+        Adds text to the output panel and scrolls to the bottom.
+
+        This method appends the provided text to the output console and
+        ensures that the view is scrolled to display the latest content.
+        """
+
+        self.output.append(text)
+        # Scroll to the bottom
+        cursor = self.output.textCursor()
+        cursor.movePosition(cursor.End)
+        self.output.setTextCursor(cursor)
+
+        # Also update the statusbar with the latest message
+        # Extract the actual message part (without timestamp)
+        message_parts = text.split(']', 1)
+
+        # Update the status bar with a simplified version of the message
+        if len(message_parts) > 1:
+            # Remove timestamp and get clean message
+            clean_message = message_parts[1].strip()
+
+            # Truncate long messages for statusbar
+            if len(clean_message) > 80:
+                statusbar_msg = clean_message[:77] + "..."
+            else:
+                statusbar_msg = clean_message
+
+            # Update statusbar
+            if hasattr(self, 'statusBar'):
+                self.statusBar().showMessage(statusbar_msg, 5000)  # Show for 5 seconds
+
+            # Log to output log if it's an important message (contains certain keywords)
+            important_keywords = ["error", "warning", "critical", "failed", "completed", "success"]
+            if any(keyword in clean_message.lower() for keyword in important_keywords):
+                self.log_to_file(f"STATUS: {clean_message}")
+
+    def log_to_file(self, message):
+        """
+        Log a message to a file in the logs directory.
+        
+        This method writes important application messages to a dedicated log file,
+        separate from the standard Python logging system.
+        
+        Args:
+            message (str): The message to log to the file
+        """
+        try:
+            # Ensure logs directory exists
+            logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+            if not os.path.exists(logs_dir):
+                os.makedirs(logs_dir)
+                
+            # Set log file path with today's date
+            log_file = os.path.join(logs_dir, f"intellicrack_status_{datetime.datetime.now().strftime('%Y-%m-%d')}.log")
+            
+            # Append log with timestamp
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp}] {message}\n")
+                
+        except Exception as e:
+            # Log the error through standard logging since we can't use our own method
+            logger.error(f"Error writing to status log file: {str(e)}")
+            # Don't let logging errors interrupt the application flow
+
+    def save_analysis_results(self):
+        """
+        Save analysis results to a file.
+        """
+        if not hasattr(self, "analyze_results") or not self.analyze_results:
+            self.update_output.emit(log_message("No analysis results to save."))
+            return
+
+        filename, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Analysis Results",
+            "",
+            "Text Files (*.txt);;HTML Files (*.html);;All Files (*)"
+        )
+
+        if not filename:
+            return
+
+        try:
+            # Determine format based on extension
+            if filename.lower().endswith('.html'):
+                # Create HTML report
+                html = """
+                <!DOCTYPE html>
+                <html>

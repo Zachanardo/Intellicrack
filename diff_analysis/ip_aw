@@ -1,0 +1,1000 @@
+        self.error_counts = {'cuda': 0, 'opencl': 0, 'tensorflow': 0, 'pytorch': 0}
+        self.max_errors_before_blacklist = 3
+        self.blacklisted_backends = set()
+
+        # Check for GPU acceleration libraries
+        self._check_available_backends()
+
+        # Select the preferred backend
+        self._select_preferred_backend()
+
+        # Run initial benchmarks
+        self._run_initial_benchmarks()
+
+    def _check_available_backends(self):
+        """
+        Check which GPU acceleration backends are available.
+        """
+        # Check for CUDA
+        try:
+            if 'cupy' in sys.modules:
+                self.cuda_available = True
+                self.logger.info("CUDA acceleration available via CuPy")
+
+                # Get available CUDA devices
+                try:
+                    num_devices = cp.cuda.runtime.getDeviceCount()
+                    for i in range(num_devices):
+                        device_props = cp.cuda.runtime.getDeviceProperties(i)
+                        self.cuda_devices.append({
+                            'index': i,
+                            'name': device_props['name'].decode('utf-8'),
+                            'memory': device_props['totalGlobalMem'],
+                            'compute_capability': f"{device_props['major']}.{device_props['minor']}",
+                            'multiprocessors': device_props['multiProcessorCount'],
+                            'max_threads_per_block': device_props['maxThreadsPerBlock']
+                        })
+                    self.logger.info(f"Found {len(self.cuda_devices)} CUDA devices")
+                except Exception as e:
+                    self.logger.warning(f"Error getting CUDA device info: {e}")
+            else:
+                if cuda is not None and 'pycuda.autoinit' in sys.modules:
+                    self.cuda_available = True
+                    self.logger.info("CUDA acceleration available via PyCUDA")
+
+                    # Get available CUDA devices for PyCUDA
+                    try:
+                        drv.init()
+
+                        # Create memory allocation history for tracking
+                        if not hasattr(self, 'memory_tracking'):
+                            self.memory_tracking = {
+                                'history': [],
+                                'allocations': {},
+                                'peak_usage': 0
+                            }
+
+                        for i in range(drv.Device.count()):
+                            device = drv.Device(i)
+
+                            # Get device memory information
+                            total_memory = device.total_memory()
+                            free_memory, _ = drv.mem_get_info()
+                            allocated_memory = total_memory - free_memory
+                            memory_utilization = (allocated_memory / total_memory) * 100
+
+                            # Use allocated_memory to make decisions about memory management
+                            if memory_utilization > 80:
+                                # Memory is heavily used - implement aggressive memory management
+                                self.logger.warning(f"CUDA device {i} memory utilization high ({memory_utilization:.1f}%)")
+                                self.force_memory_cleanup()
+                            elif memory_utilization > 50:
+                                # Moderate memory usage - implement standard cleanup
+                                self.logger.info(f"CUDA device {i} memory utilization moderate ({memory_utilization:.1f}%)")
+                                # Schedule cleanup after current operation
+                                self.schedule_cleanup = True
+
+                            # Record tracking data
+                            timestamp = time.time()
+                            self.memory_tracking['history'].append({
+                                'device_id': i,
+                                'timestamp': timestamp,
+                                'allocated_memory': allocated_memory,
+                                'total_memory': total_memory,
+                                'utilization': memory_utilization
+                            })
+
+                            # Update peak usage
+                            if allocated_memory > self.memory_tracking['peak_usage']:
+                                self.memory_tracking['peak_usage'] = allocated_memory
+                                self.logger.info(f"New peak memory usage: {allocated_memory/1024/1024:.1f} MB")
+
+                            # Record device details with memory utilization statistics
+                            self.cuda_devices.append({
+                                'index': i,
+                                'name': device.name(),
+                                'memory': total_memory,
+                                'free_memory': free_memory,
+                                'allocated_memory': allocated_memory,
+                                'memory_utilization': memory_utilization,
+                                'compute_capability': f"{device.compute_capability()[0]}.{device.compute_capability()[1]}",
+                                'multiprocessors': device.get_attribute(drv.device_attribute.MULTIPROCESSOR_COUNT)
+                            })
+
+                            # Log memory status for each device
+                            self.logger.info(f"CUDA Device {i} ({device.name()}): {total_memory/1024/1024:.1f}MB total, "
+                                             f"{allocated_memory/1024/1024:.1f}MB used ({memory_utilization:.1f}%)")
+
+                        self.logger.info(f"Found {len(self.cuda_devices)} CUDA devices (PyCUDA)")
+
+                        # Setup memory monitoring thread if not already running
+                        if not hasattr(self, 'memory_monitor_running') or not self.memory_monitor_running:
+                            self.setup_memory_monitor()
+                    except Exception as e:
+                        self.logger.warning(f"Error getting PyCUDA device info: {e}")
+                        self.logger.debug(f"Error details: {traceback.format_exc()}")
+                else:
+                    raise ImportError("CUDA modules not available")
+        except (ImportError, AttributeError, NameError):
+            self.logger.info("CUDA acceleration not available")
+            self.cuda_available = False
+
+        # Add memory management functions for CUDA
+        def force_memory_cleanup(self):
+            """Force cleanup of GPU memory to prevent fragmentation and OOM errors"""
+            if hasattr(self, 'cuda_available') and self.cuda_available:
+                try:
+                    if 'cupy' in sys.modules:
+                        # CuPy memory cleanup
+                        mempool = cp.get_default_memory_pool()
+                        pinned_mempool = cp.get_default_pinned_memory_pool()
+                        mempool.free_all_blocks()
+                        pinned_mempool.free_all_blocks()
+                        self.logger.info(f"CuPy memory pools cleared, now using: {mempool.used_bytes()/1024/1024:.2f}MB")
+
+                    if 'pycuda' in sys.modules:
+                        # PyCUDA memory cleanup using context cache clearing
+                        pycuda.tools.clear_context_caches()
+                        self.logger.info("PyCUDA context caches cleared")
+
+                    # Record cleanup in memory tracking
+                    if hasattr(self, 'memory_tracking'):
+                        self.memory_tracking['history'].append({
+                            'action': 'cleanup',
+                            'timestamp': time.time(),
+                            'type': 'forced'
+                        })
+                except Exception as e:
+                    self.logger.error(f"Error during memory cleanup: {e}")
+
+        def setup_memory_monitor(self):
+            """Set up a background thread to monitor memory usage"""
+            import threading
+
+            def monitor_memory():
+                """Background monitoring thread for GPU memory"""
+                self.memory_monitor_running = True
+                self.logger.info("Starting GPU memory monitor thread")
+
+                try:
+                    while self.memory_monitor_running:
+                        # Check memory usage every 5 seconds
+                        time.sleep(5)
+
+                        if not hasattr(self, 'cuda_available') or not self.cuda_available:
+                            continue
+
+                        # Get current memory usage
+                        try:
+                            free_memory, total_memory = drv.mem_get_info()
+                            allocated_memory = total_memory - free_memory
+                            utilization = (allocated_memory / total_memory) * 100
+
+                            # Record in tracking history
+                            if hasattr(self, 'memory_tracking'):
+                                self.memory_tracking['history'].append({
+                                    'action': 'monitor',
+                                    'timestamp': time.time(),
+                                    'allocated_memory': allocated_memory,
+                                    'total_memory': total_memory,
+                                    'utilization': utilization
+                                })
+
+                            # Auto-cleanup if memory utilization is too high
+                            if utilization > 90:
+                                self.logger.warning(f"Critical memory utilization: {utilization:.1f}%, forcing cleanup")
+                                self.force_memory_cleanup()
+                        except Exception as e:
+                            self.logger.error(f"Error monitoring memory: {e}")
+                except Exception as e:
+                    self.logger.error(f"Memory monitor thread error: {e}")
+                finally:
+                    self.memory_monitor_running = False
+                    self.logger.info("GPU memory monitor thread stopped")
+
+            # Start monitoring thread
+            monitor_thread = threading.Thread(target=monitor_memory, daemon=True)
+            monitor_thread.start()
+            self.logger.info("GPU memory monitor thread started")
+
+        # Check for OpenCL
+        try:
+            if cl is not None:
+                # Get available OpenCL platforms
+                platforms = cl.get_platforms()
+                if platforms:
+                    devices = []
+                    for platform in platforms:
+                        platform_devices = platform.get_devices()
+                        if platform_devices:
+                            devices.extend(platform_devices)
+
+                    if devices:
+                        # Store OpenCL device info
+                        self.opencl_devices = []
+                        for i, device in enumerate(devices):
+                            device_info = {
+                                'index': i,
+                                'name': device.name,
+                                'platform': device.platform.name,
+                                'type': str(device.type).replace('cl.device_type.', ''),
+                                'memory': device.global_mem_size,
+                                'compute_units': device.max_compute_units,
+                                'max_work_group_size': device.max_work_group_size,
+                                'device_version': device.version,
+                                'device': device  # Store actual device reference
+                            }
+                            self.opencl_devices.append(device_info)
+
+                        # Initialize OpenCL context and command queue with the first device
+                        if devices:
+                            try:
+                                # Select GPU devices preferably
+                                gpu_devices = [d for d in devices if 'GPU' in str(d.type)]
+                                selected_device = gpu_devices[0] if gpu_devices else devices[0]
+
+                                self.opencl_context = cl.Context([selected_device])
+                                self.opencl_queue = cl.CommandQueue(self.opencl_context)
+                                self.logger.info(f"Initialized OpenCL with {selected_device.name}")
+                            except cl.LogicError as e:
+                                self.logger.error(f"Failed to initialize OpenCL context: {e}")
+
+                        self.opencl_available = True
+                        self.logger.info(f"OpenCL acceleration available: {len(devices)} device(s)")
+                    else:
+                        self.opencl_available = False
+                        self.logger.info("OpenCL installed but no devices detected")
+                else:
+                    self.opencl_available = False
+                    self.logger.info("OpenCL installed but no platforms detected")
+            else:
+                raise ImportError("PyOpenCL not available")
+        except (ImportError, AttributeError, cl.LogicError) if 'cl' in globals() else Exception as e:
+            self.logger.info(f"OpenCL acceleration not available: {str(e)}")
+            self.opencl_available = False
+
+        # Since we're using PyTorch instead of TensorFlow, mark TensorFlow as unavailable
+        self.tensorflow_available = False
+        self.logger.info("Using PyTorch instead of TensorFlow for ML acceleration")
+
+        # Check for PyTorch
+        try:
+            if torch is not None and torch.cuda.is_available():
+                self.pytorch_available = True
+                num_devices = torch.cuda.device_count()
+                self.logger.info(f"PyTorch GPU acceleration available: {num_devices} GPU(s)")
+
+                # Get PyTorch device information
+                for i in range(num_devices):
+                    device_properties = torch.cuda.get_device_properties(i)
+                    self.pytorch_devices.append({
+                        'index': i,
+                        'name': device_properties.name,
+                        'total_memory': device_properties.total_memory,
+                        'major': device_properties.major,
+                        'minor': device_properties.minor,
+                        'multi_processor_count': device_properties.multi_processor_count
+                    })
+            else:
+                if torch is not None:
+                    self.logger.info("PyTorch installed but no GPU detected")
+                else:
+                    raise ImportError("PyTorch not available")
+        except ImportError:
+            self.logger.info("PyTorch acceleration not available")
+
+    def _select_preferred_backend(self):
+        """
+        Select the preferred GPU backend based on availability, performance, and workload characteristics.
+        Takes into account the blacklisted backends and benchmark results when available.
+        """
+        # Start with all available backends
+        available_backends = []
+        if self.cuda_available and 'cuda' not in self.blacklisted_backends:
+            available_backends.append('cuda')
+        if self.opencl_available and 'opencl' not in self.blacklisted_backends:
+            available_backends.append('opencl')
+        if self.tensorflow_available and 'tensorflow' not in self.blacklisted_backends:
+            available_backends.append('tensorflow')
+        if self.pytorch_available and 'pytorch' not in self.blacklisted_backends:
+            available_backends.append('pytorch')
+
+        if not available_backends:
+            self.selected_backend = None
+            self.logger.warning("No GPU acceleration backend available or all backends are blacklisted")
+            return
+
+        # If we have benchmark data, use it to select the best backend
+        if self.backend_benchmarks:
+            # Calculate a weighted score for each backend
+            # Lower is better (based on execution time)
+            backend_scores = {}
+            for backend in available_backends:
+                if backend in self.backend_benchmarks:
+                    # Weighted average of benchmark scores for different operations
+                    pattern_score = self.backend_benchmarks[backend].get('pattern_matching', 1000)
+                    entropy_score = self.backend_benchmarks[backend].get('entropy_calculation', 1000)
+                    hash_score = self.backend_benchmarks[backend].get('hash_calculation', 1000)
+
+                    # Calculate weighted score based on typical usage patterns
+                    # Adjust weights based on your application's common operations
+                    weighted_score = 0.4 * pattern_score + 0.4 * entropy_score + 0.2 * hash_score
+                    backend_scores[backend] = weighted_score
+
+            # Select the backend with the best (lowest) score
+            if backend_scores:
+                best_backend = min(backend_scores, key=backend_scores.get)
+                self.selected_backend = best_backend
+                self.logger.info(f"Selected {best_backend} as preferred GPU backend based on benchmark scores")
+                return
+
+        # If no benchmark data or couldn't select based on benchmarks, use default preference order
+        default_order = ['cuda', 'opencl', 'tensorflow', 'pytorch']
+        for backend in default_order:
+            if backend in available_backends:
+                self.selected_backend = backend
+                self.logger.info(f"Selected {backend} as preferred GPU backend based on default order")
+                return
+
+        # Fallback
+        self.selected_backend = available_backends[0] if available_backends else None
+        self.logger.info(f"Selected {self.selected_backend} as preferred GPU backend (fallback)")
+
+    def is_acceleration_available(self):
+        """
+        Check if any GPU acceleration is available.
+
+        Returns:
+            bool: True if any GPU acceleration is available, False otherwise
+        """
+        return (self.cuda_available or self.opencl_available or
+                self.tensorflow_available or self.pytorch_available)
+
+    def _run_initial_benchmarks(self):
+        """
+        Run simple benchmarks to evaluate the performance of available backends.
+        Uses synthetic data to test each operation type.
+        """
+        self.logger.info("Running initial benchmarks for available backends...")
+
+        # Create synthetic test data
+        test_data = b"X" * 1024 * 1024  # 1MB of data
+        test_patterns = [b"XXX", b"XXXXX", b"XXXXXXX"]
+
+        # Initialize benchmark results
+        self.backend_benchmarks = {}
+
+        # Test available backends
+        backends_to_test = []
+        if self.cuda_available:
+            backends_to_test.append('cuda')
+        if self.opencl_available:
+            backends_to_test.append('opencl')
+        if self.tensorflow_available:
+            backends_to_test.append('tensorflow')
+        if self.pytorch_available:
+            backends_to_test.append('pytorch')
+
+        for backend in backends_to_test:
+            self.backend_benchmarks[backend] = {}
+            temp_selected = self.selected_backend
+            self.selected_backend = backend
+
+            try:
+                # Benchmark pattern matching
+                start_time = time.time()
+                try:
+                    if backend == 'cuda':
+                        self._cuda_pattern_matching(test_data[:10000], test_patterns)  # Use smaller sample
+                    elif backend == 'opencl':
+                        self._opencl_pattern_matching(test_data[:10000], test_patterns)  # Use smaller sample
+                    elif backend == 'tensorflow':
+                        self._tensorflow_pattern_matching(test_data[:10000], test_patterns)  # Use smaller sample
+                    elif backend == 'pytorch':
+                        self._pytorch_pattern_matching(test_data[:10000], test_patterns)  # Use smaller sample
+                    pattern_time = time.time() - start_time
+                    self.backend_benchmarks[backend]['pattern_matching'] = pattern_time
+                    self.logger.debug(f"{backend} pattern matching benchmark: {pattern_time:.4f}s")
+                except Exception as e:
+                    self.logger.warning(f"Error benchmarking {backend} pattern matching: {e}")
+                    self.backend_benchmarks[backend]['pattern_matching'] = float('inf')
+
+                # Benchmark entropy calculation
+                start_time = time.time()
+                try:
+                    if backend == 'cuda':
+                        self._cuda_entropy_calculation(test_data)
+                    elif backend == 'opencl':
+                        self._opencl_entropy_calculation(test_data)
+                    elif backend == 'tensorflow':
+                        self._tensorflow_entropy_calculation(test_data)
+                    elif backend == 'pytorch':
+                        self._pytorch_entropy_calculation(test_data)
+                    entropy_time = time.time() - start_time
+                    self.backend_benchmarks[backend]['entropy_calculation'] = entropy_time
+                    self.logger.debug(f"{backend} entropy calculation benchmark: {entropy_time:.4f}s")
+                except Exception as e:
+                    self.logger.warning(f"Error benchmarking {backend} entropy calculation: {e}")
+                    self.backend_benchmarks[backend]['entropy_calculation'] = float('inf')
+
+                # Benchmark hash calculation
+                start_time = time.time()
+                try:
+                    if backend == 'cuda':
+                        self._cuda_hash_calculation(test_data)
+                    elif backend == 'opencl':
+                        self._opencl_hash_calculation(test_data)
+                    elif backend == 'tensorflow':
+                        self._tensorflow_hash_calculation(test_data)
+                    elif backend == 'pytorch':
+                        self._pytorch_hash_calculation(test_data)
+                    hash_time = time.time() - start_time
+                    self.backend_benchmarks[backend]['hash_calculation'] = hash_time
+                    self.logger.debug(f"{backend} hash calculation benchmark: {hash_time:.4f}s")
+                except Exception as e:
+                    self.logger.warning(f"Error benchmarking {backend} hash calculation: {e}")
+                    self.backend_benchmarks[backend]['hash_calculation'] = float('inf')
+
+            except Exception as e:
+                self.logger.error(f"Error during {backend} benchmarking: {e}")
+
+            # Restore original backend
+            self.selected_backend = temp_selected
+
+        self.logger.info("Initial benchmarks completed")
+
+    def _validate_gpu_memory(self, data_size, operation_type):
+        """
+        Validate that there's enough GPU memory available for the operation.
+
+        Args:
+            data_size: Size of the data to process in bytes
+            operation_type: Type of operation ('pattern_matching', 'entropy_calculation', 'hash_calculation')
+
+        Returns:
+            bool: True if there's enough memory, False otherwise
+        """
+        # Memory requirement multipliers based on operation type
+        memory_multipliers = {
+            'pattern_matching': 3.0,  # Original data + pattern data + result data
+            'entropy_calculation': 2.5,  # Original data + histogram + intermediate data
+            'hash_calculation': 2.0,  # Original data + hash state
+        }
+
+        multiplier = memory_multipliers.get(operation_type, 3.0)  # Default to 3x if unknown
+        required_memory = int(data_size * multiplier)
+
+        # Check available memory for the selected backend
+        try:
+            if self.selected_backend == 'cuda' and self.cuda_devices:
+                # For CuPy
+                if 'cupy' in sys.modules:
+                    device_id = cp.cuda.get_device_id()
+                    free_memory, total_memory = cp.cuda.runtime.memGetInfo()
+                    # Calculate already allocated memory to avoid fragmentation issues
+                    allocated_memory = total_memory - free_memory
+                    memory_utilization = allocated_memory / total_memory * 100
+
+                    # Only proceed if we have enough memory AND memory isn't too fragmented
+                    if free_memory < required_memory:
+                        self.logger.warning(f"Insufficient CUDA memory for {operation_type}. Required: {required_memory/1024/1024:.2f}MB, Available: {free_memory/1024/1024:.2f}MB")
+                        return False
+                    elif memory_utilization > 85 and required_memory > 10*1024*1024:  # Over 85% utilized and need >10MB
+                        self.logger.warning(f"High memory utilization ({memory_utilization:.1f}%) may cause fragmentation issues")
+                        # Try to force garbage collection to consolidate memory
+                        if hasattr(cp, 'get_default_memory_pool'):
+                            cp.get_default_memory_pool().free_all_blocks()
+                # For PyCUDA
+                elif 'pycuda.driver' in sys.modules:
+                    free_memory, total_memory = drv.mem_get_info()
+                    if free_memory < required_memory:
+                        self.logger.warning(f"Insufficient CUDA memory for {operation_type}. Required: {required_memory/1024/1024:.2f}MB, Available: {free_memory/1024/1024:.2f}MB")
+                        return False
+
+            elif self.selected_backend == 'opencl' and self.opencl_devices:
+                # OpenCL doesn't have a direct way to query available memory
+                # We can estimate from device info
+                device = self.opencl_devices[0]['device']
+                total_memory = device.global_mem_size
+
+                # Assume some percentage is available (conservative estimate)
+                estimate_available = total_memory * 0.7
+                if estimate_available < required_memory:
+                    self.logger.warning(f"Potentially insufficient OpenCL memory for {operation_type}. Required: {required_memory/1024/1024:.2f}MB, Estimated available: {estimate_available/1024/1024:.2f}MB")
+                    return False
+
+            elif self.selected_backend == 'pytorch' and torch.cuda.is_available():
+                # PyTorch memory check
+                device_id = 0  # Use first device by default
+                total_memory = torch.cuda.get_device_properties(device_id).total_memory
+                reserved_memory = torch.cuda.memory_reserved(device_id)
+                allocated_memory = torch.cuda.memory_allocated(device_id)
+                free_memory = total_memory - reserved_memory
+
+                # Log current memory usage statistics
+                self.logger.debug(f"PyTorch CUDA memory stats: Total: {total_memory/1024/1024:.2f}MB, Reserved: {reserved_memory/1024/1024:.2f}MB, Allocated: {allocated_memory/1024/1024:.2f}MB, Free: {free_memory/1024/1024:.2f}MB")
+
+                # Use a more conservative estimate that accounts for already allocated memory
+                actual_free_memory = free_memory - allocated_memory
+
+                if actual_free_memory < required_memory:
+                    self.logger.warning(f"Insufficient PyTorch CUDA memory for {operation_type}. Required: {required_memory/1024/1024:.2f}MB, Available: {actual_free_memory/1024/1024:.2f}MB")
+                    return False
+
+            elif self.selected_backend == 'pytorch':
+                # Get PyTorch device memory info if available
+                try:
+                    if torch.cuda.is_available():
+                        device = torch.cuda.current_device()
+                        total_memory = torch.cuda.get_device_properties(device).total_memory
+                        used_memory = torch.cuda.memory_allocated(device)
+                        free_memory = total_memory - used_memory
+                        return free_memory
+                except:
+                    pass
+                # Use a conservative estimate
+                pass
+
+        except Exception as e:
+            self.logger.warning(f"Error checking GPU memory: {e}")
+            # Default to True when we can't check
+            return True
+
+        return True
+
+    def select_backend_for_workload(self, operation_type, data_size):
+        """
+        Dynamically select the best backend for a specific workload.
+
+        Args:
+            operation_type: Type of operation ('pattern_matching', 'entropy_calculation', 'hash_calculation')
+            data_size: Size of the data to process in bytes
+
+        Returns:
+            str: Name of the selected backend
+        """
+        if not self.is_acceleration_available():
+            return None
+
+        # Filter out blacklisted backends
+        available_backends = []
+        if self.cuda_available and 'cuda' not in self.blacklisted_backends:
+            available_backends.append('cuda')
+        if self.opencl_available and 'opencl' not in self.blacklisted_backends:
+            available_backends.append('opencl')
+        if self.tensorflow_available and 'tensorflow' not in self.blacklisted_backends:
+            available_backends.append('tensorflow')
+        if self.pytorch_available and 'pytorch' not in self.blacklisted_backends:
+            available_backends.append('pytorch')
+
+        if not available_backends:
+            return None
+
+        # Check if data size is too large for GPU memory
+        valid_backends = []
+        for backend in available_backends:
+            temp_backend = self.selected_backend
+            self.selected_backend = backend
+
+            if self._validate_gpu_memory(data_size, operation_type):
+                valid_backends.append(backend)
+
+            self.selected_backend = temp_backend
+
+        if not valid_backends:
+            self.logger.warning(f"No backend has sufficient memory for {operation_type} with {data_size/1024/1024:.2f}MB data")
+            return None
+
+        # If we have benchmark data, use it to select the best backend for this operation
+        if self.backend_benchmarks:
+            best_backend = None
+            best_score = float('inf')
+
+            for backend in valid_backends:
+                if backend in self.backend_benchmarks and operation_type in self.backend_benchmarks[backend]:
+                    score = self.backend_benchmarks[backend][operation_type]
+                    if score < best_score:
+                        best_score = score
+                        best_backend = backend
+
+            if best_backend:
+                return best_backend
+
+        # Workload-specific preferences if no benchmark data
+        if operation_type == 'pattern_matching':
+            # CUDA and OpenCL are typically best for pattern matching
+            if 'cuda' in valid_backends:
+                return 'cuda'
+            elif 'opencl' in valid_backends:
+                return 'opencl'
+        elif operation_type == 'entropy_calculation':
+            # All backends should handle this well, prefer CUDA > OpenCL > PyTorch > TensorFlow
+            for backend in ['cuda', 'opencl', 'pytorch', 'tensorflow']:
+                if backend in valid_backends:
+                    return backend
+        elif operation_type == 'hash_calculation':
+            # CUDA and OpenCL are typically better for hash calculations
+            if 'cuda' in valid_backends:
+                return 'cuda'
+            elif 'opencl' in valid_backends:
+                return 'opencl'
+
+        # Default to the first valid backend
+        return valid_backends[0] if valid_backends else None
+
+    def accelerate_pattern_matching(self, data, patterns):
+        """
+        Accelerate pattern matching using the selected GPU backend.
+
+        Args:
+            data: Binary data to search
+            patterns: List of patterns to search for
+
+        Returns:
+            list: List of matches with their positions
+        """
+        if not self.is_acceleration_available():
+            self.logger.warning("No GPU acceleration available for pattern matching")
+            return self._cpu_pattern_matching(data, patterns)
+
+        # Dynamic backend selection based on workload
+        data_size = len(data)
+        operation_backend = self.select_backend_for_workload('pattern_matching', data_size)
+
+        if not operation_backend:
+            self.logger.warning("No suitable GPU backend for pattern matching workload, falling back to CPU")
+            return self._cpu_pattern_matching(data, patterns)
+
+        self.logger.debug(f"Selected {operation_backend} backend for pattern matching workload")
+
+        try:
+            if operation_backend == 'cuda':
+                self.logger.debug("Using CUDA for pattern matching")
+                return self._cuda_pattern_matching(data, patterns)
+            elif operation_backend == 'opencl':
+                self.logger.debug("Using OpenCL for pattern matching")
+                return self._opencl_pattern_matching(data, patterns)
+            elif operation_backend == 'tensorflow':
+                self.logger.debug("Using TensorFlow for pattern matching")
+                return self._tensorflow_pattern_matching(data, patterns)
+            elif operation_backend == 'pytorch':
+                self.logger.debug("Using PyTorch for pattern matching")
+                return self._pytorch_pattern_matching(data, patterns)
+            else:
+                return self._cpu_pattern_matching(data, patterns)
+        except Exception as e:
+            self.logger.error(f"Error during GPU-accelerated pattern matching with {operation_backend}: {e}")
+
+            # Record error for this backend
+            self.error_counts[operation_backend] = self.error_counts.get(operation_backend, 0) + 1
+
+            # Check if backend should be blacklisted
+            if self.error_counts[operation_backend] >= self.max_errors_before_blacklist:
+                self.logger.warning(f"Blacklisting {operation_backend} backend due to repeated errors")
+                self.blacklisted_backends.add(operation_backend)
+
+            # Try fallback to other backends in order of preference
+            fallback_order = ['cuda', 'opencl', 'tensorflow', 'pytorch']
+            for fallback in fallback_order:
+                if fallback != operation_backend and fallback not in self.blacklisted_backends:
+                    if (fallback == 'cuda' and self.cuda_available or
+                        fallback == 'opencl' and self.opencl_available or
+                        fallback == 'tensorflow' and self.tensorflow_available or
+                        fallback == 'pytorch' and self.pytorch_available):
+
+                        self.logger.info(f"Attempting fallback to {fallback} implementation")
+                        try:
+                            if fallback == 'cuda':
+                                return self._cuda_pattern_matching(data, patterns)
+                            elif fallback == 'opencl':
+                                return self._opencl_pattern_matching(data, patterns)
+                            elif fallback == 'tensorflow':
+                                return self._tensorflow_pattern_matching(data, patterns)
+                            elif fallback == 'pytorch':
+                                return self._pytorch_pattern_matching(data, patterns)
+                        except Exception as e2:
+                            self.logger.error(f"{fallback} fallback also failed: {e2}")
+
+            # If all GPU implementations fail, fall back to CPU
+            self.logger.info("All GPU implementations failed, falling back to CPU implementation")
+            return self._cpu_pattern_matching(data, patterns)
+
+    def _cpu_pattern_matching(self, data, patterns):
+        """
+        CPU implementation of pattern matching.
+
+        Args:
+            data: Binary data to search
+            patterns: List of patterns to search for
+
+        Returns:
+            list: List of matches with their positions
+        """
+        results = []
+        for pattern in patterns:
+            pattern_matches = []
+            for match in re.finditer(pattern, data):
+                pattern_matches.append({
+                    'pattern': pattern,
+                    'position': match.start(),
+                    'match': match.group()
+                })
+            results.extend(pattern_matches)
+        return results
+
+    def _cuda_pattern_matching(self, data, patterns):
+        """
+        CUDA implementation of pattern matching.
+
+        Args:
+            data: Binary data to search
+            patterns: List of patterns to search for
+
+        Returns:
+            list: List of matches with their positions
+        """
+        try:
+            # Convert data to numpy array
+            data_array = np.frombuffer(data, dtype=np.uint8)
+
+            # Transfer to GPU
+            gpu_data = cp.array(data_array)
+
+            results = []
+            for pattern in patterns:
+                if isinstance(pattern, bytes):
+                    pattern_bytes = pattern
+                else:
+                    pattern_bytes = pattern.encode('utf-8')
+
+                pattern_array = np.frombuffer(pattern_bytes, dtype=np.uint8)
+                gpu_pattern = cp.array(pattern_array)
+
+                # Simple sliding window pattern matching
+                matches = []
+                pattern_len = len(pattern_array)
+
+                # CUDA kernel for pattern matching
+                if pattern_len <= 256:  # Limit for simple kernel
+                    # Create a kernel that checks for pattern match at each position
+                    kernel_code = """
+                    extern "C" __global__ void pattern_match(const unsigned char* data,
+                                                            const unsigned char* pattern,
+                                                            int data_len, int pattern_len,
+                                                            int* results) {
+                        int idx = blockIdx.x * blockDim.x + threadIdx.x;
+                        if (idx + pattern_len <= data_len) {
+                            bool match = true;
+                            for (int i = 0; i < pattern_len; i++) {
+                                if (data[idx + i] != pattern[i]) {
+                                    match = false;
+                                    break;
+                                }
+                            }
+                            results[idx] = match ? 1 : 0;
+                        }
+                    }
+                    """
+
+                    # Compile and run the kernel
+                    module = cp.RawModule(code=kernel_code)
+                    kernel = module.get_function('pattern_match')
+
+                    # Prepare output array
+                    results_gpu = cp.zeros(len(data_array), dtype=cp.int32)
+
+                    # Run kernel
+                    threads_per_block = 256
+                    blocks_per_grid = (len(data_array) + threads_per_block - 1) // threads_per_block
+                    kernel((blocks_per_grid,), (threads_per_block,),
+                           (gpu_data, gpu_pattern, len(data_array), pattern_len, results_gpu))
+
+                    # Get results
+                    results_cpu = cp.asnumpy(results_gpu)
+
+                    # Find matches
+                    for i in range(len(results_cpu)):
+                        if results_cpu[i] == 1:
+                            matches.append({
+                                'pattern': pattern,
+                                'position': i,
+                                'match': data[i:i+pattern_len]
+                            })
+                else:
+                    # Fall back to CPU for long patterns
+                    for match in re.finditer(pattern, data):
+                        matches.append({
+                            'pattern': pattern,
+                            'position': match.start(),
+                            'match': match.group()
+                        })
+
+                results.extend(matches)
+
+            return results
+
+        except Exception as e:
+            self.logger.error(f"CUDA pattern matching error: {e}")
+            return self._cpu_pattern_matching(data, patterns)
+
+    def _opencl_pattern_matching(self, data, patterns):
+        """
+        OpenCL implementation of pattern matching.
+
+        Args:
+            data: Binary data to search
+            patterns: List of patterns to search for
+
+        Returns:
+            list: List of matches with their positions
+        """
+        if not self.opencl_available or not self.opencl_context or not self.opencl_queue:
+            raise RuntimeError("OpenCL context not initialized")
+
+        results = []
+
+        try:
+            # Convert data to numpy array
+            data_array = np.frombuffer(data, dtype=np.uint8)
+
+            for pattern in patterns:
+                if isinstance(pattern, bytes):
+                    pattern_bytes = pattern
+                else:
+                    pattern_bytes = pattern.encode('utf-8')
+
+                pattern_array = np.frombuffer(pattern_bytes, dtype=np.uint8)
+                pattern_len = len(pattern_array)
+
+                # For very long patterns or complex regex patterns, fall back to CPU
+                if pattern_len > 256 or not all(isinstance(c, (int, bytes)) for c in pattern_bytes):
+                    pattern_matches = []
+                    for match in re.finditer(pattern, data):
+                        pattern_matches.append({
+                            'pattern': pattern,
+                            'position': match.start(),
+                            'match': match.group()
+                        })
+                    results.extend(pattern_matches)
+                    continue
+
+                # OpenCL kernel for pattern matching
+                opencl_code = """
+                __kernel void pattern_match(__global const uchar* data,
+                                           __global const uchar* pattern,
+                                           const int data_len,
+                                           const int pattern_len,
+                                           __global int* results) {
+                    int idx = get_global_id(0);
+
+                    if (idx + pattern_len <= data_len) {
+                        bool match = true;
+                        for (int i = 0; i < pattern_len; i++) {
+                            if (data[idx + i] != pattern[i]) {
+                                match = false;
+                                break;
+                            }
+                        }
+                        results[idx] = match ? 1 : 0;
+                    } else {
+                        results[idx] = 0;
+                    }
+                }
+                """
+
+                # Create OpenCL buffers
+                mf = cl.mem_flags
+                data_buf = cl.Buffer(self.opencl_context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data_array)
+                pattern_buf = cl.Buffer(self.opencl_context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=pattern_array)
+                results_buf = cl.Buffer(self.opencl_context, mf.WRITE_ONLY, size=data_array.nbytes * 4)
+
+                # Build program
+                program = cl.Program(self.opencl_context, opencl_code).build()
+
+                # Execute kernel
+                global_size = (len(data_array),)
+                local_size = None  # Let OpenCL decide
+
+                program.pattern_match(self.opencl_queue, global_size, local_size,
+                                     data_buf, pattern_buf,
+                                     np.int32(len(data_array)), np.int32(pattern_len),
+                                     results_buf)
+
+                # Read the results
+                results_array = np.zeros(len(data_array), dtype=np.int32)
+                cl.enqueue_copy(self.opencl_queue, results_array, results_buf)
+
+                # Find matches
+                matches = []
+                for i in range(len(results_array)):
+                    if results_array[i] == 1:
+                        matches.append({
+                            'pattern': pattern,
+                            'position': i,
+                            'match': data[i:i+pattern_len]
+                        })
+
+                results.extend(matches)
+
+            return results
+
+        except Exception as e:
+            self.logger.error(f"OpenCL pattern matching error: {e}")
+            return self._cpu_pattern_matching(data, patterns)
+
+    def accelerate_entropy_calculation(self, data, block_size=1024):
+        """
+        Accelerate entropy calculation using the selected GPU backend.
+
+        Args:
+            data: Binary data to calculate entropy for
+            block_size: Size of blocks to process
+
+        Returns:
+            float: Entropy value
+        """
+        if not self.is_acceleration_available():
+            self.logger.warning("No GPU acceleration available for entropy calculation")
+            return self._cpu_entropy_calculation(data)
+
+        # Dynamic backend selection based on workload
+        data_size = len(data)
+        operation_backend = self.select_backend_for_workload('entropy_calculation', data_size)
+
+        if not operation_backend:
+            self.logger.warning("No suitable GPU backend for entropy calculation workload, falling back to CPU")
+            return self._cpu_entropy_calculation(data)
+
+        self.logger.debug(f"Selected {operation_backend} backend for entropy calculation workload")
+
+        try:
+            if operation_backend == 'cuda':
+                self.logger.debug("Using CUDA for entropy calculation")
+                return self._cuda_entropy_calculation(data, block_size)
+            elif operation_backend == 'opencl':
+                self.logger.debug("Using OpenCL for entropy calculation")
+                return self._opencl_entropy_calculation(data, block_size)
+            elif operation_backend == 'tensorflow':
+                self.logger.debug("Using TensorFlow for entropy calculation")
+                return self._tensorflow_entropy_calculation(data, block_size)
+            elif operation_backend == 'pytorch':
+                self.logger.debug("Using PyTorch for entropy calculation")
+                return self._pytorch_entropy_calculation(data, block_size)
+            else:
+                return self._cpu_entropy_calculation(data)
+        except Exception as e:
+            self.logger.error(f"Error during GPU-accelerated entropy calculation with {operation_backend}: {e}")
+
+            # Record error for this backend
+            self.error_counts[operation_backend] = self.error_counts.get(operation_backend, 0) + 1
+
+            # Check if backend should be blacklisted
+            if self.error_counts[operation_backend] >= self.max_errors_before_blacklist:
+                self.logger.warning(f"Blacklisting {operation_backend} backend due to repeated errors")
+                self.blacklisted_backends.add(operation_backend)
+
+            # Try fallback to other backends in order of preference
+            fallback_order = ['cuda', 'opencl', 'tensorflow', 'pytorch']
+            for fallback in fallback_order:
+                if fallback != operation_backend and fallback not in self.blacklisted_backends:
+                    if (fallback == 'cuda' and self.cuda_available or
+                        fallback == 'opencl' and self.opencl_available or
+                        fallback == 'tensorflow' and self.tensorflow_available or
+                        fallback == 'pytorch' and self.pytorch_available):
+
+                        self.logger.info(f"Attempting fallback to {fallback} implementation")
+                        try:
+                            if fallback == 'cuda':
+                                return self._cuda_entropy_calculation(data, block_size)
+                            elif fallback == 'opencl':
+                                return self._opencl_entropy_calculation(data, block_size)
+                            elif fallback == 'tensorflow':
+                                return self._tensorflow_entropy_calculation(data, block_size)
+                            elif fallback == 'pytorch':
+                                return self._pytorch_entropy_calculation(data, block_size)
+                        except Exception as e2:
+                            self.logger.error(f"{fallback} fallback also failed: {e2}")
+
+            # If all GPU implementations fail, fall back to CPU
+            self.logger.info("All GPU implementations failed, falling back to CPU implementation")
+            return self._cpu_entropy_calculation(data)

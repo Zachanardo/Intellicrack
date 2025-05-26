@@ -1,0 +1,91 @@
+Intellicrack ML Vulnerability Predictor Model
+==============================================
+
+Created: 2025-05-03 19:01:54
+Training samples: 15000
+Training time: 538.17 seconds
+
+Model Architecture:
+- Ensemble of Random Forest and Gradient Boosting Classifiers
+- Robust scaling of features
+
+Performance Metrics:
+- Overall accuracy: 0.9620
+- buffer_overflow F1-score: 1.0000
+- buffer_overflow ROC AUC: 1.0000
+- heap_overflow F1-score: 1.0000
+- heap_overflow ROC AUC: 1.0000
+- stack_overflow F1-score: 1.0000
+- stack_overflow ROC AUC: 1.0000
+- format_string F1-score: 1.0000
+- format_string ROC AUC: 1.0000
+- use_after_free F1-score: 0.7114
+- use_after_free ROC AUC: 0.9939
+- double_free F1-score: 0.7473
+- double_free ROC AUC: 0.9945
+- null_pointer_dereference F1-score: 0.9655
+- null_pointer_dereference ROC AUC: 0.9997
+- integer_overflow F1-score: 0.9957
+- integer_overflow ROC AUC: 1.0000
+- integer_underflow F1-score: 0.9589
+- integer_underflow ROC AUC: 0.9998
+- signedness_error F1-score: 0.9583
+- signedness_error ROC AUC: 0.9993
+- race_condition F1-score: 0.9756
+- race_condition ROC AUC: 0.9998
+- time_of_check_time_of_use F1-score: 0.9114
+- time_of_check_time_of_use ROC AUC: 0.9994
+- improper_authentication F1-score: 0.9504
+- improper_authentication ROC AUC: 0.9997
+- improper_authorization F1-score: 0.9518
+- improper_authorization ROC AUC: 0.9999
+- improper_input_validation F1-score: 0.9645
+- improper_input_validation ROC AUC: 0.9999
+- sql_injection F1-score: 1.0000
+- sql_injection ROC AUC: 1.0000
+- xss_cross_site_scripting F1-score: 0.9896
+- xss_cross_site_scripting ROC AUC: 1.0000
+- csrf_cross_site_request_forgery F1-score: 0.9929
+- csrf_cross_site_request_forgery ROC AUC: 1.0000
+- open_redirect F1-score: 0.9822
+- open_redirect ROC AUC: 0.9999
+- path_traversal F1-score: 0.9927
+- path_traversal ROC AUC: 1.0000
+- remote_file_inclusion F1-score: 0.9935
+- remote_file_inclusion ROC AUC: 1.0000
+- weak_cryptography F1-score: 0.9737
+- weak_cryptography ROC AUC: 1.0000
+- hardcoded_credentials F1-score: 0.9872
+- hardcoded_credentials ROC AUC: 1.0000
+- improper_certificate_validation F1-score: 0.9726
+- improper_certificate_validation ROC AUC: 1.0000
+- insecure_randomness F1-score: 1.0000
+- insecure_randomness ROC AUC: 1.0000
+- command_injection F1-score: 0.9268
+- command_injection ROC AUC: 0.9994
+- os_command_injection F1-score: 0.8971
+- os_command_injection ROC AUC: 0.9993
+- buffer_over_read F1-score: 0.9591
+- buffer_over_read ROC AUC: 0.9999
+- privilege_escalation F1-score: 0.9640
+- privilege_escalation ROC AUC: 0.9999
+- unrestricted_file_upload F1-score: 0.9615
+- unrestricted_file_upload ROC AUC: 0.9999
+- information_leakage F1-score: 0.9211
+- information_leakage ROC AUC: 0.9994
+- insecure_deserialization F1-score: 0.9714
+- insecure_deserialization ROC AUC: 1.0000
+- licensing_weakness F1-score: 0.9787
+- licensing_weakness ROC AUC: 1.0000
+
+Top 10 most important features:
+- Byte_115: 0.030212
+- Byte_100: 0.025902
+- Byte_109: 0.025358
+- Byte_108: 0.025313
+- Byte_101: 0.024183
+- Byte_99: 0.022823
+- Byte_102: 0.022009
+- Byte_121: 0.021328
+- Byte_105: 0.021299
+- Byte_116: 0.021299

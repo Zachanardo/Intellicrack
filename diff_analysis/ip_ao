@@ -1,0 +1,1000 @@
+        # Ask for target address (optional)
+        target_address_str, ok = QInputDialog.getText(app, "Target Address", "Enter target address (optional, hex format):")
+        target_address = int(target_address_str, 16) if ok and target_address_str else None
+
+        # Run path exploration
+        app.update_output.emit(log_message("[Concolic] Running path exploration..."))
+        results = concolic_engine.explore_paths(target_address=target_address)
+
+    else:  # License Bypass
+        # Ask for license check address (optional)
+        license_check_str, ok = QInputDialog.getText(app, "License Check Address", "Enter license check address (optional, hex format):")
+        license_check_address = int(license_check_str, 16) if ok and license_check_str else None
+
+        # Run license bypass
+        app.update_output.emit(log_message("[Concolic] Searching for license bypass..."))
+        results = concolic_engine.find_license_bypass(license_check_address=license_check_address)
+
+    # Process results
+    if "error" in results:
+        app.update_output.emit(log_message(f"[Concolic] Error: {results['error']}"))
+        return
+
+    # Display results
+    if mode == "Path Exploration":
+        app.update_output.emit(log_message(f"[Concolic] Explored {results['paths_explored']} paths. Found {len(results['inputs'])} inputs."))
+        app.update_output.emit(log_message(f"[Concolic] Found {len(results['inputs'])} unique inputs"))
+
+        # Add to analyze results
+        if not hasattr(app, "analyze_results"):
+            app.analyze_results = []
+
+        app.analyze_results.append("\n=== CONCOLIC EXECUTION RESULTS ===")
+        app.analyze_results.append(f"Paths explored: {results['paths_explored']}")
+        app.analyze_results.append(f"Unique inputs found: {len(results['inputs'])}")
+
+        if results['inputs']:
+            app.analyze_results.append("\nSample inputs:")
+            for i, input_data in enumerate(results['inputs'][:5]):  # Show up to 5 inputs
+                app.analyze_results.append(f"\nInput {i+1}:")
+                app.analyze_results.append(f"  Stdin: {input_data['stdin']}")
+                app.analyze_results.append(f"  Argv: {input_data['argv']}")
+                app.analyze_results.append(f"  Termination reason: {input_data['termination_reason']}")
+
+    else:  # License Bypass
+        if results.get("bypass_found", False):
+            app.update_output.emit(log_message("[Concolic] License bypass found!"))
+            app.update_output.emit(log_message(f"[Concolic] License check at: {results['license_check_address']}"))
+
+            # Add to analyze results
+            if not hasattr(app, "analyze_results"):
+                app.analyze_results = []
+
+            app.analyze_results.append("\n=== LICENSE BYPASS RESULTS ===")
+            app.analyze_results.append("License bypass found!")
+            app.analyze_results.append(f"License check at: {results['license_check_address']}")
+            app.analyze_results.append(f"Bypass input (stdin): {results['stdin']}")
+            app.analyze_results.append(f"Bypass input (argv): {results['argv']}")
+
+            # Save bypass to file
+            bypass_file = os.path.join("scripts", "license_bypass.json")
+            os.makedirs(os.path.dirname(bypass_file), exist_ok=True)
+
+            try:
+                with open(bypass_file, "w", encoding="utf-8") as f:
+                    json.dump(results, f, indent=2)
+                app.update_output.emit(log_message(f"[Concolic] Bypass saved to {bypass_file}"))
+            except Exception as e:
+                app.update_output.emit(log_message(f"[Concolic] Error saving bypass: {e}"))
+        else:
+            app.update_output.emit(log_message("[Concolic] Could not find license bypass"))
+            app.update_output.emit(log_message("[Concolic] Try providing a specific license check address"))
+
+# -------------------------------
+# Enhanced Protection Handling
+# -------------------------------
+def generate_checksum(data: ByteString) -> int:
+    """
+    Compute a 16-bit checksum for the provided binary data.
+
+    This function mimics the approach used by Windows PE files:
+    - It ensures an even number of bytes by padding with a null byte if needed.
+    - It processes the data in 16-bit little-endian chunks using `struct.iter_unpack`.
+    - It sums all 16-bit values using 32-bit arithmetic.
+    - It then folds the 32-bit sum down to 16 bits by repeatedly adding the upper 16 bits to the lower 16 bits.
+
+    Args:
+        data (ByteString): The binary data to calculate the checksum from.
+
+    Returns:
+        int: The computed 16-bit checksum.
+    """
+    logging.debug(f"Generating 16-bit checksum for data of length {len(data)}")
+    # Ensure data length is even by padding a null byte if necessary.
+    if len(data) % 2 != 0:
+        data += b'\0'
+
+    # Sum up all 16-bit words in the data using iter_unpack for efficiency.
+    checksum = sum(word[0] for word in struct.iter_unpack('<H', data)) & 0xffffffff
+
+    # Fold 32-bit checksum to 16 bits by continuously adding the upper and lower 16 bits.
+    while (checksum >> 16) != 0:
+        checksum = (checksum & 0xffff) + (checksum >> 16)
+
+    final_checksum = checksum & 0xffff
+    logging.debug(f"Calculated checksum: 0x{final_checksum:04X}")
+    return final_checksum
+
+def detect_checksum_verification(app):
+    """
+    Detects integrity/checksum verification routines in the binary.
+    """
+    logging.info(f"Scanning {app.binary_path} for integrity verification mechanisms.")
+    results = []
+    results.append("Scanning for integrity verification mechanisms...")
+
+    if not app.binary_path:
+        results.append("Error: No binary specified.")
+        return results
+
+    binary_path = app.binary_path
+
+    try:
+
+        pe = pefile.PE(binary_path)
+        is_64bit = pe.FILE_HEADER.Machine == 0x8664
+        mode = CS_MODE_64 if is_64bit else CS_MODE_32
+
+        # Checksum-related imports
+        checksum_imports = [
+            "GetFileVersionInfoA", "GetFileVersionInfoW",
+            "GetFileVersionInfoSizeA", "GetFileVersionInfoSizeW",
+            "CRC32", "MD5", "SHA1", "SHA256",
+            "CryptHashData", "CryptCreateHash",
+            "MapFileAndCheckSum", "CheckSumMappedFile"
+        ]
+
+        # Self-modifying code patterns
+        patch_instructions = [
+            "WriteProcessMemory", "VirtualProtect",
+            "memmove", "memcpy", "RtlMoveMemory",
+            "VirtualAlloc", "VirtualProtect"
+        ]
+
+        # Crypto functions that might be used for verification
+        crypto_funcs = [
+            "CryptAcquireContext", "CryptGenRandom",
+            "CryptCreateHash", "CryptHashData",
+            "CryptGetHashParam"
+        ]
+
+        # Check imports
+        found_checksum_apis = []
+
+        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                dll_name = entry.dll.decode('utf-8', 'ignore').lower()
+
+                for imp in entry.imports:
+                    if imp.name:
+                        imp_name = imp.name.decode('utf-8', 'ignore')
+
+                        # Check for checksum-related APIs
+                        for api in checksum_imports:
+                            if api.lower() in imp_name.lower():
+                                found_checksum_apis.append(
+                                    f"{dll_name}:{imp_name}")
+                                break
+
+                        # Check for patching APIs
+                        for api in patch_instructions:
+                            if api.lower() in imp_name.lower():
+                                found_checksum_apis.append(
+                                    f"{dll_name}:{imp_name}")
+                                break
+
+                        # Check for crypto APIs
+                        for api in crypto_funcs:
+                            if api.lower() in imp_name.lower():
+                                found_checksum_apis.append(
+                                    f"{dll_name}:{imp_name}")
+                                break
+
+        if found_checksum_apis:
+            results.append(
+                f"Found {
+                    len(found_checksum_apis)} APIs related to integrity checking:")
+            logging.info(f"Found {len(found_checksum_apis)} integrity-related APIs.")
+            # Show only first 10
+            for i, api in enumerate(found_checksum_apis[:10]):
+                results.append(f"  {i + 1}. {api}")
+            if len(found_checksum_apis) > 10:
+                results.append(
+                    f"  ... and {len(found_checksum_apis) - 10} more")
+        else:
+            results.append("No integrity-related APIs found in imports.")
+
+        # Analyze .text section for instruction patterns
+        text_section = next(
+            (s for s in pe.sections if b".text" in s.Name), None)
+        if text_section:
+            code_data = text_section.get_data()
+            md = Cs(CS_ARCH_X86, mode)
+
+            # Instruction patterns that suggest integrity verification
+            suspicious_patterns = 0
+            crc_patterns = 0
+            hash_patterns = 0
+            checksum_xor_patterns = 0
+
+            for i, instruction in enumerate(md.disasm(code_data, 0)):
+                # Check for CRC-like calculation patterns
+                # Common patterns: XOR, shift, CMP with constant pattern
+                if instruction.mnemonic == "xor" and instruction.op_str.find(
+                        "eax") != -1:
+                    crc_patterns += 1
+
+                # Hash calculation typically has many bitwise operations
+                if instruction.mnemonic in [
+                        "rol", "ror", "shl", "shr"] and crc_patterns > 0:
+                    hash_patterns += 1
+
+                # Integrity check typically ends with a comparison
+                if instruction.mnemonic in ["cmp", "test"] and (
+                        crc_patterns > 3 or hash_patterns > 3):
+                    suspicious_patterns += 1
+
+                # XOR patterns often used in checksum calculation
+                if instruction.mnemonic == "xor" and instruction.op_str.find(
+                        "byte ptr") != -1:
+                    checksum_xor_patterns += 1
+
+            if suspicious_patterns > 0 or crc_patterns > 5 or hash_patterns > 5 or checksum_xor_patterns > 5:
+                results.append(
+                    "\nDetected potential integrity checking patterns in code:")
+                if suspicious_patterns > 0:
+                    results.append(
+                        f"  - {suspicious_patterns} potential checksum verification patterns")
+                if crc_patterns > 5:
+                    results.append(
+                        f"  - {crc_patterns} CRC-like calculation patterns")
+                if hash_patterns > 5:
+                    results.append(
+                        f"  - {hash_patterns} hash calculation patterns")
+                if checksum_xor_patterns > 5:
+                    results.append(
+                        f"  - {checksum_xor_patterns} checksum XOR patterns")
+
+        if pe.OPTIONAL_HEADER.CheckSum != 0:
+            results.append("\nPE Header contains a non-zero CheckSum field:")
+            results.append(f"  PE CheckSum: 0x{pe.OPTIONAL_HEADER.CheckSum:08X}")
+
+            # Verify if the checksum is valid
+            try:
+                # Open the binary file in binary mode and read its content
+                with open(binary_path, "rb") as f:
+                    file_data = f.read()
+                calculated = generate_checksum(file_data)
+                is_valid_checksum = (calculated == pe.OPTIONAL_HEADER.CheckSum)
+                logging.info(f"PE Checksum: 0x{pe.OPTIONAL_HEADER.CheckSum:08X}. Valid: {is_valid_checksum}")
+                if is_valid_checksum:
+                    results.append("  CheckSum is valid. The binary verifies its integrity.")
+                else:
+                    results.append(f"  CheckSum is invalid. Expected: 0x{calculated:08X}, Found: 0x{pe.OPTIONAL_HEADER.CheckSum:08X}")
+                    results.append("  This may indicate the binary has been modified.")
+            except BaseException:
+                results.append("  Could not verify PE CheckSum.")
+
+        # Analyze resources for embedded checksums
+        if hasattr(pe, 'DIRECTORY_ENTRY_RESOURCE'):
+            for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
+                for resource_id in resource_type.directory.entries:
+                    for resource_lang in resource_id.directory.entries:
+                        try:
+                            data_rva = resource_lang.data.struct.OffsetToData
+                            size = resource_lang.data.struct.Size
+                            data = pe.get_memory_mapped_image()[
+                                data_rva:data_rva + size]
+
+                            # Check for patterns that might be checksums
+                            if size >= 16 and size <= 64:
+                                # Check if it could be a hash
+                                is_hash = True
+                                for i in range(min(16, size)):
+                                    if data[i] < 0x20 and data[i] != 0:
+                                        is_hash = False
+                                        break
+
+                                if is_hash:
+                                    results.append(
+                                        "\nFound potential integrity data in resources:")
+                                    results.append(
+                                        f"  - Resource ID: {resource_id.id}, Size: {size} bytes")
+                                    results.append(
+                                        f"  - First 16 bytes: {data[:16].hex()}")
+                        except BaseException:
+                            pass
+
+        # Check for specific integrity sections
+        integrity_sections = [".hash", ".crc", ".sign", ".vrf", ".verif"]
+        for section in pe.sections:
+            section_name = section.Name.decode('utf-8', 'ignore').strip("\x00")
+            if any(integrity_name in section_name.lower()
+                   for integrity_name in integrity_sections):
+                results.append(
+                    f"\nFound dedicated integrity section: {section_name}")
+                results.append(
+                    f"  - Section size: {section.SizeOfRawData} bytes")
+                results.append(
+                    f"  - Section entropy: {calculate_entropy(section.get_data()):.2f}")
+
+                # High entropy suggests encrypted or compressed data
+                if calculate_entropy(section.get_data()) > 7.0:
+                    results.append(
+                        "  - Section has high entropy, suggesting encrypted/compressed verification data")
+
+        # Overall assessment
+        if len(
+                found_checksum_apis) > 2 or suspicious_patterns > 5 or pe.OPTIONAL_HEADER.CheckSum != 0:
+            results.append(
+                "\nINTEGRITY VERIFICATION DETECTED (High confidence)")
+            results.append(
+                "The binary appears to check its own integrity and may detect modifications.")
+            results.append(
+                "Recommendation: Use memory patching instead of modifying the file directly.")
+            logging.info(f"Overall integrity verification confidence: HIGH")
+        elif len(found_checksum_apis) > 0 or suspicious_patterns > 0 or crc_patterns > 5 or hash_patterns > 5:
+            results.append(
+                "\nPOSSIBLE INTEGRITY VERIFICATION (Medium confidence)")
+            results.append(
+                "The binary may have basic integrity checking capabilities.")
+            results.append("Proceed with caution when patching.")
+            logging.info(f"Overall integrity verification confidence: MEDIUM")
+        else:
+            results.append("\nNo significant integrity verification detected.")
+            results.append(
+                "The binary likely does not protect itself against modifications.")
+            logging.info(f"Overall integrity verification confidence: LOW")
+
+    except Exception as e:
+        results.append(f"Error analyzing integrity verification: {e}")
+        results.append(traceback.format_exc())
+
+    return results
+
+
+def detect_self_healing_code(app):
+    """
+    Detects self-healing code mechanisms in the binary.
+    """
+    logging.info(f"Scanning {app.binary_path} for self-healing code mechanisms.")
+    results = []
+    results.append("Scanning for self-healing code mechanisms...")
+
+    if not app.binary_path:
+        results.append("Error: No binary specified.")
+        return results
+
+    binary_path = app.binary_path
+
+    try:
+
+        pe = pefile.PE(binary_path)
+        is_64bit = pe.FILE_HEADER.Machine == 0x8664
+        mode = CS_MODE_64 if is_64bit else CS_MODE_32
+
+        # Self-healing related APIs
+        healing_apis = [
+            "WriteProcessMemory", "VirtualProtect", "VirtualAlloc",
+            "memcpy", "memmove", "RtlCopyMemory", "CopyMemory",
+            "LoadLibrary", "GetProcAddress",
+            "CreateThread", "CreateRemoteThread",
+            "NtProtectVirtualMemory", "SetProcessValidCallTargets"
+        ]
+
+        # Found APIs
+        found_healing_apis = []
+
+        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                dll_name = entry.dll.decode('utf-8', 'ignore').lower()
+
+                for imp in entry.imports:
+                    if imp.name:
+                        imp_name = imp.name.decode('utf-8', 'ignore')
+
+                        # Check for memory writing/protection APIs
+                        for api in healing_apis:
+                            if api.lower() in imp_name.lower():
+                                found_healing_apis.append(
+                                    f"{dll_name}:{imp_name}")
+                                break
+
+        if found_healing_apis:
+            results.append(
+                f"Found {
+                    len(found_healing_apis)} APIs related to self-healing:")
+            logging.info(f"Found {len(found_healing_apis)} self-healing related APIs.")
+            # Show only first 10
+            for i, api in enumerate(found_healing_apis[:10]):
+                results.append(f"  {i + 1}. {api}")
+            if len(found_healing_apis) > 10:
+                results.append(
+                    f"  ... and {len(found_healing_apis) - 10} more")
+        else:
+            results.append("No self-healing related APIs found in imports.")
+
+        # Check for write-execute memory regions
+        text_section = next(
+            (s for s in pe.sections if b".text" in s.Name), None)
+        if text_section:
+            is_executable = (text_section.Characteristics &
+                             0x20000000) != 0  # IMAGE_SCN_MEM_EXECUTE
+            is_writable = (text_section.Characteristics &
+                           0x80000000) != 0    # IMAGE_SCN_MEM_WRITE
+
+            if is_executable and is_writable:
+                results.append(
+                    "\nDETECTED WRITABLE AND EXECUTABLE .text SECTION")
+                results.append(
+                    "This is a strong indicator of self-modifying/self-healing code.")
+                logging.info(".text section is W+X.")
+
+        # Search for other sections with both write and execute permissions
+        for section in pe.sections:
+            section_name = section.Name.decode('utf-8', 'ignore').strip("\x00")
+            # IMAGE_SCN_MEM_EXECUTE
+            is_executable = (section.Characteristics & 0x20000000) != 0
+            # IMAGE_SCN_MEM_WRITE
+            is_writable = (section.Characteristics & 0x80000000) != 0
+
+            if is_executable and is_writable and not section_name.startswith(
+                    ".text"):
+                results.append(
+                    f"\nDETECTED WRITABLE AND EXECUTABLE SECTION: {section_name}")
+                results.append(f"  - Size: {section.SizeOfRawData} bytes")
+                results.append(
+                    f"  - Entropy: {calculate_entropy(section.get_data()):.2f}")
+                results.append(
+                    "This section can contain self-modifying/self-healing code.")
+                logging.info(f"Section '{section_name}' is W+X.")
+
+        # Analyze instructions for self-modifying patterns
+        text_section = next(
+            (s for s in pe.sections if b".text" in s.Name), None)
+        if text_section:
+            code_data = text_section.get_data()
+            md = Cs(CS_ARCH_X86, mode)
+
+            # Patterns suggesting self-modifying code
+            self_mod_patterns = 0
+            memory_write_patterns = 0
+            protection_change_patterns = 0
+
+            instructions = list(md.disasm(code_data, 0))
+            for i, insn in enumerate(instructions):
+                # Look for memory write patterns
+                if insn.mnemonic == "mov" and (
+                        "byte ptr [" in insn.op_str or
+                        "word ptr [" in insn.op_str or
+                        "dword ptr [" in insn.op_str or
+                        "qword ptr [" in insn.op_str):
+                    memory_write_patterns += 1
+
+                    # Check if writing to a code section address
+                    if "byte ptr [0x" in insn.op_str or "word ptr [0x" in insn.op_str:
+                        self_mod_patterns += 1
+
+                # Look for calls to memory protection functions
+                if insn.mnemonic == "call" and i > 0:
+                    prev_insn = instructions[i - 1]
+                    if prev_insn.mnemonic in [
+                            "push", "mov"] and "VirtualProtect" in prev_insn.op_str:
+                        protection_change_patterns += 1
+
+            if self_mod_patterns > 5 or protection_change_patterns > 0:
+                results.append("\nDetected self-modifying code patterns:")
+                if self_mod_patterns > 5:
+                    results.append(
+                        f"  - {self_mod_patterns} direct memory write operations to code regions")
+                if protection_change_patterns > 0:
+                    results.append(
+                        f"  - {protection_change_patterns} memory protection changes")
+
+        # Overall assessment
+        overall_confidence_level = "LOW"
+        if len(found_healing_apis) > 3 or protection_change_patterns > 0 or (
+                is_executable and is_writable):
+            overall_confidence_level = "HIGH"
+            results.append("\nSELF-HEALING CODE DETECTED (High confidence)")
+            results.append(
+                "The binary appears to modify its own code at runtime.")
+            results.append(
+                "This is a strong anti-tampering mechanism that makes static patching less effective.")
+            results.append(
+                "Recommendation: Use runtime patching or API hooking instead of static patching.")
+        elif len(found_healing_apis) > 0 or self_mod_patterns > 5:
+            overall_confidence_level = "MEDIUM"
+            results.append("\nPOSSIBLE SELF-HEALING CODE (Medium confidence)")
+            results.append(
+                "The binary may have basic self-modification capabilities.")
+            results.append("Proceed with caution when patching.")
+        else:
+            overall_confidence_level = "LOW"
+            results.append("\nNo significant self-healing code detected.")
+            results.append(
+                "The binary likely does not restore itself after modifications.")
+
+        logging.info(f"Overall self-healing code confidence: {overall_confidence_level}")
+
+    except Exception as e:
+        results.append(f"Error analyzing self-healing code: {e}")
+        results.append(traceback.format_exc())
+
+    return results
+
+
+def detect_obfuscation(app):
+    """
+    Detects code obfuscation techniques in the binary.
+    Enhanced with advanced detection for heavily obfuscated binaries.
+    """
+    logging.info(f"Scanning {app.binary_path} for code obfuscation.")
+    results = []
+    results.append("Scanning for code obfuscation...")
+
+    if not app.binary_path:
+        results.append("Error: No binary specified.")
+        return results
+
+    binary_path = app.binary_path
+
+    try:
+
+        # Define calculate_entropy function
+        def calculate_entropy(data):
+            """Calculates Shannon entropy of given data."""
+            if not data:
+                return 0
+
+            entropy = 0
+            counter = Counter(bytearray(data))
+            data_len = len(data)
+
+            for count in counter.values():
+                probability = count / data_len
+                entropy -= probability * math.log2(probability)
+
+            return entropy
+
+        pe = pefile.PE(binary_path)
+
+        # Check for high-entropy sections (indication of packing or encryption)
+        high_entropy_sections = []
+        for section in pe.sections:
+            section_name = section.Name.decode('utf-8', 'ignore').strip("\x00")
+            section_data = section.get_data()
+            entropy = calculate_entropy(section_data)
+
+            if entropy > 7.0:
+                high_entropy_sections.append((section_name, entropy))
+
+        if high_entropy_sections:
+            results.append(
+                "Found high-entropy sections (possible obfuscation/packing):")
+            for name, entropy in high_entropy_sections:
+                results.append(f"  - {name}: Entropy {entropy:.2f}")
+        else:
+            results.append("No high-entropy sections found.")
+
+        # Check for unusual section names
+        unusual_sections = []
+        common_sections = {".text", ".data", ".rdata",
+                           ".bss", ".rsrc", ".idata", ".reloc", ".tls"}
+
+        for section in pe.sections:
+            section_name = section.Name.decode('utf-8', 'ignore').strip("\x00")
+            if section_name and section_name not in common_sections and not section_name.startswith(
+                    "."):
+                unusual_sections.append(section_name)
+
+        if unusual_sections:
+            results.append(
+                "\nFound unusual section names (potential obfuscation):")
+            for name in unusual_sections:
+                results.append(f"  - {name}")
+
+        # Check for missing or invalid imports
+        if not hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            results.append(
+                "\nNo import directory found - strong indication of obfuscation")
+        else:
+            num_imports = sum(len(entry.imports)
+                              for entry in pe.DIRECTORY_ENTRY_IMPORT)
+            if num_imports < 10:
+                results.append(
+                    f"\nVery few imports ({num_imports}) - possible obfuscation")
+
+        # Check for unusual entry point
+        entry_rva = pe.OPTIONAL_HEADER.AddressOfEntryPoint
+        is_entry_in_known_section = False
+        entry_section = None
+
+        for section in pe.sections:
+            if (section.VirtualAddress <= entry_rva <
+                    section.VirtualAddress + section.Misc_VirtualSize):
+                is_entry_in_known_section = True
+                entry_section = section.Name.decode(
+                    'utf-8', 'ignore').strip("\x00")
+                break
+
+        if not is_entry_in_known_section:
+            results.append(
+                "\nEntry point is not in any known section - strong indication of obfuscation")
+        elif entry_section != ".text":
+            results.append(
+                f"\nEntry point is in an unusual section: {entry_section} - possible obfuscation")
+
+        # Check for jumps to calculated addresses (common in obfuscated code)
+
+        is_64bit = pe.FILE_HEADER.Machine == 0x8664
+        mode = CS_MODE_64 if is_64bit else CS_MODE_32
+
+        text_section = next(
+            (s for s in pe.sections if b".text" in s.Name), None)
+        if text_section:
+            code_data = text_section.get_data()
+            md = Cs(CS_ARCH_X86, mode)
+
+            # Patterns suggesting obfuscation
+            jmp_reg_count = 0
+            unusual_instrs = 0
+            redundant_instrs = 0
+            opaque_predicates = 0
+            mixed_code_data = 0
+            control_flow_flattening = 0
+
+            # Analyze the first 1000 instructions or less
+            max_instr = 1000
+            instr_count = 0
+
+            # Store previous instructions for pattern detection
+            prev_instrs = []
+            max_prev = 5  # Keep track of 5 previous instructions
+
+            for insn in md.disasm(code_data, 0):
+                instr_count += 1
+                if instr_count > max_instr:
+                    break
+
+                # Store instruction for pattern analysis
+                prev_instrs.append(insn)
+                if len(prev_instrs) > max_prev:
+                    prev_instrs.pop(0)
+
+                # Jump to register (often used in obfuscated code)
+                if insn.mnemonic in [
+                        "jmp", "call"] and "[" in insn.op_str and "0x" not in insn.op_str:
+                    jmp_reg_count += 1
+
+                # Unusual instruction sequences
+                if insn.mnemonic in [
+                    "ror",
+                    "rol",
+                    "rcl",
+                    "rcr",
+                    "xor",
+                        "pxor"] and insn.op_str.find("0x") != -1:
+                    unusual_instrs += 1
+
+                # Redundant instructions (often used to confuse analysis)
+                if (
+                    (insn.mnemonic == "push" and "eax" in insn.op_str) or
+                    (insn.mnemonic == "pop" and "eax" in insn.op_str) or
+                    (insn.mnemonic == "inc" and "ecx" in insn.op_str and
+                     instr_count < max_instr - 1 and md.disasm(code_data[instr_count:instr_count + 2], 0)[0].mnemonic == "dec" and
+                     "ecx" in md.disasm(code_data[instr_count:instr_count + 2], 0)[0].op_str)
+                ):
+                    redundant_instrs += 1
+
+                # Detect opaque predicates (always true/false conditions)
+                if insn.mnemonic.startswith("j") and len(prev_instrs) >= 2:
+                    prev = prev_instrs[-2]
+                    if prev.mnemonic == "test" and prev.op_str.split(",")[0] == prev.op_str.split(",")[1]:
+                        # test eax, eax followed by conditional jump is often an opaque predicate
+                        opaque_predicates += 1
+                    elif prev.mnemonic == "cmp" and "0" in prev.op_str and insn.mnemonic in ["jne", "je"]:
+                        # cmp reg, 0 followed by je/jne is often an opaque predicate
+                        opaque_predicates += 1
+
+                # Detect control flow flattening (common in VMProtect/Themida)
+                if insn.mnemonic == "jmp" and "[" in insn.op_str and len(prev_instrs) >= 3:
+                    # Look for patterns like: mov reg, value; add/sub reg, reg2; jmp [table+reg]
+                    if any(p.mnemonic in ["mov", "lea"] for p in prev_instrs) and \
+                       any(p.mnemonic in ["add", "sub", "xor"] for p in prev_instrs):
+                        control_flow_flattening += 1
+
+                # Detect mixed code and data (common in obfuscated binaries)
+                if insn.mnemonic in ["db", "dw", "dd"] or insn.bytes[0] == 0:
+                    mixed_code_data += 1
+
+            obfuscation_score = 0
+            if jmp_reg_count > 10:
+                obfuscation_score += 2
+                results.append(
+                    f"\nFound {jmp_reg_count} jumps to registers - common in obfuscated code")
+
+            if unusual_instrs > 20:
+                obfuscation_score += 2
+                results.append(
+                    f"\nFound {unusual_instrs} unusual instruction sequences - possible obfuscation")
+
+            if redundant_instrs > 15:
+                obfuscation_score += 1
+                results.append(
+                    f"\nFound {redundant_instrs} redundant instructions - possible obfuscation")
+
+            if opaque_predicates > 5:
+                obfuscation_score += 3
+                results.append(
+                    f"\nFound {opaque_predicates} potential opaque predicates - strong indication of obfuscation")
+
+            if control_flow_flattening > 3:
+                obfuscation_score += 4
+                results.append(
+                    f"\nDetected control flow flattening patterns ({control_flow_flattening} instances) - advanced obfuscation technique")
+
+            if mixed_code_data > 10:
+                obfuscation_score += 2
+                results.append(
+                    f"\nDetected mixed code and data ({mixed_code_data} instances) - common in heavily obfuscated code")
+
+            # Check for metamorphic code patterns (code that changes itself)
+            metamorphic_score = 0
+            if jmp_reg_count > 15 and unusual_instrs > 25 and control_flow_flattening > 5:
+                metamorphic_score = 3
+                results.append("\nPossible metamorphic code detected - code may modify itself during execution")
+                obfuscation_score += metamorphic_score
+
+        # Overall assessment
+        obfuscation_confidence = "NONE"
+        if len(high_entropy_sections) > 1 or not is_entry_in_known_section or obfuscation_score >= 5:
+            obfuscation_confidence = "HIGH"
+        elif len(high_entropy_sections) > 0 or len(unusual_sections) > 0 or obfuscation_score > 2:
+            obfuscation_confidence = "MEDIUM"
+
+        results.append("\nOBFUSCATION ASSESSMENT: " +
+                       obfuscation_confidence + " CONFIDENCE")
+        results.append(f"Obfuscation Score: {obfuscation_score}/15")
+
+        if obfuscation_confidence == "HIGH":
+            results.append(
+                "The binary shows strong signs of advanced obfuscation, making static analysis difficult.")
+            results.append(
+                "Recommendation: Use dynamic analysis, memory patching, and advanced deobfuscation techniques.")
+
+            # Specific recommendations for advanced obfuscation
+            if control_flow_flattening > 3:
+                results.append("  - Use control flow graph recovery techniques to reconstruct original logic")
+            if opaque_predicates > 5:
+                results.append("  - Apply symbolic execution to resolve opaque predicates")
+            if metamorphic_score > 0:
+                results.append("  - Use runtime tracing to capture code after self-modification")
+
+        elif obfuscation_confidence == "MEDIUM":
+            results.append(
+                "The binary shows some signs of obfuscation. Exercise caution during analysis.")
+        else:
+            results.append(
+                "No significant obfuscation detected. Standard analysis should be effective.")
+
+    except Exception as e:
+        results.append(f"Error analyzing obfuscation: {e}")
+        results.append(traceback.format_exc())
+
+    return results
+
+
+def run_enhanced_protection_scan(app):
+    """
+    Comprehensive scan for various protection mechanisms.
+    """
+    if not app.binary_path:
+        app.update_output.emit(log_message(
+            "[Protection Scan] No binary selected."))
+        return
+
+    app.update_output.emit(log_message(
+        "[Protection Scan] Starting comprehensive protection scan..."))
+    app.analyze_results.clear()
+
+    # Check for checksum verification
+    app.update_output.emit(log_message(
+        "[Protection Scan] Analyzing integrity verification mechanisms..."))
+    checksum_results = detect_checksum_verification(app)
+    for line in checksum_results:
+        app.update_output.emit(log_message(f"[Integrity Check] {line}"))
+        app.analyze_results.append(line)
+
+    # Check for self-healing code
+    app.update_output.emit(log_message(
+        "[Protection Scan] Analyzing self-healing mechanisms..."))
+    healing_results = detect_self_healing_code(app)
+    for line in healing_results:
+        app.update_output.emit(log_message(f"[Self-Healing] {line}"))
+        app.analyze_results.append(line)
+
+    # Check for obfuscation
+    app.update_output.emit(log_message(
+        "[Protection Scan] Analyzing code obfuscation..."))
+    obfuscation_results = detect_obfuscation(app)
+    for line in obfuscation_results:
+        app.update_output.emit(log_message(f"[Obfuscation] {line}"))
+        app.analyze_results.append(line)
+
+    # Generate summary and recommendations
+    app.update_output.emit(log_message(
+        "[Protection Scan] Generating recommendations..."))
+
+    # Find the confidence levels from each scan
+    integrity_level = "LOW"
+    for line in checksum_results:
+        if "INTEGRITY VERIFICATION DETECTED (High confidence)" in line:
+            integrity_level = "HIGH"
+            break
+        elif "POSSIBLE INTEGRITY VERIFICATION (Medium confidence)" in line:
+            integrity_level = "MEDIUM"
+            break
+
+    healing_level = "LOW"
+    for line in healing_results:
+        if "SELF-HEALING CODE DETECTED (High confidence)" in line:
+            healing_level = "HIGH"
+            break
+        elif "POSSIBLE SELF-HEALING CODE (Medium confidence)" in line:
+            healing_level = "MEDIUM"
+            break
+
+    obfuscation_level = "LOW"
+    for line in obfuscation_results:
+        if "OBFUSCATION ASSESSMENT: HIGH CONFIDENCE" in line:
+            obfuscation_level = "HIGH"
+            break
+        elif "OBFUSCATION ASSESSMENT: MEDIUM CONFIDENCE" in line:
+            obfuscation_level = "MEDIUM"
+            break
+
+    # Overall protection level
+    protection_levels = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
+    protection_score = (protection_levels[integrity_level] +
+                        protection_levels[healing_level] +
+                        protection_levels[obfuscation_level])
+
+    overall_protection = "BASIC"
+    if protection_score >= 7:
+        overall_protection = "STRONG"
+    elif protection_score >= 4:
+        overall_protection = "MODERATE"
+
+    summary = [
+        "\n=== PROTECTION ANALYSIS SUMMARY ===",
+        f"Binary: {os.path.basename(app.binary_path)}",
+        f"Integrity Protection: {integrity_level}",
+        f"Self-Healing Capability: {healing_level}",
+        f"Code Obfuscation: {obfuscation_level}",
+        f"Overall Protection Level: {overall_protection}"
+    ]
+
+    # Generate recommendations based on protection types
+    recommendations = ["\nRECOMMENDATIONS:"]
+
+    if integrity_level == "HIGH":
+        recommendations.append(
+            "- Use memory patching instead of file patching")
+        recommendations.append(
+            "- Consider disabling integrity checks through API hooking")
+
+    if healing_level == "HIGH":
+        recommendations.append(
+            "- Use continuous runtime monitoring to detect and counter self-healing")
+        recommendations.append(
+            "- Apply patches in multiple memory locations to counter restoration")
+
+    if obfuscation_level == "HIGH":
+        recommendations.append(
+            "- Focus on dynamic analysis rather than static analysis")
+        recommendations.append(
+            "- Use pattern-based runtime memory scanning to find key code")
+
+    if overall_protection == "STRONG":
+        recommendations.append(
+            "- Consider using the Memory Patching Fallback approach")
+        recommendations.append(
+            "- Combine API hooking with runtime monitoring for best results")
+    elif overall_protection == "MODERATE":
+        recommendations.append(
+            "- Use a combination of static and dynamic techniques")
+        recommendations.append(
+            "- Apply patches after bypassing integrity checks")
+    else:
+        recommendations.append(
+            "- Standard static patching should be effective")
+        recommendations.append(
+            "- Use the Automated Patch Agent for best results")
+
+    # Add summary and recommendations to results
+    for line in summary:
+        app.update_output.emit(log_message(line))
+        app.analyze_results.append(line)
+
+    for line in recommendations:
+        app.update_output.emit(log_message(line))
+        app.analyze_results.append(line)
+
+    app.analyze_status.setText("Protection scan complete")
+
+    # -------------------------------
+    # Incremental Analysis System
+    # -------------------------------
+
+    class IncrementalAnalysisManager:
+        """
+        Incremental analysis system to avoid reprocessing unchanged code.
+
+        This system tracks changes between binary versions and only analyzes
+        modified sections, significantly improving performance for large binaries
+        with minor changes.
+        """
+
+        def __init__(self, cache_dir="analysis_cache"):
+            """
+            Initialize the incremental analysis manager.
+
+            Args:
+                cache_dir: Directory to store analysis cache (default: "analysis_cache")
+            """
+            self.cache_dir = cache_dir
+            self.logger = logging.getLogger(__name__)
+
+            # Create cache directory if it doesn't exist
+            os.makedirs(cache_dir, exist_ok=True)
+
+            # Initialize cache index
+            self.cache_index_file = os.path.join(cache_dir, "cache_index.json")
+            self.cache_index = self._load_cache_index()
+
+        def _load_cache_index(self):
+            """
+            Load the cache index from disk.
+
+            Returns:
+                dict: Cache index mapping binary hashes to analysis results
+            """
+            if os.path.exists(self.cache_index_file):
+                try:
+                    with open(self.cache_index_file, "r", encoding="utf-8") as f:
+                        return json.load(f)
+                except Exception as e:
+                    self.logger.error(f"Error loading cache index: {e}")
+                    return {}
+            else:
+                return {}
+
+        def _save_cache_index(self):
+            """
+            Save the cache index to disk.
+            """
+            try:
+                with open(self.cache_index_file, "w", encoding="utf-8") as f:
+                    json.dump(self.cache_index, f, indent=2)
+            except Exception as e:
+                self.logger.error(f"Error saving cache index: {e}")
+
+        def compute_binary_hash(self, binary_path):
+            """
+            Compute a hash of the binary file for change detection.
+
+            Args:
+                binary_path: Path to the binary file
+
+            Returns:
+                str: SHA-256 hash of the binary
+            """
+            try:
+                with open(binary_path, "rb") as f:
+                    binary_data = f.read()
+                return hashlib.sha256(binary_data).hexdigest()
+            except Exception as e:
+                self.logger.error(f"Error computing binary hash: {e}")
+                return None
+
+        def compute_section_hashes(self, binary_path):
+            """
+            Compute hashes for each section of the binary.
+
+            Args:
+                binary_path: Path to the binary file
+
+            Returns:
+                dict: Mapping of section names to their SHA-256 hashes
+            """

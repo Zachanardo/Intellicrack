@@ -1,0 +1,66 @@
+# Include documentation and metadata files
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+include CODE_OF_CONDUCT.md
+include requirements.txt
+include requirements-dev.txt
+include pyproject.toml
+include setup.py
+include Makefile
+
+# Include configuration files
+include .gitignore
+include .editorconfig
+
+# Include all package data
+recursive-include intellicrack *.py
+recursive-include intellicrack/assets *
+recursive-include intellicrack/data *
+recursive-include intellicrack/plugins *.py *.js *.java
+
+# Include tests
+recursive-include tests *.py
+recursive-include tests/data *
+recursive-include tests/fixtures *
+
+# Include documentation
+recursive-include docs *.rst *.md *.txt
+recursive-include docs/images *
+
+# Include scripts
+recursive-include scripts *.py
+
+# Include examples
+recursive-include examples *.py *.md
+
+# Exclude compiled and temporary files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+global-exclude .git*
+global-exclude *.log
+global-exclude *.tmp
+global-exclude *.bak
+global-exclude *.swp
+global-exclude *~
+
+# Exclude build directories
+prune build
+prune dist
+prune .tox
+prune .pytest_cache
+prune htmlcov
+prune .mypy_cache
+prune .venv
+prune venv
+prune env
+
+# Exclude IDE directories
+prune .idea
+prune .vscode
+
+# Exclude large binary directories
+prune ghidra
+prune node_modules

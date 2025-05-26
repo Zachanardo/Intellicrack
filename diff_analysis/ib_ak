@@ -1,0 +1,1000 @@
+                             var isHttpError = strData.startsWith("HTTP/1.") && (strData.includes(" 40") || strData.includes(" 50")); // Basic check for 4xx/5xx
+                             var containsError = errorKeywords.some(keyword => strData.toLowerCase().includes(keyword));
+
+                              if (isHttpError || containsError) {
+                                  logHook("[Network] License failure detected in socket response! Attempting to spoof success...");
+                                  // Construct a minimal successful HTTP response
+                                  var successResponse = "HTTP/1.1 200 OK\\r\\nContent-Type: application/json\\r\\nContent-Length: 30\\r\\n\\r\\n{\\"status\\":\\"success\\",\\"valid\\":true}";
+
+                                   if (successResponse.length <= this.len) {
+                                       Memory.writeUtf8String(this.buffer, successResponse);
+                                       retval.replace(successResponse.length); // IMPORTANT: Change return value to length of spoofed data
+                                       logHook("[Network]  SPOOFED Winsock response with success message.");
+                                   } else {
+                                       logHook("[Network]  Spoofing failed: Success message too long for buffer.");
+                                   }
+                              }
+                              // --- End Spoofing ---
+
+                         } catch(e) { logHook("[Network]  Error processing recv buffer: " + e); }
+                     }
+                 } else if (this.isLicenseSocket && bytesRead === 0) {
+                     logHook("[Network] Winsock connection closed by peer for tracked socket.");
+                 } else if (this.isLicenseSocket && bytesRead < 0) {
+                      logHook("[Network] Winsock recv failed for tracked socket (Error: " + NativeFunction.getLastError() + ")"); // Winsock uses WSAGetLastError
+                 }
+             }
+         });
+     }
+
+""")
+
+    # Window notification hooks
+    if "window" in hook_types:
+        script_parts.append("""
+    // ========== Window API Hooks (License Notifications) ==========
+    logHook("[Intellicrack] Setting up Window message hooks");
+
+    // MessageBoxW / MessageBoxA - Common for license errors/nags
+    ['MessageBoxW', 'MessageBoxA'].forEach(function(funcName){
+        var messageBoxPtr = Module.findExportByName("user32.dll", funcName);
+        if (messageBoxPtr) {
+            Interceptor.attach(messageBoxPtr, {
+                onEnter: function(args) {
+                    // HWND hWnd = args[0]; LPCSTR lpText = args[1]; LPCSTR lpCaption = args[2]; UINT uType = args[3];
+                    this.hWnd = args[0];
+                    this.textPtr = args[1];
+                    this.captionPtr = args[2];
+                    this.uType = args[3].toInt32();
+
+                    this.text = "N/A";
+                    this.caption = "N/A";
+                    this.isLicenseDialog = false;
+                    this.isErrorDialog = false;
+
+                    try {
+                         if (this.textPtr && !this.textPtr.isNull()) this.text = funcName.endsWith('W') ? this.textPtr.readUtf16String() : this.textPtr.readAnsiString();
+                         if (this.captionPtr && !this.captionPtr.isNull()) this.caption = funcName.endsWith('W') ? this.captionPtr.readUtf16String() : this.captionPtr.readAnsiString();
+                    } catch(e) {}
+
+                    // Check for license-related keywords in text or caption
+                    var licenseKeywords = ["licen", "regist", "activ", "serial", "key", "trial", "valid", "expir", "auth", "invalid", "error"];
+                    this.isLicenseDialog = licenseKeywords.some(keyword => this.text.toLowerCase().includes(keyword) || this.caption.toLowerCase().includes(keyword));
+
+                    if (this.isLicenseDialog) {
+                        // Check dialog type flags (MB_ICONERROR, MB_ICONWARNING, etc.)
+                         var iconType = this.uType & 0xF0; // Mask for icon flags
+                         this.isErrorDialog = (iconType === 0x10 /*MB_ICONERROR*/ || iconType === 0x30 /*MB_ICONWARNING*/ || iconType === 0x40 /*MB_ICONINFORMATION*/); // Include info dialogs sometimes used for nags
+
+                         logHook("[UI] MessageBox: Caption='" + this.caption + "', Text='" + this.text.substring(0,100) + "...', Type=0x" + this.uType.toString(16));
+
+                         if (this.isErrorDialog) {
+                             logHook("[UI] License-related error/warning/nag dialog detected. Suppressing...");
+                             // Block the dialog by returning a default success code (e.g., IDOK)
+                             this.context.set('rax', 1); // Set return value to IDOK (1) for x64
+                             // For 32-bit, it would be context.set('eax', 1); Need arch check.
+                             // This attempts to prevent the dialog from showing by returning immediately.
+                             // Note: This might not always work depending on how the caller uses the return value.
+                         }
+                    }
+                },
+                onLeave: function(retval) {
+                     if (this.isLicenseDialog && this.isErrorDialog) {
+                          // Ensure we always return a "success" code like IDOK or IDCANCEL depending on button types if suppression failed
+                          var buttonType = this.uType & 0xF; // Mask for button flags
+                          var defaultRetVal = 1; // IDOK
+                          if (buttonType === 1 /*MB_OKCANCEL*/ || buttonType === 5 /*MB_RETRYCANCEL*/) defaultRetVal = 1; // IDOK or IDRETRY
+                          else if (buttonType === 3 /*MB_YESNOCANCEL*/) defaultRetVal = 6; // IDYES
+                          else if (buttonType === 4 /*MB_YESNO*/) defaultRetVal = 6; // IDYES
+                          else if (buttonType === 2 /*MB_ABORTRETRYIGNORE*/) defaultRetVal = 3; // IDIGNORE (might be better than abort)
+
+                          logHook("[UI] Original MessageBox return: " + retval.toInt32() + ". Forcing return value: " + defaultRetVal);
+                          retval.replace(defaultRetVal); // Replace the return value
+                     }
+                }
+            });
+            logHook("[UI] Hooked " + funcName);
+        }
+    });
+
+    // Optional: Hook DialogBoxIndirectParamW or CreateWindowExW to intercept dialog creation more directly
+    // This is more complex as it involves inspecting dialog resources or window classes.
+""")
+
+    # Dynamic Memory Scanning function definition
+    script_parts.append("""
+    // ========== Dynamic Memory Scanning ==========
+    function scanMemoryForKeywords() {
+        logHook("[Memory Scan] Scanning process memory for license keywords...");
+        // Expand keywords as needed
+        var keywordsAscii = ["license_key", "activation_code", "serial_number", "trial_period", "hwid", "registered_to"];
+        var keywordsUtf16 = ["L\\x00i\\x00c\\x00e\\x00n\\x00s\\x00e", "A\\x00c\\x00t\\x00i\\x00v\\x00a\\x00t\\x00i\\x00o\\x00n"]; // Example UTF16 keywords
+        var foundCount = 0;
+
+        try {
+            // Scan readable memory ranges
+            var protection = 'r--';
+            var ranges = Process.enumerateRangesSync(protection); // Use Sync version for simplicity in this example
+            logHook("[Memory Scan] Scanning " + ranges.length + " readable memory ranges...");
+
+            keywordsAscii.forEach(function(keyword) {
+                var pattern = keyword.split('').map(c => c.charCodeAt(0).toString(16).padStart(2,'0')).join(' '); // Convert keyword to hex pattern
+                Memory.scan(ranges, pattern, { // Async scan is better for performance
+                    onMatch: function(address, size) {
+                         logHook("[Memory Scan] Found ASCII keyword '" + keyword + "' at address: " + address);
+                         foundCount++;
+                         // Optional: Read surrounding memory for context
+                         // var contextBytes = Memory.readByteArray(address.sub(16), 64); // Read 16 bytes before, keyword, 16 bytes after
+                         // logHook("[Memory Scan]  Context (Hex): " + Array.from(new Uint8Array(contextBytes)).map(b => b.toString(16).padStart(2, '0')).join(''));
+                    },
+                    onError: function(reason) {
+                         // logHook("[Memory Scan] Error scanning for " + keyword + ": " + reason);
+                    },
+                    onComplete: function() {
+                         // logHook("[Memory Scan] Finished scanning for " + keyword);
+                    }
+                 });
+            });
+
+            // Add scans for UTF16 keywords if needed (convert keyword to hex pattern for UTF16)
+
+            // Note: Memory.scan can be slow. Use sparingly or target specific modules/ranges if possible.
+            // Module.enumerateModulesSync().forEach(function(m) { // Example: Scan only main module
+            //     if (m.path.toLowerCase().includes(Process.enumerateModulesSync()[0].name.toLowerCase())) {
+            //         Memory.scan(m.base, m.size, '...');
+            //     }
+            // });
+
+            // Perform memory scans and handle results properly
+            logHook("[Memory Scan] Beginning memory scans for " + keywords.length + " keywords");
+
+            // Track scan progress and results
+            var totalScans = keywords.length * 2; // ASCII + UTF16 for each keyword
+            var completedScans = 0;
+            var totalMatches = 0;
+
+            // Function to update scan progress
+            function updateScanProgress() {
+                completedScans++;
+                var progress = Math.floor((completedScans / totalScans) * 100);
+                if (completedScans % 5 === 0 || completedScans === totalScans) {
+                    logHook("[Memory Scan] Progress: " + progress + "% (" + completedScans + "/" + totalScans + " scans)");
+                }
+
+                // Final report when all scans complete
+                if (completedScans === totalScans) {
+                    logHook("[Memory Scan] Scan completed. Found " + totalMatches + " potential matches.");
+                }
+            }
+
+            // Function to process and report a match
+            function processMatch(address, size, keyword, encoding) {
+                totalMatches++;
+
+                try {
+                    // Read memory around the match for context
+                    var contextSize = 64; // Bytes of context to grab
+                    var startAddr = address.sub(contextSize/2);
+                    var totalReadSize = size + contextSize;
+
+                    // Ensure we don't read outside valid memory
+                    try {
+                        var memoryBytes = Memory.readByteArray(startAddr, totalReadSize);
+                        var memoryStr = "";
+
+                        // Convert to hex dump format
+                        for (var i = 0; i < memoryBytes.length; i++) {
+                            // Mark the actual match position
+                            if (i === contextSize/2) {
+                                memoryStr += "[MATCH→] ";
+                            }
+
+                            memoryStr += ("0" + memoryBytes[i].toString(16)).slice(-2) + " ";
+
+                            // Add newline every 16 bytes
+                            if ((i + 1) % 16 === 0) {
+                                memoryStr += "\\n";
+                            }
+                        }
+
+                        // Get module info if possible
+                        var moduleInfo = "";
+                        var modules = Process.enumerateModulesSync();
+                        for (var i = 0; i < modules.length; i++) {
+                            var mod = modules[i];
+                            var modStart = ptr(mod.base);
+                            var modEnd = modStart.add(mod.size);
+
+                            if (address.compare(modStart) >= 0 && address.compare(modEnd) < 0) {
+                                var offset = address.sub(modStart);
+                                moduleInfo = mod.name + "+" + offset;
+                                break;
+                            }
+                        }
+
+                        if (moduleInfo === "") {
+                            moduleInfo = "unknown module";
+                        }
+
+                        // Log the match with details
+                        logHook("[Memory Scan] Found keyword '" + keyword + "' (" + encoding + ") at " + address + " in " + moduleInfo);
+                        logHook("[Memory Scan] Memory context:\\n" + memoryStr);
+
+                        // Try to interpret as string if possible
+                        try {
+                            var dataAsString = "";
+                            if (encoding === "UTF-16") {
+                                dataAsString = Memory.readUtf16String(address, 64);
+                            } else {
+                                dataAsString = Memory.readCString(address);
+                            }
+
+                            if (dataAsString && dataAsString.length > 0) {
+                                logHook("[Memory Scan] String value: " + JSON.stringify(dataAsString));
+                            }
+                        } catch (e) {
+                            // String interpretation failed, that's ok
+                        }
+                    } catch (e) {
+                        // Reading memory failed, just report the match address
+                        logHook("[Memory Scan] Found keyword '" + keyword + "' at " + address + " (error reading memory: " + e + ")");
+                    }
+                } catch (e) {
+                    logHook("[Memory Scan] Error processing match: " + e);
+                }
+            }
+
+            // Scan for ASCII keywords in all modules
+            keywords.forEach(function(keyword) {
+                var pattern = "";
+                for (var i = 0; i < keyword.length; i++) {
+                    pattern += keyword.charCodeAt(i).toString(16) + " ";
+                }
+                pattern = pattern.trim();
+
+                Memory.scan(ptr('0'), ptr('-1'), pattern, {
+                    onMatch: function(address, size) {
+                        processMatch(address, size, keyword, "ASCII");
+                    },
+                    onComplete: function() {
+                        updateScanProgress();
+                    },
+                    onError: function(reason) {
+                        logHook("[Memory Scan] Error scanning for '" + keyword + "': " + reason);
+                        updateScanProgress();
+                    }
+                });
+            });
+
+            // Scan for UTF-16 keywords in all modules
+            keywords.forEach(function(keyword) {
+                var pattern = "";
+                for (var i = 0; i < keyword.length; i++) {
+                    // UTF-16LE encoding: character code followed by 00
+                    pattern += keyword.charCodeAt(i).toString(16) + " 00 ";
+                }
+                pattern = pattern.trim();
+
+                Memory.scan(ptr('0'), ptr('-1'), pattern, {
+                    onMatch: function(address, size) {
+                        processMatch(address, size, keyword, "UTF-16");
+                    },
+                    onComplete: function() {
+                        updateScanProgress();
+                    },
+                    onError: function(reason) {
+                        logHook("[Memory Scan] Error scanning for UTF-16 '" + keyword + "': " + reason);
+                        updateScanProgress();
+                    }
+                });
+            });
+
+            logHook("[Memory Scan] Memory scan initiated. Results will appear asynchronously if matches found.");
+
+        } catch(e) {
+             logHook("[Memory Scan] Error setting up memory scan: " + e);
+        }
+    }
+""")
+
+    # Final closing for script and optional trigger for memory scan
+    script_parts.append("""
+    logHook("[Intellicrack] Enhanced comprehensive API hooking initialized.");
+
+    // Example: Trigger memory scan after a delay (adjust as needed)
+    if (hook_types.includes("memory_scan")) {
+        setTimeout(scanMemoryForKeywords, 20000); // Scan after 20 seconds
+    }
+
+})(); // End of main IIFE wrapper
+"""
+                        )
+
+    # Combine script
+    script = "".join(script_parts)
+
+    # Save script to file for reference
+    script_path = os.path.join(
+        "plugins", "frida_scripts", "enhanced_comprehensive_api_hooks.js")
+    try:
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(script_path), exist_ok=True)
+        with open(script_path, "w", encoding="utf-8") as f:
+            f.write(script)
+        app.update_output.emit(log_message(
+            f"[API Hooks] API hooking script generated and saved to {script_path}"))
+    except Exception as e:
+        app.update_output.emit(log_message(
+            f"[API Hooks] Error saving API hooking script: {e}"))
+
+    return script
+
+
+# -------------------------------
+# Symbolic Execution Engine
+# -------------------------------
+
+class SymbolicExecutionEngine:
+    """
+    Advanced symbolic execution engine for automatic vulnerability discovery.
+
+    This engine uses symbolic execution techniques to explore program paths
+    and automatically discover vulnerabilities by reasoning about program states
+    and identifying conditions that could lead to security issues.
+    """
+
+    def __init__(self, binary_path, max_paths=100, timeout=300, memory_limit=4096):
+        """
+        Initialize the symbolic execution engine.
+
+        Args:
+            binary_path: Path to the binary to analyze
+            max_paths: Maximum number of paths to explore (default: 100)
+            timeout: Maximum execution time in seconds (default: 300)
+            memory_limit: Maximum memory usage in MB (default: 4096)
+        """
+        self.binary_path = binary_path
+        self.max_paths = max_paths
+        self.timeout = timeout
+        self.memory_limit = memory_limit
+        self.logger = logging.getLogger(__name__)
+        self.angr_available = False
+        self.z3_available = False
+
+        # Check for required dependencies
+        try:
+            self.angr_available = True
+            self.z3_available = True
+            self.logger.info("Symbolic execution dependencies available")
+        except ImportError as e:
+            self.logger.error(f"Symbolic execution dependency missing: {e}")
+
+    def discover_vulnerabilities(self, vulnerability_types=None):
+        """
+        Perform symbolic execution to discover vulnerabilities.
+
+        Args:
+            vulnerability_types: List of vulnerability types to look for, or None for all
+
+        Returns:
+            list: Discovered vulnerabilities with details
+        """
+        if not self.angr_available:
+            return [{"error": "Required dependencies not available. Please install angr and claripy."}]
+
+        if vulnerability_types is None:
+            vulnerability_types = [
+                "buffer_overflow", "integer_overflow", "use_after_free",
+                "format_string", "command_injection", "path_traversal"
+            ]
+
+        self.logger.info(f"Starting symbolic execution on {self.binary_path}")
+        self.logger.info(f"Looking for vulnerability types: {vulnerability_types}")
+
+        try:
+            # Create project
+            project = angr.Project(self.binary_path, auto_load_libs=False)
+
+            # Create symbolic arguments
+            symbolic_args = []
+            if "buffer_overflow" in vulnerability_types or "format_string" in vulnerability_types:
+                symbolic_args.append(claripy.BVS("arg1", 8 * 100))  # 100-byte symbolic buffer
+
+            # Create initial state with symbolic arguments
+            initial_state = project.factory.entry_state(args=[project.filename] + symbolic_args)
+
+            # Set up exploration technique
+            simgr = project.factory.simulation_manager(initial_state)
+
+            # Add exploration techniques
+            if "buffer_overflow" in vulnerability_types:
+                simgr.use_technique(angr.exploration_techniques.Spiller())
+                simgr.use_technique(angr.exploration_techniques.LengthLimiter(max_length=self.max_paths))
+                simgr.use_technique(angr.exploration_techniques.MemoryLimiter(self.memory_limit))
+
+            # Explore the program
+            self.logger.info("Exploring program paths...")
+            simgr.explore(timeout=self.timeout)
+
+            # Analyze results
+            vulnerabilities = []
+
+            # Check for buffer overflows
+            if "buffer_overflow" in vulnerability_types:
+                for state in simgr.errored:
+                    if isinstance(state.error, angr.errors.SimSegfaultError):
+                        # Found potential buffer overflow
+                        vuln = {
+                            "type": "buffer_overflow",
+                            "address": hex(state.addr),
+                            "description": "Potential buffer overflow detected",
+                            "input": state.posix.dumps(0) if hasattr(state, "posix") else None,
+                            "constraints": str(state.solver.constraints)
+                        }
+                        vulnerabilities.append(vuln)
+
+            # Check for integer overflows
+            if "integer_overflow" in vulnerability_types:
+                for state in simgr.deadended + simgr.active:
+                    # Look for arithmetic operations with insufficient bounds checking
+                    for constraint in state.solver.constraints:
+                        if "mul" in str(constraint) or "add" in str(constraint):
+                            if self._check_integer_overflow(state, constraint):
+                                vuln = {
+                                    "type": "integer_overflow",
+                                    "address": hex(state.addr),
+                                    "description": "Potential integer overflow detected",
+                                    "constraint": str(constraint)
+                                }
+                                vulnerabilities.append(vuln)
+
+            # Check for format string vulnerabilities
+            if "format_string" in vulnerability_types:
+                for state in simgr.active + simgr.deadended:
+                    if self._check_format_string(state, project):
+                        vuln = {
+                            "type": "format_string",
+                            "address": hex(state.addr),
+                            "description": "Potential format string vulnerability detected",
+                            "input": state.posix.dumps(0) if hasattr(state, "posix") else None
+                        }
+                        vulnerabilities.append(vuln)
+
+            self.logger.info(f"Symbolic execution completed. Found {len(vulnerabilities)} potential vulnerabilities.")
+            return vulnerabilities
+
+        except Exception as e:
+            self.logger.error(f"Error during symbolic execution: {e}")
+            self.logger.error(traceback.format_exc())
+            return [{"error": f"Symbolic execution failed: {str(e)}"}]
+
+    def _check_integer_overflow(self, state, constraint):
+        """
+        Check if a constraint could lead to an integer overflow.
+
+        Args:
+            state: Program state
+            constraint: Constraint to check
+
+        Returns:
+            bool: True if potential integer overflow, False otherwise
+        """
+        try:
+            # Check if constraint involves arithmetic that could overflow
+            constraint_str = str(constraint)
+            self.logger.debug(f"Checking for integer overflow in constraint: {constraint_str} at 0x{state.addr:x}")
+            if "+" in constraint_str or "*" in constraint_str:
+                # Try to find cases where large values are possible
+                if state.solver.satisfiable(extra_constraints=[constraint]):
+                    # Check if we can satisfy with very large values
+                    for var in state.solver.variables:
+                        try:
+                            max_val = state.solver.max(var)
+                            if max_val > 2**30:  # Large value threshold
+                                self.logger.info(f"Potential integer overflow identified due to large variable value for '{var}'")
+                                return True
+                        except:
+                            pass
+            return False
+        except Exception as e:
+            self.logger.warning(f"Error during integer overflow check: {e}", exc_info=False)
+            return False
+
+    def _check_format_string(self, state, project):
+        """
+        Check if state could contain a format string vulnerability.
+
+        Args:
+            state: Program state
+            project: Angr project
+
+        Returns:
+            bool: True if potential format string vulnerability, False otherwise
+        """
+        try:
+            # Look for printf-like function calls with user-controlled format string
+            self.logger.debug(f"Checking for format string vulnerability at 0x{state.addr:x}")
+            for addr in state.history.bbl_addrs:
+                try:
+                    function = project.kb.functions.get_by_addr(addr)
+                    if function and function.name:
+                        self.logger.debug(f"Found call to {function.name} at 0x{addr:x}")
+                        if "printf" in function.name or "sprintf" in function.name or "fprintf" in function.name:
+                            # Check if first argument (format string) is symbolic
+                            for var in state.solver.variables:
+                                var_name = str(var)
+                                if "arg" in var_name and "%" in state.solver.eval(var, cast_to=bytes).decode('latin-1', errors='ignore'):
+                                    self.logger.info(f"Potential format string vulnerability: Symbolic format string for {function.name} controlled by '{var_name}'")
+                                    return True
+                except Exception as e:
+                    continue
+            return False
+        except Exception as e:
+            self.logger.warning(f"Error during format string check: {e}", exc_info=False)
+            return False
+
+    def generate_exploit(self, vulnerability):
+        """
+        Generate a proof-of-concept exploit for a discovered vulnerability.
+
+        Args:
+            vulnerability: Vulnerability information from discover_vulnerabilities
+
+        Returns:
+            dict: Exploit information including payload and instructions
+        """
+        if not self.angr_available:
+            return {"error": "Required dependencies not available"}
+
+        try:
+            vuln_type = vulnerability.get("type")
+
+            if vuln_type == "buffer_overflow":
+                # Generate buffer overflow exploit
+                payload = b"A" * 256  # Basic overflow pattern
+                if "input" in vulnerability and vulnerability["input"]:
+                    # Use the input that triggered the vulnerability
+                    payload = vulnerability["input"]
+
+                return {
+                    "type": "buffer_overflow",
+                    "payload": payload.hex(),
+                    "instructions": "Send this payload to the program input to trigger the buffer overflow"
+                }
+
+            elif vuln_type == "format_string":
+                # Generate format string exploit
+                payload = b"%x " * 20  # Basic format string leak
+
+                return {
+                    "type": "format_string",
+                    "payload": payload.hex(),
+                    "instructions": "Send this payload to leak memory through format string vulnerability"
+                }
+
+            elif vuln_type == "integer_overflow":
+                # Generate integer overflow exploit
+                return {
+                    "type": "integer_overflow",
+                    "payload": "0x7FFFFFFF",
+                    "instructions": "Use this value to trigger integer overflow"
+                }
+
+            return {"error": f"Exploit generation not implemented for {vuln_type}"}
+
+        except Exception as e:
+            self.logger.error(f"Error generating exploit: {e}")
+            return {"error": f"Exploit generation failed: {str(e)}"}
+
+# -------------------------------
+# Advanced Network License Bypass
+# -------------------------------
+
+def run_network_license_server(app):
+    """Initialize and run the network license server emulator"""
+    # Get configuration from UI
+
+    # If server is already running, stop it
+    if hasattr(app, "license_server_instance") and app.license_server_instance:
+        app.update_output.emit(log_message("[License Server] Stopping existing server..."))
+        app.license_server_instance.stop()
+        app.license_server_instance = None
+        app.update_output.emit(log_message("[License Server] Server stopped"))
+        return
+
+    # Ask for port
+    port, ok = QInputDialog.getInt(app, "License Server Port", "Enter port number:", 8080, 1024, 65535)
+    if not ok:
+        app.update_output.emit(log_message("[License Server] Cancelled"))
+        return
+
+    # Ask if learning mode should be enabled
+    learning_mode = QMessageBox.question(
+        app,
+        "Learning Mode",
+        "Enable learning mode? This will allow the server to learn from captured traffic.",
+        QMessageBox.Yes | QMessageBox.No
+    ) == QMessageBox.Yes
+
+    # Create and configure the emulator
+    emulator = NetworkLicenseServerEmulator({
+        'port': port,
+        'log_transactions': True,
+        'auto_learn': learning_mode
+    })
+
+    # Register protocol handlers
+    class FlexLMProtocolHandler(LicenseProtocolHandler):
+        """
+        Handler for FlexLM license protocol operations.
+
+        Manages FlexLM-specific license features, vendor daemon configuration,
+        license issuance, and protocol-specific state for Intellicrack.
+        """
+        def __init__(self):
+            """
+            Initialize the FlexLMProtocolHandler.
+
+            Sets up logging, feature definitions, vendor daemon, license tracking,
+            and handle ID counter for FlexLM protocol emulation.
+            """
+            super().__init__()
+            self.logger = logging.getLogger("IntellicrackLogger.FlexLM")
+            self.features = {
+                "FEATURE1": {"version": "1.0", "count": 10, "expires": "31-dec-2099"},
+                "FEATURE2": {"version": "2.0", "count": 5, "expires": "31-dec-2099"},
+                "SUITE": {"version": "3.0", "count": 20, "expires": "31-dec-2099"}
+            }
+            self.vendor_daemon = "intellicrack_vendor"
+            self.licenses_out = {}
+            self.handle_id_counter = 1000
+
+            # FlexLM message types
+            self.MESSAGE_TYPES = {
+                0x01: "REQUEST_LICENSE",
+                0x02: "GRANT_LICENSE",
+                0x03: "RELEASE_LICENSE",
+                0x04: "HEARTBEAT",
+                0x05: "QUERY_LICENSE",
+                0x10: "DENY_LICENSE",
+                0x11: "ERROR"
+            }
+
+            # Initialize response templates
+            self._init_response_templates()
+
+        def _init_response_templates(self):
+            """Initialize common FlexLM response templates."""
+            # FlexLM typically uses a binary header followed by ASCII data
+            self.response_templates = {
+                "license_grant": (
+                    b"\x02\x00\x00\x01" +  # Message type 2 (GRANT_LICENSE)
+                    b"SERVER this_host intellicrack_flexlm 1234567890123\n" +
+                    b"VENDOR {vendor} port=27001\n" +
+                    b"FEATURE {feature} {vendor} {version} {date} {count} HOSTID=ANY SIGN=INTELLICRACK\n"
+                ),
+                "license_deny": (
+                    b"\x10\x00\x00\x01" +  # Message type 16 (DENY_LICENSE)
+                    b"Error: No license available for feature {feature}\n"
+                ),
+                "heartbeat_resp": b"\x04\x00\x00\x01",  # Message type 4 (HEARTBEAT)
+                "release_confirm": b"\x03\x00\x00\x01"   # Message type 3 (RELEASE_LICENSE)
+            }
+
+        def handle_connection(self, socket, initial_data):
+            """Handle an incoming FlexLM connection with proper protocol parsing.
+
+            Args:
+                socket: The connected client socket
+                initial_data: Initial data received from the client
+            """
+            self.logger.info("FlexLM connection received")
+
+            try:
+                # Parse initial request
+                if not initial_data or len(initial_data) < 4:
+                    self.logger.warning("Invalid FlexLM request (too short)")
+                    socket.sendall(self._generate_error_response("Invalid request format"))
+                    return
+
+                # Extract message type from the first byte
+                msg_type = initial_data[0]
+                msg_type_name = self.MESSAGE_TYPES.get(msg_type, "UNKNOWN")
+                self.logger.info(f"FlexLM message type: {msg_type_name} (0x{msg_type:02x})")
+
+                # Process based on message type
+                if msg_type == 0x01:  # REQUEST_LICENSE
+                    response = self._handle_license_request(initial_data)
+                elif msg_type == 0x03:  # RELEASE_LICENSE
+                    response = self._handle_license_release(initial_data)
+                elif msg_type == 0x04:  # HEARTBEAT
+                    response = self.response_templates["heartbeat_resp"]
+                elif msg_type == 0x05:  # QUERY_LICENSE
+                    response = self._handle_license_query(initial_data)
+                else:
+                    self.logger.warning(f"Unsupported FlexLM message type: {msg_type_name}")
+                    response = self._generate_error_response(f"Unsupported message type: {msg_type_name}")
+
+                # Send response
+                socket.sendall(response)
+
+            except Exception as e:
+                self.logger.error(f"Error handling FlexLM connection: {str(e)}")
+                try:
+                    socket.sendall(self._generate_error_response(f"Server error: {str(e)}"))
+                except:
+                    pass
+
+        def _handle_license_request(self, request_data):
+            """Handle a license checkout request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            # In a real implementation, we would parse the binary format
+            # For now, we'll extract the feature name and count if available
+            feature_name = "UNKNOWN"
+            count = 1
+
+            # Try to extract feature name and count from request
+            try:
+                # Check if there's ASCII data after the binary header
+                if len(request_data) > 8:
+                    text_part = request_data[8:].decode('ascii', errors='ignore')
+                    # Look for feature name in the text part
+                    feature_match = re.search(r'FEATURE=(\w+)', text_part)
+                    if feature_match:
+                        feature_name = feature_match.group(1)
+
+                    # Look for count in the text part
+                    count_match = re.search(r'COUNT=(\d+)', text_part)
+                    if count_match:
+                        count = int(count_match.group(1))
+            except:
+                pass
+
+            # Check if the feature exists
+            if feature_name not in self.features:
+                # Try to find a feature that might match
+                for known_feature in self.features.keys():
+                    if known_feature.lower() in feature_name.lower() or feature_name.lower() in known_feature.lower():
+                        feature_name = known_feature
+                        break
+                else:
+                    # No matching feature found, use the first one
+                    if self.features:
+                        feature_name = list(self.features.keys())[0]
+
+            # Get feature info
+            feature_info = self.features.get(feature_name, {"version": "1.0", "count": 10, "expires": "31-dec-2099"})
+
+            # Check if licenses are available
+            if feature_info["count"] >= count:
+                # Generate handle ID for this checkout
+                handle_id = self.handle_id_counter
+                self.handle_id_counter += 1
+
+                # Record the checkout
+                if feature_name not in self.licenses_out:
+                    self.licenses_out[feature_name] = 0
+                self.licenses_out[feature_name] += count
+
+                # Create license grant response
+                response = self.response_templates["license_grant"].replace(
+                    b"{vendor}", self.vendor_daemon.encode('ascii')
+                ).replace(
+                    b"{feature}", feature_name.encode('ascii')
+                ).replace(
+                    b"{version}", feature_info["version"].encode('ascii')
+                ).replace(
+                    b"{date}", feature_info["expires"].encode('ascii')
+                ).replace(
+                    b"{count}", str(count).encode('ascii')
+                )
+
+                # Add handle ID to the response
+                response += f"HANDLE={handle_id}\n".encode('ascii')
+
+                self.logger.info(f"Granted {count} licenses for feature {feature_name} (handle: {handle_id})")
+                return response
+            else:
+                # No licenses available
+                self.logger.info(f"Denied license request for {feature_name} (requested: {count}, available: {feature_info['count']})")
+                return self.response_templates["license_deny"].replace(
+                    b"{feature}", feature_name.encode('ascii')
+                )
+
+        def _handle_license_release(self, request_data):
+            """Handle a license checkin (release) request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            # Extract handle ID if available
+            handle_id = None
+            try:
+                if len(request_data) > 8:
+                    text_part = request_data[8:].decode('ascii', errors='ignore')
+                    handle_match = re.search(r'HANDLE=(\d+)', text_part)
+                    if handle_match:
+                        handle_id = int(handle_match.group(1))
+            except:
+                pass
+
+            self.logger.info(f"Released license with handle ID: {handle_id}")
+            return self.response_templates["release_confirm"]
+
+        def _handle_license_query(self, request_data):
+            """Handle a license status query request.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            # Create status response
+            response = b"\x05\x00\x00\x01"  # Message type 5 (QUERY_LICENSE response)
+
+            # Add status information
+            status_text = "License server status:\n"
+            status_text += f"Vendor daemon: {self.vendor_daemon}\n"
+            status_text += "Feature usage:\n"
+
+            for feature, info in self.features.items():
+                used = self.licenses_out.get(feature, 0)
+                status_text += f"{feature}: {used} of {info['count']} in use (expires: {info['expires']})\n"
+
+            response += status_text.encode('ascii')
+            return response
+
+        def _generate_error_response(self, error_message):
+            """Generate an error response with the given message.
+
+            Args:
+                error_message: The error message
+
+            Returns:
+                bytes: The binary response
+            """
+            return b"\x11\x00\x00\x01" + error_message.encode('ascii')
+
+        def generate_response(self, request_data):
+            """Generate a response for the given request data.
+
+            This method is called when we don't have a direct socket connection,
+            but need to generate a response based on captured data.
+
+            Args:
+                request_data: The binary request data
+
+            Returns:
+                bytes: The binary response
+            """
+            try:
+                # If request is too short, return error
+                if not request_data or len(request_data) < 4:
+                    return self._generate_error_response("Invalid request format")
+
+                # Extract message type from the first byte
+                msg_type = request_data[0]
+
+                # Process based on message type
+                if msg_type == 0x01:  # REQUEST_LICENSE
+                    return self._handle_license_request(request_data)
+                elif msg_type == 0x03:  # RELEASE_LICENSE
+                    return self._handle_license_release(request_data)
+                elif msg_type == 0x04:  # HEARTBEAT
+                    return self.response_templates["heartbeat_resp"]
+                elif msg_type == 0x05:  # QUERY_LICENSE
+                    return self._handle_license_query(request_data)
+                else:
+                    return self._generate_error_response(f"Unsupported message type: {msg_type}")
+
+            except Exception as e:
+                return self._generate_error_response(f"Server error: {str(e)}")
+
+    class HASPProtocolHandler(LicenseProtocolHandler):
+        """
+        Handler for HASP license protocol operations.
+
+        Manages HASP-specific product keys, session tracking, and protocol-specific
+        state for Intellicrack.
+        """
+        def __init__(self):
+            """
+            Initialize the HASPProtocolHandler.
+
+            Sets up logging, product key definitions, active session tracking,
+            and session counter for HASP protocol emulation.
+            """
+            super().__init__()
+            self.logger = logging.getLogger("IntellicrackLogger.HASP")
+            self.product_keys = {
+                0x1234: {"name": "Product A", "key": b"HASP1234ABCDEFG"},
+                0x5678: {"name": "Product B", "key": b"HASP5678HIJKLMN"},
+                0x9ABC: {"name": "Product Suite", "key": b"HASP9ABCOPQRSTU"}
+            }
+            self.active_sessions = {}
+            self.session_counter = 1
+
+            # HASP command codes
+            self.COMMANDS = {
+                0x01: "LOGIN",
+                0x02: "LOGOUT",
+                0x03: "GET_KEY",
+                0x04: "GET_INFO",
+                0x05: "ENCRYPT",
+                0x06: "DECRYPT",
+                0x07: "READ_MEMORY",
+                0x08: "WRITE_MEMORY",
+                0x09: "GET_TIMESTAMP",
+                0x0A: "SET_TIMESTAMP"
+            }
+
+            # Initialize response templates
+            self._init_response_templates()
+
+        def _init_response_templates(self):
+            """Initialize HASP response templates"""
+            # HASP typically uses command-response structure with status codes
+            self.response_templates = {
+                "login_success": bytearray([
+                    0x01,  # LOGIN response
+                    0x00,  # Status OK
+                    0x00, 0x00, 0x00, 0x00,  # 4 bytes for session ID (to be filled)
+                    0x01,  # Key attached
+                    0xFF, 0xFF  # Valid rights
+                ]),
+                "logout_success": bytearray([
+                    0x02,  # LOGOUT response
+                    0x00   # Status OK
+                ]),
+                "key_data": bytearray([
+                    0x03,  # GET_KEY response
+                    0x00,  # Status OK
+                    0x00, 0x00,  # Product ID (to be filled)
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  # 8 bytes for key (to be filled)
+                    0xFF, 0xFF, 0xFF, 0xFF  # All features enabled
+                ]),
+                "info_data": bytearray([
+                    0x04,  # GET_INFO response
+                    0x00,  # Status OK
+                    0xFF, 0xFF,  # Hardware ID
+                    0x00, 0x01,  # Major version
+                    0x00, 0x05,  # Minor version
+                    0x20, 0x25, 0x04, 0x25  # Date (2025-04-25)
+                ]),
+                "error": bytearray([
+                    0xFF,  # Error response
+                    0x01   # Generic error (to be filled)
+                ])
+            }
+
+        def handle_connection(self, socket, initial_data):
+            """Handle a HASP protocol connection with proper implementation.
+
+            Args:
+                socket: The connected client socket
+                initial_data: Initial data received from the client
+            """
+            self.logger.info("HASP connection received")
+
+            try:
+                # Parse initial request
+                if not initial_data or len(initial_data) < 2:
+                    self.logger.warning("Invalid HASP request (too short)")
+                    socket.sendall(self._generate_error_response(0x02))  # Invalid format
+                    return
+
+                # Extract command code from the first byte
+                cmd_code = initial_data[0]
+                cmd_name = self.COMMANDS.get(cmd_code, "UNKNOWN")
+                self.logger.info(f"HASP command: {cmd_name} (0x{cmd_code:02x})")
+

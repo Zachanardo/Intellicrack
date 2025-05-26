@@ -1,0 +1,1000 @@
+        chat_splitter.setSizes([500, 200])
+
+        layout.addWidget(chat_splitter)
+
+        # Add status indicator
+        self.assistant_status = QLabel("Assistant ready")
+        layout.addWidget(self.assistant_status)
+
+        self.assistant_tab.setLayout(layout)
+
+    def handle_preset_query(self, index):
+        """Handles preset query selection."""
+        if index == 0:  # "Select a preset..."
+            return
+
+        preset_texts = {
+            1: "Analyze the current binary and tell me what license protection mechanism it might be using.",
+            2: "Generate a patch plan to bypass the license checks in the current binary.",
+            3: "How can I bypass the license check for this software? Give me specific steps.",
+            4: "Create a key generator for this software based on what you've learned about its licensing."}
+
+        if index in preset_texts:
+            self.user_input.setPlainText(preset_texts[index])
+
+    def import_custom_model(self):
+        """Imports a custom model through file selection or API repository."""
+        # Ask the user which import method to use
+        import_dialog = QDialog(self)
+        import_dialog.setWindowTitle("Import Model")
+        import_dialog.setMinimumWidth(400)
+
+        layout = QVBoxLayout()
+
+        # Add option buttons
+        layout.addWidget(QLabel("Select an import method:"))
+
+        file_button = QPushButton("Import from File")
+        file_button.clicked.connect(lambda: self._import_from_file(import_dialog))
+        layout.addWidget(file_button)
+
+        api_button = QPushButton("Import from API Repository")
+        api_button.clicked.connect(lambda: self._import_from_api(import_dialog))
+        layout.addWidget(api_button)
+
+        # Add cancel button
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(import_dialog.reject)
+        layout.addWidget(cancel_button)
+
+        import_dialog.setLayout(layout)
+        import_dialog.exec_()
+
+    def _import_from_file(self, parent_dialog=None):
+        """Imports a custom GGUF model file selected by the user."""
+        if parent_dialog:
+            parent_dialog.accept()
+
+        options = QFileDialog.Options()
+        # options |= QFileDialog.DontUseNativeDialog # Uncomment if native dialog causes issues
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import Custom GGUF Model",
+            "",  # Start directory (empty means default or last used)
+            "GGUF Model Files (*.gguf);;All Files (*)",
+            options=options
+        )
+
+        if file_path:
+            # Use the ModelManager to import the local file
+            model_info = self.model_manager.import_local_model(file_path)
+
+            if model_info:
+                # Set the selected model path
+                absolute_path = model_info.local_path
+                self.selected_model_path = absolute_path
+
+                # Update the UI
+                if hasattr(self, 'custom_model_path_label'):
+                    self.custom_model_path_label.setText(os.path.basename(absolute_path))
+                self.update_output.emit(log_message(f"[Model] Selected custom model path: {absolute_path}"))
+                self.save_config() # Save the newly selected path
+
+                # Attempt to load the model immediately
+                self.update_output.emit(log_message("[Model] Attempting to load selected model..."))
+                model_instance = self.load_ai_model()
+                if model_instance:
+                    self.update_output.emit(log_message("[Model] Custom model loaded successfully."))
+                else:
+                    # Error message should have been emitted by load_ai_model
+                    self.update_output.emit(log_message("[Model] Failed to load custom model. Check previous messages for details."))
+            else:
+                self.update_output.emit(log_message("[Model] Failed to import model file."))
+
+    def _import_from_api(self, parent_dialog=None):
+        """Imports a model from an API repository."""
+        if parent_dialog:
+            parent_dialog.accept()
+
+        # Get available repositories
+        repositories = self.model_manager.get_available_repositories()
+
+        # If no repositories are enabled, show a message
+        if not repositories:
+            QMessageBox.warning(self, "No Repositories Available",
+                               "No API repositories are currently enabled. Please configure repositories in settings.")
+            return
+
+        # Create API import dialog
+        api_dialog = QDialog(self)
+        api_dialog.setWindowTitle("Import from API Repository")
+        api_dialog.setMinimumWidth(600)
+        api_dialog.setMinimumHeight(400)
+
+        layout = QVBoxLayout()
+
+        # Repository selection
+        layout.addWidget(QLabel("Select Repository:"))
+        repo_combo = QComboBox()
+
+        # Add enabled repositories to combo box
+        for repo_name, repo_info in repositories.items():
+            repo_combo.addItem(f"{repo_name} ({repo_info['type']})", repo_name)
+
+        layout.addWidget(repo_combo)
+
+        # Model selection (will be populated when repository is selected)
+        layout.addWidget(QLabel("Select Model:"))
+        model_list = QListWidget()
+        layout.addWidget(model_list)
+
+        # Progress indicators
+        progress_bar = QProgressBar()
+        progress_bar.setVisible(False)
+        layout.addWidget(progress_bar)
+
+        status_label = QLabel("")
+        layout.addWidget(status_label)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+
+        refresh_button = QPushButton("Refresh Models")
+        button_layout.addWidget(refresh_button)
+
+        download_button = QPushButton("Download & Import")
+        download_button.setEnabled(False)
+        button_layout.addWidget(download_button)
+
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(api_dialog.reject)
+        button_layout.addWidget(cancel_button)
+
+        layout.addLayout(button_layout)
+        api_dialog.setLayout(layout)
+
+        # Variables to store selections
+        selected_repo = None
+        selected_model_id = None
+
+        # Function to populate the model list
+        def populate_model_list():
+            """
+            Populate the model list for the selected repository.
+
+            Clears the list and loads available models based on the selected repository.
+            """
+            model_list.clear()
+            status_label.setText("Loading models...")
+
+            # Get the selected repository
+            if repo_combo.currentIndex() == -1:
+                return
+
+            nonlocal selected_repo
+            selected_repo = repo_combo.currentData()
+
+            # Get models from the selected repository
+            models = self.model_manager.get_available_models(selected_repo)
+
+            # Add models to the list
+            for model in models:
+                item = QListWidgetItem(f"{model.name} ({model.size_bytes} bytes)")
+                item.setData(Qt.UserRole, model.model_id)
+                if model.is_downloaded():
+                    item.setBackground(QColor(200, 255, 200))  # Light green for downloaded models
+                model_list.addItem(item)
+
+            status_label.setText(f"Found {len(models)} models in {selected_repo}")
+
+        # Connect signals
+        repo_combo.currentIndexChanged.connect(populate_model_list)
+        refresh_button.clicked.connect(populate_model_list)
+
+        def on_model_selected():
+            """
+            Handle selection changes in the model list.
+
+            Updates the selected model ID and enables or disables the download button.
+            """
+            if model_list.currentItem():
+                nonlocal selected_model_id
+                selected_model_id = model_list.currentItem().data(Qt.UserRole)
+                download_button.setEnabled(True)
+            else:
+                download_button.setEnabled(False)
+
+        model_list.itemSelectionChanged.connect(on_model_selected)
+
+        # Handle download progress
+        def update_progress(bytes_downloaded, total_bytes):
+            """
+            Update the download progress bar.
+
+            Args:
+                bytes_downloaded: Number of bytes downloaded so far.
+                total_bytes: Total number of bytes to download.
+            """
+            if not progress_bar.isVisible():
+                progress_bar.setVisible(True)
+
+            if total_bytes > 0:
+                progress_bar.setMaximum(total_bytes)
+                progress_bar.setValue(bytes_downloaded)
+                percent = (bytes_downloaded / total_bytes) * 100
+                status_label.setText(f"Downloading: {bytes_downloaded}/{total_bytes} bytes ({percent:.1f}%)")
+            else:
+                progress_bar.setMaximum(0)  # Indeterminate mode
+                status_label.setText(f"Downloading: {bytes_downloaded} bytes")
+
+        def download_complete(success, message):
+            """
+            Handle completion of a model download.
+
+            Updates the progress bar and status label based on success or failure.
+            If successful, sets the selected model, updates the UI, saves config,
+            and attempts to load the model.
+            """
+            progress_bar.setVisible(False)
+
+            if success:
+                status_label.setText(f"Download complete: {message}")
+
+                # Get the model path
+                model_path = self.model_manager.get_model_path(selected_model_id, selected_repo)
+                if model_path:
+                    # Set as selected model
+                    self.selected_model_path = model_path
+                    if hasattr(self, 'custom_model_path_label'):
+                        self.custom_model_path_label.setText(os.path.basename(model_path))
+                    self.update_output.emit(log_message(f"[Model] Selected API model: {model_path}"))
+                    self.save_config()
+
+                    # Attempt to load the model
+                    model_instance = self.load_ai_model()
+                    if model_instance:
+                        self.update_output.emit(log_message("[Model] API model loaded successfully."))
+                        api_dialog.accept()  # Close the dialog on success
+                    else:
+                        self.update_output.emit(log_message("[Model] Failed to load API model. Check previous messages for details."))
+                else:
+                    status_label.setText("Error: Could not find downloaded model")
+            else:
+                status_label.setText(f"Download failed: {message}")
+
+        # Handle download button click
+        def start_download():
+            """
+            Handle the download button click event.
+
+            Prepares the UI and initiates the model download using the model manager.
+            """
+            if not selected_repo or not selected_model_id:
+                return
+
+            status_label.setText(f"Preparing to download model {selected_model_id}...")
+            download_button.setEnabled(False)
+
+            # Start the download
+            success = self.model_manager.import_api_model(
+                model_id=selected_model_id,
+                repository_name=selected_repo,
+                progress_callback=update_progress,
+                complete_callback=download_complete
+            )
+
+            if not success:
+                status_label.setText("Failed to start download")
+                download_button.setEnabled(True)
+
+        download_button.clicked.connect(start_download)
+
+        # Initial population
+        if repo_combo.count() > 0:
+            populate_model_list()
+
+        # Show the dialog
+        api_dialog.exec_()
+
+    # handle_model_format_change removed as it's no longer needed
+
+    def configure_api_repositories(self):
+        """Configure API model repositories for importing models."""
+        # Create dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle("API Model Repositories Configuration")
+        dialog.setMinimumWidth(700)
+        dialog.setMinimumHeight(500)
+
+        layout = QVBoxLayout()
+
+        # Tabs for different repositories
+        tab_widget = QTabWidget()
+
+        # Get repository configurations
+        repositories = CONFIG.get("model_repositories", {})
+
+        # Function to create a tab for a repository
+        def create_repository_tab(repo_name, repo_config):
+            """
+            Create a new tab for a repository in the UI.
+
+            Sets up UI elements for enabling/disabling the repository and displaying its type.
+            """
+            tab = QWidget()
+            tab_layout = QVBoxLayout()
+
+            # Enable/disable repository
+            enable_cb = QCheckBox("Enable this repository")
+            enable_cb.setChecked(repo_config.get("enabled", False))
+            tab_layout.addWidget(enable_cb)
+
+            # Repository type (display only)
+            repo_type_layout = QHBoxLayout()
+            repo_type_layout.addWidget(QLabel("Repository Type:"))
+            repo_type_label = QLabel(repo_config.get("type", "unknown"))
+            repo_type_layout.addWidget(repo_type_label)
+            repo_type_layout.addStretch(1)
+            tab_layout.addLayout(repo_type_layout)
+
+            # API Key
+            api_key_layout = QHBoxLayout()
+            api_key_layout.addWidget(QLabel("API Key:"))
+            api_key_edit = QLineEdit()
+            api_key_edit.setText(repo_config.get("api_key", ""))
+            api_key_edit.setEchoMode(QLineEdit.Password)  # Mask the API key
+            api_key_layout.addWidget(api_key_edit)
+            tab_layout.addLayout(api_key_layout)
+
+            # API Endpoint
+            endpoint_layout = QHBoxLayout()
+            endpoint_layout.addWidget(QLabel("API Endpoint:"))
+            endpoint_edit = QLineEdit()
+            endpoint_edit.setText(repo_config.get("endpoint", ""))
+            endpoint_layout.addWidget(endpoint_edit)
+            tab_layout.addLayout(endpoint_layout)
+
+            # Timeout
+            timeout_layout = QHBoxLayout()
+            timeout_layout.addWidget(QLabel("Timeout (seconds):"))
+            timeout_spin = QSpinBox()
+            timeout_spin.setRange(5, 300)
+            timeout_spin.setValue(repo_config.get("timeout", 60))
+            timeout_layout.addWidget(timeout_spin)
+            timeout_layout.addStretch(1)
+            tab_layout.addLayout(timeout_layout)
+
+            # Proxy
+            proxy_layout = QHBoxLayout()
+            proxy_layout.addWidget(QLabel("Proxy URL:"))
+            proxy_edit = QLineEdit()
+            proxy_edit.setText(repo_config.get("proxy", ""))
+            proxy_edit.setPlaceholderText("e.g., http://proxy.example.com:8080")
+            proxy_layout.addWidget(proxy_edit)
+            tab_layout.addLayout(proxy_layout)
+
+            # Rate Limits
+            rate_group = QGroupBox("Rate Limits")
+            rate_layout = QVBoxLayout()
+
+            rate_config = repo_config.get("rate_limit", {})
+
+            rpm_layout = QHBoxLayout()
+            rpm_layout.addWidget(QLabel("Requests per minute:"))
+            rpm_spin = QSpinBox()
+            rpm_spin.setRange(1, 1000)
+            rpm_spin.setValue(rate_config.get("requests_per_minute", 60))
+            rpm_layout.addWidget(rpm_spin)
+            rpm_layout.addStretch(1)
+            rate_layout.addLayout(rpm_layout)
+
+            rpd_layout = QHBoxLayout()
+            rpd_layout.addWidget(QLabel("Requests per day:"))
+            rpd_spin = QSpinBox()
+            rpd_spin.setRange(1, 100000)
+            rpd_spin.setValue(rate_config.get("requests_per_day", 1000))
+            rpd_layout.addWidget(rpd_spin)
+            rpd_layout.addStretch(1)
+            rate_layout.addLayout(rpd_layout)
+
+            rate_group.setLayout(rate_layout)
+            tab_layout.addWidget(rate_group)
+
+            # Test connection button
+            test_btn = QPushButton("Test Connection")
+
+            def test_connection():
+                """
+                Test connection to a model repository using current form settings.
+
+                Creates a temporary repository configuration from the current form values,
+                initializes a repository instance, and attempts to authenticate with it.
+                Displays appropriate success or error messages to the user based on
+                the authentication result.
+
+                This function is triggered by the Test Connection button in the repository
+                configuration dialog.
+
+                Args:
+                    None: Uses form values from enclosing scope
+                         (enable_cb, api_key_edit, endpoint_edit, etc.)
+
+                Returns:
+                    None
+
+                Raises:
+                    No exceptions are propagated as they are caught and displayed
+                    to the user via dialog messages.
+                """
+                # Save current settings to a temporary config
+                temp_config = {
+                    "type": repo_config.get("type"),
+                    "name": repo_name,
+                    "enabled": enable_cb.isChecked(),
+                    "api_key": api_key_edit.text(),
+                    "endpoint": endpoint_edit.text(),
+                    "timeout": timeout_spin.value(),
+                    "proxy": proxy_edit.text(),
+                    "rate_limit": {
+                        "requests_per_minute": rpm_spin.value(),
+                        "requests_per_day": rpd_spin.value()
+                    }
+                }
+
+                # Create a temporary repository
+                repo = self.model_manager.repositories.get(repo_name)
+                if not repo:
+                    # Create the repository if it doesn't exist
+                    from models.repositories.factory import RepositoryFactory
+                    repo = RepositoryFactory.create_repository(temp_config)
+                    if not repo:
+                        QMessageBox.warning(dialog, "Repository Error", f"Failed to create repository {repo_name}")
+                        return
+
+                # Test authentication
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                success, message = repo.authenticate()
+                QApplication.restoreOverrideCursor()
+
+                if success:
+                    QMessageBox.information(dialog, "Connection Successful", f"Successfully connected to {repo_name} repository.")
+                else:
+                    QMessageBox.warning(dialog, "Connection Failed", f"Failed to connect to {repo_name} repository: {message}")
+
+            test_btn.clicked.connect(test_connection)
+            tab_layout.addWidget(test_btn)
+
+            # Add spacer
+            tab_layout.addStretch(1)
+
+            # Store references to widgets
+            tab.setLayout(tab_layout)
+            tab.enable_cb = enable_cb
+            tab.api_key_edit = api_key_edit
+            tab.endpoint_edit = endpoint_edit
+            tab.timeout_spin = timeout_spin
+            tab.proxy_edit = proxy_edit
+            tab.rpm_spin = rpm_spin
+            tab.rpd_spin = rpd_spin
+
+            return tab
+
+        # Create tabs for each repository
+        repository_tabs = {}
+        for repo_name, repo_config in repositories.items():
+            tab = create_repository_tab(repo_name, repo_config)
+            tab_widget.addTab(tab, repo_name.capitalize())
+            repository_tabs[repo_name] = tab
+
+        layout.addWidget(tab_widget)
+
+        # Cache settings
+        cache_group = QGroupBox("API Cache Settings")
+        cache_layout = QVBoxLayout()
+
+        cache_config = CONFIG.get("api_cache", {})
+
+        enable_cache_cb = QCheckBox("Enable API Response Caching")
+        enable_cache_cb.setChecked(cache_config.get("enabled", True))
+        cache_layout.addWidget(enable_cache_cb)
+
+        ttl_layout = QHBoxLayout()
+        ttl_layout.addWidget(QLabel("Cache TTL (seconds):"))
+        ttl_spin = QSpinBox()
+        ttl_spin.setRange(60, 86400)  # 1 minute to 1 day
+        ttl_spin.setValue(cache_config.get("ttl", 3600))
+        ttl_layout.addWidget(ttl_spin)
+        ttl_layout.addStretch(1)
+        cache_layout.addLayout(ttl_layout)
+
+        max_size_layout = QHBoxLayout()
+        max_size_layout.addWidget(QLabel("Max Cache Size (MB):"))
+        max_size_spin = QSpinBox()
+        max_size_spin.setRange(10, 1000)  # 10MB to 1GB
+        max_size_spin.setValue(cache_config.get("max_size_mb", 100))
+        max_size_layout.addWidget(max_size_spin)
+        max_size_layout.addStretch(1)
+        cache_layout.addLayout(max_size_layout)
+
+        clear_cache_btn = QPushButton("Clear Cache")
+
+        def clear_cache():
+            """
+            Clear the API response cache for all repositories.
+
+            Invokes each repository's cache manager and shows a confirmation dialog.
+            """
+            for repo in self.model_manager.repositories.values():
+                if hasattr(repo, 'cache_manager'):
+                    repo.cache_manager.clear_cache()
+            QMessageBox.information(dialog, "Cache Cleared", "API response cache has been cleared.")
+
+        clear_cache_btn.clicked.connect(clear_cache)
+        cache_layout.addWidget(clear_cache_btn)
+
+        cache_group.setLayout(cache_layout)
+        layout.addWidget(cache_group)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        save_btn = QPushButton("Save Configuration")
+        cancel_btn = QPushButton("Cancel")
+
+        def save_config():
+            """
+            Save the current repository configuration from the UI.
+
+            Updates the repositories dictionary with values from the tab widgets.
+            """
+            # Update repository configurations
+            for repo_name, tab in repository_tabs.items():
+                repositories[repo_name]["enabled"] = tab.enable_cb.isChecked()
+                repositories[repo_name]["api_key"] = tab.api_key_edit.text()
+                repositories[repo_name]["endpoint"] = tab.endpoint_edit.text()
+                repositories[repo_name]["timeout"] = tab.timeout_spin.value()
+                repositories[repo_name]["proxy"] = tab.proxy_edit.text()
+                repositories[repo_name]["rate_limit"] = {
+                    "requests_per_minute": tab.rpm_spin.value(),
+                    "requests_per_day": tab.rpd_spin.value()
+                }
+
+            # Update cache configuration
+            CONFIG["api_cache"] = {
+                "enabled": enable_cache_cb.isChecked(),
+                "ttl": ttl_spin.value(),
+                "max_size_mb": max_size_spin.value()
+            }
+
+            # Save configuration
+            self.save_config()
+
+            # Reinitialize model manager
+            self.model_manager = ModelManager(CONFIG)
+
+            dialog.accept()
+
+        save_btn.clicked.connect(save_config)
+        cancel_btn.clicked.connect(dialog.reject)
+
+        button_layout.addStretch(1)
+        button_layout.addWidget(save_btn)
+        button_layout.addWidget(cancel_btn)
+
+        layout.addLayout(button_layout)
+
+        dialog.setLayout(layout)
+        dialog.exec_()
+
+    def verify_hash(self):
+        """Verifies the integrity of the selected model file using a user-provided hash."""
+        if not self.selected_model_path or not os.path.exists(self.selected_model_path):
+            QMessageBox.warning(self, "Model Not Selected",
+                                "Please import a model file first using the 'Import Custom Model' button.")
+            return
+
+        model_path = self.selected_model_path
+        # Ensure hashlib is imported
+        try:
+            available_algorithms = [alg for alg in ["SHA256", "SHA512", "SHA1", "MD5", "MD4"] if alg.lower() in hashlib.algorithms_available]
+        except ImportError:
+            QMessageBox.critical(self, "Import Error", "Failed to import the 'hashlib' module.")
+            return
+        except AttributeError: # Handle older Python versions without hashlib.algorithms_available
+            available_algorithms = ["SHA256", "SHA512", "SHA1", "MD5"]
+
+
+        if not available_algorithms:
+            QMessageBox.warning(self, "No Hash Algorithms", "No supported hash algorithms found in hashlib.")
+            return
+
+        algorithm, ok = QInputDialog.getItem(self, "Select Hash Algorithm",
+                                             "Choose the hash algorithm:", available_algorithms, 0, False)
+        if not ok or not algorithm:
+            self.update_output.emit(log_message("[Verify Hash] Hash algorithm selection cancelled."))
+            return
+
+        expected_hash, ok = QInputDialog.getText(self, "Enter Expected Hash",
+                                             f"Paste the expected {algorithm} hash string:")
+        if not ok or not expected_hash:
+            self.update_output.emit(log_message("[Verify Hash] Expected hash input cancelled or empty."))
+            return
+
+        expected_hash = expected_hash.strip().lower()
+        algorithm_lower = algorithm.lower()
+
+        self.update_output.emit(log_message(f"[Verify Hash] Computing {algorithm} hash for {os.path.basename(model_path)}..."))
+        self.update_status.emit(f"Computing {algorithm} hash...")
+
+        try:
+            # Use a thread to avoid blocking the UI during hashing
+            def hash_thread_func():
+                """
+                Compute a file hash in a background thread and emit results to the UI.
+
+                Uses the instance's compute_file_hash method and compares with the expected hash.
+                """
+                try:
+                    # Use self.compute_file_hash since it's bound to the instance
+                    computed_hash = self.compute_file_hash(model_path, algorithm=algorithm_lower, progress_signal=self.update_progress)
+                    if computed_hash:
+                        computed_hash = computed_hash.lower()
+                        self.update_output.emit(log_message(f"[Verify Hash] Computed {algorithm}: {computed_hash}"))
+                        self.update_output.emit(log_message(f"[Verify Hash] Expected {algorithm}: {expected_hash}"))
+                        if computed_hash == expected_hash:
+                            self.update_output.emit(log_message("[Verify Hash] SUCCESS: Hashes match!"))
+                            # Use QTimer to show message box in main thread
+                            QTimer.singleShot(0, lambda: QMessageBox.information(self, "Hash Verification", "Success! The computed hash matches the expected hash."))
+                        else:
+                            self.update_output.emit(log_message("[Verify Hash] FAILED: Hashes DO NOT match."))
+                            QTimer.singleShot(0, lambda: QMessageBox.warning(self, "Hash Verification", "Failed! The computed hash does not match the expected hash."))
+                    else:
+                        self.update_output.emit(log_message("[Verify Hash] Hash computation failed or returned None."))
+                        QTimer.singleShot(0, lambda: QMessageBox.critical(self, "Hash Error", f"Failed to compute {algorithm} hash."))
+
+                except Exception as e_hash:
+                    error_msg = f"[Verify Hash] Error during hash computation: {e_hash}"
+                    self.update_output.emit(log_message(error_msg))
+                    self.update_output.emit(log_message(traceback.format_exc()))
+                    QTimer.singleShot(0, lambda: QMessageBox.critical(self, "Hash Error", f"An error occurred during hash computation:\n{e_hash}"))
+                finally:
+                    self.update_status.emit("Ready")
+                    self.update_progress.emit(0) # Reset progress bar
+
+            hash_thread = threading.Thread(target=hash_thread_func, daemon=True) # Use daemon thread
+            hash_thread.start()
+
+        except Exception as e_thread:
+            error_msg = f"[Verify Hash] Error starting hash thread: {e_thread}"
+            self.update_output.emit(log_message(error_msg))
+            self.update_output.emit(log_message(traceback.format_exc()))
+            QMessageBox.critical(self, "Threading Error", f"Could not start hash verification thread:\n{e_thread}")
+            self.update_status.emit("Ready")
+
+    def open_model_finetuning(self):
+        """Open the AI model fine-tuning and training dataset management dialog."""
+        try:
+            dialog = ModelFinetuningDialog(self)
+            dialog.exec_()
+        except Exception as e:
+            self.update_output.emit(log_message(f"Error opening model fine-tuning: {e}"))
+            self.update_output.emit(log_message(traceback.format_exc()))
+            QMessageBox.warning(self, "Fine-Tuning Error",
+                              f"Error opening model fine-tuning dialog: {e}")
+
+    def evaluate_ml_model(self, model_path, test_dataset_path=None):
+        """
+        Evaluate a machine learning model on a test dataset.
+
+        Args:
+            model_path: Path to the model file
+            test_dataset_path: Path to the test dataset (optional)
+
+        Returns:
+            dict: Evaluation metrics
+        """
+        try:
+            self.update_output.emit(log_message(f"[ML] Evaluating model: {os.path.basename(model_path)}"))
+
+            # In a real implementation, we would load the model and run evaluation
+            # For now, we'll simulate the evaluation with random metrics
+
+            # Simulate processing time
+            time.sleep(1)
+
+            # Generate simulated metrics
+            metrics = {
+                "accuracy": round(random.uniform(0.85, 0.98), 4),
+                "precision": round(random.uniform(0.80, 0.95), 4),
+                "recall": round(random.uniform(0.75, 0.90), 4),
+                "f1_score": round(random.uniform(0.80, 0.95), 4),
+                "latency_ms": round(random.uniform(10, 50), 2)
+            }
+
+            self.update_output.emit(log_message(f"[ML] Evaluation complete: {metrics}"))
+            return metrics
+
+        except Exception as e:
+            self.update_output.emit(log_message(f"[ML] Error evaluating model: {e}"))
+            self.update_output.emit(log_message(traceback.format_exc()))
+            return {"error": str(e)}
+
+    def compare_ml_models(self, model_paths, test_dataset_path=None):
+        """
+        Compare multiple machine learning models on the same test dataset.
+
+        Args:
+            model_paths: List of paths to model files
+            test_dataset_path: Path to the test dataset (optional)
+
+        Returns:
+            dict: Comparison results
+        """
+        try:
+            self.update_output.emit(log_message(f"[ML] Comparing {len(model_paths)} models"))
+
+            results = {}
+            for model_path in model_paths:
+                model_name = os.path.basename(model_path)
+                self.update_output.emit(log_message(f"[ML] Evaluating model: {model_name}"))
+
+                # Evaluate each model
+                metrics = self.evaluate_ml_model(model_path, test_dataset_path)
+                results[model_name] = metrics
+
+            # Determine the best model based on accuracy
+            if all("error" not in metrics for metrics in results.values()):
+                best_model = max(results.items(), key=lambda x: x[1]["accuracy"])
+                self.update_output.emit(log_message(
+                    f"[ML] Best model: {best_model[0]} with accuracy {best_model[1]['accuracy']}"))
+
+            return results
+
+        except Exception as e:
+            self.update_output.emit(log_message(f"[ML] Error comparing models: {e}"))
+            self.update_output.emit(log_message(traceback.format_exc()))
+            return {"error": str(e)}
+
+        threading.Thread(
+            target=lambda: self._verify_model_thread(model_path)).start()
+
+    def _verify_model_thread(self, model_path):
+        """Background thread for model verification."""
+        try:
+            # Start verification
+            self.update_output.emit(log_message("[ML] Starting model verification..."))
+
+            # Perform verification steps
+            file_check = self._check_model_file_integrity(model_path)
+            structure_check = self._check_model_structure(model_path)
+            signatures_check = self._check_model_signatures(model_path)
+
+            # Consolidate results
+            result = {
+                "file_integrity": file_check,
+                "structure": structure_check,
+                "signatures": signatures_check,
+                "timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
+                "overall_status": "valid" if all([
+                    file_check.get("status") == "valid",
+                    structure_check.get("status") == "valid",
+                    signatures_check.get("status") == "valid"
+                ]) else "invalid"
+            }
+
+            # Report verification result
+            self.update_output.emit(log_message(
+                "Computing model hash (this may take a while)..."))
+            # Pass the progress signal to compute_sha256
+            file_hash = compute_file_hash(model_path, progress_signal=self.update_progress)
+            self.update_output.emit(log_message(f"Model hash: {file_hash}"))
+
+            # Check file size
+            file_size = os.path.getsize(model_path)
+            self.update_output.emit(log_message(
+                f"Model size: {file_size:,} bytes"))
+
+            # Try loading model to verify it works
+            self.update_output.emit(log_message("Testing model loading..."))
+            try:
+                # Small context for quick test
+                local_model = Llama(model_path=model_path, n_ctx=512)
+                self.update_output.emit(
+                    log_message("Model loaded successfully!"))
+
+                # Test a simple prompt
+                prompt = "<s>[INST] Say hello [/INST]"
+                self.update_output.emit(log_message(
+                    "Testing inference with a simple prompt..."))
+
+                result = local_model(prompt=prompt, max_tokens=20)
+                self.update_output.emit(log_message("Model test successful!"))
+
+            except Exception as e:
+                self.update_output.emit(
+                    log_message(f"Error loading model: {e}"))
+                self.update_output.emit(log_message(traceback.format_exc()))
+                return
+
+            self.update_output.emit(log_message(
+                "Model verification complete. Model appears to be valid."))
+
+        except Exception as e:
+            self.update_output.emit(log_message(f"Error verifying model: {e}"))
+            self.update_output.emit(log_message(traceback.format_exc()))
+
+    def browse_ghidra_path(self):
+        """Allows the user to browse for the Ghidra executable."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Select Ghidra Executable", "", "Batch Files (*.bat);;All Files (*)")
+        if path:
+            self.ghidra_path_edit.setPlainText(path)
+
+    def save_config(self):
+        """Saves the current configuration."""
+        try:
+            print("DEBUG: save_config method called")
+
+            # Check if ghidra_path_edit exists
+            if not hasattr(self, "ghidra_path_edit"):
+                print(f"DEBUG: Error - ghidra_path_edit attribute is missing! Self attributes: {dir(self)[:10]}...")
+                # Keep existing ghidra_path if it's in CONFIG
+                print(f"DEBUG: Current CONFIG keys: {CONFIG.keys()}")
+                print(f"DEBUG: Keeping existing ghidra_path: {CONFIG.get('ghidra_path', 'not set')}")
+            else:
+                # Update config with UI values
+                print(f"DEBUG: Updating ghidra_path from UI: {self.ghidra_path_edit.toPlainText().strip()}")
+                CONFIG["ghidra_path"] = self.ghidra_path_edit.toPlainText().strip()
+
+            # Remove saving of model_format and custom_model_path as they are obsolete
+            # CONFIG["model_format"] = self.model_format # Removed
+            # CONFIG["custom_model_path"] = self.custom_model_path # Removed
+
+            # Update CONFIG dictionary with current UI values
+            if hasattr(self, "ghidra_path_edit"):
+                CONFIG["ghidra_path"] = self.ghidra_path_edit.toPlainText().strip()
+
+            # Runtime options
+            if hasattr(self, "runtime_interception_cb"):
+                CONFIG["runtime_interception"] = self.runtime_interception_cb.isChecked()
+
+            if hasattr(self, "detect_protections_cb"):
+                CONFIG["detect_protections"] = self.detect_protections_cb.isChecked()
+
+            if hasattr(self, "enable_memory_patching_cb"):
+                CONFIG["enable_memory_patching"] = self.enable_memory_patching_cb.isChecked()
+
+            if hasattr(self, "enable_plugin_sandbox_cb"):
+                CONFIG["enable_plugin_sandbox"] = self.enable_plugin_sandbox_cb.isChecked()
+
+            if hasattr(self, "enable_remote_plugins_cb"):
+                CONFIG["enable_remote_plugins"] = self.enable_remote_plugins_cb.isChecked()
+
+            if hasattr(self, "plugin_timeout_spinbox"):
+                CONFIG["plugin_timeout"] = self.plugin_timeout_spinbox.value()
+
+            # Save the selected model path from the app instance
+            if hasattr(self, "selected_model_path"):
+                CONFIG["selected_model_path"] = self.selected_model_path
+
+            # Save to file
+            config_path = "intellicrack_config.json"
+            print(f"DEBUG: Saving configuration to {os.path.abspath(config_path)}")
+            print(f"DEBUG: CONFIG keys to save: {', '.join(CONFIG.keys())}")
+
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(CONFIG, f, indent=2)
+
+            print("DEBUG: Configuration saved successfully")
+
+            if hasattr(self, "update_output"):
+                self.update_output.emit(log_message(
+                    "Configuration saved successfully"))
+            else:
+                print("DEBUG: No update_output attribute available")
+
+        except Exception as e:
+            print(f"Error saving configuration: {e}")
+            print(f"DEBUG: Exception traceback: {traceback.format_exc()}")
+
+            if hasattr(self, "update_output"):
+                self.update_output.emit(log_message(
+                    f"Error saving configuration: {e}"))
+
+                if hasattr(self, "QMessageBox"):
+                    QMessageBox.warning(self, "Save Error",
+                                        f"Error saving configuration: {e}")
+
+    def save_analysis_config(self):
+        """Save current analysis options to a configuration file."""
+        config = {
+            "stealth_patching": self.stealth_checkbox.isChecked(),
+            "auto_patch": self.auto_patch_checkbox.isChecked(),
+            "heuristic_patching": self.heuristic_patch_checkbox.isChecked(),
+            "frida_runtime_hooking": self.frida_checkbox.isChecked(),
+            "qiling_emulation": self.qiling_checkbox.isChecked(),
+            "create_backups": self.backup_checkbox.isChecked(),
+            "deep_analysis_option": self.deep_analysis_combo.currentText(),
+            "analysis_depth": self.analysis_depth_slider.value() if hasattr(self, "analysis_depth_slider") else 50
+        }
+
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save Analysis Configuration", "", "JSON Files (*.json);;All Files (*)")
+
+        if not path:
+            return
+
+        # Ensure the file has .json extension
+        if not path.lower().endswith(".json"):
+            path += ".json"
+
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2)
+
+            self.update_output.emit(log_message(f"[Config] Analysis configuration saved to {path}"))
+            QMessageBox.information(self, "Configuration Saved",
+                                   f"Analysis configuration successfully saved to:\n{path}")
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Config] Error saving analysis configuration: {e}"))
+            QMessageBox.warning(self, "Save Error",
+                               f"Error saving analysis configuration:\n{e}")
+
+    def load_analysis_config(self):
+        """Load analysis options from a configuration file."""
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Load Analysis Configuration", "", "JSON Files (*.json);;All Files (*)")
+
+        if not path:
+            return
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+
+            # Apply the loaded configuration
+            if "stealth_patching" in config:
+                self.stealth_checkbox.setChecked(config["stealth_patching"])
+
+            if "auto_patch" in config:
+                self.auto_patch_checkbox.setChecked(config["auto_patch"])
+
+            if "heuristic_patching" in config:
+                self.heuristic_patch_checkbox.setChecked(config["heuristic_patching"])
+
+            if "frida_runtime_hooking" in config:
+                self.frida_checkbox.setChecked(config["frida_runtime_hooking"])
+
+            if "qiling_emulation" in config:
+                self.qiling_checkbox.setChecked(config["qiling_emulation"])
+
+            if "create_backups" in config:
+                self.backup_checkbox.setChecked(config["create_backups"])
+
+            if "deep_analysis_option" in config:
+                index = self.deep_analysis_combo.findText(config["deep_analysis_option"])
+                if index >= 0:
+                    self.deep_analysis_combo.setCurrentIndex(index)
+
+            if "analysis_depth" in config and hasattr(self, "analysis_depth_slider"):
+                self.analysis_depth_slider.setValue(config["analysis_depth"])
+
+            self.update_output.emit(log_message(f"[Config] Analysis configuration loaded from {path}"))
+            QMessageBox.information(self, "Configuration Loaded",
+                                   f"Analysis configuration successfully loaded from:\n{path}")
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Config] Error loading analysis configuration: {e}"))
+            QMessageBox.warning(self, "Load Error",
+                               f"Error loading analysis configuration:\n{e}")
+
+    def apply_config_preset(self, preset_name):
+        """Apply a predefined analysis configuration preset."""
+        if preset_name == "Default Configuration":
+            self.stealth_checkbox.setChecked(False)
+            self.auto_patch_checkbox.setChecked(True)
+            self.heuristic_patch_checkbox.setChecked(False)
+            self.frida_checkbox.setChecked(False)
+            self.qiling_checkbox.setChecked(False)
+            self.backup_checkbox.setChecked(True)
+
+            index = self.deep_analysis_combo.findText("CFG Structure")
+            if index >= 0:

@@ -1,0 +1,1000 @@
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Select File to View" if read_only else "Select File to Edit",
+            "", "All Files (*)"
+        )
+        
+        if file_path:
+            try:
+                from hexview.hex_dialog import HexViewerDialog
+                
+                # Create and show the hex viewer dialog
+                dialog = HexViewerDialog(self)
+                success = dialog.load_file(file_path, read_only=read_only)
+                
+                if success:
+                    dialog.exec_()
+                else:
+                    QMessageBox.warning(self, "Error", f"Could not open {file_path}")
+            except ImportError:
+                QMessageBox.warning(self, "Error", "Hex viewer module not available")
+                
+    def show_current_binary_in_hex(self, read_only=True):
+        """Show the current binary in hex viewer."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "Error", "No binary loaded")
+            return
+            
+        try:
+            from hexview.hex_dialog import HexViewerDialog
+            
+            # Create and show the hex viewer dialog
+            dialog = HexViewerDialog(self)
+            success = dialog.load_file(self.binary_path, read_only=read_only)
+            
+            if success:
+                dialog.exec_()
+            else:
+                QMessageBox.warning(self, "Error", f"Could not open {self.binary_path}")
+        except ImportError:
+            QMessageBox.warning(self, "Error", "Hex viewer module not available")
+            
+    def setup_network_sim_tab(self):
+        """Sets up the Network & Simulation Tab with traffic analysis, server emulation, and interception tools."""
+        # Create main layout
+        layout = QVBoxLayout()
+        
+        # Create tab widget for network tools
+        network_tabs = QTabWidget()
+        
+        # 1. Traffic Analysis tab
+        traffic_tab = QWidget()
+        traffic_layout = QVBoxLayout(traffic_tab)
+        
+        # Header
+        traffic_layout.addWidget(QLabel("<h2>Network Traffic Analysis</h2>"))
+        traffic_layout.addWidget(QLabel("Capture and analyze network traffic from applications"))
+        
+        # Capture controls
+        capture_group = QGroupBox("Capture Controls")
+        capture_layout = QGridLayout()
+        
+        # Network interface selection
+        capture_layout.addWidget(QLabel("Interface:"), 0, 0)
+        interface_combo = QComboBox()
+        interface_combo.addItems(["Ethernet", "Wi-Fi", "Loopback", "All Interfaces"])
+        capture_layout.addWidget(interface_combo, 0, 1)
+        
+        # Filter settings
+        capture_layout.addWidget(QLabel("Filter:"), 1, 0)
+        filter_edit = QLineEdit()
+        filter_edit.setPlaceholderText("e.g. port 80 or host 192.168.1.1")
+        capture_layout.addWidget(filter_edit, 1, 1)
+        
+        # Target application
+        capture_layout.addWidget(QLabel("Target:"), 2, 0)
+        target_combo = QComboBox()
+        target_combo.addItems(["All Traffic", "Selected Process", "Current Binary"])
+        capture_layout.addWidget(target_combo, 2, 1)
+        
+        # Process selection (enabled when "Selected Process" is chosen)
+        process_select_btn = QPushButton("Select Process")
+        capture_layout.addWidget(process_select_btn, 2, 2)
+        
+        # Capture buttons
+        capture_buttons_layout = QHBoxLayout()
+        start_capture_btn = QPushButton("Start Capture")
+        stop_capture_btn = QPushButton("Stop Capture")
+        stop_capture_btn.setEnabled(False)
+        clear_capture_btn = QPushButton("Clear")
+        save_capture_btn = QPushButton("Save Capture")
+        
+        capture_buttons_layout.addWidget(start_capture_btn)
+        capture_buttons_layout.addWidget(stop_capture_btn)
+        capture_buttons_layout.addWidget(clear_capture_btn)
+        capture_buttons_layout.addWidget(save_capture_btn)
+        
+        capture_layout.addLayout(capture_buttons_layout, 3, 0, 1, 3)
+        
+        capture_group.setLayout(capture_layout)
+        traffic_layout.addWidget(capture_group)
+        
+        # Traffic display
+        traffic_display_splitter = QSplitter(Qt.Vertical)
+        
+        # Packet list
+        packet_list = QTableWidget()
+        packet_list.setColumnCount(6)
+        packet_list.setHorizontalHeaderLabels(["No.", "Time", "Source", "Destination", "Protocol", "Info"])
+        
+        # Add some placeholder packets
+        packet_list.setRowCount(5)
+        packets = [
+            ["1", "0.000000", "192.168.1.100", "93.184.216.34", "TCP", "59102 → 80 [SYN] Seq=0 Win=64240 Len=0"],
+            ["2", "0.025114", "93.184.216.34", "192.168.1.100", "TCP", "80 → 59102 [SYN, ACK] Seq=0 Ack=1 Win=65535 Len=0"],
+            ["3", "0.025303", "192.168.1.100", "93.184.216.34", "TCP", "59102 → 80 [ACK] Seq=1 Ack=1 Win=64240 Len=0"],
+            ["4", "0.034563", "192.168.1.100", "93.184.216.34", "HTTP", "GET / HTTP/1.1"],
+            ["5", "0.154387", "93.184.216.34", "192.168.1.100", "HTTP", "HTTP/1.1 200 OK"]
+        ]
+        
+        for i, packet in enumerate(packets):
+            for j, value in enumerate(packet):
+                packet_list.setItem(i, j, QTableWidgetItem(value))
+        
+        # Packet details
+        packet_details = QTreeWidget()
+        packet_details.setHeaderLabels(["Field", "Value"])
+        
+        # Add sample packet details
+        http_item = QTreeWidgetItem(["HTTP", ""])
+        http_item.addChild(QTreeWidgetItem(["Request Method", "GET"]))
+        http_item.addChild(QTreeWidgetItem(["Request URI", "/"]))
+        http_item.addChild(QTreeWidgetItem(["Request Version", "HTTP/1.1"]))
+        
+        headers_item = QTreeWidgetItem(["Headers", ""])
+        headers_item.addChild(QTreeWidgetItem(["Host", "example.com"]))
+        headers_item.addChild(QTreeWidgetItem(["User-Agent", "Mozilla/5.0"]))
+        headers_item.addChild(QTreeWidgetItem(["Accept", "text/html,application/xhtml+xml"]))
+        
+        packet_details.addTopLevelItem(http_item)
+        packet_details.addTopLevelItem(headers_item)
+        packet_details.expandAll()
+        
+        # Raw packet hex
+        raw_packet = QTextEdit()
+        raw_packet.setReadOnly(True)
+        raw_packet.setFont(QFont("Courier New", 10))
+        raw_packet.setText("00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00\n00 3c 00 00 40 00 40 06 00 00 c0 a8 01 64 5d b8\nd8 22 e6 ce 00 50 00 00 00 00 00 00 00 00 80 02\nfa f0 00 00 00 00 02 04 05 b4 04 02 08 0a 00 00\n00 00 00 00 00 00 01 03 03 07")
+        
+        traffic_display_splitter.addWidget(packet_list)
+        traffic_display_splitter.addWidget(packet_details)
+        traffic_display_splitter.addWidget(raw_packet)
+        traffic_display_splitter.setSizes([200, 200, 100])
+        
+        traffic_layout.addWidget(traffic_display_splitter)
+        
+        # 2. Server Emulation tab
+        emulation_tab = QWidget()
+        emulation_layout = QVBoxLayout(emulation_tab)
+        
+        # Header
+        emulation_layout.addWidget(QLabel("<h2>License Server Emulation</h2>"))
+        emulation_layout.addWidget(QLabel("Emulate license servers and customize responses"))
+        
+        # Server type selection
+        server_type_group = QGroupBox("Server Type")
+        server_type_layout = QVBoxLayout()
+        
+        server_types = QButtonGroup()
+        flexlm_radio = QRadioButton("FlexLM License Server")
+        hasp_radio = QRadioButton("HASP/Sentinel License Server")
+        codemeter_radio = QRadioButton("CodeMeter License Server")
+        custom_radio = QRadioButton("Custom License Server")
+        
+        flexlm_radio.setChecked(True)
+        
+        server_types.addButton(flexlm_radio)
+        server_types.addButton(hasp_radio)
+        server_types.addButton(codemeter_radio)
+        server_types.addButton(custom_radio)
+        
+        server_type_layout.addWidget(flexlm_radio)
+        server_type_layout.addWidget(hasp_radio)
+        server_type_layout.addWidget(codemeter_radio)
+        server_type_layout.addWidget(custom_radio)
+        
+        server_type_group.setLayout(server_type_layout)
+        
+        # Server configuration
+        server_config_group = QGroupBox("Server Configuration")
+        server_config_layout = QGridLayout()
+        
+        server_config_layout.addWidget(QLabel("Listen Address:"), 0, 0)
+        listen_addr = QLineEdit("0.0.0.0")
+        server_config_layout.addWidget(listen_addr, 0, 1)
+        
+        server_config_layout.addWidget(QLabel("Port:"), 1, 0)
+        port_spin = QSpinBox()
+        port_spin.setRange(1, 65535)
+        port_spin.setValue(27000)
+        server_config_layout.addWidget(port_spin, 1, 1)
+        
+        server_config_layout.addWidget(QLabel("Status:"), 2, 0)
+        status_label = QLabel("Stopped")
+        status_label.setStyleSheet("color: red;")
+        server_config_layout.addWidget(status_label, 2, 1)
+        
+        server_config_group.setLayout(server_config_layout)
+        
+        # License configuration
+        license_config_group = QGroupBox("License Configuration")
+        license_config_layout = QVBoxLayout()
+        
+        # Features table (for FlexLM)
+        features_table = QTableWidget()
+        features_table.setColumnCount(4)
+        features_table.setHorizontalHeaderLabels(["Feature", "Version", "Expiry", "Count"])
+        
+        # Add some sample features
+        features_table.setRowCount(3)
+        features = [
+            ["FEATURE1", "1.0", "31-dec-2099", "10"],
+            ["FEATURE2", "2.0", "31-dec-2099", "5"],
+            ["SUITE", "3.0", "31-dec-2099", "20"]
+        ]
+        
+        for i, feature in enumerate(features):
+            for j, value in enumerate(feature):
+                features_table.setItem(i, j, QTableWidgetItem(value))
+        
+        add_feature_btn = QPushButton("Add Feature")
+        remove_feature_btn = QPushButton("Remove Feature")
+        
+        feature_buttons_layout = QHBoxLayout()
+        feature_buttons_layout.addWidget(add_feature_btn)
+        feature_buttons_layout.addWidget(remove_feature_btn)
+        
+        license_config_layout.addWidget(features_table)
+        license_config_layout.addLayout(feature_buttons_layout)
+        
+        license_config_group.setLayout(license_config_layout)
+        
+        # Server controls
+        server_controls_layout = QHBoxLayout()
+        
+        start_server_btn = QPushButton("Start Server")
+        stop_server_btn = QPushButton("Stop Server")
+        stop_server_btn.setEnabled(False)
+        reset_server_btn = QPushButton("Reset Server")
+        
+        server_controls_layout.addWidget(start_server_btn)
+        server_controls_layout.addWidget(stop_server_btn)
+        server_controls_layout.addWidget(reset_server_btn)
+        
+        # Server logs
+        logs_group = QGroupBox("Server Logs")
+        logs_layout = QVBoxLayout()
+        
+        server_logs = QTextEdit()
+        server_logs.setReadOnly(True)
+        server_logs.setText("Server logs will appear here...")
+        
+        clear_logs_btn = QPushButton("Clear Logs")
+        save_logs_btn = QPushButton("Save Logs")
+        
+        log_buttons_layout = QHBoxLayout()
+        log_buttons_layout.addWidget(clear_logs_btn)
+        log_buttons_layout.addWidget(save_logs_btn)
+        
+        logs_layout.addWidget(server_logs)
+        logs_layout.addLayout(log_buttons_layout)
+        
+        logs_group.setLayout(logs_layout)
+        
+        # Layout for emulation tab
+        emulation_left_layout = QVBoxLayout()
+        emulation_left_layout.addWidget(server_type_group)
+        emulation_left_layout.addWidget(server_config_group)
+        emulation_left_layout.addLayout(server_controls_layout)
+        emulation_left_layout.addStretch(1)
+        
+        emulation_right_layout = QVBoxLayout()
+        emulation_right_layout.addWidget(license_config_group)
+        emulation_right_layout.addWidget(logs_group)
+        
+        emulation_split_layout = QHBoxLayout()
+        emulation_split_layout.addLayout(emulation_left_layout, 1)
+        emulation_split_layout.addLayout(emulation_right_layout, 2)
+        
+        emulation_layout.addLayout(emulation_split_layout)
+        
+        # 3. Traffic Interception tab
+        interception_tab = QWidget()
+        interception_layout = QVBoxLayout(interception_tab)
+        
+        # Header
+        interception_layout.addWidget(QLabel("<h2>Traffic Interception</h2>"))
+        interception_layout.addWidget(QLabel("Intercept and modify network traffic in real-time"))
+        
+        # Interception controls
+        intercept_controls_group = QGroupBox("Interception Controls")
+        intercept_controls_layout = QGridLayout()
+        
+        intercept_controls_layout.addWidget(QLabel("Proxy Mode:"), 0, 0)
+        proxy_mode_combo = QComboBox()
+        proxy_mode_combo.addItems(["HTTP/HTTPS", "TCP/UDP", "All Traffic"])
+        intercept_controls_layout.addWidget(proxy_mode_combo, 0, 1)
+        
+        intercept_controls_layout.addWidget(QLabel("Listen Port:"), 1, 0)
+        listen_port_spin = QSpinBox()
+        listen_port_spin.setRange(1024, 65535)
+        listen_port_spin.setValue(8080)
+        intercept_controls_layout.addWidget(listen_port_spin, 1, 1)
+        
+        intercept_controls_layout.addWidget(QLabel("SSL/TLS:"), 2, 0)
+        ssl_mode_combo = QComboBox()
+        ssl_mode_combo.addItems(["Generate Certificate", "Use Custom Certificate", "No SSL/TLS"])
+        intercept_controls_layout.addWidget(ssl_mode_combo, 2, 1)
+        
+        intercept_controls_group.setLayout(intercept_controls_layout)
+        
+        # Interception control buttons
+        intercept_buttons_layout = QHBoxLayout()
+        
+        start_intercept_btn = QPushButton("Start Interception")
+        stop_intercept_btn = QPushButton("Stop Interception")
+        stop_intercept_btn.setEnabled(False)
+        clear_intercept_btn = QPushButton("Clear History")
+        
+        intercept_buttons_layout.addWidget(start_intercept_btn)
+        intercept_buttons_layout.addWidget(stop_intercept_btn)
+        intercept_buttons_layout.addWidget(clear_intercept_btn)
+        
+        # Interception display (request/response)
+        intercept_display = QSplitter(Qt.Vertical)
+        
+        # Request/response list
+        request_list = QTableWidget()
+        request_list.setColumnCount(5)
+        request_list.setHorizontalHeaderLabels(["#", "Host", "Method/Status", "URL/Content", "Size"])
+        
+        # Sample intercepted requests
+        request_list.setRowCount(3)
+        requests = [
+            ["1", "example.com", "GET", "/index.html", "1.2 KB"],
+            ["2", "api.example.com", "POST", "/login", "0.8 KB"],
+            ["3", "example.com", "200 OK", "text/html", "15.4 KB"]
+        ]
+        
+        for i, req in enumerate(requests):
+            for j, value in enumerate(req):
+                request_list.setItem(i, j, QTableWidgetItem(value))
+        
+        # Request/response editor
+        editor_tabs = QTabWidget()
+        
+        # Request tab
+        request_tab = QWidget()
+        request_layout = QVBoxLayout(request_tab)
+        
+        request_headers = QTextEdit()
+        request_headers.setPlainText("GET /index.html HTTP/1.1\nHost: example.com\nUser-Agent: Mozilla/5.0\nAccept: text/html")
+        
+        request_layout.addWidget(QLabel("Request Headers:"))
+        request_layout.addWidget(request_headers)
+        
+        request_body = QTextEdit()
+        request_body.setPlainText("")
+        
+        request_layout.addWidget(QLabel("Request Body:"))
+        request_layout.addWidget(request_body)
+        
+        # Response tab
+        response_tab = QWidget()
+        response_layout = QVBoxLayout(response_tab)
+        
+        response_headers = QTextEdit()
+        response_headers.setPlainText("HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 15824\nConnection: close")
+        
+        response_layout.addWidget(QLabel("Response Headers:"))
+        response_layout.addWidget(response_headers)
+        
+        response_body = QTextEdit()
+        response_body.setPlainText("<html>\n  <head>\n    <title>Example Domain</title>\n  </head>\n  <body>\n    <h1>Example Domain</h1>\n    <p>This domain is for use in examples.</p>\n  </body>\n</html>")
+        
+        response_layout.addWidget(QLabel("Response Body:"))
+        response_layout.addWidget(response_body)
+        
+        editor_tabs.addTab(request_tab, "Request")
+        editor_tabs.addTab(response_tab, "Response")
+        
+        # Interception action buttons
+        editor_buttons_layout = QHBoxLayout()
+        
+        forward_btn = QPushButton("Forward")
+        forward_btn.setEnabled(False)
+        drop_btn = QPushButton("Drop")
+        drop_btn.setEnabled(False)
+        modify_forward_btn = QPushButton("Modify & Forward")
+        modify_forward_btn.setEnabled(False)
+        
+        editor_buttons_layout.addWidget(forward_btn)
+        editor_buttons_layout.addWidget(drop_btn)
+        editor_buttons_layout.addWidget(modify_forward_btn)
+        
+        intercept_display.addWidget(request_list)
+        intercept_display.addWidget(editor_tabs)
+        intercept_display.setSizes([200, 400])
+        
+        # Compose the interception tab layout
+        interception_layout.addWidget(intercept_controls_group)
+        interception_layout.addLayout(intercept_buttons_layout)
+        interception_layout.addWidget(intercept_display)
+        interception_layout.addLayout(editor_buttons_layout)
+        
+        # Add all tabs to the network tabs widget
+        network_tabs.addTab(traffic_tab, "Traffic Analysis")
+        network_tabs.addTab(emulation_tab, "Server Emulation")
+        network_tabs.addTab(interception_tab, "Traffic Interception")
+        
+        layout.addWidget(network_tabs)
+        
+        # Set the layout for the tab
+        self.network_sim_tab.setLayout(layout)
+        
+    def setup_plugins_hub_tab(self):
+        """Sets up the Plugins Hub tab with analysis, patching, and utility plugins."""
+        # Create main layout
+        layout = QVBoxLayout()
+        
+        # Header
+        header_layout = QHBoxLayout()
+        header_layout.addWidget(QLabel("<h2>Plugins Hub</h2>"))
+        header_layout.addStretch(1)
+        
+        plugin_manager_btn = QPushButton("Plugin Manager")
+        plugin_manager_btn.setIcon(QIcon.fromTheme("preferences-system"))
+        plugin_manager_btn.setToolTip("Install, update, and manage plugins")
+        
+        install_plugin_btn = QPushButton("Install Plugin")
+        install_plugin_btn.setIcon(QIcon.fromTheme("list-add"))
+        
+        header_layout.addWidget(plugin_manager_btn)
+        header_layout.addWidget(install_plugin_btn)
+        
+        layout.addLayout(header_layout)
+        
+        # Create main two-panel layout
+        plugin_splitter = QSplitter(Qt.Horizontal)
+        
+        # Left panel: Categories
+        category_panel = QWidget()
+        category_layout = QVBoxLayout(category_panel)
+        
+        # Category search
+        search_layout = QHBoxLayout()
+        search_edit = QLineEdit()
+        search_edit.setPlaceholderText("Search plugins...")
+        search_layout.addWidget(search_edit)
+        
+        category_layout.addLayout(search_layout)
+        
+        # Categories tree
+        category_tree = QTreeWidget()
+        category_tree.setHeaderLabel("Plugin Categories")
+        category_tree.setAlternatingRowColors(True)
+        
+        # Add top-level categories
+        analysis_item = QTreeWidgetItem(["Analysis Plugins"])
+        analysis_item.addChild(QTreeWidgetItem(["Binary Analysis"]))
+        analysis_item.addChild(QTreeWidgetItem(["Network Analysis"]))
+        analysis_item.addChild(QTreeWidgetItem(["Static Analysis"]))
+        analysis_item.addChild(QTreeWidgetItem(["Dynamic Analysis"]))
+        
+        patching_item = QTreeWidgetItem(["Patching Plugins"])
+        patching_item.addChild(QTreeWidgetItem(["License Bypass"]))
+        patching_item.addChild(QTreeWidgetItem(["Anti-Debug Removal"]))
+        patching_item.addChild(QTreeWidgetItem(["Feature Unlock"]))
+        patching_item.addChild(QTreeWidgetItem(["Trial Extension"]))
+        
+        utility_item = QTreeWidgetItem(["Utility Plugins"])
+        utility_item.addChild(QTreeWidgetItem(["Converters"]))
+        utility_item.addChild(QTreeWidgetItem(["Visualizers"]))
+        utility_item.addChild(QTreeWidgetItem(["Export Tools"]))
+        utility_item.addChild(QTreeWidgetItem(["Report Generators"]))
+        
+        tech_item = QTreeWidgetItem(["By Technology"])
+        tech_item.addChild(QTreeWidgetItem(["Frida Scripts"]))
+        tech_item.addChild(QTreeWidgetItem(["Ghidra Scripts"]))
+        tech_item.addChild(QTreeWidgetItem(["Python Plugins"]))
+        tech_item.addChild(QTreeWidgetItem(["JavaScript Plugins"]))
+        
+        category_tree.addTopLevelItem(analysis_item)
+        category_tree.addTopLevelItem(patching_item)
+        category_tree.addTopLevelItem(utility_item)
+        category_tree.addTopLevelItem(tech_item)
+        
+        category_tree.expandAll()
+        
+        category_layout.addWidget(category_tree)
+        
+        # Right panel: Plugin list and details
+        plugins_panel = QWidget()
+        plugins_layout = QVBoxLayout(plugins_panel)
+        
+        # Plugin list and details splitter
+        content_splitter = QSplitter(Qt.Vertical)
+        
+        # Plugin list
+        plugin_list = QTableWidget()
+        plugin_list.setColumnCount(3)
+        plugin_list.setHorizontalHeaderLabels(["Name", "Status", "Description"])
+        plugin_list.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
+        
+        # Add some sample plugins
+        plugin_list.setRowCount(6)
+        sample_plugins = [
+            ["License Finder", "Available", "Locates license verification routines in binaries"],
+            ["Network Interceptor", "Installed", "Intercepts and modifies network traffic with SSL support"],
+            ["String Decryptor", "Available", "Automatically decrypts obfuscated strings"],
+            ["Adobe CC Bypass", "Installed", "Sample Frida script for Adobe CC apps"],
+            ["Binary Differ", "Installed", "Compares binaries and identifies differences"],
+            ["Demo Plugin", "Installed", "Demonstration of plugin functionality"]
+        ]
+        
+        for i, plugin in enumerate(sample_plugins):
+            for j, value in enumerate(plugin):
+                item = QTableWidgetItem(value)
+                if j == 1:  # Status column
+                    if value == "Installed":
+                        item.setBackground(QColor(200, 255, 200))  # Light green
+                plugin_list.setItem(i, j, item)
+        
+        # Plugin details
+        details_widget = QWidget()
+        details_layout = QVBoxLayout(details_widget)
+        
+        # Details header
+        details_header = QHBoxLayout()
+        self.plugin_name_label = QLabel("<h3>License Finder</h3>")
+        details_header.addWidget(self.plugin_name_label)
+        details_header.addStretch(1)
+        
+        details_layout.addLayout(details_header)
+        
+        # Plugin info
+        info_layout = QHBoxLayout()
+        
+        # Left column: Info
+        info_left = QVBoxLayout()
+        info_left.addWidget(QLabel("<b>Author:</b> IntelliCrack Team"))
+        info_left.addWidget(QLabel("<b>Category:</b> Analysis Plugins > Binary Analysis"))
+        
+        # Right column: Actions
+        info_right = QVBoxLayout()
+        run_plugin_btn = QPushButton("Run Plugin")
+        run_plugin_btn.setIcon(QIcon.fromTheme("media-playback-start"))
+        
+        edit_plugin_btn = QPushButton("Edit Plugin")
+        edit_plugin_btn.setIcon(QIcon.fromTheme("document-edit"))
+        
+        uninstall_plugin_btn = QPushButton("Uninstall")
+        uninstall_plugin_btn.setIcon(QIcon.fromTheme("edit-delete"))
+        
+        info_right.addWidget(run_plugin_btn)
+        info_right.addWidget(edit_plugin_btn)
+        info_right.addWidget(uninstall_plugin_btn)
+        info_right.addStretch(1)
+        
+        info_layout.addLayout(info_left, 2)
+        info_layout.addLayout(info_right, 1)
+        
+        details_layout.addLayout(info_layout)
+        
+        # Description
+        details_layout.addWidget(QLabel("<b>Description:</b>"))
+        description_text = QTextEdit()
+        description_text.setReadOnly(True)
+        description_text.setMaximumHeight(100)
+        description_text.setText("License Finder locates license verification routines in binaries. It finds code paths related to license checks, activation verifications, and trial limitations.")
+        details_layout.addWidget(description_text)
+        
+        # Usage
+        details_layout.addWidget(QLabel("<b>Usage:</b>"))
+        usage_text = QTextEdit()
+        usage_text.setReadOnly(True)
+        usage_text.setMaximumHeight(80)
+        usage_text.setText("1. Select a binary file to analyze\n2. Run the plugin\n3. Review the identified license check locations\n4. Export results or use with patcher")
+        details_layout.addWidget(usage_text)
+        
+        # Add to content splitter
+        content_splitter.addWidget(plugin_list)
+        content_splitter.addWidget(details_widget)
+        content_splitter.setSizes([300, 400])
+        
+        plugins_layout.addWidget(content_splitter)
+        
+        # Add the panels to the main splitter
+        plugin_splitter.addWidget(category_panel)
+        plugin_splitter.addWidget(plugins_panel)
+        plugin_splitter.setSizes([200, 800])
+        
+        layout.addWidget(plugin_splitter)
+        
+        # Special tools section
+        tools_group = QGroupBox("Special Tools")
+        tools_layout = QGridLayout()
+        
+        keygen_tool_btn = QPushButton("Key Generator")
+        keygen_tool_btn.setIcon(QIcon.fromTheme("dialog-password"))
+        keygen_tool_btn.setToolTip("Generate license keys for various applications")
+        tools_layout.addWidget(keygen_tool_btn, 0, 0)
+        
+        patcher_tool_btn = QPushButton("Advanced Patcher")
+        patcher_tool_btn.setIcon(QIcon.fromTheme("package-x-generic"))
+        patcher_tool_btn.setToolTip("Advanced binary patching tool")
+        tools_layout.addWidget(patcher_tool_btn, 0, 1)
+        
+        emulator_tool_btn = QPushButton("API Emulator")
+        emulator_tool_btn.setIcon(QIcon.fromTheme("network-server"))
+        emulator_tool_btn.setToolTip("Emulate API responses for testing")
+        tools_layout.addWidget(emulator_tool_btn, 0, 2)
+        
+        unpacker_tool_btn = QPushButton("Binary Unpacker")
+        unpacker_tool_btn.setIcon(QIcon.fromTheme("package-x-generic"))
+        unpacker_tool_btn.setToolTip("Unpack protected executables")
+        tools_layout.addWidget(unpacker_tool_btn, 1, 0)
+        
+        rebuilder_tool_btn = QPushButton("PE Rebuilder")
+        rebuilder_tool_btn.setIcon(QIcon.fromTheme("document-save-as"))
+        rebuilder_tool_btn.setToolTip("Fix and rebuild damaged PE files")
+        tools_layout.addWidget(rebuilder_tool_btn, 1, 1)
+        
+        certificate_tool_btn = QPushButton("Certificate Manager")
+        certificate_tool_btn.setIcon(QIcon.fromTheme("application-certificate"))
+        certificate_tool_btn.setToolTip("Manage and create certificates")
+        tools_layout.addWidget(certificate_tool_btn, 1, 2)
+        
+        tools_group.setLayout(tools_layout)
+        layout.addWidget(tools_group)
+        
+        # Set the layout for the tab
+        self.plugins_hub_tab.setLayout(layout)
+        
+    def setup_assistant_logs_tab(self):
+        """Sets up the Assistant & Logs tab combining AI assistance with live logs."""
+        # Create main layout
+        layout = QVBoxLayout()
+        
+        # Create main splitter to adjust space between assistant and logs
+        main_splitter = QSplitter(Qt.Vertical)
+        
+        # --- ASSISTANT SECTION ---
+        assistant_widget = QWidget()
+        assistant_layout = QVBoxLayout(assistant_widget)
+        
+        # Header
+        header_layout = QHBoxLayout()
+        header_layout.addWidget(QLabel("<h2>AI Assistant</h2>"))
+        
+        # Status indicator
+        self.assistant_status = QLabel("Ready")
+        self.assistant_status.setStyleSheet("color: green; font-weight: bold;")
+        header_layout.addStretch(1)
+        header_layout.addWidget(QLabel("Status:"))
+        header_layout.addWidget(self.assistant_status)
+        
+        # Model selection
+        model_layout = QHBoxLayout()
+        model_layout.addWidget(QLabel("AI Model:"))
+        model_combo = QComboBox()
+        model_combo.addItems(["Claude-3", "Local LLama", "GPT-4", "Mistral"])
+        model_layout.addWidget(model_combo)
+        model_layout.addStretch(1)
+        
+        # Add header and model selection to assistant layout
+        assistant_layout.addLayout(header_layout)
+        assistant_layout.addLayout(model_layout)
+        
+        # Create chat interface
+        chat_group = QGroupBox("Chat History")
+        chat_layout = QVBoxLayout()
+        
+        # Chat display
+        self.chat_display = QTextEdit()
+        self.chat_display.setReadOnly(True)
+        # Set font for better readability
+        chat_font = QFont("Segoe UI", 10)
+        self.chat_display.setFont(chat_font)
+        # Welcome message
+        self.chat_display.setHtml(
+            "<div style='color:#666;'><i>Welcome to IntelliCrack Assistant. "
+            "I can help you analyze binaries, generate patches, understand protection mechanisms, "
+            "and more. What would you like to do today?</i></div>"
+        )
+        
+        chat_layout.addWidget(self.chat_display)
+        chat_group.setLayout(chat_layout)
+        
+        # User input area
+        input_group = QGroupBox("Your Message")
+        input_layout = QVBoxLayout()
+        
+        # Preset queries
+        preset_layout = QHBoxLayout()
+        preset_layout.addWidget(QLabel("Preset:"))
+        preset_combo = QComboBox()
+        preset_combo.addItems([
+            "Select a preset query...",
+            "Analyze this binary for license checks",
+            "Generate a patch plan",
+            "Explain this assembly code",
+            "How does this protection work?",
+            "Suggest memory locations to patch",
+            "What APIs are used by this function?",
+            "Help me bypass this protection"
+        ])
+        preset_combo.currentIndexChanged.connect(self.handle_preset_query)
+        
+        preset_layout.addWidget(preset_combo, 1)
+        preset_layout.addStretch(1)
+        
+        # User input
+        self.user_input = QTextEdit()
+        self.user_input.setPlaceholderText("Type your message here...")
+        self.user_input.setMaximumHeight(100)
+        
+        # Chat buttons
+        chat_buttons_layout = QHBoxLayout()
+        
+        clear_btn = QPushButton("Clear")
+        clear_btn.clicked.connect(lambda: self.user_input.clear())
+        
+        send_btn = QPushButton("Send")
+        send_btn.setIcon(QIcon.fromTheme("mail-send"))
+        send_btn.clicked.connect(self.send_to_assistant)
+        
+        chat_buttons_layout.addWidget(clear_btn)
+        chat_buttons_layout.addStretch(1)
+        chat_buttons_layout.addWidget(send_btn)
+        
+        # Add all elements to input layout
+        input_layout.addLayout(preset_layout)
+        input_layout.addWidget(self.user_input)
+        input_layout.addLayout(chat_buttons_layout)
+        
+        input_group.setLayout(input_layout)
+        
+        # Add chat components to assistant layout
+        assistant_layout.addWidget(chat_group)
+        assistant_layout.addWidget(input_group)
+        
+        # --- LOGS SECTION ---
+        logs_widget = QWidget()
+        logs_layout = QVBoxLayout(logs_widget)
+        
+        # Log header and controls
+        logs_header_layout = QHBoxLayout()
+        logs_header_layout.addWidget(QLabel("<h2>Live Logs</h2>"))
+        logs_header_layout.addStretch(1)
+        
+        # Log filter controls
+        logs_header_layout.addWidget(QLabel("Filter:"))
+        self.log_filter = QLineEdit()
+        self.log_filter.setFixedWidth(200)
+        self.log_filter.setPlaceholderText("Enter keywords to filter...")
+        logs_header_layout.addWidget(self.log_filter)
+        
+        apply_filter_btn = QPushButton("Apply")
+        apply_filter_btn.clicked.connect(self.apply_log_filter)
+        logs_header_layout.addWidget(apply_filter_btn)
+        
+        # Add log header to logs layout
+        logs_layout.addLayout(logs_header_layout)
+        
+        # Log display
+        log_display_layout = QHBoxLayout()
+        
+        # Log level filter
+        log_level_group = QGroupBox("Log Levels")
+        log_level_layout = QVBoxLayout()
+        
+        self.info_check = QCheckBox("Info")
+        self.info_check.setChecked(True)
+        self.warning_check = QCheckBox("Warning")
+        self.warning_check.setChecked(True)
+        self.error_check = QCheckBox("Error")
+        self.error_check.setChecked(True)
+        self.debug_check = QCheckBox("Debug")
+        self.debug_check.setChecked(False)
+        
+        log_level_layout.addWidget(self.info_check)
+        log_level_layout.addWidget(self.warning_check)
+        log_level_layout.addWidget(self.error_check)
+        log_level_layout.addWidget(self.debug_check)
+        log_level_layout.addStretch(1)
+        
+        # Apply levels button
+        apply_levels_btn = QPushButton("Apply Levels")
+        apply_levels_btn.clicked.connect(self.apply_log_filter)
+        log_level_layout.addWidget(apply_levels_btn)
+        
+        log_level_group.setLayout(log_level_layout)
+        
+        # Log output area
+        self.log_output = QTextEdit()
+        self.log_output.setReadOnly(True)
+        self.log_output.setLineWrapMode(QTextEdit.NoWrap)
+        self.log_output.setFont(QFont("Courier New", 9))
+        # Add sample log messages
+        self.log_output.append("<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:45] Application started</span>")
+        self.log_output.append("<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:46] Loading configuration from intellicrack_config.json</span>")
+        self.log_output.append("<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:47] Initializing UI components</span>")
+        self.log_output.append("<span style='color:#CC7F00;'>[WARNING] [2023-05-16 12:30:48] Could not load recent files list</span>")
+        self.log_output.append("<span style='color:#CC0000;'>[ERROR] [2023-05-16 12:30:50] Failed to initialize OpenGL context</span>")
+        self.log_output.append("<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:52] Using software rendering fallback</span>")
+        
+        log_display_layout.addWidget(log_level_group, 1)
+        log_display_layout.addWidget(self.log_output, 4)
+        
+        # Log buttons
+        log_buttons_layout = QHBoxLayout()
+        
+        clear_logs_btn = QPushButton("Clear Logs")
+        clear_logs_btn.clicked.connect(self.clear_logs)
+        
+        save_logs_btn = QPushButton("Save Logs")
+        save_logs_btn.clicked.connect(self.save_logs)
+        
+        auto_scroll_check = QCheckBox("Auto-scroll")
+        auto_scroll_check.setChecked(True)
+        
+        log_buttons_layout.addWidget(clear_logs_btn)
+        log_buttons_layout.addWidget(save_logs_btn)
+        log_buttons_layout.addStretch(1)
+        log_buttons_layout.addWidget(auto_scroll_check)
+        
+        # Add log components to logs layout
+        logs_layout.addLayout(log_display_layout)
+        logs_layout.addLayout(log_buttons_layout)
+        
+        # Add widgets to main splitter
+        main_splitter.addWidget(assistant_widget)
+        main_splitter.addWidget(logs_widget)
+        main_splitter.setSizes([600, 400])  # Default size allocation
+        
+        layout.addWidget(main_splitter)
+        
+        # Set the layout for the tab
+        self.assistant_logs_tab.setLayout(layout)
+        
+    def handle_preset_query(self, index):
+        """Handle selection of preset queries."""
+        if index == 0:  # "Select a preset query..."
+            return
+            
+        combo_box = self.sender()
+        selected_text = combo_box.currentText()
+        self.user_input.setText(selected_text)
+        combo_box.setCurrentIndex(0)  # Reset to default
+        
+    def send_to_assistant(self):
+        """Send the user's message to the assistant."""
+        user_message = self.user_input.toPlainText().strip()
+        if not user_message:
+            return
+            
+        # Update chat display with user message
+        self.chat_display.append(f"<div style='font-weight:bold;'>You:</div>")
+        self.chat_display.append(f"<div style='margin-left:10px;'>{user_message}</div><br>")
+        
+        # Clear user input
+        self.user_input.clear()
+        
+        # Show assistant is thinking
+        self.assistant_status.setText("Thinking...")
+        self.assistant_status.setStyleSheet("color: orange; font-weight: bold;")
+        
+        # Generate a placeholder response (in a real implementation, this would be from the AI model)
+        response = "I'm analyzing your request...\n\nBased on the information provided, I'd recommend examining the license verification routines at addresses 0x140001000-0x140001500. These appear to contain the core validation logic.\n\nI can help you generate patches or explain the protection mechanism in more detail if needed."
+        
+        # Simulate delay for assistant response
+        QTimer.singleShot(1500, lambda: self.show_assistant_response(response))
+        
+    def show_assistant_response(self, response):
+        """Display the assistant's response in the chat."""
+        # Update status to ready
+        self.assistant_status.setText("Ready")
+        self.assistant_status.setStyleSheet("color: green; font-weight: bold;")
+        
+        # Add response to chat
+        self.chat_display.append(f"<div style='font-weight:bold; color:#0066CC;'>Assistant:</div>")
+        self.chat_display.append(f"<div style='margin-left:10px;'>{response}</div><br>")
+        
+        # Scroll to bottom
+        self.chat_display.verticalScrollBar().setValue(
+            self.chat_display.verticalScrollBar().maximum()
+        )
+        
+        # Also add to logs
+        self.log_output.append("<span style='color:#007F00;'>[INFO] [2023-05-16 12:31:30] Assistant query processed</span>")
+        
+    def apply_log_filter(self):
+        """Apply filters to the log output."""
+        filter_text = self.log_filter.text().lower()
+        
+        # Apply log level filters (placeholder implementation)
+        show_info = self.info_check.isChecked()
+        show_warning = self.warning_check.isChecked()
+        show_error = self.error_check.isChecked()
+        show_debug = self.debug_check.isChecked()
+        
+        # In a real implementation, this would filter the actual logs
+        # For now, we'll just show a status message
+        self.log_output.append(f"<i>Applied filter: '{filter_text}' with levels: "
+                              f"INFO={show_info}, WARNING={show_warning}, "
+                              f"ERROR={show_error}, DEBUG={show_debug}</i>")
+        
+    def clear_logs(self):
+        """Clear the log output display."""
+        self.log_output.clear()
+        
+    def save_logs(self):
+        """Save logs to a file."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save Logs", "", "Log Files (*.log);;Text Files (*.txt);;All Files (*)"
+        )
+        
+        if file_path:
+            try:
+                with open(file_path, 'w') as f:
+                    # In a real implementation, would get plain text of logs
+                    f.write(self.log_output.toPlainText())
+                self.log_output.append(f"<i>Logs saved to {file_path}</i>")
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Could not save logs: {str(e)}")
+    
+    def setup_dashboard_tab(self):
+        """Sets up the Dashboard tab with system overview and quick access."""
+        # Create main layout
+        dashboard_layout = QVBoxLayout()
+        
+        # Create scrollable area for dashboard
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_widget = QWidget()
+        scroll_layout = QVBoxLayout(scroll_widget)
+        scroll_layout.setContentsMargins(15, 15, 15, 15)
+        scroll_layout.setSpacing(15)
+        
+        # --- HEADER SECTION ---
+        header_widget = QWidget()
+        header_widget.setObjectName("dashboardHeader")  # For styling
+        header_layout = QHBoxLayout(header_widget)
+        
+        # Left side: Welcome message
+        welcome_layout = QVBoxLayout()
+        welcome_title = QLabel("<h1>Welcome to Intellicrack</h1>")
+        welcome_subtitle = QLabel("Advanced Analysis and Patching Platform")
+        welcome_layout.addWidget(welcome_title)
+        welcome_layout.addWidget(welcome_subtitle)
+        welcome_layout.addStretch(1)
+        
+        # Right side: System status indicators
+        status_layout = QGridLayout()
+        status_layout.setSpacing(10)
+        
+        # System status indicators with visual status (green/yellow/red)
+        status_indicators = [
+            ("AI Model", "Connected", "green"),
+            ("License Server", "Running", "green"),
+            ("Patch Engine", "Ready", "green"),
+            ("Network Monitor", "Inactive", "gray")
+        ]
+        
+        for row, (name, status, color) in enumerate(status_indicators):
+            label = QLabel(f"<b>{name}:</b>")
+            status_indicator = QLabel(f"<span style='color:{color};'>●</span> {status}")
+            status_layout.addWidget(label, row, 0)
+            status_layout.addWidget(status_indicator, row, 1)
+        
+        # Add welcome and status to header
+        header_layout.addLayout(welcome_layout, 3)
+        header_layout.addLayout(status_layout, 2)
+        
+        scroll_layout.addWidget(header_widget)
+        
+        # --- QUICK ACTIONS SECTION ---
+        actions_group = QGroupBox("Quick Actions")
+        actions_layout = QHBoxLayout()
+        
+        # Create quick action buttons with icons
+        quick_actions = [
+            ("Analyze Binary", "microscope", self.open_analyze_tab),
+            ("Create Patch", "wrench", self.open_patching_tab),
+            ("View Hex", "search", self.open_hex_viewer_tab),
+            ("Network Capture", "wifi", self.open_network_tab),
+            ("Run Plugin", "extension", self.open_plugins_tab)
+        ]
+        
+        for name, icon, callback in quick_actions:
+            action_btn = QPushButton(name)

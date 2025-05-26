@@ -1,0 +1,1000 @@
+
+        # Store patches for later use
+        app.potential_patches = instructions
+
+        # Show results in output
+        app.analyze_results.clear()
+        app.analyze_results.append(f"Generated {len(instructions)} patches:")
+
+        for i, patch in enumerate(instructions):
+            app.analyze_results.append(f"\nPatch {i + 1}:")
+            app.analyze_results.append(f"  Address: 0x{patch['address']:X}")
+            app.analyze_results.append(
+                f"  New bytes: {
+                    patch['new_bytes'].hex().upper()}")
+            app.analyze_results.append(
+                f"  Description: {
+                    patch['description']}")
+
+        app.analyze_results.append(
+            "\nUse 'Apply Patch Plan' to apply these patches.")
+
+        app.analyze_status.setText(f"Generated {len(instructions)} patches")
+
+    except Exception as e:
+        app.update_output.emit(log_message(f"[Patch Agent] Error: {e}"))
+        app.analyze_status.setText(f"Error: {str(e)}")
+
+
+def run_ghidra_analysis_gui(app):
+    """Run Ghidra analysis GUI."""
+    if not app.binary_path:
+        app.update_output.emit(log_message("[Ghidra] No binary selected."))
+        return
+
+    app.update_output.emit(log_message("[Ghidra] Starting Ghidra analysis..."))
+
+    # Get Ghidra path from config
+    ghidra_path = CONFIG.get("ghidra_path",
+                             r"C:\Program Files\Ghidra\ghidraRun.bat")
+
+    if not os.path.exists(ghidra_path):
+        app.update_output.emit(
+            log_message(
+                f"[Ghidra] Ghidra not found at {ghidra_path}"))
+        app.update_output.emit(
+            log_message("[Ghidra] Please configure the correct path in Settings"))
+        return
+
+    # Create a temporary directory for the Ghidra project
+    temp_dir = tempfile.mkdtemp(prefix="intellicrack_ghidra_")
+    project_name = "intellicrack_project"
+
+    try:
+        app.update_output.emit(
+            log_message("[Ghidra] Setting up Ghidra project..."))
+
+        # Create a custom Ghidra script for license analysis
+        script_path = os.path.join(temp_dir, "LicenseAnalyzer.java")
+
+        script_content = """
+//License analyzer for Intellicrack
+//@category Intellicrack
+
+import ghidra.app.script.GhidraScript;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
+import ghidra.program.model.address.*;
+import java.io.*;
+import java.util.*;
+
+public class LicenseAnalyzer extends GhidraScript {
+
+    private static final String[] LICENSE_KEYWORDS = {
+        "licens", "registr", "activ", "serial", "key", "trial",
+        "valid", "expir", "check", "auth", "dongle"
+    };
+
+    @Override
+    public void run() throws Exception {
+        println("Intellicrack License Analyzer starting...");
+
+        // Output file for results
+        File outputFile = new File(System.getProperty("user.dir"), "license_analysis.txt");
+        PrintWriter writer = new PrintWriter(new FileWriter(outputFile));
+
+        writer.println("Intellicrack License Analysis Results");
+        writer.println("=====================================");
+        writer.println("Binary: " + currentProgram.getName());
+        writer.println("Date: " + new Date());
+        writer.println();
+
+        // Search for license-related strings
+        findLicenseStrings(writer);
+
+        // Search for license-related functions
+        findLicenseFunctions(writer);
+
+        writer.close();
+        println("Analysis complete. Results saved to: " + outputFile.getAbsolutePath());
+    }
+
+    private void findLicenseStrings(PrintWriter writer) throws Exception {
+        writer.println("License-Related Strings:");
+        writer.println("------------------------");
+
+        int count = 0;
+        SymbolTable symbolTable = currentProgram.getSymbolTable();
+        SymbolIterator symbols = symbolTable.getAllSymbols(true);
+
+        for (Symbol symbol : symbols) {
+            if (symbol.getSymbolType() == SymbolType.LABEL) {
+                String name = symbol.getName().toLowerCase();
+
+                // Check if name contains any license keywords
+                for (String keyword : LICENSE_KEYWORDS) {
+                    if (name.contains(keyword)) {
+                        Address addr = symbol.getAddress();
+                        writer.println("  " + addr + ": " + symbol.getName());
+                        count++;
+                        break;
+                    }
+                }
+            }
+        }
+
+        writer.println("  Found " + count + " license-related strings");
+        writer.println();
+    }
+
+    private void findLicenseFunctions(PrintWriter writer) throws Exception {
+        writer.println("License-Related Functions:");
+        writer.println("--------------------------");
+
+        int count = 0;
+        FunctionManager functionManager = currentProgram.getFunctionManager();
+        FunctionIterator functions = functionManager.getFunctions(true);
+
+        for (Function function : functions) {
+            String name = function.getName().toLowerCase();
+
+            // Check if function name contains any license keywords
+            boolean isLicenseRelated = false;
+            for (String keyword : LICENSE_KEYWORDS) {
+                if (name.contains(keyword)) {
+                    isLicenseRelated = true;
+                    break;
+                }
+            }
+
+            if (isLicenseRelated) {
+                Address addr = function.getEntryPoint();
+                writer.println("  " + addr + ": " + function.getName());
+
+                // Get function signature
+                String signature = function.getSignature().toString();
+                writer.println("    Signature: " + signature);
+
+                // Get first few instructions
+                Listing listing = currentProgram.getListing();
+                int instrCount = 0;
+                writer.println("    Instructions:");
+
+                Address currentAddr = addr;
+                while (instrCount < 10) {
+                    Instruction instr = listing.getInstructionAt(currentAddr);
+                    if (instr == null) break;
+
+                    writer.println("      " + instr.getAddress() + ": " + instr.toString());
+                    currentAddr = instr.getNext();
+                    instrCount++;
+                }
+
+                writer.println();
+                count++;
+            }
+        }
+
+        writer.println("  Found " + count + " license-related functions");
+        writer.println();
+    }
+}
+"""
+
+        with open(script_path, "w", encoding="utf-8") as f:
+            f.write(script_content)
+
+        # First, run headless analyzer to pre-analyze the binary
+        app.update_output.emit(
+            log_message("[Ghidra] Running headless analysis..."))
+
+        headless_cmd = [
+            ghidra_path.replace(
+                "ghidraRun.bat",
+                "support/analyzeHeadless.bat"),
+            temp_dir,
+            project_name,
+            "-import", app.binary_path,
+            "-scriptPath", temp_dir,
+            "-postScript", "LicenseAnalyzer.java",
+            "-deleteProject"
+        ]
+
+        # Execute headless analyzer
+        process = subprocess.Popen(
+            headless_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8"
+        )
+
+        # Wait for it to complete
+        stdout, stderr = process.communicate()
+
+        if process.returncode != 0:
+            app.update_output.emit(
+                log_message(
+                    f"[Ghidra] Headless analysis failed: {stderr}"))
+            return
+
+        # Extract important information from stdout
+        stdout_lines = stdout.splitlines()
+
+        # Log analysis summary and extract key information
+        analysis_summary = []
+        important_findings = []
+
+        for line in stdout_lines:
+            if "[LicenseAnalyzer]" in line:
+                important_findings.append(line.strip())
+            elif "INFO" in line and ("Analysis" in line or "Analyzing" in line):
+                analysis_summary.append(line.strip())
+
+        # Display summary information
+        app.update_output.emit(
+            log_message(f"[Ghidra] Headless analysis complete with {len(important_findings)} license-related findings"))
+
+        # Log details for debugging
+        if important_findings:
+            app.update_output.emit(
+                log_message(f"[Ghidra] Key findings from analysis: {len(important_findings)} items detected"))
+            for i, finding in enumerate(important_findings[:3]):  # Show first 3 findings
+                app.update_output.emit(log_message(f"[Ghidra] Finding {i+1}: {finding}"))
+
+            if len(important_findings) > 3:
+                app.update_output.emit(log_message(f"[Ghidra] ...and {len(important_findings)-3} more findings"))
+
+        # Check for analysis results
+        result_path = os.path.join(os.getcwd(), "license_analysis.txt")
+        if os.path.exists(result_path):
+            with open(result_path, "r", encoding="utf-8") as f:
+                results = f.read()
+
+            app.update_output.emit(log_message("[Ghidra] Analysis results:"))
+            for line in results.splitlines():
+                app.update_output.emit(log_message(f"[Ghidra] {line}"))
+
+        # Now launch Ghidra GUI with the binary
+        app.update_output.emit(log_message("[Ghidra] Launching Ghidra GUI..."))
+
+        gui_cmd = [
+            ghidra_path,
+            temp_dir,
+            project_name,
+            "-import", app.binary_path
+        ]
+
+        # Start Ghidra GUI
+        subprocess.Popen(gui_cmd)
+
+        app.update_output.emit(log_message("[Ghidra] Ghidra GUI launched"))
+
+    except Exception as e:
+        app.update_output.emit(log_message(f"[Ghidra] Error: {e}"))
+        # Clean up temp directory
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+def scan_for_bytecode_protectors(binary_path):
+    """Scan for bytecode protectors."""
+    results = {}
+
+    try:
+        # Define signatures for known protectors
+        protector_signatures = {
+            "Themida/WinLicense": {
+                "patterns": [b"Themida", b"WinLicense"],
+                "sections": [".themida", ".winlic"],
+            },
+            "VMProtect": {
+                "patterns": [b"VMProtect", b"vmp"],
+                "sections": [".vmp", "vmp"],
+            },
+            "Enigma": {
+                "patterns": [b"Enigma"],
+                "sections": [".enigma"],
+            },
+            "ASProtect": {
+                "patterns": [b"ASProtect"],
+                "sections": [".aspr"],
+            },
+            "Armadillo": {
+                "patterns": [b"Armadillo", b"SLVcop"],
+                "sections": [".rlp", ".tls"],
+            },
+            "PELock": {
+                "patterns": [b"PELock"],
+                "sections": [".pelock"],
+            },
+            "Obsidium": {
+                "patterns": [b"Obsidium"],
+                "sections": [".obsidium"],
+            },
+            "EXECryptor": {
+                "patterns": [b"ExeCryptor"],
+                "sections": [".exeenc"],
+            }
+        }
+
+        pe = pefile.PE(binary_path)
+
+        # Check section names
+        section_names = [
+            section.Name.decode(
+                'utf-8',
+                'ignore').strip('\x00') for section in pe.sections]
+
+        # Check for high entropy sections (common in packed/protected
+        # executables)
+        high_entropy_sections = []
+        for section in pe.sections:
+            section_name = section.Name.decode('utf-8', 'ignore').strip('\x00')
+            section_data = section.get_data()
+            entropy = calculate_entropy(section_data)
+
+            if entropy > 7.0:
+                high_entropy_sections.append((section_name, entropy))
+
+        # Read full binary data for pattern matching
+        with open(binary_path, "rb") as f:
+            binary_data = f.read()
+
+        # Check each protector's signatures
+        for protector_name, signature in protector_signatures.items():
+            detected = False
+            detection_info = {"detected": False}
+
+            # Check for patterns in binary
+            for pattern in signature["patterns"]:
+                if pattern.lower() in binary_data.lower():
+                    detected = True
+                    detection_info["detected"] = True
+                    detection_info["signature"] = pattern.decode(
+                        'utf-8', 'ignore')
+                    break
+
+            # Check for specific sections
+            for section in signature["sections"]:
+                if any(section.lower() in s.lower() for s in section_names):
+                    detected = True
+                    detection_info["detected"] = True
+                    detection_info["section_name"] = section
+
+                    # Find section and calculate entropy
+                    matching_section = next(
+                        (s for s in pe.sections if section.lower() in s.Name.decode(
+                            'utf-8', 'ignore').strip('\x00').lower()), None)
+                    if matching_section:
+                        entropy = calculate_entropy(
+                            matching_section.get_data())
+                        detection_info["section_entropy"] = entropy
+
+                    break
+
+            # Add detailed detection information based on detected status
+            if detected:
+                # Add when the detection happened
+                detection_info["detection_time"] = time.strftime('%Y-%m-%d %H:%M:%S')
+
+                if "detection_stats" not in results:
+                    results["detection_stats"] = {}
+                if protector_name not in results["detection_stats"]:
+                    results["detection_stats"][protector_name] = 0
+                results["detection_stats"][protector_name] += 1
+
+                # Add confidence level based on what triggered the detection
+                if "signature" in detection_info and "section_name" in detection_info:
+                    detection_info["confidence"] = "High" # Both pattern and section found
+                elif "signature" in detection_info:
+                    detection_info["confidence"] = "Medium" # Only pattern found
+                elif "section_name" in detection_info:
+                    detection_info["confidence"] = "Medium" # Only section found
+                else:
+                    detection_info["confidence"] = "Low" # Other detection method
+
+            results[protector_name] = detection_info
+
+        # Additional generic detection based on entropy
+        if high_entropy_sections and not any(
+                info.get("detected", False) for info in results.values()):
+            results["Generic Packer/Protector"] = {
+                "detected": True,
+                "note": "High entropy sections detected, possible unknown protector",
+                "high_entropy_sections": high_entropy_sections}
+
+        # Additional checks for specific protectors
+        # Check for Themida's unusual imports
+        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                dll_name = entry.dll.decode('utf-8', 'ignore').lower()
+                if "securengine" in dll_name:
+                    results["Themida/WinLicense"]["detected"] = True
+                    results["Themida/WinLicense"]["import"] = dll_name
+
+    except Exception as e:
+        results["error"] = str(e)
+
+    return results
+
+
+def detect_packing(binary_path):
+    """Detect packing techniques used in the binary."""
+    results = [f"Analyzing {binary_path} for packing..."]
+
+    try:
+        pe = pefile.PE(binary_path)
+
+        # Calculate entropy for each section
+        section_entropies = []
+        for section in pe.sections:
+            section_name = section.Name.decode('utf-8', 'ignore').strip('\x00')
+            section_data = section.get_data()
+            entropy = calculate_entropy(section_data)
+
+            size_kb = section.SizeOfRawData / 1024
+            section_entropies.append((section_name, entropy, size_kb))
+
+        results.append("Section entropy analysis:")
+        for name, entropy, size in section_entropies:
+            results.append(
+                f"  {name}: Entropy: {
+                    entropy:.4f}, Size: {
+                    size:.2f} KB")
+            if entropy > 7.0:
+                results.append(
+                    f"  ⚠️ Very high entropy (>{
+                        entropy:.4f}) indicates packing/encryption")
+            elif entropy > 6.5:
+                results.append(
+                    f"  ⚠️ High entropy (>{
+                        entropy:.4f}) suggests compression or obfuscation")
+
+        # Check imports - packed files often have few imports
+        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            import_count = sum(len(entry.imports)
+                               for entry in pe.DIRECTORY_ENTRY_IMPORT)
+            results.append(f"\nImport analysis:")
+            results.append(f"  Total imports: {import_count}")
+
+            if import_count < 10:
+                results.append(
+                    "  ⚠️ Very few imports (< 10) - typical of packed executables")
+            elif import_count < 30:
+                results.append(
+                    "  ⚠️ Few imports (< 30) - possible indication of packing")
+
+            # Check for suspicious imports (often used by packers/protectors)
+            suspicious_imports = [
+                "LoadLibrary",
+                "GetProcAddress",
+                "VirtualAlloc",
+                "VirtualProtect"]
+            found_suspicious = []
+
+            # pylint: disable=no-member
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                for imp in entry.imports:
+                    if imp.name:
+                        name = imp.name.decode('utf-8', 'ignore')
+                        if any(susp in name for susp in suspicious_imports):
+                            found_suspicious.append(name)
+
+            if found_suspicious:
+                results.append(
+                    "  ⚠️ Found suspicious imports used by packers/protectors:")
+                for imp in found_suspicious:
+                    results.append(f"    - {imp}")
+        else:
+            results.append(
+                "\nNo import directory found - strong indication of packing!")
+
+        # Check sections
+        results.append("\nSection analysis:")
+
+        # Suspicious section names
+        suspicious_sections = [".ndata", "UPX", ".packed", ".nsp", ".enigma"]
+        for section in pe.sections:
+            name = section.Name.decode('utf-8', 'ignore').strip('\x00')
+            if any(susp.lower() in name.lower()
+                   for susp in suspicious_sections):
+                results.append(f"  ⚠️ Suspicious section name: {name}")
+
+        # Executable & writable sections (often used by self-modifying packers)
+        for section in pe.sections:
+            name = section.Name.decode('utf-8', 'ignore').strip('\x00')
+            is_executable = (section.Characteristics & 0x20000000) != 0
+            is_writable = (section.Characteristics & 0x80000000) != 0
+
+            if is_executable and is_writable:
+                results.append(
+                    f"  ⚠️ Section {name} is both executable and writable - common in self-modifying code/packers")
+
+        # Summarize findings
+        results.append("\nPacking analysis summary:")
+
+        if any("Very high entropy" in line for line in results):
+            results.append(
+                "  ⚠️ PACKED/ENCRYPTED - Very high entropy sections detected")
+        elif any("High entropy" in line for line in results):
+            results.append(
+                "  ⚠️ PROBABLE PACKING - High entropy sections detected")
+        elif any(("Very few imports" in line or "No import directory" in line) for line in results):
+            results.append("  ⚠️ PROBABLE PACKING - Abnormal import structure")
+        elif any("both executable and writable" in line for line in results):
+            results.append(
+                "  ⚠️ POSSIBLE PACKING - Self-modifying code structure detected")
+        else:
+            results.append("  ✓ No strong indicators of packing detected")
+
+    except Exception as e:
+        results.append(f"Error analyzing for packing: {e}")
+
+    return results
+
+
+def decrypt_embedded_script(binary_path):
+    """Decrypt embedded scripts in the binary."""
+    results = [f"Searching for embedded scripts in {binary_path}..."]
+
+    try:
+        # Read the binary file
+        with open(binary_path, "rb") as f:
+            binary_data = f.read()
+
+        # Look for script markers
+        script_markers = [
+            (b"<script>", b"</script>"),
+            (b"BEGIN_SCRIPT", b"END_SCRIPT"),
+            (b"#BEGIN_PY", b"#END_PY"),
+            (b"/*SCRIPT_START*/", b"/*SCRIPT_END*/")
+        ]
+
+        found_scripts = []
+
+        for start_marker, end_marker in script_markers:
+            start_pos = 0
+            while True:
+                start_pos = binary_data.find(start_marker, start_pos)
+                if start_pos == -1:
+                    break
+
+                end_pos = binary_data.find(
+                    end_marker, start_pos + len(start_marker))
+                if end_pos == -1:
+                    break
+
+                # Extract script content
+                script_content = binary_data[start_pos +
+                                             len(start_marker):end_pos]
+
+                # Check if it's actually a script (look for script-like
+                # content)
+                is_script = False
+                script_keywords = [
+                    b"function",
+                    b"var ",
+                    b"return",
+                    b"import",
+                    b"class",
+                    b"def ",
+                    b"print(",
+                    b"console.log"]
+                for keyword in script_keywords:
+                    if keyword in script_content:
+                        is_script = True
+                        break
+
+                if is_script:
+                    try:
+                        # Try to decode as UTF-8
+                        decoded_script = script_content.decode(
+                            'utf-8', errors='ignore')
+                        found_scripts.append({
+                            "offset": start_pos,
+                            "marker": start_marker.decode('utf-8', errors='ignore'),
+                            # Limit to first 1000 chars to avoid huge outputs
+                            "content": decoded_script[:1000]
+                        })
+                    except Exception as e:
+                        results.append(f"Error decoding script: {e}")
+
+                start_pos = end_pos + len(end_marker)
+
+        # Look for obfuscated scripts
+        obfuscation_markers = [
+            b"eval(", b"String.fromCharCode(", b"atob(", b"decrypt",
+            b"base64.b64decode", b"base64_decode", b"fromBase64"
+        ]
+
+        for marker in obfuscation_markers:
+            start_pos = 0
+            while True:
+                start_pos = binary_data.find(marker, start_pos)
+                if start_pos == -1:
+                    break
+
+                # Extract context (100 bytes before and after)
+                context_start = max(0, start_pos - 100)
+                context_end = min(
+                    len(binary_data),
+                    start_pos + len(marker) + 100)
+                context = binary_data[context_start:context_end]
+
+                try:
+                    decoded_context = context.decode('utf-8', errors='ignore')
+                    found_scripts.append({
+                        "offset": start_pos,
+                        "marker": "Obfuscated: " + marker.decode('utf-8', errors='ignore'),
+                        "content": decoded_context
+                    })
+                except Exception as e:
+                    results.append(f"Error decoding obfuscated script: {e}")
+
+                start_pos += len(marker)
+
+        # Report findings
+        if found_scripts:
+            results.append(
+                f"Found {
+                    len(found_scripts)} potential embedded scripts:")
+
+            for i, script in enumerate(found_scripts):
+                results.append(
+                    f"\nScript {
+                        i +
+                        1} at offset 0x{
+                        script['offset']:X}:")
+                results.append(f"Marker: {script['marker']}")
+                results.append("Content preview:")
+
+                # Show first few lines
+                lines = script['content'].splitlines()
+                for j, line in enumerate(lines[:10]):
+                    results.append(f"  {j + 1}: {line}")
+
+                if len(lines) > 10:
+                    results.append(f"  ... plus {len(lines) - 10} more lines")
+
+                # Try to determine script type
+                if "function" in script['content'] and "var" in script['content']:
+                    results.append("Type: JavaScript")
+                elif "import" in script['content'] and "def " in script['content']:
+                    results.append("Type: Python")
+                elif "<?php" in script['content']:
+                    results.append("Type: PHP")
+                else:
+                    results.append("Type: Unknown")
+        else:
+            results.append("No embedded scripts found.")
+
+    except Exception as e:
+        results.append(f"Error searching for embedded scripts: {e}")
+
+    return results
+
+
+def simulate_patch_and_verify(binary_path, patches):
+    """Simulate patch application and verify results."""
+    results = [f"Simulating {len(patches)} patches on {binary_path}..."]
+
+    try:
+        # Create a temporary copy of the binary to simulate patching
+        temp_dir = tempfile.mkdtemp(prefix="intellicrack_sim_")
+        temp_path = os.path.join(temp_dir, os.path.basename(binary_path))
+        shutil.copy2(binary_path, temp_path)
+
+        results.append(f"Created temporary copy at {temp_path}")
+
+        # Apply patches to the temporary copy
+        pe = pefile.PE(temp_path)
+
+        patch_results = []
+        for i, patch in enumerate(patches):
+            try:
+                address = patch.get("address")
+                new_bytes = patch.get("new_bytes")
+                description = patch.get("description", "No description")
+
+                if not address or not new_bytes:
+                    patch_results.append(
+                        (False, f"Patch {i + 1}: Invalid patch data"))
+                    continue
+
+                # Get file offset from RVA
+                offset = pe.get_offset_from_rva(
+                    address - pe.OPTIONAL_HEADER.ImageBase)
+
+                # Apply patch
+                with open(temp_path, "r+b", encoding="utf-8") as f:
+                    f.seek(offset)
+                    f.write(new_bytes)
+
+                patch_results.append(
+                    (True,
+                     f"Patch {
+                         i +
+                         1}: Successfully applied at offset 0x{
+                         offset:X} ({description})"))
+            except Exception as e:
+                patch_results.append((False, f"Patch {i + 1}: Failed - {e}"))
+
+        # Report patch results
+        results.append("\nPatch simulation results:")
+        for success, message in patch_results:
+            if success:
+                results.append(f"✓ {message}")
+            else:
+                results.append(f"✗ {message}")
+
+        # Verify patched binary
+        try:
+            # Basic verification: check if the file loads and seems valid
+            verification_pe = pefile.PE(temp_path)
+            is_valid_pe = True
+        except Exception as e:
+            is_valid_pe = False
+            results.append(
+                f"\nVerification failed: Invalid PE file after patching - {e}")
+
+        if is_valid_pe:
+            results.append(
+                "\nBasic verification passed: File appears to be a valid PE executable")
+
+            # Compare sections with original
+            original_pe = pefile.PE(binary_path)
+
+            # Check section sizes
+            for i, (orig_section, patched_section) in enumerate(
+                    zip(original_pe.sections, verification_pe.sections)):
+                orig_name = orig_section.Name.decode(
+                    'utf-8', 'ignore').strip('\x00')
+                patched_name = patched_section.Name.decode(
+                    'utf-8', 'ignore').strip('\x00')
+
+                if orig_name != patched_name:
+                    results.append(
+                        f"Warning: Section {
+                            i + 1} name changed: {orig_name} -> {patched_name}")
+
+                if orig_section.SizeOfRawData != patched_section.SizeOfRawData:
+                    results.append(
+                        f"Warning: Section {orig_name} size changed: {
+                            orig_section.SizeOfRawData} -> {
+                            patched_section.SizeOfRawData}")
+
+            # Check entry point
+            if hasattr(original_pe, 'OPTIONAL_HEADER') and hasattr(verification_pe, 'OPTIONAL_HEADER'):
+                if hasattr(original_pe.OPTIONAL_HEADER, 'AddressOfEntryPoint') and hasattr(verification_pe.OPTIONAL_HEADER, 'AddressOfEntryPoint'):
+                    if original_pe.OPTIONAL_HEADER.AddressOfEntryPoint != verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:
+                        results.append(
+                            f"Warning: Entry point changed: 0x{
+                                original_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X} -> 0x{
+                                verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X}")
+                    else:
+                        results.append(
+                            f"Entry point verification passed: 0x{
+                                verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X}")
+                else:
+                    results.append("Warning: Could not verify entry point - A
+ddressOfEntryPoint attribute not found")
+            else:
+                results.append("Warning: Could not verify entry point - OPTIONAL_HEADER not found")
+
+            # Verify patches were applied correctly
+            for i, patch in enumerate(patches):
+                try:
+                    address = patch.get("address")
+                    new_bytes = patch.get("new_bytes")
+                    description = patch.get("description", "No description")
+
+                    if not address or not new_bytes:
+                        continue
+
+                    # Get file offset from RVA
+                    offset = verification_pe.get_offset_from_rva(
+                        address - verification_pe.OPTIONAL_HEADER.ImageBase)
+
+                    # Read bytes at patched location
+                    with open(temp_path, "rb") as f:
+                        f.seek(offset)
+                        actual_bytes = f.read(len(new_bytes))
+
+                    if actual_bytes == new_bytes:
+                        results.append(
+                            f"✓ Patch {
+                                i +
+                                1} verification: Bytes match at offset 0x{
+                                offset:X}")
+                    else:
+                        results.append(
+                            f"✗ Patch {
+                                i +
+                                1} verification: Bytes mismatch at offset 0x{
+                                offset:X}")
+                        results.append(
+                            f"  Expected: {
+                                new_bytes.hex().upper()}")
+                        results.append(
+                            f"  Actual: {
+                                actual_bytes.hex().upper()}")
+                except Exception as e:
+                    results.append(f"✗ Patch {i + 1} verification failed: {e}")
+
+        try:
+            shutil.rmtree(temp_dir)
+            results.append("\nCleanup: Temporary files removed")
+        except Exception as e:
+            results.append(
+                f"\nWarning: Failed to clean up temporary files: {e}")
+
+    except Exception as e:
+        results.append(f"Error during patch simulation: {e}")
+
+    return results
+
+
+def run_external_tool(args):
+    """Run an external tool with the given arguments."""
+    logger = logging.getLogger("Intellicrack.ExternalTool")
+    logger.info(f"Running external tool: {' '.join(args)}")
+    results = f"Running external tool: {' '.join(args)}\n"
+
+    try:
+        # Run the command
+        process = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8"
+        )
+        logger.info(f"Subprocess started: {args} (PID: {process.pid})")
+
+        # Get output
+        stdout, stderr = process.communicate()
+        logger.info(f"Subprocess finished with exit code {process.returncode}")
+        if stdout:
+            logger.info(f"Subprocess stdout:\n{stdout}")
+        if stderr:
+            logger.warning(f"Subprocess stderr:\n{stderr}")
+
+        # Format results
+        results += f"\nExit code: {process.returncode}\n"
+
+        if stdout:
+            results += f"\nOutput:\n{stdout}\n"
+
+        if stderr:
+            results += f"\nErrors:\n{stderr}\n"
+
+    except Exception as e:
+        logger.exception(f"Error executing external tool: {e}")
+        results += f"\nError executing command: {e}\n"
+
+    return results
+
+
+def retrieve_few_shot_examples(num_examples=3):
+    """Retrieve few-shot examples for the AI model."""
+    # These examples teach the AI model common patterns for cracking
+    # protection schemes
+    examples = [
+        """
+Example 1: Software with License Key Validation
+
+Binary analysis revealed a key validation routine at address 0x00401870. The function compares user input against a valid key format.
+
+Key findings:
+- Address 0x00401870: Main validation function
+- At 0x00401890: Comparison result determines success/failure path
+- A JNZ instruction at 0x00401895 jumps to failure path if key is invalid
+
+Patching solution:
+Address: 0x00401895 NewBytes: 909090 // Replace JNZ with NOPs to always take success path
+Address: 0x00401960 NewBytes: B001C3 // Replace complex validation with "MOV AL, 1; RET" to always return success
+
+This bypasses the key validation and forces the software to always report a successful license check.
+        """,
+
+        """
+Example 2: Trial Period Expiration
+
+Analysis shows the software checks the current date against a stored expiration date.
+
+Key findings:
+- Function at 0x00405230 retrieves current system time
+- Comparison at 0x00405280 checks if current date > expiration date
+- JBE instruction at 0x00405285 controls the expiration branch
+- Registry value "HKCU\\Software\\MyApp\\ExpiryDate" contains expiration timestamp
+
+Patching solution:
+Address: 0x00405285 NewBytes: EB11 // Replace conditional JBE with unconditional JMP to skip expiration check
+Address: 0x00405230 NewBytes: 31C0C3 // Replace time check with "XOR EAX, EAX; RET" to always return time 0
+
+The patch causes the expiration check to always pass, effectively creating an infinite trial period.
+        """,
+
+        """
+Example 3: Online Activation DRM
+
+The software validates its license by contacting an activation server.
+
+Key findings:
+- Network calls occur in function 0x00409840
+- Server response parsing at 0x00409930
+- Response code verification at 0x00409980
+- JNE instruction at 0x00409988 branches based on server response
+
+Patching solution:
+Address: 0x00409988 NewBytes: 9090 // Replace JNE with NOPs to always continue as if activation succeeded
+Address: 0x00409930 NewBytes: C7450801000000 // Add "MOV DWORD PTR [EBP+8], 1" to force successful response code
+
+This patch bypasses the online activation check by forcing a successful response code regardless of server communication.
+        """
+    ]
+
+    # Return the requested number of examples
+    return "\n".join(examples[:num_examples])
+
+
+class SplashScreen(QWidget):
+    """Displays a splash image on startup."""
+
+    def __init__(self):
+        """
+        Initialize the splash screen window.
+
+        Sets window flags, attributes, and loads the splash image.
+        """
+        super().__init__()
+        self.setWindowFlags(Qt.SplashScreen | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        layout = QVBoxLayout()
+
+        # Try to load splash image
+        splash_path = "assets/splash.png"
+
+        if not os.path.exists("assets"):
+            os.makedirs("assets")
+
+        if not os.path.exists(splash_path):
+            # Create a basic splash image
+            pixmap = QPixmap(400, 200)
+            pixmap.fill(QColor(40, 40, 40))
+
+            painter = QPainter(pixmap)
+            painter.setPen(QColor(255, 255, 255))
+            font = QFont("Arial", 20, QFont.Bold)
+            painter.setFont(font)
+            painter.drawText(pixmap.rect(), Qt.AlignCenter, "Intellicrack")
+            painter.end()
+        else:
+            pixmap = QPixmap(splash_path)
+
+        label = QLabel()
+        label.setPixmap(pixmap)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+
+        # Add version information
+        version_label = QLabel("Version 2.0")
+        version_label.setAlignment(Qt.AlignCenter)
+        version_label.setStyleSheet(
+            "color: white; background-color: rgba(0, 0, 0, 128);")
+        layout.addWidget(version_label)
+
+        self.setLayout(layout)
+
+        # Center the splash screen on the display
+        self.center_on_screen()
+
+    def center_on_screen(self):
+        """Centers the splash screen on the primary display."""
+
+        # Get the screen geometry
+        screen_geometry = QDesktopWidget().screenGeometry()
+
+        # Calculate position to center the widget
+        x = (screen_geometry.width() - self.width()) // 2
+        y = (screen_geometry.height() - self.height()) // 2

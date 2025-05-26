@@ -1,0 +1,1000 @@
+
+    try:
+        pe = pefile.PE(binary_path)
+        is_64bit = pe.FILE_HEADER.Machine == 0x8664
+        mode = CS_MODE_64 if is_64bit else CS_MODE_32
+
+        # Find code sections (.text and potentially others)
+        code_sections = [s for s in pe.sections if b".text" in s.Name
+                         or b"CODE" in s.Name
+                         or (s.Characteristics & 0x20000000)]  # IMAGE_SCN_CNT_CODE
+
+        if not code_sections:
+            results.append("No code sections found for instruction analysis")
+
+        for section in code_sections:
+            section_name = section.Name.decode(errors='replace').strip('\x00')
+            code_data = section.get_data()
+            section_addr = section.VirtualAddress
+
+            md = Cs(CS_ARCH_X86, mode)
+            md.detail = True  # Enable detailed output
+
+            # Limit disassembly to avoid excessive processing on large binaries
+            max_instructions = min(100000, len(code_data))
+            instructions = list(md.disasm(code_data[:max_instructions], section_addr))
+
+            for i, instr in enumerate(instructions):
+                # VM detection instructions
+                if instr.mnemonic == "cpuid":
+                    has_cpuid_check = True
+                    instruction_patterns.setdefault(section_name, {}).setdefault("cpuid", []).append(instr.address)
+
+                elif instr.mnemonic == "rdtsc":
+                    has_rdtsc_check = True
+                    instruction_patterns.setdefault(section_name, {}).setdefault("rdtsc", []).append(instr.address)
+
+                elif instr.mnemonic in ["sidt", "sgdt", "sldt"]:
+                    has_sidt_sgdt_check = True
+                    instruction_patterns.setdefault(section_name, {}).setdefault("descriptor_table", []).append(instr.address)
+
+                elif instr.mnemonic == "in" or instr.mnemonic == "out":
+                    has_in_instruction = True
+                    instruction_patterns.setdefault(section_name, {}).setdefault("io_port", []).append(instr.address)
+
+                # Check for comparison + conditional jump patterns
+                if i + 1 < len(instructions) and instr.mnemonic in ["cmp", "test"]:
+                    next_instr = instructions[i + 1]
+                    if next_instr.mnemonic.startswith("j") and next_instr.mnemonic != "jmp":
+                        # Check operands for VM-related content
+                        for pattern in vm_detection_patterns:
+                            try:
+                                pattern_str = pattern.decode().lower()
+                                if pattern_str in instr.op_str.lower():
+                                    has_registry_vm_check = True
+                                    instruction_patterns.setdefault(section_name, {}).setdefault("vm_compare", []).append(instr.address)
+                                    break
+                            except UnicodeDecodeError:
+                                # Handle case where pattern contains invalid UTF-8
+                                continue
+
+    except Exception as e:
+        error_details = traceback.format_exc()
+        results.append(f"Error scanning for VM detection instruction patterns: {str(e)}")
+        logger.debug(f"Instruction analysis error details:\n{error_details}")
+
+    # Results summary
+    if vm_strings_found:
+        results.append(f"Found virtualization detection strings: {', '.join(vm_strings_found)}")
+
+    # Summarize API findings by category
+    for category, apis in vm_apis_found.items():
+        if apis:
+            results.append(f"Found {category} detection APIs: {', '.join(apis)}")
+
+    # Instruction pattern results
+    if has_cpuid_check:
+        results.append(f"Found CPUID instruction(s) often used for VM detection at {len(instruction_patterns.get('cpuid', []))} locations")
+
+    if has_rdtsc_check:
+        results.append(f"Found RDTSC instruction(s) used for timing/VM detection at {len(instruction_patterns.get('rdtsc', []))} locations")
+
+    if has_sidt_sgdt_check:
+        results.append(f"Found SIDT/SGDT/SLDT instructions used to detect hypervisors at {len(instruction_patterns.get('descriptor_table', []))} locations")
+
+    if has_in_instruction:
+        results.append(f"Found IN/OUT instructions for I/O port access commonly used in VM detection at {len(instruction_patterns.get('io_port', []))} locations")
+
+    if has_registry_vm_check:
+        results.append(f"Found comparison patterns commonly used for VM detection at {len(instruction_patterns.get('vm_compare', []))} locations")
+
+    # Detailed findings for debugging
+    for pattern_type, addresses in instruction_patterns.items():
+        if addresses:
+            addr_list = ", ".join([f"0x{addr:X}" for addr in addresses[:5]])
+            if len(addresses) > 5:
+                addr_list += f" and {len(addresses)-5} more"
+            logger.debug(f"Found {pattern_type} instruction pattern(s) at: {addr_list}")
+
+    # Overall assessment with improved weighting
+    detection_level = 0
+
+    # String detection (0-2 points)
+    if len(vm_strings_found) > 3:
+        detection_level += 2
+        results.append("HIGH level of VM detection strings")
+    elif len(vm_strings_found) > 0:
+        detection_level += 1
+        results.append("MODERATE level of VM detection strings")
+
+    # API detection (0-3 points based on categories)
+    api_categories_used = sum(1 for category, apis in vm_apis_found.items() if apis)
+    if api_categories_used >= 3:
+        detection_level += 3
+        results.append("HIGH level of VM detection APIs (multiple categories)")
+    elif api_categories_used >= 2:
+        detection_level += 2
+        results.append("MODERATE level of VM detection APIs")
+    elif api_categories_used >= 1:
+        detection_level += 1
+        results.append("LOW level of VM detection APIs")
+
+    # Instruction detection (0-4 points)
+    instruction_techniques = sum([
+        1 if has_cpuid_check else 0,
+        1 if has_rdtsc_check else 0,
+        1 if has_sidt_sgdt_check else 0,
+        1 if has_in_instruction else 0
+    ])
+
+    if instruction_techniques >= 3:
+        detection_level += 2
+        results.append("HIGH level of VM detection instruction techniques")
+    elif instruction_techniques >= 1:
+        detection_level += 1
+        results.append("MODERATE level of VM detection instruction techniques")
+
+    # Overall detection level summary
+    max_level = 7  # Maximum possible score
+    if detection_level == 0:
+        results.append("No anti-virtualization techniques detected")
+    elif detection_level <= 2:
+        results.append(f"LOW level of anti-virtualization protection detected ({detection_level}/{max_level})")
+    elif detection_level <= 5:
+        results.append(f"MODERATE level of anti-virtualization protection detected ({detection_level}/{max_level})")
+    else:
+        results.append(f"HIGH level of anti-virtualization protection detected ({detection_level}/{max_level})")
+
+    return results, detection_level
+
+    if has_registry_vm_check:
+        detection_level += 1
+
+    if detection_level >= 4:
+        results.append("STRONG virtualization detection mechanisms detected")
+    elif detection_level >= 2:
+        results.append("MODERATE virtualization detection mechanisms detected")
+    elif detection_level >= 1:
+        results.append("BASIC virtualization detection mechanisms detected")
+    else:
+        results.append("No virtualization detection mechanisms detected")
+
+    return results
+
+
+def detect_commercial_protections(binary_path):
+    """
+    Enhanced detection of commercial protection systems like Themida, VMProtect, etc.
+    Provides more detailed information than the basic scan.
+    """
+    logging.info(f"Scanning binary '{binary_path}' for commercial protections.")
+    results = []
+    results.append("Scanning for commercial protection systems...")
+
+    # Expand signature database with more detailed information
+    protection_signatures = {
+        "Themida/WinLicense 3+": {
+            "patterns": [
+                b"Themida", b"WinLicense", b"SecureEngine", b".themida",
+                b"Protection!E", b"WL:S:", b"WL3:", b"TH3:", b"THEMIDA3"
+            ],
+            "sections": [".themida", "WinLic", ".tmd", ".thm", ".tdata"],
+            "imports": ["SecureEngine", "ThemidaSDK"],
+            "entropy_threshold": 7.3,
+            "description": "Advanced virtualization-based protector with licensing capabilities and anti-analysis"
+        },
+        "VMProtect 3+": {
+            "patterns": [
+                b"VMProtect", b"vmp", b"VMP3", b".vmp", b"@VMP",
+                b"VMPx", b"VMPh", b"VMPk", b"VMPy", b"VMPn"  # New VMProtect 3.x markers
+            ],
+            "sections": [".vmp", "vmp", ".vmdata", ".vmpx", ".vmpy"],
+            "imports": ["VMProtect", "VMP"],
+            "entropy_threshold": 7.2,
+            "description": "Advanced virtual machine-based protection with code mutation and anti-debug"
+        },
+        "CodeVirtualizer 3.x": {
+            "patterns": [
+                b"Code Virtualizer", b"WPProtect", b"OreansCv", b"CV3"
+            ],
+            "sections": [".cv", ".cvr", ".cvm", ".cvd"],
+            "imports": ["codevirtualizer", "cv3"],
+            "entropy_threshold": 7.0,
+            "description": "Code virtualization technology by Oreans with advanced anti-analysis"
+        },
+        "Enigma Protector": {
+            "patterns": [
+                b"Enigma Protector", b"EP:[0-9]", b".enigma", b"ENIGMA"
+            ],
+            "sections": [".enigma"],
+            "imports": ["enigma"],
+            "entropy_threshold": 6.5,
+            "description": "Full-featured protection system with licensing capability"
+        },
+        "Obsidium": {
+            "patterns": [
+                b"Obsidium", b"obsidium",
+            ],
+            "sections": [".obsidium", ".obsd"],
+            "imports": ["obsidium.dll"],
+            "entropy_threshold": 6.8,
+            "description": "Strong anti-debugging protection with code virtualization"
+        },
+        "ASProtect": {
+            "patterns": [
+                b"ASProtect", b"AspPE", b"aspr"
+            ],
+            "sections": [".aspr", ".asp"],
+            "imports": ["asprotect.dll"],
+            "entropy_threshold": 6.5,
+            "description": "Classic protector with compression and encryption"
+        },
+        "Armadillo/SLVcop": {
+            "patterns": [
+                b"Armadillo", b"SLVcop", b"Silicon", b"~SLV"
+            ],
+            "sections": [".SLV", ".slv"],
+            "imports": ["slvcop"],
+            "entropy_threshold": 6.2,
+            "description": "Commercial protection with anti-debugging and anti-tampering"
+        },
+        "Safengine": {
+            "patterns": [
+                b"SafeEngine", b"SafeengineShield"
+            ],
+            "sections": [".safe"],
+            "imports": ["safengine"],
+            "entropy_threshold": 6.7,
+            "description": "Strong protection with anti-debugging and licensing"
+        },
+        "ExeCryptor": {
+            "patterns": [
+                b"ExeCryptor", b"EXECRYPT", b"ExeCry"
+            ],
+            "sections": [".exec", ".ecry"],
+            "imports": ["execryptor"],
+            "entropy_threshold": 7.2,
+            "description": "Heavy encryption and anti-debug protection"
+        },
+        "Denuvo": {
+            "patterns": [
+                b"Denuvo", b"DENUVO", b"denuvo.com"
+            ],
+            "sections": [],
+            "imports": ["denuvo"],
+            "entropy_threshold": 6.5,
+            "description": "Advanced anti-tamper technology for games"
+        },
+        "StarForce": {
+            "patterns": [
+                b"StarForce", b"STAR-FORCE", b"starforce"
+            ],
+            "sections": [".sforce", ".star"],
+            "imports": ["starforce"],
+            "entropy_threshold": 6.5,
+            "description": "Powerful disk and memory protection against cracking"
+        },
+        "WiseProtect": {
+            "patterns": [
+                b"WiseProtect", b"Wise-Protect"
+            ],
+            "sections": [".wise"],
+            "imports": ["wiseprotect"],
+            "entropy_threshold": 6.0,
+            "description": "Protection against reverse engineering and debuggers"
+        },
+        "CodeVirtualizer": {
+            "patterns": [
+                b"Code Virtualizer", b"WPProtect", b"OreansCv"
+            ],
+            "sections": [".cv", ".cvr"],
+            "imports": ["codevirtualizer"],
+            "entropy_threshold": 6.5,
+            "description": "Code virtualization technology by Oreans"
+        }
+    }
+
+    try:
+
+        with open(binary_path, "rb") as f:
+            full_data = f.read()
+
+        pe = pefile.PE(binary_path)
+
+        # Check for protected sections
+        found_protections = {}
+        section_names = [section.Name.decode(
+            'utf-8', 'ignore').strip('\x00') for section in pe.sections]
+
+        for protection, info in protection_signatures.items():
+            # Pattern matching in full binary
+            logging.debug(f"Checking for protector '{protection}'. Patterns: {info['patterns']}, Sections: {info['sections']}")
+            pattern_matches = []
+            for pattern in info["patterns"]:
+                if pattern.lower() in full_data.lower():
+                    pattern_matches.append(pattern.decode('utf-8', 'ignore'))
+
+            # Section name matching
+            matching_sections = []
+            for section_name in section_names:
+                if any(protected_section.lower() in section_name.lower()
+                       for protected_section in info["sections"]):
+                    matching_sections.append(section_name)
+
+            # Import matching
+            matching_imports = []
+            if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+                for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                    dll_name = entry.dll.decode('utf-8', 'ignore').lower()
+                    if any(imp.lower() in dll_name for imp in info["imports"]):
+                        matching_imports.append(dll_name)
+
+            # Check section entropy
+            high_entropy_sections = []
+            for section in pe.sections:
+                section_name = section.Name.decode(
+                    'utf-8', 'ignore').strip('\x00')
+                section_data = section.get_data()
+                entropy = calculate_entropy(section_data)
+                if entropy > info["entropy_threshold"]:
+                    high_entropy_sections.append((section_name, entropy))
+
+            # Determine confidence level
+            confidence = 0
+            if pattern_matches:
+                confidence += len(pattern_matches) * 2
+            if matching_sections:
+                confidence += len(matching_sections) * 3
+            if matching_imports:
+                confidence += len(matching_imports) * 3
+            if high_entropy_sections:
+                confidence += len(high_entropy_sections)
+
+            if confidence > 0:
+                found_protections[protection] = {
+                    "confidence": confidence,
+                    "patterns": pattern_matches,
+                    "sections": matching_sections,
+                    "imports": matching_imports,
+                    "high_entropy": high_entropy_sections,
+                    "description": info["description"]
+                }
+
+        # Format results
+        if found_protections:
+            for protection, details in sorted(
+                    found_protections.items(), key=lambda x: x[1]["confidence"], reverse=True):
+                confidence_level = "HIGH" if details["confidence"] >= 6 else "MEDIUM" if details["confidence"] >= 3 else "LOW"
+                logging.info(f"Detected {protection} (Confidence: {confidence_level}). Patterns: {details['patterns']}, Sections: {details['sections']}, Imports: {details['imports']}")
+                results.append(
+                    f"Detected {protection} (Confidence: {confidence_level})")
+                results.append(f"  Description: {details['description']}")
+
+                if details["patterns"]:
+                    results.append(
+                        f"  Found patterns: {', '.join(details['patterns'])}")
+                if details["sections"]:
+                    results.append(
+                        f"  Protected sections: {
+                            ', '.join(
+                                details['sections'])}")
+                if details["imports"]:
+                    results.append(
+                        f"  Protected imports: {
+                            ', '.join(
+                                details['imports'])}")
+                if details["high_entropy"]:
+                    entropy_info = ", ".join(
+                        [f"{name} ({entropy:.2f})" for name, entropy in details["high_entropy"]])
+                    results.append(f"  High entropy sections: {entropy_info}")
+
+                results.append("")
+        else:
+            logging.info("Commercial protection scan complete. No known protections detected.")
+            results.append("No commercial protection systems detected")
+
+    except Exception as e:
+        logging.error(f"Error scanning for commercial protections: {e}", exc_info=True)
+        results.append(f"Error scanning for commercial protections: {e}")
+        results.append(traceback.format_exc())
+
+    return results
+
+
+def run_comprehensive_protection_scan(app):
+    """
+    Comprehensive protection scan that combines multiple detection techniques.
+    """
+    if not app.binary_path:
+        app.update_output.emit(log_message(
+            "[Protection Scan] No binary selected."))
+        return
+
+    app.update_output.emit(log_message(
+        "[Protection Scan] Starting comprehensive protection scan..."))
+    app.analyze_results.clear()
+
+    # Run dongle detection
+    app.update_output.emit(log_message(
+        "[Protection Scan] Checking for hardware dongles..."))
+    dongle_results = detect_hardware_dongles(app)
+    for line in dongle_results:
+        app.update_output.emit(log_message(f"[Hardware Dongle] {line}"))
+        app.analyze_results.append(line)
+
+    # Run TPM detection
+    app.update_output.emit(log_message(
+        "[Protection Scan] Checking for TPM protection..."))
+    tpm_results = detect_tpm_protection(app)
+    for line in tpm_results:
+        app.update_output.emit(log_message(f"[TPM Protection] {line}"))
+        app.analyze_results.append(line)
+
+    # Run VM detection
+    app.update_output.emit(log_message(
+        "[Protection Scan] Checking for virtualization protection..."))
+    vm_results = detect_virtualization_protection(app)
+    for line in vm_results:
+        app.update_output.emit(log_message(f"[VM Detection] {line}"))
+        app.analyze_results.append(line)
+
+    # Run commercial protection detection
+    app.update_output.emit(log_message(
+        "[Protection Scan] Checking for commercial protections..."))
+    commercial_results = detect_commercial_protections(app.binary_path)
+    for line in commercial_results:
+        app.update_output.emit(log_message(f"[Commercial Protection] {line}"))
+        app.analyze_results.append(line)
+
+    # Compile summary
+    app.update_output.emit(log_message(
+        "[Protection Scan] Scan complete. Generating summary..."))
+
+    # Determine overall protection level and recommendations
+    protection_found = False
+    dongle_found = any(
+        "Detected hardware dongles" in line for line in dongle_results)
+    tpm_found = any(
+        "TPM-based protection DETECTED" in line for line in tpm_results)
+    vm_found = any(
+        "STRONG virtualization detection" in line for line in vm_results)
+    commercial_found = any(
+        "Detected " in line and "Confidence" in line for line in commercial_results)
+
+    if dongle_found or tpm_found or vm_found or commercial_found:
+        protection_found = True
+
+    summary = ["", "=== PROTECTION SCAN SUMMARY ==="]
+    summary.append(f"Binary: {os.path.basename(app.binary_path)}")
+    summary.append(
+        f"Hardware dongle protection: {
+            'Detected' if dongle_found else 'Not detected'}")
+    summary.append(
+        f"TPM-based protection: {'Detected' if tpm_found else 'Not detected'}")
+    summary.append(
+        f"VM/Sandbox detection: {'Detected' if vm_found else 'Not detected'}")
+    summary.append(
+        f"Commercial protection: {
+            'Detected' if commercial_found else 'Not detected'}")
+
+    if protection_found:
+        summary.append("\nRecommendations:")
+        if dongle_found:
+            summary.append("- Use hardware dongle emulation (see Plugins tab)")
+        if tpm_found:
+            summary.append("- Use TPM emulation or bypass TPM checks")
+        if vm_found:
+            summary.append(
+                "- Use Anti-Debugger and VM detection bypass plugins")
+        if commercial_found:
+            summary.append(
+                "- Consider using memory patching instead of static patching")
+            summary.append(
+                "- Use runtime interception for heavily protected binaries")
+    else:
+        summary.append(
+            "\nNo significant protections detected. Standard patching techniques should work.")
+
+    for line in summary:
+        app.update_output.emit(log_message(line))
+        app.analyze_results.append(line)
+
+    app.analyze_status.setText("Protection scan complete")
+    app.update_output.emit(log_message("[Protection Scan] Comprehensive scan complete. Summary generated."))
+
+# -------------------------------
+# Comprehensive Runtime Interception
+# -------------------------------
+
+
+def inject_comprehensive_api_hooks(app, hook_types=None):
+    """
+    Injects comprehensive API hooks using Frida into a running process.
+
+    Args:
+        app: The application instance containing UI elements and binary path
+        hook_types: Optional list of specific hook types to inject
+    """
+    app.update_output.emit(log_message("[API Hooks] Preparing to inject comprehensive API hooks."))
+
+    if not app.binary_path:
+        app.update_output.emit(log_message("[API Hooks] No binary selected."))
+        return
+
+    app.update_output.emit(log_message(
+        "[API Hooks] Generating script for API hooks..."))
+
+    # Generate hook script based on requested hook types
+    script = generate_complete_api_hooking_script(app, hook_types)
+
+    # Find target process
+    target_pid = get_target_process_pid(app.binary_path)
+
+    if target_pid is None:
+        app.update_output.emit(log_message(
+            "[API Hooks] Target process not found."))
+        return
+
+    app.update_output.emit(log_message(f"[API Hooks] Target PID: {target_pid}"))
+    app.update_output.emit(log_message(
+        f"[API Hooks] Attaching to process PID {target_pid}"))
+
+    try:
+        session = frida.attach(target_pid)
+        script_obj = session.create_script(script)
+
+        def on_message(message, data):
+            """
+            Callback function for handling messages from the Frida script.
+
+            This function processes messages from the injected Frida script and updates
+            the UI output. It handles two types of messages: regular messages with a
+            'send' type that contain a payload to display, and error messages that
+            contain stack trace information.
+
+            Args:
+                message (dict): The message object received from Frida containing
+                    a 'type' key ('send' or 'error') and either 'payload' or 'stack'
+                data (bytes): Additional binary data that might be attached to the message
+                    (typically unused in this implementation)
+
+            Returns:
+                None
+            """
+            if message["type"] == "send":
+                app.update_output.emit(log_message(
+                    f"[API Hooks] {message['payload']}"))
+            elif message["type"] == "error":
+                app.update_output.emit(log_message(
+                    f"[API Hooks] Error: {message['stack']}"))
+
+        script_obj.on("message", on_message)
+        script_obj.load()
+
+        app.update_output.emit(log_message(
+            "[API Hooks] Hooks installed successfully"))
+
+        if not hasattr(app, "frida_sessions"):
+            app.frida_sessions = {}
+
+        app.frida_sessions["api_hooks"] = (session, script_obj)
+        app.update_output.emit(log_message("[API Hooks] Frida script created and loaded."))
+
+    except Exception as e:
+        app.update_output.emit(log_message(f"[API Hooks] Error injecting hooks: {e}"))
+        app.update_output.emit(log_message(traceback.format_exc()))
+
+
+def generate_complete_api_hooking_script(app, hook_types=None):
+    """
+    Generates a comprehensive Frida script for complete API hooking.
+    Enhanced with better anti-anti-debugging, memory scanning, and logging.
+    Covers all major licensing-related APIs.
+
+    Args:
+        app: The main app instance for UI updates
+        hook_types: List of hook types to include, or None for all hooks
+    """
+    if not hook_types:
+        hook_types = [
+            "registry", "filesystem", "network", "hardware_id",
+            # Added memory_scan trigger
+            "time", "cryptography", "debugger", "window", "memory_scan"
+        ]
+
+    app.update_output.emit(log_message(
+        f"[API Hooks] Generating API hooking script. Hook types: {hook_types if hook_types else 'All'}"))
+
+    script_parts = [
+        """
+// Intellicrack Enhanced Comprehensive API Hooking Script
+// Hooks licensing-related APIs with enhanced anti-debug and runtime scanning.
+
+function logHook(message) {
+    // Use send for structured logging if needed, otherwise console.log
+    // send({ type: 'log', data: message }); // Example structured logging
+    console.log(message);
+    return true;
+}
+
+(function() {
+    logHook("[Intellicrack] Starting enhanced comprehensive API hooking");
+"""
+    ]
+
+    # Registry hooks (Includes more detailed logging example)
+    if "registry" in hook_types:
+        script_parts.append("""
+    // ========== Registry API Hooks ==========
+    logHook("[Intellicrack] Setting up Registry hooks");
+
+    // Track registry keys of interest (expand as needed)
+    var licenseRegKeys = [
+        "SOFTWARE\\\\Microsoft", "SOFTWARE\\\\Classes\\\\CLSID", "SOFTWARE\\\\Wow6432Node",
+        "HARDWARE\\\\DEVICEMAP", "SYSTEM\\\\CurrentControlSet", "SOFTWARE\\\\Policies",
+        "licen", "activ", "trial", "key", "valid", "product", "serial" // Keywords
+    ];
+
+    // RegOpenKeyExW
+    var regOpenKeyExW = Module.findExportByName("advapi32.dll", "RegOpenKeyExW");
+    if (regOpenKeyExW) {
+        Interceptor.attach(regOpenKeyExW, {
+            onEnter: function(args) {
+                this.hKey = args[0]; // Root key handle (e.g., HKEY_LOCAL_MACHINE)
+                this.subKeyPtr = args[1];
+                this.options = args[2].toInt32();
+                this.samDesired = args[3].toInt32(); // Desired access rights
+
+                this.subKey = "N/A";
+                this.isLicenseKey = false;
+
+                if (this.subKeyPtr && !this.subKeyPtr.isNull()) {
+                    try {
+                        this.subKey = this.subKeyPtr.readUtf16String();
+                        // Check if this key matches keywords or known paths
+                        this.isLicenseKey = licenseRegKeys.some(function(licKey) {
+                            return this.subKey && this.subKey.toLowerCase().includes(licKey.toLowerCase());
+                        }, this);
+
+                        if (this.isLicenseKey) {
+                            logHook("[Registry] Opening key: '" + this.subKey +
+                                    "' (Desired Access: 0x" + this.samDesired.toString(16) + ")");
+                        }
+                    } catch (e) {
+                        logHook("[Registry] Error reading subkey pointer: " + e);
+                    }
+                }
+            },
+            onLeave: function(retval) {
+                // retval is NTSTATUS (0 for success)
+                if (this.isLicenseKey) {
+                     var phkResultPtr = this.context.get('rcx'); // Assuming x64 call convention where 4th arg is in RCX
+                     // Note: Getting output parameters like the resulting handle requires architecture-specific context reading
+                     logHook("[Registry] RegOpenKeyExW('" + this.subKey + "') returned status: " + retval.toInt32());
+                     // Could potentially store the opened handle if needed, but requires careful context handling.
+                }
+            }
+        });
+    }
+
+    // RegQueryValueExW
+    var regQueryValueExW = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
+    if (regQueryValueExW) {
+        Interceptor.attach(regQueryValueExW, {
+            onEnter: function(args) {
+                this.hKey = args[0]; // Handle to the open key
+                this.valueNamePtr = args[1];
+                this.lpType = args[3]; // Pointer to receive type code
+                this.lpData = args[4]; // Pointer to data buffer
+                this.lpcbData = args[5]; // Pointer to size variable
+
+                this.valueName = "N/A";
+                this.isLicenseValue = false;
+
+                if (this.valueNamePtr && !this.valueNamePtr.isNull()) {
+                    try {
+                        this.valueName = this.valueNamePtr.readUtf16String();
+                        // Check if value name is license-related
+                        this.isLicenseValue = licenseRegKeys.some(function(keyword) {
+                           return this.valueName && this.valueName.toLowerCase().includes(keyword.toLowerCase());
+                        }, this);
+
+                        if (this.isLicenseValue) {
+                            logHook("[Registry] Querying value: '" + this.valueName + "'");
+                        }
+                    } catch (e) {
+                        logHook("[Registry] Error reading value name pointer: " + e);
+                    }
+                }
+            },
+            onLeave: function(retval) {
+                // retval is NTSTATUS (0 for success)
+                if (this.isLicenseValue && retval.toInt32() === 0) { // ERROR_SUCCESS
+                    logHook("[Registry] RegQueryValueExW('" + this.valueName + "') succeeded.");
+
+                    // Safely read type and size
+                    var dataType = 0;
+                    var dataSize = 0;
+                    try {
+                        if (this.lpType && !this.lpType.isNull()) dataType = Memory.readUInt(this.lpType);
+                        if (this.lpcbData && !this.lpcbData.isNull()) dataSize = Memory.readUInt(this.lpcbData);
+                    } catch (e) { logHook("[Registry] Error reading type/size pointers: " + e); return; }
+
+                    // Attempt to read and potentially modify the data
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0) {
+                        try {
+                            var dataHex = Memory.readByteArray(this.lpData, Math.min(dataSize, 32)); // Read first 32 bytes for preview
+                            var hexString = Array.from(new Uint8Array(dataHex)).map(b => b.toString(16).padStart(2, '0')).join('');
+                            logHook("[Registry]  Type: " + dataType + ", Size: " + dataSize + ", Data (Hex): " + hexString + "...");
+
+                            // REG_SZ or REG_EXPAND_SZ (Type 1 or 2)
+                            if ((dataType === 1 || dataType === 2) && dataSize > 1) { // Min size for null terminator
+                                var valueStr = Memory.readUtf16String(this.lpData); // Reads until null terminator
+                                logHook("[Registry]  Retrieved string value: '" + valueStr + "'");
+
+                                var nameLower = this.valueName.toLowerCase();
+                                var modified = false;
+                                // Modify common license/trial values
+                                if (nameLower.includes("expire") || nameLower.includes("expiry")) {
+                                    var futureDate = "2099-12-31";
+                                    if (futureDate.length * 2 + 2 <= dataSize) { // Check buffer size (UTF16 + null)
+                                        Memory.writeUtf16String(this.lpData, futureDate);
+                                        logHook("[Registry]  MODIFIED expiry date to: " + futureDate);
+                                        modified = true;
+                                    }
+                                } else if (nameLower.includes("trial") && (nameLower.includes("remain") || nameLower.includes("left") || nameLower.includes("days"))) {
+                                    var trialDays = "9999";
+                                    if (trialDays.length * 2 + 2 <= dataSize) {
+                                        Memory.writeUtf16String(this.lpData, trialDays);
+                                        logHook("[Registry]  MODIFIED trial days to: " + trialDays);
+                                        modified = true;
+                                    }
+                                } else if ((nameLower.includes("licen") || nameLower.includes("activ")) && (valueStr.toLowerCase().includes("invalid") || valueStr.toLowerCase().includes("expired"))) {
+                                    var licStatus = "Valid";
+                                    if (licStatus.length * 2 + 2 <= dataSize) {
+                                         Memory.writeUtf16String(this.lpData, licStatus);
+                                         logHook("[Registry]  MODIFIED license status to: " + licStatus);
+                                         modified = true;
+                                     }
+                                }
+                                // Add more specific string modifications here based on observed values
+
+                            // REG_DWORD (Type 4)
+                            } else if (dataType === 4 && dataSize >= 4) {
+                                var dwordValue = Memory.readUInt(this.lpData);
+                                logHook("[Registry]  Retrieved DWORD value: " + dwordValue + " (0x" + dwordValue.toString(16) + ")");
+
+                                var nameLower = this.valueName.toLowerCase();
+                                var modified = false;
+                                // Modify common counters/status flags
+                                if (nameLower.includes("counter") || nameLower.includes("count")) {
+                                    Memory.writeUInt(this.lpData, 0); // Reset counter
+                                    logHook("[Registry]  MODIFIED counter to 0");
+                                    modified = true;
+                                } else if (nameLower.includes("trial") || nameLower.includes("days")) {
+                                    Memory.writeUInt(this.lpData, 9999); // Set high trial days
+                                    logHook("[Registry]  MODIFIED trial value to 9999");
+                                    modified = true;
+                                } else if ((nameLower.includes("status") || nameLower.includes("state") || nameLower.includes("valid")) && dwordValue === 0) {
+                                    Memory.writeUInt(this.lpData, 1); // Set status to valid/active (assuming 1 means success)
+                                    logHook("[Registry]  MODIFIED status DWORD to 1 (valid)");
+                                    modified = true;
+                                }
+                                // Add more DWORD modifications here
+                            }
+                            // Add handlers for other types (REG_BINARY, etc.) if needed
+
+                        } catch (e) {
+                            logHook("[Registry] Error reading or modifying data: " + e);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // RegSetValueExW
+    var regSetValueExW = Module.findExportByName("advapi32.dll", "RegSetValueExW");
+    if (regSetValueExW) {
+        Interceptor.attach(regSetValueExW, {
+            onEnter: function(args) {
+                this.valueNamePtr = args[1];
+                var valueName = "N/A";
+                try {
+                    if (this.valueNamePtr && !this.valueNamePtr.isNull()) valueName = this.valueNamePtr.readUtf16String();
+                } catch(e){}
+
+                 var isLicenseValue = licenseRegKeys.some(function(keyword) {
+                    return valueName && valueName.toLowerCase().includes(keyword.toLowerCase());
+                 }, this);
+
+                if (isLicenseValue) {
+                    var dataType = args[3].toInt32(); // Type
+                    var dataPtr = args[4]; // Data
+                    var dataSize = args[5].toInt32(); // Size
+                    var dataStr = "N/A";
+
+                    if (dataPtr && !dataPtr.isNull() && dataSize > 0) {
+                         try {
+                             if (dataType === 1 || dataType === 2) { // REG_SZ, REG_EXPAND_SZ
+                                 dataStr = "'" + Memory.readUtf16String(dataPtr) + "'";
+                             } else if (dataType === 4) { // REG_DWORD
+                                 dataStr = Memory.readUInt(dataPtr) + " (DWORD)";
+                             } else if (dataType === 3) { // REG_BINARY
+                                 var hex = Memory.readByteArray(dataPtr, Math.min(dataSize, 16));
+                                 dataStr = Array.from(new Uint8Array(hex)).map(b => b.toString(16).padStart(2, '0')).join('') + "... (Binary)";
+                             }
+                         } catch(e) { dataStr = "(Error reading data)"; }
+                    }
+                    logHook("[Registry] Setting value: '" + valueName + "' (Type: " + dataType + ", Size: " + dataSize + ") Data: " + dataStr);
+                }
+            }
+        });
+    }
+""")
+
+    # Filesystem hooks (Includes more detailed logging example)
+    if "filesystem" in hook_types:
+        script_parts.append("""
+    // ========== Filesystem API Hooks ==========
+    logHook("[Intellicrack] Setting up Filesystem hooks");
+
+    // License-related file names/extensions
+    var licenseFilesKeywords = [".lic", ".key", ".dat", "license", "activation", "reginfo", "serial", "trial", "user", "auth"];
+
+    // CreateFileW - For license file access
+    var createFileW = Module.findExportByName("kernel32.dll", "CreateFileW");
+    if (createFileW) {
+        Interceptor.attach(createFileW, {
+            onEnter: function(args) {
+                this.fileNamePtr = args[0];
+                this.dwDesiredAccess = args[1].toInt32();
+                this.dwShareMode = args[2].toInt32();
+                // args[3] is lpSecurityAttributes (optional)
+                this.dwCreationDisposition = args[4].toInt32();
+                this.dwFlagsAndAttributes = args[5].toInt32();
+
+                this.fileName = "N/A";
+                this.isLicenseFile = false;
+
+                if (this.fileNamePtr && !this.fileNamePtr.isNull()) {
+                    try {
+                        this.fileName = this.fileNamePtr.readUtf16String();
+                        this.isLicenseFile = licenseFilesKeywords.some(function(keyword) {
+                            return this.fileName && this.fileName.toLowerCase().includes(keyword.toLowerCase());
+                        }, this);
+
+                        if (this.isLicenseFile) {
+                            var accessMode = "";
+                            if ((this.dwDesiredAccess & 0x80000000) !== 0) accessMode += "Read "; // GENERIC_READ
+                            if ((this.dwDesiredAccess & 0x40000000) !== 0) accessMode += "Write "; // GENERIC_WRITE
+                            if ((this.dwDesiredAccess & 0x20000000) !== 0) accessMode += "Execute "; // GENERIC_EXECUTE
+                            if ((this.dwDesiredAccess & 0x10000000) !== 0) accessMode += "All "; // GENERIC_ALL
+                            if (!accessMode) accessMode = "Specific:" + this.dwDesiredAccess.toString(16);
+
+                            logHook("[Filesystem] CreateFileW: '" + this.fileName +
+                                    "' Access: " + accessMode.trim() +
+                                    ", Creation: " + this.dwCreationDisposition +
+                                    ", Flags: 0x" + this.dwFlagsAndAttributes.toString(16));
+
+                            // Track handles for later use in ReadFile/WriteFile
+                            if (!global._trackedFileHandles) global._trackedFileHandles = {};
+                             // Store info temporarily, associate with handle onLeave
+                            this._tempFileInfo = { fileName: this.fileName, isLicense: true };
+                        }
+                    } catch (e) {
+                         logHook("[Filesystem] Error reading filename pointer: " + e);
+                    }
+                }
+            },
+            onLeave: function(retval) {
+                var handle = retval.toUInt32(); // Handles are usually 32-bit unsigned
+                if (this._tempFileInfo && this._tempFileInfo.isLicense) {
+                    if (handle !== 0xFFFFFFFF) { // INVALID_HANDLE_VALUE is -1 (signed), which is 0xFFFFFFFF (unsigned)
+                        logHook("[Filesystem] Successfully opened license file '" + this.fileName + "', Handle: 0x" + handle.toString(16));
+                        global._trackedFileHandles[handle] = { fileName: this.fileName }; // Associate handle with file info
+                    } else {
+                        logHook("[Filesystem] Failed to open license file '" + this.fileName + "' (Error: " + NativeFunction.getLastError() + ")");
+                    }
+                }
+                 // Clear temporary info
+                this._tempFileInfo = null;
+            }
+        });
+    }
+
+    // ReadFile - For license file reading
+    var readFile = Module.findExportByName("kernel32.dll", "ReadFile");
+    if (readFile) {
+        Interceptor.attach(readFile, {
+            onEnter: function(args) {
+                this.hFile = args[0].toUInt32();
+                this.lpBuffer = args[1];
+                this.nNumberOfBytesToRead = args[2].toInt32();
+                this.lpNumberOfBytesRead = args[3];
+
+                this.isLicenseFile = false;
+                this.licenseFileName = "N/A";
+
+                if (global._trackedFileHandles && global._trackedFileHandles[this.hFile]) {
+                    this.isLicenseFile = true;
+                    this.licenseFileName = global._trackedFileHandles[this.hFile].fileName;
+                    logHook("[Filesystem] Reading " + this.nNumberOfBytesToRead + " bytes from license file: '" + this.licenseFileName + "' (Handle: 0x" + this.hFile.toString(16) + ")");
+                }
+            },
+            onLeave: function(retval) {
+                // retval is BOOL (non-zero for success)
+                if (this.isLicenseFile && retval.toInt32() !== 0) {
+                    var bytesRead = 0;
+                    try {
+                         if (this.lpNumberOfBytesRead && !this.lpNumberOfBytesRead.isNull()) {
+                             bytesRead = Memory.readUInt(this.lpNumberOfBytesRead);
+                         }
+                    } catch(e) { logHook("[Filesystem] Error reading bytesRead pointer: " + e); return; }
+
+                    logHook("[Filesystem] Read " + bytesRead + " bytes successfully from '" + this.licenseFileName + "'");
+
+                    if (bytesRead > 0 && this.lpBuffer && !this.lpBuffer.isNull()) {
+                        // Attempt to modify known license formats (similar to registry value modification)
+                        try {
+                             var dataHex = Memory.readByteArray(this.lpBuffer, Math.min(bytesRead, 64));
+                             var hexString = Array.from(new Uint8Array(dataHex)).map(b => b.toString(16).padStart(2, '0')).join('');
+                             logHook("[Filesystem]  Data (Hex Preview): " + hexString + "...");
+
+                             // Try decoding as UTF-8 to check for text-based licenses
+                             try {
+                                 var licenseText = Memory.readUtf8String(this.lpBuffer, bytesRead);
+                                 logHook("[Filesystem]  License appears text-based. Content (preview): " + licenseText.substring(0, 100) + "...");
+
+                                 // Look for expiration dates
+                                 var dateRegex = /(\\d{4}[-\\/]\\d{1,2}[-\\/]\\d{1,2})/g;
+                                 var dateMatch = dateRegex.exec(licenseText);
+                                 if (dateMatch) {
+                                     logHook("[Filesystem]  Found potential date: " + dateMatch[0]);
+                                     // Modify date if needed (similar to registry hook)
+                                     // Memory.writeUtf8String(this.lpBuffer, licenseText.replace(dateMatch[0], '2099-12-31'));
+                                     // logHook("[Filesystem]  MODIFIED date in buffer.");
+                                 }
+                                 // Look for status flags
+                                 if (licenseText.toLowerCase().includes("status=invalid") || licenseText.toLowerCase().includes("expired")) {
+                                     logHook("[Filesystem]  Found failure status. Attempting modification...");
+                                     // Modify status if possible
+                                     // var modifiedText = licenseText.replace(/status=invalid/i, 'status=valid');
+                                     // Memory.writeUtf8String(this.lpBuffer, modifiedText);
+                                     // logHook("[Filesystem]  MODIFIED status in buffer.");
+                                 }
+
+                             } catch(e) {
+                                 logHook("[Filesystem]  License appears binary or non-UTF8.");
+                                 // Add logic here for known binary license formats if applicable
+                             }
+                        } catch (e) {
+                             logHook("[Filesystem] Error reading/modifying license file data: " + e);
+                        }
+                    }
+                } else if (this.isLicenseFile && retval.toInt32() === 0) {
+                    logHook("[Filesystem] ReadFile failed for '" + this.licenseFileName + "' (Error: " + NativeFunction.getLastError() + ")");
+                }
+            }
+        });
+    }
+
+    // WriteFile - For license file writing
+    var writeFile = Module.findExportByName("kernel32.dll", "WriteFile");
+    if (writeFile) {
+        Interceptor.attach(writeFile, {
+            onEnter: function(args) {
+                this.hFile = args[0].toUInt32();
+                this.lpBuffer = args[1];
+                this.nNumberOfBytesToWrite = args[2].toInt32();
+                this.lpNumberOfBytesWritten = args[3];
+
+                if (global._trackedFileHandles && global._trackedFileHandles[this.hFile]) {
+                     var fileName = global._trackedFileHandles[this.hFile].fileName;
+                     logHook("[Filesystem] Writing " + this.nNumberOfBytesToWrite + " bytes to license file: '" + fileName + "' (Handle: 0x" + this.hFile.toString(16) + ")");
+                     // Log data being written (optional, potentially verbose)
+                     if (this.lpBuffer && !this.lpBuffer.isNull() && this.nNumberOfBytesToWrite > 0) {
+                         try {
+                             var dataHex = Memory.readByteArray(this.lpBuffer, Math.min(this.nNumberOfBytesToWrite, 32));
+                             var hexString = Array.from(new Uint8Array(dataHex)).map(b => b.toString(16).padStart(2, '0')).join('');
+                             logHook("[Filesystem]  Data Preview (Hex): " + hexString + "...");

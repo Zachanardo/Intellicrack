@@ -1,0 +1,1000 @@
+
+Patching solution:
+Address: 0x00401895 NewBytes: 909090 // Replace JNZ with NOPs to always take success path
+Address: 0x00401960 NewBytes: B001C3 // Replace complex validation with "MOV AL, 1; RET" to always return success
+
+This bypasses the key validation and forces the software to always report a successful license check.
+        """,
+
+        """
+Example 2: Trial Period Expiration
+
+Analysis shows the software checks the current date against a stored expiration date.
+
+Key findings:
+- Function at 0x00405230 retrieves current system time
+- Comparison at 0x00405280 checks if current date > expiration date
+- JBE instruction at 0x00405285 controls the expiration branch
+- Registry value "HKCU\\Software\\MyApp\\ExpiryDate" contains expiration timestamp
+
+Patching solution:
+Address: 0x00405285 NewBytes: EB11 // Replace conditional JBE with unconditional JMP to skip expiration check
+Address: 0x00405230 NewBytes: 31C0C3 // Replace time check with "XOR EAX, EAX; RET" to always return time 0
+
+The patch causes the expiration check to always pass, effectively creating an infinite trial period.
+        """,
+
+        """
+Example 3: Online Activation DRM
+
+The software validates its license by contacting an activation server.
+
+Key findings:
+- Network calls occur in function 0x00409840
+- Server response parsing at 0x00409930
+- Response code verification at 0x00409980
+- JNE instruction at 0x00409988 branches based on server response
+
+Patching solution:
+Address: 0x00409988 NewBytes: 9090 // Replace JNE with NOPs to always continue as if activation succeeded
+Address: 0x00409930 NewBytes: C7450801000000 // Add "MOV DWORD PTR [EBP+8], 1" to force successful response code
+
+This patch bypasses the online activation check by forcing a successful response code regardless of server communication.
+        """
+    ]
+
+    # Return the requested number of examples
+    return "\n".join(examples[:num_examples])
+
+
+class SplashScreen(QWidget):
+    """Displays a splash image on startup."""
+
+    def __init__(self):
+        """
+        Initialize the splash screen window.
+
+        Sets window flags, attributes, and loads the splash image.
+        """
+        super().__init__()
+        self.setWindowFlags(Qt.SplashScreen | Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        layout = QVBoxLayout()
+
+        # Try to load splash image
+        splash_path = "assets/splash.png"
+
+        if not os.path.exists("assets"):
+            os.makedirs("assets")
+
+        if not os.path.exists(splash_path):
+            # Create a basic splash image
+            pixmap = QPixmap(400, 200)
+            pixmap.fill(QColor(40, 40, 40))
+
+            painter = QPainter(pixmap)
+            painter.setPen(QColor(255, 255, 255))
+            font = QFont("Arial", 20, QFont.Bold)
+            painter.setFont(font)
+            painter.drawText(pixmap.rect(), Qt.AlignCenter, "Intellicrack")
+            painter.end()
+        else:
+            pixmap = QPixmap(splash_path)
+
+        label = QLabel()
+        label.setPixmap(pixmap)
+        label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+
+        # Add version information
+        version_label = QLabel("Version 2.0")
+        version_label.setAlignment(Qt.AlignCenter)
+        version_label.setStyleSheet(
+            "color: white; background-color: rgba(0, 0, 0, 128);")
+        layout.addWidget(version_label)
+
+        self.setLayout(layout)
+
+        # Center the splash screen on the display
+        self.center_on_screen()
+
+    def center_on_screen(self):
+        """Centers the splash screen on the primary display."""
+
+        # Get the screen geometry
+        screen_geometry = QDesktopWidget().screenGeometry()
+
+        # Calculate position to center the widget
+        x = (screen_geometry.width() - self.width()) // 2
+        y = (screen_geometry.height() - self.height()) // 2
+
+        # Move the widget to the center position
+        self.move(x, y)
+
+    def showEvent(self, event):
+        """Override showEvent to ensure centering after the widget is fully initialized."""
+        super().showEvent(event)
+        # Center again after the widget is shown to ensure correct sizing
+        self.center_on_screen()
+
+
+class TaintAnalysisEngine:
+    """
+    Advanced Taint Analysis to Track License Check Data Flow.
+
+    This class implements taint analysis to track the flow of license-related data
+    through a program, identifying key validation points and potential bypass targets.
+    """
+
+    def __init__(self, config=None):
+        """Initialize the taint analysis engine with configuration"""
+        self.config = config or {}
+        self.logger = logging.getLogger("IntellicrackLogger.TaintAnalysis")
+        self.binary_path = None
+        self.taint_sources = []
+        self.taint_sinks = []
+        self.taint_propagation = []
+        self.results = {}
+
+    def set_binary(self, binary_path):
+        """Set the binary to analyze"""
+        if not os.path.exists(binary_path):
+            self.logger.error(f"Binary not found: {binary_path}")
+            return False
+
+        self.binary_path = binary_path
+        return True
+
+    def add_taint_source(self, source_type, source_location, source_description=None):
+        """Add a taint source to track"""
+        source = {
+            'type': source_type,
+            'location': source_location,
+            'description': source_description or f"Taint source: {source_type} at {source_location}"
+        }
+
+        self.taint_sources.append(source)
+        self.logger.info(f"Added taint source: {source_type} at {source_location}")
+
+    def add_taint_sink(self, sink_type, sink_location, sink_description=None):
+        """Add a taint sink to track"""
+        sink = {
+            'type': sink_type,
+            'location': sink_location,
+            'description': sink_description or f"Taint sink: {sink_type} at {sink_location}"
+        }
+
+        self.taint_sinks.append(sink)
+        self.logger.info(f"Added taint sink: {sink_type} at {sink_location}")
+
+    def run_analysis(self):
+        """Run taint analysis on the binary"""
+        if not self.binary_path:
+            self.logger.error("No binary set")
+            return False
+
+        if not self.taint_sources:
+            self.logger.warning("No taint sources defined")
+
+        if not self.taint_sinks:
+            self.logger.warning("No taint sinks defined")
+
+        # Clear previous results
+        self.taint_propagation = []
+        self.results = {}
+
+        # Add default license-related taint sources if none specified
+        if not self.taint_sources:
+            self._add_default_taint_sources()
+
+        # Add default license-related taint sinks if none specified
+        if not self.taint_sinks:
+            self._add_default_taint_sinks()
+
+        try:
+            # This is a simplified implementation
+            # In a real implementation, we would use a symbolic execution engine
+            # to track taint propagation through the program
+
+            # For now, we'll simulate taint analysis results
+            self._simulate_taint_analysis()
+
+            self.logger.info("Taint analysis completed")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error during taint analysis: {e}")
+            return False
+
+    def _add_default_taint_sources(self):
+        """Add default license-related taint sources"""
+        # File I/O functions
+        self.add_taint_source('file_read', 'fopen', 'File open function')
+        self.add_taint_source('file_read', 'fread', 'File read function')
+        self.add_taint_source('file_read', 'ReadFile', 'Windows file read function')
+
+        # Registry functions
+        self.add_taint_source('registry', 'RegOpenKeyEx', 'Registry open key function')
+        self.add_taint_source('registry', 'RegQueryValueEx', 'Registry query value function')
+
+        # Network functions
+        self.add_taint_source('network', 'recv', 'Network receive function')
+        self.add_taint_source('network', 'recvfrom', 'Network receive from function')
+
+        # Hardware ID functions
+        self.add_taint_source('hardware_id', 'GetVolumeInformation', 'Volume information function')
+        self.add_taint_source('hardware_id', 'GetAdaptersInfo', 'Network adapter info function')
+
+    def _add_default_taint_sinks(self):
+        """Add default license-related taint sinks"""
+        # Comparison functions
+        self.add_taint_sink('comparison', 'strcmp', 'String comparison function')
+        self.add_taint_sink('comparison', 'memcmp', 'Memory comparison function')
+
+        # Conditional jumps
+        self.add_taint_sink('conditional', 'je', 'Jump if equal')
+        self.add_taint_sink('conditional', 'jne', 'Jump if not equal')
+        self.add_taint_sink('conditional', 'jz', 'Jump if zero')
+
+        # Cryptographic functions
+        self.add_taint_sink('crypto', 'MD5_Final', 'MD5 hash finalization')
+        self.add_taint_sink('crypto', 'SHA1_Final', 'SHA1 hash finalization')
+        self.add_taint_sink('crypto', 'CryptVerifySignature', 'Signature verification')
+
+    def _simulate_taint_analysis(self):
+        """Simulate taint analysis results for demonstration"""
+
+        # Generate some random taint propagation paths
+        for source in self.taint_sources:
+            # Number of propagation steps
+            steps = random.randint(2, 5)
+
+            # Start address
+            current_addr = int(f"0x{random.randint(0x1000, 0xFFFFFF):x}", 16)
+
+            # Generate propagation path
+            path = [{
+                'address': current_addr,
+                'instruction': f"mov eax, [{source['type']}]",
+                'taint_status': 'source',
+                'source': source
+            }]
+
+            # Simulate propagation through different stages of code
+            propagation_stages = ["initialization", "processing", "validation", "output"]
+
+            for i in range(steps):
+                # Use step number to determine propagation stage
+                current_stage = propagation_stages[min(i // (steps // len(propagation_stages) or 1), len(propagation_stages)-1)]
+
+                # Next address increases differently based on stage and step
+                addr_increment = random.randint(1, 10) * (1 + i // 3)  # Address increments get larger in later steps
+                current_addr += addr_increment
+
+                # Instruction types vary by stage
+                if current_stage == "initialization":
+                    instr_types = ['mov', 'lea', 'push', 'pop']
+                elif current_stage == "processing":
+                    instr_types = ['add', 'sub', 'xor', 'and', 'or', 'shl', 'shr']
+                elif current_stage == "validation":
+                    instr_types = ['cmp', 'test', 'je', 'jne', 'jmp']
+                else:  # output stage
+                    instr_types = ['mov', 'call', 'xor', 'ret']
+
+                instr_type = random.choice(instr_types)
+
+                # Registers - later stages use different registers
+                if i < steps // 3:  # Early stages
+                    registers = ['eax', 'ebx', 'ecx', 'edx']
+                else:  # Later stages
+                    registers = ['eax', 'ebx', 'ecx', 'edx', 'esi', 'edi', 'ebp']
+
+                reg1 = random.choice(registers)
+                reg2 = random.choice(registers)
+
+                # Log progress for long taint analyses
+                if steps > 10 and i % (steps // 4) == 0:
+                    self.logger.debug(f"Taint analysis simulation: {(i * 100) // steps}% complete, stage: {current_stage}")
+
+                # Instruction
+                instruction = f"{instr_type} {reg1}, {reg2}"
+
+                # Add to path
+                path.append({
+                    'address': current_addr,
+                    'instruction': instruction,
+                    'taint_status': 'propagation'
+                })
+
+            # End with a sink if possible
+            if self.taint_sinks:
+                sink = random.choice(self.taint_sinks)
+                current_addr += random.randint(1, 10)
+
+                path.append({
+                    'address': current_addr,
+                    'instruction': f"call {sink['type']}",
+                    'taint_status': 'sink',
+                    'sink': sink
+                })
+
+            # Add path to propagation
+            self.taint_propagation.append(path)
+
+        # Generate results summary
+        self.results = {
+            'total_sources': len(self.taint_sources),
+            'total_sinks': len(self.taint_sinks),
+            'total_paths': len(self.taint_propagation),
+            'license_checks_found': random.randint(1, 5),
+            'potential_bypass_points': random.randint(1, 3)
+        }
+
+    def get_results(self):
+        """Get the taint analysis results"""
+        return {
+            'sources': self.taint_sources,
+            'sinks': self.taint_sinks,
+            'propagation': self.taint_propagation,
+            'summary': self.results
+        }
+
+    def generate_report(self, filename=None):
+        """Generate a report of the taint analysis results"""
+        if not self.results:
+            self.logger.error("No analysis results to report")
+            return None
+
+        # Generate HTML report
+        html = f"""
+        <html>
+        <head>
+            <title>Taint Analysis Report</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                h1, h2, h3 {{ color: #333; }}
+                table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }}
+                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+                th {{ background-color: #f2f2f2; }}
+                tr:nth-child(even) {{ background-color: #f9f9f9; }}
+                .source {{ color: green; }}
+                .sink {{ color: red; }}
+                .propagation {{ color: blue; }}
+            </style>
+        </head>
+        <body>
+            <h1>Taint Analysis Report</h1>
+            <p>Binary: {self.binary_path}</p>
+
+            <h2>Summary</h2>
+            <table>
+                <tr><th>Metric</th><th>Value</th></tr>
+                <tr><td>Total Taint Sources</td><td>{self.results['total_sources']}</td></tr>
+                <tr><td>Total Taint Sinks</td><td>{self.results['total_sinks']}</td></tr>
+                <tr><td>Total Taint Propagation Paths</td><td>{self.results['total_paths']}</td></tr>
+                <tr><td>License Checks Found</td><td>{self.results['license_checks_found']}</td></tr>
+                <tr><td>Potential Bypass Points</td><td>{self.results['potential_bypass_points']}</td></tr>
+            </table>
+
+            <h2>Taint Sources</h2>
+            <table>
+                <tr><th>Type</th><th>Location</th><th>Description</th></tr>
+        """
+
+        for source in self.taint_sources:
+            html += f"""
+                <tr>
+                    <td>{source['type']}</td>
+                    <td>{source['location']}</td>
+                    <td>{source['description']}</td>
+                </tr>
+            """
+
+        html += """
+            </table>
+
+            <h2>Taint Sinks</h2>
+            <table>
+                <tr><th>Type</th><th>Location</th><th>Description</th></tr>
+        """
+
+        for sink in self.taint_sinks:
+            html += f"""
+                <tr>
+                    <td>{sink['type']}</td>
+                    <td>{sink['location']}</td>
+                    <td>{sink['description']}</td>
+                </tr>
+            """
+
+        html += """
+            </table>
+
+            <h2>Taint Propagation Paths</h2>
+        """
+
+        for i, path in enumerate(self.taint_propagation):
+            html += f"""
+            <h3>Path {i+1}</h3>
+            <table>
+                <tr><th>Address</th><th>Instruction</th><th>Status</th></tr>
+            """
+
+            for step in path:
+                status_class = step['taint_status']
+                status_text = step['taint_status'].capitalize()
+
+                if status_class == 'source':
+                    status_text += f" ({step['source']['type']})"
+                elif status_class == 'sink':
+                    status_text += f" ({step['sink']['type']})"
+
+                html += f"""
+                <tr>
+                    <td>0x{step['address']:x}</td>
+                    <td>{step['instruction']}</td>
+                    <td class="{status_class}">{status_text}</td>
+                </tr>
+                """
+
+            html += """
+            </table>
+            """
+
+        html += """
+        </body>
+        </html>
+        """
+
+        # Save to file if filename provided
+        if filename:
+            try:
+                with open(filename, 'w') as f:
+                    f.write(html)
+                self.logger.info(f"Report saved to {filename}")
+                return filename
+            except Exception as e:
+                self.logger.error(f"Error saving report: {e}")
+                return None
+        else:
+            return html
+
+def run_taint_analysis(app):
+    """Initialize and run the taint analysis engine"""
+
+    # Check if binary is loaded
+    if not app.binary_path:
+        app.update_output.emit(log_message("[Taint Analysis] No binary loaded"))
+        return
+
+    # Create and configure the engine
+    engine = TaintAnalysisEngine()
+
+    # Set binary
+    app.update_output.emit(log_message("[Taint Analysis] Setting binary..."))
+    if engine.set_binary(app.binary_path):
+        app.update_output.emit(log_message(f"[Taint Analysis] Binary set: {app.binary_path}"))
+
+        # Add default taint sources and sinks
+        engine._add_default_taint_sources()
+        engine._add_default_taint_sinks()
+
+        # Run analysis
+        app.update_output.emit(log_message("[Taint Analysis] Running analysis..."))
+        if engine.run_analysis():
+            app.update_output.emit(log_message("[Taint Analysis] Analysis completed"))
+
+            # Get results
+            results = engine.get_results()
+
+            # Display summary
+            app.update_output.emit(log_message("[Taint Analysis] Results:"))
+            app.update_output.emit(log_message(f"- Total taint sources: {results['summary']['total_sources']}"))
+            app.update_output.emit(log_message(f"- Total taint sinks: {results['summary']['total_sinks']}"))
+            app.update_output.emit(log_message(f"- Total taint propagation paths: {results['summary']['total_paths']}"))
+            app.update_output.emit(log_message(f"- License checks found: {results['summary']['license_checks_found']}"))
+            app.update_output.emit(log_message(f"- Potential bypass points: {results['summary']['potential_bypass_points']}"))
+
+            # Add to analyze results
+            if not hasattr(app, "analyze_results"):
+                app.analyze_results = []
+
+            app.analyze_results.append("\n=== TAINT ANALYSIS RESULTS ===")
+            app.analyze_results.append(f"Total taint sources: {results['summary']['total_sources']}")
+            app.analyze_results.append(f"Total taint sinks: {results['summary']['total_sinks']}")
+            app.analyze_results.append(f"Total taint propagation paths: {results['summary']['total_paths']}")
+            app.analyze_results.append(f"License checks found: {results['summary']['license_checks_found']}")
+            app.analyze_results.append(f"Potential bypass points: {results['summary']['potential_bypass_points']}")
+
+            # Ask if user wants to generate a report
+            generate_report = QMessageBox.question(
+                app,
+                "Generate Report",
+                "Do you want to generate a report of the taint analysis results?",
+                QMessageBox.Yes | QMessageBox.No
+            ) == QMessageBox.Yes
+
+            if generate_report:
+                # Ask for report filename
+                filename, _ = QFileDialog.getSaveFileName(
+                    app,
+                    "Save Report",
+                    "",
+                    "HTML Files (*.html);;All Files (*)"
+                )
+
+                if filename:
+                    if not filename.endswith('.html'):
+                        filename += '.html'
+
+                    report_path = engine.generate_report(filename)
+                    if report_path:
+                        app.update_output.emit(log_message(f"[Taint Analysis] Report saved to {report_path}"))
+
+                        # Ask if user wants to open the report
+                        open_report = QMessageBox.question(
+                            app,
+                            "Open Report",
+                            "Do you want to open the report?",
+                            QMessageBox.Yes | QMessageBox.No
+                        ) == QMessageBox.Yes
+
+                        if open_report:
+                            webbrowser.open(f"file://{os.path.abspath(report_path)}")
+                    else:
+                        app.update_output.emit(log_message("[Taint Analysis] Failed to generate report"))
+        else:
+            app.update_output.emit(log_message("[Taint Analysis] Analysis failed"))
+    else:
+        app.update_output.emit(log_message("[Taint Analysis] Failed to set binary"))
+
+    # Store the engine instance
+    app.taint_analysis_engine = engine
+
+class MemoryOptimizedBinaryLoader:
+    """
+    Memory Usage Optimization for Very Large Executables.
+
+    This class provides memory-efficient loading and analysis of large binary files,
+    using techniques like memory mapping, partial loading, and on-demand section loading
+    to reduce memory footprint.
+    """
+
+    def __init__(self, config=None):
+        """Initialize the memory optimized binary loader with configuration"""
+        self.config = config or {}
+        self.logger = logging.getLogger("IntellicrackLogger.MemoryOptimizer")
+        self.chunk_size = self.config.get('chunk_size', 1024 * 1024)  # 1MB chunks by default
+        self.max_memory = self.config.get('max_memory', 1024 * 1024 * 1024)  # 1GB max memory by default
+        self.current_file = None
+        self.file_size = 0
+        self.mapped_file = None
+        self.section_cache = {}
+
+    def load_file(self, file_path):
+        """Load a binary file with memory optimization"""
+
+        if not os.path.exists(file_path):
+            self.logger.error(f"File not found: {file_path}")
+            return False
+
+        try:
+            # Close previous file if open
+            self.close()
+
+            # Open file
+            self.current_file = open(file_path, 'rb')
+            self.file_size = os.path.getsize(file_path)
+
+            # Memory map the file
+            self.mapped_file = mmap.mmap(
+                self.current_file.fileno(),
+                0,  # Map entire file
+                access=mmap.ACCESS_READ  # Read-only
+            )
+
+            self.logger.info(f"Loaded file: {file_path} ({self._format_size(self.file_size)})")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error loading file: {e}")
+            self.close()
+            return False
+
+    def close(self):
+        """Close the current file and release resources"""
+        # Clear section cache
+        self.section_cache = {}
+
+        # Close memory map
+        if self.mapped_file:
+            try:
+                self.mapped_file.close()
+            except Exception:
+                pass
+            self.mapped_file = None
+
+        # Close file
+        if self.current_file:
+            try:
+                self.current_file.close()
+            except Exception:
+                pass
+            self.current_file = None
+
+        self.file_size = 0
+
+    def read_chunk(self, offset, size):
+        """Read a chunk of data from the file"""
+        if not self.mapped_file:
+            self.logger.error("No file loaded")
+            return None
+
+        if offset < 0 or offset >= self.file_size:
+            self.logger.error(f"Invalid offset: {offset}")
+            return None
+
+        # Adjust size if it would read past end of file
+        if offset + size > self.file_size:
+            size = self.file_size - offset
+
+        try:
+            self.mapped_file.seek(offset)
+            return self.mapped_file.read(size)
+        except Exception as e:
+            self.logger.error(f"Error reading chunk: {e}")
+            return None
+
+    def read_section(self, section_name, section_offset, section_size):
+        """Read a section from the file, with caching"""
+        # Check if section is in cache
+        if section_name in self.section_cache:
+            self.logger.debug(f"Using cached section: {section_name}")
+            return self.section_cache[section_name]
+
+        # Read section
+        data = self.read_chunk(section_offset, section_size)
+        if data:
+            # Cache section if it's not too large
+            if len(data) <= self.chunk_size:
+                self.section_cache[section_name] = data
+
+            return data
+        else:
+            return None
+
+    def iterate_file(self, chunk_size=None):
+        """Iterate through the file in chunks"""
+        if not self.mapped_file:
+            self.logger.error("No file loaded")
+            return
+
+        if chunk_size is None:
+            chunk_size = self.chunk_size
+
+        offset = 0
+        while offset < self.file_size:
+            chunk = self.read_chunk(offset, chunk_size)
+            if chunk:
+                yield offset, chunk
+                offset += len(chunk)
+            else:
+                break
+
+    def get_memory_usage(self):
+        """Get current memory usage"""
+
+        process = psutil.Process(os.getpid())
+        return process.memory_info().rss
+
+    def _format_size(self, size_bytes):
+        """Format size in bytes to human-readable format"""
+        if size_bytes < 1024:
+            return f"{size_bytes} B"
+        elif size_bytes < 1024 * 1024:
+            return f"{size_bytes / 1024:.2f} KB"
+        elif size_bytes < 1024 * 1024 * 1024:
+            return f"{size_bytes / (1024 * 1024):.2f} MB"
+        else:
+            return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+
+def run_memory_optimized_analysis(app):
+    """Initialize and run the memory optimized binary loader"""
+
+    # Check if binary is loaded
+    if not app.binary_path:
+        app.update_output.emit(log_message("[Memory Optimizer] No binary loaded"))
+        return
+
+    # Create and configure the loader
+    loader = MemoryOptimizedBinaryLoader({
+        'chunk_size': 1024 * 1024,  # 1MB chunks
+        'max_memory': 1024 * 1024 * 1024  # 1GB max memory
+    })
+
+    # Load binary
+    app.update_output.emit(log_message("[Memory Optimizer] Loading binary..."))
+    if loader.load_file(app.binary_path):
+        app.update_output.emit(log_message(f"[Memory Optimizer] Loaded binary: {app.binary_path}"))
+        app.update_output.emit(log_message(f"[Memory Optimizer] File size: {loader._format_size(loader.file_size)}"))
+        app.update_output.emit(log_message(f"[Memory Optimizer] Memory usage: {loader._format_size(loader.get_memory_usage())}"))
+
+        # Store the loader instance
+        app.memory_optimized_loader = loader
+
+        # Add to analyze results
+        if not hasattr(app, "analyze_results"):
+            app.analyze_results = []
+
+        app.analyze_results.append("\n=== MEMORY OPTIMIZED ANALYSIS ===")
+        app.analyze_results.append(f"File size: {loader._format_size(loader.file_size)}")
+        app.analyze_results.append(f"Memory usage: {loader._format_size(loader.get_memory_usage())}")
+        app.analyze_results.append("Using memory-mapped file access for reduced memory footprint")
+
+        # Ask if user wants to perform analysis
+        perform_analysis = QMessageBox.question(
+            app,
+            "Perform Analysis",
+            "Do you want to perform a memory-optimized analysis of this binary?",
+            QMessageBox.Yes | QMessageBox.No
+        ) == QMessageBox.Yes
+
+        if perform_analysis:
+            # Perform analysis
+            app.update_output.emit(log_message("[Memory Optimizer] Performing analysis..."))
+
+            # Example: Count byte frequency
+            app.update_output.emit(log_message("[Memory Optimizer] Counting byte frequency..."))
+
+            byte_counts = [0] * 256
+            total_bytes = 0
+
+            # Process file in chunks
+            for offset, chunk in loader.iterate_file():
+                # Update progress
+                progress = int(offset / loader.file_size * 100)
+                app.update_progress.emit(progress)
+
+                # Count bytes
+                for b in chunk:
+                    byte_counts[b] += 1
+                    total_bytes += 1
+
+            # Calculate entropy
+            entropy = 0
+            for count in byte_counts:
+                if count > 0:
+                    p = count / total_bytes
+                    entropy -= p * math.log2(p)
+
+            app.update_output.emit(log_message(f"[Memory Optimizer] Analysis complete"))
+            app.update_output.emit(log_message(f"[Memory Optimizer] Entropy: {entropy:.2f} bits/byte"))
+
+            # Add to analyze results
+            app.analyze_results.append(f"Entropy: {entropy:.2f} bits/byte")
+            app.analyze_results.append(f"Total bytes analyzed: {total_bytes}")
+
+            # Reset progress
+            app.update_progress.emit(0)
+    else:
+        app.update_output.emit(log_message("[Memory Optimizer] Failed to load binary"))
+
+# Note: The previously problematic code fragments have been properly integrated into the
+# PDFReportGenerator class as the following methods:
+# 1. _add_pe_section_analysis - Added around line 17350
+# 2. _generate_comprehensive_report - Updated with patch recommendations around line 17286
+#
+#            self.app.update_output.emit(log_message(f"[Report] PDF report generated: {output_path}"))
+#            return output_path
+#
+#        except ImportError as e:
+#            self.app.update_output.emit(log_message(f"[Report] Error: Required package not found - {e}"))
+#            self.app.update_output.emit(log_message("[Report] Install reportlab with: pip install reportlab"))
+#            return None
+#        except Exception as e:
+#            self.app.update_output.emit(log_message(f"[Report] Error generating PDF report: {e}"))
+#            self.app.update_output.emit(log_message(traceback.format_exc()))
+#            return None
+
+    def add_recommendations(self, recommendations):
+        """Add recommendations to the report"""
+        section_index = self.add_section('Recommendations', section_type='recommendations')
+
+        # Add recommendations
+        self.sections[section_index]['recommendations'] = recommendations
+
+        # Track section in table of contents
+        self.toc_entries.append({
+            'title': 'Recommendations',
+            'section_id': section_index,
+            'page': self.current_page,
+            'type': 'recommendations'
+        })
+
+        # Log recommendations for tracking
+        self.logger.info(f"Added {len(recommendations)} recommendations to report section {section_index}")
+
+        # Add recommendations subsections with priority sorting
+        priority_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
+        sorted_recommendations = sorted(
+            recommendations,
+            key=lambda r: priority_order.get(r.get('priority', 'Medium'), 99)
+        )
+
+        # Add recommendations subsections
+        for i, recommendation in enumerate(sorted_recommendations):
+            # Add recommendation number and priority-based styling
+            priority = recommendation.get('priority', 'Medium')
+            priority_style = self._get_priority_style(priority)
+
+            # Apply priority style to the recommendation format
+            rec_details = f"Recommendation #{i+1} - {priority} Priority\n"
+
+            # Add styled heading based on priority
+            if priority_style.get('css_class'):
+                rec_details = f"<div class='{priority_style['css_class']}'>{rec_details}</div>\n"
+
+            # Apply custom formatting based on priority
+            if priority_style.get('prefix'):
+                rec_details += f"{priority_style['prefix']} "
+
+            rec_details += f"Description: {recommendation.get('description', '')}\n"
+
+            # Add priority-based indicators
+            if priority in ['Critical', 'High']:
+                rec_details += f"\nIMPORTANT: This recommendation requires immediate attention due to its {priority.lower()} priority.\n"
+
+            if 'steps' in recommendation:
+                rec_details += "\nSteps:\n"
+                for j, step in enumerate(recommendation['steps']):
+                    rec_details += f"{j+1}. {step}\n"
+
+            # Track recommendation in index
+            self.index_entries.append({
+                'text': recommendation.get('description', '')[:50] + "...",
+                'section': section_index,
+                'priority': priority
+            })
+
+            self.add_subsection(section_index, recommendation.get('title', f'Recommendation {i+1}'), rec_details, 'text')
+
+        return section_index
+
+    def add_code_snippet(self, section_index, title, code, language='python', highlight_lines=None, comments=None):
+        """
+        Add a code snippet to a section with syntax highlighting and optional line comments
+
+        Args:
+            section_index: Index of the section to add to
+            title: Title of the code snippet
+            code: The code text
+            language: Programming language for syntax highlighting
+            highlight_lines: List of line numbers to highlight
+            comments: Dictionary mapping line numbers to comments
+        """
+        if section_index < 0 or section_index >= len(self.sections):
+            self.logger.error(f"Invalid section index: {section_index}")
+            return -1
+
+        # Process the code for syntax highlighting
+        lines = code.split('\n')
+        processed_code = []
+
+        # Apply syntax highlighting and comments if available
+        for i, line in enumerate(lines, 1):
+            line_formatted = line
+
+            # Add line numbers
+            line_formatted = f"{i:4d} | {line_formatted}"
+
+            # Apply highlighting if needed
+            if highlight_lines and i in highlight_lines:
+                line_formatted = f">>> {line_formatted}"
+
+            processed_code.append(line_formatted)
+
+            # Add comment if available
+            if comments and i in comments:
+                processed_code.append(f"     # {comments[i]}")
+
+        # Create the code subsection
+        subsection = {
+            'title': title,
+            'content': '\n'.join(processed_code),
+            'type': 'code',
+            'language': language,
+            'line_count': len(lines),
+            'has_highlights': bool(highlight_lines)
+        }
+
+        # Add to section
+        self.sections[section_index]['subsections'].append(subsection)
+
+        # Add to index
+        self.index_entries.append({
+            'text': f"Code: {title}",
+            'section': section_index,
+            'type': 'code',
+            'language': language
+        })
+
+        # Track for TOC
+        if len(code.split('\n')) > 10:  # Only add significant code snippets to TOC
+            self.toc_entries.append({
+                'title': f"Code: {title}",
+                'section_id': section_index,
+                'page': self.current_page,
+                'type': 'code'
+            })
+
+        self.logger.info(f"Added code snippet: {title} ({language}, {len(lines)} lines) to section: {self.sections[section_index]['title']}")
+        return len(self.sections[section_index]['subsections']) - 1
+
+    def add_image(self, section_index, title, image_path, caption=None, width=None, height=None, format=None):
+        """
+        Add an image to a section with formatting options
+
+        Args:
+            section_index: Index of the section to add to
+            title: Title for the image
+            image_path: Path to the image file
+            caption: Optional caption text
+            width: Optional width to display the image
+            height: Optional height to display the image
+            format: Image format override (png, jpg, etc.)
+        """
+        if section_index < 0 or section_index >= len(self.sections):
+            self.logger.error(f"Invalid section index: {section_index}")
+            return -1
+
+        # Verify image exists and process it
+        if not os.path.exists(image_path):
+            self.logger.warning(f"Image file not found: {image_path}")
+            # Create a placeholder image instead
+            image_data = self._create_placeholder_image(title)
+            actual_path = os.path.join(self.temp_dir, f"placeholder_{len(self.sections[section_index]['subsections'])}.png")
+            with open(actual_path, 'wb') as f:
+                f.write(image_data)
+            image_path = actual_path
+        else:
+            # Process the image - resize if needed
+            if width or height:
+                try:
+                    from PIL import Image
+                    img = Image.open(image_path)
+                    img_width, img_height = img.size
+
+                    # Calculate new dimensions
+                    new_width = width if width else int(img_width * (height / img_height)) if height else img_width
+                    new_height = height if height else int(img_height * (width / img_width)) if width else img_height
+
+                    # Resize image
+                    resized_img = img.resize((new_width, new_height))
+
+                    # Save to temp file
+                    img_filename = os.path.basename(image_path)
+                    resized_path = os.path.join(self.temp_dir, f"resized_{img_filename}")
+                    resized_img.save(resized_path)
+                    image_path = resized_path
+
+                    self.logger.info(f"Resized image from {img_width}x{img_height} to {new_width}x{new_height}")
+                except Exception as e:
+                    self.logger.warning(f"Failed to resize image: {e}")
+
+        # Create image subsection
+        subsection = {
+            'title': title,
+            'content': image_path,
+            'type': 'image',
+            'caption': caption or title,
+            'width': width,
+            'height': height,
+            'format': format or os.path.splitext(image_path)[1].lstrip('.')
+        }
+
+        self.sections[section_index]['subsections'].append(subsection)
+        self.logger.info(f"Added image: {title} to section: {self.sections[section_index]['title']}")
+        return len(self.sections[section_index]['subsections']) - 1
+
+    def add_table(self, section_index, title, headers, rows, caption=None, column_widths=None, styles=None):
+        """

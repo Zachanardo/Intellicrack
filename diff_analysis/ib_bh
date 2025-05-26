@@ -1,0 +1,1000 @@
+            bool: True if successful, False otherwise
+        """
+        if not self.qemu_process:
+            self.logger.error("QEMU not running")
+            return False
+
+        if name not in self.snapshots:
+            self.logger.error(f"Snapshot not found: {name}")
+            return False
+
+        try:
+            # Send QEMU monitor command to restore snapshot
+            self.qemu_process.stdin.write(f"loadvm {name}\n")
+            self.qemu_process.stdin.flush()
+
+            # Wait for confirmation
+            for _ in range(10):  # Wait up to 10 seconds
+                line = self.qemu_process.stdout.readline()
+                if "loaded" in line:
+                    self.logger.info(f"Restored snapshot: {name}")
+                    return True
+                time.sleep(1)
+
+            self.logger.warning(f"Timeout waiting for snapshot restoration: {name}")
+            return False
+        except Exception as e:
+            self.logger.error(f"Failed to restore snapshot: {e}")
+            return False
+
+    def execute_command(self, command):
+        """
+        Execute a command in the QEMU VM
+
+        Args:
+            command: Command to execute
+
+        Returns:
+            str: Command output
+        """
+        if not self.qemu_process:
+            self.logger.error("QEMU not running")
+            return ""
+
+        try:
+            # Send command to VM
+            self.qemu_process.stdin.write(f"{command}\n")
+            self.qemu_process.stdin.flush()
+
+            # Read output (simple approach - can be improved)
+            output = []
+            for _ in range(20):  # Read up to 20 lines or until prompt
+                line = self.qemu_process.stdout.readline().strip()
+                if line.endswith("$ ") or line.endswith("# "):  # Shell prompt
+                    break
+                if line and command not in line:  # Skip echo of command
+                    output.append(line)
+
+            return "\n".join(output)
+        except Exception as e:
+            self.logger.error(f"Failed to execute command: {e}")
+            return f"Error: {e}"
+
+    def compare_snapshots(self, before_name="pre_license_check", after_name="post_license_check"):
+        """
+        Compare memory state between two snapshots using QEMU's memory inspection capabilities.
+        Identifies changes in memory regions, loaded modules, active processes, and files
+        between the two snapshot states.
+
+        Args:
+            before_name: Name of the before snapshot
+            after_name: Name of the after snapshot
+
+        Returns:
+            dict: Comprehensive differences between snapshots including memory changes,
+                 file system modifications, and process state differences
+        """
+        if not self.qemu_process:
+            self.logger.error("QEMU not running")
+            return {"error": "QEMU not running"}
+
+        if before_name not in self.snapshots or after_name not in self.snapshots:
+            self.logger.error(f"Snapshots not found: {before_name} or {after_name}")
+            return {"error": f"Snapshots not found: {before_name} or {after_name}"}
+
+        self.logger.info(f"Comparing snapshots: {before_name} vs {after_name}")
+
+        try:
+            before_snapshot = self.snapshots[before_name]
+            after_snapshot = self.snapshots[after_name]
+
+            # Use QEMU's monitor to extract memory information
+            # Save memory state for each snapshot using pmemsave
+            before_mem_path = os.path.join(tempfile.gettempdir(), f"qemu_mem_{before_name}.bin")
+            after_mem_path = os.path.join(tempfile.gettempdir(), f"qemu_mem_{after_name}.bin")
+
+            # Extract memory regions
+            memory_regions = self._get_memory_regions()
+
+            # Track differences for each region
+            memory_diffs = []
+            total_changes = 0
+            significant_regions = []
+
+            # Compare memory regions of interest
+            for region in memory_regions:
+                region_name = region.get("name", "unknown")
+                region_addr = region.get("start", 0)
+                region_size = region.get("size", 0)
+
+                # Skip regions that are too large or system regions
+                if region_size > 10*1024*1024 or region_name in ["rom", "system"]:
+                    continue
+
+                # Use QEMU hmp to dump memory for comparison
+                before_dump = self._dump_memory_region(region_addr, region_size, before_name)
+                after_dump = self._dump_memory_region(region_addr, region_size, after_name)
+
+                if before_dump and after_dump:
+                    # Compare memory contents
+                    changes, similarity = self._compare_memory_dumps(before_dump, after_dump)
+
+                    if changes > 0:
+                        memory_diffs.append({
+                            "region": region_name,
+                            "address": f"0x{region_addr:x}",
+                            "size": region_size,
+                            "changes": changes,
+                            "similarity": similarity
+                        })
+
+                        total_changes += changes
+
+                        # Mark regions with significant changes
+                        if changes > 100 or similarity < 0.9:
+                            significant_regions.append(region_name)
+
+            # File system differences
+            fs_changes = self._compare_filesystem_state(before_name, after_name)
+
+            # Process differences
+            process_changes = self._compare_process_state(before_name, after_name)
+
+            # Network differences
+            network_changes = self._compare_network_state(before_name, after_name)
+
+            # Memory mapped files differences
+            mmap_changes = self._compare_mmap_state(before_name, after_name)
+
+            # Analyze results and classify changes
+            analysis_results = self._analyze_snapshot_differences(
+                memory_diffs, fs_changes, process_changes, network_changes, mmap_changes)
+
+            # Build comprehensive report
+            report = {
+                "memory": {
+                    "total_changes": total_changes,
+                    "changed_regions": len(memory_diffs),
+                    "significant_regions": significant_regions,
+                    "region_details": memory_diffs[:10]  # Limit to first 10 regions
+                },
+                "filesystem": fs_changes,
+                "processes": process_changes,
+                "network": network_changes,
+                "mmap": mmap_changes,
+                "analysis": analysis_results,
+                "metadata": {
+                    "before": {
+                        "name": before_name,
+                        "time": before_snapshot["time"]
+                    },
+                    "after": {
+                        "name": after_name,
+                        "time": after_snapshot["time"]
+                    },
+                    "time_diff": (after_snapshot["time"] - before_snapshot["time"]).total_seconds()
+                }
+            }
+
+            # Clean up temporary files
+            for path in [before_mem_path, after_mem_path]:
+                if os.path.exists(path):
+                    os.unlink(path)
+
+            return report
+
+        except Exception as e:
+            self.logger.error(f"Error comparing snapshots: {str(e)}")
+            self.logger.error(traceback.format_exc())
+            return {
+                "error": f"Error comparing snapshots: {str(e)}",
+                "before": self.snapshots[before_name],
+                "after": self.snapshots[after_name],
+                "time_diff": (self.snapshots[after_name]["time"] - self.snapshots[before_name]["time"]).total_seconds()
+            }
+
+    def _get_memory_regions(self):
+        """Get memory regions from QEMU using the monitor"""
+        try:
+            # Use QEMU monitor to get memory regions
+            result = self._send_monitor_command("info memdev")
+
+            # Parse memory regions from the result
+            regions = []
+
+            # Fallback to basic regions if detailed info not available
+            basic_regions = [
+                {"name": "ram", "start": 0x00000000, "size": 0x8000000},
+                {"name": "heap", "start": 0x08000000, "size": 0x1000000},
+                {"name": "stack", "start": 0x7FF00000, "size": 0x100000},
+            ]
+
+            if not result or "unknown command" in result.lower():
+                # Try alternative command
+                result = self._send_monitor_command("info memory")
+
+            if result and "memory" in result.lower():
+                # Parse the memory regions from QEMU output
+                # This parsing would depend on the exact format of QEMU's output
+                pass
+            else:
+                # Use fallback regions
+                regions = basic_regions
+
+            return regions
+        except Exception as e:
+            self.logger.error(f"Error getting memory regions: {str(e)}")
+            return []
+
+    def _dump_memory_region(self, addr, size, snapshot_name):
+        """Dump a memory region for a specific snapshot"""
+        try:
+            # Load the snapshot first
+            self._send_monitor_command(f"loadvm {snapshot_name}")
+
+            # Use a temporary file for the memory dump
+            output_path = os.path.join(tempfile.gettempdir(), f"mem_dump_{snapshot_name}_{addr:x}.bin")
+
+            # Dump memory region to file
+            dump_cmd = f"pmemsave 0x{addr:x} {size} {output_path}"
+            self._send_monitor_command(dump_cmd)
+
+            # Read the dumped memory
+            if os.path.exists(output_path):
+                with open(output_path, 'rb') as f:
+                    memory_data = f.read()
+
+                # Clean up
+                os.unlink(output_path)
+                return memory_data
+
+            return None
+        except Exception as e:
+            self.logger.error(f"Error dumping memory: {str(e)}")
+            return None
+
+    def _compare_memory_dumps(self, dump1, dump2):
+        """Compare two memory dumps and calculate differences"""
+        try:
+            if not dump1 or not dump2:
+                return 0, 0.0
+
+            # Ensure dumps are the same size for comparison
+            min_len = min(len(dump1), len(dump2))
+            dump1 = dump1[:min_len]
+            dump2 = dump2[:min_len]
+
+            # Count byte differences
+            diff_count = sum(1 for a, b in zip(dump1, dump2) if a != b)
+
+            # Calculate similarity as a percentage
+            similarity = 1.0 - (diff_count / min_len) if min_len > 0 else 0.0
+
+            return diff_count, similarity
+        except Exception as e:
+            self.logger.error(f"Error comparing memory dumps: {str(e)}")
+            return 0, 0.0
+
+    def _compare_filesystem_state(self, before_name, after_name):
+        """Compare filesystem state between snapshots"""
+        try:
+            # Load before snapshot and get filesystem state
+            self._send_monitor_command(f"loadvm {before_name}")
+            before_files = self._get_filesystem_state()
+
+            # Load after snapshot and get filesystem state
+            self._send_monitor_command(f"loadvm {after_name}")
+            after_files = self._get_filesystem_state()
+
+            # Compare file lists
+            new_files = [f for f in after_files if f not in before_files]
+            deleted_files = [f for f in before_files if f not in after_files]
+
+            return {
+                "new_files": new_files[:20],  # Limit to first 20
+                "deleted_files": deleted_files[:20],
+                "total_changes": len(new_files) + len(deleted_files)
+            }
+        except Exception as e:
+            self.logger.error(f"Error comparing filesystem state: {str(e)}")
+            return {"error": str(e)}
+
+    def _get_filesystem_state(self):
+        """Get filesystem state using guest commands"""
+        try:
+            # Run ls command in the guest to get file list
+            result = self.execute_command("find /tmp /var/log -type f -mtime -1 2>/dev/null")
+
+            # Split result into lines and clean up
+            files = [line.strip() for line in result.split('\n') if line.strip()]
+            return files
+        except Exception as e:
+            self.logger.error(f"Error getting filesystem state: {str(e)}")
+            return []
+
+    def _compare_process_state(self, before_name, after_name):
+        """Compare process state between snapshots"""
+        try:
+            # Load before snapshot and get process list
+            self._send_monitor_command(f"loadvm {before_name}")
+            before_procs = self._get_process_state()
+
+            # Load after snapshot and get process list
+            self._send_monitor_command(f"loadvm {after_name}")
+            after_procs = self._get_process_state()
+
+            # Compare process lists
+            new_procs = [p for p in after_procs if p not in before_procs]
+            ended_procs = [p for p in before_procs if p not in after_procs]
+
+            return {
+                "new_processes": new_procs,
+                "ended_processes": ended_procs,
+                "total_changes": len(new_procs) + len(ended_procs)
+            }
+        except Exception as e:
+            self.logger.error(f"Error comparing process state: {str(e)}")
+            return {"error": str(e)}
+
+    def _get_process_state(self):
+        """Get process state using guest commands"""
+        try:
+            # Run ps command in the guest
+            result = self.execute_command("ps aux")
+
+            # Parse process information
+            processes = []
+            lines = result.split('\n')
+            if len(lines) > 1:  # Skip header
+                for line in lines[1:]:
+                    parts = line.split()
+                    if len(parts) >= 11:
+                        processes.append({
+                            "user": parts[0],
+                            "pid": parts[1],
+                            "cmd": ' '.join(parts[10:])
+                        })
+            return processes
+        except Exception as e:
+            self.logger.error(f"Error getting process state: {str(e)}")
+            return []
+
+    def _compare_network_state(self, before_name, after_name):
+        """Compare network state between snapshots"""
+        try:
+            # Load before snapshot and get network state
+            self._send_monitor_command(f"loadvm {before_name}")
+            before_net = self._get_network_state()
+
+            # Load after snapshot and get network state
+            self._send_monitor_command(f"loadvm {after_name}")
+            after_net = self._get_network_state()
+
+            # Calculate differences
+            return {
+                "before": before_net,
+                "after": after_net,
+                "new_connections": [c for c in after_net.get("connections", [])
+                                   if c not in before_net.get("connections", [])]
+            }
+        except Exception as e:
+            self.logger.error(f"Error comparing network state: {str(e)}")
+            return {"error": str(e)}
+
+    def _get_network_state(self):
+        """Get network state using guest commands"""
+        try:
+            # Get network interfaces
+            interfaces = self.execute_command("ifconfig -a || ip addr")
+
+            # Get network connections
+            connections = self.execute_command("netstat -tuln || ss -tuln")
+
+            # Parse connections into structured data
+            conn_list = []
+            for line in connections.split('\n'):
+                if "LISTEN" in line or "ESTABLISHED" in line:
+                    conn_list.append(line.strip())
+
+            return {
+                "interfaces": interfaces,
+                "connections": conn_list
+            }
+        except Exception as e:
+            self.logger.error(f"Error getting network state: {str(e)}")
+            return {}
+
+    def _compare_mmap_state(self, before_name, after_name):
+        """Compare memory-mapped file state between snapshots"""
+        try:
+            # Load before snapshot and get mmap state
+            self._send_monitor_command(f"loadvm {before_name}")
+            before_mmap = self._get_mmap_state()
+
+            # Load after snapshot and get mmap state
+            self._send_monitor_command(f"loadvm {after_name}")
+            after_mmap = self._get_mmap_state()
+
+            # Compare mappings
+            new_maps = [m for m in after_mmap if m not in before_mmap]
+            removed_maps = [m for m in before_mmap if m not in after_mmap]
+
+            return {
+                "new_mappings": new_maps[:10],  # Limit to first 10
+                "removed_mappings": removed_maps[:10],
+                "total_changes": len(new_maps) + len(removed_maps)
+            }
+        except Exception as e:
+            self.logger.error(f"Error comparing mmap state: {str(e)}")
+            return {"error": str(e)}
+
+    def _get_mmap_state(self):
+        """Get memory map state using guest commands"""
+        try:
+            # Get memory mappings from proc
+            result = self.execute_command("cat /proc/*/maps 2>/dev/null | grep -v '\\[' | sort -u")
+
+            # Parse mappings
+            mappings = []
+            for line in result.split('\n'):
+                if line.strip():
+                    mappings.append(line.strip())
+
+            return mappings
+        except Exception as e:
+            self.logger.error(f"Error getting mmap state: {str(e)}")
+            return []
+
+    def _analyze_snapshot_differences(self, memory_diffs, fs_changes, process_changes,
+                                     network_changes, mmap_changes):
+        """Analyze differences between snapshots and provide insights"""
+        analysis = {
+            "license_related_changes": False,
+            "suspected_license_checks": [],
+            "potential_modifications": []
+        }
+
+        # Check for license-related changes in filesystem
+        license_files = [f for f in fs_changes.get("new_files", [])
+                        if "license" in f.lower() or "key" in f.lower()]
+        if license_files:
+            analysis["license_related_changes"] = True
+            analysis["suspected_license_checks"].append(
+                f"Created license-related files: {', '.join(license_files)}")
+
+        # Check for license-related processes
+        license_procs = [p["cmd"] for p in process_changes.get("new_processes", [])
+                        if "license" in p.get("cmd", "").lower() or
+                           "activ" in p.get("cmd", "").lower()]
+        if license_procs:
+            analysis["license_related_changes"] = True
+            analysis["suspected_license_checks"].append(
+                f"Started license-related processes: {', '.join(license_procs)}")
+
+        # Check for significant memory changes in important regions
+        significant_memory = [m for m in memory_diffs
+                             if m["changes"] > 1000 and "heap" in m["region"].lower()]
+        if significant_memory:
+            analysis["potential_modifications"].append(
+                f"Significant heap memory changes detected in {len(significant_memory)} regions")
+
+        # Check for network activity potentially related to licensing
+        if network_changes.get("new_connections"):
+            analysis["potential_modifications"].append(
+                f"New network connections established ({len(network_changes.get('new_connections', []))})")
+
+        return analysis
+
+    def _send_monitor_command(self, command):
+        """Send a command to the QEMU monitor"""
+        try:
+            if not self.qemu_process:
+                self.logger.error("QEMU not running, cannot send monitor command")
+                return None
+
+            # Use QMP (QEMU Machine Protocol) or HMP (Human Monitor Protocol)
+            # This is a simplified implementation
+            monitor_sock_path = getattr(self, 'monitor_sock_path', None)
+
+            if not monitor_sock_path:
+                self.logger.warning("No monitor socket path available")
+                return None
+
+            # Connect to QEMU monitor socket
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.connect(monitor_sock_path)
+
+            # Send command
+            sock.sendall(f"{command}\n".encode('utf-8'))
+
+            # Read response
+            response = b""
+            while True:
+                data = sock.recv(4096)
+                if not data:
+                    break
+                response += data
+                if b"(qemu)" in response:  # Command prompt indicates end
+                    break
+
+            sock.close()
+            return response.decode('utf-8', errors='ignore')
+
+        except Exception as e:
+            self.logger.error(f"Error sending monitor command: {str(e)}")
+            return None
+
+    def stop_system(self):
+        """
+        Stop the QEMU system emulation
+
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if not self.qemu_process:
+            self.logger.warning("QEMU not running")
+            return True
+
+        try:
+            # Send quit command to QEMU monitor
+            self.qemu_process.stdin.write("quit\n")
+            self.qemu_process.stdin.flush()
+
+            # Wait for process to terminate
+            for _ in range(5):  # Wait up to 5 seconds
+                if self.qemu_process.poll() is not None:
+                    self.logger.info("QEMU stopped gracefully")
+                    self.qemu_process = None
+                    return True
+                time.sleep(1)
+
+            # Force terminate if still running
+            self.qemu_process.terminate()
+            self.logger.warning("QEMU terminated forcefully")
+            self.qemu_process = None
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to stop QEMU: {e}")
+            if self.qemu_process:
+                try:
+                    self.qemu_process.kill()
+                    self.qemu_process = None
+                except:
+                    pass
+            return False
+
+def run_qemu_analysis(app):
+    """
+    Run full system emulation analysis using QEMU
+
+    Args:
+        app: Application instance
+    """
+    if not app.binary_path:
+        app.update_output.emit(log_message("[QEMU] No binary selected."))
+        return
+
+    app.update_output.emit(log_message("[QEMU] Starting full system emulation analysis..."))
+
+    # Check if binary architecture is supported
+    try:
+        pe = pefile.PE(app.binary_path)
+        arch = "x86_64" if pe.FILE_HEADER.Machine == 0x8664 else "x86"
+    except:
+        app.update_output.emit(log_message("[QEMU] Error determining binary architecture. Defaulting to x86_64."))
+        arch = "x86_64"
+
+    # Initialize QEMU emulator
+    emulator = QEMUSystemEmulator(app.binary_path, arch=arch)
+    app.update_output.emit(log_message(f"[QEMU] Initialized emulator for {arch} architecture"))
+
+    # Start the system
+    app.update_output.emit(log_message("[QEMU] Starting system emulation..."))
+    if not emulator.start_system(memory_mb=2048, with_network=True):
+        app.update_output.emit(log_message("[QEMU] Failed to start system emulation"))
+        return
+
+    app.update_output.emit(log_message("[QEMU] System started successfully"))
+
+    # Wait for system to boot
+    app.update_output.emit(log_message("[QEMU] Waiting for system to boot..."))
+    time.sleep(10)  # Simple wait - could be improved with boot detection
+
+    # Mount shared folder with binary
+    app.update_output.emit(log_message("[QEMU] Mounting shared folder..."))
+    mount_output = emulator.execute_command("mkdir -p /mnt/host && mount -t 9p -o trans=virtio host0 /mnt/host")
+    app.update_output.emit(log_message(f"[QEMU] Mount output: {mount_output}"))
+
+    # Create pre-license check snapshot
+    app.update_output.emit(log_message("[QEMU] Creating pre-license check snapshot..."))
+    if not emulator.create_snapshot("pre_license_check"):
+        app.update_output.emit(log_message("[QEMU] Failed to create pre-license check snapshot"))
+        emulator.stop_system()
+        return
+
+    # Run the binary
+    binary_name = os.path.basename(app.binary_path)
+    app.update_output.emit(log_message(f"[QEMU] Running binary: {binary_name}"))
+    run_output = emulator.execute_command(f"cd /mnt/host && chmod +x {binary_name} && ./{binary_name}")
+    app.update_output.emit(log_message(f"[QEMU] Binary output: {run_output}"))
+
+    # Create post-license check snapshot
+    app.update_output.emit(log_message("[QEMU] Creating post-license check snapshot..."))
+    if not emulator.create_snapshot("post_license_check"):
+        app.update_output.emit(log_message("[QEMU] Failed to create post-license check snapshot"))
+        emulator.stop_system()
+        return
+
+    # Compare snapshots
+    app.update_output.emit(log_message("[QEMU] Comparing snapshots..."))
+    diff = emulator.compare_snapshots()
+    app.update_output.emit(log_message(f"[QEMU] Time between snapshots: {diff.get('time_diff', 'N/A')} seconds"))
+
+    # Stop the system
+    app.update_output.emit(log_message("[QEMU] Stopping system..."))
+    emulator.stop_system()
+
+    app.update_output.emit(log_message("[QEMU] Full system emulation analysis complete"))
+
+class DistributedAnalysisManager:
+    """
+    Manages distributed analysis across multiple VMs/containers
+    """
+
+    def __init__(self, binary_path=None):
+        """
+        Initialize the distributed analysis manager
+
+        Args:
+            binary_path: Path to the binary to analyze
+        """
+        self.binary_path = binary_path
+        self.vms = []
+        self.containers = []
+        self.logger = logging.getLogger(__name__)
+
+    def add_vm(self, vm_type="qemu", arch="x86_64", memory_mb=2048):
+        """
+        Add a VM to the distributed analysis pool
+
+        Args:
+            vm_type: Type of VM (qemu, virtualbox, etc.)
+            arch: Architecture to emulate
+            memory_mb: Amount of memory to allocate
+
+        Returns:
+            int: VM ID
+        """
+        vm_id = len(self.vms)
+
+        if vm_type == "qemu":
+            vm = QEMUSystemEmulator(self.binary_path, arch=arch)
+            self.vms.append({
+                "id": vm_id,
+                "type": vm_type,
+                "arch": arch,
+                "memory_mb": memory_mb,
+                "instance": vm,
+                "status": "created"
+            })
+            self.logger.info(f"Added QEMU VM (ID: {vm_id}, Arch: {arch})")
+        else:
+            self.logger.error(f"Unsupported VM type: {vm_type}")
+            return -1
+
+        return vm_id
+
+    def add_container(self, container_type="docker", image="ubuntu:latest"):
+        """
+        Add a container to the distributed analysis pool
+
+        Args:
+            container_type: Type of container (docker, podman, etc.)
+            image: Container image to use
+
+        Returns:
+            int: Container ID
+        """
+        container_id = len(self.containers)
+
+        # Create container instance based on type
+        if container_type == "docker":
+            try:
+                instance = DockerContainer(self.binary_path, image)
+                self.containers.append({
+                    "id": container_id,
+                    "type": container_type,
+                    "image": image,
+                    "instance": instance,
+                    "status": "created"
+                })
+                self.logger.info(f"Added Docker container (ID: {container_id}, Image: {image})")
+            except Exception as e:
+                self.logger.error(f"Failed to create Docker container: {str(e)}")
+                return -1
+        else:
+            self.logger.error(f"Unsupported container type: {container_type}")
+            return -1
+
+        return container_id
+
+    def start_all(self):
+        """
+        Start all VMs and containers in the pool
+
+        Returns:
+            bool: True if all started successfully, False otherwise
+        """
+        success = True
+
+        # Start VMs
+        for vm in self.vms:
+            if vm["status"] == "created":
+                self.logger.info(f"Starting VM {vm['id']}...")
+                if vm["instance"].start_system(memory_mb=vm["memory_mb"]):
+                    vm["status"] = "running"
+                    self.logger.info(f"VM {vm['id']} started successfully")
+                else:
+                    vm["status"] = "failed"
+                    self.logger.error(f"Failed to start VM {vm['id']}")
+                    success = False
+
+        # Start containers
+        for container in self.containers:
+            if container["status"] == "created":
+                self.logger.info(f"Starting container {container['id']}...")
+                if container["instance"].start_container():
+                    container["status"] = "running"
+                    self.logger.info(f"Container {container['id']} started successfully")
+                else:
+                    container["status"] = "failed"
+                    self.logger.error(f"Failed to start container {container['id']}")
+                    success = False
+
+        return success
+
+    def run_distributed_analysis(self, analysis_type="license_check"):
+        """
+        Run distributed analysis across all VMs and containers
+
+        Args:
+            analysis_type: Type of analysis to run
+
+        Returns:
+            dict: Analysis results from all VMs and containers
+        """
+        results = {
+            "vms": [],
+            "containers": [],
+            "summary": {}
+        }
+
+        # Run analysis on VMs
+        for vm in self.vms:
+            if vm["status"] == "running":
+                self.logger.info(f"Running {analysis_type} analysis on VM {vm['id']}...")
+
+                # Create pre-analysis snapshot
+                vm["instance"].create_snapshot("pre_analysis")
+
+                # Run the binary
+                binary_name = os.path.basename(self.binary_path)
+                output = vm["instance"].execute_command(f"cd /mnt/host && chmod +x {binary_name} && ./{binary_name}")
+
+                # Create post-analysis snapshot
+                vm["instance"].create_snapshot("post_analysis")
+
+                # Compare snapshots
+                diff = vm["instance"].compare_snapshots("pre_analysis", "post_analysis")
+
+                results["vms"].append({
+                    "vm_id": vm["id"],
+                    "output": output,
+                    "diff": diff
+                })
+
+        # Run analysis on containers
+        for container in self.containers:
+            if container["status"] == "running":
+                self.logger.info(f"Running {analysis_type} analysis on container {container['id']}...")
+
+                # Create pre-analysis snapshot
+                container["instance"].create_snapshot("pre_analysis")
+
+                # Copy binary to container if needed
+                binary_name = os.path.basename(self.binary_path)
+                copy_result = container["instance"].copy_file_to_container(self.binary_path, f"/tmp/{binary_name}")
+
+                if not copy_result:
+                    self.logger.error(f"Failed to copy binary to container {container['id']}")
+                    continue
+
+                # Run the binary in container
+                output = container["instance"].execute_command(f"chmod +x /tmp/{binary_name} && /tmp/{binary_name}")
+
+                # Create post-analysis snapshot
+                container["instance"].create_snapshot("post_analysis")
+
+                # Compare snapshots and collect artifacts
+                diff = container["instance"].compare_snapshots("pre_analysis", "post_analysis")
+                artifacts = container["instance"].collect_analysis_artifacts()
+
+                results["containers"].append({
+                    "container_id": container["id"],
+                    "output": output,
+                    "diff": diff,
+                    "artifacts": artifacts
+                })
+
+        # Generate summary
+        results["summary"] = {
+            "vms_analyzed": len([vm for vm in self.vms if vm["status"] == "running"]),
+            "containers_analyzed": len([c for c in self.containers if c["status"] == "running"]),
+            "total_nodes": len(self.vms) + len(self.containers)
+        }
+
+        return results
+
+    def stop_all(self):
+        """
+        Stop all VMs and containers in the pool
+
+        Returns:
+            bool: True if all stopped successfully, False otherwise
+        """
+        success = True
+
+        # Stop VMs
+        for vm in self.vms:
+            if vm["status"] == "running":
+                self.logger.info(f"Stopping VM {vm['id']}...")
+                if vm["instance"].stop_system():
+                    vm["status"] = "stopped"
+                    self.logger.info(f"VM {vm['id']} stopped successfully")
+                else:
+                    vm["status"] = "error"
+                    self.logger.error(f"Failed to stop VM {vm['id']}")
+                    success = False
+
+        # Stop containers
+        for container in self.containers:
+            if container["status"] == "running":
+                self.logger.info(f"Stopping container {container['id']}...")
+                if container["instance"].stop_container():
+                    container["status"] = "stopped"
+                    self.logger.info(f"Container {container['id']} stopped successfully")
+                else:
+                    container["status"] = "error"
+                    self.logger.error(f"Failed to stop container {container['id']}")
+                    success = False
+
+        return success
+
+def run_distributed_analysis(app):
+    """
+    Run distributed analysis across multiple VMs/containers
+
+    Args:
+        app: Application instance
+    """
+    if not app.binary_path:
+        app.update_output.emit(log_message("[Distributed] No binary selected."))
+        return
+
+    app.update_output.emit(log_message("[Distributed] Starting distributed analysis..."))
+
+    # Initialize distributed analysis manager
+    manager = DistributedAnalysisManager(app.binary_path)
+
+    # Create tracking dictionary for analysis nodes
+    analysis_nodes = {}
+
+    # Add VMs with different architectures
+    app.update_output.emit(log_message("[Distributed] Adding VMs to analysis pool..."))
+    vm1_id = manager.add_vm(vm_type="qemu", arch="x86_64", memory_mb=2048)
+    if vm1_id >= 0:
+        analysis_nodes[vm1_id] = {
+            "type": "vm",
+            "arch": "x86_64",
+            "name": "Primary x86_64 VM",
+            "tasks": ["binary_analysis", "signature_verification"],
+            "status": "pending"
+        }
+        app.update_output.emit(log_message(f"[Distributed] Added x86_64 VM (ID: {vm1_id})"))
+
+    vm2_id = manager.add_vm(vm_type="qemu", arch="x86", memory_mb=1024)
+    if vm2_id >= 0:
+        analysis_nodes[vm2_id] = {
+            "type": "vm",
+            "arch": "x86",
+            "name": "Secondary x86 VM",
+            "tasks": ["compat_testing", "license_validation"],
+            "status": "pending"
+        }
+        app.update_output.emit(log_message(f"[Distributed] Added x86 VM (ID: {vm2_id})"))
+
+    # Add containers for multi-platform analysis
+    app.update_output.emit(log_message("[Distributed] Adding containers to analysis pool..."))
+    container1_id = manager.add_container(container_type="docker", image="ubuntu:latest")
+    if container1_id >= 0:
+        analysis_nodes[container1_id] = {
+            "type": "container",
+            "platform": "ubuntu",
+            "name": "Ubuntu Container",
+            "tasks": ["dependency_analysis", "license_check"],
+            "status": "pending"
+        }
+        app.update_output.emit(log_message(f"[Distributed] Added Ubuntu container (ID: {container1_id})"))
+
+    container2_id = manager.add_container(container_type="docker", image="alpine:latest")
+    if container2_id >= 0:
+        analysis_nodes[container2_id] = {
+            "type": "container",
+            "platform": "alpine",
+            "name": "Alpine Container",
+            "tasks": ["security_scan", "license_compatibility"],
+            "status": "pending"
+        }
+        app.update_output.emit(log_message(f"[Distributed] Added Alpine container (ID: {container2_id})"))
+
+    # Log summary of analysis nodes
+    app.update_output.emit(log_message(f"[Distributed] Analysis will run on {len(analysis_nodes)} nodes: " +
+                                      f"{sum(1 for node in analysis_nodes.values() if node['type'] == 'vm')} VMs and " +
+                                      f"{sum(1 for node in analysis_nodes.values() if node['type'] == 'container')} containers"))
+
+    # Start all VMs and containers
+    app.update_output.emit(log_message("[Distributed] Starting all analysis nodes..."))
+    if not manager.start_all():
+        app.update_output.emit(log_message("[Distributed] Failed to start all analysis nodes"))
+        manager.stop_all()
+        return
+
+    # Assign specific tasks to each node
+    for node_id, node_info in analysis_nodes.items():
+        for task in node_info["tasks"]:
+            app.update_output.emit(log_message(f"[Distributed] Assigning task '{task}' to {node_info['name']} (ID: {node_id})"))
+            manager.assign_task(node_id, task)
+        analysis_nodes[node_id]["status"] = "running"
+        return
+
+    # Run distributed analysis
+    app.update_output.emit(log_message("[Distributed] Running distributed license check analysis..."))
+    results = manager.run_distributed_analysis(analysis_type="license_check")
+
+    # Process results
+    app.update_output.emit(log_message("[Distributed] Processing analysis results..."))
+    app.update_output.emit(log_message(f"[Distributed] Analyzed on {results['summary']['vms_analyzed']} VMs and {results['summary']['containers_analyzed']} containers"))
+
+    for vm_result in results["vms"]:
+        app.update_output.emit(log_message(f"[Distributed] VM {vm_result['vm_id']} output: {vm_result['output']}"))
+
+    # Stop all VMs and containers
+    app.update_output.emit(log_message("[Distributed] Stopping all analysis nodes..."))
+    manager.stop_all()
+
+    app.update_output.emit(log_message("[Distributed] Distributed analysis complete"))
+
+# -------------------------------
+# Guided Workflow Wizard
+# -------------------------------
+
+class GuidedWorkflowWizard(QWizard):
+    """
+    Guided workflow wizard for new users
+    """
+
+    def __init__(self, parent=None):
+        """
+        Initialize the guided workflow wizard
+
+        Args:
+            parent: Parent widget
+        """
+        super().__init__(parent)
+        self.parent = parent
+
+        # Set up wizard properties
+        self.setWindowTitle("Intellicrack Guided Workflow")
+        self.setWizardStyle(QWizard.ModernStyle)
+
+        if os.path.exists("assets/icon.ico"):

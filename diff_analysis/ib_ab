@@ -1,0 +1,1000 @@
+            # Fallback to basic file info if binary_info is not available
+            file_stat = os.stat(path)
+            basic_info = {
+                "path": path,
+                "size": file_stat.st_size,
+                "created": datetime.datetime.fromtimestamp(file_stat.st_ctime).isoformat(),
+                "modified": datetime.datetime.fromtimestamp(file_stat.st_mtime).isoformat(),
+                "accessed": datetime.datetime.fromtimestamp(file_stat.st_atime).isoformat()
+            }
+            return {"status": "success", "metadata": basic_info}
+    except Exception as e:
+        logging.error(f"Failed to get metadata for {path}: {e}", exc_info=True)
+        return {"status": "error", "message": f"Failed to get file metadata: {str(e)}"}
+
+def wrapper_run_static_analysis(app_instance, parameters):
+    """
+    Wrapper for tool_run_static_analysis.
+    Runs static analysis on a binary.
+
+    Parameters:
+        path (str): Path to the binary
+
+    Returns:
+        dict: Analysis results
+    """
+    logging.debug(f"Entering wrapper_run_static_analysis with parameters: {parameters}")
+    path = parameters.get("path")
+    if not path:
+        return {"status": "error", "message": "Missing 'path' parameter for tool_run_static_analysis"}
+
+    try:
+        logging.info(f"Running static analysis on: {path}")
+        app_instance.update_output.emit(log_message(f"[Tool] Running static analysis on: {path}"))
+
+        # Call the analyze_binary_internal function
+        analysis_results = analyze_binary_internal(path, flags=[])
+
+        # Format the results
+        formatted_results = {
+            "status": "success",
+            "binary_path": path,
+            "analysis_results": analysis_results
+        }
+
+        logging.info(f"Static analysis completed for {path}. Results summary: ...")
+        logging.debug(f"Static analysis results for {path}: {formatted_results}")
+        return formatted_results
+    except Exception as e:
+        logging.error(f"Failed static analysis for {path}: {e}", exc_info=True)
+        return {"status": "error", "message": f"Failed to run static analysis: {str(e)}"}
+
+def wrapper_deep_license_analysis(app_instance, parameters):
+    """
+    Wrapper for tool_deep_license_analysis.
+    Runs deep license analysis on a binary.
+
+    Parameters:
+        path (str): Path to the binary
+
+    Returns:
+        dict: License analysis results
+    """
+    logging.debug(f"Entering wrapper_deep_license_analysis with parameters: {parameters}")
+    path = parameters.get("path")
+    if not path:
+        return {"status": "error", "message": "Missing 'path' parameter for tool_deep_license_analysis"}
+
+    try:
+        logging.info(f"Running deep license analysis on: {path}")
+        app_instance.update_output.emit(log_message(f"[Tool] Running deep license analysis on: {path}"))
+
+        # Call the enhanced_deep_license_analysis function
+        license_results = enhanced_deep_license_analysis(path)
+
+        logging.info(f"Deep license analysis completed for {path}. Found {len(license_results) if license_results else 0} candidates.")
+        logging.debug(f"Deep license analysis results for {path}: {license_results}")
+        return {
+            "status": "success",
+            "binary_path": path,
+            "license_candidates": license_results
+        }
+    except Exception as e:
+        logging.error(f"Failed deep license analysis for {path}: {e}", exc_info=True)
+        return {"status": "error", "message": f"Failed to run deep license analysis: {str(e)}"}
+
+def wrapper_detect_protections(app_instance, parameters):
+    """
+    Wrapper for tool_detect_protections.
+    Detects specific protection types in a binary.
+
+    Parameters:
+        path (str): Path to the binary
+        type (str): Protection type to detect ('commercial', 'packing', 'obfuscation', 'checksum', 'healing')
+
+    Returns:
+        dict: Detection results
+    """
+    logging.debug(f"Entering wrapper_detect_protections with parameters: {parameters}")
+    path = parameters.get("path")
+    protection_type = parameters.get("type")
+
+    if not path:
+        return {"status": "error", "message": "Missing 'path' parameter for tool_detect_protections"}
+    if not protection_type:
+        return {"status": "error", "message": "Missing 'type' parameter for tool_detect_protections"}
+
+    try:
+        logging.info(f"Detecting '{protection_type}' protections in: {path}")
+        app_instance.update_output.emit(log_message(f"[Tool] Detecting {protection_type} protections in: {path}"))
+
+        # Call the appropriate detection function based on the type
+        if protection_type == 'commercial':
+            results = detect_commercial_protections(path)
+        elif protection_type == 'packing':
+            results = detect_packing(path)
+        elif protection_type == 'obfuscation':
+            results = detect_obfuscation(app_instance)
+        elif protection_type == 'checksum':
+            results = detect_checksum_verification(app_instance)
+        elif protection_type == 'healing':
+            results = detect_self_healing_code(app_instance)
+        else:
+            return {"status": "error", "message": f"Unknown protection type: {protection_type}"}
+
+        logging.info(f"Protection detection for '{protection_type}' in {path} completed. Results: ...")
+        logging.debug(f"Protection detection results: {results}")
+        return {
+            "status": "success",
+            "binary_path": path,
+            "protection_type": protection_type,
+            "detection_results": results
+        }
+    except Exception as e:
+        logging.error(f"Failed protection detection for {path} ({protection_type}): {e}", exc_info=True)
+        return {"status": "error", "message": f"Failed to detect protections: {str(e)}"}
+
+def wrapper_disassemble_address(app_instance, parameters):
+    """
+    Wrapper for tool_disassemble_address.
+    Disassembles instructions at a given address.
+
+    Parameters:
+        address (int): Address to disassemble
+        num_instructions (int, optional): Number of instructions to disassemble
+
+    Returns:
+        dict: Disassembly listing
+    """
+    logging.debug(f"Entering wrapper_disassemble_address with parameters: {parameters}")
+    address = parameters.get("address")
+    num_instructions = parameters.get("num_instructions", 10)  # Default to 10 instructions
+
+    if address is None:
+        return {"status": "error", "message": "Missing 'address' parameter for tool_disassemble_address"}
+
+    try:
+        address = int(address) if isinstance(address, str) else address
+        num_instructions = int(num_instructions)
+
+        logging.info(f"Disassembling address: 0x{address:x}, {num_instructions} instructions for binary: {app_instance.binary_path}")
+        app_instance.update_output.emit(log_message(f"[Tool] Disassembling address: 0x{address:x}, {num_instructions} instructions"))
+
+        # Check if a binary is loaded
+        if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+            logging.warning("Disassemble attempt failed: No binary loaded.")
+            return {"status": "error", "message": "No binary loaded. Load a binary first."}
+
+        # Use r2pipe to disassemble
+        r2 = r2pipe.open(app_instance.binary_path)
+        r2.cmd(f"s {address}")
+        disasm = r2.cmd(f"pd {num_instructions}")
+        r2.quit()
+
+        # Parse the disassembly output
+        instructions = []
+        for line in disasm.splitlines():
+            if line.strip():
+                instructions.append(line)
+
+        return {
+            "status": "success",
+            "address": f"0x{address:x}",
+            "num_instructions": num_instructions,
+            "disassembly": instructions
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to disassemble address: {str(e)}"}
+
+def wrapper_get_cfg(app_instance, parameters):
+    """
+    Wrapper for tool_get_cfg.
+    Gets Control Flow Graph data for a function.
+
+    Parameters:
+        function_address (int): Address of the function
+
+    Returns:
+        dict: CFG nodes and edges
+    """
+    logging.debug(f"Entering wrapper_get_cfg with parameters: {parameters}")
+    function_address = parameters.get("function_address")
+
+    if function_address is None:
+        return {"status": "error", "message": "Missing 'function_address' parameter for tool_get_cfg"}
+
+    try:
+        function_address = int(function_address) if isinstance(function_address, str) else function_address
+
+        logging.info(f"Getting CFG for function at 0x{function_address:x} in {app_instance.binary_path}")
+        app_instance.update_output.emit(log_message(f"[Tool] Getting CFG for function at: 0x{function_address:x}"))
+
+        # Check if a binary is loaded
+        if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+            logging.warning("CFG generation attempt failed: No binary loaded.")
+            return {"status": "error", "message": "No binary loaded. Load a binary first."}
+
+        # Extract logic from run_deep_cfg_analysis
+        # Open the binary with r2pipe
+        r2 = r2pipe.open(app_instance.binary_path)
+
+        # Analyze the function
+        r2.cmd("aaa")  # Analyze all
+        r2.cmd(f"s {function_address}")  # Seek to function address
+        r2.cmd("af")  # Analyze function
+
+        # Get basic blocks
+        blocks_json = r2.cmd("afbj")
+        blocks = json.loads(blocks_json if blocks_json.strip() else "[]")
+
+        # Get function calls
+        calls_json = r2.cmd("afij")
+        calls = json.loads(calls_json if calls_json.strip() else "[]")
+
+        # Create CFG data
+        nodes = []
+        edges = []
+
+        for block in blocks:
+            nodes.append({
+                "id": block.get("addr"),
+                "address": f"0x{block.get('addr'):x}",
+                "size": block.get("size"),
+                "ninstr": block.get("ninstr"),
+                "jump": block.get("jump"),
+                "fail": block.get("fail")
+            })
+
+            # Add edges
+            if block.get("jump"):
+                edges.append({
+                    "from": block.get("addr"),
+                    "to": block.get("jump"),
+                    "type": "jump"
+                })
+            if block.get("fail"):
+                edges.append({
+                    "from": block.get("addr"),
+                    "to": block.get("fail"),
+                    "type": "fail"
+                })
+
+        r2.quit()
+
+        return {
+            "status": "success",
+            "function_address": f"0x{function_address:x}",
+            "nodes": nodes,
+            "edges": edges,
+            "calls": calls
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to get CFG: {str(e)}"}
+
+def wrapper_launch_target(app_instance, parameters):
+    """
+    Wrapper for tool_launch_target.
+    Launches the target binary.
+
+    Parameters:
+        path (str): Path to the binary
+
+    Returns:
+        dict: Process ID
+    """
+    logging.debug(f"Entering wrapper_launch_target with parameters: {parameters}")
+    path = parameters.get("path")
+
+    if not path:
+        return {"status": "error", "message": "Missing 'path' parameter for tool_launch_target"}
+
+    try:
+        logging.info(f"Launching target: {path}")
+        app_instance.update_output.emit(log_message(f"[Tool] Launching target: {path}"))
+
+        # Launch the process using subprocess.Popen
+        process = subprocess.Popen(
+            [path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == 'win32' else 0
+        )
+
+        # Store the process ID for later use
+        if not hasattr(app_instance, 'target_processes'):
+            app_instance.target_processes = {}
+
+        app_instance.target_processes[process.pid] = {
+            'process': process,
+            'path': path,
+            'launch_time': datetime.datetime.now().isoformat()
+        }
+
+        return {
+            "status": "success",
+            "pid": process.pid,
+            "path": path,
+            "message": f"Process launched with PID: {process.pid}"
+        }
+    except Exception as e:
+        logging.error(f"Failed to launch target {path}: {e}", exc_info=True)
+        return {"status": "error", "message": f"Failed to launch target: {str(e)}"}
+
+def wrapper_attach_target(app_instance, parameters):
+    """
+    Wrapper for tool_attach_target.
+    Attaches Frida to a process.
+
+    Parameters:
+        pid (int): Process ID
+
+    Returns:
+        dict: Success status
+    """
+    logging.debug(f"Entering wrapper_attach_target with parameters: {parameters}")
+    pid = parameters.get("pid")
+
+    if pid is None:
+        return {"status": "error", "message": "Missing 'pid' parameter for tool_attach_target"}
+
+    try:
+        pid = int(pid)
+
+        logging.info(f"Attaching Frida to process PID: {pid}")
+        app_instance.update_output.emit(log_message(f"[Tool] Attaching to process with PID: {pid}"))
+
+        # Attach to the process using Frida
+        session = frida.attach(pid)
+
+        # Store the session for later use
+        if not hasattr(app_instance, 'frida_sessions'):
+            app_instance.frida_sessions = {}
+
+        app_instance.frida_sessions[pid] = {
+            'session': session,
+            'scripts': [],
+            'attach_time': datetime.datetime.now().isoformat()
+        }
+
+        return {
+            "status": "success",
+            "pid": pid,
+            "message": f"Successfully attached to process with PID: {pid}"
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to attach to process: {str(e)}"}
+
+# Define wrapper functions for tools
+def wrapper_run_frida_script(app_instance, parameters):
+    """Wrapper for tool_run_frida_script."""
+    logging.debug(f"Entering wrapper_run_frida_script with parameters: PID={parameters.get('pid')}, Script content length: {len(parameters.get('script_content', '')) if parameters.get('script_content') else 0}")
+    try:
+        # Validate parameters
+        pid = parameters.get("pid")
+        script_content = parameters.get("script_content")
+
+        if pid is None:
+            return {"status": "error", "message": "Missing 'pid' parameter for tool_run_frida_script"}
+        if not script_content:
+            return {"status": "error", "message": "Missing or empty 'script_content' parameter for tool_run_frida_script"}
+
+        try:
+            pid = int(pid)
+        except ValueError:
+            return {"status": "error", "message": f"Invalid 'pid' parameter: {pid}. Must be an integer."}
+
+        logging.info(f"Running Frida script on PID: {pid}")
+
+        # Check if we have a session for this pid
+        if not hasattr(app_instance, 'frida_sessions'):
+            app_instance.frida_sessions = {}
+
+        session = app_instance.frida_sessions.get(pid)
+        if not session:
+            try:
+                # Try to attach to the process
+                session = frida.attach(pid)
+                app_instance.frida_sessions[pid] = session
+            except Exception as e:
+                return {"status": "error", "message": f"Failed to attach to process {pid}: {str(e)}"}
+
+        # Create and load the script
+        try:
+            script = session.create_script(script_content)
+
+            # Set up message handler
+            def on_message(message, data):
+                """
+                Callback for handling messages from a Frida script.
+
+                Emits output or error logs to the application output.
+                """
+                if message['type'] == 'send':
+                    app_instance.update_output.emit(log_message(f"[Frida Script] {message['payload']}"))
+                elif message['type'] == 'error':
+                    app_instance.update_output.emit(log_message(f"[Frida Script Error] {message['stack']}"))
+
+            script.on('message', on_message)
+            script.load()
+
+            # Store the script in the session for later reference
+            if not hasattr(session, 'scripts'):
+                session.scripts = []
+            session.scripts.append(script)
+
+            return {"status": "success", "message": f"Frida script loaded and running on process {pid}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to create or load script: {str(e)}"}
+
+    except Exception as e:
+        return {"status": "error", "message": f"Error in wrapper_run_frida_script: {str(e)}"}
+
+def wrapper_detach(app_instance, parameters):
+    """Wrapper for tool_detach."""
+    logging.debug(f"Entering wrapper_detach with parameters: {parameters}")
+    try:
+        # Validate parameters
+        pid = parameters.get("pid")
+
+        if pid is None:
+            return {"status": "error", "message": "Missing 'pid' parameter for tool_detach"}
+
+        try:
+            pid = int(pid)
+        except ValueError:
+            return {"status": "error", "message": f"Invalid 'pid' parameter: {pid}. Must be an integer."}
+
+        logging.info(f"Detaching Frida from process PID: {pid}")
+
+        # Check if we have a session for this pid
+        if not hasattr(app_instance, 'frida_sessions'):
+            return {"status": "error", "message": f"No Frida session found for process {pid}"}
+
+        session = app_instance.frida_sessions.get(pid)
+        if not session:
+            return {"status": "error", "message": f"No Frida session found for process {pid}"}
+
+        # Detach from the process
+        try:
+            session.detach()
+            del app_instance.frida_sessions[pid]
+            return {"status": "success", "message": f"Detached from process {pid}"}
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to detach from process {pid}: {str(e)}"}
+
+    except Exception as e:
+        return {"status": "error", "message": f"Error in wrapper_detach: {str(e)}"}
+
+def wrapper_propose_patch(app_instance, parameters):
+    """Wrapper for tool_propose_patch."""
+    logging.debug(f"Entering wrapper_propose_patch with parameters: Address=0x{parameters.get('address', 'N/A'):X if parameters.get('address') is not None else 'N/A'}, NewBytes={parameters.get('new_bytes_hex', 'N/A')}, Description='{parameters.get('description', 'N/A')}'")
+    try:
+        # Validate parameters
+        address = parameters.get("address")
+        new_bytes_hex = parameters.get("new_bytes_hex")
+        description = parameters.get("description")
+
+        if address is None:
+            return {"status": "error", "message": "Missing 'address' parameter for tool_propose_patch"}
+        if not new_bytes_hex:
+            return {"status": "error", "message": "Missing or empty 'new_bytes_hex' parameter for tool_propose_patch"}
+        if not description:
+            return {"status": "error", "message": "Missing or empty 'description' parameter for tool_propose_patch"}
+
+        try:
+            address = int(address, 0) if isinstance(address, str) else int(address)
+        except ValueError:
+            return {"status": "error", "message": f"Invalid 'address' parameter: {address}. Must be an integer."}
+
+        logging.info(f"Proposing patch: Address=0x{address:X}, Bytes='{new_bytes_hex}', Description='{description}'")
+
+        # Validate hex string
+        try:
+            # Remove any '0x' prefix and spaces
+            clean_hex = new_bytes_hex.replace('0x', '').replace(' ', '')
+            # Check if it's a valid hex string
+            if not all(c in '0123456789abcdefABCDEF' for c in clean_hex):
+                return {"status": "error", "message": f"Invalid hex string: {new_bytes_hex}"}
+            # Check if it has an even number of characters
+            if len(clean_hex) % 2 != 0:
+                return {"status": "error", "message": f"Hex string must have an even number of characters: {new_bytes_hex}"}
+            # Convert to bytes
+            new_bytes = bytes.fromhex(clean_hex)
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to parse hex string: {str(e)}"}
+
+        # Initialize potential_patches if it doesn't exist
+        if not hasattr(app_instance, 'potential_patches'):
+            app_instance.potential_patches = []
+
+        # Generate a unique patch ID
+        # uuid is already imported at the top level
+        patch_id = str(uuid.uuid4())
+
+        # Create the patch
+        patch = {
+            "id": patch_id,
+            "address": address,
+            "new_bytes": new_bytes,
+            "new_bytes_hex": clean_hex,
+            "description": description,
+            "status": "proposed"
+        }
+
+        # Add the patch to the list
+        app_instance.potential_patches.append(patch)
+
+        logging.info(f"Patch proposed with ID: {patch_id}")
+
+        return {
+            "status": "success",
+            "message": f"Patch proposed at address 0x{address:X}",
+            "patch_id": patch_id
+        }
+
+    except Exception as e:
+        logging.error(f"Failed to propose patch: {e}", exc_info=True)
+        return {"status": "error", "message": f"Error in wrapper_propose_patch: {str(e)}"}
+
+def wrapper_get_proposed_patches(app_instance, parameters):
+    """Wrapper for tool_get_proposed_patches."""
+    logging.debug(f"Entering wrapper_get_proposed_patches")
+    try:
+        # Initialize potential_patches if it doesn't exist
+        if not hasattr(app_instance, 'potential_patches'):
+            app_instance.potential_patches = []
+
+        logging.info(f"Retrieving {len(app_instance.potential_patches) if hasattr(app_instance, 'potential_patches') else 0} proposed patches.")
+
+        # Format the patches for display
+        formatted_patches = []
+        for patch in app_instance.potential_patches:
+            formatted_patch = {
+                "id": patch.get("id", "unknown"),
+                "address": f"0x{patch.get('address', 0):X}",
+                "new_bytes_hex": patch.get("new_bytes_hex", ""),
+                "description": patch.get("description", ""),
+                "status": patch.get("status", "proposed")
+            }
+            formatted_patches.append(formatted_patch)
+
+        return {
+            "status": "success",
+            "message": f"Found {len(app_instance.potential_patches)} proposed patches",
+            "patches": formatted_patches
+        }
+
+    except Exception as e:
+        return {"status": "error", "message": f"Error in wrapper_get_proposed_patches: {str(e)}"}
+
+def wrapper_apply_confirmed_patch(app_instance, parameters):
+    """Wrapper for tool_apply_confirmed_patch."""
+    logging.debug(f"Entering wrapper_apply_confirmed_patch with parameters: PatchID={parameters.get('patch_id')}")
+    try:
+        # Validate parameters
+        patch_id = parameters.get("patch_id")
+
+        if not patch_id:
+            return {"status": "error", "message": "Missing or empty 'patch_id' parameter for tool_apply_confirmed_patch"}
+
+        logging.info(f"Attempting to apply confirmed patch ID: {patch_id}")
+
+        # Initialize potential_patches if it doesn't exist
+        if not hasattr(app_instance, 'potential_patches'):
+            app_instance.potential_patches = []
+            return {"status": "error", "message": f"No patches found with ID: {patch_id}"}
+
+        # Find the patch with the given ID
+        patch = None
+        for p in app_instance.potential_patches:
+            if p.get("id") == patch_id:
+                patch = p
+                break
+
+        if not patch:
+            return {"status": "error", "message": f"No patch found with ID: {patch_id}"}
+
+        # Create a patch instruction for apply_parsed_patch_instructions_with_validation
+        patch_instruction = {
+            "address": patch["address"],
+            "bytes": patch["new_bytes"] if isinstance(patch["new_bytes"], bytes) else bytes.fromhex(patch["new_bytes_hex"]),
+            "description": patch["description"]
+        }
+
+        # Apply the patch
+        try:
+            result = apply_parsed_patch_instructions_with_validation(app_instance, [patch_instruction])
+
+            if result and "patched_path" in result:
+                # Update the patch status
+                patch["status"] = "applied"
+                logging.info(f"Patch ID {patch_id} applied successfully to {result['patched_path']}")
+                return {
+                    "status": "success",
+                    "message": f"Patch applied successfully",
+                    "patched_path": result["patched_path"]
+                }
+            else:
+                return {"status": "error", "message": "Failed to apply patch: No result returned"}
+        except Exception as e:
+            logging.error(f"Failed to apply patch ID {patch_id}: {e}", exc_info=True)
+            return {"status": "error", "message": f"Failed to apply patch: {str(e)}"}
+
+    except Exception as e:
+        logging.error(f"Failed to apply patch ID {patch_id}: {e}", exc_info=True)
+        return {"status": "error", "message": f"Error in wrapper_apply_confirmed_patch: {str(e)}"}
+
+def wrapper_generate_launcher_script(app_instance, parameters):
+    """Wrapper for tool_generate_launcher_script."""
+    logging.debug(f"Entering wrapper_generate_launcher_script with parameters: Strategy={parameters.get('strategy', 'memory')}")
+    try:
+        # Validate parameters
+        strategy = parameters.get("strategy", "memory")
+
+        if strategy not in ["memory", "api"]:
+            return {"status": "error", "message": f"Invalid 'strategy' parameter: {strategy}. Must be 'memory' or 'api'."}
+
+        logging.info(f"Generating launcher script with strategy: {strategy}")
+
+        # Generate the launcher script
+        try:
+            script_path = generate_launcher_script(app_instance, strategy)
+
+            if script_path:
+                return {
+                    "status": "success",
+                    "message": f"Launcher script generated with {strategy} strategy",
+                    "script_path": script_path
+                }
+            else:
+                return {"status": "error", "message": f"Failed to generate launcher script: No path returned"}
+        except Exception as e:
+            return {"status": "error", "message": f"Failed to generate launcher script: {str(e)}"}
+
+    except Exception as e:
+        return {"status": "error", "message": f"Error in wrapper_generate_launcher_script: {str(e)}"}
+
+# Tool Registry mapping tool names to wrapper functions
+TOOL_REGISTRY = {
+    "tool_find_file": wrapper_find_file,
+    "tool_load_binary": wrapper_load_binary,
+    "tool_list_relevant_files": wrapper_list_relevant_files,
+    "tool_read_file_chunk": wrapper_read_file_chunk,
+    "tool_get_file_metadata": wrapper_get_file_metadata,
+    "tool_run_static_analysis": wrapper_run_static_analysis,
+    "tool_deep_license_analysis": wrapper_deep_license_analysis,
+    "tool_detect_protections": wrapper_detect_protections,
+    "tool_disassemble_address": wrapper_disassemble_address,
+    "tool_get_cfg": wrapper_get_cfg,
+    "tool_launch_target": wrapper_launch_target,
+    "tool_attach_target": wrapper_attach_target,
+    "tool_run_frida_script": wrapper_run_frida_script,
+    "tool_detach": wrapper_detach,
+    "tool_propose_patch": wrapper_propose_patch,
+    "tool_get_proposed_patches": wrapper_get_proposed_patches,
+    "tool_apply_confirmed_patch": wrapper_apply_confirmed_patch,
+    "tool_generate_launcher_script": wrapper_generate_launcher_script
+}
+
+def dispatch_tool(app_instance, tool_name, parameters):
+    """
+    Dispatches the AI-requested tool to the corresponding wrapper function.
+    """
+    app_instance.update_output.emit(log_message(f"[Tool Dispatch] Attempting to dispatch tool: {tool_name}"))
+
+    if tool_name in TOOL_REGISTRY:
+        try:
+            # Call the wrapper function
+            tool_result = TOOL_REGISTRY[tool_name](app_instance, parameters)
+            app_instance.update_output.emit(log_message(f"[Tool Dispatch] Tool '{tool_name}' executed. Result: {tool_result.get('status', 'No status')}"))
+            return tool_result
+        except Exception as e:
+            error_trace = traceback.format_exc()
+
+            # Create a more detailed error message
+            error_msg = f"Error executing tool '{tool_name}': {str(e)}"
+            app_instance.update_output.emit(log_message(f"[Tool Dispatch] ERROR: {error_msg}"))
+            app_instance.update_output.emit(log_message(error_trace))
+
+            # Provide more specific error messages based on the exception type
+            detailed_msg = error_msg
+            if "FileNotFoundError" in error_trace:
+                detailed_msg = f"File not found error while executing '{tool_name}'. Please check that the specified file exists."
+            elif "PermissionError" in error_trace:
+                detailed_msg = f"Permission denied while executing '{tool_name}'. Please check file permissions."
+            elif "KeyError" in error_trace:
+                detailed_msg = f"Missing key in parameters for '{tool_name}'. Please check the required parameters."
+            elif "ValueError" in error_trace:
+                detailed_msg = f"Invalid value provided for '{tool_name}'. Please check parameter types and formats."
+            elif "TypeError" in error_trace:
+                detailed_msg = f"Type error while executing '{tool_name}'. Please check parameter types."
+            elif "IndexError" in error_trace or "AttributeError" in error_trace:
+                detailed_msg = f"Access error while executing '{tool_name}'. This may indicate a problem with the tool implementation."
+
+            # Log additional diagnostic information
+            logger.error(f"[Tool Error] Tool: {tool_name}")
+            logger.error(f"[Tool Error] Parameters: {parameters}")
+            logger.error(f"[Tool Error] Exception: {str(e)}")
+
+            return {
+                "status": "error",
+                "message": detailed_msg,
+                "original_error": str(e),
+                "tool_name": tool_name
+            }
+    else:
+        # Get a list of available tools for better error message
+        available_tools = list(TOOL_REGISTRY.keys())
+
+        # Check if the requested tool is similar to any available tool (typo detection)
+        similar_tools = []
+        for tool in available_tools:
+            # Simple similarity check - if the tool name is close to an available tool
+            if tool_name in tool or tool in tool_name or (
+                len(tool_name) > 3 and sum(1 for a, b in zip(tool_name, tool) if a == b) > len(tool_name) * 0.7
+            ):
+                similar_tools.append(tool)
+
+        # Create a helpful error message
+        error_msg = f"Unknown tool requested: {tool_name}"
+        if similar_tools:
+            suggestion = f"Did you mean: {', '.join(similar_tools)}?"
+            error_msg = f"{error_msg}. {suggestion}"
+
+        # Log the error with available tools for reference
+        app_instance.update_output.emit(log_message(f"[Tool Dispatch] ERROR: {error_msg}"))
+        logger.error(f"[Tool Dispatch] Unknown tool: {tool_name}")
+        logger.error(f"[Tool Dispatch] Available tools: {available_tools}")
+
+        return {
+            "status": "error",
+            "message": error_msg,
+            "available_tools": available_tools
+        }
+
+# --- End AI Tooling ---
+
+def calculate_entropy(data):
+    """
+    Calculates Shannon entropy of given data.
+    Higher values (>7.0) typically indicate encryption, compression, or obfuscation.
+
+    Args:
+        data: Binary data (bytes or bytearray)
+
+    Returns:
+        float: Shannon entropy value between 0 and 8
+    """
+    if not data:
+        return 0
+
+    entropy = 0
+    counter = Counter(bytearray(data))
+    data_len = len(data)
+
+    for count in counter.values():
+        probability = count / data_len
+        entropy -= probability * math.log2(probability)
+
+    return entropy
+
+class AdvancedVulnerabilityEngine:
+    """
+    Comprehensive vulnerability detection and analysis framework
+    """
+
+    # Class logger for all AdvancedVulnerabilityEngine methods
+    logger = logging.getLogger('Intellicrack.AdvancedVulnerabilityEngine')
+
+    @staticmethod
+    def calculate_entropy(data):
+        """
+        Calculate Shannon entropy of binary data.
+
+        Shannon entropy measures the randomness or unpredictability of data.
+        Higher values (closer to 8.0 for byte data) indicate more random/encrypted content,
+        while lower values suggest more predictable patterns.
+
+        Args:
+            data: Binary data as bytes or bytearray to analyze
+
+        Returns:
+            float: Entropy value between 0.0 (completely predictable) and 8.0 (completely random)
+        """
+        if not data:
+            return 0.0
+
+        # Count byte frequencies
+        freq = {}
+        for byte in data:
+            freq[byte] = freq.get(byte, 0) + 1
+
+        # Calculate entropy
+        entropy = 0
+        total_bytes = len(data)
+
+        for count in freq.values():
+            prob = count / total_bytes
+            entropy -= prob * math.log2(prob)
+
+        return entropy
+
+    @classmethod
+    def scan_binary(cls, binary_path):
+        """
+        Comprehensive multi-stage binary vulnerability scanning.
+
+        Performs a series of vulnerability checks on the binary including import table analysis,
+        section analysis, export table analysis, weak crypto detection, and licensing weakness
+        detection. Each check is executed in sequence to build a complete vulnerability profile.
+
+        Args:
+            cls: Class reference
+            binary_path: Path to the binary file to scan
+
+        Returns:
+            list: Collection of detected vulnerabilities, each represented as a dictionary
+                 with details about the vulnerability type, location, and severity
+        """
+        vulnerabilities = []
+
+        try:
+            # Use pefile for in-depth PE file analysis
+            pe = pefile.PE(binary_path, fast_load=False)
+
+            # Comprehensive vulnerability checks
+            vulnerability_checks = [
+                cls._analyze_import_table,
+                cls._analyze_sections,
+                cls._analyze_export_table,
+                cls._detect_weak_crypto,
+                cls._detect_licensing_weaknesses
+            ]
+
+            # Run all vulnerability checks
+            for check in vulnerability_checks:
+                vulnerabilities.extend(check(pe, binary_path))
+
+        except Exception as e:
+            logger.error(f"Comprehensive binary scanning error: {e}")
+
+        return vulnerabilities
+
+    @staticmethod
+    def _analyze_import_table(pe, binary_path):
+        """
+        Advanced import table vulnerability analysis.
+
+        Examines the binary's import table for potentially dangerous API calls that might
+        indicate security weaknesses or licensing vulnerabilities. Categorizes imports into
+        risk categories including system execution, memory manipulation, crypto weakness,
+        and network risk.
+
+        Args:
+            pe: Loaded PE file object from pefile
+            binary_path: Path to the binary file (for reference)
+
+        Returns:
+            list: Detected import-related vulnerabilities with risk categorization
+        """
+        vulnerabilities = []
+
+        # Comprehensive dangerous import keywords
+        dangerous_imports = {
+            'system_execution': [
+                'system', 'exec', 'shellexecute', 'createprocess',
+                'winexec', 'loadlibrary'
+            ],
+            'memory_manipulation': [
+                'virtualalloc', 'virtualprotect', 'writeprocessmemory',
+                'readprocessmemory'
+            ],
+            'crypto_weakness': [
+                'crypt', 'decrypt', 'encrypt', 'hash', 'md5', 'sha1'
+            ],
+            'network_risk': [
+                'connect', 'send', 'recv', 'wsasend', 'wsarecv',
+                'internetopen', 'httpsendrequestw'
+            ]
+        }
+
+        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                for imp in entry.imports:
+                    try:
+                        func_name = imp.name.decode(
+                            'utf-8', errors='ignore').lower()
+
+                        for risk_category, keywords in dangerous_imports.items():
+                            if any(
+                                    keyword in func_name for keyword in keywords):
+                                vulnerabilities.append({
+                                    'type': 'import_vulnerability',
+                                    'risk_category': risk_category,
+                                    'function': func_name,
+                                    'module': entry.dll.decode('utf-8', errors='ignore'),
+                                    'severity': 'high'
+                                })
+                    except Exception as e:
+                        logger.warning(f"Import analysis error: {e}")
+
+        return vulnerabilities
+
+    @classmethod
+    def _analyze_sections(cls, pe, binary_path):
+        """
+        Advanced section-level vulnerability analysis.
+
+        Analyzes each section in the PE file for suspicious characteristics including:
+        - High entropy sections (potential encryption/obfuscation)
+        - Sections with dangerous permission combinations (executable + writable)
+        - Unusual section characteristics that may indicate protection mechanisms
+
+        Args:
+            pe: Loaded PE file object from pefile
+            binary_path: Path to the binary file (for reference)
+
+        Returns:
+            list: Detected section-related vulnerabilities with details about each issue
+        """
+        cls.logger.debug(f"Analyzing sections for binary: {binary_path}")
+        vulnerabilities = []
+
+        for section in pe.sections:
+            section_data = section.get_data()
+            entropy = AdvancedVulnerabilityEngine.calculate_entropy(
+                section_data)
+            section_name = section.Name.decode(
+                'utf-8', errors='ignore').strip('\x00')
+
+            # High entropy sections might indicate packed/encrypted code
+            if entropy > 7.0:
+                vulnerabilities.append({
+                    'type': 'high_entropy_section',
+                    'section_name': section_name,
+                    'entropy': entropy,
+                    'risk': 'Potential Obfuscation/Packing'
+                })
+
+            # Check section permissions
+            characteristics = section.Characteristics
+            is_executable = bool(characteristics & 0x20000000)
+            is_writable = bool(characteristics & 0x80000000)
+
+            cls.logger.debug(f"Section '{section_name}': Entropy={entropy}, Executable={is_executable}, Writable={is_writable}")
+
+            if is_executable and is_writable:
+                vulnerabilities.append({
+                    'type': 'section_permission_vulnerability',
+                    'section_name': section_name,
+                    'risk': 'Executable and Writable Section'
+                })
+
+        cls.logger.info(f"Found {len(vulnerabilities)} section-related vulnerabilities.")
+        return vulnerabilities
+
+    @staticmethod
+    def _analyze_export_table(pe, binary_path):
+        """
+        Advanced export table vulnerability analysis.
+
+        Examines the binary's export table for sensitive function names that might
+        reveal licensing mechanisms, authentication routines, or other security-critical
+        components. Identifies exports that could be targeted for patching or hooking.
+
+        Args:
+            pe: Loaded PE file object from pefile
+            binary_path: Path to the binary file (for reference)
+
+        Returns:
+            list: Detected export-related vulnerabilities with details about each sensitive export
+        """
+        vulnerabilities = []
+
+        if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
+            for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+                if exp.name:
+                    try:
+                        func_name = exp.name.decode('utf-8', errors='ignore')
+

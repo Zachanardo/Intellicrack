@@ -1,0 +1,1000 @@
+            ax.set_ylabel('Loss')
+            ax.grid(True)
+
+            # Save to buffer
+            buf = BytesIO()
+            fig.savefig(buf, format='png')
+            buf.seek(0)
+
+            # Convert to QPixmap and display
+            pixmap = QPixmap()
+            pixmap.loadFromData(buf.read())
+            self.visualization_label.setPixmap(pixmap)
+
+            # Clean up matplotlib resources
+            plt.close(fig)
+
+        except ImportError as e:
+            # Fallback if matplotlib is not available
+            self.visualization_label.setText(f"Visualization not available: {str(e)}\n\nPlease install matplotlib with: pip install matplotlib")
+            self.training_log.append("Error: Matplotlib is required for visualization")
+        except Exception as e:
+            # Handle any other errors
+            self.visualization_label.setText(f"Error generating visualization: {str(e)}")
+            self.training_log.append(f"Visualization error: {str(e)}")
+
+    def export_metrics(self):
+        """Export the training metrics to a file."""
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export Training Metrics", "training_metrics.html", "HTML Files (*.html);;Text Files (*.txt);;All Files (*)")
+
+        if not path:
+            return
+
+        logging.info(f"Exporting training metrics to: {path}")
+
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(self.metrics_view.toHtml())
+
+            if self.parent:
+                self.parent.update_output.emit(log_message(
+                    f"[Training] Exported metrics to: {path}"))
+
+            QMessageBox.information(self, "Export Successful",
+                                  f"Successfully exported metrics to: {path}")
+
+        except Exception as e:
+            error_msg = f"Error exporting metrics: {e}"
+            logging.error(f"Error exporting metrics: {e}", exc_info=True)
+            if self.parent:
+                self.parent.update_output.emit(log_message(f"[Training] {error_msg}"))
+            QMessageBox.warning(self, "Export Error", error_msg)
+
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    """
+    Global exception handler that logs uncaught exceptions and provides user feedback.
+
+    This function is set as the sys.excepthook to ensure all uncaught exceptions are properly
+    logged before the program terminates. It provides a centralized way to capture and log
+    all unhandled exceptions throughout the application, improving error tracking and debugging
+    capabilities. Additionally, it attempts to provide user feedback and basic recovery
+    strategies for known exception types.
+
+    Args:
+        exc_type: The exception class
+        exc_value: The exception instance
+        exc_traceback: The traceback object
+
+    Returns:
+        None
+    """
+    # Handle keyboard interrupts normally (allow clean Ctrl+C)
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    # Format the traceback for logging
+    tb_lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+    tb_text = ''.join(tb_lines)
+
+    error_time = time.strftime('%Y-%m-%d %H:%M:%S')
+    # Create a semi-unique error ID based on exception type, message, and first frame
+    error_hash = hashlib.md5(f"{exc_type.__name__}:{str(exc_value)}:{tb_lines[-1]}".encode()).hexdigest()[:8]
+    error_id = f"{error_time}-{error_hash}"
+
+    # Collect system information for better debugging
+    system_info = {
+        'os': platform.system(),
+        'os_version': platform.version(),
+        'python_version': platform.python_version(),
+        'platform': platform.platform(),
+        'memory': f"{psutil.virtual_memory().percent}% used"
+    }
+
+    # Log the exception with detailed information
+    logger.error(f"===== Unhandled Exception [{error_id}] =====")
+    logger.error(f"Type: {exc_type.__name__}")
+    logger.error(f"Value: {exc_value}")
+    logger.error(f"System Info: {system_info}")
+    logger.error(f"Traceback:\n{tb_text}")
+
+    # Attempt to classify and handle specific exception types
+    try:
+        # Special handling for specific exception types
+        if issubclass(exc_type, ImportError) or issubclass(exc_type, ModuleNotFoundError):
+            # Missing dependency - suggest installation
+            module_name = str(exc_value).split("'")[1] if "'" in str(exc_value) else "required module"
+            logger.info(f"Detected missing dependency: {module_name}")
+
+            # Try to automatically install the missing dependency
+            recovery_msg = f"Attempting to install missing dependency: {module_name}"
+            logger.info(recovery_msg)
+
+            # Try to recover by installing the missing dependency
+            try:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", module_name])
+                logger.info(f"Successfully installed {module_name}")
+                recovery_successful = True
+            except Exception as install_error:
+                logger.error(f"Failed to install {module_name}: {install_error}")
+                recovery_successful = False
+
+            # Display a GUI message if possible
+            _display_exception_dialog(
+                f"Missing Dependency: {module_name}",
+                f"The application requires the '{module_name}' module which is not installed.\n\n"
+                f"{'The module was automatically installed. Please restart the application.' if recovery_successful else 'Please install it manually with: pip install ' + module_name}",
+                tb_text,
+                error_id
+            )
+
+        elif issubclass(exc_type, (PermissionError, OSError)) and "permission" in str(exc_value).lower():
+            # Permission issues
+            logger.info("Detected permission error")
+            _display_exception_dialog(
+                "Permission Error",
+                "The application doesn't have sufficient permissions to perform this operation.\n\n"
+                "Try running the application as administrator or check file/folder permissions.",
+                tb_text,
+                error_id
+            )
+
+        elif issubclass(exc_type, MemoryError):
+            # Out of memory
+            logger.info("Detected memory error")
+            # Try to recover by forcing garbage collection
+            gc.collect()
+
+            _display_exception_dialog(
+                "Out of Memory",
+                "The application has run out of memory.\n\n"
+                "Try closing other applications, processing smaller files, or increasing virtual memory.",
+                tb_text,
+                error_id
+            )
+
+        elif issubclass(exc_type, TimeoutError):
+            # Timeout errors
+            logger.info("Detected timeout error")
+            _display_exception_dialog(
+                "Operation Timed Out",
+                "The operation took too long to complete and timed out.\n\n"
+                "This might be due to network issues, high system load, or processing large files.",
+                tb_text,
+                error_id
+            )
+
+        else:
+            # General exception handling for unknown types
+            _display_exception_dialog(
+                f"Unexpected Error: {exc_type.__name__}",
+                f"An unexpected error occurred: {str(exc_value)}\n\n"
+                f"Error ID: {error_id}\n"
+                f"Please report this error ID if you contact support.",
+                tb_text,
+                error_id
+            )
+
+    except Exception as handler_error:
+        # If our fancy error handling fails, fall back to basic logging
+        logger.error(f"Error in exception handler: {handler_error}")
+        logger.exception("Original uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+        # Use the original excepthook as a last resort
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
+
+def _display_exception_dialog(title, message, traceback_text, error_id):
+    """
+    Display an error dialog to the user with exception details.
+
+    This function attempts to show a GUI dialog with error information.
+    If PyQt is available, it uses a QMessageBox; otherwise, it falls back
+    to tkinter if available, or simply prints to console as a last resort.
+
+    Args:
+        title: The dialog title
+        message: The main error message to display
+        traceback_text: The formatted traceback text
+        error_id: A unique ID for this error occurrence
+    """
+    try:
+        # Check if QApplication instance exists
+        app = QApplication.instance()
+        if app is None:
+            # Create a new QApplication instance if needed
+            app = QApplication(sys.argv)
+
+        # Create a custom dialog with details view
+        dialog = QDialog()
+        dialog.setWindowTitle(title)
+        dialog.setMinimumSize(600, 400)
+
+        # Layout
+        layout = QVBoxLayout()
+
+        # Message at the top
+        message_label = QLabel(message)
+        message_label.setWordWrap(True)
+        layout.addWidget(message_label)
+
+        # Add error ID
+        id_label = QLabel(f"<b>Error ID:</b> {error_id}")
+        layout.addWidget(id_label)
+
+        # Add a text edit with the traceback
+        traceback_edit = QTextEdit()
+        traceback_edit.setReadOnly(True)
+        traceback_edit.setPlainText(traceback_text)
+        traceback_edit.setLineWrapMode(QTextEdit.NoWrap)
+        layout.addWidget(traceback_edit)
+
+        # Add copy button
+        button_layout = QHBoxLayout()
+        copy_button = QPushButton("Copy Error Details")
+        copy_button.clicked.connect(lambda: app.clipboard().setText(
+            f"{title}\n\n{message}\n\nError ID: {error_id}\n\n{traceback_text}"
+        ))
+
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(dialog.accept)
+
+        report_button = QPushButton("Report Error")
+        report_button.clicked.connect(lambda: _report_error(error_id, title, message, traceback_text))
+
+        button_layout.addWidget(copy_button)
+        button_layout.addWidget(report_button)
+        button_layout.addWidget(close_button)
+
+        layout.addLayout(button_layout)
+        dialog.setLayout(layout)
+
+        dialog.exec_()
+
+    except ImportError:
+        # Fall back to tkinter if PyQt is not available
+        try:
+
+            root = tk.Tk()
+            root.withdraw()  # Hide the main window
+
+            # Create a custom dialog
+            dialog = tk.Toplevel(root)
+            dialog.title(title)
+            dialog.geometry("600x400")
+
+            # Message at the top
+            message_label = tk.Label(dialog, text=message, wraplength=580, justify="left")
+            message_label.pack(padx=10, pady=10, fill="x")
+
+            # Error ID
+            id_label = tk.Label(dialog, text=f"Error ID: {error_id}")
+            id_label.pack(padx=10, fill="x")
+
+            # Traceback in a scrolled text
+            tb_text = scrolledtext.ScrolledText(dialog, width=80, height=20)
+            tb_text.insert(tk.END, traceback_text)
+            tb_text.configure(state="disabled")  # Make read-only
+            tb_text.pack(padx=10, pady=10, fill="both", expand=True)
+
+            # Button frame
+            button_frame = tk.Frame(dialog)
+            button_frame.pack(padx=10, pady=10, fill="x")
+
+            # Copy button
+            def copy_to_clipboard():
+                """
+                Copy error details to the clipboard.
+
+                Clears the clipboard and appends the error information.
+                """
+                dialog.clipboard_clear()
+                dialog.clipboard_append(f"{title}\n\n{message}\n\nError ID: {error_id}\n\n{traceback_text}")
+
+            copy_button = tk.Button(button_frame, text="Copy Error Details", command=copy_to_clipboard)
+            copy_button.pack(side="left", padx=5)
+
+            # Close button
+            close_button = tk.Button(button_frame, text="Close", command=dialog.destroy)
+            close_button.pack(side="right", padx=5)
+
+            dialog.transient(root)  # Make dialog modal
+            dialog.wait_window(dialog)  # Wait until dialog is closed
+
+            root.destroy()
+
+        except ImportError:
+            # If all GUI options fail, print to console
+            print(f"\n{'='*60}")
+            print(f"ERROR: {title}")
+            print(f"{'='*60}")
+            print(message)
+            print(f"\nError ID: {error_id}")
+            print(f"\nTraceback:\n{traceback_text}")
+            print(f"{'='*60}\n")
+
+
+def _report_error(error_id, title, message, traceback_text):
+    """
+    Open a dialog to report the error to the developers.
+
+    Args:
+        error_id: The unique error identifier
+        title: The error title
+        message: The error message
+        traceback_text: The formatted traceback
+    """
+    try:
+        dialog = QDialog()
+        dialog.setWindowTitle("Report Error")
+        dialog.setMinimumSize(500, 400)
+
+        layout = QVBoxLayout()
+
+        # Instructions
+        instructions = QLabel(
+            "Please describe what you were doing when the error occurred. "
+            "This information, along with the error details, will be submitted to help improve the application."
+        )
+        instructions.setWordWrap(True)
+        layout.addWidget(instructions)
+
+        # User input
+        user_input = QTextEdit()
+        user_input.setPlaceholderText("Describe the steps that led to this error...")
+        layout.addWidget(user_input)
+
+        # Error summary (read-only)
+        layout.addWidget(QLabel("<b>Error Summary (will be included in the report):</b>"))
+        summary = QTextEdit()
+        summary.setReadOnly(True)
+        summary.setMaximumHeight(150)
+        summary.setText(f"Error ID: {error_id}\nTitle: {title}\nMessage: {message}")
+        layout.addWidget(summary)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(dialog.reject)
+
+        submit_button = QPushButton("Submit Report")
+
+        # Function to handle report submission
+        def submit_report():
+            """
+            Create and save an error report file in the error_reports directory.
+
+            Gathers error details and writes them to a timestamped report file.
+            """
+            try:
+                # Create reports directory if it doesn't exist
+                reports_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "error_reports")
+                os.makedirs(reports_dir, exist_ok=True)
+
+                # Create a report file
+                report_path = os.path.join(reports_dir, f"error_report_{error_id}.txt")
+                with open(report_path, "w") as f:
+                    f.write(f"ERROR REPORT - {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    f.write(f"Error ID: {error_id}\n")
+                    f.write(f"Title: {title}\n")
+                    f.write(f"Message: {message}\n\n")
+                    f.write(f"User Description:\n{user_input.toPlainText()}\n\n")
+                    f.write(f"Traceback:\n{traceback_text}\n\n")
+                    f.write(f"System Info:\n")
+                    f.write(f"OS: {platform.system()} {platform.version()}\n")
+                    f.write(f"Python: {platform.python_version()}\n")
+                    f.write(f"Platform: {platform.platform()}\n")
+
+                QMessageBox.information(
+                    dialog,
+                    "Report Submitted",
+                    f"Thank you for your report. It has been saved to:\n{report_path}"
+                )
+                dialog.accept()
+
+            except Exception as e:
+                QMessageBox.warning(
+                    dialog,
+                    "Error Submitting Report",
+                    f"Failed to submit the error report: {str(e)}"
+                )
+
+        submit_button.clicked.connect(submit_report)
+
+        button_layout.addWidget(cancel_button)
+        button_layout.addWidget(submit_button)
+        layout.addLayout(button_layout)
+
+        dialog.setLayout(layout)
+        dialog.exec_()
+
+    except ImportError:
+        # Handle case where PyQt is not available
+        print("Error reporting requires PyQt5, which is not available.")
+
+
+# Set the global exception handler
+sys.excepthook = handle_exception
+
+LOADED_AI_MODEL = None
+
+# -------------------------------
+# Configuration Management
+# -------------------------------
+
+
+def load_config():
+    """
+    Loads configuration from a JSON file with fallback to defaults.
+
+    Attempts to read configuration settings from intellicrack_config.json.
+    If the file doesn't exist or can't be read, creates a new file with
+    default settings. Ensures all required configuration parameters are
+    available by merging loaded settings with defaults.
+
+    Returns:
+        dict: Configuration settings with all required parameters
+    """
+    logger.debug("Entered load_config")
+    config_path = "intellicrack_config.json"
+    logger.info(f"Looking for config file at: {os.path.abspath(config_path)}")
+    default_config = {
+        "log_dir": r"C:\Intellicrack\logs",
+        "ghidra_path": r"C:\Program Files\Ghidra\ghidraRun.bat",
+        "max_runtime_monitoring": 30000,  # 30 seconds
+        "default_plugins": ["HWID Spoofer", "Anti-Debugger"],
+        "auto_backup": True,
+        "ui_theme": "default",
+        "context_size": 8192,  # Larger context size for better AI analysis
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "runtime_interception": True,
+        "detect_protections": True,
+        "plugin_directory": "plugins",
+        "enable_memory_patching": True,
+        "first_run_completed": False,
+        "selected_model_path": None, # User-specified model path
+
+        # Model repository settings
+        "model_repositories": {
+            "local": {
+                "type": "local",
+                "enabled": True,
+                "models_directory": "models"
+            },
+            "openai": {
+                "type": "openai",
+                "enabled": False,
+                "api_key": "",
+                "endpoint": "https://api.openai.com/v1",
+                "timeout": 60,
+                "proxy": "",
+                "rate_limit": {
+                    "requests_per_minute": 60,
+                    "requests_per_day": 1000
+                }
+            },
+            "anthropic": {
+                "type": "anthropic",
+                "enabled": False,
+                "api_key": "",
+                "endpoint": "https://api.anthropic.com",
+                "timeout": 60,
+                "proxy": "",
+                "rate_limit": {
+                    "requests_per_minute": 60,
+                    "requests_per_day": 1000
+                }
+            },
+            "openrouter": {
+                "type": "openrouter",
+                "enabled": False,
+                "api_key": "",
+                "endpoint": "https://openrouter.ai/api",
+                "timeout": 60,
+                "proxy": "",
+                "rate_limit": {
+                    "requests_per_minute": 60,
+                    "requests_per_day": 1000
+                }
+            },
+            "lmstudio": {
+                "type": "lmstudio",
+                "enabled": False,
+                "api_key": "",
+                "endpoint": "https://api.lmstudio.ai",
+                "timeout": 60,
+                "proxy": "",
+                "rate_limit": {
+                    "requests_per_minute": 60,
+                    "requests_per_day": 1000
+                }
+            },
+            "google": {
+                "type": "google",
+                "enabled": False,
+                "api_key": "",
+                "endpoint": "https://generativelanguage.googleapis.com",
+                "timeout": 60,
+                "proxy": "",
+                "rate_limit": {
+                    "requests_per_minute": 60,
+                    "requests_per_day": 1000
+                }
+            }
+        },
+        "api_cache": {
+            "enabled": True,
+            "ttl": 3600,  # 1 hour
+            "max_size_mb": 100
+        },
+        "download_directory": "models/downloads",
+        "verify_checksums": True
+    }
+
+    if os.path.exists(config_path):
+        logger.info("Config file exists, loading...")
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                loaded_config = json.load(f)
+                logger.info(f"Loaded config with keys: {', '.join(loaded_config.keys())}")
+
+            # Check if Ghidra path exists
+            if "ghidra_path" in loaded_config:
+                ghidra_path = loaded_config["ghidra_path"]
+                logger.info(f"Checking Ghidra path from config: {ghidra_path}")
+                if os.path.exists(ghidra_path):
+                    logger.info(f"✓ Ghidra path exists at {ghidra_path}")
+                else:
+                    logger.warning(f"✗ Ghidra path does not exist at {ghidra_path}")
+
+            # Update any missing keys with defaults
+            for key, value in default_config.items():
+                if key not in loaded_config:
+                    loaded_config[key] = value
+                    logger.info(f"Added missing key '{key}' with default value")
+
+            # Ensure selected_model_path is loaded, defaulting to None
+            loaded_config["selected_model_path"] = loaded_config.get("selected_model_path", None)
+
+            logger.debug("Exiting load_config with loaded_config")
+            return loaded_config
+        except Exception as e:
+            logger.error(f"Error loading config: {e}")
+            logger.debug("Exiting load_config with default_config due to error")
+            return default_config
+    else:
+        logger.info("Config file does not exist, creating with defaults")
+        # Create default config file
+        try:
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(default_config, f, indent=2)
+                logger.info(f"Created new config file at {os.path.abspath(config_path)}")
+
+            # Check if default Ghidra path exists
+            ghidra_path = default_config["ghidra_path"]
+            logger.info(f"Checking default Ghidra path: {ghidra_path}")
+            if os.path.exists(ghidra_path):
+                logger.info(f"✓ Default Ghidra path exists")
+            else:
+                logger.warning(f"✗ Default Ghidra path does not exist")
+
+        except Exception as e:
+            logger.error(f"Error creating config file: {e}")
+        logger.debug("Exiting load_config with default_config (new file created)")
+        return default_config
+
+
+# Load config at startup
+CONFIG = load_config()
+
+
+# -------------------------------
+# Persistent Logging with Rotation
+# -------------------------------
+
+
+def setup_file_logging():
+    """
+    Initializes a rotating file and console logger.
+
+    Sets up a comprehensive logging system with both file and console output.
+    Creates the log directory if it doesn't exist, configures log rotation
+    to prevent excessive disk usage, and sets appropriate formatting for
+    log messages. Uses different log levels for file (DEBUG) and console (INFO).
+
+    Returns:
+        logging.Logger: Configured logger object ready for application-wide use
+    """
+    global logger
+    log_dir = CONFIG["log_dir"]
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    log_file = os.path.join(log_dir, "intellicrack.log")
+
+    print(f"Setting up file logging. Log directory: {log_dir}, Log file: {log_file}")
+
+    # Initialize logger if not already defined
+    logger = logging.getLogger("IntellicrackLogger")
+
+    # Clear existing handlers
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+
+    logger.setLevel(logging.DEBUG)
+    fh = logging.handlers.RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=5)
+    fh.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+    logger.info("File logging configured.")
+    return logger
+
+
+# Update the existing logger with full configuration after loading CONFIG
+logger = setup_file_logging()
+logger.info("Intellicrack started with full logging configuration.")
+
+
+def log_message(msg):
+    """
+    Returns a timestamped log message using f-string.
+
+    Creates a consistently formatted log message with the current timestamp
+    prefixed to the provided message text. Used throughout the application
+    to ensure uniform log message formatting.
+
+    Args:
+        msg: The message text to be logged
+
+    Returns:
+        str: Formatted log message with timestamp prefix
+    """
+    return f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
+
+
+def get_target_process_pid(binary_path):
+    """
+    Gets PID of target process, handling multiple instances and partial matches.
+    Prompts the user if multiple potential processes are found.
+    """
+
+    target_name = os.path.basename(binary_path).lower()
+    potential_pids = []
+
+    logger.info(
+        f"[PID Finder] Searching for process matching '{target_name}'...")
+
+    # Find all matching processes (exact and partial)
+    for proc in psutil.process_iter(['pid', 'name', 'create_time']):
+        if proc.info['name']:
+            proc_name_lower = proc.info['name'].lower()
+            # Prioritize exact matches
+            if proc_name_lower == target_name:
+                potential_pids.append({
+                    'pid': proc.info['pid'],
+                    'name': proc.info['name'],
+                    'create_time': proc.info['create_time'],
+                    'match': 'exact'
+                })
+            elif target_name in proc_name_lower:
+                potential_pids.append({
+                    'pid': proc.info['pid'],
+                    'name': proc.info['name'],
+                    'create_time': proc.info['create_time'],
+                    'match': 'partial'
+                })
+
+    if not potential_pids:
+        logger.warning(
+            f"[PID Finder] No process found matching '{target_name}'.")
+        return None
+
+    # Sort by match type (exact first) and then by creation time (newest first)
+    potential_pids.sort(key=lambda x: (
+        x['match'] != 'exact', -x['create_time']))
+
+    if len(potential_pids) == 1:
+        pid_info = potential_pids[0]
+        logger.info(
+                f"[PID Finder] Found unique process: {pid_info['name']} (PID: {pid_info['pid']}, Match: {pid_info['match']})")
+        return pid_info['pid']
+    else:
+        logger.warning(
+            f"[PID Finder] Found multiple potential processes for '{target_name}':")
+        pid_options = []
+        for i, p in enumerate(potential_pids):
+            create_dt = datetime.datetime.fromtimestamp(
+                p['create_time']).strftime('%Y-%m-%d %H:%M:%S')
+            option_text = f"[{i}] PID: {p['pid']}, Name: {p['name']}, Started: {create_dt} ({p['match']} match)"
+            pid_options.append(option_text)
+            logger.info(f"  - {option_text}")
+
+        # Prompt user to select the correct PID using a GUI dialog
+        # Ensure QApplication instance exists if running GUI elements
+        # potentially outside main loop
+        app = QApplication.instance()
+        if not app:
+            # Fallback if no GUI is running (e.g., command-line usage)
+            print("\nMultiple potential processes found:")
+            for option in pid_options:
+                print(option)
+            while True:
+                try:
+                    choice = input(
+                        f"Enter the number [0-{len(pid_options) - 1}] of the correct process (or 'c' to cancel): ")
+                    if choice.lower() == 'c':
+                        logger.info(
+                            "[PID Finder] User cancelled PID selection.")
+                        return None
+                    idx = int(choice)
+                    if 0 <= idx < len(potential_pids):
+                        selected_pid = potential_pids[idx]['pid']
+                        logger.info(
+                            f"[PID Finder] User selected PID: {selected_pid}")
+                        return selected_pid
+                    else:
+                        print("Invalid choice.")
+                except ValueError:
+                    print("Invalid input. Please enter a number or 'c'.")
+        else:
+            # Use QInputDialog for GUI interaction
+            item, ok = QInputDialog.getItem(None,  # Use None if 'self'/'app' isn't readily available or appropriate context
+                                            "Select Process",
+                                            "Multiple processes found. Please select the correct one:",
+                                            pid_options, 0, False)
+            if ok and item:
+                # Extract PID from the selected string "[idx] PID: 1234, ..."
+                try:
+                    selected_pid_str = item.split("PID: ")[1].split(",")[0]
+                    selected_pid = int(selected_pid_str)
+                    logger.info(
+                        f"[PID Finder] User selected PID: {selected_pid}")
+                    return selected_pid
+                except (IndexError, ValueError) as e:
+                    logger.error(
+                        f"[PID Finder] Error parsing selected PID from '{item}': {e}")
+                    QMessageBox.warning(
+                        None, "Error", f"Could not parse PID from selection: {item}")
+                    return None
+            else:
+                logger.info("[PID Finder] User cancelled PID selection.")
+                return None
+
+# -------------------------------
+# Automatic Dependency Management and Environment Setup
+# -------------------------------
+
+
+def check_and_install_dependencies(use_gui=True):
+    """
+    Verifies all required dependencies are installed and offers to install missing ones.
+
+    This function checks both required and optional dependencies, and can use either
+    PyQt5 or a console interface to interact with the user based on available modules
+    and preferences.
+
+    Args:
+        use_gui: Boolean indicating whether to attempt to use GUI dialogs for interaction
+                (defaults to True, falls back to console if GUI not available)
+
+    Returns:
+        tuple: (bool, dict) - Success status and detailed results dictionary with
+               information about installed, missing, and failed dependencies
+    """
+    # Dict structure makes managing dependencies easier
+    required_dependencies = {
+        "core": {
+            "pefile": "For PE file analysis",
+            "requests": "For network operations",
+            "psutil": "For process management",
+            "pycryptodome": "For cryptographic operations"
+        },
+        "analysis": {
+            "capstone": "For disassembly",
+            "lief": "For advanced binary manipulation",
+            "networkx": "For graph analysis"
+        },
+        "system": {
+            "winregistry": "For registry operations on Windows",
+            "pywin32": "For Windows API access"
+        },
+        "gui": {
+            "pyqt5": "For GUI interface"
+        },
+        "advanced": {
+            "llama-cpp-python": "For AI model integration",
+            "qiling": "For binary emulation",
+            "frida": "For runtime hooking",
+            "frida-tools": "For Frida utilities"
+        }
+    }
+
+    optional_dependencies = {
+        "visualization": {
+            "matplotlib": "For graphs and visualizations",
+            "pygraphviz": "For control flow graph visualization"
+        },
+        "integration": {
+            "r2pipe": "For Radare2 integration",
+            "angr": "For symbolic execution",
+            "manticore": "For concolic execution"
+        },
+        "performance": {
+            "numba": "For performance optimization",
+            "cupy": "For GPU acceleration (CUDA)",
+            "tensorflow": "For machine learning acceleration",
+            "pytorch": "For machine learning acceleration"
+        }
+    }
+
+    # Initialize results tracking
+    results = {
+        "installed": [],
+        "missing_required": [],
+        "missing_optional": [],
+        "failed": [],
+        "skipped": []
+    }
+
+    # Create flattened dependency dict for import checking
+    all_required = {}
+    for _, deps in required_dependencies.items():
+        all_required.update(deps)
+
+    all_optional = {}
+    for _, deps in optional_dependencies.items():
+        all_optional.update(deps)
+
+    # Check for platform-specific dependencies to skip
+    is_windows = platform.system() == "Windows"
+
+    if not is_windows:
+        # Skip Windows-only dependencies on non-Windows platforms
+        skip_deps = ["winregistry", "pywin32"]
+        for dep in skip_deps:
+            if dep in all_required:
+                results["skipped"].append((dep, f"Not required on {platform.system()}"))
+                logger.info(f"⚠ {dep} (skipped - Windows only)")
+
+    logger.info("Checking required dependencies...")
+
+    # Check core dependencies
+    for package, description in all_required.items():
+        if package in [dep for dep, _ in results["skipped"]]:
+            continue
+
+        try:
+            # Try to import the package
+            module = __import__(package)
+
+            # Get version if available
+            version = getattr(module, "__version__", "unknown version")
+            results["installed"].append((package, version))
+            logger.info(f"✓ {package} ({version})")
+
+        except ImportError:
+            # Package is not installed
+            logger.warning(f"✗ {package} (missing - {description})")
+            results["missing_required"].append((package, description))
+
+    # Check optional dependencies
+    logger.info("\nChecking optional dependencies...")
+    for package, description in all_optional.items():
+        try:
+            # Try to import the package
+            module = __import__(package)
+
+            # Get version if available
+            version = getattr(module, "__version__", "unknown version")
+            results["installed"].append((package, version))
+            logger.info(f"✓ {package} ({version} - optional)")
+
+        except ImportError:
+            # Package is not installed
+            logger.info(f"⚠ {package} (optional - {description})")
+            results["missing_optional"].append((package, description))
+
+    # Handle missing dependencies
+    if results["missing_required"]:
+        missing_count = len(results["missing_required"])
+        missing_names = [pkg for pkg, _ in results["missing_required"]]
+
+        logger.info(f"\nFound {missing_count} missing required dependencies.")
+        logger.info("Intellicrack requires these packages to function properly.")
+
+        # Try to use PyQt for GUI prompt if available and requested
+        install_confirmed = False
+        include_optional = False
+
+        if use_gui:
+            try:
+                # Try using PyQt first since it's our main GUI framework
+
+                # Check if QApplication exists
+                app = QApplication.instance()
+                app_created = False
+
+                if app is None:
+                    app = QApplication([])
+                    app_created = True
+
+                # Create dialog with optional dependencies checkbox
+                msg_box = QMessageBox()
+                msg_box.setWindowTitle("Intellicrack Dependency Installation")
+                msg_box.setText(f"Intellicrack needs to install {missing_count} missing dependencies:")
+                msg_box.setInformativeText("\n".join(missing_names))
+                msg_box.setIcon(QMessageBox.Question)
+
+                # Add optional dependencies checkbox if there are any missing
+                if results["missing_optional"]:
+                    optional_cb = QCheckBox(f"Also install {len(results['missing_optional'])} optional dependencies")
+
+                    # Use a layout to add the checkbox
+                    layout = QVBoxLayout()
+                    widget = QWidget()
+                    layout.addWidget(optional_cb)
+                    widget.setLayout(layout)
+                    msg_box.setCheckBox(optional_cb)
+
+                msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                msg_box.setDefaultButton(QMessageBox.Yes)
+
+                # Show dialog and get result
+                ret = msg_box.exec_()
+
+                if ret == QMessageBox.Yes:
+                    install_confirmed = True
+                    if results["missing_optional"] and msg_box.checkBox() and msg_box.checkBox().isChecked():
+                        include_optional = True
+
+                # Clean up if we created the app
+                if app_created:
+                    app.quit()
+
+            except ImportError:
+                # PyQt not available, fall back to tkinter
+                logger.debug("PyQt not available for dependency dialog, trying tkinter...")
+                try:
+
+                    root = tk.Tk()
+                    root.withdraw()
+
+                    # Ask about required dependencies
+                    install_confirmed = messagebox.askyesno(
+                        "Intellicrack Dependency Installation",
+                        f"Intellicrack needs to install {missing_count} missing dependencies:\n" +
+                        "\n".join(missing_names) +
+                        "\n\nProceed with installation?"
+                    )
+
+                    # If required are confirmed, ask about optional
+                    if install_confirmed and results["missing_optional"]:
+                        include_optional = messagebox.askyesno(
+                            "Optional Dependencies",
+                            f"Would you also like to install {len(results['missing_optional'])} optional dependencies?"
+                        )
+
+                    root.destroy()
+
+                except ImportError:
+                    # No GUI available, fall back to console
+                    logger.debug("No GUI frameworks available, using console interface")
+                    use_gui = False
+
+        # Console fallback
+        if not use_gui:
+            print(f"\nIntellirack needs {missing_count} missing dependencies:")
+            for pkg, desc in results["missing_required"]:
+                print(f"- {pkg}: {desc}")
+
+            response = input("\nInstall missing dependencies? (y/n): ").strip().lower()
+            install_confirmed = response.startswith('y')
+
+            if install_confirmed and results["missing_optional"]:

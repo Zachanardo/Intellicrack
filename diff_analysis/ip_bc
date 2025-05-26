@@ -1,0 +1,1000 @@
+                            safe_prologue_mnemonics = ["push", "mov", "sub", "lea", "xor"]
+                            safe_instructions_count = 0
+
+                            for insn in instructions:
+                                # Only consider very simple prologue instructions
+                                if insn.mnemonic in safe_prologue_mnemonics:
+                                    prologue_size += insn.size
+                                    safe_instructions_count += 1
+                                    # Break after a very conservative number of instructions
+                                    if safe_instructions_count >= 3:
+                                        break
+                                else:
+                                    # Stop at any other instruction type
+                                    break
+
+                            # Strict check: patch must fit within conservative prologue AND be less than 8 bytes
+                            if prologue_size >= len(patch_bytes) and len(patch_bytes) <= 8:
+                                app.update_output.emit(
+                                    log_message(
+                                        f"[License Rewrite] Safety Check OK: Patch size ({
+                                            len(patch_bytes)} bytes) fits estimated prologue size ({prologue_size} bytes) at 0x{
+                                            start_addr:X}."))
+                                patches.append({
+                                    "address": start_addr,
+                                    "new_bytes": patch_bytes,
+                                    "description": f"Replace function prologue at 0x{start_addr:X} with '{patch_asm}'"
+                                })
+                                patch_generated = True
+                            else:
+                                app.update_output.emit(
+                                    log_message(
+                                        f"[License Rewrite] Safety Check FAILED: Patch size ({
+                                            len(patch_bytes)} bytes) may NOT fit estimated prologue size ({prologue_size} bytes) at 0x{
+                                            start_addr:X}. Skipping direct rewrite."))
+                                # Instead of automatically applying NOP fallback, log it as a suggestion
+                                # Check first 3 instructions for conditional jumps
+                                for insn in instructions[:3]:
+                                    if insn.mnemonic.startswith('j') and insn.mnemonic != 'jmp' and insn.size > 0:
+                                        nop_patch = bytes([0x90] * insn.size)
+                                        suggestion_desc = f"Consider NOPing conditional jump {insn.mnemonic} at 0x{insn.address:X}"
+
+                                        # Log the suggestion instead of applying it
+                                        app.update_output.emit(
+                                            log_message(
+                                                f"[License Rewrite] SUGGESTION: {suggestion_desc}"))
+
+                                        # Add to potential patches with clear manual verification flag
+                                        if hasattr(app, "potential_patches"):
+                                            fallback_patch = {
+                                                "address": insn.address,
+                                                "new_bytes": nop_patch,
+                                                "description": f"[MANUAL VERIFY REQUIRED] {suggestion_desc}",
+                                                "requires_verification": True
+                                            }
+                                            app.potential_patches.append(fallback_patch)
+
+                                            app.update_output.emit(
+                                                log_message(
+                                                    f"[License Rewrite] Added suggestion to potential_patches. Use 'Apply Patches' to apply after review."))
+
+                                        # Mark that we provided a suggestion but didn't automatically patch
+                                        break
+
+                        else:
+                            app.update_output.emit(
+                                log_message(
+                                    f"[License Rewrite] Warning: Could not disassemble instructions at 0x{
+                                        start_addr:X} for size check."))
+                    else:
+                        app.update_output.emit(
+                            log_message(
+                                f"[License Rewrite] Warning: Candidate address 0x{
+                                    start_addr:X} is outside the .text section. Skipping."))
+
+                except Exception as e_check:
+                    app.update_output.emit(
+                        log_message(
+                            f"[License Rewrite] Error during safety check for 0x{
+                                start_addr:X}: {e_check}. Skipping patch for this candidate."))
+
+                # If no specific patch was generated, add to candidates for AI/manual review
+                if not patch_generated:
+                    app.update_output.emit(log_message(f"[License Rewrite] No safe patch generated for 0x{start_addr:X}. Adding to manual review list."))
+                    # Add to the list of candidates that need manual review
+                    candidates.append({
+                        "address": start_addr,
+                        "size": min_patch_size,
+                        "original_bytes": bytes_at_addr.hex().upper() if bytes_at_addr else "",
+                        "disassembly": disasm_at_addr or "Unknown",
+                        "reason": "Failed automatic patch generation",
+                        "needs_review": True,
+                        "review_priority": "high" if "check" in (disasm_at_addr or "").lower() else "medium"
+                    })
+
+                    # Log to analysis results for reporting
+                    app.analyze_results.append(f"Manual review needed for potential license check at 0x{start_addr:X}")
+
+        except ImportError:
+            app.update_output.emit(log_message(
+                "[License Rewrite] Error: Required modules (pefile, capstone, keystone) not found."))
+            candidates = []  # Cannot proceed if imports fail
+        except Exception as e_deep:
+            app.update_output.emit(
+                log_message(
+                    f"[License Rewrite] Error processing deep analysis candidates: {e_deep}"))
+            app.update_output.emit(log_message(traceback.format_exc()))
+            # Continue with safer alternatives instead of risky fallbacks
+
+    # --- Alternative approaches when deep analysis fails ---
+    if not patches and not candidates:  # Only if deep analysis yielded nothing
+        app.update_output.emit(log_message(
+            "[License Rewrite] Deep analysis did not identify suitable patches. Suggesting alternatives..."))
+        strategy_used = "Manual Assistance Required"
+
+        # Log safer alternative approaches instead of attempting risky static IAT patching
+        app.update_output.emit(log_message(
+            "[License Rewrite] RECOMMENDATION: Consider using dynamic hooking via Frida instead of static patching."))
+        app.update_output.emit(log_message(
+            "[License Rewrite] RECOMMENDATION: Use the AI assistant to analyze specific license functions."))
+        app.update_output.emit(log_message(
+            "[License Rewrite] RECOMMENDATION: Consider analyzing import usage with the dynamic tracer."))
+
+        # Add to analysis results for reporting
+        if hasattr(app, "analyze_results"):
+            app.analyze_results.append("\n=== LICENSE FUNCTION ANALYSIS ===")
+            app.analyze_results.append("Deep analysis didn't identify suitable patches")
+            app.analyze_results.append("Recommended approaches:")
+            app.analyze_results.append("1. Use dynamic hooking (Frida) rather than static patching")
+            app.analyze_results.append("2. Request AI-assisted analysis for specific license checks")
+            app.analyze_results.append("3. Use dynamic tracing to identify license verification code paths")
+
+    # --- Strategy 3: Fallback to Generic/AI Patching (if still no patches) ---
+    if not patches:
+        app.update_output.emit(log_message(
+            "[License Rewrite] No patches generated from specific analysis. Trying generic/AI approach..."))
+        strategy_used = "AI/Generic Fallback"
+
+        # Actually implement the AI-based patching using the Automated Patch Agent
+        try:
+            app.update_output.emit(log_message(
+                "[License Rewrite] Invoking Automated Patch Agent..."))
+
+            # Diagnostic log
+            app.update_output.emit(log_message(
+                "[License Rewrite] Checking application state before invoking agent..."))
+            app.update_output.emit(log_message(
+                f"[License Rewrite] Has binary_path: {hasattr(app, 'binary_path')}"))
+            if hasattr(app, 'binary_path'):
+                app.update_output.emit(log_message(
+                    f"[License Rewrite] Binary path exists: {os.path.exists(app.binary_path) if app.binary_path else False}"))
+
+            # Use the existing Automated Patch Agent function
+            original_status = app.analyze_status.text() if hasattr(app, 'analyze_status') else ""
+
+            # Temporarily save any existing potential patches
+            original_patches = getattr(app, 'potential_patches', None)
+
+            # Run the automated patch agent which will populate app.potential_patches
+            app.update_output.emit(log_message(
+                "[License Rewrite] Calling run_automated_patch_agent()..."))
+            run_automated_patch_agent(app)
+
+            # Check if the automated patch agent generated any patches
+            has_patches = hasattr(app, 'potential_patches') and app.potential_patches
+
+            # Compare original patches with new patches if both exist
+            if has_patches and original_patches:
+                app.update_output.emit(log_message(
+                    "[License Rewrite] Comparing original patches with new patches..."))
+
+                # Count how many patches are new vs. previously discovered
+                original_patch_addrs = {p.get('address', 'unknown') for p in original_patches}
+                new_patch_addrs = {p.get('address', 'unknown') for p in app.potential_patches}
+
+                new_patches_count = len(new_patch_addrs - original_patch_addrs)
+                overlapping_patches = len(new_patch_addrs.intersection(original_patch_addrs))
+
+                app.update_output.emit(log_message(
+                    f"[License Rewrite] Found {new_patches_count} new patches and {overlapping_patches} overlapping with previous analysis"))
+
+                # Merge patches to ensure we don't lose any good ones
+                if new_patches_count == 0 and overlapping_patches > 0:
+                    app.update_output.emit(log_message(
+                        "[License Rewrite] No new patches found, keeping original patches for reference"))
+                    # Keep track of both sets
+                    app.original_patches = original_patches
+            app.update_output.emit(log_message(
+                f"[License Rewrite] Patches generated: {has_patches}"))
+
+            if has_patches:
+                patches = app.potential_patches
+                app.update_output.emit(log_message(
+                    f"[License Rewrite] AI generated {len(patches)} potential patches"))
+                # Log first patch details for debugging
+                if patches and len(patches) > 0:
+                    app.update_output.emit(log_message(
+                        f"[License Rewrite] First patch details: {str(patches[0])}"))
+            else:
+                app.update_output.emit(log_message(
+                    "[License Rewrite] Automated Patch Agent did not generate any patches"))
+
+            # Restore original status (it gets overwritten by the patch agent)
+            if hasattr(app, 'analyze_status'):
+                app.analyze_status.setText(original_status)
+
+        except Exception as e:
+            app.update_output.emit(log_message(
+                f"[License Rewrite] Error while using Automated Patch Agent: {str(e)}"))
+        # Get detailed traceback for debugging
+            tb = traceback.format_exc()
+            app.update_output.emit(log_message(
+                f"[License Rewrite] Exception traceback: {tb}"))
+
+            # If AI approach failed, try simple generic patterns as last resort
+            if not patches:
+                app.update_output.emit(log_message(
+                    "[License Rewrite] Trying generic pattern matching as final fallback..."))
+
+                try:
+                    # Look for common license check patterns
+                    if hasattr(app, 'binary_path') and app.binary_path and os.path.exists(app.binary_path):
+                        generic_patches = []
+                        license_keywords = ["license", "valid", "check", "key", "trial", "expire", "activat"]
+
+                        app.update_output.emit(log_message(
+                            f"[License Rewrite] Opening binary file: {app.binary_path}"))
+
+                        # Get file size before reading
+                        file_size = os.path.getsize(app.binary_path)
+                        app.update_output.emit(log_message(
+                            f"[License Rewrite] Binary file size: {file_size} bytes"))
+
+                        with open(app.binary_path, 'rb') as f:
+                            binary_data = f.read()
+
+                        app.update_output.emit(log_message(
+                            f"[License Rewrite] Successfully read {len(binary_data)} bytes from binary"))
+                        app.update_output.emit(log_message(
+                            f"[License Rewrite] Searching for {len(license_keywords)} keywords..."))
+
+                        keyword_matches = 0
+                        for keyword in license_keywords:
+                            pattern = keyword.encode('utf-8')
+                            # Use a safer approach for binary pattern matching
+                            positions = []
+                            pos = -1
+                            while True:
+                                pos = binary_data.lower().find(pattern.lower(), pos + 1)
+                                if pos == -1:
+                                    break
+                                positions.append(pos)
+                                if len(positions) >= 3:  # Limit to first 3 per keyword
+                                    break
+
+                            app.update_output.emit(log_message(
+                                f"[License Rewrite] Keyword '{keyword}': found {len(positions)} matches"))
+                            keyword_matches += len(positions)
+
+                            for pos in positions:
+                                # Create a simple patch that replaces the first byte with a return success (0x01)
+                                patch = {
+                                    "address": pos,
+                                    "new_bytes": b'\x01' + b'\x90' * (len(pattern) - 1),  # 0x01 (success) + NOPs
+                                    "description": f"Generic patch replacing '{keyword}' with return success at offset 0x{pos:X}"
+                                }
+                                generic_patches.append(patch)
+
+                        app.update_output.emit(log_message(
+                            f"[License Rewrite] Found {keyword_matches} total keyword matches, created {len(generic_patches)} potential patches"))
+
+                        if generic_patches:
+                            patches = generic_patches[:5]  # Limit to at most 5 patches
+                            app.update_output.emit(log_message(
+                                f"[License Rewrite] Selected top {len(patches)} generic patches based on keyword matching"))
+                            # Log first patch for debugging
+                            if patches and len(patches) > 0:
+                                app.update_output.emit(log_message(
+                                    f"[License Rewrite] First generic patch: {patches[0]}"))
+
+                except Exception as e_generic:
+                    tb = traceback.format_exc()
+                    app.update_output.emit(log_message(
+                        f"[License Rewrite] Error in generic pattern matching: {str(e_generic)}"))
+                    app.update_output.emit(log_message(
+                        f"[License Rewrite] Generic matching traceback: {tb}"))
+
+    # --- Apply Generated Patches ---
+    if patches:
+        app.update_output.emit(
+            log_message(
+                f"[License Rewrite] Generated {len(patches)} patch(es) using strategy: {strategy_used}."))
+        app.update_output.emit(log_message(
+            "[License Rewrite] Attempting to apply generated patches..."))
+
+        # Validate patches before applying
+        valid_patches = []
+        for patch in patches:
+            # Basic validation
+            if isinstance(patch, dict) and "address" in patch and "new_bytes" in patch:
+                valid_patches.append(patch)
+            else:
+                app.update_output.emit(log_message(
+                    f"[License Rewrite] Skipping invalid patch: {patch}"))
+
+        if valid_patches:
+            # Use the VALIDATED patching function
+            apply_parsed_patch_instructions_with_validation(app, valid_patches)
+
+            # Store patches for potential simulation later
+            app.potential_patches = valid_patches
+
+            app.update_output.emit(log_message(
+                f"[License Rewrite] Applied {len(valid_patches)} validated patches"))
+        else:
+            app.update_output.emit(log_message(
+                "[License Rewrite] All generated patches failed validation"))
+    else:
+        app.update_output.emit(log_message(
+            "[License Rewrite] Failed to generate any patches after all strategies."))
+        app.analyze_status.setText("Rewrite failed: No patches generated")
+
+    # Final status update handled by
+    # apply_parsed_patch_instructions_with_validation or the messages above
+    if not patches:  # Only set status if no patches were even generated
+        app.analyze_status.setText("Rewrite analysis complete (No patches)")
+
+# -------------------------------
+# Backend Analysis and Patch Utilities
+# -------------------------------
+
+
+def verify_patches(app, patched_path, instructions):
+    """Verify that patches were applied correctly."""
+    app.update_output.emit(
+        log_message(
+            f"[Verify] Verifying patches in {patched_path}..."))
+
+    try:
+        pe = pefile.PE(patched_path)
+
+        verification_results = []
+        success_count = 0
+        fail_count = 0
+
+        for patch in instructions:
+            address = patch.get("address")
+            expected_bytes = patch.get("new_bytes")
+            description = patch.get("description", "No description")
+
+            if not address or not expected_bytes:
+                verification_results.append(
+                    f"Invalid patch instruction: {patch}")
+                fail_count += 1
+                continue
+
+            # Get file offset from RVA - using identical calculation logic as in apply_patches
+            image_base = pe.OPTIONAL_HEADER.ImageBase
+            if address >= image_base:
+                rva = address - image_base
+                try:
+                    offset = pe.get_offset_from_rva(rva)
+                except Exception as e:
+                    error_msg = f"Error calculating offset for address 0x{address:X}: {e}"
+                    app.update_output.emit(log_message(f"[Verify] {error_msg}"))
+                    verification_results.append(error_msg)
+                    fail_count += 1
+                    continue
+            else:
+                # Assuming address might be a direct file offset if smaller than image base
+                offset = address
+                app.update_output.emit(
+                    log_message(
+                        f"[Verify] Warning: Address 0x{address:X} seems low, treating as direct file offset 0x{offset:X}."))
+
+            # Check bytes at offset
+            try:
+                with open(patched_path, "rb") as f:
+                    f.seek(offset)
+                    actual_bytes = f.read(len(expected_bytes))
+
+                if actual_bytes == expected_bytes:
+                    verification_results.append(
+                        f"Patch at 0x{
+                            address:X} verified successfully: {description}")
+                    success_count += 1
+                else:
+                    mismatch_msg = f"Patch at 0x{address:X} verification failed: expected {expected_bytes.hex().upper()}, got {actual_bytes.hex().upper()}"
+                    # Add explicit warning log for UI display
+                    app.update_output.emit(log_message(f"[Verify] WARNING: {mismatch_msg}"))
+                    verification_results.append(mismatch_msg)
+                    fail_count += 1
+            except Exception as e:
+                verification_results.append(
+                    f"Error reading bytes at address 0x{
+                        address:X}: {e}")
+                fail_count += 1
+
+        # Summary
+        verification_results.append(
+            f"Verification complete: {success_count} patches succeeded, {fail_count} failed")
+
+        return verification_results
+
+    except Exception as e:
+        return [f"Error during patch verification: {e}"]
+
+
+def process_ghidra_analysis_results(app, json_path):
+    """
+    Process Ghidra analysis results with enhanced error handling and validation.
+
+    Args:
+        app: Application instance
+        json_path: Path to the JSON results file
+    """
+    try:
+        # Validate file path
+        if not os.path.exists(json_path):
+            app.update_output.emit(log_message(
+                f"[Ghidra Analysis] File not found: {json_path}"))
+            raise FileNotFoundError(
+                f"Analysis results file not found: {json_path}")
+
+        # Read and parse JSON with error handling
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                results = json.load(f)
+        except json.JSONDecodeError as e:
+            app.update_output.emit(log_message(
+                f"[Ghidra Analysis] Invalid JSON: {e}"))
+            app.update_output.emit(log_message(traceback.format_exc()))
+            raise ValueError(f"Invalid JSON file: {e}")
+        except Exception as e:
+            app.update_output.emit(log_message(
+                f"[Ghidra Analysis] Error reading file: {e}"))
+            app.update_output.emit(log_message(traceback.format_exc()))
+            raise
+
+        # Validate JSON structure
+        required_keys = [
+            "functions",
+            "instructions",
+            "strings",
+            "stringReferences",
+            "checkCandidates",
+            "patchCandidates"
+        ]
+
+        for key in required_keys:
+            if key not in results:
+                app.update_output.emit(log_message(
+                    f"[Ghidra Analysis] Missing key: {key}"))
+                results[key] = []  # Provide default empty list
+
+        app.update_output.emit(log_message(
+            "[Ghidra Analysis] Processing analysis results..."))
+
+        # Clear previous results via signal
+        app.clear_analysis_results.emit()
+        app.update_analysis_results.emit(
+            "=== GHIDRA ADVANCED ANALYSIS RESULTS ===\n")
+
+        # Process potential license checks
+        if results["checkCandidates"]:
+            checks = results["checkCandidates"]
+            app.update_output.emit(
+                log_message(
+                    f"[Ghidra Analysis] Found {
+                        len(checks)} potential license checks"))
+            app.update_analysis_results.emit(
+                f"Found {len(checks)} potential license checks:")
+
+            for i, check in enumerate(checks):
+                # Safely extract values with defaults
+                addr = check.get("address", "unknown")
+                name = check.get("name", "unknown")
+                size = check.get("size", 0)
+                complexity = check.get("complexity", 0)
+
+                app.update_analysis_results.emit(f"\nCheck {i + 1}:")
+                app.update_analysis_results.emit(f"  Address: 0x{addr}")
+                app.update_analysis_results.emit(f"  Function: {name}")
+                app.update_analysis_results.emit(f"  Size: {size} bytes")
+                app.update_analysis_results.emit(f"  Complexity: {complexity}")
+
+                # Add callers if available
+                callers = check.get("callers", [])
+                if callers:
+                    app.update_analysis_results.emit(
+                        f"  Called by {len(callers)} functions")
+
+        # Process patch candidates
+        if results["patchCandidates"]:
+            patches = results["patchCandidates"]
+            app.update_output.emit(log_message(
+                f"[Ghidra Analysis] Found {len(patches)} patch candidates"))
+            app.update_analysis_results.emit(
+                f"\nFound {len(patches)} patch candidates:")
+
+            # Create patches list
+            potential_patches = []
+
+            for i, patch in enumerate(patches):
+                # Safely extract values
+                addr = patch.get("address", "unknown")
+                new_bytes = patch.get("newBytes", "")
+                description = patch.get("description", "No description")
+
+                app.update_analysis_results.emit(f"\nPatch {i + 1}:")
+                app.update_analysis_results.emit(f"  Address: {addr}")
+                app.update_analysis_results.emit(f"  New bytes: {new_bytes}")
+                app.update_analysis_results.emit(
+                    f"  Description: {description}")
+
+                # Add to potential patches
+                try:
+                    addr_value = int(str(addr).replace("0x", ""), 16)
+                    # Validate new_bytes as hex
+                    if not all(
+                        c in '0123456789ABCDEFabcdef' for c in str(new_bytes).replace(
+                            ' ',
+                            '')):
+                        app.update_output.emit(
+                            log_message(
+                                f"[Ghidra Analysis] Invalid hex bytes for patch {
+                                    i + 1}"))
+                        continue
+
+                    new_bytes_value = bytes.fromhex(
+                        str(new_bytes).replace(' ', ''))
+
+                    potential_patches.append({
+                        "address": addr_value,
+                        "new_bytes": new_bytes_value,
+                        "description": description
+                    })
+                except (ValueError, TypeError) as e:
+                    app.update_output.emit(log_message(
+                        f"[Ghidra Analysis] Error parsing patch {i + 1}: {e}"))
+
+            # Store patches for later use
+            if potential_patches:
+                app.potential_patches = potential_patches
+                app.update_output.emit(
+                    log_message(
+                        f"[Ghidra Analysis] Added {
+                            len(potential_patches)} patches to potential patches list"))
+                app.update_analysis_results.emit(
+                    "\nPatches have been added to the potential patches list.")
+                app.update_analysis_results.emit(
+                    "You can apply them using the 'Apply Patch Plan' button.")
+            else:
+                app.update_analysis_results.emit(
+                    "\nNo valid patch candidates found.")
+
+        # Add decompiled functions if available
+        decompiled_funcs = results.get("decompiledFunctions", [])
+        if decompiled_funcs:
+            app.update_analysis_results.emit(
+                f"\nDecompiled {len(decompiled_funcs)} functions of interest.")
+
+            # Display first function details
+            if decompiled_funcs:
+                first_func = decompiled_funcs[0]
+                addr = first_func.get("address", "unknown")
+                name = first_func.get("name", "unknown")
+                pseudo_code = first_func.get("pseudoCode", "")
+
+                app.update_analysis_results.emit(
+                    f"\nExample decompiled function: {name} at 0x{addr}")
+                app.update_analysis_results.emit(
+                    "Pseudocode (first 10 lines):")
+
+                # Only show first 10 lines of pseudocode
+                pseudo_lines = pseudo_code.splitlines()[:10]
+                for line in pseudo_lines:
+                    app.update_analysis_results.emit(f"  {line}")
+
+                if len(pseudo_lines) < len(pseudo_code.splitlines()):
+                    app.update_analysis_results.emit("  ...")
+
+        app.update_status.emit("Ghidra analysis complete")
+
+    except Exception as e:
+        app.update_output.emit(log_message(
+            f"[Ghidra Analysis] Unexpected error: {e}"))
+        app.update_output.emit(log_message(traceback.format_exc()))
+        app.update_status.emit(f"Error processing results: {str(e)}")
+
+
+def enhanced_deep_license_analysis(binary_path):
+    """Perform deep analysis to find license-related code."""
+    try:
+        logging.info(f"Starting enhanced deep license analysis for {binary_path}")
+        pe = pefile.PE(binary_path)
+        is_64bit = pe.FILE_HEADER.Machine == 0x8664
+        mode = CS_MODE_64 if is_64bit else CS_MODE_32
+
+        # License-related keywords
+        license_keywords = [
+            "licens", "registr", "activ", "serial", "key", "trial",
+            "valid", "expir", "check", "auth", "dongle", "hardlock"
+        ]
+
+        candidates = []
+
+        # Find all strings
+        strings = []
+        with open(binary_path, "rb") as f:
+            data = f.read()
+
+        # Find ASCII strings (4+ chars)
+        ascii_strings = re.findall(b"[\\x20-\\x7e]{4,}", data)
+        strings.extend([s.decode("ascii", errors="ignore")
+                       for s in ascii_strings])
+
+        # Find UTF-16 strings (4+ chars)
+        utf16_pattern = re.compile(b"(?:([\\x20-\\x7e]\\x00)){4,}")
+        utf16_matches = utf16_pattern.findall(data)
+        if utf16_matches:
+            utf16_strings = []
+            for match in utf16_matches:
+                s = b"".join([bytes([b]) for b in match if b != 0])
+                utf16_strings.append(s.decode("ascii", errors="ignore"))
+            strings.extend(utf16_strings)
+
+        # Filter for license-related strings
+        license_strings = []
+        for string in strings:
+            for keyword in license_keywords:
+                if keyword in string.lower():
+                    license_strings.append(string)
+                    break
+
+        # Find references to these strings in code
+        for license_string in license_strings:
+            # Get string address in binary (approximate - could be improved)
+            string_bytes = license_string.encode("ascii")
+            pos = data.find(string_bytes)
+            if pos != -1:
+                # Find references to this address
+                string_addr = pe.OPTIONAL_HEADER.ImageBase + pos
+                logging.debug(f"Found license string: '{license_string}' at approx offset 0x{pos:X}")
+
+                # We'd need to scan for references, but for now just note the
+                # string location
+                candidates.append({
+                    "start": string_addr,
+                    "keywords": ["string_reference"],
+                    "string": license_string,
+                    "confidence": 50
+                })
+
+        # Scan code for license-related API calls
+        text_section = next(
+            (s for s in pe.sections if b".text" in s.Name), None)
+        if text_section:
+            code_data = text_section.get_data()
+            code_addr = pe.OPTIONAL_HEADER.ImageBase + text_section.VirtualAddress
+
+            md = Cs(CS_ARCH_X86, mode)
+            md.detail = True
+
+            for i, insn in enumerate(md.disasm(code_data, code_addr)):
+                # Look for calls to known license-related APIs
+                if insn.mnemonic == "call":
+                    # For example, check if operand references known license
+                    # functions
+                    candidates.append({
+                        "start": insn.address,
+                        "keywords": ["potential_license_check"],
+                        "confidence": 40,
+                        "instructions": [f"0x{insn.address:X}: {insn.mnemonic} {insn.op_str}"]
+                    })
+
+                # Look for cmp/test followed by conditional jumps (common in
+                # license checks)
+                if i + 1 < len(code_data) and insn.mnemonic in ["cmp", "test"]:
+                    next_insn_addr = insn.address + insn.size
+                    next_insns = list(md.disasm(
+                        code_data[insn.address - code_addr + insn.size:insn.address - code_addr + insn.size + 16], next_insn_addr))
+
+                    if next_insns and next_insns[0].mnemonic.startswith(
+                            "j") and next_insns[0].mnemonic != "jmp":
+                        candidates.append({
+                            "start": insn.address,
+                            "keywords": ["license_comparison"],
+                            "confidence": 60,
+                            "instructions": [
+                                f"0x{
+                                    insn.address:X}: {
+                                    insn.mnemonic} {
+                                    insn.op_str}",
+                                f"0x{
+                                    next_insns[0].address:X}: {
+                                    next_insns[0].mnemonic} {
+                                    next_insns[0].op_str}"
+                            ]
+                        })
+
+        # Import-based detection
+        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                dll_name = entry.dll.decode('utf-8', errors="ignore").lower()
+
+                for imp in entry.imports:
+                    if imp.name:
+                        func_name = imp.name.decode(
+                            'utf-8', errors="ignore").lower()
+
+                        for keyword in license_keywords:
+                            if keyword in func_name:
+                                logging.debug(f"Potential license API call: {func_name} from {dll_name} (Import Address: 0x{imp.address:X})")
+                                candidates.append({
+                                    "start": imp.address,
+                                    "keywords": ["license_related_api"],
+                                    "api": f"{dll_name}:{func_name}",
+                                    "confidence": 80
+                                })
+                                break
+
+        # Sort candidates by confidence
+        candidates.sort(key=lambda x: x.get("confidence", 0), reverse=True)
+
+        logging.info(f"Enhanced deep license analysis complete. Found {len(candidates)} candidates.")
+        return candidates
+
+    except Exception as e:
+        logging.error(f"Error in enhanced_deep_license_analysis: {e}", exc_info=True)
+        return []
+
+
+def deep_runtime_monitoring(binary_path, timeout=30000):
+    """Monitor runtime behavior of the binary."""
+    logs = [
+        f"Starting runtime monitoring of {binary_path} (timeout: {timeout}ms)"]
+
+    try:
+        # Create a basic Frida script to monitor key APIs
+        script_content = """
+        function log(message) {
+            send(message);
+            return true;
+        }
+
+        (function() {
+            log("[Intellicrack] Runtime monitoring started");
+
+            // Registry API hooks
+            var regOpenKeyExW = Module.findExportByName("advapi32.dll", "RegOpenKeyExW");
+            if (regOpenKeyExW) {
+                Interceptor.attach(regOpenKeyExW, {
+                    onEnter: function(args) {
+                        if (args[1]) {
+                            try {
+                                var keyPath = args[1].readUtf16String();
+                                log("[Registry] Opening key: " + keyPath);
+                            } catch (e) {}
+                        }
+                    }
+                });
+            }
+
+            // File API hooks
+            var createFileW = Module.findExportByName("kernel32.dll", "CreateFileW");
+            if (createFileW) {
+                Interceptor.attach(createFileW, {
+                    onEnter: function(args) {
+                        if (args[0]) {
+                            try {
+                                var filePath = args[0].readUtf16String();
+                                log("[File] Opening file: " + filePath);
+                            } catch (e) {}
+                        }
+                    }
+                });
+            }
+
+            // Network API hooks
+            var connect = Module.findExportByName("ws2_32.dll", "connect");
+            if (connect) {
+                Interceptor.attach(connect, {
+                    onEnter: function(args) {
+                        log("[Network] Connect called");
+                    }
+                });
+            }
+
+            // License validation hooks - MessageBox for errors
+            var messageBoxW = Module.findExportByName("user32.dll", "MessageBoxW");
+            if (messageBoxW) {
+                Interceptor.attach(messageBoxW, {
+                    onEnter: function(args) {
+                        if (args[1]) {
+                            try {
+                                var message = args[1].readUtf16String();
+                                log("[UI] MessageBox: " + message);
+                            } catch (e) {}
+                        }
+                    }
+                });
+            }
+
+            log("[Intellicrack] Hooks installed");
+        })();
+        """
+
+        # Launch the process
+        logs.append("Launching process...")
+        process = subprocess.Popen([binary_path])
+        logs.append(f"Process started with PID {process.pid}")
+
+        # Attach Frida
+        logs.append("Attaching Frida...")
+        session = frida.attach(process.pid)
+
+        # Create script
+        script = session.create_script(script_content)
+
+        # Set up message handler
+        def on_message(message, data):
+            """
+            Callback for handling messages from a Frida script.
+
+            Appends payloads from 'send' messages to the logs list.
+            """
+            if message["type"] == "send":
+                logs.append(message["payload"])
+
+        script.on("message", on_message)
+        script.load()
+
+        # Monitor for specified timeout
+        logs.append(f"Monitoring for {timeout / 1000} seconds...")
+        time.sleep(timeout / 1000)
+
+        # Detach and terminate
+        logs.append("Detaching Frida...")
+        session.detach()
+
+        logs.append("Terminating process...")
+        process.terminate()
+
+        logs.append("Runtime monitoring complete")
+
+    except Exception as e:
+        logs.append(f"Error during runtime monitoring: {e}")
+
+    return logs
+
+
+def run_deep_cfg_analysis(app):
+    """Run deep CFG analysis."""
+    if not app.binary_path:
+        app.update_output.emit(
+            log_message("[CFG Analysis] No binary selected."))
+        return
+
+    app.update_output.emit(
+        log_message("[CFG Analysis] Starting deep CFG analysis..."))
+    app.analyze_status.setText("Running CFG analysis...")
+
+    try:
+        pe = pefile.PE(app.binary_path)
+        is_64bit = pe.FILE_HEADER.Machine == 0x8664
+        mode = CS_MODE_64 if is_64bit else CS_MODE_32
+
+        # Find text section
+        text_section = next(
+            (s for s in pe.sections if b".text" in s.Name), None)
+        if not text_section:
+            app.update_output.emit(
+                log_message("[CFG Analysis] No .text section found"))
+            app.analyze_status.setText("CFG analysis failed")
+            return
+
+        # Create disassembler
+        code_data = text_section.get_data()
+        code_addr = pe.OPTIONAL_HEADER.ImageBase + text_section.VirtualAddress
+
+        md = Cs(CS_ARCH_X86, mode)
+        md.detail = True
+
+        # Disassemble
+        app.update_output.emit(
+            log_message("[CFG Analysis] Disassembling code..."))
+
+        instructions = list(md.disasm(code_data, code_addr))
+        app.update_output.emit(
+            log_message(
+                f"[CFG Analysis] Disassembled {
+                    len(instructions)} instructions"))
+
+        # Build CFG
+        app.update_output.emit(
+            log_message("[CFG Analysis] Building control flow graph..."))
+
+        G = nx.DiGraph()
+
+        # Add nodes for all instructions
+        for insn in instructions:
+            G.add_node(
+                insn.address,
+                instruction=f"{
+                    insn.mnemonic} {
+                    insn.op_str}")
+
+        # Add edges
+        for i, insn in enumerate(instructions):
+            # Add normal flow edge
+            if i + \
+                    1 < len(instructions) and insn.mnemonic not in ["ret", "jmp"]:
+                G.add_edge(insn.address,
+                           instructions[i + 1].address,
+                           type="normal")
+
+            # Add jump edges
+            if insn.mnemonic.startswith("j"):
+                try:
+                    # Extract jump target
+                    if " 0x" in insn.op_str:
+                        jump_target = int(insn.op_str.split("0x")[1], 16)
+                        G.add_edge(insn.address, jump_target, type="jump")
+                except Exception as e:
+                    app.update_output.emit(
+                        log_message(
+                            f"[CFG Analysis] Error parsing jump: {e}"))
+
+        # Save full CFG
+        app.update_output.emit(
+            log_message("[CFG Analysis] Saving CFG visualization..."))
+
+        # Use NetworkX to output DOT file
+        nx.drawing.nx_pydot.write_dot(G, "full_cfg.dot")
+
+        # Generate a smaller CFG focused on license checks
+        app.update_output.emit(
+            log_message("[CFG Analysis] Analyzing for license checks..."))
+
+        license_keywords = [
+            "licens",
+            "registr",
+            "activ",
+            "serial",
+            "key",
+            "trial",
+            "valid"]
+
+        # Find nodes with license-related instructions
+        license_nodes = []
+        for node, data in G.nodes(data=True):
+            instruction = data.get("instruction", "").lower()
+            if any(keyword in instruction for keyword in license_keywords):
+                license_nodes.append(node)
+
+        app.update_output.emit(
+            log_message(
+                f"[CFG Analysis] Found {
+                    len(license_nodes)} license-related nodes"))
+
+        # Create a subgraph with these nodes and their neighbors
+        if license_nodes:
+            license_subgraph = G.subgraph(license_nodes).copy()
+
+            # Add immediate predecessors and successors
+            for node in list(license_subgraph.nodes()):
+                predecessors = list(G.predecessors(node))
+                successors = list(G.successors(node))
+
+                license_subgraph.add_nodes_from(predecessors)
+                license_subgraph.add_nodes_from(successors)
+
+                for pred in predecessors:
+                    license_subgraph.add_edge(
+                        pred, node, **G.get_edge_data(pred, node, {}))
+
+                for succ in successors:
+                    license_subgraph.add_edge(
+                        node, succ, **G.get_edge_data(node, succ, {}))
+
+            # Save license-focused CFG
+            nx.drawing.nx_pydot.write_dot(license_subgraph, "license_cfg.dot")
+
+            # Try to generate PDF or SVG if graphviz is available
+            try:
+                subprocess.run(
+                    ["dot", "-Tsvg", "-o", "license_cfg.svg", "license_cfg.dot"])
+                app.update_output.emit(
+                    log_message("[CFG Analysis] Generated license_cfg.svg"))
+            except Exception as e:
+                app.update_output.emit(
+                    log_message(
+                        f"[CFG Analysis] Could not generate SVG: {e}"))
+
+        app.update_output.emit(log_message("[CFG Analysis] Analysis complete"))
+        app.analyze_status.setText("CFG analysis complete")
+
+    except Exception as e:
+        app.update_output.emit(log_message(f"[CFG Analysis] Error: {e}"))
+        app.analyze_status.setText(f"CFG analysis error: {str(e)}")

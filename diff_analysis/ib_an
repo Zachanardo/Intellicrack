@@ -1,0 +1,1000 @@
+            return False
+
+    def get_graph_layout(self, layout_type='spring'):
+        """Get a layout for the current function graph"""
+        if not self.graph:
+            self.logger.error("No graph loaded")
+            return None
+        # Choose layout algorithm
+        if layout_type == 'spring':
+            layout = nx.spring_layout(self.graph)
+        elif layout_type == 'dot':
+            layout = nx.nx_pydot.graphviz_layout(self.graph, prog='dot')
+        elif layout_type == 'circular':
+            layout = nx.circular_layout(self.graph)
+        else:
+            layout = nx.spring_layout(self.graph)
+
+        return layout
+
+    def get_graph_data(self, layout_type='spring'):
+        """Get graph data for visualization"""
+        if not self.graph:
+            self.logger.error("No graph loaded")
+            return None
+
+        # Get layout
+        layout = self.get_graph_layout(layout_type)
+
+        # Prepare nodes
+        nodes = []
+        for node in self.graph.nodes():
+            node_data = self.graph.nodes[node]
+            nodes.append({
+                'id': node,
+                'label': node_data.get('label', f"0x{node:x}"),
+                'x': float(layout[node][0]),
+                'y': float(layout[node][1]),
+                'size': node_data.get('size', 0)
+            })
+
+        # Prepare edges
+        edges = []
+        for source, target in self.graph.edges():
+            edges.append({
+                'source': source,
+                'target': target
+            })
+
+        return {
+            'nodes': nodes,
+            'edges': edges,
+            'function': self.current_function
+        }
+
+    def find_license_check_patterns(self):
+        """Find potential license check patterns in the CFG"""
+        if not self.graph:
+            self.logger.error("No graph loaded")
+            return []
+
+        license_patterns = []
+
+        # License-related keywords
+        license_keywords = [
+            'licen', 'key', 'activ', 'valid', 'check',
+            'auth', 'verif', 'serial', 'regist'
+        ]
+
+        # Get function blocks
+        blocks = self.functions[self.current_function]['blocks']
+
+        # Check each block for license-related instructions
+        for block in blocks:
+            for op in block.get('ops', []):
+                disasm = op.get('disasm', '').lower()
+
+                # Check for license keywords in disassembly
+                if any(keyword in disasm for keyword in license_keywords):
+                    license_patterns.append({
+                        'block_addr': block['offset'],
+                        'op_addr': op['offset'],
+                        'disasm': op['disasm'],
+                        'type': 'license_keyword'
+                    })
+
+                # Check for comparison followed by conditional jump
+                if ('cmp' in disasm or 'test' in disasm) and block.get('jump') and block.get('fail'):
+                    license_patterns.append({
+                        'block_addr': block['offset'],
+                        'op_addr': op['offset'],
+                        'disasm': op['disasm'],
+                        'type': 'conditional_check'
+                    })
+
+        return license_patterns
+
+def run_cfg_explorer(app):
+    """Initialize and run the CFG explorer"""
+    app.update_output.emit(log_message("[CFG Explorer] Initializing CFG explorer..."))
+
+    # Get binary path from UI
+    if not app.binary_path:
+        app.update_output.emit(log_message("[CFG Explorer] No binary path specified"))
+
+        # Ask for binary path
+        binary_path, _ = QFileDialog.getOpenFileName(
+            app,
+            "Select Binary",
+            "",
+            "All Files (*)"
+        )
+
+        if not binary_path:
+            app.update_output.emit(log_message("[CFG Explorer] Cancelled"))
+            return
+
+        app.binary_path = binary_path
+
+    # Create and configure the explorer
+    explorer = CFGExplorer(app.binary_path)
+
+    # Load the binary
+    app.update_output.emit(log_message(f"[CFG Explorer] Loading binary: {app.binary_path}"))
+    if explorer.load_binary():
+        app.update_output.emit(log_message(f"[CFG Explorer] Loaded binary: {app.binary_path}"))
+        app.cfg_explorer_instance = explorer
+
+        # Get function list
+        function_list = explorer.get_function_list()
+
+        # Ask user to select a function
+        function_name, ok = QInputDialog.getItem(
+            app,
+            "Select Function",
+            "Select a function to analyze:",
+            function_list,
+            0,
+            False
+        )
+
+        if not ok:
+            app.update_output.emit(log_message("[CFG Explorer] Cancelled"))
+            return
+
+        # Set current function
+        if explorer.set_current_function(function_name):
+            app.update_output.emit(log_message(f"[CFG Explorer] Analyzing function: {function_name}"))
+
+            # Find license check patterns
+            license_patterns = explorer.find_license_check_patterns()
+
+            if license_patterns:
+                app.update_output.emit(log_message(f"[CFG Explorer] Found {len(license_patterns)} potential license check patterns in {function_name}"))
+
+                # Display patterns
+                for pattern in license_patterns:
+                    app.update_output.emit(log_message(
+                        f"[CFG Explorer] {pattern['type']} at 0x{pattern['op_addr']:x}: {pattern['disasm']}"
+                    ))
+
+                # Add to analyze results
+                if not hasattr(app, "analyze_results"):
+                    app.analyze_results = []
+
+                app.analyze_results.append("\n=== CFG ANALYSIS RESULTS ===")
+                app.analyze_results.append(f"Function: {function_name}")
+                app.analyze_results.append(f"Found {len(license_patterns)} potential license check patterns:")
+
+                for pattern in license_patterns:
+                    app.analyze_results.append(f"- {pattern['type']} at 0x{pattern['op_addr']:x}: {pattern['disasm']}")
+
+                # Ask if user wants to generate a visualization
+                generate_viz = QMessageBox.question(
+                    app,
+                    "Generate Visualization",
+                    "Do you want to generate a visualization of the control flow graph?",
+                    QMessageBox.Yes | QMessageBox.No
+                ) == QMessageBox.Yes
+
+                if generate_viz:
+                    # Generate visualization
+                    app.update_output.emit(log_message("[CFG Explorer] Generating visualization..."))
+
+                    # Ask for output format
+                    viz_formats = ["Interactive HTML", "PNG Image", "SVG Image", "DOT File"]
+                    format_choice, ok = QInputDialog.getItem(
+                        app,
+                        "Select Visualization Format",
+                        "Select output format:",
+                        viz_formats,
+                        0,
+                        False
+                    )
+
+                    if not ok:
+                        app.update_output.emit(log_message("[CFG Explorer] Visualization cancelled"))
+                        return
+
+                    # Generate appropriate visualization based on format
+                    if format_choice == "Interactive HTML":
+                        # Create interactive D3.js visualization
+                        html_file, _ = QFileDialog.getSaveFileName(
+                            app,
+                            "Save HTML Visualization",
+                            "",
+                            "HTML Files (*.html);;All Files (*)"
+                        )
+
+                        if html_file:
+                            if not html_file.endswith('.html'):
+                                html_file += '.html'
+
+                            # Generate the interactive HTML visualization
+                            app.update_output.emit(log_message("[CFG Explorer] Generating interactive HTML visualization..."))
+
+                            # Generate the D3.js visualization
+                            # Convert networkx graph to D3.js compatible format
+                            graph_data = explorer.get_graph_data(layout_type='spring')
+
+                            # Create the HTML content
+                            html_content = f"""
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <meta charset="utf-8">
+                                <title>CFG: {function_name}</title>
+                                <script src="https://d3js.org/d3.v7.min.js"></script>
+                                <style>
+                                    body {{ margin: 0; font-family: Arial, sans-serif; overflow: hidden; }}
+                                    .node {{ stroke: #fff; stroke-width: 1.5px; }}
+                                    .node.license {{ fill: #ff7777; }}
+                                    .node.normal {{ fill: #77aaff; }}
+                                    .link {{ stroke: #999; stroke-opacity: 0.6; stroke-width: 1px; }}
+                                    .label {{ font-size: 10px; pointer-events: none; }}
+                                    #tooltip {{
+                                        position: absolute;
+                                        background: rgba(0, 0, 0, 0.7);
+                                        color: white;
+                                        padding: 5px;
+                                        border-radius: 4px;
+                                        font-size: 12px;
+                                        pointer-events: none;
+                                        opacity: 0;
+                                    }}
+                                    #controls {{
+                                        position: absolute;
+                                        top: 10px;
+                                        left: 10px;
+                                        background: rgba(255, 255, 255, 0.8);
+                                        padding: 10px;
+                                        border-radius: 4px;
+                                        z-index: 100;
+                                    }}
+                                </style>
+                            </head>
+                            <body>
+                                <div id="controls">
+                                    <h3>Control Flow Graph: {function_name}</h3>
+                                    <div>
+                                        <button id="zoom-in">Zoom In</button>
+                                        <button id="zoom-out">Zoom Out</button>
+                                        <button id="reset">Reset View</button>
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <p>Found {len(license_patterns)} potential license check points</p>
+                                        <ul style="font-size: 12px;">
+                                            {"".join(f'<li>{pattern["type"]} at 0x{pattern["op_addr"]:x}</li>' for pattern in license_patterns[:5])}
+                                            {"<li>..." if len(license_patterns) > 5 else ""}
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div id="tooltip"></div>
+                                <script>
+                                    // Graph data
+                                    const nodes = {str([{
+                                        'id': str(node['id']),
+                                        'label': node['label'],
+                                        'x': node['x'] * 1000,
+                                        'y': node['y'] * 1000,
+                                        'isLicense': any(pattern['op_addr'] == node['id'] for pattern in license_patterns)
+                                    } for node in graph_data['nodes']])};
+
+                                    const links = {str([{
+                                        'source': str(link['source']),
+                                        'target': str(link['target'])
+                                    } for link in graph_data['edges']])};
+
+                                    // Setup SVG
+                                    const width = window.innerWidth;
+                                    const height = window.innerHeight;
+
+                                    const svg = d3.select("body").append("svg")
+                                        .attr("width", width)
+                                        .attr("height", height);
+
+                                    // Define arrow markers
+                                    svg.append("defs").append("marker")
+                                        .attr("id", "arrowhead")
+                                        .attr("viewBox", "0 -5 10 10")
+                                        .attr("refX", 20)
+                                        .attr("refY", 0)
+                                        .attr("markerWidth", 6)
+                                        .attr("markerHeight", 6)
+                                        .attr("orient", "auto")
+                                        .append("path")
+                                        .attr("d", "M0,-5L10,0L0,5");
+
+                                    // Setup tooltip
+                                    const tooltip = d3.select("#tooltip");
+
+                                    // Create zoom behavior
+                                    const zoom = d3.zoom()
+                                        .scaleExtent([0.1, 10])
+                                        .on("zoom", (event) => {{
+                                            container.attr("transform", event.transform);
+                                        }});
+
+                                    svg.call(zoom);
+
+                                    // Create container for the graph
+                                    const container = svg.append("g");
+
+                                    // Create links
+                                    const link = container.append("g")
+                                        .selectAll("line")
+                                        .data(links)
+                                        .enter().append("line")
+                                        .attr("class", "link")
+                                        .attr("marker-end", "url(#arrowhead)");
+
+                                    // Create nodes
+                                    const node = container.append("g")
+                                        .selectAll("circle")
+                                        .data(nodes)
+                                        .enter().append("circle")
+                                        .attr("class", d => d.isLicense ? "node license" : "node normal")
+                                        .attr("r", 8)
+                                        .on("mouseover", (event, d) => {{
+                                            tooltip.style("opacity", 1)
+                                                .html(`<strong>${{d.label}}</strong>${{d.isLicense ? '<br>License check point' : ''}}`)
+                                                .style("left", (event.pageX + 10) + "px")
+                                                .style("top", (event.pageY - 10) + "px");
+                                        }})
+                                        .on("mouseout", () => {{
+                                            tooltip.style("opacity", 0);
+                                        }})
+                                        .call(d3.drag()
+                                            .on("start", dragstarted)
+                                            .on("drag", dragged)
+                                            .on("end", dragended));
+
+                                    // Add labels
+                                    const label = container.append("g")
+                                        .selectAll("text")
+                                        .data(nodes)
+                                        .enter().append("text")
+                                        .attr("class", "label")
+                                        .attr("dx", 12)
+                                        .attr("dy", ".35em")
+                                        .text(d => d.label);
+
+                                    // Setup force simulation
+                                    const simulation = d3.forceSimulation(nodes)
+                                        .force("charge", d3.forceManyBody().strength(-300))
+                                        .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+                                        .force("center", d3.forceCenter(width / 2, height / 2))
+                                        .on("tick", ticked);
+
+                                    // Initial positions based on layout
+                                    nodes.forEach(node => {{
+                                        node.x = (node.x / 2000) * width + width/2;
+                                        node.y = (node.y / 2000) * height + height/2;
+                                    }});
+
+                                    // Handle control buttons
+                                    d3.select("#zoom-in").on("click", () => {{
+                                        svg.transition().call(zoom.scaleBy, 1.3);
+                                    }});
+
+                                    d3.select("#zoom-out").on("click", () => {{
+                                        svg.transition().call(zoom.scaleBy, 0.7);
+                                    }});
+
+                                    d3.select("#reset").on("click", () => {{
+                                        svg.transition().call(zoom.transform, d3.zoomIdentity);
+                                    }});
+
+                                    // Function for drag
+                                    function dragstarted(event, d) {{
+                                        if (!event.active) simulation.alphaTarget(0.3).restart();
+                                        d.fx = d.x;
+                                        d.fy = d.y;
+                                    }}
+
+                                    function dragged(event, d) {{
+                                        d.fx = event.x;
+                                        d.fy = event.y;
+                                    }}
+
+                                    function dragended(event, d) {{
+                                        if (!event.active) simulation.alphaTarget(0);
+                                        d.fx = null;
+                                        d.fy = null;
+                                    }}
+
+                                    // Update positions on tick
+                                    function ticked() {{
+                                        link
+                                            .attr("x1", d => d.source.x)
+                                            .attr("y1", d => d.source.y)
+                                            .attr("x2", d => d.target.x)
+                                            .attr("y2", d => d.target.y);
+
+                                        node
+                                            .attr("cx", d => d.x)
+                                            .attr("cy", d => d.y);
+
+                                        label
+                                            .attr("x", d => d.x)
+                                            .attr("y", d => d.y);
+                                    }}
+                                </script>
+                            </body>
+                            </html>
+                            """
+
+                            # Write HTML to file
+                            with open(html_file, 'w', encoding='utf-8') as f:
+                                f.write(html_content)
+
+                            app.update_output.emit(log_message(f"[CFG Explorer] Saved interactive visualization to {html_file}"))
+
+                            # Ask if user wants to open the HTML file
+                            open_html = QMessageBox.question(
+                                app,
+                                "Open Visualization",
+                                "Do you want to open the interactive visualization?",
+                                QMessageBox.Yes | QMessageBox.No
+                            ) == QMessageBox.Yes
+
+                            if open_html:
+                                webbrowser.open(f"file://{os.path.abspath(html_file)}")
+
+                    elif format_choice in ["PNG Image", "SVG Image"]:
+                        # Get file extension based on format
+                        ext = ".png" if format_choice == "PNG Image" else ".svg"
+
+                        # Ask for output file
+                        image_file, _ = QFileDialog.getSaveFileName(
+                            app,
+                            f"Save {ext[1:].upper()} Image",
+                            "",
+                            f"{ext[1:].upper()} Files (*{ext});;All Files (*)"
+                        )
+
+                        if image_file:
+                            if not image_file.endswith(ext):
+                                image_file += ext
+
+                            # Generate the image
+                            app.update_output.emit(log_message(f"[CFG Explorer] Generating {ext[1:].upper()} visualization..."))
+
+                            # Get layout for graph
+                            layout = explorer.get_graph_layout(layout_type='spring')
+
+                            # Highlight nodes with license check patterns
+                            node_colors = []
+                            for node in explorer.graph.nodes():
+                                # Check if this node contains a license check
+                                is_license_check = any(
+                                    pattern['op_addr'] == node
+                                    for pattern in license_patterns
+                                )
+                                node_colors.append('red' if is_license_check else 'lightblue')
+
+                            # Create matplotlib figure
+                            plt.figure(figsize=(12, 9))
+
+                            # Draw the graph
+                            nx.draw_networkx(
+                                explorer.graph,
+                                pos=layout,
+                                with_labels=True,
+                                node_color=node_colors,
+                                node_size=500,
+                                font_size=8,
+                                arrows=True,
+                                connectionstyle='arc3,rad=0.1'
+                            )
+
+                            # Add title
+                            plt.title(f"Control Flow Graph: {function_name}")
+
+                            # Remove axes
+                            plt.axis('off')
+
+                            # Save the figure
+                            plt.savefig(image_file, format=ext[1:], dpi=300, bbox_inches='tight')
+                            plt.close()
+
+                            app.update_output.emit(log_message(f"[CFG Explorer] Saved {ext[1:].upper()} visualization to {image_file}"))
+
+                            # Ask if user wants to open the image
+                            open_image = QMessageBox.question(
+                                app,
+                                "Open Visualization",
+                                f"Do you want to open the {ext[1:].upper()} visualization?",
+                                QMessageBox.Yes | QMessageBox.No
+                            ) == QMessageBox.Yes
+
+                            if open_image:
+                                webbrowser.open(f"file://{os.path.abspath(image_file)}")
+
+                    else:  # DOT File
+                        # Ask for output file
+                        dot_file, _ = QFileDialog.getSaveFileName(
+                            app,
+                            "Save DOT File",
+                            "",
+                            "DOT Files (*.dot);;All Files (*)"
+                        )
+
+                        if dot_file:
+                            if not dot_file.endswith('.dot'):
+                                dot_file += '.dot'
+
+                            # Write DOT file
+                            nx.drawing.nx_pydot.write_dot(explorer.graph, dot_file)
+                            app.update_output.emit(log_message(f"[CFG Explorer] Saved DOT file to {dot_file}"))
+
+                            # Ask if user wants to open the DOT file
+                            open_dot = QMessageBox.question(
+                                app,
+                                "Open DOT File",
+                                "Do you want to open the DOT file? (requires a DOT viewer)",
+                                QMessageBox.Yes | QMessageBox.No
+                            ) == QMessageBox.Yes
+
+                            if open_dot:
+                                webbrowser.open(f"file://{os.path.abspath(dot_file)}")
+            else:
+                app.update_output.emit(log_message("[CFG Explorer] No license check patterns found"))
+        else:
+            app.update_output.emit(log_message(f"[CFG Explorer] Failed to set function: {function_name}"))
+    else:
+        app.update_output.emit(log_message(f"[CFG Explorer] Failed to load binary: {app.binary_path}"))
+
+# -------------------------------
+# Concolic Execution Engine
+# -------------------------------
+
+class ConcolicExecutionEngine:
+    """
+    Advanced concolic execution engine for precise path exploration.
+
+    This engine combines concrete execution with symbolic analysis to systematically
+    explore program paths and generate inputs that trigger specific behaviors,
+    enabling more thorough vulnerability discovery and license bypass techniques.
+    """
+
+    def __init__(self, binary_path, max_iterations=100, timeout=300):
+        """
+        Initialize the concolic execution engine.
+
+        Args:
+            binary_path: Path to the binary to analyze
+            max_iterations: Maximum number of iterations (default: 100)
+            timeout: Maximum execution time in seconds (default: 300)
+        """
+        self.binary_path = binary_path
+        self.max_iterations = max_iterations
+        self.timeout = timeout
+        self.logger = logging.getLogger(__name__)
+        self.manticore_available = False
+
+        # Check for required dependencies
+        try:
+            self.manticore_available = True
+            self.logger.info("Concolic execution dependencies available")
+        except ImportError as e:
+            self.logger.error(f"Concolic execution dependency missing: {e}")
+
+    def explore_paths(self, target_address=None, avoid_addresses=None):
+        """
+        Perform concolic execution to explore program paths.
+
+        Args:
+            target_address: Optional address to reach (e.g., license validation success)
+            avoid_addresses: Optional list of addresses to avoid (e.g., license checks)
+
+        Returns:
+            dict: Exploration results including discovered paths and inputs
+        """
+        if not self.manticore_available:
+            return {"error": "Required dependencies not available. Please install manticore."}
+
+        try:
+
+            self.logger.info(f"Starting concolic execution on {self.binary_path}")
+
+            # Create Manticore instance
+            m = Manticore(self.binary_path)
+
+            # Set up hooks if target or avoid addresses are provided
+            if target_address is not None:
+                m.add_hook(target_address, self._target_hook)
+
+            if avoid_addresses is not None:
+                for addr in avoid_addresses:
+                    m.add_hook(addr, self._avoid_hook)
+
+            # Add path exploration plugin
+            class PathExplorationPlugin(Plugin):
+                """
+                Plugin for path exploration during symbolic execution.
+
+                Adds hooks for target and avoid addresses to guide execution paths.
+                """
+                def will_run_callback(self, *args, **kwargs):
+                    """Called when path exploration is about to start."""
+                    logger.info("Starting path exploration")
+
+                def did_finish_run_callback(self, *args, **kwargs):
+                    """Called when path exploration has finished execution."""
+                    logger.info("Finished path exploration")
+
+                def will_fork_state_callback(self, state, *args, **kwargs):
+                    """Called before a state is about to be forked during exploration.
+
+                    Args:
+                        state: The state that will be forked
+                    """
+                    logger.debug(f"Forking state at PC: {state.cpu.PC}")
+
+            m.register_plugin(PathExplorationPlugin())
+
+            # Set timeout
+            m.set_exec_timeout(self.timeout)
+
+            # Run exploration
+            self.logger.info("Running concolic execution...")
+            m.run(procs=4)  # Use 4 parallel processes
+
+            # Collect results
+            results = {
+                "success": True,
+                "paths_explored": len(m.all_states),
+                "inputs": []
+            }
+
+            # Process discovered states
+            for state_id, state in m.all_states.items():
+                if state.is_terminated():
+                    # Get input that led to this state
+                    stdin_data = state.input_symbols.get('stdin', b'')
+                    argv_data = state.input_symbols.get('argv', [])
+
+                    results["inputs"].append({
+                        "id": state_id,
+                        "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
+                        "argv": [arg.hex() if isinstance(arg, bytes) else str(arg) for arg in argv_data],
+                        "termination_reason": state.termination_reason
+                    })
+
+            self.logger.info(f"Concolic execution completed. Explored {results['paths_explored']} paths.")
+            return results
+
+        except Exception as e:
+            self.logger.error(f"Error during concolic execution: {e}")
+            self.logger.error(traceback.format_exc())
+            return {"error": f"Concolic execution failed: {str(e)}"}
+
+    def _target_hook(self, state):
+        """
+        Hook for target address.
+
+        Args:
+            state: Current execution state
+        """
+        state.abandon()  # Stop exploring this state
+        self.logger.info(f"Reached target address at PC: {state.cpu.PC}")
+
+    def _avoid_hook(self, state):
+        """
+        Hook for addresses to avoid.
+
+        Args:
+            state: Current execution state
+        """
+        state.abandon()  # Stop exploring this state
+        self.logger.info(f"Avoided address at PC: {state.cpu.PC}")
+
+    def find_license_bypass(self, license_check_address=None):
+        """
+        Find inputs that bypass license checks.
+
+        Args:
+            license_check_address: Optional address of license check function
+
+        Returns:
+            dict: Bypass results including inputs that bypass license checks
+        """
+        if not self.manticore_available:
+            return {"error": "Required dependencies not available"}
+
+        try:
+
+            self.logger.info(f"Finding license bypass for {self.binary_path}")
+
+            # If license check address is not provided, try to find it
+            if license_check_address is None:
+                # Use symbolic execution to find license check
+                license_check_address = self._find_license_check_address()
+                if license_check_address is None:
+                    return {"error": "Could not automatically find license check address"}
+
+            self.logger.info(f"License check identified at address: {license_check_address}")
+
+            # Create Manticore instance
+            m = Manticore(self.binary_path)
+
+            # Add hook to detect license check result
+            success_found = [False]
+            bypass_input = [None]
+
+            class LicenseCheckPlugin(Plugin):
+                """
+                Plugin for Manticore symbolic execution engine to identify and manipulate license verification paths.
+
+                This plugin extends Manticore's Plugin class to hook into the symbolic execution process,
+                monitoring instructions at runtime to identify license validation routines. It specifically
+                looks for conditional branches that determine whether a license check succeeds or fails.
+
+                The plugin works by analyzing branch conditions and manipulating the execution state to
+                force exploration of the "license valid" paths, which helps to:
+                1. Identify valid license patterns or keys
+                2. Generate working license bypass solutions
+                3. Understand the license verification algorithm
+
+                Attributes:
+                    Inherits all attributes from the Manticore Plugin base class
+
+                Note:
+                    This plugin requires the parent analysis to properly identify license check
+                    address locations for effective targeting.
+                """
+                def will_execute_instruction_callback(self, state, pc, insn):
+                    """Called before executing each instruction during emulation.
+
+                    Monitors for license check functions and attempts to force successful path
+                    when conditional branches are encountered during trace recording.
+
+                    Args:
+                        state: Current emulation state
+                        pc: Program counter (current instruction address)
+                        insn: Current instruction being executed
+                    """
+                    # Check if we're at the license check function
+                    if pc == license_check_address:
+                        # Save current state for later analysis
+                        state.record_trace = True
+                        logger.info(f"Reached license check at {hex(pc)}")
+
+                    # Check for successful license validation (typically a conditional jump)
+                    if state.record_trace and insn.mnemonic.startswith('j') and not insn.mnemonic == 'jmp':
+                        # Try to force the branch to take the "success" path
+                        # This is a simplified approach - in reality, we'd need to analyze
+                        # which branch leads to success
+                        try:
+                            # Try to make the condition true (success path)
+                            condition = state.cpu.read_register(insn.op_str.split(',')[0])
+                            state.constrain(condition != 0)
+                            success_found[0] = True
+                            bypass_input[0] = state.input_symbols
+                            logger.info(f"Found potential license bypass at {hex(pc)}")
+                        except Exception as e:
+                            logger.debug(f"Could not constrain condition: {e}")
+
+            m.register_plugin(LicenseCheckPlugin())
+
+            # Set timeout
+            m.set_exec_timeout(self.timeout)
+
+            # Run exploration
+            self.logger.info("Running concolic execution for license bypass...")
+            m.run(procs=4)  # Use 4 parallel processes
+
+            if success_found[0] and bypass_input[0]:
+                # Process the bypass input
+                stdin_data = bypass_input[0].get('stdin', b'')
+                argv_data = bypass_input[0].get('argv', [])
+
+                return {
+                    "success": True,
+                    "bypass_found": True,
+                    "license_check_address": hex(license_check_address) if isinstance(license_check_address, int) else license_check_address,
+                    "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
+                    "argv": [arg.hex() if isinstance(arg, bytes) else str(arg) for arg in argv_data],
+                    "description": "Found input that bypasses license check"
+                }
+            else:
+                return {
+                    "success": True,
+                    "bypass_found": False,
+                    "description": "Could not find input that bypasses license check"
+                }
+
+        except Exception as e:
+            self.logger.error(f"Error finding license bypass: {e}")
+            self.logger.error(traceback.format_exc())
+            return {"error": f"License bypass search failed: {str(e)}"}
+
+    def _find_license_check_address(self):
+        """
+        Attempt to automatically find license check address.
+
+        Returns:
+            int: Address of license check function, or None if not found
+        """
+        try:
+            # pylint: disable=no-member
+            binary = lief.parse(self.binary_path)
+
+            # Look for license-related functions in exports
+            for func in binary.exported_functions:
+                func_name = func.name.lower()
+                if any(pattern in func_name for pattern in ["licen", "valid", "check", "auth"]):
+                    return func.address
+
+            # Look for license-related strings
+            with open(self.binary_path, 'rb') as f:
+                binary_data = f.read()
+
+            license_patterns = [b"license", b"valid", b"key", b"auth", b"check"]
+            for pattern in license_patterns:
+                matches = list(re.finditer(pattern, binary_data, re.IGNORECASE))
+                if matches:
+                    # Found a potential license-related string
+                    # In a real implementation, we'd need to find the function that references this string
+                    # This is a simplified approach
+                    return None
+
+            return None
+
+        except Exception as e:
+            self.logger.error(f"Error finding license check address: {e}")
+            return None
+
+def run_concolic_execution(app):
+    """
+    Run concolic execution for path exploration and license bypass.
+
+    Args:
+        app: Application instance
+    """
+    if not app.binary_path:
+        app.update_output.emit(log_message("[Concolic] No binary selected."))
+        return
+
+    app.update_output.emit(log_message("[Concolic] Starting concolic execution engine..."))
+
+    # Create concolic execution engine
+    concolic_engine = ConcolicExecutionEngine(app.binary_path)
+
+    # Ask for execution mode
+    modes = ["Path Exploration", "License Bypass"]
+    mode, ok = QInputDialog.getItem(app, "Concolic Execution Mode", "Select mode:", modes, 0, False)
+    if not ok:
+        app.update_output.emit(log_message("[Concolic] Cancelled"))
+        return
+
+    if mode == "Path Exploration":
+        # Ask for target address (optional)
+        target_address_str, ok = QInputDialog.getText(app, "Target Address", "Enter target address (optional, hex format):")
+        target_address = int(target_address_str, 16) if ok and target_address_str else None
+
+        # Run path exploration
+        app.update_output.emit(log_message("[Concolic] Running path exploration..."))
+        results = concolic_engine.explore_paths(target_address=target_address)
+
+    else:  # License Bypass
+        # Ask for license check address (optional)
+        license_check_str, ok = QInputDialog.getText(app, "License Check Address", "Enter license check address (optional, hex format):")
+        license_check_address = int(license_check_str, 16) if ok and license_check_str else None
+
+        # Run license bypass
+        app.update_output.emit(log_message("[Concolic] Searching for license bypass..."))
+        results = concolic_engine.find_license_bypass(license_check_address=license_check_address)
+
+    # Process results
+    if "error" in results:
+        app.update_output.emit(log_message(f"[Concolic] Error: {results['error']}"))
+        return
+
+    # Display results
+    if mode == "Path Exploration":
+        app.update_output.emit(log_message(f"[Concolic] Explored {results['paths_explored']} paths. Found {len(results['inputs'])} inputs."))
+        app.update_output.emit(log_message(f"[Concolic] Found {len(results['inputs'])} unique inputs"))
+
+        # Add to analyze results
+        if not hasattr(app, "analyze_results"):
+            app.analyze_results = []
+
+        app.analyze_results.append("\n=== CONCOLIC EXECUTION RESULTS ===")
+        app.analyze_results.append(f"Paths explored: {results['paths_explored']}")
+        app.analyze_results.append(f"Unique inputs found: {len(results['inputs'])}")
+
+        if results['inputs']:
+            app.analyze_results.append("\nSample inputs:")
+            for i, input_data in enumerate(results['inputs'][:5]):  # Show up to 5 inputs
+                app.analyze_results.append(f"\nInput {i+1}:")
+                app.analyze_results.append(f"  Stdin: {input_data['stdin']}")
+                app.analyze_results.append(f"  Argv: {input_data['argv']}")
+                app.analyze_results.append(f"  Termination reason: {input_data['termination_reason']}")
+
+    else:  # License Bypass
+        if results.get("bypass_found", False):
+            app.update_output.emit(log_message("[Concolic] License bypass found!"))
+            app.update_output.emit(log_message(f"[Concolic] License check at: {results['license_check_address']}"))
+
+            # Add to analyze results
+            if not hasattr(app, "analyze_results"):
+                app.analyze_results = []
+
+            app.analyze_results.append("\n=== LICENSE BYPASS RESULTS ===")
+            app.analyze_results.append("License bypass found!")
+            app.analyze_results.append(f"License check at: {results['license_check_address']}")
+            app.analyze_results.append(f"Bypass input (stdin): {results['stdin']}")
+            app.analyze_results.append(f"Bypass input (argv): {results['argv']}")
+
+            # Save bypass to file
+            bypass_file = os.path.join("scripts", "license_bypass.json")
+            os.makedirs(os.path.dirname(bypass_file), exist_ok=True)
+
+            try:
+                with open(bypass_file, "w", encoding="utf-8") as f:
+                    json.dump(results, f, indent=2)
+                app.update_output.emit(log_message(f"[Concolic] Bypass saved to {bypass_file}"))
+            except Exception as e:
+                app.update_output.emit(log_message(f"[Concolic] Error saving bypass: {e}"))
+        else:
+            app.update_output.emit(log_message("[Concolic] Could not find license bypass"))
+            app.update_output.emit(log_message("[Concolic] Try providing a specific license check address"))
+
+# -------------------------------
+# Enhanced Protection Handling
+# -------------------------------
+def generate_checksum(data: ByteString) -> int:
+    """
+    Compute a 16-bit checksum for the provided binary data.
+
+    This function mimics the approach used by Windows PE files:
+    - It ensures an even number of bytes by padding with a null byte if needed.
+    - It processes the data in 16-bit little-endian chunks using `struct.iter_unpack`.
+    - It sums all 16-bit values using 32-bit arithmetic.
+    - It then folds the 32-bit sum down to 16 bits by repeatedly adding the upper 16 bits to the lower 16 bits.
+
+    Args:
+        data (ByteString): The binary data to calculate the checksum from.
+
+    Returns:
+        int: The computed 16-bit checksum.
+    """
+    logging.debug(f"Generating 16-bit checksum for data of length {len(data)}")
+    # Ensure data length is even by padding a null byte if necessary.
+    if len(data) % 2 != 0:
+        data += b'\0'
+
+    # Sum up all 16-bit words in the data using iter_unpack for efficiency.
+    checksum = sum(word[0] for word in struct.iter_unpack('<H', data)) & 0xffffffff
+
+    # Fold 32-bit checksum to 16 bits by continuously adding the upper and lower 16 bits.
+    while (checksum >> 16) != 0:
+        checksum = (checksum & 0xffff) + (checksum >> 16)
+
+    final_checksum = checksum & 0xffff
+    logging.debug(f"Calculated checksum: 0x{final_checksum:04X}")
+    return final_checksum
+
+def detect_checksum_verification(app):
+    """
+    Detects integrity/checksum verification routines in the binary.
+    """
+    logging.info(f"Scanning {app.binary_path} for integrity verification mechanisms.")
+    results = []
+    results.append("Scanning for integrity verification mechanisms...")
+
+    if not app.binary_path:
+        results.append("Error: No binary specified.")
+        return results
+
+    binary_path = app.binary_path
+
+    try:
+
+        pe = pefile.PE(binary_path)
+        is_64bit = pe.FILE_HEADER.Machine == 0x8664
+        mode = CS_MODE_64 if is_64bit else CS_MODE_32
+
+        # Checksum-related imports

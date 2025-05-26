@@ -1,0 +1,1000 @@
+#!/usr/bin/env python
+# pylint: disable=line-too-long, no-member, too-many-function-args, unexpected-keyword-arg, no-value-for-parameter
+"""
+Intellicrack: A fully featured, AI-assisted software analysis and cracking suite.
+
+This script implements a comprehensive GUI-based tool for internal security research,
+including advanced static and dynamic binary analysis, automated patching, extensive
+plugin support, and integrated AI assistance. It provides sophisticated vulnerability
+detection, exploit generation, and advanced analysis capabilities for software license
+bypass and security research across multiple binary formats.
+
+Key Features:
+
+  • Core Analysis Capabilities:
+    - Static Binary Analysis (PE, ELF, Mach-O)
+    - Dynamic Runtime Analysis (Subprocess & Frida Instrumentation)
+    - Multi-Format Binary Parsing & Manipulation (LIEF Integration)
+    - Deep License Logic Analysis & Pattern Recognition
+    - Deep Runtime Monitoring & API Hooking
+    - Control Flow Graph (CFG) Generation & Analysis (Radare2/NetworkX)
+    - Symbolic Execution for Path Exploration (Angr Integration)
+    - Concolic Execution for Precise Path Finding (Manticore Integration)
+    - ROP Chain Generation & Analysis (ROPgadget Integration)
+    - Taint Analysis for Data Flow Tracking
+    - Distributed Analysis Processing for Large Binaries
+    - GPU-Accelerated Analysis (Pattern Matching, Entropy, Hashing)
+    - Incremental Analysis Caching System
+    - Memory-Optimized Loading for Very Large Binaries
+    - Full System Emulation (QEMU Integration)
+
+  • Advanced Vulnerability & Protection Detection:
+    - Import/Export Table Analysis (Dangerous APIs, Sensitive Exports)
+    - Section Analysis (Entropy, Permissions, Unusual Names)
+    - Weak Cryptography Detection (Hardcoded Keys, Outdated Algorithms)
+    - License Weakness Detection (Trial Periods, Activation Checks)
+    - Obfuscation Detection (Packing, High Entropy, Control Flow Flattening)
+    - Self-Healing Code Detection (Writable+Executable Sections, Memory Write Patterns)
+    - Integrity/Checksum Verification Detection (PE Checksum, Hashing Routines)
+    - Commercial Protection System Recognition (Themida, VMProtect, Denuvo, etc.)
+    - Hardware Dongle Detection (SafeNet, HASP, CodeMeter)
+    - TPM Protection Usage Detection
+    - Virtualization/Container/Sandbox Detection Mechanisms
+    - Anti-Debugger Technique Detection
+
+  • Patching and Exploitation:
+    - Automated Patch Planning and Application
+    - AI-Driven Patching
+    - Static File Patching with Backups
+    - Memory Patching for Protected Binaries
+    - Runtime Patching Fallback (Frida-based Launcher Script Generation)
+    - Automated Exploit Strategy Generation based on Vulnerabilities
+    - Advanced Payload Generation (License Bypass, Function Hijacking, etc.)
+    - Patch Simulation and Verification
+
+  • Network and Protocol Analysis:
+    - Network Traffic Analysis & Capture (Pyshark/Scapy)
+    - Protocol Fingerprinting (FlexLM, HASP, Custom) with Learning Mode
+    - Network License Server Emulation
+    - Cloud License Verification Interception & Response Generation
+    - SSL/TLS Interception for Encrypted Traffic (mitmproxy Integration)
+    - Comprehensive Network API Hooking (Winsock, WinINet)
+
+  • Protection Bypass Capabilities:
+    - Hardware Dongle Emulation (Conceptual - Requires specific implementation)
+    - TPM Protection Bypass Strategies (Conceptual)
+    - Virtualization/Container Detection Bypass (Conceptual)
+    - HWID Spoofing (Frida Plugin)
+    - Anti-Debugger Countermeasures (Frida Plugin & API Hooks)
+    - Time Bomb Defuser (Frida Plugin & API Hooks)
+    - Telemetry Blocking (Frida Plugin & Network Hooks)
+    - Embedded/Encrypted Script Detection & Extraction
+
+  • Machine Learning Integration:
+    - ML-Based Vulnerability Prediction (Random Forest Classifier)
+    - Binary Similarity Search (Finding similar cracking patterns)
+    - Automated Feature Extraction for ML Models
+    - AI Assistant for Guidance & Analysis (Mixtral Integration)
+    - AI Model Fine-tuning Interface
+
+  • External Tool Integration:
+    - Advanced Ghidra Analysis Integration (Headless & GUI Launch)
+    - QEMU System Emulation Integration
+    - Frida Dynamic Instrumentation Integration
+
+  • Plugin System:
+    - Self-Initializing Plugin Framework
+    - Custom Python Module Support
+    - Frida Script Plugin Support
+    - Ghidra Script Plugin Support
+    - Remote Plugin Execution Framework (Conceptual Server/Client)
+    - Sandboxed Plugin Execution (Conceptual using Multiprocessing)
+
+  • User Interface and Experience:
+    - Comprehensive GUI with Multiple Tabs (Dashboard, Analyze, Logs, Settings, Plugins, Assistant)
+    - Guided Workflow Wizard for New Users
+    - Visual Patch Editor with Disassembly Context
+    - Editable Hex Viewer Widget with Search
+    - PDF and HTML Report Generation
+    - License Key Generator Utility
+    - Visual Network Traffic Analyzer (Conceptual - Requires specific UI implementation)
+    - Visual CFG Explorer (Conceptual - Requires specific UI implementation)
+    - Theme Support (Light/Dark)
+
+  • System Features:
+    - Persistent Logging with Rotation
+    - Automatic Dependency Management & Installation Checks
+    - Multi-Threading for Long-Running Operations
+    - Custom AI Model Import & Fine-tuning Support
+    - Executable Icon Extraction for UI
+    - Memory Usage Optimization Techniques
+
+WARNING: For research purposes only.
+The developer is in no way responsible for any misuse of this program.
+"""
+# --------------------------------------------------------------------------- #
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ IMPORTS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# --------------------------------------------------------------------------- #
+
+# -------------------------------
+# Standard Library Imports
+# -------------------------------
+import base64
+import binascii
+import collections
+from collections import Counter, defaultdict, OrderedDict
+import copy
+import csv
+import ctypes
+import datetime
+import enum
+from enum import Enum, auto
+import functools
+from functools import partial
+import gc
+import getpass
+import glob
+import hashlib
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import importlib
+import importlib.util # For WeasyPrint check
+import io
+from io import BytesIO
+import json
+import logging
+import logging.handlers
+import math
+import mmap
+import multiprocessing
+import os
+from pathlib import Path
+import pickle
+import platform
+import queue
+import random
+import re
+import shutil
+import signal
+import socket
+import select
+import socketserver
+import ssl
+import string
+import struct
+import subprocess
+import sys
+import tempfile
+import threading
+from threading import Timer
+import time
+import traceback
+from typing import Any, ByteString, Dict, List, Optional, Tuple, Union
+import uuid
+import webbrowser
+import xml.etree.ElementTree as ET
+
+# pylint: disable=no-name-in-module, import-error
+# PyQt5 imports - dynamically generated classes that pylint can't detect
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+# Import specific classes from QtCore
+Qt = QtCore.Qt
+QSize = QtCore.QSize
+pyqtSignal = QtCore.pyqtSignal
+QRect = QtCore.QRect
+QPoint = QtCore.QPoint
+QMargins = QtCore.QMargins
+QTimer = QtCore.QTimer
+QByteArray = QtCore.QByteArray
+QBuffer = QtCore.QBuffer
+
+# Import specific classes from QtGui
+QColor = QtGui.QColor
+QFont = QtGui.QFont
+QPainter = QtGui.QPainter
+QPalette = QtGui.QPalette
+QTextCursor = QtGui.QTextCursor
+QFontMetrics = QtGui.QFontMetrics
+QKeyEvent = QtGui.QKeyEvent
+QMouseEvent = QtGui.QMouseEvent
+QPen = QtGui.QPen
+QBrush = QtGui.QBrush
+QResizeEvent = QtGui.QResizeEvent
+QPaintEvent = QtGui.QPaintEvent
+QTextFormat = QtGui.QTextFormat
+QTextCharFormat = QtGui.QTextCharFormat
+
+# Import specific classes from QtWidgets
+QAbstractScrollArea = QtWidgets.QAbstractScrollArea
+QScrollBar = QtWidgets.QScrollBar
+QWidget = QtWidgets.QWidget
+QVBoxLayout = QtWidgets.QVBoxLayout
+QHBoxLayout = QtWidgets.QHBoxLayout
+QLabel = QtWidgets.QLabel
+QComboBox = QtWidgets.QComboBox
+QSpinBox = QtWidgets.QSpinBox
+QToolBar = QtWidgets.QToolBar
+QAction = QtWidgets.QAction
+QLineEdit = QtWidgets.QLineEdit
+QDialog = QtWidgets.QDialog
+QDialogButtonBox = QtWidgets.QDialogButtonBox
+QFormLayout = QtWidgets.QFormLayout
+QApplication = QtWidgets.QApplication
+QInputDialog = QtWidgets.QInputDialog
+QMessageBox = QtWidgets.QMessageBox
+QMenu = QtWidgets.QMenu
+QFrame = QtWidgets.QFrame
+QSplitter = QtWidgets.QSplitter
+QCheckBox = QtWidgets.QCheckBox
+QTableWidget = QtWidgets.QTableWidget
+QTableWidgetItem = QtWidgets.QTableWidgetItem
+QHeaderView = QtWidgets.QHeaderView
+QSizePolicy = QtWidgets.QSizePolicy
+
+# -------------------------------
+# Third-Party Library Imports
+# -------------------------------
+import angr
+# Try to import TensorFlow for GPU-accelerated pattern matching
+try:
+    import tensorflow as tf # type: ignore
+    TENSORFLOW_AVAILABLE = True
+except ImportError:
+    TENSORFLOW_AVAILABLE = False
+
+# -------------------------------
+# Intellicrack Hex Viewer Imports
+# -------------------------------
+# Core file handling
+from hexview.file_handler import VirtualFileAccess, ChunkManager, LRUCache
+
+# UI components
+from hexview.hex_widget import HexViewerWidget
+from hexview.hex_dialog import HexViewerDialog
+from hexview.hex_renderer import ViewMode, HexViewRenderer, parse_hex_view
+from hexview.hex_highlighter import HexHighlighter, HighlightType, HexHighlight
+
+# Integration components
+from hexview.integration import (
+    add_hex_viewer_menu,
+    add_hex_viewer_toolbar_button,
+    integrate_enhanced_hex_viewer,
+    register_hex_viewer_ai_tools,
+    show_enhanced_hex_viewer
+)
+from hexview.ai_bridge import (
+    AIBinaryBridge,
+    AIFeatureType,
+    wrapper_ai_binary_analyze,
+    wrapper_ai_binary_pattern_search,
+    wrapper_ai_binary_edit_suggest
+)
+from hexview.api import (
+    open_hex_file,
+    create_hex_viewer_dialog,
+    integrate_with_intellicrack
+)
+import capstone
+from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
+import claripy
+import dask
+import distributed
+from dask.distributed import Client, progress
+import elftools
+from elftools.elf.elffile import ELFFile
+import frida
+import joblib
+import keystone
+import lief
+import llama_cpp
+try:
+    from llama_cpp import Llama
+except ImportError:
+    Llama = None
+    print("Warning: llama_cpp not found. AI model integration may be limited.")
+import macholib
+from macholib.MachO import MachO
+import matplotlib
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas # Specific backend
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import pefile
+import psutil
+import pyshark
+import requests
+# Radare2 import requires PATH setup first, handled below
+# import r2pipe
+import scapy.all as scapy
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import z3
+
+# --- Optional / Conditional Third-Party Libraries ---
+
+# Cryptography
+try:
+    import cryptography
+    from cryptography import x509
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
+    from cryptography.x509.oid import NameOID
+except ImportError:
+    cryptography = None
+    print("Warning: cryptography library not found. Some features will be disabled.")
+
+# SimConcolic - Lightweight replacement for Manticore
+try:
+    from simconcolic import Manticore, NativeManticore, Plugin
+    print("Using SimConcolic for binary analysis")
+except ImportError:
+    Manticore = None
+    NativeManticore = None
+    Plugin = None
+    print("Warning: simconcolic.py not found. Concolic execution disabled.")
+
+# Pcapy (Packet Capture)
+# Instead of pcapy, we'll use scapy preferentially and add native socket support as fallback
+try:
+    print("Debug: scapy imported successfully for packet capture.")
+    PACKET_CAPTURE_LIB = "scapy"
+except ImportError:
+    try:
+        # Try pyshark as another good alternative
+        print("Debug: pyshark imported successfully for packet capture.")
+        PACKET_CAPTURE_LIB = "pyshark"
+    except ImportError:
+        # For complete fallback, we'll use Python's native socket library
+        print("Debug: Using Python's native socket library for basic packet capture functionality.")
+        PACKET_CAPTURE_LIB = "socket"
+        print("Info: For enhanced packet capture, consider installing scapy: pip install scapy")
+
+# PDF Generation (pdfkit)
+try:
+    import pdfkit
+except ImportError:
+    pdfkit = None
+    print("Info: pdfkit not found. PDF generation via pdfkit disabled.")
+
+# PDF Generation (reportlab)
+try:
+    import reportlab
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter, A4, legal
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import (
+        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image,
+        PageBreak, ListFlowable, ListItem
+    )
+    from reportlab.graphics.charts.barcharts import VerticalBarChart
+    from reportlab.graphics.charts.piecharts import Pie
+    from reportlab.graphics.shapes import Drawing
+except ImportError:
+    reportlab = None
+    print("Warning: reportlab not found. PDF generation via ReportLab disabled.")
+
+# PDF Generation (WeasyPrint)
+
+# GPU Acceleration - We'll try multiple backends with detailed diagnostics
+try:
+    print("Debug: Attempting to import PyCUDA/CuPy for GPU acceleration...")
+    import pycuda.autoinit # type: ignore
+    import pycuda.driver as cuda # type: ignore
+    import pycuda.driver as drv # type: ignore
+    import cupy as cp # type: ignore
+    print("Debug: PyCUDA and CuPy imported successfully.")
+    CUDA_BACKEND = "pycuda"
+except ImportError as e:
+    print(f"Info: PyCUDA/CuPy not found ({str(e)}). Falling back to PyTorch CUDA.")
+    pycuda = None
+    cuda = None
+    drv = None
+    cp = None
+
+    # Try PyTorch's CUDA as an alternative
+    try:
+        import torch
+        if torch.cuda.is_available():
+            print("Debug: Using PyTorch's CUDA capabilities for GPU acceleration.")
+            CUDA_BACKEND = "pytorch"
+        else:
+            print("Debug: PyTorch CUDA not available. GPU acceleration disabled.")
+            CUDA_BACKEND = None
+    except:
+        print("Debug: No GPU acceleration libraries available.")
+        CUDA_BACKEND = None
+
+    print("Debug: For CUDA acceleration, install: pip install pycuda cupy")
+    print("Debug: Note that PyCUDA requires CUDA toolkit to be installed")
+    print("Info: PyCUDA/CuPy not found. CUDA GPU acceleration disabled.")
+
+# Suppress warnings from pytools (used by PyOpenCL)
+import warnings
+warnings.filterwarnings("ignore",
+                        message="Unable to import recommended hash 'siphash24.siphash13', falling back to 'hashlib.sha256'",
+                        module="pytools.persistent_dict")
+
+# PyOpenCL (GPU Acceleration)
+try:
+    import pyopencl as cl
+except ImportError:
+    cl = None
+    print("Info: PyOpenCL not found. OpenCL GPU acceleration disabled.")
+
+# Ray (Distributed Computing) with Failover to Joblib
+try:
+    import ray # type: ignore
+    print("Debug: Ray distributed computing imported successfully.")
+    HAS_RAY = True
+except ImportError:
+    ray = None
+    print("Info: Ray not found. Falling back to alternative distributed processing.")
+    HAS_RAY = False
+
+    # Add alternative distributed computing libraries
+    try:
+        print("Debug: Using joblib for parallel processing instead.")
+        HAS_JOBLIB = True
+    except ImportError:
+        print("Debug: Joblib not found, will use Python's built-in multiprocessing.")
+        HAS_JOBLIB = False
+
+# ROPgadget
+try:
+    import ropgadget
+except ImportError:
+    ropgadget = None
+    print("Warning: ropgadget not found. ROP chain generation disabled.")
+
+# TensorFlow (ML Acceleration)
+# Replace TensorFlow with PyTorch for ML acceleration
+try:
+    print("Debug: Attempting to import PyTorch for ML acceleration...")
+    import torch
+    print(f"Debug: PyTorch imported successfully. Version: {torch.__version__}")
+    ML_ACCELERATION_LIB = "pytorch"
+except ImportError:
+    try:
+        print("Debug: NumPy imported successfully for basic tensor operations.")
+        ML_ACCELERATION_LIB = "numpy"
+    except ImportError:
+        print("Info: Neither PyTorch nor NumPy available. ML acceleration disabled.")
+        ML_ACCELERATION_LIB = None
+    print("Debug: For ML acceleration, consider installing PyTorch: pip install torch")
+    print("Debug: PyTorch is compatible with Python 3.13 and provides GPU acceleration.")
+
+# PyTorch (ML Acceleration)
+try:
+    import torch
+except ImportError:
+    torch = None
+    print("Info: PyTorch not found. PyTorch acceleration disabled.")
+
+# Tkinter (Optional GUI Fallback)
+try:
+    import tkinter as tk
+    from tkinter import messagebox, scrolledtext
+except ImportError:
+    tk = None
+    messagebox = None
+    scrolledtext = None
+    print("Info: Tkinter not available. GUI fallbacks disabled.")
+
+# PyWin32 (Windows Specific)
+_pywin32_available = False
+windll = None # Define defaults for non-windows or failed imports
+byref = None
+c_int = None
+sizeof = None
+if platform.system() == "Windows":
+    try:
+        import pythoncom
+        import win32api
+        import win32com.client
+        import win32con
+        import win32gui
+        import win32service
+        import win32serviceutil
+        import win32ui
+        # Import ctypes specifics only if pywin32 succeeds
+        from ctypes import windll, byref, c_int, sizeof
+        _pywin32_available = True
+    except ImportError:
+        print("Warning: PyWin32 modules not available on Windows. Some functionality will be limited.")
+        pythoncom = None
+        win32api = None
+        win32com = None
+        win32con = None
+        win32gui = None
+        win32service = None
+        win32serviceutil = None
+        win32ui = None
+        # Keep ctypes defaults as None
+else:
+    # Define None for non-Windows platforms
+    pythoncom = None
+    win32api = None
+    win32com = None
+    win32con = None
+    win32gui = None
+    win32service = None
+    win32serviceutil = None
+    win32ui = None
+
+# -------------------------------
+# PyQt5 Framework Imports
+# -------------------------------
+# pylint: disable=no-name-in-module, import-error
+
+# Import from QtCore
+Q_ARG = QtCore.Q_ARG
+QEvent = QtCore.QEvent
+QMargins = QtCore.QMargins
+QMetaObject = QtCore.QMetaObject
+QObject = QtCore.QObject
+QPoint = QtCore.QPoint
+QRect = QtCore.QRect
+QRunnable = QtCore.QRunnable
+QSettings = QtCore.QSettings
+QSize = QtCore.QSize
+Qt = QtCore.Qt
+QThread = QtCore.QThread
+QThreadPool = QtCore.QThreadPool
+QTimer = QtCore.QTimer
+QUrl = QtCore.QUrl
+pyqtSignal = QtCore.pyqtSignal
+
+# Import from QtGui
+QColor = QtGui.QColor
+QCursor = QtGui.QCursor
+QDesktopServices = QtGui.QDesktopServices
+QFont = QtGui.QFont
+QFontDatabase = QtGui.QFontDatabase
+QFontMetrics = QtGui.QFontMetrics
+QIcon = QtGui.QIcon
+QImage = QtGui.QImage
+QKeyEvent = QtGui.QKeyEvent
+QKeySequence = QtGui.QKeySequence
+QMouseEvent = QtGui.QMouseEvent
+QPainter = QtGui.QPainter
+QPalette = QtGui.QPalette
+QPen = QtGui.QPen
+QPixmap = QtGui.QPixmap
+QTextCursor = QtGui.QTextCursor
+
+# Import from QtWidgets
+QAbstractItemView = QtWidgets.QAbstractItemView
+QAbstractScrollArea = QtWidgets.QAbstractScrollArea
+QAction = QtWidgets.QAction
+QApplication = QtWidgets.QApplication
+QButtonGroup = QtWidgets.QButtonGroup
+QCalendarWidget = QtWidgets.QCalendarWidget
+QCheckBox = QtWidgets.QCheckBox
+QColorDialog = QtWidgets.QColorDialog
+QComboBox = QtWidgets.QComboBox
+QDesktopWidget = QtWidgets.QDesktopWidget
+QDialog = QtWidgets.QDialog
+QDialogButtonBox = QtWidgets.QDialogButtonBox
+QDockWidget = QtWidgets.QDockWidget
+QDoubleSpinBox = QtWidgets.QDoubleSpinBox
+QFileDialog = QtWidgets.QFileDialog
+QFontComboBox = QtWidgets.QFontComboBox
+QFontDialog = QtWidgets.QFontDialog
+QFormLayout = QtWidgets.QFormLayout
+QFrame = QtWidgets.QFrame
+QGridLayout = QtWidgets.QGridLayout
+QGroupBox = QtWidgets.QGroupBox
+QHBoxLayout = QtWidgets.QHBoxLayout
+QHeaderView = QtWidgets.QHeaderView
+QInputDialog = QtWidgets.QInputDialog
+QLabel = QtWidgets.QLabel
+QLineEdit = QtWidgets.QLineEdit
+QListWidget = QtWidgets.QListWidget
+QListWidgetItem = QtWidgets.QListWidgetItem
+QMainWindow = QtWidgets.QMainWindow
+QMenu = QtWidgets.QMenu
+QMenuBar = QtWidgets.QMenuBar
+QMessageBox = QtWidgets.QMessageBox
+QPlainTextEdit = QtWidgets.QPlainTextEdit
+QProgressDialog = QtWidgets.QProgressDialog
+QProgressBar = QtWidgets.QProgressBar
+QPushButton = QtWidgets.QPushButton
+QRadioButton = QtWidgets.QRadioButton
+QScrollArea = QtWidgets.QScrollArea
+QShortcut = QtWidgets.QShortcut
+QSizePolicy = QtWidgets.QSizePolicy
+QSlider = QtWidgets.QSlider
+QSpacerItem = QtWidgets.QSpacerItem
+QSpinBox = QtWidgets.QSpinBox
+QSplitter = QtWidgets.QSplitter
+QStatusBar = QtWidgets.QStatusBar
+QStyleFactory = QtWidgets.QStyleFactory
+QTabWidget = QtWidgets.QTabWidget
+QTableWidget = QtWidgets.QTableWidget
+QTableWidgetItem = QtWidgets.QTableWidgetItem
+QTextEdit = QtWidgets.QTextEdit
+QToolBar = QtWidgets.QToolBar
+QTreeWidget = QtWidgets.QTreeWidget
+QTreeWidgetItem = QtWidgets.QTreeWidgetItem
+QVBoxLayout = QtWidgets.QVBoxLayout
+QWidget = QtWidgets.QWidget
+QWizard = QtWidgets.QWizard
+QWizardPage = QtWidgets.QWizardPage
+
+# Import print support
+from PyQt5 import QtPrintSupport
+QPrintDialog = QtPrintSupport.QPrintDialog
+QPrinter = QtPrintSupport.QPrinter
+QDockWidget, QDoubleSpinBox, QFileDialog, QFontComboBox, QFontDialog, QFormLayout,
+QFrame, QGridLayout, QGroupBox, QHBoxLayout, QHeaderView, QInputDialog, QLabel,
+QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QMenu, QMenuBar, QMessageBox,
+QPlainTextEdit, QProgressDialog, QProgressBar, QPushButton, QRadioButton, QScrollArea,
+QShortcut, QSizePolicy, QSlider, QSpacerItem, QSpinBox, QSplitter, QStatusBar,
+QStyleFactory, QTabWidget, QTableWidget, QTableWidgetItem, QTextEdit, QToolBar,
+QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, QWizard, QWizardPage
+
+# Optional Qt Modules
+try:
+    from PyQt5.QtWebEngineWidgets import QWebEngineView
+except ImportError:
+    QWebEngineView = None
+    print("Info: PyQtWebEngine not found. Web view features disabled.")
+# First try PyQt5 PDF modules
+try:
+    from PyQt5.QtPdf import QPdfDocument # type: ignore
+    from PyQt5.QtPdfWidgets import QPdfView # type: ignore
+    HAS_PYQT_PDF = True
+    HAS_PDF_SUPPORT = True
+    print("Debug: PyQt5 PDF support available.")
+except ImportError as e:
+    QPdfDocument = None
+    QPdfView = None
+    HAS_PYQT_PDF = False
+    print(f"Info: PyQt5 PDF modules not found ({e}). Trying alternative PDF libraries...")
+
+    # Try PyPDF2 as an alternative
+    try:
+        import PyPDF2
+        HAS_PYPDF2 = True
+        HAS_PDF_SUPPORT = True
+        print("Debug: Using PyPDF2 for PDF support instead.")
+    except ImportError:
+        HAS_PYPDF2 = False
+
+        # Last resort: Try fitz (PyMuPDF)
+        try:
+            import fitz  # PyMuPDF
+            HAS_FITZ = True
+            HAS_PDF_SUPPORT = True
+            print("Debug: Using PyMuPDF for PDF support instead.")
+        except ImportError:
+            HAS_FITZ = False
+            HAS_PDF_SUPPORT = False
+            print("Info: No PDF libraries found. PDF viewing features disabled.")
+            print("Note: To enable PDF support, install one of: PyQt5>=5.14, PyPDF2, or PyMuPDF")
+from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
+
+# -------------------------------
+# Local Application Modules
+# -------------------------------
+from models import ModelManager
+
+# --------------------------------------------------------------------------- #
+# ~~~~~~~~~~~~~~~~~~~~~~ CONFIGURATION & SETUP ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# --------------------------------------------------------------------------- #
+
+# --- Logging Setup ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger('Intellicrack')
+logger.info("Initializing Intellicrack imports...")
+
+# --- Radare2 Path Configuration ---
+logger.info("Configuring radare2 PATH...")
+script_dir = Path(__file__).parent.absolute()
+local_r2_path = script_dir / "radare2" / "radare2-5.9.8-w64" / "bin"
+
+if local_r2_path.exists():
+    logger.info(f"Using local radare2: {local_r2_path}")
+    if sys.platform == 'win32':
+        os.environ["PATH"] = f"{str(local_r2_path)};{os.environ.get('PATH', '')}"
+    else:
+        os.environ["PATH"] = f"{str(local_r2_path)}:{os.environ.get('PATH', '')}"
+else:
+    logger.warning(f"Local radare2 not found at: {local_r2_path}")
+
+# Now import r2pipe after PATH is set
+import r2pipe
+
+# --- WeasyPrint Dependency Check & Import ---
+logger.info("Attempting to import WeasyPrint...")
+weasyprint = None
+
+def check_weasyprint_dependencies():
+    """Check WeasyPrint dependencies with detailed logging."""
+    missing_deps = []
+    try:
+        import cffi
+        logger.info("✓ CFFI dependency found")
+    except ImportError as e:
+        logger.error(f"✗ CFFI import error: {e}")
+        missing_deps.append("cffi")
+    try:
+        import cairocffi
+        logger.info("✓ Cairo dependency found")
+    except ImportError as e:
+        logger.error(f"✗ Cairo import error: {e}")
+        missing_deps.append("cairocffi")
+    try:
+        import tinycss2
+        logger.info("✓ TinyCSS2 dependency found")
+    except ImportError as e:
+        logger.error(f"✗ TinyCSS2 import error: {e}")
+        missing_deps.append("tinycss2")
+    if sys.platform == 'win32':
+        try:
+            gtk_paths = [
+                "C:\\GTK\\bin",
+                "C:\\Program Files\\GTK3-Runtime Win64\\bin",
+                os.environ.get("GTK_BASEPATH", "") + "\\bin"
+            ]
+            logger.info(f"Checking GTK paths: {gtk_paths}")
+            dll_found = False
+            for path in gtk_paths:
+                if os.path.exists(path):
+                    if os.path.exists(os.path.join(path, "libgtk-3-0.dll")):
+                        logger.info(f"✓ GTK DLLs found at: {path}")
+                        dll_found = True
+                        break
+            if not dll_found:
+                logger.error("✗ GTK DLLs not found in standard locations")
+                missing_deps.append("GTK libraries")
+        except Exception as e:
+            logger.error(f"Error checking GTK dependencies: {e}")
+    return missing_deps
+
+try:
+    if importlib.util.find_spec("weasyprint") is not None:
+        missing = check_weasyprint_dependencies()
+        if missing:
+            logger.warning(f"WeasyPrint dependencies missing: {', '.join(missing)}")
+            logger.warning("See installation instructions at:")
+            logger.warning("https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation")
+        else:
+            try:
+                import weasyprint
+                logger.info(f"✓ WeasyPrint imported successfully (version {weasyprint.__version__})")
+            except Exception as e:
+                logger.error(f"✗ WeasyPrint import failed despite dependencies: {e}")
+                if "DLL load failed" in str(e):
+                    logger.error("This is likely a GTK DLL loading issue on Windows.")
+                    logger.error("Please ensure GTK is installed and in your PATH")
+    else:
+        logger.warning("WeasyPrint module not found in Python environment")
+except Exception as e:
+    logger.error(f"Error during WeasyPrint import process: {e}")
+
+# Final status
+if weasyprint is None:
+    logger.warning("WeasyPrint functionality will be disabled")
+
+
+# --- Final Dependency Checks/Messages ---
+if platform.system() == "Windows" and not _pywin32_available:
+    logging.warning("pywin32 library not found. Some Windows-specific features might be unavailable.")
+
+logger.info("Imports and initial setup complete.")
+# --------------------------------------------------------------------------- #
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~ END CONFIG & SETUP ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# --------------------------------------------------------------------------- #
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# -------------------------------
+# Utility Functions
+# -------------------------------
+
+# --- AI Tooling ---
+
+def wrapper_find_file(app_instance, parameters):
+    """
+    Wrapper for tool_find_file.
+    Searches for files based on filename.
+
+    Parameters:
+        filename (str, optional): The filename to search for
+
+    Returns:
+        dict: Result with status and path if found
+    """
+    logger.debug("Entered wrapper_find_file with parameters: %s", parameters)
+    filename = parameters.get("filename")
+    if not filename:
+        logger.warning("Missing 'filename' parameter for tool_find_file")
+        return {"status": "error", "message": "Missing 'filename' parameter for tool_find_file"}
+
+    try:
+        app_instance.update_output.emit(log_message(f"[Tool] Searching for file: {filename}"))
+        logger.info(f"Searching for file: {filename}")
+
+        # Start search from current directory
+        for root, _, files in os.walk('.'):
+            for file in files:
+                if filename in file:
+                    file_path = os.path.join(root, file)
+                    logger.info(f"Found file at: {file_path}")
+                    return {
+                        "status": "success",
+                        "path": file_path,
+                        "message": f"Found file at: {file_path}"
+                    }
+
+        logger.warning(f"File '{filename}' not found")
+        return {"status": "error", "message": f"File '{filename}' not found"}
+    except Exception as e:
+        logger.exception(f"Error searching for file: {filename}")
+        return {"status": "error", "message": f"Error searching for file: {str(e)}"}
+
+def wrapper_load_binary(app_instance, parameters):
+    """
+    Wrapper for tool_load_binary.
+    Loads a binary file for analysis.
+
+    Parameters:
+        path (str): Path to the binary file
+
+    Returns:
+        dict: Binary information from app_instance.binary_info
+    """
+    logger.debug("Entered wrapper_load_binary with parameters: %s", parameters)
+    path = parameters.get("path")
+    if not path:
+        logger.warning("Missing 'path' parameter for tool_load_binary")
+        return {"status": "error", "message": "Missing 'path' parameter for tool_load_binary"}
+
+    try:
+        # Call the actual load_binary method on the app instance
+        app_instance.update_output.emit(log_message(f"[Tool] Loading binary: {path}"))
+        logger.info(f"Loading binary: {path}")
+        app_instance.load_binary(path)
+
+        # Return the binary info from the app instance
+        if hasattr(app_instance, 'binary_info') and app_instance.binary_info:
+            logger.info(f"Binary '{os.path.basename(path)}' loaded successfully")
+            return {
+                "status": "success",
+                "message": f"Binary '{os.path.basename(path)}' loaded successfully",
+                "binary_info": app_instance.binary_info
+            }
+        else:
+            logger.warning("Binary loaded but no information available")
+            return {"status": "warning", "message": "Binary loaded but no information available"}
+    except Exception as e:
+        logger.exception(f"Failed to load binary: {path}")
+        return {"status": "error", "message": f"Failed to load binary: {str(e)}"}
+
+def wrapper_list_relevant_files(app_instance, parameters):
+    """
+    Wrapper for tool_list_relevant_files.
+    Lists files with relevant extensions in a directory.
+
+    Parameters:
+        directory_path (str): Directory to list files from
+
+    Returns:
+        dict: List of relevant files
+    """
+    logging.debug(f"Entering wrapper_list_relevant_files with parameters: {parameters}")
+    directory_path = parameters.get("directory_path", ".")  # Default to current directory
+
+    try:
+        logging.info(f"Listing relevant files in directory: {directory_path}")
+        app_instance.update_output.emit(log_message(f"[Tool] Listing relevant files in: {directory_path}"))
+
+        # Relevant file extensions for binary analysis
+        relevant_extensions = ['.exe', '.dll', '.so', '.dylib', '.bin', '.sys', '.ocx', '.drv', '.dat', '.config', '.ini']
+
+        # Get all files in the directory
+        files = []
+        for file in os.listdir(directory_path):
+            file_path = os.path.join(directory_path, file)
+            if os.path.isfile(file_path):
+                _, ext = os.path.splitext(file)
+                if ext.lower() in relevant_extensions or not ext:  # Include files without extension
+                    files.append(file)
+
+        logging.debug(f"Found relevant files: {files} in {directory_path}")
+        return {"status": "success", "files": files, "directory": directory_path}
+    except Exception as e:
+        logging.error(f"Failed to list relevant files in {directory_path}: {e}", exc_info=True)
+        return {"status": "error", "message": f"Failed to list files: {str(e)}"}
+
+def wrapper_read_file_chunk(app_instance, parameters):
+    """
+    Wrapper for tool_read_file_chunk.
+    Reads a chunk of a file.
+
+    Parameters:
+        file_path (str): Path to the file
+        offset (int, optional): Starting offset
+        max_bytes (int, optional): Maximum bytes to read
+
+    Returns:
+        dict: File content in hex and text format
+    """
+    logging.debug(f"Entering wrapper_read_file_chunk with parameters: {parameters}")
+    file_path = parameters.get("file_path")
+    offset = parameters.get("offset", 0)
+    max_bytes = parameters.get("max_bytes", 4096)  # Default to 4KB
+
+    if not file_path:
+        return {"status": "error", "message": "Missing 'file_path' parameter for tool_read_file_chunk"}
+
+    try:
+        offset = int(offset)
+        max_bytes = int(max_bytes)
+
+        logging.info(f"Reading file chunk: {file_path}, offset: {offset}, max_bytes: {max_bytes}")
+        app_instance.update_output.emit(log_message(f"[Tool] Reading file chunk: {file_path} (offset: {offset}, max_bytes: {max_bytes})"))
+
+        with open(file_path, 'rb') as f:
+            f.seek(offset)
+            data = f.read(max_bytes)
+
+        # Convert to hex representation
+        hex_data = data.hex()
+
+        # Try to decode as text (replace non-printable chars)
+        try:
+            text_data = data.decode('utf-8', errors='replace')
+        except:
+            text_data = ''.join(chr(b) if 32 <= b < 127 else '.' for b in data)
+
+        logging.debug(f"Read {len(data)} bytes from {file_path}")
+        return {
+            "status": "success",
+            "file_path": file_path,
+            "offset": offset,
+            "bytes_read": len(data),
+            "hex_data": hex_data,
+            "text_data": text_data
+        }
+    except Exception as e:
+        logging.error(f"Failed to read file chunk from {file_path}: {e}", exc_info=True)
+        return {"status": "error", "message": f"Failed to read file chunk: {str(e)}"}
+
+def wrapper_get_file_metadata(app_instance, parameters):
+    """
+    Wrapper for tool_get_file_metadata.
+    Gets metadata for a file.
+
+    Parameters:
+        path (str): Path to the file
+
+    Returns:
+        dict: File metadata
+    """
+    logging.debug(f"Entering wrapper_get_file_metadata with parameters: {parameters}")
+    path = parameters.get("path")
+    if not path:
+        return {"status": "error", "message": "Missing 'path' parameter for tool_get_file_metadata"}
+
+    try:
+        logging.info(f"Getting file metadata for: {path}")
+        app_instance.update_output.emit(log_message(f"[Tool] Getting file metadata: {path}"))
+
+        # Call the extract_binary_info method
+        app_instance.extract_binary_info(path)
+
+        # Return the binary info
+        if hasattr(app_instance, 'binary_info') and app_instance.binary_info:
+            logging.debug(f"Metadata for {path}: {app_instance.binary_info if hasattr(app_instance, 'binary_info') and app_instance.binary_info else 'Basic info only'}")
+            return {
+                "status": "success",
+                "metadata": app_instance.binary_info
+            }
+        else:
