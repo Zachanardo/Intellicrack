@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@e2b/mcp-server": "^0.2.0",
+    "@modelcontextprotocol/server-brave-search": "^0.6.2",
+    "@modelcontextprotocol/server-filesystem": "^2025.3.28",
+    "@modelcontextprotocol/server-github": "^2025.4.8",
+    "@modelcontextprotocol/server-gitlab": "^2025.4.25"
+  }
+}

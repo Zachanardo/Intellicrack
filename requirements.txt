@@ -1,0 +1,77 @@
+# Core GUI Framework
+PyQt5>=5.15
+
+# Machine Learning and Data Science
+scikit-learn>=1.6.0
+numpy>=1.23.0
+joblib>=1.5.0
+scipy>=1.15.0
+pandas>=2.0.0
+torch>=2.0.0  # Optional: for advanced ML features
+transformers>=4.30.0  # Optional: for AI model fine-tuning
+
+# Binary Analysis and Reverse Engineering
+r2pipe>=1.9.0
+capstone>=5.0.0
+pefile>=2024.8.0
+lief>=0.16.0
+unicorn>=2.1.0
+keystone-engine>=0.9.0
+ropper>=1.13.0
+pwntools>=4.0.0
+pyelftools>=0.29
+frida-tools>=12.0.0  # For dynamic analysis
+yara-python>=4.3.0  # For pattern matching
+
+# Network Analysis
+pyshark>=0.6
+scapy>=2.6.0
+mitmproxy>=10.0.0  # For SSL/TLS interception
+requests>=2.31.0
+cryptography>=41.0.0
+
+# Database
+sqlalchemy>=2.0.0
+sqlite3  # Built-in
+
+# Visualization and Reporting
+matplotlib>=3.10.0
+reportlab>=4.0.0  # For PDF generation
+networkx>=3.1  # For graph analysis
+graphviz>=0.20  # For graph visualization
+plotly>=5.14.0  # For interactive plots
+
+# System and Process Management
+psutil>=5.9.0
+docker>=6.1.0  # For container management
+paramiko>=3.3.0  # For SSH connections
+
+# XML/HTML Processing
+lxml>=5.4.0
+beautifulsoup4>=4.12.0
+
+# Utilities
+termcolor>=3.1.0
+packaging>=25.0
+python-dateutil>=2.9.0
+click>=8.1.0  # For CLI
+rich>=13.0.0  # For rich terminal output
+tqdm>=4.65.0  # For progress bars
+colorama>=0.4.6  # For cross-platform colored output
+
+# File Processing
+filebytes>=0.10.0
+python-magic>=0.4.27  # For file type detection
+pyzipper>=0.3.6  # For encrypted zip support
+
+# Logging and Monitoring
+loguru>=0.7.0  # Enhanced logging
+
+# Configuration
+pyyaml>=6.0
+toml>=0.10.2
+python-dotenv>=1.0.0
+
+# Note: angr and manticore require complex C++ compilation and may need manual installation
+# For full symbolic execution support, install separately:
+# pip install angr claripy manticore

@@ -1,0 +1,6 @@
+Add SQLite and Memory back to YOUR MCP servers. But, I think that all or most of the ones you removed might
+  benefit the actual Intellicrack app, which got me thinking... Could we add a module to Intellicrack that would
+  allow users to add and configure MCP servers, that can be called upon automatically by whatever AI model the user
+   imports into Intellicrack? Possibly include a guide for the user within the app for specific steps on
+  configuring an MCP server within the app? I think it could be placed in the GUI in the settings tab, under a sub
+  tab called MCP Servers.
