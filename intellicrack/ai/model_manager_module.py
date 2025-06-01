@@ -621,9 +621,304 @@ def get_global_model_manager() -> ModelManager:
     return _global_model_manager
 
 
+class ModelFineTuner:
+    """Fine-tuning support for AI models."""
+    
+    def __init__(self, model_manager: ModelManager):
+        self.model_manager = model_manager
+        self.training_history = {}
+        self.lock = threading.RLock()
+    
+    def fine_tune_model(self, model_id: str, training_data: Any, 
+                       validation_data: Any = None, epochs: int = 10,
+                       learning_rate: float = 0.001, batch_size: int = 32,
+                       callback: Callable = None) -> Dict[str, Any]:
+        """
+        Fine-tune a pre-trained model on custom data.
+        
+        Args:
+            model_id: ID of the model to fine-tune
+            training_data: Training dataset
+            validation_data: Optional validation dataset
+            epochs: Number of training epochs
+            learning_rate: Learning rate for optimization
+            batch_size: Batch size for training
+            callback: Optional callback for progress updates
+            
+        Returns:
+            Dict with training results and metrics
+        """
+        with self.lock:
+            # Load the base model
+            model = self.model_manager.load_model(model_id)
+            model_info = self.model_manager.model_metadata[model_id]
+            model_type = model_info['type']
+            
+            results = {
+                'model_id': model_id,
+                'epochs': epochs,
+                'training_loss': [],
+                'validation_loss': [],
+                'metrics': {},
+                'fine_tuned_model_path': None
+            }
+            
+            try:
+                if model_type in ['pytorch', 'pth'] and HAS_TORCH:
+                    results = self._fine_tune_pytorch(
+                        model, training_data, validation_data,
+                        epochs, learning_rate, batch_size, callback
+                    )
+                elif model_type in ['tensorflow', 'h5'] and HAS_TENSORFLOW:
+                    results = self._fine_tune_tensorflow(
+                        model, training_data, validation_data,
+                        epochs, learning_rate, batch_size, callback
+                    )
+                elif model_type in ['sklearn', 'joblib'] and HAS_JOBLIB:
+                    results = self._fine_tune_sklearn(
+                        model, training_data, validation_data, callback
+                    )
+                else:
+                    raise ValueError(f"Fine-tuning not supported for model type: {model_type}")
+                
+                # Save fine-tuned model
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                fine_tuned_id = f"{model_id}_finetuned_{timestamp}"
+                fine_tuned_path = os.path.join(
+                    self.model_manager.models_dir,
+                    f"{fine_tuned_id}.{model_type}"
+                )
+                
+                # Save the model
+                backend = self.model_manager.backends[model_type]
+                if hasattr(backend, 'save_model'):
+                    backend.save_model(model, fine_tuned_path)
+                else:
+                    # Default save methods
+                    if model_type in ['pytorch', 'pth']:
+                        torch.save(model, fine_tuned_path)
+                    elif model_type in ['tensorflow', 'h5']:
+                        model.save(fine_tuned_path)
+                    elif model_type in ['sklearn', 'joblib']:
+                        joblib.dump(model, fine_tuned_path)
+                
+                # Register the fine-tuned model
+                self.model_manager.register_model(
+                    fine_tuned_id, fine_tuned_path, model_type,
+                    metadata={
+                        'base_model': model_id,
+                        'fine_tuning_params': {
+                            'epochs': epochs,
+                            'learning_rate': learning_rate,
+                            'batch_size': batch_size
+                        },
+                        'results': results
+                    }
+                )
+                
+                results['fine_tuned_model_id'] = fine_tuned_id
+                results['fine_tuned_model_path'] = fine_tuned_path
+                
+                # Store training history
+                self.training_history[fine_tuned_id] = results
+                
+                logger.info(f"Fine-tuning completed. New model ID: {fine_tuned_id}")
+                
+            except Exception as e:
+                logger.error(f"Fine-tuning failed: {e}")
+                results['error'] = str(e)
+            
+            return results
+    
+    def _fine_tune_pytorch(self, model: Any, training_data: Any,
+                          validation_data: Any, epochs: int,
+                          learning_rate: float, batch_size: int,
+                          callback: Callable) -> Dict[str, Any]:
+        """Fine-tune a PyTorch model."""
+        import torch.optim as optim
+        from torch.utils.data import DataLoader, TensorDataset
+        
+        # Set model to training mode
+        model.train()
+        
+        # Create optimizer
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+        criterion = nn.CrossEntropyLoss()
+        
+        # Prepare data loaders
+        train_dataset = TensorDataset(
+            torch.tensor(training_data[0]).float(),
+            torch.tensor(training_data[1]).long()
+        )
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        
+        val_loader = None
+        if validation_data is not None:
+            val_dataset = TensorDataset(
+                torch.tensor(validation_data[0]).float(),
+                torch.tensor(validation_data[1]).long()
+            )
+            val_loader = DataLoader(val_dataset, batch_size=batch_size)
+        
+        results = {
+            'training_loss': [],
+            'validation_loss': []
+        }
+        
+        # Training loop
+        for epoch in range(epochs):
+            # Training phase
+            train_loss = 0.0
+            for batch_idx, (data, target) in enumerate(train_loader):
+                optimizer.zero_grad()
+                output = model(data)
+                loss = criterion(output, target)
+                loss.backward()
+                optimizer.step()
+                train_loss += loss.item()
+            
+            avg_train_loss = train_loss / len(train_loader)
+            results['training_loss'].append(avg_train_loss)
+            
+            # Validation phase
+            if val_loader:
+                model.eval()
+                val_loss = 0.0
+                with torch.no_grad():
+                    for data, target in val_loader:
+                        output = model(data)
+                        val_loss += criterion(output, target).item()
+                
+                avg_val_loss = val_loss / len(val_loader)
+                results['validation_loss'].append(avg_val_loss)
+                model.train()
+            
+            # Callback for progress updates
+            if callback:
+                callback(epoch + 1, epochs, avg_train_loss, 
+                        avg_val_loss if val_loader else None)
+        
+        return results
+    
+    def _fine_tune_tensorflow(self, model: Any, training_data: Any,
+                             validation_data: Any, epochs: int,
+                             learning_rate: float, batch_size: int,
+                             callback: Callable) -> Dict[str, Any]:
+        """Fine-tune a TensorFlow model."""
+        # Compile model with new learning rate
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+            loss='sparse_categorical_crossentropy',
+            metrics=['accuracy']
+        )
+        
+        # Prepare callbacks
+        callbacks = []
+        if callback:
+            class ProgressCallback(tf.keras.callbacks.Callback):
+                def on_epoch_end(self, epoch, logs=None):
+                    callback(epoch + 1, epochs, logs.get('loss'),
+                            logs.get('val_loss'))
+            callbacks.append(ProgressCallback())
+        
+        # Train the model
+        history = model.fit(
+            training_data[0], training_data[1],
+            validation_data=validation_data,
+            epochs=epochs,
+            batch_size=batch_size,
+            callbacks=callbacks,
+            verbose=0
+        )
+        
+        return {
+            'training_loss': history.history['loss'],
+            'validation_loss': history.history.get('val_loss', []),
+            'metrics': history.history
+        }
+    
+    def _fine_tune_sklearn(self, model: Any, training_data: Any,
+                          validation_data: Any, callback: Callable) -> Dict[str, Any]:
+        """Fine-tune a scikit-learn model."""
+        # For sklearn, we typically retrain on new data
+        X_train, y_train = training_data
+        
+        # Partial fit if supported, otherwise full refit
+        if hasattr(model, 'partial_fit'):
+            model.partial_fit(X_train, y_train)
+        else:
+            model.fit(X_train, y_train)
+        
+        results = {'training_complete': True}
+        
+        # Calculate validation score if data provided
+        if validation_data is not None:
+            X_val, y_val = validation_data
+            val_score = model.score(X_val, y_val)
+            results['validation_score'] = val_score
+        
+        if callback:
+            callback(1, 1, None, results.get('validation_score'))
+        
+        return results
+    
+    def get_training_history(self, model_id: str) -> Optional[Dict[str, Any]]:
+        """Get training history for a fine-tuned model."""
+        return self.training_history.get(model_id)
+
+
+def import_custom_model(model_path: str, model_type: str = None,
+                       model_id: str = None) -> Dict[str, Any]:
+    """
+    Import a custom AI model into the system.
+    
+    Args:
+        model_path: Path to the model file
+        model_type: Type of model (pytorch, tensorflow, onnx, sklearn)
+        model_id: Optional custom ID for the model
+        
+    Returns:
+        Dict with import results and model information
+    """
+    manager = get_global_model_manager()
+    
+    # Auto-generate model ID if not provided
+    if model_id is None:
+        model_name = Path(model_path).stem
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        model_id = f"{model_name}_{timestamp}"
+    
+    try:
+        # Register the model
+        manager.register_model(model_id, model_path, model_type)
+        
+        # Try to load it to verify it works
+        model = manager.load_model(model_id)
+        
+        # Get model information
+        model_info = manager.get_model_info(model_id)
+        
+        return {
+            'success': True,
+            'model_id': model_id,
+            'model_path': model_path,
+            'model_info': model_info
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to import model: {e}")
+        return {
+            'success': False,
+            'error': str(e),
+            'model_id': model_id,
+            'model_path': model_path
+        }
+
+
 # Export for external use
 __all__ = [
     'ModelManager', 'AsyncModelManager', 'ModelCache',
     'PyTorchBackend', 'TensorFlowBackend', 'ONNXBackend', 'SklearnBackend',
-    'create_model_manager', 'get_global_model_manager'
+    'create_model_manager', 'get_global_model_manager',
+    'ModelFineTuner', 'import_custom_model'
 ]

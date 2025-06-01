@@ -34,6 +34,11 @@ try:
 except ImportError as e:
     logger.warning(f"Failed to import vm_bypass: {e}")
 
+try:
+    from .dongle_emulator import *
+except ImportError as e:
+    logger.warning(f"Failed to import dongle_emulator: {e}")
+
 # Define package exports
 __all__ = [
     # From tpm_bypass
@@ -47,6 +52,10 @@ __all__ = [
     'VirtualizationAnalyzer',
     'detect_virtualization',
     'analyze_vm_protection',
+    
+    # From dongle_emulator
+    'HardwareDongleEmulator',
+    'activate_hardware_dongle_emulation',
 ]
 
 # Package metadata

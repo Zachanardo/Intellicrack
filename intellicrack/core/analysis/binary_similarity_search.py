@@ -67,8 +67,8 @@ class BinarySimilaritySearch:
             database_path: Path to the binary database file
         """
         self.database_path = database_path
-        self.database = self._load_database()
         self.logger = logging.getLogger(__name__)
+        self.database = self._load_database()
 
     def _load_database(self) -> Dict[str, Any]:
         """

@@ -39,6 +39,21 @@ try:
 except ImportError as e:
     logger.warning(f"Failed to import memory_optimizer: {e}")
 
+try:
+    from .memory_loader import *
+except ImportError as e:
+    logger.warning(f"Failed to import memory_loader: {e}")
+
+try:
+    from .qiling_emulator import *
+except ImportError as e:
+    logger.warning(f"Failed to import qiling_emulator: {e}")
+
+try:
+    from .qemu_emulator import *
+except ImportError as e:
+    logger.warning(f"Failed to import qemu_emulator: {e}")
+
 # Define package exports
 __all__ = [
     # From distributed_manager
@@ -58,6 +73,20 @@ __all__ = [
     'optimize_memory',
     'profile_memory_usage',
     'clear_cache',
+    
+    # From memory_loader
+    'MemoryOptimizedBinaryLoader',
+    'create_memory_loader',
+    
+    # From qiling_emulator
+    'QilingEmulator',
+    'run_qiling_analysis',
+    'create_qiling_sandbox',
+    
+    # From qemu_emulator
+    'QemuEmulator',
+    'VirtualMachine',
+    'run_qemu_analysis',
 ]
 
 # Package metadata

@@ -1,77 +1,155 @@
+# ============================================================================
+# COMPLETE Requirements for Intellicrack
+# Extracted from ~1000 lines of imports in Intellicrack.py
+# ============================================================================
+
 # Core GUI Framework
-PyQt5>=5.15
+PyQt5>=5.15.0
+PyQt5-sip>=12.11.0
+PyQt5-stubs>=5.15.0  # Type hints
+PyQtWebEngine>=5.15.0  # Web view features
+PyQt5-Qt5>=5.15.0  # Qt5 binaries
 
-# Machine Learning and Data Science
-scikit-learn>=1.6.0
+# Machine Learning and AI
 numpy>=1.23.0
-joblib>=1.5.0
-scipy>=1.15.0
+scipy>=1.10.0
+scikit-learn>=1.3.0
 pandas>=2.0.0
-torch>=2.0.0  # Optional: for advanced ML features
-transformers>=4.30.0  # Optional: for AI model fine-tuning
+joblib>=1.3.0
+torch>=2.0.0  # PyTorch for ML
+tensorflow>=2.13.0  # TensorFlow for GPU pattern matching
+transformers>=4.30.0  # Hugging Face transformers
+llama-cpp-python>=0.2.0  # Local LLM support
 
-# Binary Analysis and Reverse Engineering
-r2pipe>=1.9.0
-capstone>=5.0.0
-pefile>=2024.8.0
-lief>=0.16.0
-unicorn>=2.1.0
-keystone-engine>=0.9.0
-ropper>=1.13.0
-pwntools>=4.0.0
-pyelftools>=0.29
-frida-tools>=12.0.0  # For dynamic analysis
-yara-python>=4.3.0  # For pattern matching
+# Binary Analysis Core
+angr>=9.2.0  # Symbolic execution
+claripy>=9.2.0  # Constraint solver for angr
+z3-solver>=4.12.0  # SMT solver
+capstone>=5.0.0  # Disassembly framework
+keystone-engine>=0.9.2  # Assembly framework
+unicorn>=2.0.0  # CPU emulator
+
+# File Format Analysis
+pefile>=2023.2.7  # PE file analysis
+lief>=0.14.0  # Multi-format binary parsing
+pyelftools>=0.29  # ELF file analysis (elftools import)
+macholib>=1.16  # Mach-O analysis
+
+# Dynamic Analysis
+frida>=16.0.0  # Dynamic instrumentation
+frida-tools>=12.0.0  # Frida CLI tools
+
+# Reverse Engineering Tools
+r2pipe>=1.8.0  # Radare2 integration
+ropgadget>=7.3  # ROP chain generation
+ropper>=1.13.0  # Alternative ROP tool
+pwntools>=4.11.0  # CTF/exploitation toolkit
+yara-python>=4.3.0  # Pattern matching
 
 # Network Analysis
-pyshark>=0.6
-scapy>=2.6.0
-mitmproxy>=10.0.0  # For SSL/TLS interception
-requests>=2.31.0
-cryptography>=41.0.0
+scapy>=2.5.0  # Packet manipulation
+pyshark>=0.6  # Wireshark wrapper
+mitmproxy>=10.0.0  # HTTPS interception
+requests>=2.31.0  # HTTP library
+paramiko>=3.3.0  # SSH client
+
+# Cryptography
+cryptography>=41.0.0  # Crypto operations
+
+# PDF Generation & Manipulation
+reportlab>=4.0.0  # PDF creation
+pdfkit>=1.0.0  # HTML to PDF (requires wkhtmltopdf)
+PyPDF2>=3.0.0  # PDF manipulation
+PyMuPDF>=1.23.0  # PDF support (imports as fitz)
+weasyprint>=60.0  # HTML/CSS to PDF
+# WeasyPrint dependencies
+cffi>=1.15.0
+cairocffi>=1.6.0
+tinycss2>=1.2.0
+cssselect2>=0.7.0
+html5lib>=1.1
+Pillow>=10.0.0
+
+# Visualization
+matplotlib>=3.7.0  # Plotting
+networkx>=3.1  # Graph analysis
+graphviz>=0.20  # Graph visualization
+plotly>=5.14.0  # Interactive plots
+
+# GPU Acceleration
+pycuda>=2022.2; platform_machine!="arm64"  # CUDA support
+cupy>=12.0.0; platform_machine!="arm64"  # CUDA arrays
+pyopencl>=2023.1  # OpenCL support
+pytools>=2023.1  # Required by PyOpenCL
+
+# Distributed Computing
+ray>=2.7.0  # Distributed framework
+dask>=2023.9.0  # Parallel computing
+distributed>=2023.9.0  # Dask distributed
+
+# System & Process Management
+psutil>=5.9.0  # System monitoring
+docker>=6.1.0  # Container management
+
+# Windows Specific
+pywin32>=306; platform_system=="Windows"
+pypiwin32>=223; platform_system=="Windows"
 
 # Database
 sqlalchemy>=2.0.0
-sqlite3  # Built-in
-
-# Visualization and Reporting
-matplotlib>=3.10.0
-reportlab>=4.0.0  # For PDF generation
-networkx>=3.1  # For graph analysis
-graphviz>=0.20  # For graph visualization
-plotly>=5.14.0  # For interactive plots
-
-# System and Process Management
-psutil>=5.9.0
-docker>=6.1.0  # For container management
-paramiko>=3.3.0  # For SSH connections
-
-# XML/HTML Processing
-lxml>=5.4.0
-beautifulsoup4>=4.12.0
-
-# Utilities
-termcolor>=3.1.0
-packaging>=25.0
-python-dateutil>=2.9.0
-click>=8.1.0  # For CLI
-rich>=13.0.0  # For rich terminal output
-tqdm>=4.65.0  # For progress bars
-colorama>=0.4.6  # For cross-platform colored output
 
 # File Processing
-filebytes>=0.10.0
-python-magic>=0.4.27  # For file type detection
-pyzipper>=0.3.6  # For encrypted zip support
+python-magic>=0.4.27  # File type detection
+pyzipper>=0.3.6  # ZIP support
+filebytes>=0.10.0  # Low-level file ops
 
-# Logging and Monitoring
-loguru>=0.7.0  # Enhanced logging
+# Web Scraping
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Terminal & CLI
+click>=8.1.0
+colorama>=0.4.6
+termcolor>=2.3.0
+rich>=13.0.0
+tqdm>=4.65.0
+
+# Development Tools
+pytest>=7.4.0
+pytest-qt>=4.2.0
+black>=23.0.0  # Code formatter
+pylint>=2.17.0  # Linter
+mypy>=1.5.0  # Type checker
+
+# Documentation
+sphinx>=7.0.0
+sphinx-rtd-theme>=1.3.0
 
 # Configuration
 pyyaml>=6.0
 toml>=0.10.2
 python-dotenv>=1.0.0
 
-# Note: angr and manticore require complex C++ compilation and may need manual installation
-# For full symbolic execution support, install separately:
-# pip install angr claripy manticore
+# Utilities
+packaging>=23.0
+python-dateutil>=2.8.0
+loguru>=0.7.0
+
+# Optional but referenced in try/except blocks
+pcapy>=0.11.5  # Alternative packet capture
+manticore>=0.3.7  # Alternative to angr (optional)
+
+# Additional specialized tools
+qiling>=1.4.0  # Binary emulation framework
+binwalk>=2.3.0  # Firmware analysis
+volatility3>=2.5.0  # Memory forensics
+
+# ============================================================================
+# System Dependencies (not pip installable):
+# - wkhtmltopdf (for pdfkit)
+# - CUDA toolkit (for pycuda/cupy)
+# - OpenCL runtime (for pyopencl)
+# - Radare2 binary (for r2pipe)
+# - Ghidra (for Ghidra integration)
+# - GTK3 (for weasyprint)
+# ============================================================================

@@ -36,7 +36,7 @@ from .config import CONFIG
 # Main application
 try:
     from .main import main
-    from .ui.main_window import IntellicrackApp
+    from .ui.main_app import IntellicrackApp
 except ImportError:
     # Handle case where dependencies aren't available
     main = None

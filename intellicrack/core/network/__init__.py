@@ -17,12 +17,12 @@ Modules:
 """
 
 try:
-    from .traffic_analyzer import TrafficAnalyzer
+    from .traffic_analyzer import NetworkTrafficAnalyzer as TrafficAnalyzer
 except ImportError:
     TrafficAnalyzer = None
 
 try:
-    from .ssl_interceptor import SSLInterceptor
+    from .ssl_interceptor import SSLTLSInterceptor as SSLInterceptor
 except ImportError:
     SSLInterceptor = None
 
@@ -32,18 +32,18 @@ except ImportError:
     ProtocolFingerprinter = None
 
 try:
-    from .license_server_emulator import LicenseServerEmulator
+    from .license_server_emulator import NetworkLicenseServerEmulator as LicenseServerEmulator
 except ImportError:
     LicenseServerEmulator = None
 
 try:
-    from .cloud_license_hooker import CloudLicenseHooker
+    from .cloud_license_hooker import CloudLicenseResponseGenerator as CloudLicenseHooker
 except ImportError:
     CloudLicenseHooker = None
 
 __all__ = [
     'TrafficAnalyzer',
-    'SSLInterceptor',
+    'SSLInterceptor', 
     'ProtocolFingerprinter',
     'LicenseServerEmulator',
     'CloudLicenseHooker'

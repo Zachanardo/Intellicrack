@@ -125,7 +125,7 @@ class TrainingThread(QThread):
             if key not in self.params:
                 self.params[key] = value
 
-    def _create_torch_model(self) -> Optional[torch.nn.Module]:
+    def _create_torch_model(self) -> Optional[Any]:
         """
         Create a PyTorch model for fine-tuning.
         
@@ -149,7 +149,7 @@ class TrainingThread(QThread):
             self.logger.error(f"Failed to create PyTorch model: {e}")
             return None
 
-    def _load_pretrained_model(self, base_model: str) -> Optional[torch.nn.Module]:
+    def _load_pretrained_model(self, base_model: str) -> Optional[Any]:
         """
         Load a pre-trained model with optional LoRA.
         
@@ -251,7 +251,7 @@ class TrainingThread(QThread):
             self.logger.error(f"Failed to load {model_type} model: {e}")
             return None, None
 
-    def _apply_lora(self, model: torch.nn.Module) -> torch.nn.Module:
+    def _apply_lora(self, model: Any) -> Any:
         """
         Apply LoRA (Low-Rank Adaptation) to the model.
         
@@ -278,7 +278,7 @@ class TrainingThread(QThread):
             self.logger.warning(f"Failed to apply LoRA: {e}")
             return model
 
-    def _create_simple_transformer(self) -> torch.nn.Module:
+    def _create_simple_transformer(self) -> Any:
         """
         Create a simple transformer model as fallback.
         
@@ -375,7 +375,7 @@ class TrainingThread(QThread):
             self.logger.error(f"Error in real training batch: {e}")
             return 2.0 * random.random()
 
-    def _train_pytorch_batch(self, model: torch.nn.Module, optimizer: Any, 
+    def _train_pytorch_batch(self, model: Any, optimizer: Any, 
                            batch_data: Dict[str, List]) -> float:
         """Train a PyTorch batch."""
         inputs = torch.tensor(batch_data['input_ids'])

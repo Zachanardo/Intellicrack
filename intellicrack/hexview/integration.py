@@ -129,12 +129,12 @@ def show_enhanced_hex_viewer(app_instance, file_path: Optional[str] = None, read
         return None
 
 
-def replace_standard_hex_viewer(app_instance):
+def initialize_hex_viewer(app_instance):
     """
-    Replace the standard hex viewer with the enhanced version.
+    Initialize the hex viewer functionality.
     
-    This function replaces the standard hex viewer function with the enhanced
-    version, by modifying the app_instance's show_editable_hex_viewer method.
+    This function sets up the hex viewer methods on the application instance
+    to enable both read-only viewing and editable modes.
     
     Args:
         app_instance: Intellicrack application instance
@@ -153,7 +153,7 @@ def replace_standard_hex_viewer(app_instance):
     if not hasattr(app_instance, "show_writable_hex_viewer"):
         app_instance.show_writable_hex_viewer = app_instance.show_editable_hex_viewer
     
-    logger.info("Replaced standard hex viewer with enhanced version")
+    logger.info("Initialized hex viewer functionality")
 
 
 def restore_standard_hex_viewer(app_instance):
@@ -288,8 +288,8 @@ def integrate_enhanced_hex_viewer(app_instance):
             logger.info("Enhanced hex viewer already integrated - skipping")
             return True
         
-        # Replace standard hex viewer
-        replace_standard_hex_viewer(app_instance)
+        # Initialize hex viewer
+        initialize_hex_viewer(app_instance)
         
         # Skip adding to menu since we have a dedicated tab
         # add_hex_viewer_menu(app_instance)
@@ -301,7 +301,7 @@ def integrate_enhanced_hex_viewer(app_instance):
         # Mark as integrated
         app_instance._hex_viewer_integrated = True
         
-        logger.info("Enhanced hex viewer fully integrated with Intellicrack")
+        logger.info("Hex viewer integration completed successfully")
         return True
     except Exception as e:
         logger.error(f"Error integrating enhanced hex viewer: {e}")

@@ -150,6 +150,11 @@ try:
 except ImportError as e:
     logger.warning(f"Failed to import ui_setup_functions: {e}")
 
+try:
+    from .pcapy_compat import *
+except ImportError as e:
+    logger.warning(f"Failed to import pcapy_compat: {e}")
+
 # Define package exports
 __all__ = [
     # From binary_utils
@@ -295,6 +300,9 @@ __all__ = [
     
     # From ui_setup_functions
     'setup_dataset_tab', 'setup_memory_monitor', 'setup_training_tab',
+    
+    # From pcapy_compat
+    'get_packet_capture_interface', 'create_pcap_reader', 'PCAP_AVAILABLE',
     
     # From internal_helpers (selected important ones)
     '_add_protocol_fingerprinter_results', '_analyze_requests',

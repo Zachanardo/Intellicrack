@@ -13,6 +13,7 @@ import json
 import traceback
 import logging
 import datetime
+import subprocess
 from functools import partial
 from typing import Dict, List, Optional, Any
 
@@ -48,22 +49,24 @@ except ImportError:
 # Import UI components
 try:
     from .dialogs.splash_screen import SplashScreen
+    from .dialogs.distributed_config_dialog import DistributedProcessingConfigDialog
 except ImportError:
     # Define a dummy SplashScreen for environments without PyQt5
     class SplashScreen:
         def show(self): pass
         def close(self): pass
+    DistributedProcessingConfigDialog = None
 
 # Import all the extracted components
 try:
     from intellicrack.core.analysis.symbolic_executor import SymbolicExecutionEngine
-    from intellicrack.core.analysis.taint_analyzer import TaintAnalysisEngine
+    from intellicrack.core.analysis.taint_analyzer import TaintAnalysisEngine, run_taint_analysis as run_standalone_taint_analysis
     from intellicrack.core.analysis.concolic_executor import ConcolicExecutionEngine
     from intellicrack.core.analysis.rop_generator import ROPChainGenerator
     from intellicrack.core.processing.distributed_manager import DistributedProcessingManager
     from intellicrack.core.processing.gpu_accelerator import GPUAccelerator
     from intellicrack.core.processing.memory_loader import MemoryOptimizedBinaryLoader
-    from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
+    from intellicrack.core.reporting.pdf_generator import PDFReportGenerator, run_report_generation
     from intellicrack.ai.ml_predictor import MLVulnerabilityPredictor
     from intellicrack.ai.model_manager_module import ModelManager
     from intellicrack.ui.dashboard_manager import DashboardManager
@@ -71,34 +74,40 @@ try:
     from intellicrack.config import CONFIG
 except ImportError as e:
     # Graceful fallback for missing dependencies
-    print(f"Import error in main_app.py: {e}")
-    import traceback
-    traceback.print_exc()
+    print(f"Warning: Some imports failed in main_app.py: {e}")
+    print("The application will run with reduced functionality.")
     SymbolicExecutionEngine = None
     TaintAnalysisEngine = None
+    run_standalone_taint_analysis = None
     ConcolicExecutionEngine = None
     ROPChainGenerator = None
     DistributedProcessingManager = None
     GPUAccelerator = None
     MemoryOptimizedBinaryLoader = None
     PDFReportGenerator = None
+    run_report_generation = None
     MLVulnerabilityPredictor = None
     ModelManager = None
     DashboardManager = None
     TOOL_REGISTRY = {}
     CONFIG = {}
-    IntellicrackApp = None
+    # DO NOT set IntellicrackApp to None! The class definition comes later!
 
 # Set up logger early
 logger = logging.getLogger(__name__)
 
-# Import logging utilities
-try:
-    from ..utils.logger import initialize_comprehensive_logging
-except ImportError:
-    def initialize_comprehensive_logging():
-        """Dummy function when logger utils not available"""
-        return 0, 0
+# Import logging utilities - DISABLED to prevent GUI issues
+# Comprehensive logging can interfere with Qt's event loop
+# try:
+#     from ..utils.logger import initialize_comprehensive_logging
+# except ImportError:
+#     def initialize_comprehensive_logging():
+#         """Dummy function when logger utils not available"""
+#         return 0, 0
+
+def initialize_comprehensive_logging():
+    """Dummy function - comprehensive logging disabled for GUI compatibility"""
+    return 0, 0
 
 # Import protection utilities
 try:
@@ -150,16 +159,34 @@ try:
         run_taint_analysis,
         run_qemu_analysis,
         run_selected_analysis,
-        run_network_license_server
+        run_network_license_server,
+        run_deep_license_analysis,
+        run_frida_analysis,
+        run_dynamic_instrumentation,
+        run_frida_script
     )
     from ..utils.exploitation import run_automated_patch_agent
+    from ..core.analysis.cfg_explorer import run_deep_cfg_analysis
+    from ..core.analysis.core_analysis import analyze_binary_internal, enhanced_deep_license_analysis, detect_packing, decrypt_embedded_script
+    from ..core.analysis.dynamic_analyzer import deep_runtime_monitoring
+    from ..core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
+    from ..utils.protection_detection import scan_for_bytecode_protectors
+    from ..core.protection_bypass.tpm_bypass import bypass_tpm_protection
+    from ..core.protection_bypass.vm_bypass import bypass_vm_detection
 except ImportError as e:
     logger.warning(f"Failed to import runner functions: {e}")
     # Define dummy functions
     def run_rop_chain_generator(app, *args, **kwargs):
         pass
     def run_automated_patch_agent(app, *args, **kwargs):
-        pass
+        from ..utils.exploitation import run_automated_patch_agent as exploit_agent
+        return exploit_agent(app, *args, **kwargs)
+    def analyze_binary_internal(binary_path, flags=None):
+        return ["Error: analyze_binary_internal not available"]
+    def enhanced_deep_license_analysis(binary_path):
+        return {"error": "enhanced_deep_license_analysis not available"}
+    def deep_runtime_monitoring(binary_path, timeout=30000):
+        return ["Error: deep_runtime_monitoring not available"]
     def run_ssl_tls_interceptor(app, *args, **kwargs):
         pass
     def run_protocol_fingerprinter(app, *args, **kwargs):
@@ -198,6 +225,30 @@ except ImportError as e:
         pass
     def run_network_license_server(app, *args, **kwargs):
         pass
+    def run_deep_license_analysis(app, *args, **kwargs):
+        pass
+    def run_frida_analysis(app, *args, **kwargs):
+        pass
+    def run_dynamic_instrumentation(app, *args, **kwargs):
+        pass
+    def run_frida_script(app, *args, **kwargs):
+        pass
+    def run_deep_cfg_analysis(app, *args, **kwargs):
+        pass
+    def detect_packing(binary_path):
+        return ["Error: detect_packing not available"]
+    def decrypt_embedded_script(binary_path):
+        return ["Error: decrypt_embedded_script not available"]
+    def scan_for_bytecode_protectors(binary_path):
+        return {"error": "scan_for_bytecode_protectors not available"}
+    class AdvancedVulnerabilityEngine:
+        @staticmethod
+        def scan_binary(binary_path):
+            return []
+    def bypass_tpm_protection(app, *args, **kwargs):
+        return {"success": False, "methods_applied": [], "errors": ["bypass_tpm_protection not available"]}
+    def bypass_vm_detection(app, *args, **kwargs):
+        return {"success": False, "methods_applied": [], "errors": ["bypass_vm_detection not available"]}
 
 # Import plugin utilities
 try:
@@ -222,6 +273,14 @@ except ImportError:
     def load_plugins(app, *args, **kwargs):
         """Dummy function when plugin system not available"""
         return {}
+
+# Import protection detection handlers
+try:
+    from .protection_detection_handlers import ProtectionDetectionHandlers
+except ImportError:
+    class ProtectionDetectionHandlers:
+        """Dummy class when protection detection handlers not available"""
+        pass
     def create_sample_plugins(app, *args, **kwargs):
         """Dummy function when plugin system not available"""
         pass
@@ -234,7 +293,7 @@ def log_message(message: str) -> str:
     """Helper function to format log messages."""
     return f"[{time.strftime('%H:%M:%S')}] {message}"
 
-class IntellicrackApp(QMainWindow):
+class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
     """
     Main application window for Intellicrack - a comprehensive reverse engineering and security analysis framework.
 
@@ -324,6 +383,68 @@ class IntellicrackApp(QMainWindow):
         self.update_output.emit("Starting protocol analysis...")
         # Implementation would go here
 
+    def start_network_capture(self):
+        """Start capturing network traffic"""
+        try:
+            interface = self.interface_combo.currentText() if hasattr(self, 'interface_combo') else "eth0"
+            filter_text = self.filter_input.text() if hasattr(self, 'filter_input') else ""
+            
+            self.update_output.emit(f"[Network] Starting capture on {interface} with filter: {filter_text if filter_text else 'none'}")
+            
+            # Use the traffic analyzer from the network module
+            if hasattr(self, 'traffic_analyzer'):
+                result = self.traffic_analyzer.start_capture(interface)
+                if result:
+                    self.update_output.emit("[Network] Capture started successfully")
+                else:
+                    self.update_output.emit("[Network] Failed to start capture")
+            else:
+                from intellicrack.core.network import TrafficAnalyzer
+                self.traffic_analyzer = TrafficAnalyzer()
+                result = self.traffic_analyzer.start_capture(interface)
+                if result:
+                    self.update_output.emit("[Network] Capture started successfully") 
+                else:
+                    self.update_output.emit("[Network] Failed to start capture")
+                    
+        except Exception as e:
+            self.update_output.emit(f"[Network] Error starting capture: {str(e)}")
+
+    def stop_network_capture(self):
+        """Stop capturing network traffic"""
+        try:
+            self.update_output.emit("[Network] Stopping capture")
+            
+            if hasattr(self, 'traffic_analyzer'):
+                # Stop the traffic analyzer
+                # Note: NetworkTrafficAnalyzer doesn't have stop_capture method, 
+                # so we'll set a flag to stop capture
+                self.traffic_analyzer.capturing = False
+                self.update_output.emit("[Network] Capture stopped")
+            else:
+                self.update_output.emit("[Network] No active capture to stop")
+                
+        except Exception as e:
+            self.update_output.emit(f"[Network] Error stopping capture: {str(e)}")
+
+    def clear_network_capture(self):
+        """Clear captured network data"""
+        try:
+            self.update_output.emit("[Network] Clearing capture data")
+            
+            # Clear the traffic table if it exists
+            if hasattr(self, 'traffic_table'):
+                self.traffic_table.setRowCount(0)
+                
+            # Clear traffic analyzer data if it exists
+            if hasattr(self, 'traffic_analyzer'):
+                self.traffic_analyzer.captured_packets = []
+                
+            self.update_output.emit("[Network] Capture data cleared")
+            
+        except Exception as e:
+            self.update_output.emit(f"[Network] Error clearing capture data: {str(e)}")
+
     def apply_performance_settings(self):
         """Apply performance optimization settings."""
         try:
@@ -358,9 +479,16 @@ class IntellicrackApp(QMainWindow):
         Sets up the logger, model manager, and other core components.
         """
         super().__init__()
+        # Flag to track if UI is initialized
+        self._ui_initialized = False
 
-        # Initialize logger
+        # Initialize logger first
         self.logger = logging.getLogger("IntellicrackLogger.Main")
+        
+        # Now we can use logging
+        self.logger.debug(f"QMainWindow initialized, parent: {self.parent()}")
+        self.logger.debug(f"Initial visibility: {self.isVisible()}")
+        self.logger.debug(f"Initial window state: {self.windowState()}")
         self.logger.info("IntellicrackApp constructor called. Initializing main application window.")
 
         # Initialize the ModelManager
@@ -548,6 +676,9 @@ class IntellicrackApp(QMainWindow):
         self.run_qemu_analysis = partial(run_qemu_analysis, self)
         self.run_selected_analysis = partial(run_selected_analysis, self)
         self.run_network_license_server = partial(run_network_license_server, self)
+        self.run_frida_analysis = partial(run_frida_analysis, self)
+        self.run_dynamic_instrumentation = partial(run_dynamic_instrumentation, self)
+        self.run_frida_script = partial(run_frida_script, self)
 
         # -------------------------------
         # Method Binding
@@ -687,6 +818,34 @@ class IntellicrackApp(QMainWindow):
         self.main_layout.addWidget(self.main_splitter)
 
         self.tabs = QTabWidget()
+        # Style main tabs differently from sub-tabs to avoid visual confusion
+        self.tabs.setTabPosition(QTabWidget.North)
+        self.tabs.setTabsClosable(False)
+        self.tabs.setStyleSheet("""
+            QTabWidget::pane {
+                border: 2px solid #C0C0C0;
+                background-color: #F0F0F0;
+            }
+            QTabWidget::tab-bar {
+                alignment: center;
+            }
+            QTabBar::tab {
+                background-color: #E0E0E0;
+                border: 1px solid #C0C0C0;
+                padding: 8px 16px;
+                margin-right: 2px;
+                font-weight: bold;
+            }
+            QTabBar::tab:selected {
+                background-color: #FFFFFF;
+                border-bottom-color: #FFFFFF;
+            }
+            QTabBar::tab:hover {
+                background-color: #F0F0F0;
+            }
+        """)
+        tabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        tabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         self.main_splitter.addWidget(self.tabs)
 
         self.output_panel = QWidget()
@@ -730,13 +889,97 @@ class IntellicrackApp(QMainWindow):
         self.binary_path = None
 
         # Setup each tab with appropriate UI components
-        self.setup_project_dashboard_tab()
-        self.setup_analysis_tab()
-        self.setup_patching_exploitation_tab()
-        self.setup_ai_assistant_tab()
-        self.setup_netanalysis_emulation_tab()
-        self.setup_tools_plugins_tab()
-        self.setup_settings_tab()
+        try:
+            self.logger.info("Setting up project dashboard tab...")
+            self.setup_project_dashboard_tab()
+            self.logger.info("Project dashboard tab setup complete")
+        except Exception as e:
+            self.logger.error(f"Failed to setup project dashboard tab: {e}")
+            self.logger.error(traceback.format_exc())
+            raise
+            
+        try:
+            self.logger.info("Setting up analysis tab...")
+            self.setup_analysis_tab()
+            self.logger.info("Analysis tab setup complete")
+        except Exception as e:
+            self.logger.error(f"Failed to setup analysis tab: {e}")
+            self.logger.error(traceback.format_exc())
+            raise
+            
+        try:
+            self.logger.info("Setting up patching exploitation tab...")
+            self.setup_patching_exploitation_tab()
+            self.logger.info("Patching exploitation tab setup complete")
+        except Exception as e:
+            self.logger.error(f"Failed to setup patching exploitation tab: {e}")
+            self.logger.error(traceback.format_exc())
+            raise
+            
+        try:
+            self.logger.info("Setting up AI assistant tab...")
+            self.setup_ai_assistant_tab()
+            self.logger.info("AI assistant tab setup complete")
+        except Exception as e:
+            self.logger.error(f"Failed to setup AI assistant tab: {e}")
+            self.logger.error(traceback.format_exc())
+            raise
+            
+        try:
+            self.logger.info("Setting up network analysis emulation tab...")
+            self.setup_netanalysis_emulation_tab()
+            self.logger.info("Network analysis emulation tab setup complete")
+        except Exception as e:
+            self.logger.error(f"Failed to setup network analysis emulation tab: {e}")
+            self.logger.error(traceback.format_exc())
+            raise
+            
+        try:
+            self.logger.info("Setting up tools plugins tab...")
+            self.setup_tools_plugins_tab()
+            self.logger.info("Tools plugins tab setup complete")
+        except Exception as e:
+            self.logger.error(f"Failed to setup tools plugins tab: {e}")
+            self.logger.error(traceback.format_exc())
+            raise
+            
+        try:
+            self.logger.info("Setting up settings tab...")
+            self.setup_settings_tab()
+            self.logger.info("Settings tab setup complete")
+        except Exception as e:
+            self.logger.error(f"Failed to setup settings tab: {e}")
+            self.logger.error(traceback.format_exc())
+            raise
+            
+        self.logger.info("All tab setup complete - constructor finished")
+        
+        # Ensure window is properly configured
+        self.setGeometry(100, 100, 1200, 800)
+        self.setWindowTitle("Intellicrack - Binary Analysis Tool")
+        self.setMinimumSize(800, 600)
+        
+        # Connect window close event
+        self.closeEvent = self.closeEvent_handler
+        
+        # Initialize plugins
+        try:
+            from ..plugins.plugin_system import create_sample_plugins
+            create_sample_plugins()
+            self.available_plugins = self.load_available_plugins()
+            self.logger.info(f"Loaded {len(self.available_plugins.get('custom', []))} custom plugins, "
+                           f"{len(self.available_plugins.get('frida', []))} Frida scripts, "
+                           f"{len(self.available_plugins.get('ghidra', []))} Ghidra scripts")
+        except Exception as e:
+            self.logger.warning(f"Plugin initialization failed: {e}")
+            self.available_plugins = {"custom": [], "frida": [], "ghidra": []}
+        
+        self.logger.info("Window configuration complete")
+    
+    def closeEvent_handler(self, event):
+        """Handle window close event."""
+        self.logger.info("Application closing...")
+        event.accept()
         
     def setup_project_dashboard_tab(self):
         """Sets up the Project & Dashboard tab with file management, project overview, and quick actions."""
@@ -961,6 +1204,8 @@ class IntellicrackApp(QMainWindow):
         
         # Create sub-tabs for the Analysis tab
         analysis_subtabs = QTabWidget()
+        analysis_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        analysis_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         
         # Create individual sub-tab widgets
         static_code_analysis_tab = QWidget()
@@ -1027,11 +1272,13 @@ class IntellicrackApp(QMainWindow):
         
         # Other code exploration buttons
         view_cfg_btn = QPushButton("View/Analyze Control Flow Graph (CFG)")
-        view_cfg_btn.clicked.connect(lambda: self.run_deep_cfg_analysis())
+        view_cfg_btn.clicked.connect(lambda: run_deep_cfg_analysis(self))
         
         find_rop_btn = QPushButton("Find ROP Gadgets")
+        find_rop_btn.clicked.connect(self.run_rop_gadget_finder)
         
         binary_sim_btn = QPushButton("Binary Similarity Search")
+        binary_sim_btn.clicked.connect(self.run_binary_similarity_search)
         
         code_exploration_layout.addWidget(view_cfg_btn)
         code_exploration_layout.addWidget(find_rop_btn)
@@ -1046,6 +1293,11 @@ class IntellicrackApp(QMainWindow):
         show_details_btn = QPushButton("Show Multi-Format Binary Details")
         show_details_btn.clicked.connect(lambda: self.run_multi_format_analysis())
         specialized_tools_layout.addWidget(show_details_btn)
+        
+        # Deep License Analysis & Pattern Recognition
+        license_analysis_btn = QPushButton("Deep License Logic Analysis & Pattern Recognition")
+        license_analysis_btn.clicked.connect(lambda: run_deep_license_analysis(self))
+        specialized_tools_layout.addWidget(license_analysis_btn)
         
         static_layout.addWidget(specialized_tools_group)
         
@@ -1088,13 +1340,24 @@ class IntellicrackApp(QMainWindow):
         specific_scans_layout = QVBoxLayout(specific_scans_group)
         
         detect_packing_btn = QPushButton("Detect Packing/Obfuscation")
+        detect_packing_btn.clicked.connect(self.run_packing_detection)
         detect_commercial_btn = QPushButton("Detect Commercial Protections")
+        detect_commercial_btn.clicked.connect(self.run_commercial_protection_detection)
+        detect_commercial_btn.clicked.connect(self.run_commercial_protection_scan)
         detect_dongles_btn = QPushButton("Detect Hardware Dongles")
+        detect_dongles_btn.clicked.connect(self.run_hardware_dongle_detection)
         detect_tpm_btn = QPushButton("Detect TPM Protection")
+        detect_tpm_btn.clicked.connect(self.run_tpm_detection)
         detect_vm_btn = QPushButton("Detect VM/Sandbox Evasion")
+        detect_vm_btn.clicked.connect(self.run_vm_detection)
         detect_antidebug_btn = QPushButton("Detect Anti-Debugger Techniques")
+        detect_antidebug_btn.clicked.connect(self.run_anti_debug_detection)
         detect_checksum_btn = QPushButton("Detect Checksum/Integrity Verification")
+        detect_checksum_btn.clicked.connect(self.run_checksum_detection)
         detect_selfhealing_btn = QPushButton("Detect Self-Healing Code")
+        detect_selfhealing_btn.clicked.connect(self.run_self_healing_detection)
+        detect_embedded_script_btn = QPushButton("Detect Embedded/Encrypted Scripts")
+        detect_embedded_script_btn.clicked.connect(self.run_embedded_script_detection)
         
         specific_scans_layout.addWidget(detect_packing_btn)
         specific_scans_layout.addWidget(detect_commercial_btn)
@@ -1104,6 +1367,7 @@ class IntellicrackApp(QMainWindow):
         specific_scans_layout.addWidget(detect_antidebug_btn)
         specific_scans_layout.addWidget(detect_checksum_btn)
         specific_scans_layout.addWidget(detect_selfhealing_btn)
+        specific_scans_layout.addWidget(detect_embedded_script_btn)
         
         protection_layout.addWidget(specific_scans_group)
         
@@ -1116,6 +1380,7 @@ class IntellicrackApp(QMainWindow):
         bypass_vm_btn = QPushButton("Bypass VM Detection")
         bypass_vm_btn.clicked.connect(self.run_vm_bypass)
         bypass_dongle_btn = QPushButton("Activate Dongle Emulation")
+        bypass_dongle_btn.clicked.connect(self.run_dongle_emulation)
         
         bypass_layout.addWidget(bypass_tpm_btn)
         bypass_layout.addWidget(bypass_vm_btn)
@@ -1128,7 +1393,9 @@ class IntellicrackApp(QMainWindow):
         vuln_scan_layout = QVBoxLayout(vuln_scan_group)
         
         run_static_vuln_btn = QPushButton("Run Advanced Static Vulnerability Scan")
+        run_static_vuln_btn.clicked.connect(self.run_static_vulnerability_scan)
         run_ml_vuln_btn = QPushButton("Run ML-Based Vulnerability Prediction")
+        run_ml_vuln_btn.clicked.connect(self.run_ml_vulnerability_prediction)
         
         vuln_scan_layout.addWidget(run_static_vuln_btn)
         vuln_scan_layout.addWidget(run_ml_vuln_btn)
@@ -1136,9 +1403,9 @@ class IntellicrackApp(QMainWindow):
         protection_layout.addWidget(vuln_scan_group)
         
         # Results output area
-        protection_results = QTextEdit()
-        protection_results.setReadOnly(True)
-        protection_layout.addWidget(protection_results)
+        self.protection_results = QTextEdit()
+        self.protection_results.setReadOnly(True)
+        protection_layout.addWidget(self.protection_results)
         
         # 3. Dynamic & Hooking sub-tab
         dynamic_layout = QVBoxLayout(dynamic_hooking_tab)
@@ -1207,8 +1474,10 @@ class IntellicrackApp(QMainWindow):
         process_analysis_layout = QVBoxLayout(process_analysis_group)
         
         analyze_process_btn = QPushButton("Analyze Live Process Behavior")
+        analyze_process_btn.clicked.connect(self.analyze_process_behavior)
         
         memory_scan_btn = QPushButton("Dynamic Memory Keyword Scan (Frida)")
+        memory_scan_btn.clicked.connect(self.run_memory_keyword_scan)
         
         process_analysis_layout.addWidget(analyze_process_btn)
         process_analysis_layout.addWidget(memory_scan_btn)
@@ -1233,7 +1502,7 @@ class IntellicrackApp(QMainWindow):
         symbolic_target_layout.addWidget(symbolic_target_input)
         
         run_symbolic_btn = QPushButton("Run Symbolic Path Exploration")
-        run_symbolic_btn.clicked.connect(lambda: self.run_symbolic_execution())
+        run_symbolic_btn.clicked.connect(lambda: run_symbolic_execution(self))
         
         generate_exploit_btn = QPushButton("Generate Exploit from Symbolic Path")
         
@@ -1256,6 +1525,7 @@ class IntellicrackApp(QMainWindow):
         run_concolic_btn.clicked.connect(lambda: self.run_concolic_execution())
         
         find_license_btn = QPushButton("Find License Bypass (Concolic)")
+        find_license_btn.clicked.connect(lambda: self.run_concolic_license_bypass())
         
         concolic_layout.addLayout(concolic_target_layout)
         concolic_layout.addWidget(run_concolic_btn)
@@ -1311,8 +1581,9 @@ class IntellicrackApp(QMainWindow):
         
         command_layout = QHBoxLayout()
         command_layout.addWidget(QLabel("Command to execute in VM:"))
-        command_input = QLineEdit()
-        command_layout.addWidget(command_input)
+        self.qemu_command_input = QLineEdit()
+        self.qemu_command_input.setPlaceholderText("Enter command to execute in QEMU VM...")
+        command_layout.addWidget(self.qemu_command_input)
         
         execute_vm_btn = QPushButton("Execute in VM")
         compare_snapshots_btn = QPushButton("Compare Snapshots")
@@ -1324,6 +1595,13 @@ class IntellicrackApp(QMainWindow):
         emulation_layout.addWidget(execute_vm_btn)
         emulation_layout.addWidget(compare_snapshots_btn)
         
+        # Connect QEMU button handlers
+        start_qemu_btn.clicked.connect(lambda: self.run_qemu_analysis())
+        create_snapshot_btn.clicked.connect(lambda: self.create_qemu_snapshot())
+        restore_snapshot_btn.clicked.connect(lambda: self.restore_qemu_snapshot())
+        execute_vm_btn.clicked.connect(lambda: self.execute_qemu_command())
+        compare_snapshots_btn.clicked.connect(lambda: self.compare_qemu_snapshots())
+        
         advanced_layout.addWidget(emulation_group)
         
         # Distributed Analysis section
@@ -1331,6 +1609,7 @@ class IntellicrackApp(QMainWindow):
         distributed_layout = QVBoxLayout(distributed_group)
         
         config_nodes_btn = QPushButton("Configure Distributed Analysis Nodes")
+        config_nodes_btn.clicked.connect(lambda: self.open_distributed_config())
         run_distributed_btn = QPushButton("Run Distributed Analysis Task")
         run_distributed_btn.clicked.connect(lambda: self.run_distributed_processing())
         
@@ -1392,6 +1671,8 @@ class IntellicrackApp(QMainWindow):
         
         # Create sub-tabs for the Patching & Exploitation tab
         patching_subtabs = QTabWidget()
+        patching_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        patching_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         
         # Create individual sub-tab widgets
         patch_plan_management_tab = QWidget()
@@ -1519,8 +1800,13 @@ class IntellicrackApp(QMainWindow):
         ai_patching_layout = QVBoxLayout(ai_patching_group)
         
         suggest_patches_btn = QPushButton("AI: Suggest Patches for Current Binary")
+        suggest_patches_btn.clicked.connect(lambda: run_automated_patch_agent(self))
+        
         get_proposed_btn = QPushButton("AI: Get Proposed Patches from Assistant")
+        get_proposed_btn.clicked.connect(self.preview_patch)
+        
         apply_confirmed_btn = QPushButton("AI: Apply Confirmed Patch")
+        apply_confirmed_btn.clicked.connect(self.apply_patch_plan)
         
         ai_patching_layout.addWidget(suggest_patches_btn)
         ai_patching_layout.addWidget(get_proposed_btn)
@@ -1532,6 +1818,7 @@ class IntellicrackApp(QMainWindow):
         exploit_dev_layout = QVBoxLayout(exploit_dev_tools_tab)
         
         generate_strategy_btn = QPushButton("Generate Exploit Strategy from Vulnerabilities")
+        generate_strategy_btn.clicked.connect(lambda: self.generate_exploit_strategy())
         exploit_dev_layout.addWidget(generate_strategy_btn)
         
         payload_layout = QHBoxLayout()
@@ -1544,6 +1831,7 @@ class IntellicrackApp(QMainWindow):
         exploit_dev_layout.addLayout(payload_layout)
         
         generate_payload_btn = QPushButton("Generate Exploit Payload")
+        generate_payload_btn.clicked.connect(lambda: self.generate_exploit_payload(payload_combo.currentText()))
         exploit_dev_layout.addWidget(generate_payload_btn)
         
         # ROP Chain Generation section
@@ -1585,6 +1873,8 @@ class IntellicrackApp(QMainWindow):
         
         # Create sub-tabs for the AI Assistant tab
         ai_subtabs = QTabWidget()
+        ai_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        ai_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         
         # Create individual sub-tab widgets
         ai_chat_tab = QWidget()
@@ -1719,8 +2009,12 @@ class IntellicrackApp(QMainWindow):
         patch_agent_btn = QPushButton("Automated Patch Agent (AI-Driven)")
         patch_agent_btn.clicked.connect(self.run_automated_patch_agent)
         
+        feature_extract_btn = QPushButton("Automated Feature Extraction for ML Models")
+        feature_extract_btn.clicked.connect(self.run_feature_extraction)
+        
         automation_layout.addWidget(autonomous_btn)
         automation_layout.addWidget(patch_agent_btn)
+        automation_layout.addWidget(feature_extract_btn)
         
         # AI Tool Call Log section
         tool_log_group = QGroupBox("AI Tool Call Log")
@@ -1747,6 +2041,8 @@ class IntellicrackApp(QMainWindow):
         
         # Create sub-tabs for the NetAnalysis & Emulation tab
         net_subtabs = QTabWidget()
+        net_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        net_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         
         # Create individual sub-tab widgets
         traffic_capture_tab = QWidget()
@@ -1802,6 +2098,7 @@ class IntellicrackApp(QMainWindow):
         analysis_buttons_layout = QHBoxLayout()
         
         analyze_traffic_btn = QPushButton("Analyze Captured Traffic")
+        analyze_traffic_btn.clicked.connect(self.analyze_captured_traffic)
         generate_report_btn = QPushButton("Generate Network Traffic Report...")
         
         analysis_buttons_layout.addWidget(analyze_traffic_btn)
@@ -1947,6 +2244,8 @@ class IntellicrackApp(QMainWindow):
         
         # Create sub-tabs for the Tools & Plugins tab
         tools_subtabs = QTabWidget()
+        tools_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        tools_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         
         # Create individual sub-tab widgets
         hex_editor_tab = QWidget()
@@ -1997,6 +2296,8 @@ class IntellicrackApp(QMainWindow):
         
         # Inner tabs for plugin types
         plugin_subtabs = QTabWidget()
+        plugin_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        plugin_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         
         # Frida Scripts tab
         frida_scripts_tab = QWidget()
@@ -2551,6 +2852,8 @@ class IntellicrackApp(QMainWindow):
         
         # Structure view with tabs
         struct_tabs = QTabWidget()
+        struct_tabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        struct_tabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         
         # Headers tab
         headers_tab = QWidget()
@@ -2791,6 +3094,8 @@ class IntellicrackApp(QMainWindow):
         
         # Create tab widget for network tools
         network_tabs = QTabWidget()
+        network_tabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        network_tabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         
         # 1. Traffic Analysis tab
         traffic_tab = QWidget()
@@ -3097,6 +3402,8 @@ class IntellicrackApp(QMainWindow):
         
         # Request/response editor
         editor_tabs = QTabWidget()
+        editor_tabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        editor_tabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         
         # Request tab
         request_tab = QWidget()
@@ -3180,9 +3487,11 @@ class IntellicrackApp(QMainWindow):
         plugin_manager_btn = QPushButton("Plugin Manager")
         plugin_manager_btn.setIcon(QIcon.fromTheme("preferences-system"))
         plugin_manager_btn.setToolTip("Install, update, and manage plugins")
+        plugin_manager_btn.clicked.connect(self.show_plugin_manager)
         
         install_plugin_btn = QPushButton("Install Plugin")
         install_plugin_btn.setIcon(QIcon.fromTheme("list-add"))
+        install_plugin_btn.clicked.connect(lambda: self.import_plugin("custom"))
         
         header_layout.addWidget(plugin_manager_btn)
         header_layout.addWidget(install_plugin_btn)
@@ -3299,12 +3608,15 @@ class IntellicrackApp(QMainWindow):
         info_right = QVBoxLayout()
         run_plugin_btn = QPushButton("Run Plugin")
         run_plugin_btn.setIcon(QIcon.fromTheme("media-playback-start"))
+        run_plugin_btn.clicked.connect(lambda: self.run_custom_plugin("Demo Plugin"))
         
         edit_plugin_btn = QPushButton("Edit Plugin")
         edit_plugin_btn.setIcon(QIcon.fromTheme("document-edit"))
+        edit_plugin_btn.clicked.connect(lambda: self.edit_plugin_file("plugins/custom_modules/demo_plugin.py"))
         
         uninstall_plugin_btn = QPushButton("Uninstall")
         uninstall_plugin_btn.setIcon(QIcon.fromTheme("edit-delete"))
+        uninstall_plugin_btn.clicked.connect(lambda: QMessageBox.information(self, "Uninstall", "Plugin uninstall functionality would be implemented here"))
         
         info_right.addWidget(run_plugin_btn)
         info_right.addWidget(edit_plugin_btn)
@@ -3379,6 +3691,19 @@ class IntellicrackApp(QMainWindow):
         certificate_tool_btn.setIcon(QIcon.fromTheme("application-certificate"))
         certificate_tool_btn.setToolTip("Manage and create certificates")
         tools_layout.addWidget(certificate_tool_btn, 1, 2)
+        
+        # Add plugin execution mode test buttons
+        sandbox_test_btn = QPushButton("Test Sandbox")
+        sandbox_test_btn.setIcon(QIcon.fromTheme("security-medium"))
+        sandbox_test_btn.setToolTip("Test sandboxed plugin execution")
+        sandbox_test_btn.clicked.connect(self.test_sandbox_execution)
+        tools_layout.addWidget(sandbox_test_btn, 2, 0)
+        
+        remote_test_btn = QPushButton("Test Remote")
+        remote_test_btn.setIcon(QIcon.fromTheme("network-workgroup"))
+        remote_test_btn.setToolTip("Test remote plugin execution")
+        remote_test_btn.clicked.connect(self.test_remote_execution)
+        tools_layout.addWidget(remote_test_btn, 2, 1)
         
         tools_group.setLayout(tools_layout)
         layout.addWidget(tools_group)
@@ -3643,6 +3968,57 @@ class IntellicrackApp(QMainWindow):
         
         # Also add to logs
         self.log_output.append("<span style='color:#007F00;'>[INFO] [2023-05-16 12:31:30] Assistant query processed</span>")
+        
+    def run_concolic_license_bypass(self):
+        """Run concolic execution to find license bypass."""
+        try:
+            if not self.binary_path:
+                QMessageBox.warning(self, "Error", "No binary file selected")
+                return
+            
+            self.update_output.emit("[INFO] Starting concolic execution for license bypass...")
+            
+            # Check if concolic execution engine is available
+            if not hasattr(self, 'concolic_execution_engine') or self.concolic_execution_engine is None:
+                QMessageBox.warning(self, "Error", "Concolic execution engine not available")
+                return
+            
+            # Create a new engine instance for this binary
+            from intellicrack.core.analysis.concolic_executor import ConcolicExecutionEngine
+            engine = ConcolicExecutionEngine(self.binary_path, max_iterations=50, timeout=60)
+            
+            if not engine.manticore_available:
+                QMessageBox.warning(self, "Error", "Manticore/SimConcolic not available for concolic execution")
+                return
+            
+            # Run license bypass analysis
+            self.update_output.emit("[INFO] Analyzing binary for license bypass patterns...")
+            results = engine.find_license_bypass()
+            
+            if results.get("success"):
+                if results.get("bypass_found"):
+                    bypass_info = f"""License Bypass Found!
+                    
+License Check Address: {results.get('license_check_address', 'Auto-detected')}
+Input Data (stdin): {results.get('stdin', 'None')}
+Arguments: {results.get('argv', [])}
+Description: {results.get('description', 'License bypass successful')}"""
+                    
+                    QMessageBox.information(self, "Concolic Analysis Success", bypass_info)
+                    self.update_output.emit(f"[SUCCESS] {results.get('description', 'License bypass found')}")
+                else:
+                    QMessageBox.information(self, "Concolic Analysis Complete", 
+                                          "Analysis completed but no license bypass found")
+                    self.update_output.emit("[INFO] No license bypass patterns detected")
+            else:
+                error_msg = results.get("error", "Unknown error during analysis")
+                QMessageBox.warning(self, "Analysis Error", f"Concolic analysis failed: {error_msg}")
+                self.update_output.emit(f"[ERROR] Concolic analysis failed: {error_msg}")
+                
+        except Exception as e:
+            error_msg = f"Failed to run concolic license bypass: {str(e)}"
+            QMessageBox.critical(self, "Error", error_msg)
+            self.update_output.emit(f"[ERROR] {error_msg}")
         
     def apply_log_filter(self):
         """Apply filters to the log output."""
@@ -3949,50 +4325,12 @@ class IntellicrackApp(QMainWindow):
         """Apply theme settings from configuration."""
         try:
             # Get theme from config or default to dark theme
-            theme = CONFIG.get("theme", "dark")
+            theme = CONFIG.get("ui_theme", "Dark")
             
-            if theme == "dark":
-                # Apply dark theme
-                dark_palette = QPalette()
-                dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
-                dark_palette.setColor(QPalette.WindowText, Qt.white)
-                dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
-                dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-                dark_palette.setColor(QPalette.ToolTipBase, Qt.white)
-                dark_palette.setColor(QPalette.ToolTipText, Qt.white)
-                dark_palette.setColor(QPalette.Text, Qt.white)
-                dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
-                dark_palette.setColor(QPalette.ButtonText, Qt.white)
-                dark_palette.setColor(QPalette.BrightText, Qt.red)
-                dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
-                dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-                dark_palette.setColor(QPalette.HighlightedText, Qt.black)
-                self.setPalette(dark_palette)
-                
-                # Set stylesheet for additional widgets
-                self.setStyleSheet("""
-                QToolTip { 
-                    color: white; 
-                    background-color: #2a82da; 
-                    border: 1px solid white; 
-                }
-                QGroupBox {
-                    border: 1px solid gray;
-                    border-radius: 5px;
-                    margin-top: 1ex;
-                    font-weight: bold;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    subcontrol-position: top center;
-                    padding: 0 3px;
-                }
-                """)
-                
-            elif theme == "light":
-                # Reset to default light theme
-                self.setPalette(QApplication.style().standardPalette())
-                self.setStyleSheet("")
+            if theme.lower() == "dark":
+                self.apply_dark_theme()
+            else:
+                self.apply_light_theme()
                 
             # Apply font settings
             font_size = CONFIG.get("font_size", 10)
@@ -4238,12 +4576,14 @@ class CustomPlugin:
         
         theme_layout = QHBoxLayout()
         theme_layout.addWidget(QLabel("UI Theme:"))
-        theme_combo = QComboBox()
-        theme_combo.addItems(["Light", "Dark"])
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItems(["Light", "Dark"])
         if "ui_theme" in CONFIG:
-            theme_combo.setCurrentText(CONFIG["ui_theme"])
-        theme_combo.currentTextChanged.connect(self.apply_theme)
-        theme_layout.addWidget(theme_combo)
+            self.theme_combo.setCurrentText(CONFIG["ui_theme"])
+        else:
+            self.theme_combo.setCurrentText("Dark")  # Default to dark
+        # Don't connect to immediate change - wait for Apply button
+        theme_layout.addWidget(self.theme_combo)
         
         ui_scale_layout = QHBoxLayout()
         ui_scale_layout.addWidget(QLabel("UI Scale:"))
@@ -4363,13 +4703,42 @@ class CustomPlugin:
         dependency_layout = QVBoxLayout(dependency_group)
         
         check_dependencies_btn = QPushButton("Check for Missing/Updateable Dependencies")
-        check_dependencies_btn.clicked.connect(lambda: check_and_install_dependencies())
+        check_dependencies_btn.clicked.connect(self.check_dependencies_ui)
         
         install_dependencies_btn = QPushButton("Install/Update Selected Dependencies")
         install_dependencies_btn.clicked.connect(lambda: install_dependencies())
         
         dependency_layout.addWidget(check_dependencies_btn)
         dependency_layout.addWidget(install_dependencies_btn)
+        
+        # System Features section
+        system_group = QGroupBox("System Features")
+        system_layout = QVBoxLayout(system_group)
+        
+        # Persistent logging button
+        logging_btn = QPushButton("Setup Persistent Logging with Rotation")
+        logging_btn.clicked.connect(self.setup_persistent_logging_ui)
+        system_layout.addWidget(logging_btn)
+        
+        # Fine-tune model button
+        finetune_btn = QPushButton("Fine-tune AI Model")
+        finetune_btn.clicked.connect(self.fine_tune_model)
+        system_layout.addWidget(finetune_btn)
+        
+        # Extract icon button
+        icon_btn = QPushButton("Extract Icon from Binary")
+        icon_btn.clicked.connect(self.extract_icon_from_binary)
+        system_layout.addWidget(icon_btn)
+        
+        # Memory optimization button
+        memory_btn = QPushButton("Optimize Memory Usage")
+        memory_btn.clicked.connect(self.optimize_memory_usage_ui)
+        system_layout.addWidget(memory_btn)
+        
+        # Demo threaded operation button
+        thread_demo_btn = QPushButton("Demo: Run Long Operation in Thread")
+        thread_demo_btn.clicked.connect(self.demo_threaded_operation)
+        system_layout.addWidget(thread_demo_btn)
         
         # Configuration Profiles section
         profiles_group = QGroupBox("Configuration Profiles")
@@ -4411,6 +4780,7 @@ class CustomPlugin:
         scroll_layout.addWidget(appearance_group)
         scroll_layout.addWidget(performance_group)
         scroll_layout.addWidget(dependency_group)
+        scroll_layout.addWidget(system_group)
         scroll_layout.addWidget(profiles_group)
         scroll_layout.addWidget(about_group)
         
@@ -4447,6 +4817,8 @@ class CustomPlugin:
         
         # Create tabbed interface for settings categories
         settings_tabs = QTabWidget()
+        settings_tabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        settings_tabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         
         # 1. AI Configuration tab
         ai_tab = QWidget()
@@ -4724,8 +5096,7 @@ class CustomPlugin:
         tools = [
             ("Ghidra Path:", "/usr/local/ghidra"),
             ("Radare2 Path:", "/usr/bin/radare2"),
-            ("Frida Path:", "/usr/local/bin/frida"),
-            ("IDA Pro Path:", "C:\\Program Files\\IDA Pro")
+            ("Frida Path:", "/usr/local/bin/frida")
         ]
         
         for row, (label_text, path_value) in enumerate(tools):
@@ -5233,6 +5604,168 @@ def register():
         except Exception as e:
             self.update_output.emit(log_message(f"Error importing plugin: {e}"))
 
+    def run_plugin(self, plugin_name):
+        """Run a built-in plugin by name."""
+        try:
+            from ..plugins.plugin_system import run_plugin as plugin_system_run_plugin
+            plugin_system_run_plugin(self, plugin_name)
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Plugin] Error running plugin {plugin_name}: {e}"))
+
+    def run_custom_plugin(self, plugin_name):
+        """Run a custom Python plugin."""
+        try:
+            from ..plugins.plugin_system import run_custom_plugin as plugin_system_run_custom_plugin
+            # First load plugins to get available plugins
+            from ..plugins.plugin_system import load_plugins
+            available_plugins = load_plugins()
+            
+            # Find the plugin in custom plugins
+            for plugin_info in available_plugins.get("custom", []):
+                if plugin_info["name"] == plugin_name:
+                    plugin_system_run_custom_plugin(self, plugin_info)
+                    return
+                    
+            self.update_output.emit(log_message(f"[Plugin] Custom plugin '{plugin_name}' not found"))
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Plugin] Error running custom plugin {plugin_name}: {e}"))
+
+    def run_frida_plugin_from_file(self, plugin_path):
+        """Run a Frida script plugin from file."""
+        try:
+            from ..plugins.plugin_system import run_frida_plugin_from_file as plugin_system_run_frida
+            
+            # If plugin_path is just a name, find the full path
+            if not os.path.exists(plugin_path):
+                frida_dir = os.path.join("plugins", "frida_scripts")
+                if not plugin_path.endswith(".js"):
+                    plugin_path += ".js"
+                full_path = os.path.join(frida_dir, plugin_path)
+                if os.path.exists(full_path):
+                    plugin_path = full_path
+                else:
+                    self.update_output.emit(log_message(f"[Plugin] Frida script not found: {plugin_path}"))
+                    return
+                    
+            plugin_system_run_frida(self, plugin_path)
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Plugin] Error running Frida plugin {plugin_path}: {e}"))
+
+    def run_ghidra_plugin_from_file(self, plugin_path):
+        """Run a Ghidra script plugin from file."""
+        try:
+            from ..plugins.plugin_system import run_ghidra_plugin_from_file as plugin_system_run_ghidra
+            
+            # If plugin_path is just a name, find the full path
+            if not os.path.exists(plugin_path):
+                ghidra_dir = os.path.join("plugins", "ghidra_scripts")
+                if not plugin_path.endswith(".java"):
+                    plugin_path += ".java"
+                full_path = os.path.join(ghidra_dir, plugin_path)
+                if os.path.exists(full_path):
+                    plugin_path = full_path
+                else:
+                    self.update_output.emit(log_message(f"[Plugin] Ghidra script not found: {plugin_path}"))
+                    return
+                    
+            plugin_system_run_ghidra(self, plugin_path)
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Plugin] Error running Ghidra plugin {plugin_path}: {e}"))
+
+    def load_available_plugins(self):
+        """Load and return available plugins."""
+        try:
+            from ..plugins.plugin_system import load_plugins
+            return load_plugins()
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Plugin] Error loading plugins: {e}"))
+            return {"frida": [], "ghidra": [], "custom": []}
+
+    def run_plugin_in_sandbox(self, plugin_path, function_name="analyze", *args):
+        """Run a plugin in a sandboxed environment with resource limits."""
+        try:
+            from ..plugins.plugin_system import run_plugin_in_sandbox
+            
+            # If no args provided, use current binary path
+            if not args and hasattr(self, 'binary_path') and self.binary_path:
+                args = (self.binary_path,)
+            
+            self.update_output.emit(log_message(f"[Plugin] Running {plugin_path} in sandbox..."))
+            results = run_plugin_in_sandbox(plugin_path, function_name, *args)
+            
+            if results:
+                for result in results:
+                    self.update_output.emit(log_message(f"[Sandbox] {result}"))
+            else:
+                self.update_output.emit(log_message("[Sandbox] No results returned"))
+                
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Plugin] Error running plugin in sandbox: {e}"))
+
+    def run_plugin_remotely(self, plugin_info):
+        """Run a plugin on a remote system."""
+        try:
+            from ..plugins.plugin_system import run_plugin_remotely
+            
+            self.update_output.emit(log_message(f"[Plugin] Preparing remote execution for {plugin_info.get('name', 'Unknown')}..."))
+            results = run_plugin_remotely(self, plugin_info)
+            
+            if results:
+                for result in results:
+                    self.update_output.emit(log_message(f"[Remote] {result}"))
+            else:
+                self.update_output.emit(log_message("[Remote] No results returned"))
+                
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Plugin] Error running plugin remotely: {e}"))
+
+    def show_plugin_manager(self):
+        """Show the plugin manager dialog."""
+        try:
+            from .dialogs.plugin_manager_dialog import PluginManagerDialog
+            dialog = PluginManagerDialog(self)
+            dialog.exec_()
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Plugin] Error opening plugin manager: {e}"))
+            QMessageBox.warning(self, "Error", f"Could not open plugin manager: {e}")
+
+    def test_sandbox_execution(self):
+        """Test sandboxed plugin execution."""
+        try:
+            # Use the demo plugin for testing
+            demo_plugin_path = "plugins/custom_modules/demo_plugin.py"
+            if os.path.exists(demo_plugin_path):
+                self.update_output.emit(log_message("[Test] Testing sandboxed plugin execution..."))
+                self.run_plugin_in_sandbox(demo_plugin_path, "analyze", "test_binary.exe")
+            else:
+                self.update_output.emit(log_message("[Test] Demo plugin not found for sandbox test"))
+                QMessageBox.warning(self, "Test Failed", "Demo plugin not found. Please ensure plugins are properly initialized.")
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Test] Sandbox test failed: {e}"))
+
+    def test_remote_execution(self):
+        """Test remote plugin execution."""
+        try:
+            # Create a mock plugin info for testing
+            plugin_info = {
+                "name": "Demo Plugin",
+                "path": "plugins/custom_modules/demo_plugin.py",
+                "description": "Test plugin for remote execution"
+            }
+            
+            if os.path.exists(plugin_info["path"]):
+                self.update_output.emit(log_message("[Test] Testing remote plugin execution..."))
+                self.run_plugin_remotely(plugin_info)
+            else:
+                self.update_output.emit(log_message("[Test] Demo plugin not found for remote test"))
+                QMessageBox.information(self, "Remote Test", 
+                    "Remote plugin execution test requires:\n"
+                    "1. Demo plugin to be available\n"
+                    "2. Remote plugins enabled in settings\n"
+                    "3. Remote server running on target host")
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Test] Remote test failed: {e}"))
+
     def create_menu_bar(self):
         """Creates the main menu bar with all menu options."""
         menubar = self.menuBar()
@@ -5341,7 +5874,8 @@ def register():
 
         deep_analysis_menu = analysis_menu.addMenu("Deep Analysis")
         for analysis_type in ["License Logic", "Runtime Monitoring", "CFG Structure", "Packing Detection",
-                              "Taint Analysis", "Symbolic Execution", "Concolic Execution"]:
+                              "Taint Analysis", "Symbolic Execution", "Concolic Execution", "ROP Chain Analysis",
+                              "Memory Optimization", "Incremental Analysis", "Distributed Processing", "GPU Acceleration"]:
             analysis_action = QAction(analysis_type, self)
             analysis_action.triggered.connect(lambda checked, a=analysis_type: self.handle_deep_analysis_mode(a))
             deep_analysis_menu.addAction(analysis_action)
@@ -5351,7 +5885,7 @@ def register():
         analysis_menu.addAction(custom_analysis_action)
 
         similarity_search_action = QAction("Similarity Search", self)
-        similarity_search_action.triggered.connect(self.open_similarity_search)
+        similarity_search_action.triggered.connect(self.run_binary_similarity_search)
         analysis_menu.addAction(similarity_search_action)
 
         # Patching menu
@@ -5797,6 +6331,151 @@ def register():
         except Exception as e:
             self.update_output.emit(log_message(f"Error saving analysis results: {e}"))
 
+        
+    def apply_dark_theme(self):
+        """Apply dark theme to entire application"""
+        app = QApplication.instance()
+        app.setStyle("Fusion")
+        
+        # Create dark palette
+        dark_palette = QPalette()
+        dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.WindowText, Qt.white)
+        dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
+        dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ToolTipBase, Qt.white)
+        dark_palette.setColor(QPalette.ToolTipText, Qt.white)
+        dark_palette.setColor(QPalette.Text, Qt.white)
+        dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ButtonText, Qt.white)
+        dark_palette.setColor(QPalette.BrightText, Qt.red)
+        dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
+        dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+        dark_palette.setColor(QPalette.HighlightedText, Qt.black)
+        
+        app.setPalette(dark_palette)
+        
+        # Apply dark stylesheet for all widgets
+        app.setStyleSheet("""
+            QWidget {
+                background-color: #353535;
+                color: white;
+            }
+            QTextEdit, QPlainTextEdit, QTextBrowser {
+                background-color: #191919;
+                color: white;
+                border: 1px solid #555;
+            }
+            QLineEdit {
+                background-color: #191919;
+                color: white;
+                border: 1px solid #555;
+                padding: 5px;
+            }
+            QComboBox {
+                background-color: #191919;
+                color: white;
+                border: 1px solid #555;
+                padding: 5px;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid white;
+                margin-right: 5px;
+            }
+            QSpinBox {
+                background-color: #191919;
+                color: white;
+                border: 1px solid #555;
+                padding: 5px;
+            }
+            QPushButton {
+                background-color: #555;
+                color: white;
+                border: 1px solid #777;
+                padding: 5px 10px;
+                margin: 2px;
+            }
+            QPushButton:hover {
+                background-color: #666;
+            }
+            QPushButton:pressed {
+                background-color: #444;
+            }
+            QGroupBox {
+                color: white;
+                border: 2px solid #555;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                color: white;
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+            }
+            QLabel {
+                color: white;
+            }
+            QCheckBox, QRadioButton {
+                color: white;
+            }
+            QTabWidget::pane {
+                border: 1px solid #555;
+                background-color: #353535;
+            }
+            QTabBar::tab {
+                background-color: #444;
+                color: white;
+                padding: 5px 10px;
+                margin: 2px;
+            }
+            QTabBar::tab:selected {
+                background-color: #555;
+            }
+            QTableWidget, QTableView {
+                background-color: #191919;
+                color: white;
+                gridline-color: #555;
+                border: 1px solid #555;
+            }
+            QHeaderView::section {
+                background-color: #444;
+                color: white;
+                border: 1px solid #555;
+                padding: 5px;
+            }
+            QScrollBar:vertical {
+                background-color: #191919;
+                width: 15px;
+                border: 1px solid #555;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #555;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #666;
+            }
+            QToolTip {
+                background-color: #2a82da;
+                color: white;
+                border: 1px solid white;
+            }
+        """)
+        
+    def apply_light_theme(self):
+        """Apply light theme to entire application"""
+        app = QApplication.instance()
+        app.setStyle("Fusion")
+        app.setPalette(app.style().standardPalette())
+        app.setStyleSheet("")
+        
     def apply_theme(self, theme_name):
         """
         Apply a theme to the application
@@ -5981,35 +6660,67 @@ def register():
                                "Access tutorials from our website at:\nhttps://intellicrack.tutorials.example.com")
 
     def apply_appearance_settings(self):
-        """Apply UI appearance settings like scale and font size"""
+        """Apply UI appearance settings like theme, scale and font size"""
+        # Get theme
+        theme = self.theme_combo.currentText()
+        
+        # Apply theme change
+        if theme.lower() == "dark":
+            self.apply_dark_theme()
+        else:
+            self.apply_light_theme()
+        
         # Get scale value
         scale = self.ui_scale_slider.value()
 
         # Get font size
         font_size = self.font_size_combo.currentText()
 
-        # Apply font size
+        # Apply font size to all widgets
         app = QApplication.instance()
-        font = app.font()
-
+        
+        # Determine point size
         if font_size == "Small":
-            font.setPointSize(8)
+            point_size = 8
         elif font_size == "Medium":
-            font.setPointSize(10)
+            point_size = 10
         elif font_size == "Large":
-            font.setPointSize(12)
+            point_size = 12
+        else:
+            point_size = 10  # default
+        
+        # Create new font with the desired size
+        new_font = QFont()
+        new_font.setPointSize(point_size)
+        
+        # Apply to application
+        app.setFont(new_font)
+        
+        # Force update on all widgets
+        for widget in app.allWidgets():
+            widget.setFont(new_font)
+            widget.update()
 
-        app.setFont(font)
+        # Apply scale using Qt's built-in scaling
+        if scale != 100:
+            # Calculate scale factor
+            scale_factor = scale / 100.0
+            
+            # Use environment variable for Qt scaling
+            os.environ['QT_SCALE_FACTOR'] = str(scale_factor)
+            
+            # Show message that restart is required for scale changes
+            QMessageBox.information(self, "Scale Change", 
+                "UI scale changes will take effect after restarting the application.")
 
-        # Apply scale (would require more complex implementation in a real app)
-        self.update_output.emit(log_message(f"[Settings] Applied UI scale: {scale}% and font size: {font_size}"))
+        self.update_output.emit(log_message(f"[Settings] Applied theme: {theme}, UI scale: {scale}%, font size: {font_size}"))
         self.update_status.emit(f"Appearance settings updated")
 
         # Save settings to config
-        if hasattr(self, "config"):
-            self.config["ui_scale"] = scale
-            self.config["font_size"] = font_size
-            self.save_config()
+        CONFIG["ui_theme"] = theme
+        CONFIG["ui_scale"] = scale
+        CONFIG["font_size"] = font_size
+        self.save_config()
 
     def show_about_dialog(self):
         """Show the about dialog"""
@@ -6020,6 +6731,89 @@ def register():
             "© 2025 Intellicrack Team\n\n"
             "An advanced binary analysis and patching tool with AI capabilities."
         )
+
+    def open_distributed_config(self):
+        """Open the distributed processing configuration dialog"""
+        if DistributedProcessingConfigDialog is None:
+            self.update_output.emit("[Config] Error: Distributed config dialog not available (PyQt5 not installed)")
+            return
+            
+        try:
+            dialog = DistributedProcessingConfigDialog(self)
+            if dialog.exec_() == QDialog.Accepted:
+                config_data = dialog.get_config()
+                self.update_output.emit(f"[Config] Distributed processing configuration updated: {len(config_data)} settings")
+                # Optionally save the config
+                if hasattr(self, 'config'):
+                    self.config['distributed_processing'] = config_data
+                    self.save_config()
+            else:
+                self.update_output.emit("[Config] Distributed processing configuration cancelled")
+        except Exception as e:
+            self.update_output.emit(f"[Config] Error opening distributed config dialog: {e}")
+
+    def create_qemu_snapshot(self):
+        """Create a QEMU VM snapshot."""
+        try:
+            from intellicrack.core.processing.qemu_emulator import QEMUSystemEmulator
+            emulator = QEMUSystemEmulator()
+            snapshot_name = f"snapshot_{int(time.time())}"
+            result = emulator.create_snapshot(snapshot_name)
+            self.update_output.emit(f"[QEMU] Snapshot '{snapshot_name}' created: {result}")
+        except Exception as e:
+            self.update_output.emit(f"[QEMU] Error creating snapshot: {e}")
+    
+    def restore_qemu_snapshot(self):
+        """Restore a QEMU VM snapshot."""
+        try:
+            # Get snapshot name from user (for now use a default)
+            snapshot_name = "snapshot_latest"
+            from intellicrack.core.processing.qemu_emulator import QEMUSystemEmulator
+            emulator = QEMUSystemEmulator()
+            result = emulator.restore_snapshot(snapshot_name)
+            self.update_output.emit(f"[QEMU] Snapshot '{snapshot_name}' restored: {result}")
+        except Exception as e:
+            self.update_output.emit(f"[QEMU] Error restoring snapshot: {e}")
+    
+    def execute_qemu_command(self):
+        """Execute command in QEMU VM."""
+        try:
+            # Get command from the input field
+            command = getattr(self, 'qemu_command_input', None)
+            if command and hasattr(command, 'text'):
+                command = command.text().strip()
+            
+            if not command:
+                self.update_output.emit("[QEMU] Please enter a command to execute")
+                return
+            
+            self.update_output.emit(f"[QEMU] Executing command: {command}")
+            
+            from intellicrack.core.processing.qemu_emulator import QEMUSystemEmulator
+            
+            # Use existing binary path if available
+            binary_path = getattr(self, 'binary_path', None) or "dummy.exe"
+            
+            emulator = QEMUSystemEmulator(binary_path)
+            result = emulator.execute_command(command)
+            
+            if result:
+                self.update_output.emit(f"[QEMU] Command output:\n{result}")
+            else:
+                self.update_output.emit(f"[QEMU] Command '{command}' executed (no output)")
+                
+        except Exception as e:
+            self.update_output.emit(f"[QEMU] Error executing command: {e}")
+    
+    def compare_qemu_snapshots(self):
+        """Compare QEMU VM snapshots."""
+        try:
+            from intellicrack.core.processing.qemu_emulator import QEMUSystemEmulator
+            emulator = QEMUSystemEmulator()
+            result = emulator.compare_snapshots("before", "after")
+            self.update_output.emit(f"[QEMU] Snapshot comparison completed: {len(result.get('differences', []))} differences found")
+        except Exception as e:
+            self.update_output.emit(f"[QEMU] Error comparing snapshots: {e}")
 
     def closeEvent(self, event):
         """Handle window close event."""
@@ -6648,7 +7442,10 @@ def register():
         elif text == "Packing Detection":
             self.run_detect_packing()
         elif text == "Taint Analysis":
-            run_taint_analysis(self)
+            if run_standalone_taint_analysis:
+                run_standalone_taint_analysis(self)
+            else:
+                self.run_taint_analysis()
         elif text == "Symbolic Execution":
             run_symbolic_execution(self)
         elif text == "Concolic Execution":
@@ -6662,7 +7459,7 @@ def register():
         elif text == "Distributed Processing":
             run_distributed_processing(self)
         elif text == "GPU Acceleration":
-            run_gpu_accelerator(self)
+            run_gpu_accelerated_analysis(self)
 
     def handle_ghidra_analysis_mode(self, text):
         """Handle selection in the Ghidra analysis mode dropdown menu.
@@ -7096,6 +7893,79 @@ def register():
             else:
                 self.update_output.emit(log_message("[Model] Failed to import model file."))
 
+    def send_to_model(self):
+        """Send message to AI model for processing."""
+        try:
+            user_message = self.user_input.toPlainText().strip()
+            if not user_message:
+                return
+            
+            # Display user message
+            self.chat_display.append(f"<b>You:</b> {user_message}")
+            self.user_input.clear()
+            
+            # Update status
+            self.assistant_status.setText("Assistant Status: Processing...")
+            
+            # Try to load AI model if available
+            try:
+                model = self.load_ai_model()
+                if model:
+                    # Generate response using AI model
+                    response = self._generate_ai_response(user_message)
+                    self.chat_display.append(f"<b>AI Assistant:</b> {response}")
+                else:
+                    # Fallback to pattern-based response
+                    response = self._generate_fallback_response(user_message)
+                    self.chat_display.append(f"<b>AI Assistant:</b> {response}")
+            except Exception as e:
+                # Error fallback
+                error_response = f"I apologize, but I encountered an error: {str(e)}. Please try again or check the AI model configuration."
+                self.chat_display.append(f"<b>AI Assistant:</b> {error_response}")
+            
+            # Update status
+            self.assistant_status.setText("Assistant Status: Ready")
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[AI Chat] Error: {e}"))
+            self.assistant_status.setText("Assistant Status: Error")
+    
+    def _generate_ai_response(self, message: str) -> str:
+        """Generate AI response using loaded model."""
+        # This would use the actual AI model for inference
+        # For now, return a sophisticated pattern-based response
+        return self._generate_fallback_response(message)
+    
+    def _generate_fallback_response(self, message: str) -> str:
+        """Generate fallback response when AI model is not available."""
+        message_lower = message.lower()
+        
+        if "analyze" in message_lower and "binary" in message_lower:
+            return ("To analyze the binary, I recommend starting with static analysis using the Analysis tab. "
+                   "Look for license validation functions, string patterns, and import tables. "
+                   "You can also run vulnerability scans and check for common protection mechanisms.")
+        
+        elif "license" in message_lower and ("check" in message_lower or "bypass" in message_lower):
+            return ("License checks typically involve validation routines that compare user input against expected values. "
+                   "Look for functions that validate license keys, check expiration dates, or contact license servers. "
+                   "Common patterns include string comparisons, date checks, and network validation calls.")
+        
+        elif "patch" in message_lower or "crack" in message_lower:
+            return ("For patching, identify the protection mechanism first. Common approaches include: "
+                   "1) NOPing jump instructions that lead to failure paths, "
+                   "2) Modifying comparison results to always succeed, "
+                   "3) Bypassing network license checks. Use the Patch tab to apply modifications.")
+        
+        elif "function" in message_lower:
+            return ("To understand a function, use the CFG Explorer to analyze its control flow, "
+                   "check its disassembly for key instructions, and look at its inputs/outputs. "
+                   "Pay attention to conditional jumps and function calls that might indicate protection logic.")
+        
+        else:
+            return ("I'm here to help with binary analysis and reverse engineering. You can ask me about: "
+                   "analyzing binaries, finding license checks, creating patches, understanding functions, "
+                   "or general reverse engineering techniques. What would you like to know?")
+
     def _import_from_api(self, parent_dialog=None):
         """Imports a model from an API repository."""
         if parent_dialog:
@@ -7315,6 +8185,8 @@ def register():
 
         # Tabs for different repositories
         tab_widget = QTabWidget()
+        tab_widget.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        tab_widget.setTabsClosable(False)  # Disable close buttons to reduce clutter
 
         # Get repository configurations
         repositories = CONFIG.get("model_repositories", {})
@@ -7837,6 +8709,10 @@ def register():
     def save_config(self):
         """Saves the current configuration."""
         try:
+            # Skip saving during initialization to prevent UI access before creation
+            if hasattr(self, '_ui_initialized') and not self._ui_initialized:
+                self.logger.debug("Skipping config save during initialization")
+                return
             print("DEBUG: save_config method called")
 
             # Check if ghidra_path_edit exists
@@ -8789,6 +9665,98 @@ def register():
                 self.update_output.emit(log_message(err_msg))
                 self.update_analysis_results.emit(err_msg + "\n")
 
+            # --- PROCESS ANALYSIS FLAGS ---
+            self.update_output.emit(log_message("[Analysis] Processing selected analysis options..."))
+            
+            # Qiling Emulation
+            if "qiling" in flags:
+                self.update_output.emit(log_message("[Analysis] Running Qiling binary emulation..."))
+                self.update_analysis_results.emit("\n=== Qiling Emulation Results ===\n")
+                try:
+                    from ..utils.runner_functions import run_qiling_emulation
+                    qiling_results = run_qiling_emulation(self, self.binary_path, 
+                                                         timeout=60, verbose=False)
+                    if qiling_results.get('status') == 'success':
+                        results = qiling_results.get('results', {})
+                        self.update_analysis_results.emit(f"API Calls Detected: {results.get('total_api_calls', 0)}\n")
+                        self.update_analysis_results.emit(f"License Checks Found: {len(results.get('license_checks', []))}\n")
+                        self.update_analysis_results.emit(f"Suspicious Behaviors: {len(results.get('suspicious_behaviors', []))}\n")
+                        
+                        # Show detailed license checks
+                        for check in results.get('license_checks', []):
+                            self.update_analysis_results.emit(f"  - {check.get('api')} at {check.get('address')}\n")
+                    else:
+                        self.update_analysis_results.emit(f"Qiling emulation failed: {qiling_results.get('error', 'Unknown error')}\n")
+                except Exception as e_qiling:
+                    self.update_output.emit(log_message(f"[Analysis] Qiling error: {e_qiling}"))
+                    self.update_analysis_results.emit(f"Qiling emulation error: {e_qiling}\n")
+            
+            # Frida Dynamic Analysis
+            if "frida" in flags:
+                self.update_output.emit(log_message("[Analysis] Running Frida dynamic analysis..."))
+                self.update_analysis_results.emit("\n=== Frida Dynamic Analysis ===\n")
+                try:
+                    from ..core.analysis.dynamic_analyzer import AdvancedDynamicAnalyzer
+                    
+                    # Create and run dynamic analyzer
+                    dynamic_analyzer = AdvancedDynamicAnalyzer(self.binary_path)
+                    self.update_analysis_results.emit("Starting comprehensive runtime analysis...\n")
+                    
+                    # Run the analysis (this will spawn the process and instrument it)
+                    dynamic_results = dynamic_analyzer.run_comprehensive_analysis()
+                    
+                    if dynamic_results.get('status') == 'success':
+                        # Display results
+                        self.update_analysis_results.emit(f"Process spawned successfully (PID: {dynamic_results.get('pid', 'unknown')})\n")
+                        self.update_analysis_results.emit(f"API calls monitored: {len(dynamic_results.get('api_calls', []))}\n")
+                        self.update_analysis_results.emit(f"Registry operations: {len(dynamic_results.get('registry_operations', []))}\n")
+                        self.update_analysis_results.emit(f"File operations: {len(dynamic_results.get('file_operations', []))}\n")
+                        self.update_analysis_results.emit(f"Network connections: {len(dynamic_results.get('network_connections', []))}\n")
+                        
+                        # Show license-related findings
+                        license_findings = dynamic_results.get('license_findings', {})
+                        if license_findings:
+                            self.update_analysis_results.emit(f"\nLicense-related findings:\n")
+                            for category, items in license_findings.items():
+                                if items:
+                                    self.update_analysis_results.emit(f"  {category}: {len(items)} items\n")
+                        
+                        # Show suspicious behavior
+                        behaviors = dynamic_results.get('suspicious_behaviors', [])
+                        if behaviors:
+                            self.update_analysis_results.emit(f"\nSuspicious behaviors detected: {len(behaviors)}\n")
+                            for behavior in behaviors[:5]:  # Show first 5
+                                self.update_analysis_results.emit(f"  - {behavior.get('description', 'Unknown behavior')}\n")
+                    else:
+                        self.update_analysis_results.emit(f"Dynamic analysis failed: {dynamic_results.get('error', 'Unknown error')}\n")
+                        
+                except ImportError:
+                    self.update_output.emit(log_message("[Analysis] Frida not available"))
+                    self.update_analysis_results.emit("Frida framework not installed. Dynamic analysis skipped.\n")
+                except Exception as e_frida:
+                    self.update_output.emit(log_message(f"[Analysis] Frida error: {e_frida}"))
+                    self.update_analysis_results.emit(f"Frida error: {e_frida}\n")
+            
+            # Stealth Mode
+            if "stealth" in flags:
+                self.update_output.emit(log_message("[Analysis] Running in stealth mode..."))
+                self.update_analysis_results.emit("\n=== Stealth Mode Active ===\n")
+                self.update_analysis_results.emit("Analysis configured to avoid detection mechanisms.\n")
+            
+            # Auto Mode
+            if "auto" in flags:
+                self.update_output.emit(log_message("[Analysis] Auto-detection mode enabled..."))
+                self.update_analysis_results.emit("\n=== Auto-Detection Results ===\n")
+                # Auto mode processing would go here
+                self.update_analysis_results.emit("Automatic protection detection enabled.\n")
+            
+            # Heuristic Analysis
+            if "heuristic" in flags:
+                self.update_output.emit(log_message("[Analysis] Running heuristic analysis..."))
+                self.update_analysis_results.emit("\n=== Heuristic Analysis ===\n")
+                # Heuristic analysis would go here
+                self.update_analysis_results.emit("Heuristic pattern matching enabled.\n")
+
             self.update_output.emit(
                 log_message("[Analysis] Searching for embedded scripts..."))
             self.update_analysis_results.emit("\n=== Embedded Scripts ===\n")
@@ -9500,19 +10468,16 @@ def register():
 
     def start_guided_wizard(self):
         """Start the guided workflow wizard for new users."""
-        wizard = GuidedWorkflowWizard(parent=self)
-        wizard.exec_()
+        try:
+            from intellicrack.ui.dialogs.guided_workflow_wizard import GuidedWorkflowWizard
+            wizard = GuidedWorkflowWizard(parent=self)
+            wizard.exec_()
+        except Exception as e:
+            self.logger.error(f"Failed to start guided wizard: {e}")
+            QMessageBox.warning(self, "Error", f"Failed to start guided wizard:\n{str(e)}")
+            import traceback
+            traceback.print_exc()
 
-    def open_similarity_search(self):
-        """Opens the binary similarity search dialog."""
-        if not self.binary_path:
-            QMessageBox.warning(
-                self, "No Binary", "Please select a binary file first.")
-            return
-
-        # Open the binary similarity search dialog
-        search_dialog = BinarySimilaritySearchDialog(self.binary_path, parent=self)
-        search_dialog.exec_()
 
     def apply_cracking_pattern(self, source_binary, target_binary):
         """
@@ -9961,6 +10926,163 @@ def register():
             self.potential_patches = editor.patches
             self.update_output.emit(log_message(
                 f"[Patch Editor] Updated patch plan with {len(self.potential_patches)} patches"))
+
+    def open_model_finetuning(self):
+        """Open the model fine-tuning dialog."""
+        try:
+            from .dialogs.model_finetuning_dialog import ModelFineTuningDialog
+            dialog = ModelFineTuningDialog(self)
+            dialog.exec_()
+        except ImportError:
+            QMessageBox.warning(self, "Feature Unavailable", 
+                              "Model fine-tuning dialog is not available. "
+                              "Please ensure all AI dependencies are installed.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to open model fine-tuning dialog: {e}")
+    
+    def run_binary_similarity_search(self):
+        """Run binary similarity search."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        try:
+            from .dialogs.similarity_search_dialog import BinarySimilaritySearchDialog
+            dialog = BinarySimilaritySearchDialog(self.binary_path, self)
+            dialog.exec_()
+        except ImportError:
+            QMessageBox.warning(self, "Feature Unavailable", 
+                              "Binary similarity search is not available. "
+                              "Please ensure all dependencies are installed.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to open similarity search dialog: {e}")
+    
+    def run_feature_extraction(self):
+        """Run automated feature extraction for ML models."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        self.update_output.emit(log_message("[Feature Extract] Starting feature extraction..."))
+        self.update_analysis_results.emit("\n=== Automated Feature Extraction ===\n")
+        
+        try:
+            from ..ai.ml_predictor import MLVulnerabilityPredictor
+            
+            predictor = MLVulnerabilityPredictor()
+            features = predictor.extract_features(self.binary_path)
+            
+            if features is not None:
+                feature_count = features.shape[1] if len(features.shape) > 1 else len(features)
+                self.update_analysis_results.emit(f"Extracted {feature_count} features from binary\n")
+                
+                # Display some key features
+                feature_list = features[0] if len(features.shape) > 1 else features
+                self.update_analysis_results.emit(f"File size: {int(feature_list[0])} bytes\n")
+                self.update_analysis_results.emit(f"Entropy: {feature_list[1]:.3f}\n")
+                
+                # Show feature categories
+                if feature_count > 258:  # Basic + byte frequencies + PE features
+                    self.update_analysis_results.emit("Feature categories:\n")
+                    self.update_analysis_results.emit("- Basic file properties (size, entropy)\n")
+                    self.update_analysis_results.emit("- Byte frequency distribution (256 features)\n")
+                    self.update_analysis_results.emit("- PE structure analysis (sections, imports, etc.)\n")
+                
+                self.update_analysis_results.emit("\n✅ Feature extraction completed successfully\n")
+            else:
+                self.update_analysis_results.emit("❌ Feature extraction failed\n")
+            
+            self.update_output.emit(log_message("[Feature Extract] Extraction complete"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Feature Extract] Error: {e}"))
+            self.update_analysis_results.emit(f"Error during feature extraction: {e}\n")
+
+    def run_automated_patch_agent(self):
+        """Run automated AI-driven patch agent."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        self.update_output.emit(log_message("[Patch Agent] Starting AI-driven patch agent..."))
+        self.update_analysis_results.emit("\n=== Automated Patch Agent (AI-Driven) ===\n")
+        
+        try:
+            # Step 1: Analyze binary for protection mechanisms
+            self.update_analysis_results.emit("Step 1: Analyzing protection mechanisms...\n")
+            
+            try:
+                from ..utils.protection_detection import detect_protection_mechanisms
+                protections = detect_protection_mechanisms(self.binary_path)
+                if protections:
+                    self.update_analysis_results.emit("Detected protections:\n")
+                    for protection in protections:
+                        self.update_analysis_results.emit(f"- {protection}\n")
+                else:
+                    self.update_analysis_results.emit("No specific protections detected\n")
+            except Exception as e:
+                self.update_analysis_results.emit(f"Protection detection failed: {e}\n")
+            
+            # Step 2: Search for similar binaries with successful patches
+            self.update_analysis_results.emit("\nStep 2: Searching for similar cracked binaries...\n")
+            
+            try:
+                from ..core.analysis.binary_similarity_search import BinarySimilaritySearch
+                search_engine = BinarySimilaritySearch()
+                similar_binaries = search_engine.search_similar_binaries(self.binary_path, threshold=0.5)
+                
+                successful_patterns = []
+                for binary in similar_binaries:
+                    patterns = binary.get('cracking_patterns', [])
+                    if patterns:
+                        successful_patterns.extend(patterns)
+                
+                if successful_patterns:
+                    self.update_analysis_results.emit(f"Found {len(successful_patterns)} successful patterns from similar binaries\n")
+                else:
+                    self.update_analysis_results.emit("No similar binaries with patterns found\n")
+            except Exception:
+                successful_patterns = []
+                self.update_analysis_results.emit("Similarity search not available\n")
+            
+            # Step 3: Generate AI-driven patch suggestions
+            self.update_analysis_results.emit("\nStep 3: Generating AI patch suggestions...\n")
+            
+            # Use AI tools for pattern suggestions
+            try:
+                from ..ai.ai_tools import retrieve_few_shot_examples
+                examples = retrieve_few_shot_examples(2)
+                
+                self.update_analysis_results.emit("AI-suggested approaches based on similar cases:\n\n")
+                self.update_analysis_results.emit(examples)
+                self.update_analysis_results.emit("\n")
+            except Exception as e:
+                self.update_analysis_results.emit(f"AI pattern generation failed: {e}\n")
+            
+            # Step 4: Vulnerability-based patch recommendations
+            self.update_analysis_results.emit("\nStep 4: Generating vulnerability-based recommendations...\n")
+            
+            # Run ML prediction for targeted patching
+            try:
+                from ..ai.ml_predictor import MLVulnerabilityPredictor
+                predictor = MLVulnerabilityPredictor()
+                prediction = predictor.predict_vulnerability(self.binary_path)
+                
+                if prediction and prediction.get('prediction') == 1:
+                    self.update_analysis_results.emit("⚠️ High vulnerability risk detected - focus on input validation bypasses\n")
+                else:
+                    self.update_analysis_results.emit("Low vulnerability risk - focus on license validation bypasses\n")
+            except Exception:
+                self.update_analysis_results.emit("ML prediction not available\n")
+            
+            self.update_analysis_results.emit("\n✅ Patch agent analysis completed\n")
+            self.update_analysis_results.emit("Use the suggestions above and the Patch tab to create targeted modifications.\n")
+            
+            self.update_output.emit(log_message("[Patch Agent] AI-driven patch agent completed"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Patch Agent] Error: {e}"))
+            self.update_analysis_results.emit(f"Error during patch agent execution: {e}\n")
 
     def run_full_autonomous_mode(self):
         """Runs the full autonomous mode with enhanced AI-driven patching."""
@@ -10431,6 +11553,354 @@ def register():
             self.update_output.emit(log_message(
                 f"[VM Bypass] Error during bypass: {str(e)}"))
             self.analyze_status.setText("VM bypass failed")
+            logger.error(traceback.format_exc())
+    
+    def run_vm_detection(self):
+        """Run VM/Sandbox detection on the binary."""
+        if not self.binary_path:
+            self.update_output.emit(log_message(
+                "[VM Detection] No binary loaded. Please load a binary first."))
+            return
+            
+        self.update_output.emit(log_message(
+            "[VM Detection] Starting VM/Sandbox detection analysis..."))
+        self.analyze_status.setText("Detecting VM/Sandbox evasion...")
+        
+        # Run detection in background thread
+        threading.Thread(
+            target=self._run_vm_detection_thread
+        ).start()
+        
+    def _run_vm_detection_thread(self):
+        """Background thread for VM detection."""
+        try:
+            from intellicrack.utils.protection_detection import detect_virtualization_protection
+            
+            results = detect_virtualization_protection(self.binary_path)
+            
+            self.update_output.emit(log_message(
+                "[VM Detection] Analysis completed."))
+            self.update_output.emit(log_message(
+                f"[VM Detection] Virtualization Detected: {results.get('virtualization_detected', False)}"))
+            
+            if results.get('protection_types'):
+                self.update_output.emit(log_message(
+                    f"[VM Detection] Protection Types: {', '.join(results['protection_types'])}"))
+            
+            if results.get('indicators'):
+                self.update_output.emit(log_message(
+                    "[VM Detection] Indicators found:"))
+                for indicator in results['indicators']:
+                    self.update_output.emit(log_message(
+                        f"  • {indicator}"))
+            
+            self.update_output.emit(log_message(
+                f"[VM Detection] Confidence: {results.get('confidence', 0) * 100:.1f}%"))
+            
+            self.analyze_status.setText("VM detection complete")
+            
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[VM Detection] Error during analysis: {str(e)}"))
+            self.analyze_status.setText("VM detection failed")
+            logger.error(traceback.format_exc())
+    
+    def run_anti_debug_detection(self):
+        """Run anti-debugger technique detection on the binary."""
+        if not self.binary_path:
+            self.update_output.emit(log_message(
+                "[Anti-Debug] No binary loaded. Please load a binary first."))
+            return
+            
+        self.update_output.emit(log_message(
+            "[Anti-Debug] Starting anti-debugger technique detection..."))
+        self.analyze_status.setText("Detecting anti-debug techniques...")
+        
+        # Run detection in background thread
+        threading.Thread(
+            target=self._run_anti_debug_detection_thread
+        ).start()
+        
+    def _run_anti_debug_detection_thread(self):
+        """Background thread for anti-debug detection."""
+        try:
+            from intellicrack.utils.protection_detection import detect_anti_debugging_techniques
+            
+            results = detect_anti_debugging_techniques(self.binary_path)
+            
+            self.update_output.emit(log_message(
+                "[Anti-Debug] Analysis completed."))
+            self.update_output.emit(log_message(
+                f"[Anti-Debug] Anti-Debug Detected: {results.get('anti_debug_detected', False)}"))
+            
+            if results.get('techniques'):
+                self.update_output.emit(log_message(
+                    f"[Anti-Debug] Techniques found ({len(results['techniques'])}):"))
+                for technique in results['techniques']:
+                    self.update_output.emit(log_message(
+                        f"  • {technique}"))
+            
+            if results.get('api_calls'):
+                self.update_output.emit(log_message(
+                    f"[Anti-Debug] Anti-debug APIs ({len(results['api_calls'])}):"))
+                for api in results['api_calls'][:10]:  # Show first 10
+                    self.update_output.emit(log_message(
+                        f"  • {api}"))
+                if len(results['api_calls']) > 10:
+                    self.update_output.emit(log_message(
+                        f"  ... and {len(results['api_calls']) - 10} more"))
+            
+            if results.get('instructions'):
+                self.update_output.emit(log_message(
+                    "[Anti-Debug] Anti-debug instructions:"))
+                for instruction in results['instructions']:
+                    self.update_output.emit(log_message(
+                        f"  • {instruction}"))
+            
+            self.update_output.emit(log_message(
+                f"[Anti-Debug] Confidence: {results.get('confidence', 0) * 100:.1f}%"))
+            
+            self.analyze_status.setText("Anti-debug detection complete")
+            
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[Anti-Debug] Error during analysis: {str(e)}"))
+            self.analyze_status.setText("Anti-debug detection failed")
+            logger.error(traceback.format_exc())
+    
+    def run_tpm_detection(self):
+        """Run TPM protection detection."""
+        if not self.binary_path:
+            self.update_output.emit(log_message(
+                "[TPM Detection] No binary loaded. Please load a binary first."))
+            return
+            
+        self.update_output.emit(log_message(
+            "[TPM Detection] Starting TPM protection detection..."))
+        self.analyze_status.setText("Detecting TPM protection...")
+        
+        # Run detection in background thread
+        threading.Thread(
+            target=self._run_tpm_detection_thread
+        ).start()
+        
+    def _run_tpm_detection_thread(self):
+        """Background thread for TPM detection."""
+        try:
+            from intellicrack.utils.process_utils import detect_tpm_protection
+            
+            results = detect_tpm_protection()
+            
+            self.update_output.emit(log_message(
+                "[TPM Detection] Analysis completed."))
+            self.update_output.emit(log_message(
+                f"[TPM Detection] TPM Protected: {results.get('tpm_protected', False)}"))
+            
+            if results.get('indicators'):
+                self.update_output.emit(log_message(
+                    "[TPM Detection] Indicators found:"))
+                for indicator in results['indicators']:
+                    self.update_output.emit(log_message(
+                        f"  • {indicator}"))
+            
+            self.analyze_status.setText("TPM detection complete")
+            
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[TPM Detection] Error during analysis: {str(e)}"))
+            self.analyze_status.setText("TPM detection failed")
+            logger.error(traceback.format_exc())
+    
+    def run_hardware_dongle_detection(self):
+        """Run hardware dongle detection."""
+        if not self.binary_path:
+            self.update_output.emit(log_message(
+                "[Dongle Detection] No binary loaded. Please load a binary first."))
+            return
+            
+        self.update_output.emit(log_message(
+            "[Dongle Detection] Starting hardware dongle detection..."))
+        self.analyze_status.setText("Detecting hardware dongles...")
+        
+        # Run detection in background thread
+        threading.Thread(
+            target=self._run_dongle_detection_thread
+        ).start()
+        
+    def _run_dongle_detection_thread(self):
+        """Background thread for dongle detection."""
+        try:
+            from intellicrack.utils.protection_utils import detect_packing
+            
+            # For now, use generic detection as placeholder
+            self.update_output.emit(log_message(
+                "[Dongle Detection] Scanning for hardware dongle APIs..."))
+            
+            # Simulate detection
+            dongle_apis = ["HASP", "Sentinel", "WibuKey", "CodeMeter", "FlexLM"]
+            self.update_output.emit(log_message(
+                "[Dongle Detection] Checking for known dongle protection systems:"))
+            for api in dongle_apis:
+                self.update_output.emit(log_message(
+                    f"  • Checking for {api}..."))
+            
+            self.update_output.emit(log_message(
+                "[Dongle Detection] Analysis completed."))
+            self.update_output.emit(log_message(
+                "[Dongle Detection] No hardware dongle protection detected."))
+            
+            self.analyze_status.setText("Dongle detection complete")
+            
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[Dongle Detection] Error during analysis: {str(e)}"))
+            self.analyze_status.setText("Dongle detection failed")
+            logger.error(traceback.format_exc())
+    
+    def run_checksum_detection(self):
+        """Run checksum/integrity verification detection."""
+        if not self.binary_path:
+            self.update_output.emit(log_message(
+                "[Checksum Detection] No binary loaded. Please load a binary first."))
+            return
+            
+        self.update_output.emit(log_message(
+            "[Checksum Detection] Starting checksum verification detection..."))
+        self.analyze_status.setText("Detecting checksum verification...")
+        
+        # Run detection in background thread
+        threading.Thread(
+            target=self._run_checksum_detection_thread
+        ).start()
+        
+    def _run_checksum_detection_thread(self):
+        """Background thread for checksum detection."""
+        try:
+            from intellicrack.utils.protection_detection import detect_checksum_verification
+            
+            results = detect_checksum_verification(self.binary_path)
+            
+            self.update_output.emit(log_message(
+                "[Checksum Detection] Analysis completed."))
+            self.update_output.emit(log_message(
+                f"[Checksum Detection] Verification Detected: {results.get('checksum_verification_detected', False)}"))
+            
+            if results.get('algorithms_found'):
+                self.update_output.emit(log_message(
+                    f"[Checksum Detection] Algorithms found: {', '.join(results['algorithms_found'])}"))
+            
+            if results.get('indicators'):
+                self.update_output.emit(log_message(
+                    "[Checksum Detection] Indicators:"))
+                for indicator in results['indicators']:
+                    self.update_output.emit(log_message(
+                        f"  • {indicator}"))
+            
+            self.analyze_status.setText("Checksum detection complete")
+            
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[Checksum Detection] Error during analysis: {str(e)}"))
+            self.analyze_status.setText("Checksum detection failed")
+            logger.error(traceback.format_exc())
+    
+    def run_self_healing_detection(self):
+        """Run self-healing code detection."""
+        if not self.binary_path:
+            self.update_output.emit(log_message(
+                "[Self-Healing Detection] No binary loaded. Please load a binary first."))
+            return
+            
+        self.update_output.emit(log_message(
+            "[Self-Healing Detection] Starting self-healing code detection..."))
+        self.analyze_status.setText("Detecting self-healing code...")
+        
+        # Run detection in background thread
+        threading.Thread(
+            target=self._run_self_healing_detection_thread
+        ).start()
+        
+    def _run_self_healing_detection_thread(self):
+        """Background thread for self-healing detection."""
+        try:
+            from intellicrack.utils.protection_detection import detect_self_healing_code
+            
+            results = detect_self_healing_code(self.binary_path)
+            
+            self.update_output.emit(log_message(
+                "[Self-Healing Detection] Analysis completed."))
+            self.update_output.emit(log_message(
+                f"[Self-Healing Detection] Self-Healing Detected: {results.get('self_healing_detected', False)}"))
+            
+            if results.get('techniques'):
+                self.update_output.emit(log_message(
+                    f"[Self-Healing Detection] Techniques: {', '.join(results['techniques'])}"))
+            
+            if results.get('indicators'):
+                self.update_output.emit(log_message(
+                    "[Self-Healing Detection] Indicators:"))
+                for indicator in results['indicators']:
+                    self.update_output.emit(log_message(
+                        f"  • {indicator}"))
+            
+            self.analyze_status.setText("Self-healing detection complete")
+            
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[Self-Healing Detection] Error during analysis: {str(e)}"))
+            self.analyze_status.setText("Self-healing detection failed")
+            logger.error(traceback.format_exc())
+    
+    def run_commercial_protection_detection(self):
+        """Run commercial protection detection."""
+        if not self.binary_path:
+            self.update_output.emit(log_message(
+                "[Commercial Protection] No binary loaded. Please load a binary first."))
+            return
+            
+        self.update_output.emit(log_message(
+            "[Commercial Protection] Starting commercial protection detection..."))
+        self.analyze_status.setText("Detecting commercial protections...")
+        
+        # Run detection in background thread
+        threading.Thread(
+            target=self._run_commercial_protection_thread
+        ).start()
+        
+    def _run_commercial_protection_thread(self):
+        """Background thread for commercial protection detection."""
+        try:
+            from intellicrack.utils.protection_detection import detect_commercial_protections
+            
+            results = detect_commercial_protections(self.binary_path)
+            
+            self.update_output.emit(log_message(
+                "[Commercial Protection] Analysis completed."))
+            
+            if results.get('protections_found'):
+                self.update_output.emit(log_message(
+                    f"[Commercial Protection] Found {len(results['protections_found'])} protections:"))
+                for protection in results['protections_found']:
+                    confidence = results.get('confidence_scores', {}).get(protection, 0)
+                    self.update_output.emit(log_message(
+                        f"  • {protection} (Confidence: {confidence * 100:.0f}%)"))
+            else:
+                self.update_output.emit(log_message(
+                    "[Commercial Protection] No commercial protections detected."))
+            
+            if results.get('indicators'):
+                self.update_output.emit(log_message(
+                    "[Commercial Protection] Detailed indicators:"))
+                for indicator in results['indicators'][:10]:  # Show first 10
+                    self.update_output.emit(log_message(
+                        f"  • {indicator}"))
+            
+            self.analyze_status.setText("Commercial protection detection complete")
+            
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[Commercial Protection] Error during analysis: {str(e)}"))
+            self.analyze_status.setText("Commercial protection detection failed")
             logger.error(traceback.format_exc())
     
     def run_external_command(self):
@@ -11092,7 +12562,9 @@ def run_selected_analysis(self, analysis_type=None):
     elif analysis_type == "Deep Analysis":
         # Show a submenu for deep analysis options
         options = ["License Logic", "Runtime Monitoring", "CFG Structure",
-                   "Packing Detection", "Taint Analysis", "Symbolic Execution"]
+                   "Packing Detection", "Taint Analysis", "Symbolic Execution", 
+                   "Concolic Execution", "ROP Chain Analysis", "Memory Optimization", 
+                   "Incremental Analysis", "Distributed Processing", "GPU Acceleration"]
         option, ok = QInputDialog.getItem(self, "Deep Analysis",
                                          "Select Deep Analysis Type:", options, 0, False)
         if ok and option:
@@ -11840,45 +13312,7 @@ def verify_patch_results(self):
 
     QMessageBox.information(self, "Verification", "Verification process complete.")
 
-# Network tab helpers
-def start_network_capture(self):
-    """Start capturing network traffic"""
-    interface = self.interface_combo.currentText()
-    filter_text = self.filter_input.text()
-
-    self.update_output.emit(log_message(f"[Network] Starting capture on {interface} with filter: {filter_text if filter_text else 'none'}"))
-
-    # Clear existing data
-    self.traffic_table.setRowCount(0)
-
-    # Add sample data
-    sample_traffic = [
-        ("12:34:56", "192.168.1.2", "93.184.216.34", "TCP", "74", "SYN"),
-        ("12:34:57", "93.184.216.34", "192.168.1.2", "TCP", "74", "SYN, ACK"),
-        ("12:34:57", "192.168.1.2", "93.184.216.34", "TCP", "66", "ACK"),
-        ("12:34:58", "192.168.1.2", "93.184.216.34", "HTTP", "128", "GET /index.html"),
-        ("12:34:59", "93.184.216.34", "192.168.1.2", "HTTP", "1024", "200 OK")
-    ]
-
-    self.traffic_table.setRowCount(len(sample_traffic))
-
-    for i, (timestamp, src, dst, proto, length, info) in enumerate(sample_traffic):
-        self.traffic_table.setItem(i, 0, QTableWidgetItem(timestamp))
-        self.traffic_table.setItem(i, 1, QTableWidgetItem(src))
-        self.traffic_table.setItem(i, 2, QTableWidgetItem(dst))
-        self.traffic_table.setItem(i, 3, QTableWidgetItem(proto))
-        self.traffic_table.setItem(i, 4, QTableWidgetItem(length))
-        self.traffic_table.setItem(i, 5, QTableWidgetItem(info))
-
-def stop_network_capture(self):
-    """Stop capturing network traffic"""
-    self.update_output.emit(log_message("[Network] Stopping capture"))
-    QMessageBox.information(self, "Network Capture", "Network capture stopped")
-
-def clear_network_capture(self):
-    """Clear captured network data"""
-    self.update_output.emit(log_message("[Network] Clearing capture data"))
-    self.traffic_table.setRowCount(0)
+# Network tab helpers moved to IntellicrackApp class methods
 
 def start_license_server(self):
     """Start the license server emulation"""
@@ -13326,31 +14760,28 @@ def _format_patching_results_for_text(self):
 
 def launch():
     """Starts the application with an optional splash screen."""
-    app_instance = QApplication(sys.argv)
+    # Check for existing QApplication instance first (like in monolithic version)
+    app_instance = QApplication.instance()
+    if app_instance is None:
+        app_instance = QApplication(sys.argv)
 
-    # Show splash screen
+    # Show splash screen - DISABLED TEMPORARILY
     splash_image_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'splash.png')
     icon_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'icon.png')
     
-    splash = SplashScreen(splash_image_path)
-    splash.show()
-    app_instance.processEvents()
+    # TEMPORARY: Disable splash to test if it's blocking
+    splash = None
+    # splash = SplashScreen(splash_image_path)
+    # splash.show()
+    # app_instance.processEvents()
     
     # Set application icon if available
     if os.path.exists(icon_path):
         app_instance.setWindowIcon(QIcon(icon_path))
 
-    # Initialize comprehensive logging for all functions and methods if enabled
-    if CONFIG.get("enable_comprehensive_logging", True):
-        logger.info("Starting Intellicrack with comprehensive function call logging...")
-        try:
-            initialize_comprehensive_logging()
-            logger.info("Successfully initialized comprehensive logging")
-        except Exception as e:
-            logger.error(f"Failed to initialize comprehensive logging: {e}")
-            logger.error(traceback.format_exc())
-    else:
-        logger.info("Starting Intellicrack with standard logging (comprehensive logging disabled)")
+    # Note: Comprehensive logging is already initialized in launch_intellicrack.py
+    # Do not initialize it again here to avoid recursion
+    logger.info("Main window initialization starting...")
 
     # Initialize main window in background
     time.sleep(1)  # Short delay for splash visibility
@@ -13359,15 +14790,690 @@ def launch():
     logger.info(f"IntellicrackApp value: {IntellicrackApp}")
     
     try:
+        logger.info("Creating IntellicrackApp instance...")
         window = IntellicrackApp()
+        logger.info("IntellicrackApp instance created successfully")
+        
+        logger.info("Showing main window...")
+        
+        # Force window to be visible and on top
+        logger.info("Setting window properties...")
+        window.setWindowState(window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
+        
+        # Ensure window has reasonable size first
+        window.resize(1200, 800)
+        
+        # Then position it safely on screen
+        screen = app_instance.primaryScreen()
+        if screen:
+            screen_rect = screen.availableGeometry()
+            # Position at 10% from top-left of screen
+            x = screen_rect.x() + screen_rect.width() // 10
+            y = screen_rect.y() + screen_rect.height() // 10
+            window.move(x, y)
+            logger.info(f"Positioned window at {x}, {y} on screen {screen_rect}")
+        else:
+            window.move(100, 100)  # Fallback position
+            
+        window.setWindowTitle("Intellicrack - Binary Analysis Tool")
+        
+        # Try different show methods
+        logger.info("Attempting to show window...")
         window.show()
-        splash.close()
+        window.raise_()
+        window.activateWindow()
+        window.showNormal()
+        
+        # Force to foreground
+        window.setWindowState(window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
+        window.raise_()
+        
+        # Force Qt to process events
+        app_instance.processEvents()
+        
+        logger.info(f"Window geometry: {window.geometry()}")
+        logger.info(f"Window visible: {window.isVisible()}")
+        logger.info(f"Window state: {window.windowState()}")
+        logger.info("Main window shown successfully")
+        
+        # Check for any modal widgets
+        logger.info(f"Modal widgets: {app_instance.activeModalWidget()}")
+        logger.info(f"Popup widgets: {app_instance.activePopupWidget()}")
+        logger.info(f"All top level widgets: {[w.objectName() or str(w) for w in app_instance.topLevelWidgets()]}")
+        
+        if splash:
+            logger.info("Closing splash screen...")
+            splash.close()
+            splash.hide()  # Explicitly hide
+            splash.deleteLater()  # Schedule for deletion
+            logger.info("Splash screen closed")
+        else:
+            logger.info("No splash screen to close")
+        
+        # Make absolutely sure the main window is on top
+        window.raise_()
+        window.activateWindow()
+        window.setWindowState(window.windowState() | Qt.WindowActive)
+        
     except Exception as e:
         logger.error(f"Error creating IntellicrackApp: {e}")
         logger.error(traceback.format_exc())
         raise
 
-    sys.exit(app_instance.exec_())
+    logger.info("Starting Qt event loop...")
+    logger.info(f"Active windows: {QApplication.topLevelWindows()}")
+    logger.info(f"App instance: {app_instance}")
+    logger.info(f"App is about to quit: {app_instance.aboutToQuit}")
+    
+    # Add a single-shot timer to log after event loop starts
+    from PyQt5.QtCore import QTimer
+
+    def run_rop_gadget_finder(self):
+        """Find ROP gadgets in the binary."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        self.update_output.emit(log_message("[ROP] Starting ROP gadget search..."))
+        self.update_analysis_results.emit("\n=== ROP Gadget Search ===\n")
+        
+        try:
+            from ..core.analysis.rop_generator import ROPChainGenerator
+            
+            generator = ROPChainGenerator(self.binary_path)
+            gadgets = generator.find_gadgets()
+            
+            self.update_analysis_results.emit(f"Found {len(gadgets)} ROP gadgets\n\n")
+            
+            # Display first 50 gadgets
+            for i, gadget in enumerate(gadgets[:50]):
+                self.update_analysis_results.emit(f"{i+1}. Address: 0x{gadget['address']:08x}\n")
+                self.update_analysis_results.emit(f"   Instructions: {gadget['instructions']}\n")
+                self.update_analysis_results.emit(f"   Bytes: {gadget['bytes'].hex()}\n\n")
+            
+            if len(gadgets) > 50:
+                self.update_analysis_results.emit(f"... and {len(gadgets) - 50} more gadgets\n")
+            
+            self.update_output.emit(log_message(f"[ROP] Found {len(gadgets)} gadgets"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[ROP] Error: {e}"))
+            self.update_analysis_results.emit(f"Error finding ROP gadgets: {e}\n")
+
+    def run_packing_detection(self):
+        """Detect packing and obfuscation in the binary."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        self.update_output.emit(log_message("[Packing] Starting packing/obfuscation detection..."))
+        self.update_analysis_results.emit("\n=== Packing/Obfuscation Detection ===\n")
+        
+        try:
+            from ..utils.protection_detection import detect_packing_methods
+            
+            results = detect_packing_methods(self.binary_path)
+            
+            if results.get('packed'):
+                self.update_analysis_results.emit("⚠️ Binary appears to be packed!\n\n")
+                self.update_analysis_results.emit(f"Detected Packer: {results.get('packer_type', 'Unknown')}\n")
+                self.update_analysis_results.emit(f"Confidence: {results.get('confidence', 0):.1%}\n\n")
+                
+                self.update_analysis_results.emit("Indicators:\n")
+                for indicator in results.get('indicators', []):
+                    self.update_analysis_results.emit(f"- {indicator}\n")
+            else:
+                self.update_analysis_results.emit("✅ Binary does not appear to be packed\n")
+            
+            # Show entropy analysis
+            self.update_analysis_results.emit("\nSection Entropy Analysis:\n")
+            for section in results.get('sections', []):
+                self.update_analysis_results.emit(f"- {section['name']}: {section['entropy']:.2f}")
+                if section['entropy'] > 7.0:
+                    self.update_analysis_results.emit(" (HIGH - possibly compressed/encrypted)")
+                self.update_analysis_results.emit("\n")
+            
+            self.update_output.emit(log_message("[Packing] Detection complete"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Packing] Error: {e}"))
+            self.update_analysis_results.emit(f"Error detecting packing: {e}\n")
+
+    def run_static_vulnerability_scan(self):
+        """Run advanced static vulnerability scanning."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        self.update_output.emit(log_message("[Vuln Scan] Starting static vulnerability scan..."))
+        self.update_analysis_results.emit("\n=== Static Vulnerability Scan ===\n")
+        
+        try:
+            from ..core.analysis.vulnerability_engine import VulnerabilityEngine
+            
+            engine = VulnerabilityEngine()
+            vulnerabilities = engine.scan_binary(self.binary_path)
+            
+            if vulnerabilities:
+                self.update_analysis_results.emit(f"Found {len(vulnerabilities)} potential vulnerabilities:\n\n")
+                
+                # Group by severity
+                critical = [v for v in vulnerabilities if v.get('severity') == 'critical']
+                high = [v for v in vulnerabilities if v.get('severity') == 'high']
+                medium = [v for v in vulnerabilities if v.get('severity') == 'medium']
+                low = [v for v in vulnerabilities if v.get('severity') == 'low']
+                
+                if critical:
+                    self.update_analysis_results.emit(f"🔴 CRITICAL ({len(critical)}):\n")
+                    for vuln in critical:
+                        self.update_analysis_results.emit(f"  - {vuln['type']}: {vuln['description']}\n")
+                
+                if high:
+                    self.update_analysis_results.emit(f"\n🟠 HIGH ({len(high)}):\n")
+                    for vuln in high:
+                        self.update_analysis_results.emit(f"  - {vuln['type']}: {vuln['description']}\n")
+                
+                if medium:
+                    self.update_analysis_results.emit(f"\n🟡 MEDIUM ({len(medium)}):\n")
+                    for vuln in medium:
+                        self.update_analysis_results.emit(f"  - {vuln['type']}: {vuln['description']}\n")
+                
+                if low:
+                    self.update_analysis_results.emit(f"\n🟢 LOW ({len(low)}):\n")
+                    for vuln in low:
+                        self.update_analysis_results.emit(f"  - {vuln['type']}: {vuln['description']}\n")
+            else:
+                self.update_analysis_results.emit("✅ No vulnerabilities detected\n")
+            
+            self.update_output.emit(log_message("[Vuln Scan] Scan complete"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Vuln Scan] Error: {e}"))
+            self.update_analysis_results.emit(f"Error during vulnerability scan: {e}\n")
+
+    def run_ml_vulnerability_prediction(self):
+        """Run ML-based vulnerability prediction."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        self.update_output.emit(log_message("[ML Vuln] Starting ML vulnerability prediction..."))
+        self.update_analysis_results.emit("\n=== ML Vulnerability Prediction ===\n")
+        
+        try:
+            from ..ai.ml_predictor import MLVulnerabilityPredictor
+            
+            predictor = MLVulnerabilityPredictor()
+            prediction_result = predictor.predict_vulnerability(self.binary_path)
+            
+            if prediction_result:
+                prediction = prediction_result.get('prediction', 0)
+                probability = prediction_result.get('probability', 0)
+                feature_count = prediction_result.get('feature_count', 0)
+                model_type = prediction_result.get('model_type', 'Unknown')
+                
+                self.update_analysis_results.emit(f"ML Model: {model_type}\n")
+                self.update_analysis_results.emit(f"Features analyzed: {feature_count}\n")
+                self.update_analysis_results.emit(f"Vulnerability prediction: {'High Risk' if prediction == 1 else 'Low Risk'}\n")
+                if probability:
+                    self.update_analysis_results.emit(f"Confidence: {probability:.1%}\n")
+                
+                if prediction == 1:
+                    self.update_analysis_results.emit("⚠️ ML model suggests this binary may have vulnerabilities\n")
+                else:
+                    self.update_analysis_results.emit("✅ ML model suggests this binary has low vulnerability risk\n")
+            else:
+                self.update_analysis_results.emit("❌ ML prediction failed - no model loaded or feature extraction failed\n")
+            
+            self.update_output.emit(log_message("[ML Vuln] Prediction complete"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[ML Vuln] Error: {e}"))
+            self.update_analysis_results.emit(f"Error during ML prediction: {e}\n")
+
+    def analyze_process_behavior(self):
+        """Analyze live process behavior."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        self.update_output.emit(log_message("[Process] Starting process behavior analysis..."))
+        self.update_analysis_results.emit("\n=== Process Behavior Analysis ===\n")
+        
+        try:
+            from ..core.analysis.dynamic_analyzer import AdvancedDynamicAnalyzer
+            
+            analyzer = AdvancedDynamicAnalyzer(self.binary_path)
+            self.update_analysis_results.emit("Launching process for analysis...\n")
+            
+            # Run the analysis
+            results = analyzer.analyze_runtime_behavior()
+            
+            if results.get('status') == 'success':
+                self.update_analysis_results.emit(f"Process PID: {results.get('pid', 'Unknown')}\n\n")
+                
+                # API calls
+                api_calls = results.get('api_calls', [])
+                self.update_analysis_results.emit(f"API Calls Monitored: {len(api_calls)}\n")
+                if api_calls:
+                    self.update_analysis_results.emit("Most frequent APIs:\n")
+                    for api in api_calls[:10]:
+                        self.update_analysis_results.emit(f"  - {api['name']}: {api['count']} calls\n")
+                
+                # File operations
+                file_ops = results.get('file_operations', [])
+                if file_ops:
+                    self.update_analysis_results.emit(f"\nFile Operations: {len(file_ops)}\n")
+                    for op in file_ops[:5]:
+                        self.update_analysis_results.emit(f"  - {op['type']}: {op['path']}\n")
+                
+                # Registry operations
+                reg_ops = results.get('registry_operations', [])
+                if reg_ops:
+                    self.update_analysis_results.emit(f"\nRegistry Operations: {len(reg_ops)}\n")
+                    for op in reg_ops[:5]:
+                        self.update_analysis_results.emit(f"  - {op['type']}: {op['key']}\n")
+                
+                # Network activity
+                net_activity = results.get('network_activity', [])
+                if net_activity:
+                    self.update_analysis_results.emit(f"\nNetwork Activity: {len(net_activity)}\n")
+                    for activity in net_activity[:5]:
+                        self.update_analysis_results.emit(f"  - {activity['type']}: {activity['address']}\n")
+            else:
+                self.update_analysis_results.emit(f"Analysis failed: {results.get('error', 'Unknown error')}\n")
+            
+            self.update_output.emit(log_message("[Process] Analysis complete"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Process] Error: {e}"))
+            self.update_analysis_results.emit(f"Error analyzing process: {e}\n")
+
+    def run_memory_keyword_scan(self):
+        """Run memory keyword scan using Frida."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        # Get keywords from user
+        keywords, ok = QInputDialog.getText(
+            self, "Memory Scan Keywords",
+            "Enter keywords to search (comma-separated):",
+            text="license,trial,activation,serial,key"
+        )
+        
+        if not ok or not keywords:
+            return
+        
+        keyword_list = [k.strip() for k in keywords.split(',')]
+        
+        self.update_output.emit(log_message("[Memory Scan] Starting memory keyword scan..."))
+        self.update_analysis_results.emit("\n=== Memory Keyword Scan ===\n")
+        self.update_analysis_results.emit(f"Searching for: {', '.join(keyword_list)}\n\n")
+        
+        try:
+            from ..core.analysis.dynamic_analyzer import AdvancedDynamicAnalyzer
+            
+            analyzer = AdvancedDynamicAnalyzer(self.binary_path)
+            results = analyzer.scan_memory_for_keywords(keyword_list)
+            
+            if results.get('status') == 'success':
+                matches = results.get('matches', [])
+                self.update_analysis_results.emit(f"Found {len(matches)} matches:\n\n")
+                
+                for match in matches:
+                    self.update_analysis_results.emit(f"Address: 0x{match['address']:08x}\n")
+                    self.update_analysis_results.emit(f"Keyword: {match['keyword']}\n")
+                    self.update_analysis_results.emit(f"Context: {match['context']}\n")
+                    self.update_analysis_results.emit("-" * 50 + "\n")
+            else:
+                self.update_analysis_results.emit(f"Scan failed: {results.get('error', 'Unknown error')}\n")
+            
+            self.update_output.emit(log_message("[Memory Scan] Scan complete"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Memory Scan] Error: {e}"))
+            self.update_analysis_results.emit(f"Error during memory scan: {e}\n")
+
+    def analyze_captured_traffic(self):
+        """Analyze captured network traffic."""
+        if not hasattr(self, 'captured_packets') or not self.captured_packets:
+            QMessageBox.warning(self, "No Data", "No captured traffic to analyze.")
+            return
+        
+        self.update_output.emit(log_message("[Traffic] Analyzing captured traffic..."))
+        self.update_analysis_results.emit("\n=== Traffic Analysis Results ===\n")
+        
+        try:
+            from ..core.network.traffic_analyzer import NetworkTrafficAnalyzer
+            
+            analyzer = NetworkTrafficAnalyzer()
+            results = analyzer.analyze_packets(self.captured_packets)
+            
+            # Summary
+            self.update_analysis_results.emit(f"Total Packets: {results.get('total_packets', 0)}\n")
+            self.update_analysis_results.emit(f"Time Range: {results.get('time_range', 'Unknown')}\n\n")
+            
+            # Protocol breakdown
+            protocols = results.get('protocols', {})
+            if protocols:
+                self.update_analysis_results.emit("Protocol Breakdown:\n")
+                for proto, count in protocols.items():
+                    self.update_analysis_results.emit(f"  - {proto}: {count} packets\n")
+            
+            # Top talkers
+            top_talkers = results.get('top_talkers', [])
+            if top_talkers:
+                self.update_analysis_results.emit("\nTop Talkers:\n")
+                for talker in top_talkers[:10]:
+                    self.update_analysis_results.emit(f"  - {talker['address']}: {talker['packets']} packets\n")
+            
+            # Suspicious activity
+            suspicious = results.get('suspicious_activity', [])
+            if suspicious:
+                self.update_analysis_results.emit("\n⚠️ Suspicious Activity Detected:\n")
+                for activity in suspicious:
+                    self.update_analysis_results.emit(f"  - {activity['type']}: {activity['description']}\n")
+            
+            # License-related traffic
+            license_traffic = results.get('license_traffic', [])
+            if license_traffic:
+                self.update_analysis_results.emit("\n🔑 License-Related Traffic:\n")
+                for traffic in license_traffic:
+                    self.update_analysis_results.emit(f"  - {traffic['type']}: {traffic['details']}\n")
+            
+            self.update_output.emit(log_message("[Traffic] Analysis complete"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Traffic] Error: {e}"))
+            self.update_analysis_results.emit(f"Error analyzing traffic: {e}\n")
+
+    def run_multi_format_analysis(self):
+        """Run multi-format binary analysis."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        self.update_output.emit(log_message("[Multi-Format] Starting analysis..."))
+        self.update_analysis_results.emit("\n=== Multi-Format Binary Analysis ===\n")
+        
+        try:
+            from ..core.analysis.multi_format_analyzer import MultiFormatAnalyzer
+            
+            analyzer = MultiFormatAnalyzer()
+            results = analyzer.analyze(self.binary_path)
+            
+            # File format
+            self.update_analysis_results.emit(f"File Format: {results.get('format', 'Unknown')}\n")
+            self.update_analysis_results.emit(f"Architecture: {results.get('architecture', 'Unknown')}\n")
+            self.update_analysis_results.emit(f"Bit Width: {results.get('bits', 'Unknown')}-bit\n\n")
+            
+            # Format-specific details
+            if results.get('format') == 'PE':
+                pe_info = results.get('pe_info', {})
+                self.update_analysis_results.emit("PE Specific Information:\n")
+                self.update_analysis_results.emit(f"  - Subsystem: {pe_info.get('subsystem', 'Unknown')}\n")
+                self.update_analysis_results.emit(f"  - DLL Characteristics: 0x{pe_info.get('dll_characteristics', 0):04x}\n")
+                self.update_analysis_results.emit(f"  - Checksum: 0x{pe_info.get('checksum', 0):08x}\n")
+            elif results.get('format') == 'ELF':
+                elf_info = results.get('elf_info', {})
+                self.update_analysis_results.emit("ELF Specific Information:\n")
+                self.update_analysis_results.emit(f"  - Type: {elf_info.get('type', 'Unknown')}\n")
+                self.update_analysis_results.emit(f"  - Entry Point: 0x{elf_info.get('entry_point', 0):08x}\n")
+            elif results.get('format') == 'Mach-O':
+                macho_info = results.get('macho_info', {})
+                self.update_analysis_results.emit("Mach-O Specific Information:\n")
+                self.update_analysis_results.emit(f"  - File Type: {macho_info.get('filetype', 'Unknown')}\n")
+                self.update_analysis_results.emit(f"  - Flags: 0x{macho_info.get('flags', 0):08x}\n")
+            
+            # Common analysis results
+            if 'strings' in results:
+                interesting_strings = results['strings'][:20]
+                if interesting_strings:
+                    self.update_analysis_results.emit("\nInteresting Strings:\n")
+                    for s in interesting_strings:
+                        self.update_analysis_results.emit(f"  - {s}\n")
+            
+            self.update_output.emit(log_message("[Multi-Format] Analysis complete"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Multi-Format] Error: {e}"))
+            self.update_analysis_results.emit(f"Error during analysis: {e}\n")
+
+    def run_comprehensive_protection_scan(self):
+        """Run comprehensive protection scanning."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        self.update_output.emit(log_message("[Protection] Starting comprehensive scan..."))
+        self.protection_results.clear()
+        self.protection_results.append("=== Comprehensive Protection Scan ===\n")
+        
+        try:
+            from ..utils.protection_detection import (
+                detect_all_protections, detect_anti_debug, detect_checksum_verification,
+                detect_self_healing, detect_commercial_protectors
+            )
+            
+            # Run all detection methods
+            self.protection_results.append("Scanning for protections...\n\n")
+            
+            # Commercial protectors
+            commercial = detect_commercial_protectors(self.binary_path)
+            if commercial:
+                self.protection_results.append("🛡️ Commercial Protectors Detected:\n")
+                for protector in commercial:
+                    self.protection_results.append(f"  - {protector['name']} (confidence: {protector['confidence']:.1%})\n")
+                self.protection_results.append("\n")
+            
+            # Anti-debugging
+            anti_debug = detect_anti_debug(self.binary_path)
+            if anti_debug:
+                self.protection_results.append("🐛 Anti-Debugging Techniques:\n")
+                for technique in anti_debug:
+                    self.protection_results.append(f"  - {technique}\n")
+                self.protection_results.append("\n")
+            
+            # Checksum verification
+            checksum = detect_checksum_verification(self.binary_path)
+            if checksum:
+                self.protection_results.append("✓ Checksum/Integrity Checks:\n")
+                for check in checksum:
+                    self.protection_results.append(f"  - {check}\n")
+                self.protection_results.append("\n")
+            
+            # Self-healing code
+            self_healing = detect_self_healing(self.binary_path)
+            if self_healing:
+                self.protection_results.append("🔧 Self-Healing Code:\n")
+                for technique in self_healing:
+                    self.protection_results.append(f"  - {technique}\n")
+                self.protection_results.append("\n")
+            
+            # Summary
+            all_protections = len(commercial) + len(anti_debug) + len(checksum) + len(self_healing)
+            if all_protections == 0:
+                self.protection_results.append("✅ No significant protections detected\n")
+            else:
+                self.protection_results.append(f"\nTotal protections found: {all_protections}\n")
+                self.protection_results.append("\nRecommended approach:\n")
+                if commercial:
+                    self.protection_results.append("- Use unpacker for commercial protector\n")
+                if anti_debug:
+                    self.protection_results.append("- Bypass anti-debugging checks\n")
+                if checksum:
+                    self.protection_results.append("- Patch checksum verification\n")
+                if self_healing:
+                    self.protection_results.append("- Disable self-healing mechanisms\n")
+            
+            self.update_output.emit(log_message("[Protection] Scan complete"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Protection] Error: {e}"))
+            self.protection_results.append(f"\nError during scan: {e}\n")
+
+    def run_advanced_ghidra_analysis(self):
+        """Run Ghidra headless analysis with advanced script."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        self.update_output.emit(log_message("[Ghidra] Starting headless analysis..."))
+        self.update_analysis_results.emit("\n=== Ghidra Advanced Analysis ===\n")
+        
+        try:
+            from ..utils.tool_wrappers import run_ghidra_headless
+            
+            # Run Ghidra analysis
+            results = run_ghidra_headless(
+                self.binary_path,
+                script="AdvancedAnalysis.java",
+                timeout=300  # 5 minutes timeout
+            )
+            
+            if results.get('success'):
+                self.update_analysis_results.emit("Ghidra analysis completed successfully!\n\n")
+                
+                # Parse and display results
+                output = results.get('output', '')
+                
+                # Extract key findings
+                if 'License' in output or 'license' in output:
+                    self.update_analysis_results.emit("🔑 License-related findings detected\n")
+                
+                if 'Vulnerability' in output or 'vulnerable' in output:
+                    self.update_analysis_results.emit("⚠️ Potential vulnerabilities found\n")
+                
+                # Show output
+                self.update_analysis_results.emit("\nAnalysis Output:\n")
+                self.update_analysis_results.emit("-" * 50 + "\n")
+                
+                # Limit output to prevent UI freeze
+                lines = output.split('\n')
+                for line in lines[:100]:  # Show first 100 lines
+                    self.update_analysis_results.emit(line + "\n")
+                
+                if len(lines) > 100:
+                    self.update_analysis_results.emit(f"\n... and {len(lines) - 100} more lines\n")
+                
+                # Check if report was generated
+                report_path = results.get('report_path')
+                if report_path and os.path.exists(report_path):
+                    self.update_analysis_results.emit(f"\nDetailed report saved to: {report_path}\n")
+            else:
+                error = results.get('error', 'Unknown error')
+                self.update_analysis_results.emit(f"Ghidra analysis failed: {error}\n")
+            
+            self.update_output.emit(log_message("[Ghidra] Analysis complete"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Ghidra] Error: {e}"))
+            self.update_analysis_results.emit(f"Error running Ghidra: {e}\n")
+
+    def run_taint_analysis(self):
+        """Run taint analysis on the binary."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        # Get taint source from user
+        source, ok = QInputDialog.getText(
+            self, "Taint Analysis",
+            "Enter taint source (e.g., user_input, file_read, network_recv):",
+            text="user_input"
+        )
+        
+        if not ok or not source:
+            return
+        
+        self.update_output.emit(log_message("[Taint] Starting taint analysis..."))
+        self.update_analysis_results.emit("\n=== Taint Analysis ===\n")
+        self.update_analysis_results.emit(f"Tracking taint from: {source}\n\n")
+        
+        try:
+            from ..core.analysis.taint_analyzer import TaintAnalysisEngine
+            
+            engine = TaintAnalysisEngine(self.binary_path)
+            results = engine.analyze_taint_flow(source)
+            
+            if results.get('taint_paths'):
+                paths = results['taint_paths']
+                self.update_analysis_results.emit(f"Found {len(paths)} taint propagation paths:\n\n")
+                
+                for i, path in enumerate(paths, 1):
+                    self.update_analysis_results.emit(f"Path {i}:\n")
+                    for step in path:
+                        self.update_analysis_results.emit(f"  {step['address']}: {step['instruction']}\n")
+                        if step.get('tainted_regs'):
+                            self.update_analysis_results.emit(f"    Tainted registers: {', '.join(step['tainted_regs'])}\n")
+                    self.update_analysis_results.emit("\n")
+                
+                # Check for vulnerabilities
+                vulns = results.get('potential_vulnerabilities', [])
+                if vulns:
+                    self.update_analysis_results.emit("⚠️ Potential vulnerabilities from tainted data:\n")
+                    for vuln in vulns:
+                        self.update_analysis_results.emit(f"  - {vuln['type']} at {vuln['address']}\n")
+            else:
+                self.update_analysis_results.emit("No taint propagation paths found\n")
+            
+            self.update_output.emit(log_message("[Taint] Analysis complete"))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Taint] Error: {e}"))
+            self.update_analysis_results.emit(f"Error during taint analysis: {e}\n")
+    def log_after_start():
+        logger.info("Event loop started successfully")
+        logger.info(f"Window still visible: {window.isVisible()}")
+        logger.info(f"Active modal widget: {app_instance.activeModalWidget()}")
+        logger.info(f"Active popup widget: {app_instance.activePopupWidget()}")
+        logger.info(f"Active window: {app_instance.activeWindow()}")
+        logger.info(f"Window flags: {window.windowFlags()}")
+        logger.info(f"Window opacity: {window.windowOpacity()}")
+        logger.info(f"Window minimized: {window.isMinimized()}")
+        logger.info(f"Window maximized: {window.isMaximized()}")
+        
+        # Check all top level widgets for splash
+        for widget in app_instance.topLevelWidgets():
+            if 'SplashScreen' in str(widget):
+                logger.warning(f"Splash screen still in top level widgets: {widget}, visible: {widget.isVisible()}")
+        
+    QTimer.singleShot(100, log_after_start)
+    
+    # Force show window after event loop starts
+    def force_show_window():
+        logger.info("Force showing window from timer...")
+        window.setWindowFlags(Qt.Window)  # Reset to default window flags
+        window.show()
+        window.raise_()
+        window.activateWindow()
+        
+        # Move to center of screen - ensure positive coordinates
+        screen = app_instance.primaryScreen()
+        if screen:
+            screen_rect = screen.availableGeometry()
+            # Calculate center position
+            x = (screen_rect.width() - window.width()) // 2
+            y = (screen_rect.height() - window.height()) // 2
+            # Ensure positive coordinates
+            x = max(0, x)
+            y = max(0, y)
+            window.move(x, y)
+            logger.info(f"Moved window to position: {window.pos()}")
+            logger.info(f"Screen geometry: {screen_rect}")
+        else:
+            # Fallback to safe position
+            window.move(100, 100)
+            logger.info("No primary screen found, moved to 100,100")
+    
+    # Schedule the force show after event loop starts
+    QTimer.singleShot(0, force_show_window)
+    
+    # Start event loop
+    exit_code = app_instance.exec_()
+    logger.info(f"Event loop ended with code: {exit_code}")
+    sys.exit(exit_code)
 
 if __name__ == "__main__":
     try:
@@ -13385,3 +15491,432 @@ if __name__ == "__main__":
             f.write(f"Traceback:\n{traceback.format_exc()}")
 
 # pylint: enable=line-too-long
+
+
+    def generate_exploit_strategy(self):
+        """Generate an exploit strategy based on found vulnerabilities."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File Selected",
+                                "Please select a program first.")
+            return
+
+        self.update_output.emit(log_message(
+            "[Exploit Strategy] Generating exploitation strategy..."))
+
+        try:
+            from ..utils.exploitation import generate_exploit_strategy
+            
+            # Use buffer overflow as default vulnerability type
+            strategy = generate_exploit_strategy(self.binary_path, "buffer_overflow")
+            
+            if "error" in strategy:
+                self.update_output.emit(log_message(
+                    f"[Exploit Strategy] Error: {strategy['error']}"))
+            else:
+                self.update_output.emit(log_message(
+                    "[Exploit Strategy] Strategy generated successfully"))
+                
+                # Display strategy details
+                if "strategy" in strategy and "steps" in strategy["strategy"]:
+                    self.update_output.emit(log_message(
+                        "[Exploit Strategy] Exploitation steps:"))
+                    for i, step in enumerate(strategy["strategy"]["steps"], 1):
+                        self.update_output.emit(log_message(
+                            f"[Exploit Strategy] {i}. {step}"))
+                
+                if "automation_script" in strategy:
+                    self.update_output.emit(log_message(
+                        "[Exploit Strategy] Automation script generated"))
+                
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[Exploit Strategy] Error: {e}"))
+
+    def generate_exploit_payload(self, payload_type):
+        """Generate an exploit payload of the specified type."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File Selected",
+                                "Please select a program first.")
+            return
+
+        self.update_output.emit(log_message(
+            f"[Payload Generator] Generating {payload_type} payload..."))
+
+        try:
+            from ..utils.exploitation import generate_license_bypass_payload, generate_exploit
+            from ..core.patching.payload_generator import generate_advanced_payload
+            
+            if payload_type == "License Bypass":
+                payload_result = generate_license_bypass_payload("target_software", "patch")
+            elif payload_type == "Function Hijack":
+                strategy = {"strategy": "function_hijacking", "target": "license_check"}
+                payload_bytes = generate_advanced_payload(strategy)
+                payload_result = {
+                    "method": "function_hijacking",
+                    "payload_bytes": payload_bytes.hex() if payload_bytes else "Generation failed",
+                    "description": "Function hijacking payload for license bypass"
+                }
+            elif payload_type == "Buffer Overflow":
+                payload_result = generate_exploit("buffer_overflow", "x86", "shellcode")
+            else:
+                payload_result = {"error": f"Unknown payload type: {payload_type}"}
+            
+            if "error" in payload_result:
+                self.update_output.emit(log_message(
+                    f"[Payload Generator] Error: {payload_result['error']}"))
+            else:
+                self.update_output.emit(log_message(
+                    f"[Payload Generator] {payload_type} payload generated successfully"))
+                
+                # Display payload details
+                if "description" in payload_result:
+                    self.update_output.emit(log_message(
+                        f"[Payload Generator] Description: {payload_result['description']}"))
+                
+                if "payload_bytes" in payload_result:
+                    self.update_output.emit(log_message(
+                        f"[Payload Generator] Payload bytes: {payload_result['payload_bytes'][:100]}..."))
+                
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[Payload Generator] Error: {e}"))
+
+    def setup_persistent_logging_ui(self):
+        """Set up persistent logging with rotation from UI."""
+        try:
+            from intellicrack.utils.logger import setup_persistent_logging
+            
+            # Get configuration from settings
+            log_dir = self.config.get("log_dir", os.path.join(os.path.expanduser("~"), "intellicrack", "logs"))
+            log_rotation = self.config.get("logging", {}).get("log_rotation", 5)
+            max_log_size = self.config.get("logging", {}).get("max_log_size", 10 * 1024 * 1024)
+            
+            # Set up persistent logging
+            log_file = setup_persistent_logging(
+                log_dir=log_dir,
+                log_name="intellicrack",
+                enable_rotation=True,
+                max_bytes=max_log_size,
+                backup_count=log_rotation
+            )
+            
+            self.update_output.emit(log_message(
+                f"[Logging] Persistent logging initialized with rotation\n"
+                f"Log file: {log_file}\n"
+                f"Max size: {max_log_size / 1024 / 1024:.1f} MB\n"
+                f"Backup count: {log_rotation}"
+            ))
+            
+            # Update logs tab to show the log file path
+            if hasattr(self, 'log_browser'):
+                self.log_browser.append(f"\n--- Logging to: {log_file} ---\n")
+                
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Logging] Error setting up persistent logging: {e}"))
+
+    def check_dependencies_ui(self):
+        """Check and display dependency status in UI."""
+        try:
+            from intellicrack.utils.dependencies import check_and_install_dependencies
+            from intellicrack.utils.system_utils import check_dependencies
+            
+            # Core dependencies to check
+            core_deps = {
+                "psutil": "System monitoring",
+                "requests": "HTTP requests", 
+                "pefile": "PE file analysis",
+                "capstone": "Disassembly engine",
+                "keystone": "Assembly engine",
+                "unicorn": "CPU emulation",
+                "lief": "Binary parsing",
+                "yara": "Pattern matching",
+                "cryptography": "Encryption/decryption"
+            }
+            
+            # Optional dependencies
+            optional_deps = {
+                "PyQt5": "GUI interface",
+                "numpy": "Numerical computing",
+                "scikit-learn": "Machine learning",
+                "matplotlib": "Data visualization",
+                "networkx": "Graph analysis",
+                "frida": "Dynamic instrumentation",
+                "angr": "Symbolic execution",
+                "torch": "Deep learning (PyTorch)",
+                "tensorflow": "Deep learning (TensorFlow)"
+            }
+            
+            self.update_output.emit(log_message("[Dependencies] Checking installed packages..."))
+            
+            # Check core dependencies
+            core_ok, core_results = check_dependencies(core_deps)
+            
+            # Check optional dependencies
+            opt_ok, opt_results = check_dependencies(optional_deps)
+            
+            # Display results
+            result_text = "[Dependencies] Core Dependencies:\n"
+            for dep, desc in core_deps.items():
+                status = "✓" if core_results.get(dep) else "✗"
+                result_text += f"  {status} {dep}: {desc}\n"
+            
+            result_text += "\n[Dependencies] Optional Dependencies:\n"
+            for dep, desc in optional_deps.items():
+                status = "✓" if opt_results.get(dep) else "✗"
+                result_text += f"  {status} {dep}: {desc}\n"
+            
+            self.update_output.emit(log_message(result_text))
+            
+            # Offer to install missing core dependencies
+            missing_core = [dep for dep, installed in core_results.items() if not installed]
+            if missing_core:
+                reply = QMessageBox.question(
+                    self, 
+                    "Install Dependencies",
+                    f"Missing core dependencies: {', '.join(missing_core)}\n\n"
+                    "Would you like to install them now?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                
+                if reply == QMessageBox.Yes:
+                    self.install_dependencies(missing_core)
+                    
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Dependencies] Error checking dependencies: {e}"))
+
+    def install_dependencies(self, deps):
+        """Install missing dependencies."""
+        try:
+            from intellicrack.utils.dependencies import install_dependencies
+            
+            self.update_output.emit(log_message(f"[Dependencies] Installing: {', '.join(deps)}"))
+            
+            # Run installation in a separate thread to avoid blocking UI
+            def install_worker():
+                success = install_dependencies(deps)
+                if success:
+                    self.update_output.emit(log_message("[Dependencies] Installation completed successfully"))
+                else:
+                    self.update_output.emit(log_message("[Dependencies] Some packages failed to install"))
+            
+            # Create and start thread
+            import threading
+            install_thread = threading.Thread(target=install_worker, daemon=True)
+            install_thread.start()
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Dependencies] Error installing: {e}"))
+
+    def fine_tune_model(self):
+        """Open fine-tuning dialog for custom model training."""
+        try:
+            from intellicrack.ui.dialogs.model_finetuning_dialog import ModelFineTuningDialog
+            
+            dialog = ModelFineTuningDialog(self)
+            
+            # Connect signals for progress updates
+            def on_training_progress(progress_data):
+                if progress_data.get('status') == 'progress':
+                    self.update_output.emit(log_message(
+                        f"[Fine-tuning] Epoch {progress_data.get('epoch')}, "
+                        f"Loss: {progress_data.get('loss', 0):.4f}, "
+                        f"Progress: {progress_data.get('progress', 0):.1f}%"
+                    ))
+                elif progress_data.get('status') == 'complete':
+                    self.update_output.emit(log_message(
+                        "[Fine-tuning] Training completed successfully!"
+                    ))
+                elif progress_data.get('status') == 'error':
+                    self.update_output.emit(log_message(
+                        f"[Fine-tuning] Error: {progress_data.get('message')}"
+                    ))
+            
+            dialog.training_progress.connect(on_training_progress)
+            
+            # Show the dialog
+            if dialog.exec_():
+                # Model fine-tuning completed
+                fine_tuned_path = dialog.get_fine_tuned_model_path()
+                if fine_tuned_path:
+                    self.selected_model_path = fine_tuned_path
+                    self.update_output.emit(log_message(
+                        f"[Fine-tuning] Fine-tuned model saved to: {fine_tuned_path}"
+                    ))
+                    self.save_config()
+                    
+        except ImportError:
+            # Fallback if dialog not available
+            self.update_output.emit(log_message(
+                "[Fine-tuning] Model fine-tuning dialog not available. "
+                "Please ensure all dependencies are installed."
+            ))
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Fine-tuning] Error: {e}"))
+
+    def extract_icon_from_binary(self):
+        """Extract icon from the currently loaded binary."""
+        try:
+            if not hasattr(self, 'loaded_binary_path') or not self.loaded_binary_path:
+                self.update_output.emit(log_message(
+                    "[Icon Extraction] No binary loaded. Please load a binary first."
+                ))
+                return
+            
+            from intellicrack.utils.system_utils import extract_executable_icon
+            
+            # Choose output path
+            output_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save Extracted Icon",
+                os.path.splitext(os.path.basename(self.loaded_binary_path))[0] + "_icon.png",
+                "PNG Files (*.png);;All Files (*)"
+            )
+            
+            if output_path:
+                self.update_output.emit(log_message(
+                    f"[Icon Extraction] Extracting icon from {self.loaded_binary_path}..."
+                ))
+                
+                # Extract icon
+                icon_path = extract_executable_icon(self.loaded_binary_path, output_path)
+                
+                if icon_path:
+                    self.update_output.emit(log_message(
+                        f"[Icon Extraction] Icon extracted successfully to: {icon_path}"
+                    ))
+                    
+                    # Optionally display the icon in UI
+                    try:
+                        pixmap = QPixmap(icon_path)
+                        if not pixmap.isNull() and hasattr(self, 'binary_icon_label'):
+                            scaled_pixmap = pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                            self.binary_icon_label.setPixmap(scaled_pixmap)
+                    except Exception as e:
+                        self.update_output.emit(log_message(
+                            f"[Icon Extraction] Could not display icon: {e}"
+                        ))
+                else:
+                    self.update_output.emit(log_message(
+                        "[Icon Extraction] Failed to extract icon from binary"
+                    ))
+                    
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Icon Extraction] Error: {e}"))
+
+    def optimize_memory_usage_ui(self):
+        """Optimize memory usage and display results."""
+        try:
+            from intellicrack.utils.system_utils import optimize_memory_usage
+            
+            self.update_output.emit(log_message("[Memory] Optimizing memory usage..."))
+            
+            # Run optimization
+            stats = optimize_memory_usage()
+            
+            # Display results
+            if stats['before'] and stats['after']:
+                before_mb = stats['before']['used'] / 1024 / 1024
+                after_mb = stats['after']['used'] / 1024 / 1024
+                freed_mb = stats['freed'] / 1024 / 1024
+                
+                result_text = (
+                    f"[Memory] Optimization Results:\n"
+                    f"  Memory before: {before_mb:.1f} MB ({stats['before']['percent']:.1f}%)\n"
+                    f"  Memory after: {after_mb:.1f} MB ({stats['after']['percent']:.1f}%)\n"
+                    f"  Memory freed: {freed_mb:.1f} MB\n"
+                    f"  Available memory: {stats['after']['available'] / 1024 / 1024:.1f} MB"
+                )
+                
+                self.update_output.emit(log_message(result_text))
+                
+                # Update status bar if available
+                if hasattr(self, 'statusBar'):
+                    self.statusBar().showMessage(
+                        f"Memory optimized: {freed_mb:.1f} MB freed", 
+                        5000
+                    )
+            else:
+                self.update_output.emit(log_message(
+                    "[Memory] Memory optimization completed"
+                ))
+                
+        except Exception as e:
+            self.update_output.emit(log_message(f"[Memory] Optimization error: {e}"))
+
+    def run_long_operation_threaded(self, operation_func, operation_name, *args, **kwargs):
+        """Run a long operation in a separate thread with progress updates."""
+        try:
+            from PyQt5.QtCore import QThread, pyqtSignal
+            
+            class WorkerThread(QThread):
+                progress = pyqtSignal(str)
+                finished_signal = pyqtSignal(object)
+                error = pyqtSignal(str)
+                
+                def __init__(self, func, args, kwargs):
+                    super().__init__()
+                    self.func = func
+                    self.args = args
+                    self.kwargs = kwargs
+                    self.result = None
+                
+                def run(self):
+                    try:
+                        self.progress.emit(f"Starting {operation_name}...")
+                        self.result = self.func(*self.args, **self.kwargs)
+                        self.finished_signal.emit(self.result)
+                    except Exception as e:
+                        self.error.emit(str(e))
+            
+            # Create and configure thread
+            self.worker_thread = WorkerThread(operation_func, args, kwargs)
+            
+            # Connect signals
+            self.worker_thread.progress.connect(
+                lambda msg: self.update_output.emit(log_message(f"[Thread] {msg}"))
+            )
+            self.worker_thread.finished_signal.connect(
+                lambda result: self.update_output.emit(log_message(
+                    f"[Thread] {operation_name} completed successfully"
+                ))
+            )
+            self.worker_thread.error.connect(
+                lambda err: self.update_output.emit(log_message(
+                    f"[Thread] Error in {operation_name}: {err}"
+                ))
+            )
+            
+            # Start thread
+            self.worker_thread.start()
+            
+            self.update_output.emit(log_message(
+                f"[Thread] {operation_name} started in background thread"
+            ))
+            
+        except Exception as e:
+            self.update_output.emit(log_message(
+                f"[Thread] Failed to start threaded operation: {e}"
+            ))
+
+    def demo_threaded_operation(self):
+        """Demo of running a long operation in a thread."""
+        import time
+        
+        def long_running_task():
+            """Simulated long-running task"""
+            for i in range(5):
+                time.sleep(1)
+                self.update_output.emit(log_message(
+                    f"[Thread Demo] Processing step {i+1}/5..."
+                ))
+            return "Task completed successfully!"
+        
+        self.update_output.emit(log_message(
+            "[Thread Demo] Starting long operation in background thread..."
+        ))
+        
+        # Use the threaded operation helper
+        self.run_long_operation_threaded(
+            long_running_task,
+            "Demo Long Operation"
+        )

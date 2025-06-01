@@ -836,6 +836,7 @@ def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]
         # Execute the plugin remotely
         results = executor.execute_plugin(
             plugin_info['path'],
+            'analyze',
             app.binary_path
         )
         

@@ -33,7 +33,7 @@ from .ai_bridge import AIBinaryBridge, BinaryContextBuilder
 from .integration import (
     show_enhanced_hex_viewer,
     integrate_enhanced_hex_viewer, 
-    replace_standard_hex_viewer,
+    initialize_hex_viewer,
     restore_standard_hex_viewer,
     register_hex_viewer_ai_tools
 )

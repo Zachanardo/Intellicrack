@@ -290,7 +290,11 @@ class GPUAccelerator:
         self._select_preferred_backend()
 
         # Run initial benchmarks
-        self._run_initial_benchmarks()
+        try:
+            self._run_initial_benchmarks()
+        except Exception as e:
+            self.logger.warning(f"Initial benchmark failed: {e}")
+            # Don't let benchmark failure prevent GPU usage
 
     def _check_available_backends(self):
         """
@@ -614,7 +618,8 @@ class GPUAccelerator:
         for freq in frequencies:
             if freq > 0:
                 prob = freq / data_len
-                entropy -= prob * (prob.bit_length() - 1)  # log2 approximation
+                import math
+                entropy -= prob * math.log2(prob)
         
         return entropy
 

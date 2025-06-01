@@ -51,10 +51,25 @@ def log_function_call(func: F) -> F:
     Returns:
         The wrapped function with logging
     """
+    # Thread-local storage to prevent recursion
+    import threading
+    _local = threading.local()
+    
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        # Check if we're already in a logging call to prevent recursion
+        if hasattr(_local, 'in_logger') and _local.in_logger:
+            # Just call the function without logging to avoid recursion
+            return func(*args, **kwargs)
+            
         func_name = func.__qualname__
+        
+        # Skip logging for certain problematic functions
+        if any(skip in func_name for skip in ['__str__', '__repr__', 'as_posix', 'getline', 'getlines']):
+            return func(*args, **kwargs)
+            
         try:
+            _local.in_logger = True
             # Log function call with arguments
             arg_names = inspect.getfullargspec(func).args
             arg_values = args[:len(arg_names)]
@@ -78,15 +93,31 @@ def log_function_call(func: F) -> F:
             logger.debug(f"Exiting {func_name} with result: {safe_repr(result)}")
             return result
         except Exception as e:
-            logger.exception(f"Exception in {func_name}: {e}")
+            # Don't use logger.exception to avoid recursion - just log the error
+            try:
+                logger.error(f"Exception in {func_name}: {e}", exc_info=False)
+            except:
+                print(f"Exception in {func_name}: {e}")
             raise
+        finally:
+            _local.in_logger = False
 
     # Support async functions
     if inspect.iscoroutinefunction(func):
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
+            # Check if we're already in a logging call to prevent recursion
+            if hasattr(_local, 'in_logger') and _local.in_logger:
+                return await func(*args, **kwargs)
+                
             func_name = func.__qualname__
+            
+            # Skip logging for certain problematic functions
+            if any(skip in func_name for skip in ['__str__', '__repr__', 'as_posix', 'getline', 'getlines']):
+                return await func(*args, **kwargs)
+                
             try:
+                _local.in_logger = True
                 arg_names = inspect.getfullargspec(func).args
                 arg_values = args[:len(arg_names)]
                 
@@ -109,8 +140,14 @@ def log_function_call(func: F) -> F:
                 logger.debug(f"Exiting async {func_name} with result: {safe_repr(result)}")
                 return result
             except Exception as e:
-                logger.exception(f"Exception in async {func_name}: {e}")
+                # Don't use logger.exception to avoid recursion
+                try:
+                    logger.error(f"Exception in async {func_name}: {e}", exc_info=False)
+                except:
+                    print(f"Exception in async {func_name}: {e}")
                 raise
+            finally:
+                _local.in_logger = False
         return async_wrapper
 
     return wrapper
@@ -130,79 +167,6 @@ def log_all_methods(cls):
         if callable(attr_value) and not attr_name.startswith("__"):
             setattr(cls, attr_name, log_function_call(attr_value))
     return cls
-
-
-def initialize_comprehensive_logging(module_name: str = '__main__'):
-    """
-    Initialize comprehensive logging for the entire application.
-    
-    This function automatically applies the log_function_call decorator to all
-    functions and methods throughout the application, ensuring complete
-    visibility into the program's execution flow.
-    
-    Args:
-        module_name: Name of the module to initialize logging for
-    """
-    logger = logging.getLogger('Intellicrack')
-    logger.info("Initializing comprehensive function logging...")
-    
-    # Get the specified module
-    if module_name in sys.modules:
-        current_module = sys.modules[module_name]
-    else:
-        logger.warning(f"Module {module_name} not found in sys.modules")
-        return
-    
-    # Track what we've already processed to avoid infinite loops
-    processed = set()
-    
-    # Helper function to recursively apply logging
-    def apply_logging_to_object(obj, obj_name=""):
-        # Skip if we've already processed this object
-        if id(obj) in processed:
-            return
-        processed.add(id(obj))
-        
-        # Apply to functions
-        if inspect.isfunction(obj) and not obj_name.startswith("_"):
-            try:
-                # Get the parent object that contains this function
-                parent_name = obj_name.rsplit('.', 1)[0] if '.' in obj_name else module_name
-                parent = current_module
-                for part in parent_name.split('.')[1:]:  # Skip module name
-                    parent = getattr(parent, part, None)
-                    if parent is None:
-                        break
-                
-                if parent is not None:
-                    # Apply the decorator
-                    decorated = log_function_call(obj)
-                    setattr(parent, obj.__name__, decorated)
-                    logger.debug(f"Applied logging to function: {obj_name}")
-            except Exception as e:
-                logger.debug(f"Could not apply logging to {obj_name}: {e}")
-        
-        # Apply to classes
-        elif inspect.isclass(obj):
-            try:
-                # Apply to all methods in the class
-                for method_name, method in inspect.getmembers(obj):
-                    if callable(method) and not method_name.startswith("_"):
-                        try:
-                            decorated = log_function_call(method)
-                            setattr(obj, method_name, decorated)
-                            logger.debug(f"Applied logging to method: {obj_name}.{method_name}")
-                        except Exception as e:
-                            logger.debug(f"Could not apply logging to {obj_name}.{method_name}: {e}")
-            except Exception as e:
-                logger.debug(f"Could not process class {obj_name}: {e}")
-    
-    # Process all objects in the module
-    for name, obj in inspect.getmembers(current_module):
-        if not name.startswith("_"):
-            apply_logging_to_object(obj, f"{module_name}.{name}")
-    
-    logger.info("Comprehensive logging initialization complete")
 
 
 def setup_logger(name: str = 'Intellicrack', level: int = logging.INFO, 
@@ -278,18 +242,116 @@ def configure_logging(level: int = logging.INFO, log_file: str = None,
     """
     # Set up the root logger
     setup_logger('Intellicrack', level, log_file, format_string)
+
+def setup_logging(level: str = "INFO", log_file: str = None, 
+                  enable_rotation: bool = True, max_bytes: int = 10485760,
+                  backup_count: int = 5) -> None:
+    """
+    Set up logging for the application with optional log rotation.
     
-    # Enable comprehensive logging if requested
-    if enable_comprehensive:
-        initialize_comprehensive_logging()
+    Args:
+        level: The logging level as a string (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        log_file: Optional log file path
+        enable_rotation: Whether to enable log rotation
+        max_bytes: Max size of each log file before rotation (default: 10MB)
+        backup_count: Number of backup files to keep (default: 5)
+    """
+    # Convert string level to logging constant
+    numeric_level = getattr(logging, level.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError(f'Invalid log level: {level}')
+    
+    # Set up handlers
+    handlers = []
+    
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(numeric_level)
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    console_handler.setFormatter(formatter)
+    handlers.append(console_handler)
+    
+    # File handler with rotation if log_file is specified
+    if log_file:
+        if enable_rotation:
+            from logging.handlers import RotatingFileHandler
+            file_handler = RotatingFileHandler(
+                log_file,
+                maxBytes=max_bytes,
+                backupCount=backup_count
+            )
+        else:
+            file_handler = logging.FileHandler(log_file)
+        
+        file_handler.setLevel(numeric_level)
+        file_handler.setFormatter(formatter)
+        handlers.append(file_handler)
+    
+    # Configure root logger
+    logging.basicConfig(
+        level=numeric_level,
+        handlers=handlers,
+        force=True  # Force reconfiguration
+    )
+
+
+def setup_persistent_logging(log_dir: str = None, log_name: str = "intellicrack",
+                            enable_rotation: bool = True, max_bytes: int = 10485760,
+                            backup_count: int = 5) -> str:
+    """
+    Set up persistent logging with automatic rotation.
+    
+    Args:
+        log_dir: Directory for log files (default: ~/intellicrack/logs)
+        log_name: Base name for log files
+        enable_rotation: Whether to enable log rotation
+        max_bytes: Max size of each log file before rotation (default: 10MB)
+        backup_count: Number of backup files to keep (default: 5)
+        
+    Returns:
+        str: Path to the log file
+    """
+    import os
+    from datetime import datetime
+    
+    # Default log directory
+    if log_dir is None:
+        log_dir = os.path.join(os.path.expanduser("~"), "intellicrack", "logs")
+    
+    # Create log directory if it doesn't exist
+    os.makedirs(log_dir, exist_ok=True)
+    
+    # Create log file name with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = os.path.join(log_dir, f"{log_name}_{timestamp}.log")
+    
+    # Set up logging with rotation
+    setup_logging(
+        level="INFO",
+        log_file=log_file,
+        enable_rotation=enable_rotation,
+        max_bytes=max_bytes,
+        backup_count=backup_count
+    )
+    
+    logger.info(f"Persistent logging initialized. Log file: {log_file}")
+    logger.info(f"Log rotation: {'Enabled' if enable_rotation else 'Disabled'}")
+    logger.info(f"Max file size: {max_bytes / 1024 / 1024:.1f} MB, Backup count: {backup_count}")
+    
+    return log_file
 
 
 # Exported functions and classes
 __all__ = [
     'log_function_call',
     'log_all_methods',
-    'initialize_comprehensive_logging',
     'setup_logger',
     'get_logger',
     'configure_logging',
+    'setup_logging',
+    'setup_persistent_logging',
+    'log_message',
 ]

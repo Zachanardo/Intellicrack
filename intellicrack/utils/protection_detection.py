@@ -228,7 +228,7 @@ def run_comprehensive_protection_scan(binary_path: str) -> Dict[str, Any]:
         try:
             from intellicrack.utils.process_utils import detect_tpm_protection
             tpm_results = detect_tpm_protection()
-            results["scan_results"]["tpm"] = tmp_results
+            results["scan_results"]["tpm"] = tpm_results
         except ImportError:
             logger.debug("TPM detection not available")
         
@@ -420,10 +420,199 @@ def detect_obfuscation(binary_path: str) -> Dict[str, Any]:
     return results
 
 
+def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
+    """Detect anti-debugging techniques in binary.
+    
+    Args:
+        binary_path: Path to binary to analyze
+        
+    Returns:
+        Detection results including techniques found and confidence
+    """
+    results = {
+        "anti_debug_detected": False,
+        "techniques": [],
+        "api_calls": [],
+        "instructions": [],
+        "indicators": [],
+        "confidence": 0.0
+    }
+    
+    try:
+        if not os.path.exists(binary_path):
+            return {"error": "Binary file not found"}
+        
+        # Anti-debugging API functions
+        anti_debug_apis = [
+            # Windows debugging APIs
+            b"IsDebuggerPresent",
+            b"CheckRemoteDebuggerPresent",
+            b"NtQueryInformationProcess",
+            b"NtSetInformationThread",
+            b"OutputDebugString",
+            b"NtQuerySystemInformation",
+            b"GetTickCount",
+            b"QueryPerformanceCounter",
+            b"timeGetTime",
+            b"rdtsc",
+            # Linux/Unix debugging APIs
+            b"ptrace",
+            b"getppid",
+            b"/proc/self/status",
+            b"/proc/self/stat",
+            b"/proc/self/cmdline"
+        ]
+        
+        # Anti-debugging strings and indicators
+        debug_strings = [
+            b"debugger",
+            b"IDA",
+            b"OllyDbg",
+            b"x64dbg",
+            b"WinDbg",
+            b"gdb",
+            b"lldb",
+            b"radare2",
+            b"Immunity",
+            b"SoftICE",
+            b"SICE",
+            b"ntice",
+            b"iceext",
+            b"Syser",
+            b"TRW2000",
+            b"Trace",
+            b"debug"
+        ]
+        
+        # Read binary data
+        with open(binary_path, 'rb') as f:
+            binary_data = f.read()
+        
+        # Check for anti-debugging APIs
+        for api in anti_debug_apis:
+            if api in binary_data:
+                api_name = api.decode('utf-8', errors='ignore')
+                results["api_calls"].append(api_name)
+                results["indicators"].append(f"Anti-debug API found: {api_name}")
+                results["anti_debug_detected"] = True
+                
+                # Categorize techniques
+                if api_name in ["IsDebuggerPresent", "CheckRemoteDebuggerPresent"]:
+                    if "Windows Debugger Detection" not in results["techniques"]:
+                        results["techniques"].append("Windows Debugger Detection")
+                elif api_name in ["GetTickCount", "QueryPerformanceCounter", "timeGetTime", "rdtsc"]:
+                    if "Timing-based Detection" not in results["techniques"]:
+                        results["techniques"].append("Timing-based Detection")
+                elif api_name == "ptrace":
+                    if "Linux ptrace Detection" not in results["techniques"]:
+                        results["techniques"].append("Linux ptrace Detection")
+                elif "NtQuery" in api_name or "NtSet" in api_name:
+                    if "NT API Detection" not in results["techniques"]:
+                        results["techniques"].append("NT API Detection")
+        
+        # Check for debugger strings
+        for debug_str in debug_strings:
+            if debug_str.lower() in binary_data.lower():
+                str_name = debug_str.decode('utf-8', errors='ignore')
+                results["indicators"].append(f"Debugger string found: {str_name}")
+                if "Debugger Name Detection" not in results["techniques"]:
+                    results["techniques"].append("Debugger Name Detection")
+                results["anti_debug_detected"] = True
+        
+        # Check for specific x86/x64 anti-debugging instructions
+        # INT 3 (CC) - Breakpoint instruction check
+        int3_count = binary_data.count(b'\xCC')
+        if int3_count > 50:  # Unusual number of INT3s
+            results["instructions"].append("INT 3 flooding")
+            results["indicators"].append(f"High INT3 count: {int3_count}")
+            results["techniques"].append("INT3 Detection")
+            results["anti_debug_detected"] = True
+        
+        # INT 2D (anti-debug interrupt)
+        if b'\xCD\x2D' in binary_data:
+            results["instructions"].append("INT 2D")
+            results["indicators"].append("INT 2D anti-debug interrupt found")
+            results["techniques"].append("INT 2D Detection")
+            results["anti_debug_detected"] = True
+        
+        # Check for PEB access patterns (Windows)
+        peb_patterns = [
+            b'\x64\xA1\x30\x00\x00\x00',  # mov eax, fs:[30h] - 32-bit PEB
+            b'\x65\x48\x8B\x04\x25\x60\x00\x00\x00',  # mov rax, gs:[60h] - 64-bit PEB
+        ]
+        
+        for pattern in peb_patterns:
+            if pattern in binary_data:
+                results["instructions"].append("PEB Access")
+                results["indicators"].append("Direct PEB access for debugger detection")
+                if "PEB BeingDebugged Check" not in results["techniques"]:
+                    results["techniques"].append("PEB BeingDebugged Check")
+                results["anti_debug_detected"] = True
+        
+        # Check for exception-based anti-debugging
+        exception_apis = [
+            b"SetUnhandledExceptionFilter",
+            b"RaiseException",
+            b"__try",
+            b"__except"
+        ]
+        
+        exception_count = 0
+        for exc_api in exception_apis:
+            if exc_api in binary_data:
+                exception_count += 1
+                results["indicators"].append(f"Exception handling API: {exc_api.decode('utf-8', errors='ignore')}")
+        
+        if exception_count >= 2:
+            results["techniques"].append("Exception-based Detection")
+            results["anti_debug_detected"] = True
+        
+        # Check for hardware breakpoint detection
+        if b"GetThreadContext" in binary_data or b"SetThreadContext" in binary_data:
+            results["techniques"].append("Hardware Breakpoint Detection")
+            results["indicators"].append("Thread context manipulation for DR register checking")
+            results["anti_debug_detected"] = True
+        
+        # Calculate confidence based on findings
+        if results["anti_debug_detected"]:
+            # Base confidence on number and variety of techniques
+            technique_score = len(results["techniques"]) * 0.15
+            api_score = len(results["api_calls"]) * 0.05
+            indicator_score = len(results["indicators"]) * 0.02
+            
+            results["confidence"] = min(technique_score + api_score + indicator_score, 1.0)
+        
+        # Try PE analysis for more detailed checks
+        try:
+            import pefile
+            pe = pefile.PE(binary_path)
+            
+            # Check TLS callbacks (often used for anti-debugging)
+            if hasattr(pe, 'DIRECTORY_ENTRY_TLS'):
+                results["techniques"].append("TLS Callback Detection")
+                results["indicators"].append("TLS callbacks present (common anti-debug location)")
+                results["anti_debug_detected"] = True
+            
+            pe.close()
+            
+        except ImportError:
+            logger.debug("pefile not available for detailed PE analysis")
+        except Exception as e:
+            logger.debug(f"PE analysis failed: {e}")
+        
+        logger.info(f"Anti-debugging detection complete: {results['anti_debug_detected']}")
+        
+    except Exception as e:
+        logger.error(f"Error in anti-debugging detection: {e}")
+        results["error"] = str(e)
+    
+    return results
+
+
 def scan_for_bytecode_protectors(binary_path):
     """Scan for bytecode protectors."""
     import time
-    from .binary_utils import calculate_entropy
+    from .protection_utils import calculate_entropy
     
     results = {}
 

@@ -172,6 +172,27 @@ intellicrack_error.log
 *.backup
 *.orig
 
+# Local-specific files
+CLAUDE.md
+.claude/
+docs/CLAUDE.md
+docs/verification/
+IntellicrackFeatures.txt
+docs/IntellicrackFeatures.txt
+launch_working.py
+diagnose_launch.py
+verify_fixes.py
+test_*_features.py
+test_license_bypass.py
+test_network_features.py
+test_windows_activator.py
+FIXES_APPLIED.md
+INSTALLATION.md
+REFACTORING*.md
+TEST_ALL_FEATURES.bat
+install_helper.py
+siphash24_replacement.py
+
 # Output directories
 logs/
 output/

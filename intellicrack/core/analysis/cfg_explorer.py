@@ -92,8 +92,17 @@ class CFGExplorer:
 
         try:
             # Use r2pipe to extract CFG
+            # Configure radare2 path if available in config
+            from ...config import CONFIG
+            radare2_path = CONFIG.get('radare2_path', None)
+            
             # Open the binary with radare2
-            r2 = r2pipe.open(self.binary_path)
+            if radare2_path and os.path.exists(radare2_path):
+                # Use specific radare2 binary path
+                r2 = r2pipe.open(self.binary_path, flags=['-e', f'bin.radare2={radare2_path}'])
+            else:
+                # Use system PATH radare2
+                r2 = r2pipe.open(self.binary_path)
 
             # Initialize radare2
             r2.cmd('aaa')  # Analyze all
@@ -670,4 +679,4 @@ def log_message(message: str) -> str:
     return message
 
 
-__all__ = ['CFGExplorer', 'run_cfg_explorer']
+__all__ = ['CFGExplorer', 'run_cfg_explorer', 'run_deep_cfg_analysis']

@@ -17,12 +17,26 @@ try:
     from manticore.core.plugin import Plugin
     MANTICORE_AVAILABLE = True
 except ImportError:
-    MANTICORE_AVAILABLE = False
-    # Define minimal stubs to prevent import errors
-    class Manticore:
-        pass
-    class Plugin:
-        pass
+    # Try to use simconcolic as a fallback
+    try:
+        import sys
+        import os
+        # Add scripts directory to path
+        scripts_dir = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'scripts')
+        if os.path.exists(scripts_dir):
+            sys.path.insert(0, scripts_dir)
+        
+        from simconcolic import BinaryAnalyzer as Manticore, Plugin
+        MANTICORE_AVAILABLE = True
+        logging.getLogger(__name__).info("Using simconcolic as Manticore replacement")
+    except ImportError:
+        MANTICORE_AVAILABLE = False
+        # Define minimal stubs to prevent import errors
+        class Manticore:
+            pass
+        class Plugin:
+            pass
+        logging.getLogger(__name__).warning("Neither Manticore nor simconcolic available")
 
 try:
     import lief
@@ -96,6 +110,10 @@ class ConcolicExecutionEngine:
 
                 Adds hooks for target and avoid addresses to guide execution paths.
                 """
+                def __init__(self):
+                    super().__init__()
+                    self.logger = logging.getLogger(__name__)
+                    
                 def will_run_callback(self, *args, **kwargs):
                     """Called when path exploration is about to start."""
                     self.logger.info("Starting path exploration")
@@ -223,6 +241,10 @@ class ConcolicExecutionEngine:
                     This plugin requires the parent analysis to properly identify license check
                     address locations for effective targeting.
                 """
+                def __init__(self):
+                    super().__init__()
+                    self.logger = logging.getLogger(__name__)
+                    
                 def will_execute_instruction_callback(self, state, pc, insn):
                     """Called before executing each instruction during emulation.
 

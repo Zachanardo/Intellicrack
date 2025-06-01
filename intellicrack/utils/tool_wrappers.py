@@ -780,3 +780,74 @@ def run_external_tool(args):
         results += f"\nError executing command: {e}\n"
 
     return results
+
+
+def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Wrapper for deep runtime monitoring functionality.
+    
+    Args:
+        app_instance: Application instance
+        parameters: Dict containing 'binary_path' and optional 'timeout'
+        
+    Returns:
+        Dict with monitoring results
+    """
+    try:
+        # Get parameters
+        binary_path = parameters.get('binary_path')
+        timeout = parameters.get('timeout', 30000)
+        
+        if not binary_path:
+            return {
+                "status": "error",
+                "error": "No binary_path provided for runtime monitoring"
+            }
+            
+        # Import the deep runtime monitoring function
+        from .core_utilities import deep_runtime_monitoring
+        
+        # Create monitoring config
+        monitoring_config = {
+            "monitor_api_calls": True,
+            "monitor_file_operations": True,
+            "monitor_registry": True,
+            "monitor_network": True,
+            "capture_strings": True,
+            "timeout": timeout
+        }
+        
+        # Run the monitoring
+        result = deep_runtime_monitoring(binary_path, monitoring_config)
+        
+        # Extract logs from result
+        if isinstance(result, dict) and 'logs' in result:
+            logs = result['logs']
+        else:
+            logs = result
+        
+        # Update UI if available
+        if app_instance and hasattr(app_instance, 'update_output'):
+            for log in logs:
+                app_instance.update_output.emit(f"[Runtime Monitor] {log}")
+        
+        return {
+            "status": "success",
+            "binary_path": binary_path,
+            "timeout": timeout,
+            "logs": logs,
+            "monitoring_complete": True
+        }
+        
+    except Exception as e:
+        error_msg = f"Error in runtime monitoring: {str(e)}"
+        logger.error(error_msg)
+        
+        if app_instance and hasattr(app_instance, 'update_output'):
+            app_instance.update_output.emit(f"[Runtime Monitor] ERROR: {error_msg}")
+            
+        return {
+            "status": "error",
+            "error": error_msg,
+            "traceback": traceback.format_exc()
+        }

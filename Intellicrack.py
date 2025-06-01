@@ -44024,8 +44024,7 @@ class CustomPlugin:
         tools = [
             ("Ghidra Path:", "/usr/local/ghidra"),
             ("Radare2 Path:", "/usr/bin/radare2"),
-            ("Frida Path:", "/usr/local/bin/frida"),
-            ("IDA Pro Path:", "C:\\Program Files\\IDA Pro")
+            ("Frida Path:", "/usr/local/bin/frida")
         ]
         
         for row, (label_text, path_value) in enumerate(tools):

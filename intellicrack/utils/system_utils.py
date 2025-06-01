@@ -387,6 +387,200 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
         return False
 
 
+def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[str]:
+    """
+    Extract icon from an executable file.
+    
+    Args:
+        exe_path: Path to the executable file
+        output_path: Output path for the icon (optional)
+        
+    Returns:
+        Optional[str]: Path to the extracted icon file, or None if failed
+    """
+    try:
+        import struct
+        from PIL import Image
+        
+        if not os.path.exists(exe_path):
+            logger.error(f"Executable not found: {exe_path}")
+            return None
+        
+        # Default output path
+        if output_path is None:
+            output_path = os.path.splitext(exe_path)[0] + "_icon.png"
+        
+        if is_windows():
+            try:
+                # Windows-specific icon extraction using win32api
+                import win32api
+                import win32con
+                import win32ui
+                import win32gui
+                
+                # Extract icon
+                ico_x = win32api.GetSystemMetrics(win32con.SM_CXICON)
+                ico_y = win32api.GetSystemMetrics(win32con.SM_CYICON)
+                
+                large, small = win32gui.ExtractIconEx(exe_path, 0)
+                if large:
+                    win32gui.DestroyIcon(small[0])
+                    
+                    # Convert to PIL Image
+                    hdc = win32ui.CreateDCFromHandle(win32gui.GetDC(0))
+                    hbmp = win32ui.CreateBitmap()
+                    hbmp.CreateCompatibleBitmap(hdc, ico_x, ico_y)
+                    hdc_mem = hdc.CreateCompatibleDC()
+                    hdc_mem.SelectObject(hbmp)
+                    
+                    win32gui.DrawIconEx(hdc_mem.GetHandleOutput(), 0, 0, large[0], 
+                                       ico_x, ico_y, 0, None, win32con.DI_NORMAL)
+                    
+                    # Save to file
+                    bmpinfo = hbmp.GetInfo()
+                    bmpstr = hbmp.GetBitmapBits(True)
+                    
+                    img = Image.frombuffer(
+                        'RGB',
+                        (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
+                        bmpstr, 'raw', 'BGRX', 0, 1
+                    )
+                    
+                    img.save(output_path, 'PNG')
+                    win32gui.DestroyIcon(large[0])
+                    
+                    logger.info(f"Icon extracted to: {output_path}")
+                    return output_path
+                    
+            except ImportError:
+                logger.warning("win32api not available, trying alternative method")
+            except Exception as e:
+                logger.error(f"Windows icon extraction failed: {e}")
+        
+        # Cross-platform fallback: Try to extract from PE file
+        try:
+            import pefile
+            pe = pefile.PE(exe_path)
+            
+            # Look for RT_ICON resources
+            if hasattr(pe, 'DIRECTORY_ENTRY_RESOURCE'):
+                for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
+                    if resource_type.name and str(resource_type.name) == 'RT_ICON':
+                        for resource_id in resource_type.directory.entries:
+                            for resource_lang in resource_id.directory.entries:
+                                data = pe.get_data(
+                                    resource_lang.data.struct.OffsetToData,
+                                    resource_lang.data.struct.Size
+                                )
+                                
+                                # Save as ICO file first
+                                ico_path = output_path.replace('.png', '.ico')
+                                with open(ico_path, 'wb') as f:
+                                    f.write(data)
+                                
+                                # Convert ICO to PNG using PIL
+                                try:
+                                    img = Image.open(ico_path)
+                                    img.save(output_path, 'PNG')
+                                    os.remove(ico_path)  # Clean up ICO file
+                                    logger.info(f"Icon extracted to: {output_path}")
+                                    return output_path
+                                except Exception as e:
+                                    logger.error(f"Failed to convert ICO to PNG: {e}")
+                                    
+        except ImportError:
+            logger.error("pefile not available for icon extraction")
+        except Exception as e:
+            logger.error(f"PE icon extraction failed: {e}")
+        
+        # If all methods fail, create a default icon
+        logger.warning("All icon extraction methods failed, creating default icon")
+        try:
+            # Create a simple default icon
+            img = Image.new('RGBA', (64, 64), (100, 100, 100, 255))
+            from PIL import ImageDraw
+            draw = ImageDraw.Draw(img)
+            draw.rectangle([10, 10, 54, 54], outline=(200, 200, 200), width=2)
+            draw.text((20, 25), "EXE", fill=(255, 255, 255))
+            img.save(output_path, 'PNG')
+            return output_path
+        except Exception as e:
+            logger.error(f"Failed to create default icon: {e}")
+            
+    except Exception as e:
+        logger.error(f"Icon extraction failed: {e}")
+        return None
+
+
+def optimize_memory_usage() -> Dict[str, Any]:
+    """
+    Optimize system memory usage by clearing caches and garbage collection.
+    
+    Returns:
+        Dict[str, Any]: Memory statistics before and after optimization
+    """
+    import gc
+    
+    stats = {
+        'before': {},
+        'after': {},
+        'freed': 0
+    }
+    
+    # Get initial memory stats
+    if psutil:
+        mem = psutil.virtual_memory()
+        stats['before'] = {
+            'total': mem.total,
+            'available': mem.available,
+            'percent': mem.percent,
+            'used': mem.used
+        }
+    
+    # Force garbage collection
+    collected = gc.collect()
+    logger.info(f"Garbage collector: collected {collected} objects")
+    
+    # Clear Python's internal caches
+    try:
+        # Clear linecache
+        import linecache
+        linecache.clearcache()
+        
+        # Clear re cache
+        import re
+        re.purge()
+        
+        # Clear functools caches
+        import functools
+        if hasattr(functools, 'lru_cache'):
+            # Clear all lru_cache instances (Python 3.9+)
+            for obj in gc.get_objects():
+                if hasattr(obj, 'cache_clear'):
+                    try:
+                        obj.cache_clear()
+                    except:
+                        pass
+    except Exception as e:
+        logger.warning(f"Error clearing caches: {e}")
+    
+    # Get final memory stats
+    if psutil:
+        mem = psutil.virtual_memory()
+        stats['after'] = {
+            'total': mem.total,
+            'available': mem.available,
+            'percent': mem.percent,
+            'used': mem.used
+        }
+        
+        # Calculate freed memory
+        stats['freed'] = stats['before']['used'] - stats['after']['used']
+        logger.info(f"Memory optimization freed: {stats['freed'] / 1024 / 1024:.2f} MB")
+    
+    return stats
+
+
 # Exported functions
 __all__ = [
     'get_target_process_pid',
@@ -405,4 +599,6 @@ __all__ = [
     'check_admin_privileges',
     'is_admin',
     'run_as_admin',
+    'extract_executable_icon',
+    'optimize_memory_usage',
 ]

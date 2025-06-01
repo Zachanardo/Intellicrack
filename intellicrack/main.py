@@ -12,6 +12,9 @@ import os
 if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:
     os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
+# Comprehensive logging disabled for Qt compatibility
+# The comprehensive logging system interferes with Qt's window display mechanisms
+
 
 def main() -> int:
     """

@@ -43,39 +43,46 @@ except ImportError:
     VulnerabilityEngine = None
 
 try:
-    from .dynamic_analyzer import DynamicAnalyzer
+    from .dynamic_analyzer import DynamicAnalyzer, AdvancedDynamicAnalyzer
 except ImportError:
     DynamicAnalyzer = None
+    AdvancedDynamicAnalyzer = None
 
 try:
-    from .symbolic_executor import SymbolicExecutor
+    from .symbolic_executor import SymbolicExecutionEngine
 except ImportError:
-    SymbolicExecutor = None
+    SymbolicExecutionEngine = None
 
 try:
-    from .concolic_executor import ConcolicExecutor
+    from .concolic_executor import ConcolicExecutionEngine
 except ImportError:
-    ConcolicExecutor = None
+    ConcolicExecutionEngine = None
 
 try:
-    from .taint_analyzer import TaintAnalyzer
+    from .taint_analyzer import TaintAnalysisEngine, run_taint_analysis
 except ImportError:
-    TaintAnalyzer = None
+    TaintAnalysisEngine = None
+    run_taint_analysis = None
 
 try:
-    from .rop_generator import ROPGenerator
+    from .rop_generator import ROPChainGenerator
 except ImportError:
-    ROPGenerator = None
+    ROPChainGenerator = None
 
 try:
-    from .multi_format_analyzer import MultiFormatAnalyzer
+    from .multi_format_analyzer import MultiFormatBinaryAnalyzer
 except ImportError:
-    MultiFormatAnalyzer = None
+    MultiFormatBinaryAnalyzer = None
 
 try:
     from .cfg_explorer import CFGExplorer
 except ImportError:
     CFGExplorer = None
+
+try:
+    from .incremental_manager import IncrementalAnalysisManager
+except ImportError:
+    IncrementalAnalysisManager = None
 
 try:
     from .similarity_searcher import SimilaritySearcher
@@ -90,12 +97,15 @@ __all__ = [
     'detect_packing',
     # Analysis engines
     'VulnerabilityEngine',
-    'DynamicAnalyzer', 
-    'SymbolicExecutor',
-    'ConcolicExecutor',
-    'TaintAnalyzer',
-    'ROPGenerator',
-    'MultiFormatAnalyzer',
+    'DynamicAnalyzer',
+    'AdvancedDynamicAnalyzer',
+    'SymbolicExecutionEngine',
+    'ConcolicExecutionEngine',
+    'TaintAnalysisEngine',
+    'run_taint_analysis',
+    'ROPChainGenerator',
+    'MultiFormatBinaryAnalyzer',
     'CFGExplorer',
+    'IncrementalAnalysisManager',
     'SimilaritySearcher'
 ]

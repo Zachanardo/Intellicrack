@@ -8,6 +8,7 @@ Provides centralized configuration with JSON persistence and default fallbacks.
 import json
 import logging
 import os
+import sys
 from typing import Dict, Any, Optional
 
 # Configure module logger
@@ -18,8 +19,7 @@ DEFAULT_CONFIG = {
     # Paths and Directories
     "log_dir": os.path.join(os.path.expanduser("~"), "intellicrack", "logs"),
     "ghidra_path": r"C:\Program Files\Ghidra\ghidraRun.bat",
-    "radare2_path": "/usr/bin/r2",  # Usually installed via package manager
-    "ida_path": r"C:\Program Files\IDA Pro\ida.exe",
+    "radare2_path": os.path.join(os.path.dirname(__file__), "..", "..", "radare2", "radare2-5.9.8-w64", "bin", "radare2.exe") if os.name == 'nt' else "/usr/bin/r2",  # Local radare2 on Windows, system on Linux
     "frida_path": "frida",  # Usually in PATH after pip install
     "output_dir": os.path.join(os.path.expanduser("~"), "intellicrack", "output"),
     "temp_dir": os.path.join(os.path.expanduser("~"), "intellicrack", "temp"),
@@ -81,8 +81,7 @@ DEFAULT_CONFIG = {
         "enable_console_logging": True,
         "max_log_size": 10 * 1024 * 1024,  # 10 MB
         "log_rotation": 5,
-        "verbose_logging": False,
-        "enable_comprehensive_logging": True
+        "verbose_logging": False
     },
     
     # Security Settings
@@ -257,7 +256,19 @@ class ConfigManager:
                 if "ghidra_path" in loaded_config:
                     ghidra_path = loaded_config["ghidra_path"]
                     logger.info(f"Checking Ghidra path from config: {ghidra_path}")
+                    
+                    # Check if path exists (handle both Windows and WSL contexts)
+                    path_exists = False
                     if os.path.exists(ghidra_path):
+                        path_exists = True
+                    elif sys.platform.startswith('linux') and 'microsoft' in os.uname().release.lower():
+                        # Running in WSL, try converting Windows path
+                        wsl_path = ghidra_path.replace('C:\\', '/mnt/c/').replace('\\', '/')
+                        if os.path.exists(wsl_path):
+                            path_exists = True
+                            loaded_config["ghidra_path"] = wsl_path  # Update to WSL path
+                    
+                    if path_exists:
                         logger.info(f"✓ Ghidra path exists at {ghidra_path}")
                     else:
                         logger.warning(f"✗ Ghidra path does not exist at {ghidra_path}")

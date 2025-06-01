@@ -370,24 +370,349 @@ def create_nop_sled(length: int) -> bytes:
 
 def generate_complete_api_hooking_script(app, hook_types=None) -> str:
     """
-    Placeholder for comprehensive API hooking script generation.
-    This function will be properly implemented when the full API hooking system is extracted.
+    Generate comprehensive Frida API hooking scripts for various protection bypass types.
     
     Args:
         app: Application instance
-        hook_types: List of hook types to include
+        hook_types: List of hook types to include (hardware_id, debugger, time, network)
         
     Returns:
         str: Frida script for API hooking
     """
-    if hasattr(app, 'update_output'):
-        app.update_output.emit("[Payload] Placeholder for API hooking script - full implementation pending")
+    if hook_types is None:
+        hook_types = ["hardware_id", "debugger", "time", "network"]
     
-    # Return a basic placeholder script
-    return """
-    console.log('[API Hooks] Placeholder script loaded');
-    // Full API hooking implementation pending
-    """
+    script_parts = []
+    
+    # Base script setup
+    script_parts.append("""
+        console.log('[Intellicrack] Comprehensive API hooking script loaded');
+        
+        // Global variables for tracking
+        var hooksInstalled = {};
+        var spoofedValues = {};
+    """)
+    
+    # HWID Spoofing hooks
+    if "hardware_id" in hook_types:
+        script_parts.append("""
+        // === HWID SPOOFING HOOKS ===
+        console.log('[HWID] Installing hardware ID spoofing hooks...');
+        
+        // Spoof GetVolumeInformation (drive serial numbers)
+        var getVolumeInfo = Module.findExportByName("kernel32.dll", "GetVolumeInformationW");
+        if (getVolumeInfo) {
+            Interceptor.attach(getVolumeInfo, {
+                onLeave: function(retval) {
+                    if (retval.toInt32() !== 0) {
+                        // Modify volume serial number
+                        var serialPtr = this.context.r8; // 5th parameter (dwVolumeSerialNumber)
+                        if (serialPtr && !serialPtr.isNull()) {
+                            serialPtr.writeU32(0x12345678); // Spoofed serial
+                            console.log('[HWID] Spoofed volume serial number to 0x12345678');
+                        }
+                    }
+                }
+            });
+            hooksInstalled['GetVolumeInformation'] = true;
+        }
+        
+        // Spoof GetAdaptersInfo (MAC addresses)
+        var getAdaptersInfo = Module.findExportByName("iphlpapi.dll", "GetAdaptersInfo");
+        if (getAdaptersInfo) {
+            Interceptor.attach(getAdaptersInfo, {
+                onLeave: function(retval) {
+                    if (retval.toInt32() === 0) { // NO_ERROR
+                        var adapterInfo = this.context.rcx; // First parameter
+                        if (adapterInfo && !adapterInfo.isNull()) {
+                            // Replace MAC address with spoofed one
+                            var macAddr = adapterInfo.add(8); // Address offset in IP_ADAPTER_INFO
+                            macAddr.writeByteArray([0x00, 0x11, 0x22, 0x33, 0x44, 0x55]);
+                            console.log('[HWID] Spoofed MAC address to 00:11:22:33:44:55');
+                        }
+                    }
+                }
+            });
+            hooksInstalled['GetAdaptersInfo'] = true;
+        }
+        
+        // Spoof GetSystemInfo (processor information)
+        var getSystemInfo = Module.findExportByName("kernel32.dll", "GetSystemInfo");
+        if (getSystemInfo) {
+            Interceptor.attach(getSystemInfo, {
+                onLeave: function(retval) {
+                    var sysInfo = this.context.rcx; // SYSTEM_INFO pointer
+                    if (sysInfo && !sysInfo.isNull()) {
+                        // Modify processor architecture and count
+                        sysInfo.writeU16(9); // PROCESSOR_ARCHITECTURE_AMD64
+                        sysInfo.add(4).writeU32(8); // dwNumberOfProcessors
+                        console.log('[HWID] Spoofed processor information');
+                    }
+                }
+            });
+            hooksInstalled['GetSystemInfo'] = true;
+        }
+        
+        console.log('[HWID] Hardware ID spoofing hooks installed');
+        """)
+    
+    # Anti-debugger hooks
+    if "debugger" in hook_types:
+        script_parts.append("""
+        // === ANTI-DEBUGGER COUNTERMEASURES ===
+        console.log('[Anti-Debug] Installing anti-debugger countermeasures...');
+        
+        // Hook IsDebuggerPresent
+        var isDebuggerPresent = Module.findExportByName("kernel32.dll", "IsDebuggerPresent");
+        if (isDebuggerPresent) {
+            Interceptor.replace(isDebuggerPresent, new NativeCallback(function() {
+                console.log('[Anti-Debug] IsDebuggerPresent called - returning FALSE');
+                return 0; // FALSE
+            }, 'int', []));
+            hooksInstalled['IsDebuggerPresent'] = true;
+        }
+        
+        // Hook CheckRemoteDebuggerPresent
+        var checkRemoteDebugger = Module.findExportByName("kernel32.dll", "CheckRemoteDebuggerPresent");
+        if (checkRemoteDebugger) {
+            Interceptor.attach(checkRemoteDebugger, {
+                onLeave: function(retval) {
+                    if (retval.toInt32() !== 0) {
+                        // Set pbDebuggerPresent to FALSE
+                        var pbDebugger = this.context.r8; // Second parameter
+                        if (pbDebugger && !pbDebugger.isNull()) {
+                            pbDebugger.writeU8(0); // FALSE
+                            console.log('[Anti-Debug] CheckRemoteDebuggerPresent spoofed to FALSE');
+                        }
+                    }
+                }
+            });
+            hooksInstalled['CheckRemoteDebuggerPresent'] = true;
+        }
+        
+        // Hook NtQueryInformationProcess for debug flags
+        var ntQueryInfo = Module.findExportByName("ntdll.dll", "NtQueryInformationProcess");
+        if (ntQueryInfo) {
+            Interceptor.attach(ntQueryInfo, {
+                onEnter: function(args) {
+                    this.infoClass = args[1].toInt32();
+                },
+                onLeave: function(retval) {
+                    if (retval.toInt32() === 0) { // STATUS_SUCCESS
+                        // ProcessDebugPort = 7, ProcessDebugFlags = 31
+                        if (this.infoClass === 7 || this.infoClass === 31) {
+                            var buffer = this.context.r8; // ProcessInformation parameter
+                            if (buffer && !buffer.isNull()) {
+                                buffer.writeU32(0); // No debug port/flags
+                                console.log('[Anti-Debug] NtQueryInformationProcess debug check bypassed');
+                            }
+                        }
+                    }
+                }
+            });
+            hooksInstalled['NtQueryInformationProcess'] = true;
+        }
+        
+        // Hook OutputDebugString
+        var outputDebugStringA = Module.findExportByName("kernel32.dll", "OutputDebugStringA");
+        if (outputDebugStringA) {
+            Interceptor.replace(outputDebugStringA, new NativeCallback(function(lpOutputString) {
+                // Do nothing - prevent debug output
+                return;
+            }, 'void', ['pointer']));
+            hooksInstalled['OutputDebugStringA'] = true;
+        }
+        
+        console.log('[Anti-Debug] Anti-debugger countermeasures installed');
+        """)
+    
+    # Time bomb defuser hooks
+    if "time" in hook_types:
+        script_parts.append("""
+        // === TIME BOMB DEFUSER ===
+        console.log('[Time Bomb] Installing time bomb defuser hooks...');
+        
+        // Hook GetSystemTime
+        var getSystemTime = Module.findExportByName("kernel32.dll", "GetSystemTime");
+        if (getSystemTime) {
+            Interceptor.attach(getSystemTime, {
+                onLeave: function(retval) {
+                    var systemTime = this.context.rcx; // SYSTEMTIME pointer
+                    if (systemTime && !systemTime.isNull()) {
+                        // Set to a safe date: January 1, 2020
+                        systemTime.writeU16(2020);      // wYear
+                        systemTime.add(2).writeU16(1);  // wMonth
+                        systemTime.add(6).writeU16(1);  // wDay
+                        console.log('[Time Bomb] GetSystemTime spoofed to January 1, 2020');
+                    }
+                }
+            });
+            hooksInstalled['GetSystemTime'] = true;
+        }
+        
+        // Hook GetLocalTime  
+        var getLocalTime = Module.findExportByName("kernel32.dll", "GetLocalTime");
+        if (getLocalTime) {
+            Interceptor.attach(getLocalTime, {
+                onLeave: function(retval) {
+                    var localTime = this.context.rcx; // SYSTEMTIME pointer
+                    if (localTime && !localTime.isNull()) {
+                        // Set to a safe date: January 1, 2020
+                        localTime.writeU16(2020);      // wYear
+                        localTime.add(2).writeU16(1);  // wMonth
+                        localTime.add(6).writeU16(1);  // wDay
+                        console.log('[Time Bomb] GetLocalTime spoofed to January 1, 2020');
+                    }
+                }
+            });
+            hooksInstalled['GetLocalTime'] = true;
+        }
+        
+        // Hook GetTickCount and GetTickCount64
+        var getTickCount = Module.findExportByName("kernel32.dll", "GetTickCount");
+        if (getTickCount) {
+            var baseTime = Date.now();
+            Interceptor.replace(getTickCount, new NativeCallback(function() {
+                var elapsed = Date.now() - baseTime;
+                return Math.floor(elapsed); // Return consistent tick count
+            }, 'uint32', []));
+            hooksInstalled['GetTickCount'] = true;
+        }
+        
+        // Hook time() function from CRT
+        var timeFunc = Module.findExportByName("msvcrt.dll", "time");
+        if (timeFunc) {
+            Interceptor.replace(timeFunc, new NativeCallback(function(timer) {
+                var safeTime = Math.floor(new Date('2020-01-01').getTime() / 1000);
+                if (timer && !timer.isNull()) {
+                    timer.writeU32(safeTime);
+                }
+                console.log('[Time Bomb] time() function spoofed to safe date');
+                return safeTime;
+            }, 'uint32', ['pointer']));
+            hooksInstalled['time'] = true;
+        }
+        
+        console.log('[Time Bomb] Time bomb defuser hooks installed');
+        """)
+    
+    # Telemetry blocking hooks
+    if "network" in hook_types:
+        script_parts.append("""
+        // === TELEMETRY BLOCKING ===
+        console.log('[Telemetry] Installing telemetry blocking hooks...');
+        
+        // Block HTTP/HTTPS requests to telemetry endpoints
+        var winHttpOpen = Module.findExportByName("winhttp.dll", "WinHttpOpen");
+        if (winHttpOpen) {
+            Interceptor.attach(winHttpOpen, {
+                onLeave: function(retval) {
+                    if (!retval.isNull()) {
+                        console.log('[Telemetry] WinHTTP session opened - monitoring enabled');
+                        spoofedValues['winHttpSession'] = retval;
+                    }
+                }
+            });
+        }
+        
+        var winHttpConnect = Module.findExportByName("winhttp.dll", "WinHttpConnect");
+        if (winHttpConnect) {
+            Interceptor.attach(winHttpConnect, {
+                onEnter: function(args) {
+                    var serverName = args[1].readUtf16String();
+                    
+                    // Block known telemetry domains
+                    var blockedDomains = [
+                        'telemetry.microsoft.com',
+                        'vortex.data.microsoft.com',
+                        'settings-win.data.microsoft.com',
+                        'watson.microsoft.com',
+                        'adobe.com/activation',
+                        'genuine.microsoft.com'
+                    ];
+                    
+                    for (var domain of blockedDomains) {
+                        if (serverName && serverName.toLowerCase().includes(domain)) {
+                            console.log('[Telemetry] Blocked connection to: ' + serverName);
+                            this.replace = true;
+                            return;
+                        }
+                    }
+                },
+                onLeave: function(retval) {
+                    if (this.replace) {
+                        retval.replace(ptr(0)); // Return NULL to indicate failure
+                    }
+                }
+            });
+            hooksInstalled['WinHttpConnect'] = true;
+        }
+        
+        // Block Winsock connections
+        var wsaConnect = Module.findExportByName("ws2_32.dll", "WSAConnect");
+        if (wsaConnect) {
+            Interceptor.attach(wsaConnect, {
+                onEnter: function(args) {
+                    var sockAddr = args[1];
+                    if (sockAddr && !sockAddr.isNull()) {
+                        var family = sockAddr.readU16();
+                        if (family === 2) { // AF_INET
+                            var port = (sockAddr.add(2).readU8() << 8) | sockAddr.add(3).readU8();
+                            var ip = sockAddr.add(4).readU32();
+                            
+                            // Block common telemetry ports
+                            if (port === 80 || port === 443 || port === 8080) {
+                                console.log('[Telemetry] Blocked WSA connection to port ' + port);
+                                this.block = true;
+                            }
+                        }
+                    }
+                },
+                onLeave: function(retval) {
+                    if (this.block) {
+                        retval.replace(-1); // SOCKET_ERROR
+                    }
+                }
+            });
+            hooksInstalled['WSAConnect'] = true;
+        }
+        
+        console.log('[Telemetry] Telemetry blocking hooks installed');
+        """)
+    
+    # Summary and completion
+    script_parts.append("""
+        // === INSTALLATION SUMMARY ===
+        setTimeout(function() {
+            console.log('[Intellicrack] API Hooking Summary:');
+            for (var hook in hooksInstalled) {
+                console.log('  ✓ ' + hook + ' hook installed');
+            }
+            console.log('[Intellicrack] All requested API hooks are now active!');
+        }, 100);
+        
+        // Utility function to check hook status
+        function getHookStatus() {
+            return hooksInstalled;
+        }
+    """)
+    
+    final_script = '\n'.join(script_parts)
+    
+    if hasattr(app, 'update_output'):
+        hook_names = []
+        if "hardware_id" in hook_types:
+            hook_names.append("HWID Spoofing")
+        if "debugger" in hook_types:
+            hook_names.append("Anti-Debugger Countermeasures")
+        if "time" in hook_types:
+            hook_names.append("Time Bomb Defuser")
+        if "network" in hook_types:
+            hook_names.append("Telemetry Blocking")
+        
+        app.update_output.emit(f"[Payload] Generated API hooking script for: {', '.join(hook_names)}")
+    
+    return final_script
 
 def inject_shellcode(binary_data: bytes, shellcode: bytes, injection_point: int) -> bytes:
     """

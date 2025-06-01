@@ -326,7 +326,8 @@ def register_default_tools():
             wrapper_propose_patch,
             wrapper_get_proposed_patches,
             wrapper_apply_confirmed_patch,
-            wrapper_generate_launcher_script
+            wrapper_generate_launcher_script,
+            wrapper_deep_runtime_monitoring
         )
         
         # Register each tool
@@ -348,7 +349,8 @@ def register_default_tools():
             "tool_propose_patch": wrapper_propose_patch,
             "tool_get_proposed_patches": wrapper_get_proposed_patches,
             "tool_apply_confirmed_patch": wrapper_apply_confirmed_patch,
-            "tool_generate_launcher_script": wrapper_generate_launcher_script
+            "tool_generate_launcher_script": wrapper_generate_launcher_script,
+            "tool_deep_runtime_monitoring": wrapper_deep_runtime_monitoring
         }
         
         for name, func in tools.items():
@@ -502,26 +504,24 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: Optional[Dic
         Dict containing monitoring results
     """
     try:
-        from ..core.analysis.dynamic_analyzer import AdvancedDynamicAnalyzer
+        # Use the standalone deep_runtime_monitoring function from dynamic_analyzer
+        from ..core.analysis.dynamic_analyzer import deep_runtime_monitoring as analyzer_drm
         
-        # Create analyzer instance
-        analyzer = AdvancedDynamicAnalyzer()
-        
-        # Default config if not provided
-        if monitoring_config is None:
-            monitoring_config = {
-                "monitor_api_calls": True,
-                "monitor_file_operations": True,
-                "monitor_registry": True,
-                "monitor_network": True,
-                "capture_strings": True,
-                "timeout": 300  # 5 minutes
-            }
+        # Extract timeout from config if provided
+        timeout = 30000  # Default 30 seconds
+        if monitoring_config:
+            timeout = monitoring_config.get("timeout", timeout)
             
-        # Start monitoring
-        results = analyzer.monitor_runtime_behavior(target_process, monitoring_config)
+        # Call the analyzer function directly
+        results = analyzer_drm(target_process, timeout)
         
-        return results
+        return {
+            "status": "success",
+            "target_process": target_process,
+            "timeout": timeout,
+            "logs": results,
+            "config": monitoring_config
+        }
         
     except Exception as e:
         logger.error(f"Error in deep runtime monitoring: {e}")
