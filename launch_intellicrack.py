@@ -1,107 +1,127 @@
 #!/usr/bin/env python3
 """
-Launch Intellicrack with all fixes applied
+Simple working launcher based on test_direct_ui.py which works
 """
 
 import sys
 import os
 import warnings
+import subprocess
 
-# Add current directory to path for our modules
+# Add current directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Fix 1: Install proper siphash implementation before pytools tries to import it
+# Fix siphash
 try:
     import siphash24
 except ImportError:
-    # Use our replacement implementation
-    import siphash24_replacement
+    from utils import siphash24_replacement
     sys.modules['siphash24'] = siphash24_replacement
 
-# Fix 2: Suppress remaining warnings
-warnings.filterwarnings("ignore", category=UserWarning, module="pytools.persistent_dict")
+# Suppress warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.*=false'
 
-# Fix 3: Fix Qt properly - create font directory if needed
-qt_base = os.path.join(sys.prefix, "Lib", "site-packages", "PyQt5", "Qt5")
-if os.path.exists(qt_base):
-    fonts_dir = os.path.join(qt_base, "lib", "fonts")
+# Import Qt FIRST before anything else
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
+
+logger.info("Creating QApplication...")
+app = QApplication(sys.argv)
+
+# Set up simple logging AFTER QApplication is created
+import logging
+from datetime import datetime
+
+# Create logs directory
+log_dir = os.path.join(os.path.dirname(__file__), 'logs')
+os.makedirs(log_dir, exist_ok=True)
+
+# Set up basic logging
+log_file = os.path.join(log_dir, f'intellicrack_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log')
+# Set up logging with proper encoding handling
+import sys
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+# Handle encoding errors gracefully on Windows
+if hasattr(sys.stdout, 'reconfigure'):
     try:
-        os.makedirs(fonts_dir, exist_ok=True)
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     except:
         pass
 
-# Fix 4: Set Qt environment variables
-os.environ['QT_QPA_FONTDIR'] = ''  # Use system fonts
-os.environ['QT_LOGGING_RULES'] = 'qt.qpa.fonts=false'  # Specifically disable font warnings
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_file, encoding='utf-8'),
+        stream_handler
+    ]
+)
 
-# Fix 5: Install custom Qt message handler
-def qt_message_handler(mode, context, message):
-    # Filter out specific annoying messages
-    if "QFontDatabase" in message:
-        return
-    if "setLayout" in message and "which already has a layout" in message:
-        return
-    if "propagateSizeHints" in message:
-        return
-    # Let other messages through
-    if mode > 1:  # Warning or higher
-        print(f"Qt: {message}")
+logger = logging.getLogger('Intellicrack')
+logger.info("="*60)
+logger.info("Intellicrack Starting Up")
+logger.info(f"Log file: {log_file}")
+logger.info("="*60)
 
-try:
-    from PyQt5 import QtCore
-    QtCore.qInstallMessageHandler(qt_message_handler)
-except:
-    pass
-
-# Now import and run Intellicrack
-def main():
+# Run setup verification before launch
+setup_verification_script = os.path.join(os.path.dirname(__file__), 'tools', 'setup', 'verify_setup.bat')
+if os.path.exists(setup_verification_script):
+    logger.info("Running setup verification...")
     try:
-        print("Launching Intellicrack...")
-        
-        # Add the project directory to Python path
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        
-        # Create QApplication instance BEFORE importing main_app to avoid duplicate instances
-        from PyQt5.QtWidgets import QApplication
-        from PyQt5.QtGui import QFontDatabase
-        from PyQt5.QtCore import Qt
-        
-        # Check if QApplication already exists
-        app = QApplication.instance()
-        if app is None:
-            app = QApplication(sys.argv)
-            
-        # Set application attributes to reduce warnings
-        app.setAttribute(Qt.AA_DisableWindowContextHelpButton)
-        
-        # Force Qt to use system fonts (prevents font directory warnings)
-        QFontDatabase.addApplicationFont("")  # Empty string uses system fonts
-        
-        # Import and run the application
-        from intellicrack.ui.main_app import launch
-        return launch()
-        
-    except ImportError as e:
-        print(f"\nERROR: Failed to import Intellicrack modules")
-        print(f"Import error: {e}")
-        print("\nMake sure all dependencies are installed:")
-        print("  pip install -r requirements.txt")
-        return 1
-        
+        result = subprocess.run([setup_verification_script], 
+                              capture_output=True, text=True, timeout=300)
+        if result.returncode != 0:
+            logger.warning("Setup verification suggested running full setup")
+        else:
+            logger.info("Setup verification passed")
     except Exception as e:
-        print(f"\nERROR: Failed to launch Intellicrack")
-        print(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
-        
-        print("\nTroubleshooting:")
-        print("1. Check if PyQt5 is properly installed:")
-        print("   pip install PyQt5==5.15.9")
-        print("2. Run dependency fixer:")
-        print("   python fix_launch_issues.py")
-        print("3. Check error messages above for specific issues")
-        
-        return 1
+        logger.warning(f"Setup verification failed: {e}")
+else:
+    logger.warning("Setup verification script not found")
 
-if __name__ == "__main__":
-    sys.exit(main())
+# Set application icon
+icon_path = os.path.join(os.path.dirname(__file__), 'assets', 'icon.ico')
+if os.path.exists(icon_path):
+    app.setWindowIcon(QIcon(icon_path))
+    logger.info("Application icon set")
+
+# Import splash screen and main app
+from intellicrack.ui.dialogs.splash_screen import SplashScreen
+from intellicrack.ui.main_app import IntellicrackApp
+
+# Show splash screen
+splash_image_path = os.path.join(os.path.dirname(__file__), 'assets', 'splash.png')
+if os.path.exists(splash_image_path):
+    logger.info("Showing splash screen...")
+    splash = SplashScreen(splash_image_path)
+    splash.show()
+    app.processEvents()
+else:
+    logger.warning(f"Splash image not found at: {splash_image_path}")
+    splash = None
+
+# Small delay for splash visibility
+import time
+if splash:
+    time.sleep(2)  # Show splash for 2 seconds
+
+logger.info("Creating main window...")
+window = IntellicrackApp()
+
+logger.info("Showing main window...")
+window.show()
+
+# Close splash screen
+if splash:
+    splash.finish(window)
+    logger.info("Splash screen closed")
+
+logger.info(f"Window visible: {window.isVisible()}")
+
+# Start event loop
+logger.info("Starting Qt event loop...")
+sys.exit(app.exec_())

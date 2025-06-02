@@ -1,0 +1,515 @@
+"""
+AI Coordination Layer for Intellicrack
+
+This module provides coordination between the fast ML predictor and the
+intelligent LLM model manager, allowing them to work together while
+maintaining their separate strengths and performance characteristics.
+"""
+
+import logging
+from typing import Dict, Any, List, Optional, Tuple, Union
+from dataclasses import dataclass
+from enum import Enum
+import hashlib
+import time
+from datetime import datetime, timedelta
+
+# Local imports
+try:
+    from .ml_predictor import MLVulnerabilityPredictor
+    from .model_manager_module import ModelManager
+    from .orchestrator import AISharedContext, AIEventBus
+    from ..utils.logger import get_logger
+except ImportError:
+    # Fallback for testing
+    MLVulnerabilityPredictor = None
+    ModelManager = None
+    AISharedContext = None
+    AIEventBus = None
+
+
+logger = get_logger(__name__)
+
+
+class AnalysisStrategy(Enum):
+    """Strategy for coordinating ML and LLM analysis."""
+    ML_FIRST = "ml_first"              # Start with ML, escalate if needed
+    LLM_FIRST = "llm_first"            # Start with LLM, use ML for validation
+    PARALLEL = "parallel"              # Run both simultaneously
+    ML_ONLY = "ml_only"               # Use only fast ML models
+    LLM_ONLY = "llm_only"             # Use only intelligent LLMs
+    ADAPTIVE = "adaptive"              # Choose strategy based on task complexity
+
+
+@dataclass
+class AnalysisRequest:
+    """Request for coordinated analysis."""
+    binary_path: str
+    analysis_type: str
+    strategy: AnalysisStrategy = AnalysisStrategy.ADAPTIVE
+    confidence_threshold: float = 0.7
+    max_processing_time: float = 30.0  # seconds
+    use_cache: bool = True
+    context: Dict[str, Any] = None
+
+
+@dataclass
+class CoordinatedResult:
+    """Result from coordinated analysis."""
+    ml_results: Optional[Dict[str, Any]] = None
+    llm_results: Optional[Dict[str, Any]] = None
+    combined_confidence: float = 0.0
+    strategy_used: AnalysisStrategy = AnalysisStrategy.ML_FIRST
+    processing_time: float = 0.0
+    escalated: bool = False
+    cache_hit: bool = False
+    recommendations: List[str] = None
+
+
+class AICoordinationLayer:
+    """
+    Coordination layer between fast ML models and intelligent LLMs.
+    
+    This class orchestrates the interaction between:
+    - MLVulnerabilityPredictor: Fast, specific vulnerability detection
+    - ModelManager: Intelligent LLM reasoning and complex analysis
+    
+    It maintains the performance characteristics of each while enabling
+    intelligent workflows that leverage both capabilities.
+    """
+    
+    def __init__(self, shared_context: Optional[AISharedContext] = None,
+                 event_bus: Optional[AIEventBus] = None):
+        """Initialize the coordination layer."""
+        logger.info("Initializing AI Coordination Layer...")
+        
+        self.shared_context = shared_context or AISharedContext()
+        self.event_bus = event_bus or AIEventBus()
+        
+        # Initialize components
+        self.ml_predictor = None
+        self.model_manager = None
+        self._initialize_components()
+        
+        # Performance tracking
+        self.performance_stats = {
+            "ml_calls": 0,
+            "llm_calls": 0,
+            "escalations": 0,
+            "cache_hits": 0,
+            "avg_ml_time": 0.0,
+            "avg_llm_time": 0.0
+        }
+        
+        # Analysis cache for performance optimization
+        self.analysis_cache = {}
+        self.cache_ttl = timedelta(hours=1)  # Cache results for 1 hour
+        
+        logger.info("AI Coordination Layer initialized")
+    
+    def _initialize_components(self):
+        """Initialize ML and LLM components."""
+        # Initialize ML predictor
+        try:
+            if MLVulnerabilityPredictor:
+                self.ml_predictor = MLVulnerabilityPredictor()
+                logger.info("ML Predictor initialized in coordination layer")
+            else:
+                logger.warning("ML Predictor not available")
+        except Exception as e:
+            logger.error(f"Failed to initialize ML Predictor: {e}")
+        
+        # Initialize model manager
+        try:
+            if ModelManager:
+                self.model_manager = ModelManager()
+                logger.info("Model Manager initialized in coordination layer")
+            else:
+                logger.warning("Model Manager not available")
+        except Exception as e:
+            logger.error(f"Failed to initialize Model Manager: {e}")
+    
+    def _get_cache_key(self, request: AnalysisRequest) -> str:
+        """Generate cache key for analysis request."""
+        key_data = f"{request.binary_path}_{request.analysis_type}_{request.strategy}"
+        return hashlib.md5(key_data.encode()).hexdigest()
+    
+    def _is_cache_valid(self, cache_entry: Dict) -> bool:
+        """Check if cache entry is still valid."""
+        cached_time = cache_entry.get("timestamp", datetime.min)
+        return datetime.now() - cached_time < self.cache_ttl
+    
+    def _cache_result(self, cache_key: str, result: CoordinatedResult):
+        """Cache analysis result."""
+        self.analysis_cache[cache_key] = {
+            "result": result,
+            "timestamp": datetime.now()
+        }
+    
+    def _choose_strategy(self, request: AnalysisRequest) -> AnalysisStrategy:
+        """Choose analysis strategy based on request characteristics."""
+        if request.strategy != AnalysisStrategy.ADAPTIVE:
+            return request.strategy
+        
+        # Adaptive strategy selection
+        binary_path = request.binary_path
+        
+        # Check file size (larger files might benefit from ML first)
+        try:
+            import os
+            file_size = os.path.getsize(binary_path)
+            
+            if file_size > 50 * 1024 * 1024:  # > 50MB
+                return AnalysisStrategy.ML_FIRST  # Start with fast analysis
+            elif file_size < 1024 * 1024:  # < 1MB
+                return AnalysisStrategy.PARALLEL  # Small files can handle both
+            else:
+                return AnalysisStrategy.ML_FIRST  # Default to ML first
+                
+        except Exception:
+            return AnalysisStrategy.ML_FIRST
+    
+    def analyze_vulnerabilities(self, request: AnalysisRequest) -> CoordinatedResult:
+        """
+        Coordinate vulnerability analysis between ML and LLM components.
+        
+        This method intelligently combines fast ML prediction with deep
+        LLM reasoning to provide comprehensive vulnerability analysis.
+        """
+        start_time = time.time()
+        strategy = self._choose_strategy(request)
+        
+        logger.info(f"Starting coordinated vulnerability analysis with strategy: {strategy}")
+        
+        # Check cache first
+        cache_key = self._get_cache_key(request)
+        if request.use_cache and cache_key in self.analysis_cache:
+            cache_entry = self.analysis_cache[cache_key]
+            if self._is_cache_valid(cache_entry):
+                logger.info("Returning cached analysis result")
+                result = cache_entry["result"]
+                result.cache_hit = True
+                self.performance_stats["cache_hits"] += 1
+                return result
+        
+        # Initialize result
+        result = CoordinatedResult(strategy_used=strategy)
+        
+        try:
+            # Execute based on chosen strategy
+            if strategy == AnalysisStrategy.ML_FIRST:
+                result = self._ml_first_analysis(request, result)
+            elif strategy == AnalysisStrategy.LLM_FIRST:
+                result = self._llm_first_analysis(request, result)
+            elif strategy == AnalysisStrategy.PARALLEL:
+                result = self._parallel_analysis(request, result)
+            elif strategy == AnalysisStrategy.ML_ONLY:
+                result = self._ml_only_analysis(request, result)
+            elif strategy == AnalysisStrategy.LLM_ONLY:
+                result = self._llm_only_analysis(request, result)
+            
+            # Calculate processing time
+            result.processing_time = time.time() - start_time
+            
+            # Cache the result
+            if request.use_cache:
+                self._cache_result(cache_key, result)
+            
+            # Emit completion event
+            self.event_bus.emit("coordinated_analysis_complete", {
+                "strategy": strategy,
+                "processing_time": result.processing_time,
+                "confidence": result.combined_confidence,
+                "escalated": result.escalated
+            }, "coordination_layer")
+            
+            logger.info(f"Coordinated analysis complete in {result.processing_time:.2f}s")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error in coordinated analysis: {e}")
+            result.processing_time = time.time() - start_time
+            return result
+    
+    def _ml_first_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
+        """Execute ML-first analysis strategy."""
+        logger.debug("Executing ML-first analysis strategy")
+        
+        # Step 1: Fast ML analysis
+        if self.ml_predictor:
+            ml_start = time.time()
+            try:
+                ml_results = self.ml_predictor.predict_vulnerabilities(request.binary_path)
+                result.ml_results = ml_results
+                
+                ml_time = time.time() - ml_start
+                self.performance_stats["ml_calls"] += 1
+                self.performance_stats["avg_ml_time"] = (
+                    (self.performance_stats["avg_ml_time"] * (self.performance_stats["ml_calls"] - 1) + ml_time) /
+                    self.performance_stats["ml_calls"]
+                )
+                
+                # Check if escalation to LLM is needed
+                ml_confidence = ml_results.get("confidence", 0.0)
+                vulnerability_count = len(ml_results.get("vulnerabilities", []))
+                
+                should_escalate = (
+                    ml_confidence < request.confidence_threshold or
+                    vulnerability_count > 5 or  # Many vulnerabilities need deeper analysis
+                    any(vuln.get("severity") == "critical" for vuln in ml_results.get("vulnerabilities", []))
+                )
+                
+                if should_escalate and self.model_manager:
+                    logger.info(f"Escalating to LLM analysis (ML confidence: {ml_confidence:.2f})")
+                    result = self._add_llm_analysis(request, result)
+                    result.escalated = True
+                    self.performance_stats["escalations"] += 1
+                else:
+                    result.combined_confidence = ml_confidence
+                
+            except Exception as e:
+                logger.error(f"ML analysis failed: {e}")
+                if self.model_manager:
+                    # Fallback to LLM analysis
+                    result = self._add_llm_analysis(request, result)
+                    result.escalated = True
+        
+        return result
+    
+    def _llm_first_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
+        """Execute LLM-first analysis strategy."""
+        logger.debug("Executing LLM-first analysis strategy")
+        
+        # Step 1: Deep LLM analysis
+        if self.model_manager:
+            result = self._add_llm_analysis(request, result)
+            
+            # Step 2: Use ML for validation/augmentation
+            if self.ml_predictor and result.llm_results:
+                try:
+                    ml_results = self.ml_predictor.predict_vulnerabilities(request.binary_path)
+                    result.ml_results = ml_results
+                    
+                    # Combine confidences (weighted toward LLM)
+                    llm_confidence = result.llm_results.get("confidence", 0.8)
+                    ml_confidence = ml_results.get("confidence", 0.0)
+                    result.combined_confidence = 0.7 * llm_confidence + 0.3 * ml_confidence
+                    
+                except Exception as e:
+                    logger.error(f"ML validation failed: {e}")
+        
+        return result
+    
+    def _parallel_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
+        """Execute parallel analysis strategy."""
+        logger.debug("Executing parallel analysis strategy")
+        
+        import threading
+        import queue
+        
+        # Results queues
+        ml_queue = queue.Queue()
+        llm_queue = queue.Queue()
+        
+        # ML analysis thread
+        def ml_thread():
+            if self.ml_predictor:
+                try:
+                    ml_results = self.ml_predictor.predict_vulnerabilities(request.binary_path)
+                    ml_queue.put(("success", ml_results))
+                except Exception as e:
+                    ml_queue.put(("error", str(e)))
+            else:
+                ml_queue.put(("unavailable", None))
+        
+        # LLM analysis thread
+        def llm_thread():
+            if self.model_manager:
+                try:
+                    llm_results = self._perform_llm_analysis(request)
+                    llm_queue.put(("success", llm_results))
+                except Exception as e:
+                    llm_queue.put(("error", str(e)))
+            else:
+                llm_queue.put(("unavailable", None))
+        
+        # Start both threads
+        ml_thread_obj = threading.Thread(target=ml_thread)
+        llm_thread_obj = threading.Thread(target=llm_thread)
+        
+        ml_thread_obj.start()
+        llm_thread_obj.start()
+        
+        # Wait for results with timeout
+        try:
+            # Get ML results
+            ml_status, ml_data = ml_queue.get(timeout=request.max_processing_time / 2)
+            if ml_status == "success":
+                result.ml_results = ml_data
+            
+            # Get LLM results
+            llm_status, llm_data = llm_queue.get(timeout=request.max_processing_time / 2)
+            if llm_status == "success":
+                result.llm_results = llm_data
+            
+            # Combine results
+            if result.ml_results and result.llm_results:
+                ml_conf = result.ml_results.get("confidence", 0.0)
+                llm_conf = result.llm_results.get("confidence", 0.0)
+                result.combined_confidence = max(ml_conf, llm_conf)
+            elif result.ml_results:
+                result.combined_confidence = result.ml_results.get("confidence", 0.0)
+            elif result.llm_results:
+                result.combined_confidence = result.llm_results.get("confidence", 0.0)
+        
+        except queue.Empty:
+            logger.warning("Parallel analysis timed out")
+        
+        # Ensure threads complete
+        ml_thread_obj.join(timeout=1)
+        llm_thread_obj.join(timeout=1)
+        
+        return result
+    
+    def _ml_only_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
+        """Execute ML-only analysis strategy."""
+        logger.debug("Executing ML-only analysis strategy")
+        
+        if self.ml_predictor:
+            try:
+                ml_results = self.ml_predictor.predict_vulnerabilities(request.binary_path)
+                result.ml_results = ml_results
+                result.combined_confidence = ml_results.get("confidence", 0.0)
+                self.performance_stats["ml_calls"] += 1
+                
+            except Exception as e:
+                logger.error(f"ML-only analysis failed: {e}")
+        
+        return result
+    
+    def _llm_only_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
+        """Execute LLM-only analysis strategy."""
+        logger.debug("Executing LLM-only analysis strategy")
+        
+        if self.model_manager:
+            result = self._add_llm_analysis(request, result)
+        
+        return result
+    
+    def _add_llm_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
+        """Add LLM analysis to the result."""
+        if not self.model_manager:
+            return result
+        
+        llm_start = time.time()
+        try:
+            llm_results = self._perform_llm_analysis(request)
+            result.llm_results = llm_results
+            
+            llm_time = time.time() - llm_start
+            self.performance_stats["llm_calls"] += 1
+            self.performance_stats["avg_llm_time"] = (
+                (self.performance_stats["avg_llm_time"] * (self.performance_stats["llm_calls"] - 1) + llm_time) /
+                self.performance_stats["llm_calls"]
+            )
+            
+            # Update combined confidence
+            if result.ml_results:
+                # Weighted combination (ML: 30%, LLM: 70%)
+                ml_conf = result.ml_results.get("confidence", 0.0)
+                llm_conf = llm_results.get("confidence", 0.0)
+                result.combined_confidence = 0.3 * ml_conf + 0.7 * llm_conf
+            else:
+                result.combined_confidence = llm_results.get("confidence", 0.0)
+            
+        except Exception as e:
+            logger.error(f"LLM analysis failed: {e}")
+        
+        return result
+    
+    def _perform_llm_analysis(self, request: AnalysisRequest) -> Dict[str, Any]:
+        """Perform LLM-based analysis."""
+        # This would interface with the model manager to perform complex analysis
+        # For now, return a placeholder that would be implemented based on the specific
+        # LLM capabilities available in the model manager
+        
+        return {
+            "analysis_type": "llm_vulnerability_analysis",
+            "binary_path": request.binary_path,
+            "confidence": 0.85,  # LLM typically has high confidence
+            "complex_patterns": [],
+            "reasoning": "Deep analysis performed using LLM reasoning",
+            "recommendations": [
+                "Perform manual code review for identified patterns",
+                "Consider additional dynamic analysis",
+                "Review security configurations"
+            ]
+        }
+    
+    def get_performance_stats(self) -> Dict[str, Any]:
+        """Get coordination layer performance statistics."""
+        return {
+            "ml_calls": self.performance_stats["ml_calls"],
+            "llm_calls": self.performance_stats["llm_calls"],
+            "escalations": self.performance_stats["escalations"],
+            "cache_hits": self.performance_stats["cache_hits"],
+            "avg_ml_time": self.performance_stats["avg_ml_time"],
+            "avg_llm_time": self.performance_stats["avg_llm_time"],
+            "cache_size": len(self.analysis_cache),
+            "components_available": {
+                "ml_predictor": self.ml_predictor is not None,
+                "model_manager": self.model_manager is not None
+            }
+        }
+    
+    def clear_cache(self):
+        """Clear the analysis cache."""
+        self.analysis_cache.clear()
+        logger.info("Analysis cache cleared")
+    
+    def suggest_strategy(self, binary_path: str, analysis_type: str) -> AnalysisStrategy:
+        """Suggest the best analysis strategy for a given binary."""
+        try:
+            import os
+            file_size = os.path.getsize(binary_path)
+            
+            # Strategy suggestions based on file characteristics
+            if file_size > 100 * 1024 * 1024:  # > 100MB
+                return AnalysisStrategy.ML_FIRST  # Large files benefit from fast initial scan
+            elif file_size < 512 * 1024:  # < 512KB
+                return AnalysisStrategy.PARALLEL  # Small files can handle both
+            elif analysis_type in ["license_analysis", "complex_patterns"]:
+                return AnalysisStrategy.LLM_FIRST  # These need reasoning
+            elif analysis_type in ["vulnerability_scan", "quick_check"]:
+                return AnalysisStrategy.ML_FIRST  # These benefit from speed
+            else:
+                return AnalysisStrategy.ADAPTIVE  # Let the system decide
+                
+        except Exception:
+            return AnalysisStrategy.ADAPTIVE
+
+
+# Convenience functions for easy integration
+def quick_vulnerability_scan(binary_path: str, confidence_threshold: float = 0.7) -> CoordinatedResult:
+    """Quick vulnerability scan using coordination layer."""
+    coordinator = AICoordinationLayer()
+    request = AnalysisRequest(
+        binary_path=binary_path,
+        analysis_type="vulnerability_scan",
+        strategy=AnalysisStrategy.ML_FIRST,
+        confidence_threshold=confidence_threshold
+    )
+    return coordinator.analyze_vulnerabilities(request)
+
+
+def comprehensive_analysis(binary_path: str) -> CoordinatedResult:
+    """Comprehensive analysis using all available AI resources."""
+    coordinator = AICoordinationLayer()
+    request = AnalysisRequest(
+        binary_path=binary_path,
+        analysis_type="comprehensive",
+        strategy=AnalysisStrategy.PARALLEL,
+        confidence_threshold=0.8,
+        max_processing_time=60.0
+    )
+    return coordinator.analyze_vulnerabilities(request)

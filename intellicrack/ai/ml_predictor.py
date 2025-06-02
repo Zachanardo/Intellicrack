@@ -71,10 +71,24 @@ class MLVulnerabilityPredictor:
         if not JOBLIB_AVAILABLE:
             self.logger.warning("joblib not available, model loading may be limited")
 
+        # Try to load default model from config if no path provided
+        if not model_path:
+            try:
+                from ..config import CONFIG
+                model_path = CONFIG.get("ml", {}).get("vulnerability_model_path")
+                if model_path and os.path.exists(model_path):
+                    self.logger.info(f"Using default ML model from config: {model_path}")
+                else:
+                    self.logger.warning(f"Default ML model not found at: {model_path}")
+            except Exception as e:
+                self.logger.error(f"Error loading config for ML model: {e}")
+
         if model_path and os.path.exists(model_path):
             self.load_model(model_path)
             if self.model is not None:
                 self.model_path = model_path
+        else:
+            self.logger.warning("No valid ML model path provided or model file not found")
                 
         self.logger.info("MLVulnerabilityPredictor initialization complete.")
 

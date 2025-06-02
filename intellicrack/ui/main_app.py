@@ -584,11 +584,38 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     self.logger.error(f"Failed to initialize ML predictor with placeholder model: {e}")
                     self.logger.error(f"Exception details: {traceback.format_exc()}")
                     self.ml_predictor = None
-            self.logger.info("IntellicrackApp initialization complete.")
+            self.logger.info("ML predictor initialization complete.")
         except Exception as e:
             self.logger.error(f"Failed to initialize ML predictor: {e}")
             self.logger.error(f"Exception details: {traceback.format_exc()}")
             self.ml_predictor = None
+
+        # Initialize AI Orchestrator for agentic environment
+        try:
+            self.logger.info("Initializing AI Orchestrator for agentic environment...")
+            from ..ai.orchestrator import get_orchestrator
+            self.ai_orchestrator = get_orchestrator()
+            self.logger.info("AI Orchestrator initialized successfully - agentic environment ready")
+            
+            # Initialize coordination layer for intelligent AI workflows
+            from ..ai.coordination_layer import AICoordinationLayer
+            self.ai_coordinator = AICoordinationLayer(
+                shared_context=self.ai_orchestrator.shared_context,
+                event_bus=self.ai_orchestrator.event_bus
+            )
+            self.logger.info("AI Coordination Layer initialized successfully")
+            
+            # Set up AI event subscriptions for UI integration
+            self.ai_orchestrator.event_bus.subscribe("task_complete", self._on_ai_task_complete, "main_ui")
+            self.ai_orchestrator.event_bus.subscribe("coordinated_analysis_complete", self._on_coordinated_analysis_complete, "main_ui")
+            
+            self.logger.info("IntellicrackApp initialization complete with agentic AI system.")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize AI Orchestrator: {e}")
+            self.logger.error(f"Exception details: {traceback.format_exc()}")
+            self.ai_orchestrator = None
+            self.ai_coordinator = None
+            self.logger.warning("Continuing without agentic AI system")
 
         # Connect signals
         self.update_output.connect(self.append_output)
@@ -5928,6 +5955,11 @@ def register():
         model_management_action = QAction("Model Management", self)
         model_management_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.settings_tab)))
         tools_menu.addAction(model_management_action)
+        
+        # AI Model Configuration
+        ai_config_action = QAction("🤖 AI Model Configuration", self)
+        ai_config_action.triggered.connect(self.open_llm_config_dialog)
+        tools_menu.addAction(ai_config_action)
 
         # Help menu
         help_menu = menubar.addMenu("Help")
@@ -7039,6 +7071,43 @@ def register():
         # Call the original generate_key method safely in the main thread
         self.generate_key()
     # --- End Thread-Safe GUI Update Slots ---
+
+    # --- AI Event Handlers for Agentic System ---
+    def _on_ai_task_complete(self, data, source_component):
+        """Handle AI task completion events from the orchestrator."""
+        try:
+            task_id = data.get("task_id", "unknown")
+            success = data.get("success", False)
+            result = data.get("result", {})
+            
+            status_msg = f"✓ AI Task {task_id} completed" if success else f"✗ AI Task {task_id} failed"
+            self.update_output.emit(f"[AI Agent] {status_msg}")
+            
+            # Display results in the appropriate UI area
+            if success and result:
+                result_text = json.dumps(result, indent=2, default=str)
+                self.update_analysis_results.emit(f"AI Analysis Results:\n{result_text}\n")
+                
+        except Exception as e:
+            self.logger.error(f"Error handling AI task completion: {e}")
+    
+    def _on_coordinated_analysis_complete(self, data, source_component):
+        """Handle coordinated analysis completion events."""
+        try:
+            strategy = data.get("strategy", "unknown")
+            confidence = data.get("confidence", 0.0)
+            processing_time = data.get("processing_time", 0.0)
+            escalated = data.get("escalated", False)
+            
+            escalation_text = " (escalated to LLM)" if escalated else ""
+            status_msg = (f"🧠 Coordinated analysis complete using {strategy} strategy "
+                         f"(confidence: {confidence:.2f}, time: {processing_time:.2f}s){escalation_text}")
+            
+            self.update_output.emit(f"[AI Coordinator] {status_msg}")
+            
+        except Exception as e:
+            self.logger.error(f"Error handling coordinated analysis completion: {e}")
+    # --- End AI Event Handlers ---
 
     def load_binary(self, path=None):
         """
@@ -14992,44 +15061,279 @@ def launch():
             self.update_analysis_results.emit(f"Error during vulnerability scan: {e}\n")
 
     def run_ml_vulnerability_prediction(self):
-        """Run ML-based vulnerability prediction."""
+        """Run ML-based vulnerability prediction using agentic AI system."""
         if not self.binary_path:
             QMessageBox.warning(self, "No File", "Please select a binary file first.")
             return
         
-        self.update_output.emit(log_message("[ML Vuln] Starting ML vulnerability prediction..."))
-        self.update_analysis_results.emit("\n=== ML Vulnerability Prediction ===\n")
+        self.update_output.emit(log_message("[AI Agent] Starting intelligent vulnerability prediction..."))
+        self.update_analysis_results.emit("\n=== Agentic AI Vulnerability Prediction ===\n")
         
         try:
-            from ..ai.ml_predictor import MLVulnerabilityPredictor
-            
-            predictor = MLVulnerabilityPredictor()
-            prediction_result = predictor.predict_vulnerability(self.binary_path)
-            
-            if prediction_result:
-                prediction = prediction_result.get('prediction', 0)
-                probability = prediction_result.get('probability', 0)
-                feature_count = prediction_result.get('feature_count', 0)
-                model_type = prediction_result.get('model_type', 'Unknown')
+            # Use the agentic AI system if available
+            if hasattr(self, 'ai_orchestrator') and self.ai_orchestrator:
+                self.update_output.emit(log_message("[AI Agent] Using agentic AI orchestrator for analysis..."))
                 
-                self.update_analysis_results.emit(f"ML Model: {model_type}\n")
-                self.update_analysis_results.emit(f"Features analyzed: {feature_count}\n")
-                self.update_analysis_results.emit(f"Vulnerability prediction: {'High Risk' if prediction == 1 else 'Low Risk'}\n")
-                if probability:
-                    self.update_analysis_results.emit(f"Confidence: {probability:.1%}\n")
+                # Define callback to handle results
+                def handle_ai_result(result):
+                    try:
+                        if result.success:
+                            # Display ML results
+                            if result.ml_results:
+                                ml_data = result.ml_results
+                                self.update_analysis_results.emit("📊 Fast ML Analysis:\n")
+                                self.update_analysis_results.emit(f"Model confidence: {ml_data.get('confidence', 0.0):.2f}\n")
+                                vulnerabilities = ml_data.get('vulnerabilities', [])
+                                if vulnerabilities:
+                                    self.update_analysis_results.emit(f"Vulnerabilities found: {len(vulnerabilities)}\n")
+                                    for vuln in vulnerabilities[:5]:  # Show first 5
+                                        severity = vuln.get('severity', 'unknown')
+                                        name = vuln.get('name', 'unknown')
+                                        self.update_analysis_results.emit(f"  • {severity}: {name}\n")
+                                else:
+                                    self.update_analysis_results.emit("No significant vulnerabilities detected by ML\n")
+                            
+                            # Display LLM results if available (escalated analysis)
+                            if result.llm_results:
+                                llm_data = result.llm_results
+                                self.update_analysis_results.emit("\n🧠 Deep LLM Analysis:\n")
+                                self.update_analysis_results.emit(f"Complex patterns analyzed\n")
+                                self.update_analysis_results.emit(f"LLM confidence: {llm_data.get('confidence', 0.0):.2f}\n")
+                                reasoning = llm_data.get('reasoning', 'No reasoning provided')
+                                self.update_analysis_results.emit(f"Analysis reasoning: {reasoning}\n")
+                                
+                                recommendations = llm_data.get('recommendations', [])
+                                if recommendations:
+                                    self.update_analysis_results.emit("🎯 AI Recommendations:\n")
+                                    for rec in recommendations:
+                                        self.update_analysis_results.emit(f"  • {rec}\n")
+                            
+                            # Overall assessment
+                            confidence = result.combined_confidence
+                            strategy = result.strategy_used
+                            time_taken = result.processing_time
+                            
+                            self.update_analysis_results.emit(f"\n📈 Overall Assessment:\n")
+                            self.update_analysis_results.emit(f"Strategy used: {strategy.value}\n")
+                            self.update_analysis_results.emit(f"Combined confidence: {confidence:.2f}\n")
+                            self.update_analysis_results.emit(f"Processing time: {time_taken:.2f}s\n")
+                            
+                            if result.escalated:
+                                self.update_analysis_results.emit("🚀 Analysis was escalated to LLM for deeper insights\n")
+                            
+                            if confidence > 0.8:
+                                self.update_analysis_results.emit("✅ High confidence analysis - results are reliable\n")
+                            elif confidence > 0.6:
+                                self.update_analysis_results.emit("⚠️ Medium confidence - consider additional analysis\n")
+                            else:
+                                self.update_analysis_results.emit("❓ Low confidence - manual review recommended\n")
+                                
+                        else:
+                            self.update_analysis_results.emit("❌ AI analysis failed\n")
+                            for error in result.errors:
+                                self.update_analysis_results.emit(f"Error: {error}\n")
+                    
+                    except Exception as e:
+                        self.update_analysis_results.emit(f"Error displaying AI results: {e}\n")
                 
-                if prediction == 1:
-                    self.update_analysis_results.emit("⚠️ ML model suggests this binary may have vulnerabilities\n")
+                # Submit vulnerability scan task to orchestrator
+                task_id = self.ai_orchestrator.quick_vulnerability_scan(
+                    self.binary_path,
+                    callback=handle_ai_result
+                )
+                
+                self.update_output.emit(log_message(f"[AI Agent] Submitted task {task_id} to agentic AI system"))
+                
+            # Fallback to traditional ML predictor if orchestrator not available
+            elif hasattr(self, 'ml_predictor') and self.ml_predictor:
+                self.update_output.emit(log_message("[ML Vuln] Falling back to traditional ML predictor..."))
+                
+                prediction_result = self.ml_predictor.predict_vulnerability(self.binary_path)
+                
+                if prediction_result:
+                    prediction = prediction_result.get('prediction', 0)
+                    probability = prediction_result.get('probability', 0)
+                    feature_count = prediction_result.get('feature_count', 0)
+                    model_type = prediction_result.get('model_type', 'Unknown')
+                    
+                    self.update_analysis_results.emit(f"ML Model: {model_type}\n")
+                    self.update_analysis_results.emit(f"Features analyzed: {feature_count}\n")
+                    self.update_analysis_results.emit(f"Vulnerability prediction: {'High Risk' if prediction == 1 else 'Low Risk'}\n")
+                    if probability:
+                        self.update_analysis_results.emit(f"Confidence: {probability:.1%}\n")
+                    
+                    if prediction == 1:
+                        self.update_analysis_results.emit("⚠️ ML model suggests this binary may have vulnerabilities\n")
+                    else:
+                        self.update_analysis_results.emit("✅ ML model suggests this binary has low vulnerability risk\n")
                 else:
-                    self.update_analysis_results.emit("✅ ML model suggests this binary has low vulnerability risk\n")
-            else:
-                self.update_analysis_results.emit("❌ ML prediction failed - no model loaded or feature extraction failed\n")
+                    self.update_analysis_results.emit("❌ ML prediction failed - no model loaded or feature extraction failed\n")
+                
+                self.update_output.emit(log_message("[ML Vuln] Traditional prediction complete"))
             
-            self.update_output.emit(log_message("[ML Vuln] Prediction complete"))
+            else:
+                self.update_output.emit(log_message("[ML Vuln] No AI system available"))
+                self.update_analysis_results.emit("❌ No AI/ML system available for vulnerability prediction\n")
             
         except Exception as e:
-            self.update_output.emit(log_message(f"[ML Vuln] Error: {e}"))
-            self.update_analysis_results.emit(f"Error during ML prediction: {e}\n")
+            self.update_output.emit(log_message(f"[AI Agent] Error: {e}"))
+            self.update_analysis_results.emit(f"Error during AI vulnerability prediction: {e}\n")
+
+    def run_comprehensive_ai_analysis(self):
+        """Run comprehensive analysis using all available AI resources."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "No File", "Please select a binary file first.")
+            return
+        
+        self.update_output.emit(log_message("[AI Agent] Starting comprehensive agentic AI analysis..."))
+        self.update_analysis_results.emit("\n=== Comprehensive Agentic AI Analysis ===\n")
+        
+        try:
+            if hasattr(self, 'ai_orchestrator') and self.ai_orchestrator:
+                self.update_output.emit(log_message("[AI Agent] Using full agentic AI capabilities..."))
+                
+                def handle_comprehensive_result(result):
+                    try:
+                        self.update_analysis_results.emit("🤖 Comprehensive AI Analysis Results:\n")
+                        self.update_analysis_results.emit("=" * 50 + "\n")
+                        
+                        # Show which AI components were used
+                        components = result.components_used
+                        self.update_analysis_results.emit(f"AI Components Used: {', '.join(components)}\n")
+                        
+                        if result.success:
+                            # ML Analysis section
+                            if result.ml_results:
+                                self.update_analysis_results.emit("\n📊 Fast ML Analysis Results:\n")
+                                self.update_analysis_results.emit("-" * 30 + "\n")
+                                ml_data = result.ml_results
+                                
+                                # Show vulnerabilities
+                                vulns = ml_data.get('vulnerabilities', [])
+                                if vulns:
+                                    severity_counts = {}
+                                    for v in vulns:
+                                        sev = v.get('severity', 'unknown')
+                                        severity_counts[sev] = severity_counts.get(sev, 0) + 1
+                                    
+                                    self.update_analysis_results.emit(f"Total vulnerabilities: {len(vulns)}\n")
+                                    for severity, count in severity_counts.items():
+                                        self.update_analysis_results.emit(f"  {severity}: {count}\n")
+                                
+                                # Show features analyzed
+                                features = ml_data.get('features_analyzed', [])
+                                if features:
+                                    self.update_analysis_results.emit(f"Binary features analyzed: {len(features)}\n")
+                            
+                            # LLM Analysis section
+                            if result.llm_results:
+                                self.update_analysis_results.emit("\n🧠 Intelligent LLM Analysis Results:\n")
+                                self.update_analysis_results.emit("-" * 30 + "\n")
+                                llm_data = result.llm_results
+                                
+                                reasoning = llm_data.get('reasoning', 'Complex analysis performed')
+                                self.update_analysis_results.emit(f"AI Reasoning: {reasoning}\n")
+                                
+                                patterns = llm_data.get('complex_patterns', [])
+                                if patterns:
+                                    self.update_analysis_results.emit(f"Complex patterns identified: {len(patterns)}\n")
+                                    for pattern in patterns[:3]:  # Show top 3
+                                        self.update_analysis_results.emit(f"  • {pattern}\n")
+                                
+                                recommendations = llm_data.get('recommendations', [])
+                                if recommendations:
+                                    self.update_analysis_results.emit("\n🎯 AI-Generated Recommendations:\n")
+                                    for i, rec in enumerate(recommendations, 1):
+                                        self.update_analysis_results.emit(f"{i}. {rec}\n")
+                            
+                            # Binary analysis results
+                            if 'hex_analysis' in result.result_data:
+                                hex_data = result.result_data['hex_analysis']
+                                self.update_analysis_results.emit("\n🔍 Binary Pattern Analysis:\n")
+                                self.update_analysis_results.emit("-" * 30 + "\n")
+                                confidence = hex_data.get('confidence', 0.0)
+                                self.update_analysis_results.emit(f"Pattern recognition confidence: {confidence:.2f}\n")
+                            
+                            # Performance metrics
+                            self.update_analysis_results.emit(f"\n⚡ Performance Metrics:\n")
+                            self.update_analysis_results.emit("-" * 30 + "\n")
+                            self.update_analysis_results.emit(f"Total processing time: {result.processing_time:.2f}s\n")
+                            self.update_analysis_results.emit(f"Analysis strategy: {result.strategy_used.value}\n")
+                            self.update_analysis_results.emit(f"Combined confidence: {result.combined_confidence:.2f}\n")
+                            
+                            if result.escalated:
+                                self.update_analysis_results.emit("🚀 Analysis escalated to LLM for deeper insights\n")
+                            
+                            # Final assessment
+                            self.update_analysis_results.emit(f"\n📋 Final Assessment:\n")
+                            self.update_analysis_results.emit("=" * 30 + "\n")
+                            
+                            if result.combined_confidence >= 0.9:
+                                assessment = "🔴 High Risk - Immediate attention required"
+                            elif result.combined_confidence >= 0.7:
+                                assessment = "🟡 Medium Risk - Further investigation recommended"
+                            elif result.combined_confidence >= 0.5:
+                                assessment = "🟢 Low Risk - Standard security measures sufficient"
+                            else:
+                                assessment = "⚪ Inconclusive - Manual review required"
+                            
+                            self.update_analysis_results.emit(f"{assessment}\n")
+                            
+                        else:
+                            self.update_analysis_results.emit("❌ Comprehensive analysis failed\n")
+                            for error in result.errors:
+                                self.update_analysis_results.emit(f"Error: {error}\n")
+                                
+                        self.update_analysis_results.emit("\n" + "=" * 50 + "\n")
+                        
+                    except Exception as e:
+                        self.update_analysis_results.emit(f"Error displaying comprehensive results: {e}\n")
+                
+                # Submit comprehensive analysis task
+                task_id = self.ai_orchestrator.comprehensive_analysis(
+                    self.binary_path,
+                    callback=handle_comprehensive_result
+                )
+                
+                self.update_output.emit(log_message(f"[AI Agent] Submitted comprehensive task {task_id}"))
+                
+            else:
+                self.update_output.emit(log_message("[AI Agent] Agentic AI system not available"))
+                self.update_analysis_results.emit("❌ Agentic AI system not available for comprehensive analysis\n")
+                self.update_analysis_results.emit("Please check AI system initialization.\n")
+            
+        except Exception as e:
+            self.update_output.emit(log_message(f"[AI Agent] Comprehensive analysis error: {e}"))
+            self.update_analysis_results.emit(f"Error during comprehensive AI analysis: {e}\n")
+
+    def open_llm_config_dialog(self):
+        """Open the LLM configuration dialog."""
+        try:
+            from .dialogs.llm_config_dialog import LLMConfigDialog
+            
+            dialog = LLMConfigDialog(self)
+            result = dialog.exec_()
+            
+            if result == dialog.Accepted:
+                # Refresh orchestrator status after configuration
+                if hasattr(self, 'ai_orchestrator') and self.ai_orchestrator:
+                    status = self.ai_orchestrator.get_component_status()
+                    llm_info = status.get('llm_status', {})
+                    available_llms = llm_info.get('available_llms', [])
+                    
+                    if available_llms:
+                        self.update_output.emit(log_message(f"[AI Config] ✓ {len(available_llms)} LLM models configured"))
+                        active_llm = llm_info.get('active_llm')
+                        if active_llm:
+                            self.update_output.emit(log_message(f"[AI Config] ✓ Active model: {active_llm}"))
+                    else:
+                        self.update_output.emit(log_message("[AI Config] No LLM models configured"))
+                        
+        except ImportError as e:
+            QMessageBox.critical(self, "Import Error", f"Failed to import LLM config dialog: {e}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to open LLM configuration: {e}")
+            self.logger.error(f"LLM config dialog error: {e}")
 
     def analyze_process_behavior(self):
         """Analyze live process behavior."""

@@ -1146,6 +1146,452 @@ def _parse_tool_output(tool_name: str, output: str) -> Dict[str, Any]:
     return parsed
 
 
+def run_vulnerability_scan(binary_path: str) -> Dict[str, Any]:
+    """
+    Run comprehensive vulnerability scan.
+    
+    Args:
+        binary_path: Path to the binary file
+        
+    Returns:
+        Dict containing vulnerability scan results
+    """
+    try:
+        from ..core.analysis.vulnerability_engine import VulnerabilityEngine
+        
+        engine = VulnerabilityEngine()
+        vulnerabilities = engine.scan_binary(binary_path)
+        
+        return {
+            "status": "success",
+            "vulnerabilities": vulnerabilities,
+            "summary": {
+                "total": len(vulnerabilities),
+                "high": sum(1 for v in vulnerabilities if v.get("severity") == "high"),
+                "medium": sum(1 for v in vulnerabilities if v.get("severity") == "medium"),
+                "low": sum(1 for v in vulnerabilities if v.get("severity") == "low")
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in vulnerability scan: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_cfg_analysis(binary_path: str) -> Dict[str, Any]:
+    """
+    Run control flow graph analysis.
+    
+    Args:
+        binary_path: Path to the binary file
+        
+    Returns:
+        Dict containing CFG analysis results
+    """
+    try:
+        from ..core.analysis.cfg_explorer import CFGExplorer
+        
+        explorer = CFGExplorer()
+        cfg = explorer.analyze(binary_path)
+        
+        return {
+            "status": "success",
+            "cfg": cfg,
+            "functions": explorer.get_functions(),
+            "complexity": explorer.get_complexity_metrics()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in CFG analysis: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_rop_gadget_finder(binary_path: str) -> Dict[str, Any]:
+    """
+    Find ROP gadgets in binary.
+    
+    Args:
+        binary_path: Path to the binary file
+        
+    Returns:
+        Dict containing ROP gadgets
+    """
+    try:
+        from ..core.analysis.rop_generator import ROPChainGenerator
+        
+        generator = ROPChainGenerator()
+        gadgets = generator.find_gadgets(binary_path)
+        
+        return {
+            "status": "success",
+            "gadgets": gadgets,
+            "total": len(gadgets),
+            "categories": generator.categorize_gadgets(gadgets)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error finding ROP gadgets: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_section_analysis(binary_path: str) -> Dict[str, Any]:
+    """
+    Analyze binary sections.
+    
+    Args:
+        binary_path: Path to the binary file
+        
+    Returns:
+        Dict containing section analysis results
+    """
+    try:
+        from .binary_analysis import analyze_binary
+        
+        # Get basic binary info which includes sections
+        info = analyze_binary(binary_path, detailed=True)
+        sections = info.get("sections", [])
+        
+        # Analyze each section
+        section_analysis = []
+        for section in sections:
+            analysis = {
+                "name": section.get("name"),
+                "size": section.get("size", 0),
+                "virtual_size": section.get("virtual_size", 0),
+                "virtual_address": section.get("virtual_address", 0),
+                "characteristics": section.get("characteristics", []),
+                "entropy": section.get("entropy", 0),
+                "suspicious": False
+            }
+            
+            # Check for suspicious characteristics
+            if analysis["entropy"] > 7.0:
+                analysis["suspicious"] = True
+                analysis["reason"] = "High entropy - possible packing"
+            elif "WRITE" in analysis["characteristics"] and "EXECUTE" in analysis["characteristics"]:
+                analysis["suspicious"] = True
+                analysis["reason"] = "Writable and executable"
+                
+            section_analysis.append(analysis)
+            
+        return {
+            "status": "success",
+            "sections": section_analysis,
+            "total": len(sections),
+            "suspicious": sum(1 for s in section_analysis if s["suspicious"])
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in section analysis: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_import_export_analysis(binary_path: str) -> Dict[str, Any]:
+    """
+    Analyze imports and exports.
+    
+    Args:
+        binary_path: Path to the binary file
+        
+    Returns:
+        Dict containing import/export analysis
+    """
+    try:
+        from .binary_analysis import analyze_binary
+        
+        # Get binary info which includes imports/exports
+        info = analyze_binary(binary_path, detailed=True)
+        
+        imports = info.get("imports", {})
+        exports = info.get("exports", [])
+        
+        # Analyze dangerous imports
+        dangerous_apis = [
+            "LoadLibrary", "GetProcAddress", "VirtualAlloc", "VirtualProtect",
+            "WriteProcessMemory", "CreateRemoteThread", "SetWindowsHookEx",
+            "RegOpenKey", "RegSetValue", "CreateFile", "DeleteFile",
+            "WinExec", "ShellExecute", "system", "exec"
+        ]
+        
+        dangerous_imports = []
+        for dll, funcs in imports.items():
+            for func in funcs:
+                if any(api in func for api in dangerous_apis):
+                    dangerous_imports.append({"dll": dll, "function": func})
+                    
+        return {
+            "status": "success",
+            "imports": imports,
+            "exports": exports,
+            "import_count": sum(len(funcs) for funcs in imports.values()),
+            "export_count": len(exports),
+            "dangerous_imports": dangerous_imports,
+            "dlls_imported": list(imports.keys())
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in import/export analysis: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_weak_crypto_detection(binary_path: str) -> Dict[str, Any]:
+    """
+    Detect weak cryptography usage.
+    
+    Args:
+        binary_path: Path to the binary file
+        
+    Returns:
+        Dict containing weak crypto detection results
+    """
+    try:
+        from .binary_analysis import analyze_patterns
+        
+        # Patterns for weak crypto
+        weak_crypto_patterns = [
+            b"MD5", b"SHA1", b"DES", b"RC4", b"ECB",
+            b"md5_", b"sha1_", b"des_", b"rc4_",
+            b"MD5Init", b"SHA1Init", b"DESCrypt",
+            b"hardcoded_key", b"static_iv", b"weak_seed"
+        ]
+        
+        # Search for patterns
+        pattern_results = analyze_patterns(binary_path, weak_crypto_patterns)
+        
+        # Analyze strings for hardcoded keys
+        hardcoded_keys = []
+        if pattern_results.get("strings"):
+            for string in pattern_results["strings"]:
+                # Look for hex strings that might be keys
+                if len(string) in [16, 24, 32, 48, 64] and all(c in "0123456789abcdefABCDEF" for c in string):
+                    hardcoded_keys.append(string)
+                    
+        weak_algorithms = []
+        for pattern, matches in pattern_results.get("matches", {}).items():
+            if matches:
+                weak_algorithms.append({
+                    "algorithm": pattern.decode('utf-8', errors='ignore'),
+                    "occurrences": len(matches)
+                })
+                
+        return {
+            "status": "success",
+            "weak_algorithms": weak_algorithms,
+            "hardcoded_keys": hardcoded_keys[:10],  # Limit to first 10
+            "issues_found": len(weak_algorithms) + len(hardcoded_keys),
+            "severity": "high" if hardcoded_keys else ("medium" if weak_algorithms else "low")
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in weak crypto detection: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_comprehensive_protection_scan(binary_path: str) -> Dict[str, Any]:
+    """
+    Run comprehensive protection scan.
+    
+    Args:
+        binary_path: Path to the binary file
+        
+    Returns:
+        Dict containing all protection mechanisms found
+    """
+    try:
+        from .protection_detection import (
+            detect_commercial_protections,
+            detect_anti_debugging,
+            detect_vm_detection,
+            detect_tpm_protection
+        )
+        from ..core.analysis.core_analysis import detect_packing
+        
+        results = {
+            "status": "success",
+            "protections": {}
+        }
+        
+        # Detect packing
+        packing = detect_packing(binary_path)
+        if packing.get("packing_detected"):
+            results["protections"]["packing"] = packing
+            
+        # Detect commercial protections
+        commercial = detect_commercial_protections(binary_path)
+        if commercial.get("protections_found"):
+            results["protections"]["commercial"] = commercial
+            
+        # Detect anti-debugging
+        anti_debug = detect_anti_debugging(binary_path)
+        if anti_debug.get("techniques_found"):
+            results["protections"]["anti_debugging"] = anti_debug
+            
+        # Detect VM detection
+        vm_detect = detect_vm_detection(binary_path)
+        if vm_detect.get("vm_detection_found"):
+            results["protections"]["vm_detection"] = vm_detect
+            
+        # Detect TPM
+        tpm = detect_tpm_protection(binary_path)
+        if tpm.get("tpm_detected"):
+            results["protections"]["tpm"] = tpm
+            
+        # Summary
+        results["summary"] = {
+            "total_protections": len(results["protections"]),
+            "protection_types": list(results["protections"].keys()),
+            "protection_level": "high" if len(results["protections"]) > 3 else 
+                              ("medium" if len(results["protections"]) > 1 else "low")
+        }
+        
+        return results
+        
+    except Exception as e:
+        logger.error(f"Error in protection scan: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_ml_vulnerability_prediction(binary_path: str) -> Dict[str, Any]:
+    """
+    Run ML-based vulnerability prediction.
+    
+    Args:
+        binary_path: Path to the binary file
+        
+    Returns:
+        Dict containing ML predictions
+    """
+    try:
+        from ..ai import VulnerabilityPredictor
+        
+        predictor = VulnerabilityPredictor()
+        predictions = predictor.predict(binary_path)
+        
+        return {
+            "status": "success",
+            "predictions": predictions,
+            "confidence": predictor.get_confidence_score(),
+            "top_vulnerabilities": predictions[:5] if isinstance(predictions, list) else []
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in ML vulnerability prediction: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_generate_patch_suggestions(binary_path: str) -> Dict[str, Any]:
+    """
+    Generate patch suggestions for binary.
+    
+    Args:
+        binary_path: Path to the binary file
+        
+    Returns:
+        Dict containing patch suggestions
+    """
+    try:
+        from ..core.patching.payload_generator import PayloadGenerator
+        from .exploitation import analyze_for_patches
+        
+        # Analyze binary for patchable locations
+        analysis = analyze_for_patches(binary_path)
+        
+        generator = PayloadGenerator()
+        suggestions = []
+        
+        # Generate suggestions based on analysis
+        if analysis.get("license_checks"):
+            for check in analysis["license_checks"]:
+                suggestions.append({
+                    "type": "license_bypass",
+                    "address": check["address"],
+                    "description": f"Bypass license check at {check['address']}",
+                    "patch": generator.generate_nop_patch(check["size"]),
+                    "confidence": 0.8
+                })
+                
+        if analysis.get("trial_checks"):
+            for check in analysis["trial_checks"]:
+                suggestions.append({
+                    "type": "trial_bypass", 
+                    "address": check["address"],
+                    "description": f"Bypass trial check at {check['address']}",
+                    "patch": generator.generate_jmp_patch(check["address"], check["target"]),
+                    "confidence": 0.7
+                })
+                
+        return {
+            "status": "success",
+            "suggestions": suggestions,
+            "total": len(suggestions),
+            "analysis": analysis
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating patch suggestions: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_multi_format_analysis(binary_path: str) -> Dict[str, Any]:
+    """
+    Run multi-format binary analysis.
+    
+    Args:
+        binary_path: Path to the binary file
+        
+    Returns:
+        Dict containing multi-format analysis results
+    """
+    try:
+        from ..core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
+        
+        analyzer = MultiFormatBinaryAnalyzer()
+        results = analyzer.analyze(binary_path)
+        
+        return {
+            "status": "success",
+            "format": results.get("format", "unknown"),
+            "analysis": results,
+            "supported": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in multi-format analysis: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_ml_similarity_search(binary_path: str, database: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Run ML-based similarity search.
+    
+    Args:
+        binary_path: Path to the binary file
+        database: Path to similarity database
+        
+    Returns:
+        Dict containing similar binaries
+    """
+    try:
+        from ..core.analysis import SimilaritySearcher
+        
+        searcher = SimilaritySearcher()
+        if database:
+            searcher.load_database(database)
+            
+        similar = searcher.find_similar(binary_path, threshold=0.8)
+        
+        return {
+            "status": "success",
+            "similar_binaries": similar,
+            "total_found": len(similar),
+            "best_match": similar[0] if similar else None
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in ML similarity search: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 # Export all functions
 __all__ = [
     'run_comprehensive_analysis',
@@ -1169,5 +1615,16 @@ __all__ = [
     'load_ai_model',
     'get_target_process_pid',
     'detect_hardware_dongles',
-    'detect_tpm_protection'
+    'detect_tpm_protection',
+    'run_vulnerability_scan',
+    'run_cfg_analysis',
+    'run_rop_gadget_finder',
+    'run_section_analysis',
+    'run_import_export_analysis',
+    'run_weak_crypto_detection',
+    'run_comprehensive_protection_scan',
+    'run_ml_vulnerability_prediction',
+    'run_generate_patch_suggestions',
+    'run_multi_format_analysis',
+    'run_ml_similarity_search'
 ]

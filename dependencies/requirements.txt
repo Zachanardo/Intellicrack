@@ -1,0 +1,165 @@
+# ============================================================================
+# COMPLETE Requirements for Intellicrack
+# ============================================================================
+
+# Core GUI Framework
+PyQt5>=5.15.0
+PyQt5-sip>=12.11.0
+PyQt5-stubs>=5.15.0  # Type hints
+PyQtWebEngine>=5.15.0  # Web view features
+PyQt5-Qt5>=5.15.0  # Qt5 binaries
+
+# Machine Learning and AI
+numpy>=1.23.0
+scipy>=1.10.0
+scikit-learn>=1.3.0
+pandas>=2.0.0
+joblib>=1.3.0
+# torch>=2.0.0,<2.3.0  # PyTorch for ML (installed separately with Python 3.11 compatibility checks)
+# tensorflow>=2.13.0,<2.16.0  # TensorFlow for GPU pattern matching (installed separately with compatibility checks)
+transformers>=4.30.0  # Hugging Face transformers
+llama-cpp-python>=0.2.0  # Local LLM support
+
+# Binary Analysis Core
+# angr>=9.2.0  # Symbolic execution (installed separately with compatibility checks)
+# claripy>=9.2.0  # Constraint solver for angr (installed separately with compatibility checks)
+z3-solver>=4.12.0  # SMT solver
+capstone>=5.0.0  # Disassembly framework
+keystone-engine>=0.9.2  # Assembly framework
+unicorn>=2.0.0  # CPU emulator
+
+# File Format Analysis
+pefile>=2023.2.7  # PE file analysis
+lief>=0.14.0  # Multi-format binary parsing
+pyelftools>=0.29  # ELF file analysis (elftools import)
+macholib>=1.16  # Mach-O analysis
+
+# Dynamic Analysis
+frida>=16.0.0  # Dynamic instrumentation
+frida-tools>=12.0.0  # Frida CLI tools
+
+# Reverse Engineering Tools
+r2pipe>=1.8.0  # Radare2 integration
+ropgadget>=7.3  # ROP chain generation
+ropper>=1.13.0  # Alternative ROP tool
+pwntools>=4.11.0  # CTF/exploitation toolkit
+yara-python>=4.3.0  # Pattern matching
+
+# Network Analysis
+scapy>=2.5.0  # Packet manipulation
+pyshark>=0.6  # Wireshark wrapper
+mitmproxy>=10.0.0  # HTTPS interception
+requests>=2.31.0  # HTTP library
+paramiko>=3.3.0  # SSH client
+
+# Cryptography
+cryptography>=41.0.0  # Crypto operations
+
+# PDF Generation & Manipulation
+reportlab>=4.0.0  # PDF creation
+pdfkit>=1.0.0  # HTML to PDF (requires wkhtmltopdf)
+PyPDF2>=3.0.0  # PDF manipulation
+PyMuPDF>=1.23.0  # PDF support (imports as fitz)
+weasyprint>=60.0  # HTML/CSS to PDF
+# WeasyPrint dependencies
+cffi>=1.15.0
+cairocffi>=1.6.0
+tinycss2>=1.2.0
+cssselect2>=0.7.0
+html5lib>=1.1
+Pillow>=10.0.0
+
+# Visualization
+matplotlib>=3.7.0  # Plotting
+networkx>=3.1  # Graph analysis
+graphviz>=0.20  # Graph visualization
+plotly>=5.14.0  # Interactive plots
+
+# GPU Acceleration
+pycuda>=2022.2; platform_machine!="arm64"  # CUDA support (NVIDIA)
+cupy>=12.0.0; platform_machine!="arm64"  # CUDA arrays (NVIDIA)
+pyopencl>=2023.1  # OpenCL support (Universal: NVIDIA/Intel/AMD)
+pytools>=2023.1  # Required by PyOpenCL
+# intel-extension-for-pytorch<1.13.0; platform_machine!="arm64"  # Intel GPU support (installed separately with compatibility checks)
+openvino>=2023.0.0; platform_machine!="arm64"  # Intel OpenVINO toolkit
+openvino-dev>=2023.0.0; platform_machine!="arm64"  # Intel OpenVINO development tools
+
+# Distributed Computing
+ray>=2.7.0  # Distributed framework
+dask>=2023.9.0  # Parallel computing
+distributed>=2023.9.0  # Dask distributed
+
+# System & Process Management
+psutil>=5.9.0  # System monitoring
+docker>=6.1.0  # Container management
+
+# Windows Specific
+pywin32>=306; platform_system=="Windows"
+pypiwin32>=223; platform_system=="Windows"
+
+# Database
+sqlalchemy>=2.0.0
+
+# File Processing
+python-magic>=0.4.27  # File type detection
+pyzipper>=0.3.6  # ZIP support
+filebytes>=0.10.0  # Low-level file ops
+
+# Web Scraping
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Terminal & CLI
+click>=8.1.0
+colorama>=0.4.6
+termcolor>=2.3.0
+rich>=13.0.0
+tqdm>=4.65.0
+
+# Development Tools
+pytest>=7.4.0
+pytest-qt>=4.2.0
+black>=23.0.0  # Code formatter
+pylint>=2.17.0  # Linter
+mypy>=1.5.0  # Type checker
+
+# Documentation
+sphinx>=7.0.0
+sphinx-rtd-theme>=1.3.0
+
+# Configuration
+pyyaml>=6.0
+toml>=0.10.2
+python-dotenv>=1.0.0
+
+# Utilities
+packaging>=23.0
+python-dateutil>=2.8.0
+loguru>=0.7.0
+
+# Optional but referenced in try/except blocks
+# pcapy>=0.11.4  # Alternative packet capture - DISABLED: incompatible with Python 3.11+ (missing distutils._init_posix)
+pypcap>=1.2.3  # Modern replacement for pcapy - Python packet capture library
+# manticore>=0.3.7  # Alternative to angr (optional - installed separately if compatible)
+
+# Additional specialized tools  
+# qiling>=1.4.0  # Binary emulation framework (installed separately with compatibility checks)
+binwalk>=2.3.0  # Firmware analysis
+# volatility3>=2.5.0  # Memory forensics (installed separately with compatibility checks)
+
+# ============================================================================
+# System Dependencies (not pip installable):
+# - wkhtmltopdf (for pdfkit)
+# - GTK3 (for weasyprint)
+# - Docker (for container management)
+# - Radare2 binary (for r2pipe)
+# - Ghidra (for Ghidra integration)
+# - Binary analysis tools (file, strings, objdump, readelf, nm)
+# - Network tools (nmap, OpenSSL)
+#
+# GPU Dependencies (detected and configured automatically):
+# - NVIDIA: CUDA toolkit (for pycuda/cupy)
+# - Intel: Intel GPU drivers (for Intel Extension for PyTorch + OpenVINO)
+# - AMD: ROCm platform (for ROCm-enabled PyTorch)
+# - Universal: OpenCL runtime (for pyopencl - works with all GPU vendors)
+# ============================================================================

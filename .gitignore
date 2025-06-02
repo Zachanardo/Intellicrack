@@ -172,7 +172,7 @@ intellicrack_error.log
 *.backup
 *.orig
 
-# Local-specific files
+# Local-specific files and development artifacts
 CLAUDE.md
 .claude/
 docs/CLAUDE.md
@@ -192,6 +192,32 @@ REFACTORING*.md
 TEST_ALL_FEATURES.bat
 install_helper.py
 siphash24_replacement.py
+Install_Dependencies.ps1
+install_dependencies.bat
+
+# AI/LLM specific
+.llm_cache/
+llm_configs/
+api_keys.txt
+*.api_key
+model_cache/
+conversation_history/
+
+# Ruff and linting
+.ruff_cache/
+.pylint.d/
+.flake8_cache/
+
+# Additional generated/compiled files
+*.compiled
+*.optimized
+*.analysis_result
+*.workflow_result
+
+# Development tools
+lint.ps1
+format.ps1
+dev_scripts/
 
 # Output directories
 logs/

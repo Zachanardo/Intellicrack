@@ -81,8 +81,9 @@ KEYWORDS = [
 ENTRY_POINTS = {
     'console_scripts': [
         'intellicrack=intellicrack.main:main',
-        'intellicrack-cli=scripts.run_analysis_cli:main',
+        'intellicrack-cli=scripts.intellicrack_cli:main',
         'intellicrack-gui=intellicrack.ui.main_app:launch',
+        'intellicrack-basic=scripts.run_analysis_cli:main',  # Keep old basic CLI
     ],
 }
 

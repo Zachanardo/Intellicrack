@@ -27,6 +27,7 @@ try:
         ProtocolFingerprinter
     )
     from intellicrack.utils.report_generator import generate_report
+    from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
     from intellicrack.config import CONFIG
 except ImportError as e:
     print(f"Error importing Intellicrack modules: {e}")
@@ -121,7 +122,7 @@ def example_license_analysis():
     
     try:
         # Analyze for license mechanisms
-        from intellicrack.utils.runner_functions import run_deep_license_analysis
+        from intellicrack.utils.runner_functions import run_deep_license_analysis, run_qiling_emulation, run_qemu_analysis
         
         license_info = run_deep_license_analysis(binary_path)
         
@@ -142,6 +143,16 @@ def example_license_analysis():
             print("Bypass Suggestions:")
             for suggestion in license_info['bypass_suggestions']:
                 print(f"  - {suggestion}")
+        
+        # Try Qiling emulation
+        print("\n--- Qiling Emulation ---")
+        qiling_results = run_qiling_emulation(None, binary_path, timeout=30)
+        if qiling_results.get('status') == 'success':
+            results = qiling_results.get('results', {})
+            print(f"API Calls: {results.get('total_api_calls', 0)}")
+            print(f"License Checks: {len(results.get('license_checks', []))}")
+        else:
+            print(f"Qiling failed: {qiling_results.get('error', 'Unknown')}")
     
     except Exception as e:
         print(f"License analysis failed: {e}")
@@ -262,6 +273,25 @@ def example_report_generation():
         
         except Exception as e:
             print(f"Failed to generate {fmt} report: {e}")
+    
+    # Try PDF generation with proper PDFReportGenerator
+    try:
+        print("Generating comprehensive PDF report...")
+        pdf_generator = PDFReportGenerator()
+        
+        pdf_path = pdf_generator.generate_report(
+            analysis_results,
+            report_type="comprehensive",
+            output_path="sample_comprehensive_report.pdf"
+        )
+        
+        if pdf_path:
+            print(f"PDF report generated: {pdf_path}")
+        else:
+            print("PDF generation failed")
+            
+    except Exception as e:
+        print(f"PDF generation error: {e}")
     
     print()
 

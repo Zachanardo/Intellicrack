@@ -2056,6 +2056,207 @@ def run_frida_script(app_instance=None, script_path: Optional[str] = None, **kwa
         return {"status": "error", "message": error_msg}
 
 
+def run_comprehensive_analysis(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+    """
+    Run comprehensive analysis on a binary.
+    
+    This is a wrapper that calls the comprehensive analysis from additional_runners.
+    """
+    try:
+        from .additional_runners import run_comprehensive_analysis as comprehensive_analysis
+        
+        if not binary_path and app_instance:
+            binary_path = getattr(app_instance, 'binary_path', None)
+            
+        if not binary_path:
+            return {"status": "error", "message": "No binary path provided"}
+            
+        return comprehensive_analysis(binary_path)
+        
+    except Exception as e:
+        logger.error(f"Error in comprehensive analysis: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_ghidra_analysis(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+    """
+    Run basic Ghidra analysis (delegates to advanced Ghidra analysis).
+    """
+    return run_advanced_ghidra_analysis(app_instance, binary_path, **kwargs)
+
+
+def run_radare2_analysis(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+    """
+    Run Radare2 analysis on a binary.
+    """
+    try:
+        logger.info("Starting Radare2 analysis")
+        
+        if not binary_path and app_instance:
+            binary_path = getattr(app_instance, 'binary_path', None)
+            
+        if not binary_path:
+            return {"status": "error", "message": "No binary path provided"}
+            
+        # Import Radare2 if available
+        try:
+            import r2pipe
+            r2 = r2pipe.open(binary_path)
+            
+            # Get binary info
+            info = r2.cmdj("ij")
+            
+            # Get functions
+            functions = r2.cmdj("aflj")
+            
+            # Get strings
+            strings = r2.cmdj("izj")
+            
+            # Get imports
+            imports = r2.cmdj("iij")
+            
+            # Get exports
+            exports = r2.cmdj("iej")
+            
+            # Get sections
+            sections = r2.cmdj("iSj")
+            
+            r2.quit()
+            
+            return {
+                "status": "success",
+                "info": info,
+                "functions": functions,
+                "strings": strings,
+                "imports": imports,
+                "exports": exports,
+                "sections": sections
+            }
+            
+        except ImportError:
+            logger.warning("r2pipe not available, using command-line radare2")
+            
+            # Fallback to command-line
+            import subprocess
+            import json
+            
+            try:
+                # Get basic info
+                result = subprocess.run(
+                    ["r2", "-q", "-c", "ij", binary_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                
+                if result.returncode == 0:
+                    info = json.loads(result.stdout)
+                    return {
+                        "status": "success",
+                        "info": info,
+                        "message": "Basic analysis completed"
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "message": f"Radare2 failed: {result.stderr}"
+                    }
+                    
+            except FileNotFoundError:
+                return {
+                    "status": "error",
+                    "message": "Radare2 not found in PATH"
+                }
+            except subprocess.TimeoutExpired:
+                return {
+                    "status": "error",
+                    "message": "Radare2 analysis timed out"
+                }
+                
+    except Exception as e:
+        logger.error(f"Error in Radare2 analysis: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def run_frida_script(app_instance=None, binary_path: Optional[str] = None, 
+                    script_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+    """
+    Run a Frida script on a binary or process.
+    """
+    try:
+        logger.info("Running Frida script")
+        
+        if not script_path:
+            script_path = kwargs.get('script', None)
+            
+        if not script_path:
+            return {"status": "error", "message": "No script path provided"}
+            
+        # Read the script
+        with open(script_path, 'r') as f:
+            script_content = f.read()
+            
+        # Import Frida
+        try:
+            import frida
+            
+            # Get target
+            target = kwargs.get('target', binary_path)
+            spawn = kwargs.get('spawn', True)
+            
+            if spawn and binary_path:
+                # Spawn process
+                pid = frida.spawn(binary_path)
+                session = frida.attach(pid)
+                frida.resume(pid)
+            else:
+                # Attach to existing process
+                if isinstance(target, str):
+                    session = frida.attach(target)
+                else:
+                    session = frida.attach(int(target))
+                    
+            # Create script
+            script = session.create_script(script_content)
+            
+            # Set up message handler
+            messages = []
+            def on_message(message, data):
+                messages.append({"message": message, "data": data})
+                if message['type'] == 'send':
+                    logger.info(f"Frida: {message['payload']}")
+                elif message['type'] == 'error':
+                    logger.error(f"Frida error: {message}")
+                    
+            script.on('message', on_message)
+            
+            # Load script
+            script.load()
+            
+            # Run for a bit
+            import time
+            time.sleep(5)
+            
+            # Clean up
+            session.detach()
+            
+            return {
+                "status": "success",
+                "messages": messages,
+                "script": script_path
+            }
+            
+        except ImportError:
+            return {
+                "status": "error",
+                "message": "Frida not available"
+            }
+            
+    except Exception as e:
+        logger.error(f"Error running Frida script: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 __all__ = [
     'run_network_license_server',
     'run_ssl_tls_interceptor',
@@ -2086,5 +2287,8 @@ __all__ = [
     'run_deep_license_analysis',
     'run_frida_analysis',
     'run_dynamic_instrumentation',
-    'run_frida_script'
+    'run_frida_script',
+    'run_comprehensive_analysis',
+    'run_ghidra_analysis',
+    'run_radare2_analysis'
 ]

@@ -137,6 +137,16 @@ DEFAULT_CONFIG = {
         "enable_ai_suggestions": True,
         "cache_responses": True
     },
+    
+    # ML Model Settings
+    "ml": {
+        "vulnerability_model_path": os.path.join(os.path.dirname(__file__), "..", "..", "models", "ml_vulnerability_model.joblib"),
+        "similarity_model_path": None,
+        "enable_ml_features": True,
+        "model_cache_size": 100,  # MB
+        "prediction_threshold": 0.7,
+        "auto_load_models": True
+    },
 
     # Model repository settings
     "model_repositories": {

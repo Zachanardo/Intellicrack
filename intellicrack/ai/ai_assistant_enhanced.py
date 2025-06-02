@@ -1,0 +1,519 @@
+"""
+Enhanced AI Assistant for Intellicrack.
+
+This module provides an enhanced AI assistant that functions similar to Claude Code,
+with proper tool integration and workflow management.
+"""
+
+import json
+import logging
+import os
+import sys
+import traceback
+from typing import Dict, Any, List, Optional, Callable
+from dataclasses import dataclass
+from enum import Enum
+
+logger = logging.getLogger(__name__)
+
+
+class ToolCategory(Enum):
+    """Categories of tools available to the AI."""
+    ANALYSIS = "analysis"
+    PATCHING = "patching"
+    NETWORK = "network"
+    BYPASS = "bypass"
+    UTILITY = "utility"
+    EXTERNAL = "external"
+
+
+@dataclass
+class Tool:
+    """Represents a tool available to the AI."""
+    name: str
+    description: str
+    category: ToolCategory
+    parameters: Dict[str, Any]
+    risk_level: str  # low, medium, high
+    function: Callable
+    example: Optional[str] = None
+
+
+class IntellicrackAIAssistant:
+    """Enhanced AI Assistant with Claude Code-like functionality."""
+    
+    def __init__(self, cli_interface=None):
+        self.cli_interface = cli_interface
+        self.tools = self._initialize_tools()
+        self.context = {
+            "current_binary": None,
+            "analysis_results": {},
+            "suggested_patches": [],
+            "workflow_state": "idle"
+        }
+        self.conversation_history = []
+        
+    def _initialize_tools(self) -> Dict[str, Tool]:
+        """Initialize all available tools."""
+        tools = {}
+        
+        # Analysis Tools
+        tools["analyze_binary"] = Tool(
+            name="analyze_binary",
+            description="Perform comprehensive analysis on a binary file",
+            category=ToolCategory.ANALYSIS,
+            parameters={
+                "binary_path": {"type": "string", "required": True},
+                "analyses": {"type": "array", "default": ["comprehensive"]}
+            },
+            risk_level="low",
+            function=self._analyze_binary,
+            example="analyze_binary('app.exe', ['comprehensive', 'protections'])"
+        )
+        
+        tools["detect_protections"] = Tool(
+            name="detect_protections",
+            description="Detect all protection mechanisms in a binary",
+            category=ToolCategory.ANALYSIS,
+            parameters={
+                "binary_path": {"type": "string", "required": True}
+            },
+            risk_level="low",
+            function=self._detect_protections,
+            example="detect_protections('app.exe')"
+        )
+        
+        tools["find_license_checks"] = Tool(
+            name="find_license_checks",
+            description="Find license validation routines in the binary",
+            category=ToolCategory.ANALYSIS,
+            parameters={
+                "binary_path": {"type": "string", "required": True}
+            },
+            risk_level="low",
+            function=self._find_license_checks,
+            example="find_license_checks('app.exe')"
+        )
+        
+        # Patching Tools
+        tools["suggest_patches"] = Tool(
+            name="suggest_patches",
+            description="Generate patch suggestions based on analysis",
+            category=ToolCategory.PATCHING,
+            parameters={
+                "binary_path": {"type": "string", "required": True},
+                "target": {"type": "string", "default": "auto"}
+            },
+            risk_level="medium",
+            function=self._suggest_patches,
+            example="suggest_patches('app.exe', 'license')"
+        )
+        
+        tools["apply_patch"] = Tool(
+            name="apply_patch",
+            description="Apply a patch to modify the binary",
+            category=ToolCategory.PATCHING,
+            parameters={
+                "binary_path": {"type": "string", "required": True},
+                "patch_definition": {"type": "object", "required": True}
+            },
+            risk_level="high",
+            function=self._apply_patch,
+            example="apply_patch('app.exe', {'address': '0x401000', 'bytes': '9090'})"
+        )
+        
+        # Network Tools
+        tools["analyze_network"] = Tool(
+            name="analyze_network",
+            description="Analyze network communications and protocols",
+            category=ToolCategory.NETWORK,
+            parameters={
+                "binary_path": {"type": "string", "required": True}
+            },
+            risk_level="low",
+            function=self._analyze_network,
+            example="analyze_network('app.exe')"
+        )
+        
+        # Bypass Tools
+        tools["generate_bypass"] = Tool(
+            name="generate_bypass",
+            description="Generate bypass for specific protection mechanism",
+            category=ToolCategory.BYPASS,
+            parameters={
+                "binary_path": {"type": "string", "required": True},
+                "protection_type": {"type": "string", "required": True}
+            },
+            risk_level="high",
+            function=self._generate_bypass,
+            example="generate_bypass('app.exe', 'tpm')"
+        )
+        
+        # Utility Tools
+        tools["view_hex"] = Tool(
+            name="view_hex",
+            description="View hex dump of specific address range",
+            category=ToolCategory.UTILITY,
+            parameters={
+                "binary_path": {"type": "string", "required": True},
+                "address": {"type": "string", "required": True},
+                "size": {"type": "integer", "default": 64}
+            },
+            risk_level="low",
+            function=self._view_hex,
+            example="view_hex('app.exe', '0x401000', 128)"
+        )
+        
+        tools["disassemble"] = Tool(
+            name="disassemble",
+            description="Disassemble code at specific address",
+            category=ToolCategory.UTILITY,
+            parameters={
+                "binary_path": {"type": "string", "required": True},
+                "address": {"type": "string", "required": True},
+                "count": {"type": "integer", "default": 20}
+            },
+            risk_level="low",
+            function=self._disassemble,
+            example="disassemble('app.exe', '0x401000', 30)"
+        )
+        
+        return tools
+    
+    def get_system_prompt(self) -> str:
+        """Get the system prompt for the AI model."""
+        tools_description = self._format_tools_description()
+        
+        return f"""You are an AI assistant integrated with Intellicrack, a comprehensive binary analysis and patching tool.
+
+## Your Capabilities
+
+You have access to powerful tools for analyzing and modifying binary programs:
+
+{tools_description}
+
+## Workflow Guidelines
+
+1. **Always Start with Analysis**: Before suggesting any modifications, thoroughly analyze the binary
+2. **Explain Your Reasoning**: Clearly explain what you're doing and why
+3. **Progressive Approach**: Start simple, then move to more complex operations
+4. **Safety First**: High-risk operations require user confirmation
+5. **Educational Focus**: Help users understand the process, not just the results
+
+## Example Workflows
+
+### License Bypass Workflow:
+1. analyze_binary() - Understand the target
+2. find_license_checks() - Locate validation routines
+3. suggest_patches() - Generate bypass strategies
+4. apply_patch() - Apply with user confirmation
+
+### Protection Analysis Workflow:
+1. detect_protections() - Identify all protections
+2. analyze specific mechanisms in detail
+3. generate_bypass() for each protection
+4. Test and verify results
+
+## Important Notes
+
+- You cannot directly execute code or access files without using the provided tools
+- All file modifications require explicit user confirmation
+- Focus on educational and research purposes
+- Provide detailed explanations of protection mechanisms
+- Suggest multiple approaches when possible
+
+Remember: Your goal is to help users understand binary protection mechanisms and how they work, not just to crack software."""
+    
+    def _format_tools_description(self) -> str:
+        """Format tools description for the prompt."""
+        categories = {}
+        for tool in self.tools.values():
+            if tool.category not in categories:
+                categories[tool.category] = []
+            categories[tool.category].append(tool)
+        
+        description = ""
+        for category, tools in categories.items():
+            description += f"\n### {category.value.title()} Tools\n\n"
+            for tool in tools:
+                description += f"**{tool.name}** - {tool.description}\n"
+                if tool.example:
+                    description += f"   Example: `{tool.example}`\n"
+                description += "\n"
+        
+        return description
+    
+    def process_message(self, message: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Process a message from the user."""
+        # Update context if provided
+        if context:
+            self.context.update(context)
+        
+        # Add to conversation history
+        self.conversation_history.append({"role": "user", "content": message})
+        
+        # Analyze the message to determine intent
+        intent = self._analyze_intent(message)
+        
+        # Generate response based on intent
+        response = self._generate_response(intent, message)
+        
+        # Add to conversation history
+        self.conversation_history.append({"role": "assistant", "content": response["message"]})
+        
+        return response
+    
+    def _analyze_intent(self, message: str) -> Dict[str, Any]:
+        """Analyze user intent from the message."""
+        message_lower = message.lower()
+        
+        # Check for specific intents
+        if any(word in message_lower for word in ["analyze", "scan", "check", "examine"]):
+            return {"type": "analysis", "focus": self._extract_focus(message)}
+        elif any(word in message_lower for word in ["patch", "bypass", "crack", "remove"]):
+            return {"type": "patching", "target": self._extract_target(message)}
+        elif any(word in message_lower for word in ["help", "explain", "what", "how"]):
+            return {"type": "explanation", "topic": self._extract_topic(message)}
+        elif any(word in message_lower for word in ["network", "protocol", "communication"]):
+            return {"type": "network", "aspect": self._extract_aspect(message)}
+        else:
+            return {"type": "general", "content": message}
+    
+    def _extract_focus(self, message: str) -> str:
+        """Extract analysis focus from message."""
+        if "license" in message.lower():
+            return "license"
+        elif "protection" in message.lower():
+            return "protection"
+        elif "vulnerability" in message.lower():
+            return "vulnerability"
+        else:
+            return "comprehensive"
+    
+    def _extract_target(self, message: str) -> str:
+        """Extract patching target from message."""
+        if "license" in message.lower():
+            return "license"
+        elif "trial" in message.lower():
+            return "trial"
+        elif "protection" in message.lower():
+            return "protection"
+        else:
+            return "auto"
+    
+    def _extract_topic(self, message: str) -> str:
+        """Extract help topic from message."""
+        # Simple extraction logic
+        return "general"
+    
+    def _extract_aspect(self, message: str) -> str:
+        """Extract network aspect from message."""
+        return "protocol"
+    
+    def _generate_response(self, intent: Dict[str, Any], message: str) -> Dict[str, Any]:
+        """Generate response based on intent."""
+        response = {
+            "message": "",
+            "tools_used": [],
+            "suggestions": [],
+            "requires_confirmation": False
+        }
+        
+        if intent["type"] == "analysis":
+            response["message"] = self._handle_analysis_intent(intent)
+        elif intent["type"] == "patching":
+            response["message"] = self._handle_patching_intent(intent)
+        elif intent["type"] == "explanation":
+            response["message"] = self._handle_explanation_intent(intent)
+        elif intent["type"] == "network":
+            response["message"] = self._handle_network_intent(intent)
+        else:
+            response["message"] = self._handle_general_intent(message)
+        
+        return response
+    
+    def _handle_analysis_intent(self, intent: Dict[str, Any]) -> str:
+        """Handle analysis intent."""
+        if not self.context.get("current_binary"):
+            return "Please specify a binary file to analyze. You can say something like 'analyze app.exe' or provide the full path."
+        
+        focus = intent.get("focus", "comprehensive")
+        binary = self.context["current_binary"]
+        
+        # Suggest appropriate analysis
+        if focus == "license":
+            return f"I'll analyze {binary} for license checks. Let me start by finding license validation routines.\n\nWould you like me to:\n1. Run comprehensive analysis first\n2. Directly search for license checks\n3. Check for specific protection mechanisms"
+        elif focus == "protection":
+            return f"I'll detect all protection mechanisms in {binary}. This includes:\n- Packing and obfuscation\n- Anti-debugging techniques\n- License/trial checks\n- Hardware locks\n\nShall I proceed with the protection scan?"
+        else:
+            return f"I'll perform a comprehensive analysis of {binary}. This will include:\n- Binary structure and format\n- Protection mechanisms\n- Potential vulnerabilities\n- License/trial logic\n\nThis may take a few minutes. Shall I proceed?"
+    
+    def _handle_patching_intent(self, intent: Dict[str, Any]) -> str:
+        """Handle patching intent."""
+        target = intent.get("target", "auto")
+        
+        if not self.context.get("analysis_results"):
+            return "I need to analyze the binary first before suggesting patches. Would you like me to run a comprehensive analysis?"
+        
+        return f"Based on my analysis, I can suggest patches for {target} mechanisms. However, I need your confirmation before applying any modifications.\n\nWould you like me to:\n1. Show suggested patches\n2. Explain how the patches work\n3. Create a backup before patching"
+    
+    def _handle_explanation_intent(self, intent: Dict[str, Any]) -> str:
+        """Handle explanation intent."""
+        return """I can help you understand:
+
+1. **Binary Protection Mechanisms**: How software protections work
+2. **License Validation**: Common licensing schemes and checks
+3. **Patching Techniques**: How binary patches bypass protections
+4. **Analysis Methods**: Static vs dynamic analysis approaches
+
+What would you like to learn about?"""
+    
+    def _handle_network_intent(self, intent: Dict[str, Any]) -> str:
+        """Handle network intent."""
+        return "I can analyze network communications, including:\n- Protocol identification\n- License server communication\n- SSL/TLS traffic\n\nWould you like me to start network analysis?"
+    
+    def _handle_general_intent(self, message: str) -> str:
+        """Handle general intent."""
+        return f"I understand you want help with: {message}\n\nI can:\n- Analyze binaries\n- Detect protections\n- Suggest patches\n- Explain concepts\n\nWhat would you like to do first?"
+    
+    # Tool implementation methods
+    def _analyze_binary(self, binary_path: str, analyses: List[str] = None) -> Dict[str, Any]:
+        """Analyze a binary file."""
+        if self.cli_interface:
+            return self.cli_interface.analyze_binary(binary_path, analyses)
+        else:
+            return {"status": "error", "message": "CLI interface not available"}
+    
+    def _detect_protections(self, binary_path: str) -> Dict[str, Any]:
+        """Detect protection mechanisms."""
+        if self.cli_interface:
+            return self.cli_interface.execute_command(
+                [binary_path, "--detect-protections", "--format", "json"],
+                "Detecting all protection mechanisms",
+                "Scanning for packing, anti-debug, licensing, and other protections"
+            )
+        return {"status": "error", "message": "CLI interface not available"}
+    
+    def _find_license_checks(self, binary_path: str) -> Dict[str, Any]:
+        """Find license validation routines."""
+        if self.cli_interface:
+            return self.cli_interface.execute_command(
+                [binary_path, "--license-analysis", "--format", "json"],
+                "Finding license validation routines",
+                "Searching for license checks, key validation, and activation logic"
+            )
+        return {"status": "error", "message": "CLI interface not available"}
+    
+    def _suggest_patches(self, binary_path: str, target: str = "auto") -> Dict[str, Any]:
+        """Suggest patches for the binary."""
+        if self.cli_interface:
+            return self.cli_interface.suggest_patches(binary_path)
+        return {"status": "error", "message": "CLI interface not available"}
+    
+    def _apply_patch(self, binary_path: str, patch_definition: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply a patch to the binary."""
+        if self.cli_interface:
+            # Save patch definition to temporary file
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                json.dump(patch_definition, f)
+                patch_file = f.name
+            
+            result = self.cli_interface.apply_patch(binary_path, patch_file)
+            
+            # Clean up
+            os.unlink(patch_file)
+            return result
+        return {"status": "error", "message": "CLI interface not available"}
+    
+    def _analyze_network(self, binary_path: str) -> Dict[str, Any]:
+        """Analyze network communications."""
+        if self.cli_interface:
+            return self.cli_interface.execute_command(
+                [binary_path, "--protocol-fingerprint", "--format", "json"],
+                "Analyzing network protocols",
+                "Identifying network communication patterns and protocols"
+            )
+        return {"status": "error", "message": "CLI interface not available"}
+    
+    def _generate_bypass(self, binary_path: str, protection_type: str) -> Dict[str, Any]:
+        """Generate bypass for protection mechanism."""
+        bypass_flags = {
+            "tpm": "--bypass-tpm",
+            "vm": "--bypass-vm-detection",
+            "dongle": "--emulate-dongle",
+            "hwid": "--hwid-spoof",
+            "time": "--time-bomb-defuser",
+            "telemetry": "--telemetry-blocker"
+        }
+        
+        flag = bypass_flags.get(protection_type.lower())
+        if not flag:
+            return {"status": "error", "message": f"Unknown protection type: {protection_type}"}
+        
+        if self.cli_interface:
+            return self.cli_interface.execute_command(
+                [binary_path, flag, "--format", "json"],
+                f"Generating {protection_type} bypass",
+                f"Creating bypass strategy for {protection_type} protection"
+            )
+        return {"status": "error", "message": "CLI interface not available"}
+    
+    def _view_hex(self, binary_path: str, address: str, size: int = 64) -> Dict[str, Any]:
+        """View hex dump at specific address."""
+        # This would integrate with the hex viewer
+        return {
+            "status": "info",
+            "message": f"Hex view at {address} for {size} bytes would be displayed here"
+        }
+    
+    def _disassemble(self, binary_path: str, address: str, count: int = 20) -> Dict[str, Any]:
+        """Disassemble code at address."""
+        # This would integrate with disassembly tools
+        return {
+            "status": "info",
+            "message": f"Disassembly at {address} for {count} instructions would be displayed here"
+        }
+
+
+def create_ai_assistant_widget():
+    """Create the AI assistant widget for the UI."""
+    from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QPushButton, QHBoxLayout
+    
+    widget = QWidget()
+    layout = QVBoxLayout(widget)
+    
+    # Chat display
+    chat_display = QTextEdit()
+    chat_display.setReadOnly(True)
+    layout.addWidget(chat_display)
+    
+    # Input area
+    input_area = QTextEdit()
+    input_area.setMaximumHeight(100)
+    layout.addWidget(input_area)
+    
+    # Buttons
+    button_layout = QHBoxLayout()
+    send_btn = QPushButton("Send")
+    clear_btn = QPushButton("Clear")
+    button_layout.addWidget(send_btn)
+    button_layout.addWidget(clear_btn)
+    layout.addLayout(button_layout)
+    
+    # Create assistant
+    assistant = IntellicrackAIAssistant()
+    
+    # Connect signals
+    def send_message():
+        message = input_area.toPlainText()
+        if message:
+            chat_display.append(f"User: {message}")
+            response = assistant.process_message(message)
+            chat_display.append(f"Assistant: {response['message']}")
+            input_area.clear()
+    
+    send_btn.clicked.connect(send_message)
+    clear_btn.clicked.connect(chat_display.clear)
+    
+    return widget
