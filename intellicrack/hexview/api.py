@@ -5,23 +5,19 @@ This module provides a convenient API for using the hex viewer functionality
 from the main Intellicrack application or from other modules.
 """
 
-import os
 import logging
-from typing import Dict, Any, Optional, Union, Tuple, List, BinaryIO
+import os
+from typing import Any, Dict, List, Optional
 
-from PyQt5.QtWidgets import QDialog, QApplication
+from PyQt5.QtWidgets import QApplication, QDialog
 
+from .ai_bridge import AIBinaryBridge, BinaryContextBuilder
+from .file_handler import VirtualFileAccess
 from .hex_dialog import HexViewerDialog
 from .hex_widget import HexViewerWidget
-from .file_handler import VirtualFileAccess, ChunkManager
 from .integration import (
-    show_enhanced_hex_viewer,
     integrate_enhanced_hex_viewer,
-    register_hex_viewer_ai_tools
-)
-from .ai_bridge import (
-    AIBinaryBridge,
-    BinaryContextBuilder
+    register_hex_viewer_ai_tools,
 )
 
 logger = logging.getLogger('Intellicrack.HexView')
@@ -44,7 +40,7 @@ def open_hex_file(file_path: str, read_only: bool = True) -> Optional[VirtualFil
         if not os.path.exists(file_path):
             logger.error(f"File not found: {file_path}")
             return None
-            
+
         file_handler = VirtualFileAccess(file_path, read_only)
         logger.info(f"Opened file {file_path} for hex viewing/editing")
         return file_handler
@@ -69,7 +65,7 @@ def read_hex_region(file_path: str, offset: int, size: int) -> Optional[bytes]:
         file_handler = open_hex_file(file_path, True)
         if not file_handler:
             return None
-            
+
         data = file_handler.read(offset, size)
         return data
     except Exception as e:
@@ -93,11 +89,11 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
         file_handler = open_hex_file(file_path, False)
         if not file_handler:
             return False
-            
+
         result = file_handler.write(offset, data)
         if result:
             file_handler.apply_edits()
-            
+
         return result
     except Exception as e:
         logger.error(f"Error writing hex region: {e}")
@@ -106,7 +102,7 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
 
 # Analysis operations
 
-def analyze_binary_data(data: bytes, query: Optional[str] = None, 
+def analyze_binary_data(data: bytes, query: Optional[str] = None,
                       model_manager=None) -> Dict[str, Any]:
     """
     Analyze binary data using AI assistance.
@@ -128,7 +124,7 @@ def analyze_binary_data(data: bytes, query: Optional[str] = None,
         return {"error": str(e)}
 
 
-def search_binary_pattern(data: bytes, pattern_desc: str, 
+def search_binary_pattern(data: bytes, pattern_desc: str,
                         model_manager=None) -> List[Dict[str, Any]]:
     """
     Search for a pattern in binary data using AI assistance.
@@ -150,7 +146,7 @@ def search_binary_pattern(data: bytes, pattern_desc: str,
         return []
 
 
-def suggest_binary_edits(data: bytes, edit_intent: str, 
+def suggest_binary_edits(data: bytes, edit_intent: str,
                        model_manager=None) -> Dict[str, Any]:
     """
     Suggest edits to binary data using AI assistance.
@@ -187,7 +183,7 @@ def create_hex_viewer_widget(parent=None) -> HexViewerWidget:
     return HexViewerWidget(parent)
 
 
-def create_hex_viewer_dialog(parent=None, file_path: Optional[str] = None, 
+def create_hex_viewer_dialog(parent=None, file_path: Optional[str] = None,
                            read_only: bool = True) -> HexViewerDialog:
     """
     Create a new hex viewer dialog.
@@ -248,17 +244,14 @@ def add_hex_viewer_to_application(app_instance) -> bool:
         True if the hex viewer was added successfully, False otherwise
     """
     try:
-        from .integration import (
-            add_hex_viewer_menu,
-            add_hex_viewer_toolbar_button
-        )
-        
+        from .integration import add_hex_viewer_menu, add_hex_viewer_toolbar_button
+
         # Add to menu
         add_hex_viewer_menu(app_instance)
-        
+
         # Add to toolbar
         add_hex_viewer_toolbar_button(app_instance)
-        
+
         logger.info("Enhanced hex viewer added to application")
         return True
     except Exception as e:
@@ -299,16 +292,16 @@ def bytes_to_hex_string(data: bytes, bytes_per_line: int = 16) -> str:
     """
     if not data:
         return ""
-        
+
     result = []
-    
+
     for i in range(0, len(data), bytes_per_line):
         line = data[i:i + bytes_per_line]
         hex_part = " ".join(f"{b:02X}" for b in line)
         ascii_part = "".join(chr(b) if 32 <= b <= 126 else "." for b in line)
-        
+
         result.append(f"{i:08X}: {hex_part.ljust(bytes_per_line * 3 - 1)} | {ascii_part}")
-        
+
     return "\n".join(result)
 
 
@@ -324,34 +317,34 @@ def hex_string_to_bytes(hex_string: str) -> bytes:
     """
     # Remove formatting, spaces, line numbers, and ASCII parts
     cleaned = ""
-    
+
     for line in hex_string.splitlines():
         # Skip empty lines
         if not line.strip():
             continue
-            
+
         # Check if the line has offset and ASCII parts
         parts = line.split("|")
         hex_part = parts[0]
-        
+
         # Remove line number/offset if present
         if ":" in hex_part:
             hex_part = hex_part.split(":", 1)[1]
-            
+
         # Add to cleaned string
         cleaned += hex_part.strip() + " "
-        
+
     # Convert to bytes
     hex_values = cleaned.split()
     result = bytearray()
-    
+
     for hex_val in hex_values:
         try:
             result.append(int(hex_val, 16))
         except ValueError:
             # Skip invalid hex values
             pass
-            
+
     return bytes(result)
 
 
@@ -378,7 +371,7 @@ def create_binary_context(data: bytes) -> Dict[str, Any]:
 # Main entry point for running as a script
 if __name__ == "__main__":
     import sys
-    
+
     if len(sys.argv) > 1:
         file_path = sys.argv[1]
         read_only = len(sys.argv) <= 2 or sys.argv[2].lower() != "edit"

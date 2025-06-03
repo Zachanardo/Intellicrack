@@ -22,48 +22,52 @@ Usage:
 """
 
 # Core components
-from .file_handler import VirtualFileAccess, ChunkManager
-from .hex_widget import HexViewerWidget
-from .hex_renderer import HexViewRenderer, ViewMode, parse_hex_view
-from .hex_highlighter import HexHighlighter, HighlightType
-from .hex_dialog import HexViewerDialog
 from .ai_bridge import AIBinaryBridge, BinaryContextBuilder
-
-# Integration functions
-from .integration import (
-    show_enhanced_hex_viewer,
-    integrate_enhanced_hex_viewer, 
-    initialize_hex_viewer,
-    restore_standard_hex_viewer,
-    register_hex_viewer_ai_tools
-)
 
 # API functions
 from .api import (
+    add_hex_viewer_to_application,
+    # Analysis operations
+    analyze_binary_data,
+    # Utility operations
+    bytes_to_hex_string,
+    create_binary_context,
+    create_hex_viewer_dialog,
+    # UI operations
+    create_hex_viewer_widget,
+    hex_string_to_bytes,
+    # Integration operations
+    integrate_with_intellicrack,
+    launch_hex_viewer,
     # File operations
     open_hex_file,
     read_hex_region,
-    write_hex_region,
-    
-    # Analysis operations
-    analyze_binary_data,
+    register_ai_tools,
     search_binary_pattern,
     suggest_binary_edits,
-    
-    # UI operations
-    create_hex_viewer_widget,
-    create_hex_viewer_dialog,
-    launch_hex_viewer,
-    
-    # Integration operations
-    integrate_with_intellicrack,
-    add_hex_viewer_to_application,
-    register_ai_tools,
-    
-    # Utility operations
-    bytes_to_hex_string,
-    hex_string_to_bytes,
-    create_binary_context
+    write_hex_region,
+)
+from .file_handler import ChunkManager, VirtualFileAccess
+from .hex_dialog import HexViewerDialog
+from .hex_highlighter import HexHighlighter, HighlightType
+from .hex_renderer import HexViewRenderer, ViewMode, parse_hex_view
+from .hex_widget import HexViewerWidget
+
+# Large file optimization components
+try:
+    from .large_file_handler import LargeFileHandler, MemoryConfig, MemoryStrategy
+    from .performance_monitor import PerformanceMonitor, PerformanceWidget
+    LARGE_FILE_SUPPORT = True
+except ImportError:
+    LARGE_FILE_SUPPORT = False
+
+# Integration functions
+from .integration import (
+    initialize_hex_viewer,
+    integrate_enhanced_hex_viewer,
+    register_hex_viewer_ai_tools,
+    restore_standard_hex_viewer,
+    show_enhanced_hex_viewer,
 )
 
 # Convenience aliases

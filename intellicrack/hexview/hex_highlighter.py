@@ -7,8 +7,8 @@ bookmarks, and AI-identified patterns.
 """
 
 import logging
-from typing import List, Dict, Tuple, Optional, Union, Any
 from enum import Enum, auto
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger('Intellicrack.HexView')
 
@@ -31,9 +31,9 @@ class HexHighlight:
     This class stores information about a highlighted region including
     its position, appearance, and metadata.
     """
-    
+
     def __init__(self, start: int, end: int, highlight_type: HighlightType = HighlightType.CUSTOM,
-                 color: str = "#FFFF00", alpha: float = 0.3, description: str = "", 
+                 color: str = "#FFFF00", alpha: float = 0.3, description: str = "",
                  metadata: Optional[Dict[str, Any]] = None):
         """
         Initialize a hex highlight.
@@ -55,14 +55,14 @@ class HexHighlight:
         self.description = description
         self.metadata = metadata or {}
         self.id = id(self)  # Unique identifier for the highlight
-        
+
         logger.debug(f"Created highlight: {self.start}-{self.end}, type: {self.highlight_type.name}")
-    
+
     @property
     def size(self) -> int:
         """Get the size of the highlighted region."""
         return max(0, self.end - self.start)
-    
+
     def overlaps(self, start: int, end: int) -> bool:
         """
         Check if this highlight overlaps with the specified region.
@@ -75,7 +75,7 @@ class HexHighlight:
             True if there is an overlap, False otherwise
         """
         return max(self.start, start) < min(self.end, end)
-    
+
     def contains(self, offset: int) -> bool:
         """
         Check if this highlight contains the specified offset.
@@ -87,7 +87,7 @@ class HexHighlight:
             True if the offset is within the highlight, False otherwise
         """
         return self.start <= offset < self.end
-    
+
     def get_rgba(self) -> Tuple[int, int, int, int]:
         """
         Get the RGBA values for this highlight.
@@ -99,12 +99,12 @@ class HexHighlight:
         color = self.color.lstrip('#')
         if len(color) == 3:
             color = ''.join(c+c for c in color)
-        
+
         r, g, b = tuple(int(color[i:i+2], 16) for i in (0, 2, 4))
         a = int(self.alpha * 255)
-        
+
         return (r, g, b, a)
-    
+
     def __repr__(self) -> str:
         """Get a string representation of the highlight."""
         return (f"HexHighlight(start={self.start}, end={self.end}, "
@@ -118,12 +118,12 @@ class HexHighlighter:
     This class provides functionality for adding, removing, and querying
     highlights in binary data.
     """
-    
+
     def __init__(self):
         """Initialize the hex highlighter."""
         self.highlights = []  # List of HexHighlight objects
         self.current_id = 0   # For generating unique IDs
-    
+
     def add_highlight(self, start: int, end: int, highlight_type: HighlightType = HighlightType.CUSTOM,
                      color: str = "#FFFF00", alpha: float = 0.3, description: str = "",
                      metadata: Optional[Dict[str, Any]] = None) -> int:
@@ -145,14 +145,14 @@ class HexHighlighter:
         # Ensure start <= end
         if start > end:
             start, end = end, start
-        
+
         # Create and add the highlight
         highlight = HexHighlight(start, end, highlight_type, color, alpha, description, metadata)
         self.highlights.append(highlight)
-        
+
         logger.debug(f"Added highlight ID {highlight.id}: {start}-{end}, type: {highlight_type.name}")
         return highlight.id
-    
+
     def remove_highlight(self, highlight_id: int) -> bool:
         """
         Remove a highlight by ID.
@@ -168,10 +168,10 @@ class HexHighlighter:
                 self.highlights.pop(i)
                 logger.debug(f"Removed highlight ID {highlight_id}")
                 return True
-        
+
         logger.debug(f"Highlight ID {highlight_id} not found")
         return False
-    
+
     def clear_highlights(self, highlight_type: Optional[HighlightType] = None) -> int:
         """
         Clear highlights, optionally of a specific type.
@@ -187,15 +187,15 @@ class HexHighlighter:
             self.highlights.clear()
             logger.debug(f"Cleared all {count} highlights")
             return count
-        
+
         # Clear highlights of the specified type
         original_count = len(self.highlights)
         self.highlights = [h for h in self.highlights if h.highlight_type != highlight_type]
         count = original_count - len(self.highlights)
-        
+
         logger.debug(f"Cleared {count} highlights of type {highlight_type.name}")
         return count
-    
+
     def get_highlights_for_region(self, start: int, end: int) -> List[HexHighlight]:
         """
         Get highlights that overlap with the specified region.
@@ -208,7 +208,7 @@ class HexHighlighter:
             List of highlights that overlap with the region
         """
         return [h for h in self.highlights if h.overlaps(start, end)]
-    
+
     def get_highlights_at_offset(self, offset: int) -> List[HexHighlight]:
         """
         Get highlights that contain the specified offset.
@@ -220,7 +220,7 @@ class HexHighlighter:
             List of highlights that contain the offset
         """
         return [h for h in self.highlights if h.contains(offset)]
-    
+
     def get_highlight_by_id(self, highlight_id: int) -> Optional[HexHighlight]:
         """
         Get a highlight by ID.
@@ -235,7 +235,7 @@ class HexHighlighter:
             if h.id == highlight_id:
                 return h
         return None
-    
+
     def get_highlight_count(self, highlight_type: Optional[HighlightType] = None) -> int:
         """
         Get the number of highlights, optionally of a specific type.
@@ -248,9 +248,9 @@ class HexHighlighter:
         """
         if highlight_type is None:
             return len(self.highlights)
-        
+
         return sum(1 for h in self.highlights if h.highlight_type == highlight_type)
-    
+
     def update_highlight(self, highlight_id: int, **kwargs) -> bool:
         """
         Update an existing highlight's properties.
@@ -266,16 +266,16 @@ class HexHighlighter:
         if not highlight:
             logger.debug(f"Highlight ID {highlight_id} not found for update")
             return False
-        
+
         # Update the highlight properties
         for key, value in kwargs.items():
             if hasattr(highlight, key):
                 setattr(highlight, key, value)
-        
+
         logger.debug(f"Updated highlight ID {highlight_id} with {kwargs}")
         return True
-    
-    def add_bookmark(self, offset: int, size: int = 1, description: str = "", 
+
+    def add_bookmark(self, offset: int, size: int = 1, description: str = "",
                     color: str = "#0000FF") -> int:
         """
         Add a bookmark highlight.
@@ -297,8 +297,8 @@ class HexHighlighter:
             description=description,
             metadata={"bookmark": True}
         )
-    
-    def add_search_result(self, start: int, end: int, query: str = "", 
+
+    def add_search_result(self, start: int, end: int, query: str = "",
                          color: str = "#00FF00") -> int:
         """
         Add a search result highlight.
@@ -320,7 +320,7 @@ class HexHighlighter:
             description=f"Search result: {query}" if query else "Search result",
             metadata={"query": query}
         )
-    
+
     def add_modification_highlight(self, start: int, end: int) -> int:
         """
         Add a modification highlight.
@@ -340,8 +340,8 @@ class HexHighlighter:
             description="Modified data",
             metadata={"modified": True}
         )
-    
-    def add_ai_pattern_highlight(self, start: int, end: int, pattern_type: str, 
+
+    def add_ai_pattern_highlight(self, start: int, end: int, pattern_type: str,
                                confidence: float = 1.0, description: str = "") -> int:
         """
         Add an AI-identified pattern highlight.
@@ -363,7 +363,7 @@ class HexHighlighter:
             color = "#FF8800"  # Medium confidence
         else:
             color = "#FFCC00"  # Low confidence
-        
+
         return self.add_highlight(
             start=start,
             end=end,
