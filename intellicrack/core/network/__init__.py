@@ -43,7 +43,7 @@ except ImportError:
 
 __all__ = [
     'TrafficAnalyzer',
-    'SSLInterceptor', 
+    'SSLInterceptor',
     'ProtocolFingerprinter',
     'LicenseServerEmulator',
     'CloudLicenseHooker'

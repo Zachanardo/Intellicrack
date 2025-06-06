@@ -5,8 +5,8 @@ This module provides the main application entry point for the refactored
 Intellicrack binary analysis framework.
 """
 
-import sys
 import os
+import sys
 
 # Set Qt to offscreen mode for WSL/headless environments if no display
 if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:
@@ -19,7 +19,7 @@ if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:
 def main() -> int:
     """
     Main entry point for the Intellicrack application.
-    
+
     Returns:
         Application exit code
     """
@@ -27,13 +27,13 @@ def main() -> int:
         # Import and launch the GUI
         from .ui.main_app import launch
         return launch()
-        
+
     except ImportError as e:
         print(f"Error: Failed to import Intellicrack components: {e}")
         print("\nPlease ensure all dependencies are installed:")
         print("  pip install -r requirements.txt")
         return 1
-        
+
     except Exception as e:
         print(f"Error launching Intellicrack: {e}")
         import traceback

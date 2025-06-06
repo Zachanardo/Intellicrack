@@ -16,7 +16,7 @@ Key Features:
 Usage:
     from intellicrack import IntellicrackApp
     from intellicrack.config import CONFIG
-    
+
     # Initialize and run the application
     app = IntellicrackApp()
     app.run()
@@ -26,12 +26,14 @@ __version__ = "1.0.0"
 __author__ = "Intellicrack Team"
 __license__ = "Research Use Only"
 
-# Setup logging for optional imports
+# Standard library imports first
 import logging
-logger = logging.getLogger(__name__)
 
-# Core imports
+# Local imports
 from .config import CONFIG
+
+# Setup logging after imports
+logger = logging.getLogger(__name__)
 
 # Main application
 try:
@@ -43,24 +45,31 @@ except ImportError:
     IntellicrackApp = None
 
 # Core analysis modules
-from . import core
-from . import ai
-from . import utils
+try:
+    from . import ai, core, utils
+except ImportError as e:
+    logger.warning("Core modules not available: %s", e)
+    ai = core = utils = None
+
 # UI modules (optional - requires PyQt5)
 try:
     from . import ui
 except ImportError as e:
-    logger.warning(f"UI module not available: {e}")
+    logger.warning("UI module not available: %s", e)
     ui = None
 
 # Plugin system
-from . import plugins
+try:
+    from . import plugins
+except ImportError as e:
+    logger.warning("Plugins module not available: %s", e)
+    plugins = None
 
 # Hex viewer integration (optional - requires PyQt5)
 try:
     from . import hexview
 except ImportError as e:
-    logger.warning(f"Hexview module not available: {e}")
+    logger.warning("Hexview module not available: %s", e)
     hexview = None
 
 # Version info
@@ -83,16 +92,16 @@ def run_app():
 
 __all__ = [
     'CONFIG',
-    'IntellicrackApp', 
+    'IntellicrackApp',
     'main',
     'core',
-    'ai', 
+    'ai',
     'utils',
     'ui',
     'plugins',
     'hexview',
     'get_version',
-    'create_app', 
+    'create_app',
     'run_app',
     '__version__',
     '__author__',

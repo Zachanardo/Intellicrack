@@ -8,7 +8,7 @@ and constraint solving.
 
 import logging
 import traceback
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 # Optional dependencies - graceful fallback if not available
 try:
@@ -93,7 +93,10 @@ class SymbolicExecutionEngine:
             if "buffer_overflow" in vulnerability_types:
                 simgr.use_technique(angr.exploration_techniques.Spiller())
                 simgr.use_technique(angr.exploration_techniques.LengthLimiter(max_length=self.max_paths))
-                simgr.use_technique(angr.exploration_techniques.MemoryLimiter(self.memory_limit))
+                if hasattr(angr.exploration_techniques, 'MemoryLimiter'):
+                    simgr.use_technique(angr.exploration_techniques.MemoryLimiter(self.memory_limit))
+                else:
+                    self.logger.warning("MemoryLimiter not available in this angr version")
 
             # Explore the program
             self.logger.info("Exploring program paths...")
@@ -176,7 +179,7 @@ class SymbolicExecutionEngine:
                             if max_val > 2**30:  # Large value threshold
                                 self.logger.info(f"Potential integer overflow identified due to large variable value for '{var}'")
                                 return True
-                        except:
+                        except (AttributeError, ValueError, RuntimeError):
                             pass
             return False
         except Exception as e:
@@ -209,7 +212,7 @@ class SymbolicExecutionEngine:
                                 if "arg" in var_name and "%" in state.solver.eval(var, cast_to=bytes).decode('latin-1', errors='ignore'):
                                     self.logger.info(f"Potential format string vulnerability: Symbolic format string for {function.name} controlled by '{var_name}'")
                                     return True
-                except Exception as e:
+                except Exception:
                     continue
             return False
         except Exception as e:

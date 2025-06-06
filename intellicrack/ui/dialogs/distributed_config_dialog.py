@@ -6,12 +6,19 @@ parameters for binary analysis tasks.
 """
 
 import multiprocessing
-from typing import Dict, Any, List
+from typing import Any, Dict
 
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
-    QGroupBox, QSpinBox, QComboBox, QCheckBox, QLineEdit,
-    QDialogButtonBox, QLabel
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QGroupBox,
+    QLabel,
+    QLineEdit,
+    QSpinBox,
+    QVBoxLayout,
 )
 
 __all__ = ['DistributedProcessingConfigDialog']
@@ -20,7 +27,7 @@ __all__ = ['DistributedProcessingConfigDialog']
 class DistributedProcessingConfigDialog(QDialog):
     """
     Configuration dialog for distributed processing setup.
-    
+
     Provides a user interface for configuring distributed processing parameters
     including worker count, chunk sizes, analysis options, and pattern types.
     """
@@ -174,7 +181,7 @@ class DistributedProcessingConfigDialog(QDialog):
     def get_config(self) -> Dict[str, Any]:
         """
         Get the configuration from the dialog.
-        
+
         Returns:
             Dictionary containing all configuration parameters
         """
@@ -220,24 +227,24 @@ class DistributedProcessingConfigDialog(QDialog):
     def set_defaults(self, config: Dict[str, Any]) -> None:
         """
         Set default values from a configuration dictionary.
-        
+
         Args:
             config: Configuration dictionary to apply
         """
         if 'num_workers' in config:
             self.workers_spin.setValue(config['num_workers'])
-        
+
         if 'chunk_size' in config:
             # Convert bytes to MB
             chunk_size_mb = config['chunk_size'] // (1024 * 1024)
             self.chunk_size_spin.setValue(chunk_size_mb)
-        
+
         if 'window_size_kb' in config:
             self.window_size_spin.setValue(config['window_size_kb'])
-        
+
         if 'timeout' in config:
             self.timeout_spin.setValue(config['timeout'])
-        
+
         if 'preferred_backend' in config:
             backend_index = {
                 "auto": 0,
@@ -246,53 +253,53 @@ class DistributedProcessingConfigDialog(QDialog):
                 "multiprocessing": 3
             }.get(config['preferred_backend'], 0)
             self.backend_combo.setCurrentIndex(backend_index)
-        
+
         if 'use_convenience_methods' in config:
             self.convenience_check.setChecked(config['use_convenience_methods'])
-        
+
         # Analysis options
         if 'run_section_analysis' in config:
             self.section_check.setChecked(config['run_section_analysis'])
-        
+
         if 'run_pattern_search' in config:
             self.pattern_check.setChecked(config['run_pattern_search'])
-        
+
         if 'run_entropy_analysis' in config:
             self.entropy_check.setChecked(config['run_entropy_analysis'])
-        
+
         if 'run_symbolic_execution' in config:
             self.symbolic_check.setChecked(config['run_symbolic_execution'])
-        
+
         # Pattern types
         if 'search_license_patterns' in config:
             self.license_check.setChecked(config['search_license_patterns'])
-        
+
         if 'search_hardware_patterns' in config:
             self.hardware_check.setChecked(config['search_hardware_patterns'])
-        
+
         if 'search_crypto_patterns' in config:
             self.crypto_check.setChecked(config['search_crypto_patterns'])
-        
+
         if 'custom_patterns' in config and config['custom_patterns']:
             self.custom_patterns_edit.setText(', '.join(config['custom_patterns']))
 
     def validate_config(self) -> bool:
         """
         Validate the current configuration.
-        
+
         Returns:
             True if configuration is valid, False otherwise
         """
         # Basic validation
         if self.workers_spin.value() < 1:
             return False
-        
+
         if self.chunk_size_spin.value() < 1:
             return False
-        
+
         if self.timeout_spin.value() < 10:
             return False
-        
+
         # Check if at least one analysis option is selected
         analysis_selected = (
             self.section_check.isChecked() or
@@ -300,18 +307,18 @@ class DistributedProcessingConfigDialog(QDialog):
             self.entropy_check.isChecked() or
             self.symbolic_check.isChecked()
         )
-        
+
         return analysis_selected
 
 
 def create_distributed_config_dialog(binary_path: str, parent=None) -> DistributedProcessingConfigDialog:
     """
     Factory function to create a DistributedProcessingConfigDialog.
-    
+
     Args:
         binary_path: Path to binary for processing
         parent: Parent widget
-        
+
     Returns:
         Configured dialog instance
     """

@@ -27,7 +27,7 @@ class HighlightType(Enum):
 class HexHighlight:
     """
     Represents a highlighted region in hex data.
-    
+
     This class stores information about a highlighted region including
     its position, appearance, and metadata.
     """
@@ -37,7 +37,7 @@ class HexHighlight:
                  metadata: Optional[Dict[str, Any]] = None):
         """
         Initialize a hex highlight.
-        
+
         Args:
             start: Starting offset of the highlight
             end: Ending offset of the highlight (exclusive)
@@ -66,11 +66,11 @@ class HexHighlight:
     def overlaps(self, start: int, end: int) -> bool:
         """
         Check if this highlight overlaps with the specified region.
-        
+
         Args:
             start: Starting offset of the region
             end: Ending offset of the region
-            
+
         Returns:
             True if there is an overlap, False otherwise
         """
@@ -79,10 +79,10 @@ class HexHighlight:
     def contains(self, offset: int) -> bool:
         """
         Check if this highlight contains the specified offset.
-        
+
         Args:
             offset: Offset to check
-            
+
         Returns:
             True if the offset is within the highlight, False otherwise
         """
@@ -91,7 +91,7 @@ class HexHighlight:
     def get_rgba(self) -> Tuple[int, int, int, int]:
         """
         Get the RGBA values for this highlight.
-        
+
         Returns:
             Tuple of (red, green, blue, alpha) values (0-255)
         """
@@ -114,7 +114,7 @@ class HexHighlight:
 class HexHighlighter:
     """
     Manages highlights for hex data.
-    
+
     This class provides functionality for adding, removing, and querying
     highlights in binary data.
     """
@@ -129,7 +129,7 @@ class HexHighlighter:
                      metadata: Optional[Dict[str, Any]] = None) -> int:
         """
         Add a new highlight.
-        
+
         Args:
             start: Starting offset of the highlight
             end: Ending offset of the highlight (exclusive)
@@ -138,7 +138,7 @@ class HexHighlighter:
             alpha: Alpha transparency value (0.0-1.0)
             description: Description of the highlight
             metadata: Additional metadata for the highlight
-            
+
         Returns:
             ID of the created highlight
         """
@@ -156,10 +156,10 @@ class HexHighlighter:
     def remove_highlight(self, highlight_id: int) -> bool:
         """
         Remove a highlight by ID.
-        
+
         Args:
             highlight_id: ID of the highlight to remove
-            
+
         Returns:
             True if the highlight was removed, False if not found
         """
@@ -175,10 +175,10 @@ class HexHighlighter:
     def clear_highlights(self, highlight_type: Optional[HighlightType] = None) -> int:
         """
         Clear highlights, optionally of a specific type.
-        
+
         Args:
             highlight_type: Type of highlights to clear, or None for all
-            
+
         Returns:
             Number of highlights cleared
         """
@@ -199,11 +199,11 @@ class HexHighlighter:
     def get_highlights_for_region(self, start: int, end: int) -> List[HexHighlight]:
         """
         Get highlights that overlap with the specified region.
-        
+
         Args:
             start: Starting offset of the region
             end: Ending offset of the region
-            
+
         Returns:
             List of highlights that overlap with the region
         """
@@ -212,10 +212,10 @@ class HexHighlighter:
     def get_highlights_at_offset(self, offset: int) -> List[HexHighlight]:
         """
         Get highlights that contain the specified offset.
-        
+
         Args:
             offset: Offset to check
-            
+
         Returns:
             List of highlights that contain the offset
         """
@@ -224,10 +224,10 @@ class HexHighlighter:
     def get_highlight_by_id(self, highlight_id: int) -> Optional[HexHighlight]:
         """
         Get a highlight by ID.
-        
+
         Args:
             highlight_id: ID of the highlight to get
-            
+
         Returns:
             The highlight, or None if not found
         """
@@ -239,10 +239,10 @@ class HexHighlighter:
     def get_highlight_count(self, highlight_type: Optional[HighlightType] = None) -> int:
         """
         Get the number of highlights, optionally of a specific type.
-        
+
         Args:
             highlight_type: Type of highlights to count, or None for all
-            
+
         Returns:
             Number of highlights
         """
@@ -254,11 +254,11 @@ class HexHighlighter:
     def update_highlight(self, highlight_id: int, **kwargs) -> bool:
         """
         Update an existing highlight's properties.
-        
+
         Args:
             highlight_id: ID of the highlight to update
             **kwargs: Properties to update (start, end, color, etc.)
-            
+
         Returns:
             True if the highlight was updated, False if not found
         """
@@ -279,13 +279,13 @@ class HexHighlighter:
                     color: str = "#0000FF") -> int:
         """
         Add a bookmark highlight.
-        
+
         Args:
             offset: Offset of the bookmark
             size: Size of the bookmarked region
             description: Description of the bookmark
             color: Color of the bookmark highlight
-            
+
         Returns:
             ID of the created bookmark highlight
         """
@@ -302,13 +302,13 @@ class HexHighlighter:
                          color: str = "#00FF00") -> int:
         """
         Add a search result highlight.
-        
+
         Args:
             start: Starting offset of the search result
             end: Ending offset of the search result
             query: Search query that produced this result
             color: Color of the search result highlight
-            
+
         Returns:
             ID of the created search result highlight
         """
@@ -324,11 +324,11 @@ class HexHighlighter:
     def add_modification_highlight(self, start: int, end: int) -> int:
         """
         Add a modification highlight.
-        
+
         Args:
             start: Starting offset of the modified region
             end: Ending offset of the modified region
-            
+
         Returns:
             ID of the created modification highlight
         """
@@ -345,14 +345,14 @@ class HexHighlighter:
                                confidence: float = 1.0, description: str = "") -> int:
         """
         Add an AI-identified pattern highlight.
-        
+
         Args:
             start: Starting offset of the pattern
             end: Ending offset of the pattern
             pattern_type: Type of pattern identified
             confidence: Confidence level of the identification (0.0-1.0)
             description: Description of the pattern
-            
+
         Returns:
             ID of the created pattern highlight
         """

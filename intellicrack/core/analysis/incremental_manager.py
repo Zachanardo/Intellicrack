@@ -7,14 +7,14 @@ between analysis runs and avoid reprocessing unchanged code sections, significan
 improving performance for large binaries.
 """
 
-import os
-import json
-import pickle
-import hashlib
 import datetime
+import hashlib
+import json
 import logging
+import os
+import pickle
 import time
-from typing import Dict, Any, Optional, Union, List
+from typing import Any, Dict, Optional
 
 try:
     from PyQt5.QtWidgets import QMessageBox
@@ -42,19 +42,19 @@ class IncrementalAnalysisManager:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize the incremental analysis manager with configuration.
-        
+
         Args:
             config: Configuration dictionary with cache settings
         """
         self.config = config or {}
         self.logger = logging.getLogger(__name__)
-        
+
         # Configure cache settings
         self.cache_dir = self.config.get('cache_dir', os.path.join(os.getcwd(), 'analysis_cache'))
         self.enable_caching = self.config.get('enable_caching', True)
         self.cache_max_size = self.config.get('cache_max_size', 1024 * 1024 * 100)  # 100MB default
         self.cache_max_age = self.config.get('cache_max_age', 30)  # 30 days default
-        
+
         # Initialize cache state
         self.cache: Dict[str, Dict[str, Any]] = {}
         self.current_binary: Optional[str] = None
@@ -71,31 +71,31 @@ class IncrementalAnalysisManager:
 
         # Load cache index
         self._load_cache_index()
-        
+
         self.logger.info("Incremental analysis manager initialized")
 
     def _load_cache_index(self) -> None:
         """
         Load the cache index from disk.
-        
+
         The cache index contains metadata about all cached analyses
         including file paths, timestamps, and hash information.
         """
         if not self.enable_caching:
             return
-            
+
         index_path = os.path.join(self.cache_dir, 'index.json')
-        
+
         if os.path.exists(index_path):
             try:
                 with open(index_path, 'r', encoding='utf-8') as f:
                     self.cache = json.load(f)
-                    
+
                 self.logger.info(f"Loaded cache index with {len(self.cache)} entries")
-                
+
                 # Clean up invalid cache entries
                 self._cleanup_invalid_entries()
-                
+
             except (json.JSONDecodeError, IOError) as e:
                 self.logger.error(f"Error loading cache index: {e}")
                 self.cache = {}
@@ -106,34 +106,34 @@ class IncrementalAnalysisManager:
     def _save_cache_index(self) -> bool:
         """
         Save the cache index to disk.
-        
+
         Returns:
             True if save successful, False otherwise
         """
         if not self.enable_caching:
             return False
-            
+
         index_path = os.path.join(self.cache_dir, 'index.json')
-        
+
         try:
             # Create a backup of the existing index
             backup_path = index_path + '.backup'
             if os.path.exists(index_path):
                 os.rename(index_path, backup_path)
-            
+
             with open(index_path, 'w', encoding='utf-8') as f:
                 json.dump(self.cache, f, indent=2, default=str)
-            
+
             # Remove backup on successful write
             if os.path.exists(backup_path):
                 os.remove(backup_path)
-                
+
             self.logger.debug("Cache index saved successfully")
             return True
-            
+
         except (IOError, OSError) as e:
             self.logger.error(f"Error saving cache index: {e}")
-            
+
             # Restore backup if available
             backup_path = index_path + '.backup'
             if os.path.exists(backup_path):
@@ -142,7 +142,7 @@ class IncrementalAnalysisManager:
                     self.logger.info("Restored cache index from backup")
                 except OSError:
                     self.logger.error("Failed to restore backup")
-                    
+
             return False
 
     def _cleanup_invalid_entries(self) -> None:
@@ -150,21 +150,21 @@ class IncrementalAnalysisManager:
         Clean up cache entries that reference non-existent files.
         """
         invalid_hashes = []
-        
+
         for binary_hash, entry in self.cache.items():
             # Check if binary file still exists
             binary_path = entry.get('binary_path')
             if binary_path and not os.path.exists(binary_path):
                 invalid_hashes.append(binary_hash)
                 continue
-                
+
             # Check if cache files exist
             for analysis_type, cache_file in entry.items():
                 if analysis_type not in ['binary_path', 'timestamp'] and isinstance(cache_file, str):
                     if not os.path.exists(cache_file):
                         invalid_hashes.append(binary_hash)
                         break
-        
+
         # Remove invalid entries
         for binary_hash in invalid_hashes:
             self.logger.warning(f"Removing invalid cache entry: {binary_hash}")
@@ -173,10 +173,10 @@ class IncrementalAnalysisManager:
     def set_binary(self, binary_path: str) -> bool:
         """
         Set the current binary for analysis.
-        
+
         Args:
             binary_path: Path to the binary file to analyze
-            
+
         Returns:
             True if binary is found in cache, False if new analysis needed
         """
@@ -185,43 +185,43 @@ class IncrementalAnalysisManager:
             return False
 
         self.current_binary = os.path.abspath(binary_path)
-        
+
         # Calculate hash of binary
         self.current_binary_hash = self._calculate_file_hash(binary_path)
-        
+
         if not self.current_binary_hash:
             return False
 
         # Check if binary is in cache
         is_cached = self.current_binary_hash in self.cache
-        
+
         if is_cached:
             self.logger.info(f"Binary found in cache: {binary_path}")
         else:
             self.logger.info(f"Binary not found in cache: {binary_path}")
-            
+
         return is_cached
 
     def _calculate_file_hash(self, file_path: str) -> Optional[str]:
         """
         Calculate a SHA-256 hash of the file contents.
-        
+
         Args:
             file_path: Path to the file to hash
-            
+
         Returns:
             Hexadecimal hash string, or None if error
         """
         try:
             hash_sha256 = hashlib.sha256()
-            
+
             with open(file_path, "rb") as f:
                 # Read file in chunks for memory efficiency
                 for chunk in iter(lambda: f.read(8192), b""):
                     hash_sha256.update(chunk)
-                    
+
             return hash_sha256.hexdigest()
-            
+
         except (IOError, OSError) as e:
             self.logger.error(f"Error calculating file hash: {e}")
             return None
@@ -229,10 +229,10 @@ class IncrementalAnalysisManager:
     def get_cached_analysis(self, analysis_type: str) -> Optional[Any]:
         """
         Get cached analysis results for the current binary.
-        
+
         Args:
             analysis_type: Type of analysis to retrieve
-            
+
         Returns:
             Cached analysis results, or None if not available
         """
@@ -248,7 +248,7 @@ class IncrementalAnalysisManager:
 
         # Get cache file path
         cache_file = cache_entry[analysis_type]
-        
+
         if not isinstance(cache_file, str) or not os.path.exists(cache_file):
             self.logger.warning(f"Cache file not found: {cache_file}")
             return None
@@ -256,10 +256,10 @@ class IncrementalAnalysisManager:
         try:
             with open(cache_file, 'rb') as f:
                 result = pickle.load(f)
-                
+
             self.logger.info(f"Loaded cached analysis: {analysis_type}")
             return result
-            
+
         except (pickle.PickleError, IOError) as e:
             self.logger.error(f"Error loading cache file: {e}")
             return None
@@ -267,11 +267,11 @@ class IncrementalAnalysisManager:
     def cache_analysis(self, analysis_type: str, results: Any) -> bool:
         """
         Cache analysis results for the current binary.
-        
+
         Args:
             analysis_type: Type of analysis being cached
             results: Analysis results to cache
-            
+
         Returns:
             True if caching successful, False otherwise
         """
@@ -298,7 +298,7 @@ class IncrementalAnalysisManager:
 
             # Update cache index
             self.cache[self.current_binary_hash][analysis_type] = cache_file
-            
+
             if self._save_cache_index():
                 self.logger.info(f"Cached analysis results: {analysis_type}")
                 return True
@@ -307,7 +307,7 @@ class IncrementalAnalysisManager:
                 if os.path.exists(cache_file):
                     os.remove(cache_file)
                 return False
-                
+
         except (pickle.PickleError, IOError) as e:
             self.logger.error(f"Error caching analysis results: {e}")
             return False
@@ -315,10 +315,10 @@ class IncrementalAnalysisManager:
     def clear_cache(self, binary_hash: Optional[str] = None) -> bool:
         """
         Clear the cache for a specific binary or all binaries.
-        
+
         Args:
             binary_hash: Specific binary hash to clear, or None for all
-            
+
         Returns:
             True if clearing successful, False otherwise
         """
@@ -337,10 +337,10 @@ class IncrementalAnalysisManager:
     def _remove_cache_entry(self, binary_hash: str) -> bool:
         """
         Remove a specific cache entry.
-        
+
         Args:
             binary_hash: Hash of the binary to remove
-            
+
         Returns:
             True if removal successful, False otherwise
         """
@@ -349,7 +349,7 @@ class IncrementalAnalysisManager:
             return False
 
         cache_entry = self.cache[binary_hash]
-        
+
         # Delete cache files
         for analysis_type, cache_file in cache_entry.items():
             if analysis_type not in ['binary_path', 'timestamp', 'file_size'] and isinstance(cache_file, str):
@@ -362,7 +362,7 @@ class IncrementalAnalysisManager:
 
         # Remove from cache index
         del self.cache[binary_hash]
-        
+
         if self._save_cache_index():
             self.logger.info(f"Cleared cache for binary: {binary_hash}")
             return True
@@ -372,7 +372,7 @@ class IncrementalAnalysisManager:
     def get_cache_stats(self) -> Dict[str, Any]:
         """
         Get cache statistics and usage information.
-        
+
         Returns:
             Dictionary containing cache statistics
         """
@@ -382,7 +382,7 @@ class IncrementalAnalysisManager:
         total_files = 0
         total_size = 0
         analysis_types = set()
-        
+
         for cache_entry in self.cache.values():
             for analysis_type, cache_file in cache_entry.items():
                 if analysis_type not in ['binary_path', 'timestamp', 'file_size'] and isinstance(cache_file, str):
@@ -404,10 +404,10 @@ class IncrementalAnalysisManager:
     def cleanup_old_cache(self, max_age_days: Optional[int] = None) -> int:
         """
         Clean up old cache entries based on age.
-        
+
         Args:
             max_age_days: Maximum age in days, uses config default if None
-            
+
         Returns:
             Number of entries cleaned up
         """
@@ -416,9 +416,9 @@ class IncrementalAnalysisManager:
 
         max_age = max_age_days or self.cache_max_age
         cutoff_date = datetime.datetime.now() - datetime.timedelta(days=max_age)
-        
+
         old_hashes = []
-        
+
         for binary_hash, cache_entry in self.cache.items():
             timestamp_str = cache_entry.get('timestamp')
             if timestamp_str:
@@ -447,14 +447,14 @@ def run_analysis_manager(app: Any) -> None:
     Initialize and run the incremental analysis manager.
 
     This is the main entry point for the standalone incremental analysis feature.
-    
+
     Args:
         app: Main application instance
     """
     if not PYQT_AVAILABLE:
         app.logger.warning("PyQt5 not available. Cannot show confirmation dialogs.")
         return
-        
+
     # Track feature usage
     app.update_output.emit("[Incremental Analysis] Starting analysis manager")
 
@@ -485,7 +485,7 @@ def run_analysis_manager(app: Any) -> None:
     # Set binary and track performance metrics
     analysis_phases = []
     app.update_output.emit("[Incremental Analysis] Setting binary...")
-    
+
     use_cache = False
     if manager.set_binary(app.binary_path):
         app.update_output.emit("[Incremental Analysis] Binary found in cache")

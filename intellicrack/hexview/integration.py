@@ -40,15 +40,15 @@ TOOL_REGISTRY = {}
 def show_enhanced_hex_viewer(app_instance, file_path: Optional[str] = None, read_only: bool = True) -> QDialog:
     """
     Show the enhanced hex viewer/editor dialog.
-    
+
     This function creates and shows the enhanced hex viewer dialog, optionally
     loading a file if provided.
-    
+
     Args:
         app_instance: Intellicrack application instance
         file_path: Path to the file to load (optional)
         read_only: Whether to open the file in read-only mode
-        
+
     Returns:
         The created dialog instance
     """
@@ -130,10 +130,10 @@ def show_enhanced_hex_viewer(app_instance, file_path: Optional[str] = None, read
 def initialize_hex_viewer(app_instance):
     """
     Initialize the hex viewer functionality.
-    
+
     This function sets up the hex viewer methods on the application instance
     to enable both read-only viewing and editable modes.
-    
+
     Args:
         app_instance: Intellicrack application instance
     """
@@ -157,10 +157,10 @@ def initialize_hex_viewer(app_instance):
 def restore_standard_hex_viewer(app_instance):
     """
     Restore the standard hex viewer.
-    
+
     This function restores the original hex viewer function if it was
     previously replaced.
-    
+
     Args:
         app_instance: Intellicrack application instance
     """
@@ -172,10 +172,10 @@ def restore_standard_hex_viewer(app_instance):
 def add_hex_viewer_menu(app_instance, menu_name: str = None):
     """
     Add the enhanced hex viewer to a menu.
-    
+
     This function adds a menu item for the enhanced hex viewer to the
     specified menu in the application.
-    
+
     Args:
         app_instance: Intellicrack application instance
         menu_name: Name of the menu to add the item to
@@ -215,10 +215,10 @@ def add_hex_viewer_menu(app_instance, menu_name: str = None):
 def add_hex_viewer_toolbar_button(app_instance, toolbar: Optional[QToolBar] = None):
     """
     Add the enhanced hex viewer to a toolbar.
-    
+
     This function adds a toolbar button for the enhanced hex viewer to the
     specified toolbar in the application.
-    
+
     Args:
         app_instance: Intellicrack application instance
         toolbar: Toolbar to add the button to, or None to use the main toolbar
@@ -245,10 +245,10 @@ def add_hex_viewer_toolbar_button(app_instance, toolbar: Optional[QToolBar] = No
 def register_hex_viewer_ai_tools(app_instance):
     """
     Register the AI tool wrappers for the hex viewer.
-    
+
     This function registers the AI tool wrappers that provide integration
     between the hex viewer and the AI model.
-    
+
     Args:
         app_instance: Intellicrack application instance
     """
@@ -273,10 +273,10 @@ def register_hex_viewer_ai_tools(app_instance):
 def integrate_enhanced_hex_viewer(app_instance):
     """
     Fully integrate the enhanced hex viewer with Intellicrack.
-    
+
     This function performs all necessary steps to integrate the enhanced hex
     viewer with the main Intellicrack application.
-    
+
     Args:
         app_instance: Intellicrack application instance
     """
@@ -310,13 +310,13 @@ def integrate_enhanced_hex_viewer(app_instance):
 def hex_viewer_ai_tool(func):
     """
     Decorator for hex viewer AI tool wrappers.
-    
+
     This decorator adds common functionality to all hex viewer AI tool wrappers,
     such as error handling and logging.
-    
+
     Args:
         func: The tool wrapper function
-        
+
     Returns:
         Decorated function
     """

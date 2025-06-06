@@ -8,7 +8,7 @@ security assessment.
 
 import logging
 import os
-from typing import Optional, List, Dict, Any, Union
+from typing import Any, Dict, List, Optional
 
 try:
     from ..processing.docker_container import DockerContainer
@@ -28,7 +28,7 @@ __all__ = ['DistributedAnalysisManager']
 class DistributedAnalysisManager:
     """
     Manages distributed analysis across multiple VMs/containers.
-    
+
     Coordinates binary analysis across different virtual environments to provide
     comprehensive security assessment and license validation testing.
     """
@@ -65,7 +65,7 @@ class DistributedAnalysisManager:
 
         if vm_type == "qemu":
             try:
-                vm = QEMUSystemEmulator(self.binary_path, arch=arch)
+                vm = QEMUSystemEmulator(self.binary_path, architecture=arch)
                 self.vms.append({
                     "id": vm_id,
                     "type": vm_type,
@@ -278,7 +278,7 @@ class DistributedAnalysisManager:
         # Generate summary
         running_vms = [vm for vm in self.vms if vm["status"] == "running"]
         running_containers = [c for c in self.containers if c["status"] == "running"]
-        
+
         results["summary"] = {
             "vms_analyzed": len(running_vms),
             "containers_analyzed": len(running_containers),
@@ -338,11 +338,11 @@ class DistributedAnalysisManager:
     def assign_task(self, node_id: int, task: str) -> bool:
         """
         Assign a specific task to a node (VM or container).
-        
+
         Args:
             node_id: ID of the node
             task: Task description
-            
+
         Returns:
             True if task assigned successfully
         """
@@ -370,7 +370,7 @@ class DistributedAnalysisManager:
     def get_status(self) -> Dict[str, Any]:
         """
         Get status of all nodes in the analysis pool.
-        
+
         Returns:
             Status information for all VMs and containers
         """
@@ -400,7 +400,7 @@ class DistributedAnalysisManager:
     def cleanup(self) -> None:
         """Clean up all resources."""
         self.stop_all()
-        
+
         # Clean up VM instances
         for vm in self.vms:
             try:
@@ -428,10 +428,10 @@ class DistributedAnalysisManager:
 def create_distributed_manager(binary_path: Optional[str] = None) -> DistributedAnalysisManager:
     """
     Factory function to create a DistributedAnalysisManager.
-    
+
     Args:
         binary_path: Path to binary for analysis
-        
+
     Returns:
         Configured DistributedAnalysisManager instance
     """

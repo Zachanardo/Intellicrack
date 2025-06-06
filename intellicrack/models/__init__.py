@@ -23,8 +23,8 @@ Model Categories:
 
 import logging
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Set up package logger
 logger = logging.getLogger(__name__)
@@ -212,7 +212,7 @@ __all__ = [
     'AnalysisType',
     'PatchType',
     'LicenseType',
-    
+
     # Data models
     'BinaryInfo',
     'Vulnerability',

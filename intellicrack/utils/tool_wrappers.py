@@ -5,11 +5,11 @@ This module provides wrapper functions that integrate various analysis tools
 and provide a consistent interface for the main application.
 """
 
-import os
 import json
 import logging
+import os
 import traceback
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +175,7 @@ def wrapper_read_file_chunk(app_instance, parameters: Dict[str, Any]) -> Dict[st
         with open(path, 'rb') as f:
             f.seek(offset)
             data = f.read(size)
-            
+
             return {
                 "status": "success",
                 "data": data.hex(),
@@ -254,7 +254,7 @@ def wrapper_run_static_analysis(app_instance, parameters: Dict[str, Any]) -> Dic
 
         # Use the app's existing analysis methods
         app_instance.run_analysis()
-        
+
         return {
             "status": "success",
             "message": "Static analysis completed",
@@ -283,7 +283,7 @@ def wrapper_deep_license_analysis(app_instance, parameters: Dict[str, Any]) -> D
 
         # Use the app's existing deep license analysis
         app_instance.run_deep_license_analysis()
-        
+
         return {
             "status": "success",
             "message": "Deep license analysis completed"
@@ -358,7 +358,7 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
 
         # Simplified disassembly - would need actual disassembler integration
         return {
-            "status": "success", 
+            "status": "success",
             "address": f"0x{address:x}",
             "num_instructions": num_instructions,
             "disassembly": [f"0x{address + i:x}: <instruction {i}>" for i in range(num_instructions)]
@@ -567,7 +567,7 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                 "new_bytes": "90 90"
             },
             {
-                "id": 2, 
+                "id": 2,
                 "type": "trial_extension",
                 "description": "Extend trial period",
                 "address": "0x402000",
@@ -697,17 +697,17 @@ pause
 def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
     """
     Central dispatcher for tool wrapper functions.
-    
+
     Args:
         app_instance: The main application instance
         tool_name: Name of the tool to execute
         parameters: Parameters to pass to the tool
-        
+
     Returns:
         dict: Tool execution results
     """
     logger.info(f"Dispatching tool: {tool_name} with parameters: {parameters}")
-    
+
     tool_map = {
         "find_file": wrapper_find_file,
         "load_binary": wrapper_load_binary,
@@ -728,11 +728,11 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
         "apply_confirmed_patch": wrapper_apply_confirmed_patch,
         "generate_launcher_script": wrapper_generate_launcher_script,
     }
-    
+
     if tool_name not in tool_map:
         logger.warning(f"Unknown tool: {tool_name}")
         return {"status": "error", "message": f"Unknown tool: {tool_name}"}
-    
+
     try:
         return tool_map[tool_name](app_instance, parameters)
     except Exception as e:
@@ -743,7 +743,7 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
 def run_external_tool(args):
     """Run an external tool with the given arguments."""
     import subprocess
-    
+
     logger.info(f"Running external tool: {' '.join(args)}")
     results = f"Running external tool: {' '.join(args)}\n"
 
@@ -785,11 +785,11 @@ def run_external_tool(args):
 def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
     """
     Wrapper for deep runtime monitoring functionality.
-    
+
     Args:
         app_instance: Application instance
         parameters: Dict containing 'binary_path' and optional 'timeout'
-        
+
     Returns:
         Dict with monitoring results
     """
@@ -797,16 +797,15 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) ->
         # Get parameters
         binary_path = parameters.get('binary_path')
         timeout = parameters.get('timeout', 30000)
-        
+
         if not binary_path:
             return {
                 "status": "error",
                 "error": "No binary_path provided for runtime monitoring"
             }
-            
-        # Import the deep runtime monitoring function
+
         from .core_utilities import deep_runtime_monitoring
-        
+
         # Create monitoring config
         monitoring_config = {
             "monitor_api_calls": True,
@@ -816,21 +815,21 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) ->
             "capture_strings": True,
             "timeout": timeout
         }
-        
+
         # Run the monitoring
         result = deep_runtime_monitoring(binary_path, monitoring_config)
-        
+
         # Extract logs from result
         if isinstance(result, dict) and 'logs' in result:
             logs = result['logs']
         else:
             logs = result
-        
+
         # Update UI if available
         if app_instance and hasattr(app_instance, 'update_output'):
             for log in logs:
                 app_instance.update_output.emit(f"[Runtime Monitor] {log}")
-        
+
         return {
             "status": "success",
             "binary_path": binary_path,
@@ -838,16 +837,585 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) ->
             "logs": logs,
             "monitoring_complete": True
         }
-        
+
     except Exception as e:
         error_msg = f"Error in runtime monitoring: {str(e)}"
         logger.error(error_msg)
-        
+
         if app_instance and hasattr(app_instance, 'update_output'):
             app_instance.update_output.emit(f"[Runtime Monitor] ERROR: {error_msg}")
-            
+
         return {
             "status": "error",
             "error": error_msg,
             "traceback": traceback.format_exc()
         }
+
+
+def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: str = None, 
+                         project_name: str = None, options: Dict[str, Any] = None) -> Dict[str, Any]:
+    """
+    Run comprehensive Ghidra headless analysis on a binary.
+    
+    Args:
+        binary_path: Path to the binary to analyze
+        script_path: Optional path to Ghidra script to run post-analysis
+        output_dir: Directory for Ghidra project (default: binary_dir/ghidra_analysis)
+        project_name: Name for Ghidra project (default: analysis_{basename})
+        options: Additional analysis options:
+            - timeout: Analysis timeout in seconds (default: 600)
+            - analyzers: List of specific analyzers to run
+            - processor: Target processor (auto-detected if not specified)
+            - loader: Specific loader to use
+            - language: Language specification
+            - save_results: Whether to save analysis results (default: True)
+            - export_format: Export format (xml, json, csv, etc.)
+            - export_selection: What to export (functions, symbols, strings, etc.)
+            - log_level: Logging level (INFO, DEBUG, ERROR)
+            - max_ram: Maximum RAM usage for analysis
+            - script_params: Parameters to pass to post-analysis script
+    
+    Returns:
+        Comprehensive analysis results including symbols, functions, strings, etc.
+    """
+    import subprocess
+    import os
+    import json
+    import tempfile
+    import shutil
+    from pathlib import Path
+    
+    try:
+        # Initialize results structure
+        results = {
+            "status": "success",
+            "binary_path": binary_path,
+            "analysis_complete": False,
+            "project_path": None,
+            "output": [],
+            "errors": [],
+            "warnings": [],
+            "analysis_results": {
+                "functions": [],
+                "symbols": [],
+                "strings": [],
+                "cross_references": [],
+                "entry_points": [],
+                "imports": [],
+                "exports": [],
+                "segments": [],
+                "analysis_time": 0
+            },
+            "exported_files": []
+        }
+        
+        # Parse options
+        if options is None:
+            options = {}
+        
+        timeout = options.get('timeout', 600)
+        analyzers = options.get('analyzers', [])
+        processor = options.get('processor')
+        loader = options.get('loader')
+        language = options.get('language')
+        save_results = options.get('save_results', True)
+        export_format = options.get('export_format', 'json')
+        export_selection = options.get('export_selection', ['functions', 'symbols', 'strings'])
+        log_level = options.get('log_level', 'INFO')
+        max_ram = options.get('max_ram', '2G')
+        script_params = options.get('script_params', {})
+        
+        # Validate binary exists
+        if not os.path.exists(binary_path):
+            results["status"] = "error"
+            results["errors"].append(f"Binary file not found: {binary_path}")
+            return results
+        
+        # Find Ghidra installation
+        # Use dynamic path discovery
+        ghidra_executable = None
+        try:
+            from ..utils.path_discovery import find_tool
+            ghidra_base = find_tool("ghidra")
+            if ghidra_base:
+                # Find analyzeHeadless relative to ghidra installation
+                if os.path.isfile(ghidra_base):
+                    ghidra_dir = os.path.dirname(ghidra_base)
+                else:
+                    ghidra_dir = ghidra_base
+                
+                # Look for analyzeHeadless
+                analyze_paths = [
+                    os.path.join(ghidra_dir, 'support', 'analyzeHeadless.bat'),
+                    os.path.join(ghidra_dir, 'support', 'analyzeHeadless'),
+                    os.path.join(os.path.dirname(ghidra_dir), 'support', 'analyzeHeadless.bat'),
+                    os.path.join(os.path.dirname(ghidra_dir), 'support', 'analyzeHeadless'),
+                ]
+                
+                for path in analyze_paths:
+                    if os.path.exists(path):
+                        ghidra_executable = path
+                        break
+        except ImportError:
+            logger.warning("Path discovery not available, falling back to manual search")
+        
+        # Fallback to manual search if discovery fails
+        if not ghidra_executable:
+            ghidra_paths = [
+                os.environ.get('GHIDRA_INSTALL_DIR', '') + '/support/analyzeHeadless',
+                "analyzeHeadless",
+                "analyzeHeadless.bat"
+            ]
+            
+            for path in ghidra_paths:
+                if path and os.path.exists(path):
+                    ghidra_executable = path
+                    break
+        
+        # Try to find in PATH
+        if not ghidra_executable:
+            try:
+                result = subprocess.run(['which', 'analyzeHeadless'], 
+                                      capture_output=True, text=True)
+                if result.returncode == 0:
+                    ghidra_executable = result.stdout.strip()
+            except:
+                pass
+        
+        if not ghidra_executable:
+            results["status"] = "error"
+            results["errors"].append("Ghidra executable not found. Please install Ghidra and set GHIDRA_INSTALL_DIR environment variable.")
+            return results
+        
+        # Setup project directory
+        if not output_dir:
+            output_dir = os.path.join(os.path.dirname(binary_path), "ghidra_analysis")
+        
+        if not project_name:
+            project_name = f"analysis_{Path(binary_path).stem}"
+        
+        os.makedirs(output_dir, exist_ok=True)
+        results["project_path"] = os.path.join(output_dir, project_name)
+        
+        # Build command
+        cmd = [
+            ghidra_executable,
+            output_dir,
+            project_name,
+            "-import", binary_path,
+            "-overwrite"
+        ]
+        
+        # Add processor specification if provided
+        if processor:
+            cmd.extend(["-processor", processor])
+        
+        # Add loader if specified
+        if loader:
+            cmd.extend(["-loader", loader])
+            
+        # Add language if specified
+        if language:
+            cmd.extend(["-language", language])
+        
+        # Add memory settings
+        cmd.extend(["-max-memory", max_ram])
+        
+        # Add log level
+        cmd.extend(["-log-level", log_level])
+        
+        # Configure analyzers
+        if analyzers:
+            # Disable all analyzers first, then enable specific ones
+            cmd.extend(["-noanalysis"])
+            for analyzer in analyzers:
+                cmd.extend(["-analysis", analyzer])
+        else:
+            # Run full analysis by default
+            cmd.append("-analyze")
+        
+        # Create comprehensive analysis script if none provided
+        analysis_script_path = script_path
+        if not analysis_script_path:
+            analysis_script_path = _create_comprehensive_analysis_script(
+                output_dir, export_format, export_selection, script_params
+            )
+        
+        # Add post-analysis script
+        if analysis_script_path and os.path.exists(analysis_script_path):
+            cmd.extend(["-postScript", analysis_script_path])
+            
+            # Add script parameters if any
+            if script_params:
+                for key, value in script_params.items():
+                    cmd.extend(["-scriptPath", f"{key}={value}"])
+        
+        # Add quiet mode for cleaner output
+        cmd.append("-quiet")
+        
+        # Execute Ghidra analysis
+        import time
+        start_time = time.time()
+        
+        logger.info(f"Running Ghidra headless analysis: {' '.join(cmd)}")
+        
+        process = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=output_dir
+        )
+        
+        analysis_time = time.time() - start_time
+        results["analysis_results"]["analysis_time"] = analysis_time
+        
+        # Process output
+        if process.stdout:
+            results["output"] = process.stdout.split('\n')
+            # Parse analysis results from output
+            results = _parse_ghidra_output(results, process.stdout)
+        
+        if process.stderr:
+            stderr_lines = process.stderr.split('\n')
+            # Separate warnings from errors
+            for line in stderr_lines:
+                if line.strip():
+                    if 'WARN' in line or 'WARNING' in line:
+                        results["warnings"].append(line)
+                    else:
+                        results["errors"].append(line)
+        
+        results["return_code"] = process.returncode
+        results["analysis_complete"] = process.returncode == 0
+        
+        # Load exported analysis results
+        if results["analysis_complete"]:
+            results = _load_analysis_exports(results, output_dir, export_format)
+        
+        if process.returncode != 0:
+            results["status"] = "warning" if results["warnings"] and not results["errors"] else "error"
+        
+        # Cleanup temporary script if created
+        if not script_path and analysis_script_path and os.path.exists(analysis_script_path):
+            try:
+                os.remove(analysis_script_path)
+            except:
+                pass
+        
+        # Save project if requested
+        if not save_results:
+            try:
+                shutil.rmtree(results["project_path"])
+            except:
+                pass
+        
+    except subprocess.TimeoutExpired:
+        results["status"] = "error"
+        results["errors"].append(f"Ghidra analysis timed out after {timeout} seconds")
+    except Exception as e:
+        results["status"] = "error"
+        results["errors"].append(str(e))
+        logger.error(f"Error running Ghidra headless: {e}")
+        
+    return results
+
+
+def _create_comprehensive_analysis_script(output_dir: str, export_format: str, 
+                                         export_selection: list, params: dict) -> str:
+    """Create a comprehensive Ghidra analysis script."""
+    script_content = '''
+// Comprehensive Ghidra Analysis Script
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
+import ghidra.program.model.data.*;
+import ghidra.program.model.mem.*;
+import ghidra.program.model.address.*;
+import ghidra.program.model.block.*;
+import ghidra.util.task.ConsoleTaskMonitor;
+import java.io.*;
+import java.util.*;
+
+def program = currentProgram
+def listing = program.getListing()
+def symbolTable = program.getSymbolTable()
+def memory = program.getMemory()
+def addressFactory = program.getAddressFactory()
+
+// Export functions
+if (exportSelection.contains("functions")) {
+    exportFunctions()
+}
+
+// Export symbols  
+if (exportSelection.contains("symbols")) {
+    exportSymbols()
+}
+
+// Export strings
+if (exportSelection.contains("strings")) {
+    exportStrings()
+}
+
+// Export cross-references
+if (exportSelection.contains("cross_references")) {
+    exportCrossReferences()
+}
+
+// Export imports/exports
+if (exportSelection.contains("imports")) {
+    exportImports()
+}
+
+if (exportSelection.contains("exports")) {
+    exportExports()
+}
+
+// Export memory segments
+if (exportSelection.contains("segments")) {
+    exportMemorySegments()
+}
+
+def exportFunctions() {
+    def functions = []
+    def functionIterator = listing.getFunctions(true)
+    
+    while (functionIterator.hasNext()) {
+        def function = functionIterator.next()
+        def functionData = [
+            name: function.getName(),
+            address: function.getEntryPoint().toString(),
+            size: function.getBody().getNumAddresses(),
+            signature: function.getSignature().toString(),
+            calling_convention: function.getCallingConventionName(),
+            parameter_count: function.getParameterCount(),
+            local_variable_count: function.getLocalVariables().length,
+            is_external: function.isExternal(),
+            is_inline: function.isInline(),
+            stack_frame_size: function.getStackFrame().getFrameSize()
+        ]
+        functions.add(functionData)
+    }
+    
+    writeJsonFile("functions.json", functions)
+}
+
+def exportSymbols() {
+    def symbols = []
+    def symbolIterator = symbolTable.getAllSymbols(true)
+    
+    while (symbolIterator.hasNext()) {
+        def symbol = symbolIterator.next()
+        def symbolData = [
+            name: symbol.getName(),
+            address: symbol.getAddress().toString(),
+            type: symbol.getSymbolType().toString(),
+            source: symbol.getSource().toString(),
+            is_external: symbol.isExternal(),
+            is_global: symbol.isGlobal(),
+            namespace: symbol.getParentNamespace().getName()
+        ]
+        symbols.add(symbolData)
+    }
+    
+    writeJsonFile("symbols.json", symbols)
+}
+
+def exportStrings() {
+    def strings = []
+    def definedData = listing.getDefinedData(true)
+    
+    while (definedData.hasNext()) {
+        def data = definedData.next()
+        if (data.hasStringValue()) {
+            def stringData = [
+                address: data.getAddress().toString(),
+                value: data.getValue().toString(),
+                length: data.getLength(),
+                data_type: data.getDataType().getName(),
+                references: getReferencesToAddress(data.getAddress())
+            ]
+            strings.add(stringData)
+        }
+    }
+    
+    writeJsonFile("strings.json", strings)
+}
+
+def exportCrossReferences() {
+    def references = []
+    def allAddresses = memory.getAllInitializedAddressSet()
+    def addressIterator = allAddresses.getAddresses(true)
+    
+    while (addressIterator.hasNext()) {
+        def address = addressIterator.next()
+        def refsFrom = program.getReferenceManager().getReferencesFrom(address)
+        
+        for (ref in refsFrom) {
+            def refData = [
+                from_address: ref.getFromAddress().toString(),
+                to_address: ref.getToAddress().toString(),
+                type: ref.getReferenceType().toString(),
+                is_external: ref.isExternalReference(),
+                operand_index: ref.getOperandIndex()
+            ]
+            references.add(refData)
+        }
+    }
+    
+    writeJsonFile("cross_references.json", references)
+}
+
+def exportImports() {
+    def imports = []
+    def externalManager = program.getExternalManager()
+    def externalNames = externalManager.getExternalLibraryNames()
+    
+    for (libName in externalNames) {
+        def extLocations = externalManager.getExternalLocations(libName)
+        while (extLocations.hasNext()) {
+            def location = extLocations.next()
+            def importData = [
+                library: libName,
+                name: location.getLabel(),
+                address: location.getAddress() ? location.getAddress().toString() : "unknown",
+                original_name: location.getOriginalImportedName()
+            ]
+            imports.add(importData)
+        }
+    }
+    
+    writeJsonFile("imports.json", imports)
+}
+
+def exportExports() {
+    def exports = []
+    def entryPoints = symbolTable.getExternalEntryPointIterator()
+    
+    while (entryPoints.hasNext()) {
+        def entryPoint = entryPoints.next()
+        def exportData = [
+            name: entryPoint.getName(),
+            address: entryPoint.getAddress().toString(),
+            type: entryPoint.getSymbolType().toString()
+        ]
+        exports.add(exportData)
+    }
+    
+    writeJsonFile("exports.json", exports)
+}
+
+def exportMemorySegments() {
+    def segments = []
+    def memoryBlocks = memory.getBlocks()
+    
+    for (block in memoryBlocks) {
+        def segmentData = [
+            name: block.getName(),
+            start_address: block.getStart().toString(),
+            end_address: block.getEnd().toString(),
+            size: block.getSize(),
+            is_read: block.isRead(),
+            is_write: block.isWrite(),
+            is_execute: block.isExecute(),
+            is_initialized: block.isInitialized(),
+            type: block.getType().toString()
+        ]
+        segments.add(segmentData)
+    }
+    
+    writeJsonFile("memory_segments.json", segments)
+}
+
+def getReferencesToAddress(address) {
+    def refs = []
+    def refIterator = program.getReferenceManager().getReferencesTo(address)
+    
+    while (refIterator.hasNext()) {
+        def ref = refIterator.next()
+        refs.add(ref.getFromAddress().toString())
+    }
+    
+    return refs
+}
+
+def writeJsonFile(filename, data) {
+    def file = new File(filename)
+    def writer = new PrintWriter(new FileWriter(file))
+    writer.println(groovy.json.JsonBuilder(data).toPrettyString())
+    writer.close()
+    println("Exported: " + filename)
+}
+
+// Set export selection
+def exportSelection = ''' + str(export_selection) + '''
+
+println("Starting comprehensive analysis...")
+println("Analysis complete. Results exported.")
+'''
+    
+    script_file = os.path.join(output_dir, "comprehensive_analysis.py")
+    with open(script_file, 'w') as f:
+        f.write(script_content)
+    
+    return script_file
+
+
+def _parse_ghidra_output(results: dict, output: str) -> dict:
+    """Parse Ghidra analysis output for key information."""
+    lines = output.split('\n')
+    
+    for line in lines:
+        line = line.strip()
+        
+        # Parse function count
+        if 'functions found' in line.lower():
+            try:
+                count = int(line.split()[0])
+                results["analysis_results"]["function_count"] = count
+            except:
+                pass
+        
+        # Parse symbol count  
+        if 'symbols found' in line.lower():
+            try:
+                count = int(line.split()[0])
+                results["analysis_results"]["symbol_count"] = count
+            except:
+                pass
+        
+        # Parse entry points
+        if 'entry point' in line.lower():
+            try:
+                address = line.split()[-1]
+                if address not in results["analysis_results"]["entry_points"]:
+                    results["analysis_results"]["entry_points"].append(address)
+            except:
+                pass
+    
+    return results
+
+
+def _load_analysis_exports(results: dict, output_dir: str, export_format: str) -> dict:
+    """Load exported analysis results from files."""
+    export_files = [
+        "functions.json", "symbols.json", "strings.json", 
+        "cross_references.json", "imports.json", "exports.json",
+        "memory_segments.json"
+    ]
+    
+    for export_file in export_files:
+        file_path = os.path.join(output_dir, export_file)
+        if os.path.exists(file_path):
+            try:
+                with open(file_path, 'r') as f:
+                    data = json.load(f)
+                    
+                key = export_file.replace('.json', '')
+                results["analysis_results"][key] = data
+                results["exported_files"].append(file_path)
+                
+            except Exception as e:
+                results["warnings"].append(f"Failed to load {export_file}: {str(e)}")
+    
+    return results

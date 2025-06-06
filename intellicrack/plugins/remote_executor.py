@@ -14,7 +14,7 @@ import socket
 import sys
 import tempfile
 import threading
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional
 
 __all__ = ['RemotePluginExecutor']
 
@@ -22,7 +22,7 @@ __all__ = ['RemotePluginExecutor']
 class RemotePluginExecutor:
     """
     Execute plugins on remote systems.
-    
+
     Provides secure remote plugin execution capabilities with serialization
     and network communication for distributed analysis tasks.
     """
@@ -132,7 +132,7 @@ class RemotePluginExecutor:
         def handle_client(client_socket: socket.socket) -> None:
             """
             Handle a client connection.
-            
+
             Args:
                 client_socket: Client socket connection
             """
@@ -174,7 +174,7 @@ class RemotePluginExecutor:
 
                     # Create plugin instance
                     if hasattr(plugin_module, "Plugin"):
-                        plugin_class = getattr(plugin_module, "Plugin")
+                        plugin_class = plugin_module.Plugin
                         plugin_instance = plugin_class()
                     else:
                         # Look for common plugin class names
@@ -261,7 +261,7 @@ class RemotePluginExecutor:
 
                     # Handle client in a new thread
                     client_thread = threading.Thread(
-                        target=handle_client, 
+                        target=handle_client,
                         args=(client_socket,),
                         daemon=True
                     )
@@ -284,7 +284,7 @@ class RemotePluginExecutor:
     def test_connection(self) -> bool:
         """
         Test connection to the remote server.
-        
+
         Returns:
             True if connection successful, False otherwise
         """
@@ -301,13 +301,13 @@ class RemotePluginExecutor:
 def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwargs) -> List[str]:
     """
     Run plugin method in a sandboxed environment.
-    
+
     Args:
         plugin_instance: Plugin instance to execute
         method_name: Method name to call
         *args: Method arguments
         **kwargs: Method keyword arguments
-        
+
     Returns:
         Results from plugin method execution
     """
@@ -318,11 +318,11 @@ def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwar
 
         # Get the method
         method = getattr(plugin_instance, method_name)
-        
+
         # Execute the method
         if callable(method):
             result = method(*args, **kwargs)
-            
+
             # Ensure result is a list of strings
             if isinstance(result, list):
                 return [str(item) for item in result]
@@ -340,11 +340,11 @@ def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwar
 def create_remote_executor(host: str = "localhost", port: int = 8765) -> RemotePluginExecutor:
     """
     Factory function to create a RemotePluginExecutor.
-    
+
     Args:
         host: Remote host address
         port: Remote port number
-        
+
     Returns:
         Configured RemotePluginExecutor instance
     """

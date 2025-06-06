@@ -8,9 +8,8 @@ including PDF, HTML, and text reports with support for charts and visualizations
 import datetime
 import json
 import logging
-import os
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -18,11 +17,11 @@ logger = logging.getLogger(__name__)
 
 class ReportGenerator:
     """Base class for report generation with common functionality."""
-    
+
     def __init__(self, output_dir: str = "reports"):
         """
         Initialize the report generator.
-        
+
         Args:
             output_dir: Directory to save generated reports
         """
@@ -34,7 +33,7 @@ class ReportGenerator:
             'author': 'Intellicrack',
             'generated': datetime.datetime.now().isoformat()
         }
-    
+
     def set_metadata(self, title: str = None, author: str = None, **kwargs):
         """Set report metadata."""
         if title:
@@ -42,15 +41,15 @@ class ReportGenerator:
         if author:
             self.metadata['author'] = author
         self.metadata.update(kwargs)
-    
+
     def add_section(self, title: str, content: Any) -> int:
         """
         Add a section to the report.
-        
+
         Args:
             title: Section title
             content: Section content
-            
+
         Returns:
             int: Section index
         """
@@ -67,12 +66,12 @@ def generate_report(analysis_results: Dict[str, Any], output_format: str = 'text
                    output_path: Optional[Union[str, Path]] = None) -> str:
     """
     Generate an analysis report in the specified format.
-    
+
     Args:
         analysis_results: Dictionary containing analysis results
         output_format: Report format (text, json, html)
         output_path: Optional output path
-        
+
     Returns:
         str: Path to the generated report
     """
@@ -82,10 +81,10 @@ def generate_report(analysis_results: Dict[str, Any], output_format: str = 'text
         output_path = Path("reports") / filename
     else:
         output_path = Path(output_path)
-    
+
     # Ensure output directory exists
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     if output_format == 'text':
         content = generate_text_report(analysis_results)
     elif output_format == 'json':
@@ -94,11 +93,11 @@ def generate_report(analysis_results: Dict[str, Any], output_format: str = 'text
         content = generate_html_report(analysis_results)
     else:
         raise ValueError(f"Unsupported output format: {output_format}")
-    
+
     # Write report
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(content)
-    
+
     logger.info(f"Report generated: {output_path}")
     return str(output_path)
 
@@ -106,10 +105,10 @@ def generate_report(analysis_results: Dict[str, Any], output_format: str = 'text
 def generate_text_report(results: Dict[str, Any]) -> str:
     """
     Generate a text-based report.
-    
+
     Args:
         results: Analysis results
-        
+
     Returns:
         str: Text report content
     """
@@ -119,7 +118,7 @@ def generate_text_report(results: Dict[str, Any]) -> str:
     lines.append("=" * 80)
     lines.append(f"Generated: {datetime.datetime.now()}")
     lines.append("")
-    
+
     # Binary information
     if 'binary_info' in results:
         lines.append("BINARY INFORMATION")
@@ -127,7 +126,7 @@ def generate_text_report(results: Dict[str, Any]) -> str:
         for key, value in results['binary_info'].items():
             lines.append(f"  {key}: {value}")
         lines.append("")
-    
+
     # Vulnerabilities
     if 'vulnerabilities' in results:
         lines.append("VULNERABILITIES")
@@ -137,7 +136,7 @@ def generate_text_report(results: Dict[str, Any]) -> str:
             if 'description' in vuln:
                 lines.append(f"    {vuln['description']}")
         lines.append("")
-    
+
     # Protection mechanisms
     if 'protections' in results:
         lines.append("PROTECTION MECHANISMS")
@@ -145,28 +144,28 @@ def generate_text_report(results: Dict[str, Any]) -> str:
         for protection in results['protections']:
             lines.append(f"  - {protection}")
         lines.append("")
-    
+
     # Analysis summary
     if 'summary' in results:
         lines.append("SUMMARY")
         lines.append("-" * 40)
         lines.append(results['summary'])
         lines.append("")
-    
+
     lines.append("=" * 80)
     lines.append("END OF REPORT")
     lines.append("=" * 80)
-    
+
     return '\n'.join(lines)
 
 
 def generate_html_report(results: Dict[str, Any]) -> str:
     """
     Generate an HTML report.
-    
+
     Args:
         results: Analysis results
-        
+
     Returns:
         str: HTML report content
     """
@@ -196,7 +195,7 @@ def generate_html_report(results: Dict[str, Any]) -> str:
     <h1>Intellicrack Analysis Report</h1>
     <p class="timestamp">Generated: """ + str(datetime.datetime.now()) + """</p>
 """]
-    
+
     # Binary information section
     if 'binary_info' in results:
         html_parts.append("""
@@ -207,7 +206,7 @@ def generate_html_report(results: Dict[str, Any]) -> str:
         for key, value in results['binary_info'].items():
             html_parts.append(f"            <tr><td><strong>{key}</strong></td><td>{value}</td></tr>")
         html_parts.append("        </table>\n    </div>")
-    
+
     # Vulnerabilities section
     if 'vulnerabilities' in results:
         html_parts.append("""
@@ -222,25 +221,25 @@ def generate_html_report(results: Dict[str, Any]) -> str:
                 html_parts.append(f'            <p>{vuln["description"]}</p>')
             html_parts.append('        </div>')
         html_parts.append("    </div>")
-    
+
     # Add more sections as needed
-    
+
     html_parts.append("""
 </body>
 </html>
 """)
-    
+
     return '\n'.join(html_parts)
 
 
 def export_report(report_data: Dict[str, Any], format: str = 'pdf') -> Optional[str]:
     """
     Export report in various formats.
-    
+
     Args:
         report_data: Report data to export
         format: Export format (pdf, docx, etc.)
-        
+
     Returns:
         Optional[str]: Path to exported file
     """
@@ -251,41 +250,41 @@ def export_report(report_data: Dict[str, Any], format: str = 'pdf') -> Optional[
 def format_findings(findings: List[Dict[str, Any]], include_remediation: bool = True) -> str:
     """
     Format analysis findings for report inclusion.
-    
+
     Args:
         findings: List of finding dictionaries
         include_remediation: Whether to include remediation suggestions
-        
+
     Returns:
         str: Formatted findings text
     """
     formatted = []
-    
+
     for i, finding in enumerate(findings, 1):
         formatted.append(f"{i}. {finding.get('title', 'Finding')}")
-        
+
         if 'severity' in finding:
             formatted.append(f"   Severity: {finding['severity']}")
-        
+
         if 'description' in finding:
             formatted.append(f"   Description: {finding['description']}")
-        
+
         if include_remediation and 'remediation' in finding:
             formatted.append(f"   Remediation: {finding['remediation']}")
-        
+
         formatted.append("")  # Empty line between findings
-    
+
     return '\n'.join(formatted)
 
 
 def create_summary_report(binary_path: str, key_findings: List[str]) -> Dict[str, Any]:
     """
     Create a summary report structure.
-    
+
     Args:
         binary_path: Path to analyzed binary
         key_findings: List of key findings
-        
+
     Returns:
         dict: Summary report structure
     """

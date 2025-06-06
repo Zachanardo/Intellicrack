@@ -25,8 +25,29 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Import widget modules with error handling
-# Note: Widget modules will be populated as they are created
-# For now, we'll prepare the structure for future widgets
+try:
+    from .hex_viewer import (
+        HexViewer, AssemblyView, CFGWidget, CallGraphWidget,
+        SearchBar, FilterPanel, ToolPanel,
+        HeatmapWidget, GraphWidget, TimelineWidget,
+        ProgressWidget, StatusBar, LogViewer
+    )
+except ImportError as e:
+    logger.warning(f"Failed to import widgets from hex_viewer: {e}")
+    # Define fallback classes
+    class HexViewer: pass
+    class AssemblyView: pass
+    class CFGWidget: pass
+    class CallGraphWidget: pass
+    class SearchBar: pass
+    class FilterPanel: pass
+    class ToolPanel: pass
+    class HeatmapWidget: pass
+    class GraphWidget: pass
+    class TimelineWidget: pass
+    class ProgressWidget: pass
+    class StatusBar: pass
+    class LogViewer: pass
 
 # Define common widget exports
 __all__ = [
@@ -35,17 +56,17 @@ __all__ = [
     'AssemblyView',
     'CFGWidget',
     'CallGraphWidget',
-    
+
     # Control widgets
     'SearchBar',
     'FilterPanel',
     'ToolPanel',
-    
+
     # Visualization widgets
     'HeatmapWidget',
     'GraphWidget',
     'TimelineWidget',
-    
+
     # Status widgets
     'ProgressWidget',
     'StatusBar',

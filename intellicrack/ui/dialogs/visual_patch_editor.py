@@ -6,15 +6,25 @@ binary patches with drag-and-drop functionality and real-time disassembly.
 """
 
 import os
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
-    QLabel, QSplitter, QWidget, QPushButton, QListWidget,
-    QListWidgetItem, QAbstractItemView, QLineEdit, QTextEdit,
-    QMessageBox
+    QAbstractItemView,
+    QDialog,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
 try:
@@ -24,7 +34,7 @@ except ImportError:
     HAS_PEFILE = False
 
 try:
-    from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
+    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
     HAS_CAPSTONE = True
 except ImportError:
     HAS_CAPSTONE = False
@@ -35,7 +45,7 @@ __all__ = ['VisualPatchEditorDialog']
 class VisualPatchEditorDialog(QDialog):
     """
     Visual patch editor dialog with drag-and-drop functionality.
-    
+
     Provides an intuitive interface for creating and managing binary patches
     with real-time disassembly view and byte preview capabilities.
     """
@@ -313,7 +323,7 @@ class VisualPatchEditorDialog(QDialog):
             pe = pefile.PE(self.binary_path)
 
             # Determine if 32 or 64 bit
-            is_64bit = pe.FILE_HEADER.Machine == 0x8664
+            is_64bit = getattr(pe.FILE_HEADER, 'Machine', 0) == 0x8664
             mode = CS_MODE_64 if is_64bit else CS_MODE_32
 
             # Get section containing address
@@ -489,7 +499,7 @@ class VisualPatchEditorDialog(QDialog):
         for i, patch in enumerate(self.patches):
             address = patch.get("address", 0)
             new_bytes = patch.get("new_bytes", b"")
-            
+
             if address <= 0:
                 validation_results.append(f"Patch {i+1}: Invalid address (0x{address:X})")
             elif not new_bytes:
@@ -527,7 +537,7 @@ class VisualPatchEditorDialog(QDialog):
     def get_patches(self) -> List[Dict[str, Any]]:
         """
         Get the current list of patches.
-        
+
         Returns:
             List of patch dictionaries
         """
@@ -536,7 +546,7 @@ class VisualPatchEditorDialog(QDialog):
     def has_unsaved_changes(self) -> bool:
         """
         Check if there are unsaved changes.
-        
+
         Returns:
             True if patches have been modified
         """
@@ -546,12 +556,12 @@ class VisualPatchEditorDialog(QDialog):
 def create_visual_patch_editor(binary_path: str, patches: List[Dict[str, Any]], parent=None) -> VisualPatchEditorDialog:
     """
     Factory function to create a VisualPatchEditorDialog.
-    
+
     Args:
         binary_path: Path to binary file
         patches: List of patch dictionaries
         parent: Parent widget
-        
+
     Returns:
         Configured dialog instance
     """

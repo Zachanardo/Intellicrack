@@ -28,8 +28,10 @@ Modules:
 # Import core analysis functions
 try:
     from .core_analysis import (
-        calculate_entropy, analyze_binary_internal, 
-        enhanced_deep_license_analysis, detect_packing
+        analyze_binary_internal,
+        calculate_entropy,
+        detect_packing,
+        enhanced_deep_license_analysis,
     )
 except ImportError:
     calculate_entropy = None
@@ -43,7 +45,7 @@ except ImportError:
     VulnerabilityEngine = None
 
 try:
-    from .dynamic_analyzer import DynamicAnalyzer, AdvancedDynamicAnalyzer
+    from .dynamic_analyzer import AdvancedDynamicAnalyzer, DynamicAnalyzer
 except ImportError:
     DynamicAnalyzer = None
     AdvancedDynamicAnalyzer = None
@@ -92,7 +94,7 @@ except ImportError:
 __all__ = [
     # Core analysis functions
     'calculate_entropy',
-    'analyze_binary_internal', 
+    'analyze_binary_internal',
     'enhanced_deep_license_analysis',
     'detect_packing',
     # Analysis engines

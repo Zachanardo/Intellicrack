@@ -11,7 +11,7 @@ import json
 import logging
 import math
 import os
-from typing import Dict, List, Optional, Any, Union
+from typing import Any, Dict, List, Optional
 
 try:
     import pefile
@@ -22,39 +22,14 @@ except ImportError:
 __all__ = ['BinarySimilaritySearch']
 
 
-def calculate_entropy(data: bytes) -> float:
-    """
-    Calculate Shannon entropy of data.
-    
-    Args:
-        data: Input data bytes
-        
-    Returns:
-        Entropy value in bits
-    """
-    if not data:
-        return 0.0
-
-    # Count byte frequencies
-    byte_counts = [0] * 256
-    for byte in data:
-        byte_counts[byte] += 1
-
-    # Calculate entropy
-    data_len = len(data)
-    entropy = 0.0
-    for count in byte_counts:
-        if count > 0:
-            probability = count / data_len
-            entropy -= probability * math.log2(probability)
-
-    return entropy
+# Import shared entropy calculation
+from ...utils.protection_utils import calculate_entropy
 
 
 class BinarySimilaritySearch:
     """
     Binary similarity search engine to find similar cracking patterns.
-    
+
     Uses structural analysis and feature extraction to identify similarities
     between binary files and associated cracking patterns.
     """
@@ -176,9 +151,9 @@ class BinarySimilaritySearch:
                     pe = pefile.PE(binary_path)
 
                     # Extract basic PE information
-                    features["machine"] = pe.FILE_HEADER.Machine
-                    features["timestamp"] = pe.FILE_HEADER.TimeDateStamp
-                    features["characteristics"] = pe.FILE_HEADER.Characteristics
+                    features["machine"] = getattr(pe.FILE_HEADER, 'Machine', 0)
+                    features["timestamp"] = getattr(pe.FILE_HEADER, 'TimeDateStamp', 0)
+                    features["characteristics"] = getattr(pe.FILE_HEADER, 'Characteristics', 0)
 
                     # Extract section information
                     for section in pe.sections:
@@ -222,32 +197,9 @@ class BinarySimilaritySearch:
             return features
 
     def _extract_strings(self, data: bytes, min_length: int = 4) -> List[str]:
-        """
-        Extract ASCII strings from binary data.
-        
-        Args:
-            data: Binary data
-            min_length: Minimum string length
-            
-        Returns:
-            List of extracted strings
-        """
-        strings = []
-        current_string = ""
-
-        for byte in data:
-            if 32 <= byte <= 126:  # Printable ASCII
-                current_string += chr(byte)
-            else:
-                if len(current_string) >= min_length:
-                    strings.append(current_string)
-                current_string = ""
-
-        # Add final string if it meets length requirement
-        if len(current_string) >= min_length:
-            strings.append(current_string)
-
-        return strings
+        """Extract ASCII strings from binary data using common utility."""
+        from ...utils.string_utils import extract_ascii_strings
+        return extract_ascii_strings(data, min_length)
 
     def search_similar_binaries(self, binary_path: str, threshold: float = 0.7) -> List[Dict[str, Any]]:
         """
@@ -428,7 +380,7 @@ class BinarySimilaritySearch:
     def get_database_stats(self) -> Dict[str, Any]:
         """
         Get statistics about the binary database.
-        
+
         Returns:
             Dictionary with database statistics
         """
@@ -445,11 +397,11 @@ class BinarySimilaritySearch:
             for binary in self.database["binaries"]:
                 # Count patterns
                 stats["total_patterns"] += len(binary.get("cracking_patterns", []))
-                
+
                 # Calculate average file size
                 file_size = binary.get("file_size", 0)
                 total_size += file_size
-                
+
                 # Collect unique imports and exports
                 features = binary.get("features", {})
                 stats["unique_imports"].update(features.get("imports", []))
@@ -464,10 +416,10 @@ class BinarySimilaritySearch:
     def remove_binary(self, binary_path: str) -> bool:
         """
         Remove a binary from the database.
-        
+
         Args:
             binary_path: Path of the binary to remove
-            
+
         Returns:
             True if removed successfully, False otherwise
         """
@@ -476,7 +428,7 @@ class BinarySimilaritySearch:
             self.database["binaries"] = [
                 b for b in self.database["binaries"] if b["path"] != binary_path
             ]
-            
+
             if len(self.database["binaries"]) < original_count:
                 self._save_database()
                 self.logger.info(f"Removed binary {binary_path} from database")
@@ -484,7 +436,7 @@ class BinarySimilaritySearch:
             else:
                 self.logger.warning(f"Binary {binary_path} not found in database")
                 return False
-                
+
         except Exception as e:
             self.logger.error(f"Error removing binary {binary_path}: {e}")
             return False
@@ -493,10 +445,10 @@ class BinarySimilaritySearch:
 def create_similarity_search(database_path: str = "binary_database.json") -> BinarySimilaritySearch:
     """
     Factory function to create a BinarySimilaritySearch instance.
-    
+
     Args:
         database_path: Path to the database file
-        
+
     Returns:
         Configured BinarySimilaritySearch instance
     """

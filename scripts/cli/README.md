@@ -36,8 +36,6 @@ scripts/cli/
 
 ## Complete Feature Coverage
 
-### ✅ 78/78 Features Available (100% Coverage)
-
 The CLI provides access to every single Intellicrack feature through command-line arguments:
 
 #### **Core Analysis Capabilities (15 features)**

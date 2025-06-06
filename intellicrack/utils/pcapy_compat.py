@@ -15,7 +15,7 @@ except ImportError:
 def get_packet_capture_interface():
     """
     Get a packet capture interface, preferring pypcap over pcapy.
-    
+
     Returns:
         object: Packet capture interface or None if unavailable
     """
@@ -26,16 +26,16 @@ def get_packet_capture_interface():
 def create_pcap_reader(interface="any"):
     """
     Create a packet capture reader compatible with pcapy interface.
-    
+
     Args:
         interface (str): Network interface to capture from
-        
+
     Returns:
         object: Packet capture reader or None if unavailable
     """
     if not PCAP_AVAILABLE:
         return None
-    
+
     try:
         # pypcap interface is slightly different from pcapy
         pc = pypcap_module.pcap(name=interface, promisc=True, immediate=True)

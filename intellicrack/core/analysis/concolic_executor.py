@@ -9,24 +9,25 @@ enabling thorough vulnerability discovery and license bypass techniques.
 import logging
 import re
 import traceback
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 # Optional dependencies - graceful fallback if not available
 try:
-    from manticore.native import Manticore
     from manticore.core.plugin import Plugin
+    from manticore.native import Manticore
     MANTICORE_AVAILABLE = True
 except ImportError:
     # Try to use simconcolic as a fallback
     try:
-        import sys
         import os
+        import sys
         # Add scripts directory to path
         scripts_dir = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'scripts')
         if os.path.exists(scripts_dir):
             sys.path.insert(0, scripts_dir)
-        
-        from simconcolic import BinaryAnalyzer as Manticore, Plugin
+
+        from simconcolic import BinaryAnalyzer as Manticore
+        from simconcolic import Plugin
         MANTICORE_AVAILABLE = True
         logging.getLogger(__name__).info("Using simconcolic as Manticore replacement")
     except ImportError:
@@ -113,7 +114,7 @@ class ConcolicExecutionEngine:
                 def __init__(self):
                     super().__init__()
                     self.logger = logging.getLogger(__name__)
-                    
+
                 def will_run_callback(self, *args, **kwargs):
                     """Called when path exploration is about to start."""
                     self.logger.info("Starting path exploration")
@@ -244,7 +245,7 @@ class ConcolicExecutionEngine:
                 def __init__(self):
                     super().__init__()
                     self.logger = logging.getLogger(__name__)
-                    
+
                 def will_execute_instruction_callback(self, state, pc, insn):
                     """Called before executing each instruction during emulation.
 
@@ -322,8 +323,12 @@ class ConcolicExecutionEngine:
             if not LIEF_AVAILABLE:
                 self.logger.warning("LIEF not available - cannot analyze binary functions")
                 return None
-
-            binary = lief.parse(self.binary_path)
+            
+            if hasattr(lief, 'parse'):
+                binary = lief.parse(self.binary_path)
+            else:
+                self.logger.error("lief.parse not available")
+                return None
 
             # Look for license-related functions in exports
             for func in binary.exported_functions:

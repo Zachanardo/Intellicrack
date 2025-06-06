@@ -6,21 +6,29 @@ This module provides professional PDF report generation with detailed analysis r
 including visualizations, code snippets, and recommendations.
 """
 
-import os
-import logging
-import datetime
-import traceback
-import io
 import base64
+import datetime
+import io
+import logging
+import os
 import platform
 import subprocess
-from typing import Dict, List, Any, Optional
+import traceback
+from typing import Any, Dict, List, Optional
 
 try:
-    from reportlab.lib.pagesizes import letter, A4, legal
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle, Image
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.pagesizes import A4, legal, letter
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import inch
+    from reportlab.platypus import (
+        Image,
+        PageBreak,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
     REPORTLAB_AVAILABLE = True
 except ImportError:
     REPORTLAB_AVAILABLE = False
@@ -161,7 +169,7 @@ class PDFReportGenerator:
         else:
             self.logger.error(f"Invalid section index: {section_index}")
 
-    def generate_report(self, binary_path: Optional[str] = None, analysis_results: Optional[Dict[str, Any]] = None, 
+    def generate_report(self, binary_path: Optional[str] = None, analysis_results: Optional[Dict[str, Any]] = None,
                        report_type: str = "comprehensive", output_path: Optional[str] = None) -> Optional[str]:
         """
         Generate a PDF report for the analysis results.
@@ -208,7 +216,7 @@ class PDFReportGenerator:
             self.logger.warning(f"Unknown report type: {report_type}")
             return None
 
-    def _generate_comprehensive_report(self, binary_path: Optional[str], analysis_results: Optional[Dict[str, Any]], 
+    def _generate_comprehensive_report(self, binary_path: Optional[str], analysis_results: Optional[Dict[str, Any]],
                                      output_path: Optional[str] = None) -> Optional[str]:
         """
         Generate a comprehensive PDF report.
@@ -223,7 +231,6 @@ class PDFReportGenerator:
         """
         try:
             from reportlab.lib import colors
-            from reportlab.platypus import ListItem, ListFlowable
 
             # Create filename for the report if not provided
             if not output_path:
@@ -285,7 +292,7 @@ class PDFReportGenerator:
 
             # Title
             binary_name = os.path.basename(binary_path) if binary_path else "Unknown Binary"
-            content.append(Paragraph(f"Intellicrack Analysis Report", styles['Title']))
+            content.append(Paragraph("Intellicrack Analysis Report", styles['Title']))
             content.append(Paragraph(f"Binary: {binary_name}", styles['Normal']))
             content.append(Paragraph(f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
             content.append(Spacer(1, 12))
@@ -393,7 +400,7 @@ class PDFReportGenerator:
             self.logger.error(traceback.format_exc())
             return None
 
-    def _generate_vulnerability_report(self, binary_path: Optional[str], analysis_results: Optional[Dict[str, Any]], 
+    def _generate_vulnerability_report(self, binary_path: Optional[str], analysis_results: Optional[Dict[str, Any]],
                                      output_path: Optional[str] = None) -> Optional[str]:
         """
         Generate a vulnerability-focused PDF report.
@@ -411,7 +418,7 @@ class PDFReportGenerator:
         self.logger.info("Vulnerability report generation not fully implemented")
         return self._generate_comprehensive_report(binary_path, analysis_results, output_path)
 
-    def _generate_license_report(self, binary_path: Optional[str], analysis_results: Optional[Dict[str, Any]], 
+    def _generate_license_report(self, binary_path: Optional[str], analysis_results: Optional[Dict[str, Any]],
                                 output_path: Optional[str] = None) -> Optional[str]:
         """
         Generate a license-focused PDF report.
@@ -443,8 +450,8 @@ class PDFReportGenerator:
             True if successful, False otherwise
         """
         try:
-            from reportlab.graphics.shapes import Drawing
             from reportlab.graphics.charts.barcharts import VerticalBarChart
+            from reportlab.graphics.shapes import Drawing
             from reportlab.lib.units import inch
             from reportlab.platypus import Spacer
 
@@ -511,11 +518,16 @@ class PDFReportGenerator:
             chart.valueAxis.valueMax = max(max_size * 1.2, 8)  # Add 20% headroom
             chart.valueAxis.valueStep = round(max_size / 5, 1) if max_size > 5 else 1
 
-            # Add legend
-            chart.legend.alignment = 'right'
-            chart.legend.columnMaximum = 1
-            chart.legend.fontName = 'Helvetica'
-            chart.legend.fontSize = 8
+            # Add legend if supported
+            if hasattr(chart, 'legend'):
+                try:
+                    if chart.legend:
+                        chart.legend.alignment = 'right'
+                        chart.legend.columnMaximum = 1
+                        chart.legend.fontName = 'Helvetica'
+                        chart.legend.fontSize = 8
+                except AttributeError:
+                    pass
             chart.categoryAxis.labels.angle = 30
             chart.categoryAxis.labels.fontSize = 8
 
@@ -540,7 +552,7 @@ class PDFReportGenerator:
             self.logger.error(traceback.format_exc())
             return False
 
-    def generate_html_report(self, binary_path: str, analysis_results: Dict[str, Any], 
+    def generate_html_report(self, binary_path: str, analysis_results: Dict[str, Any],
                            report_type: str = "comprehensive") -> Optional[str]:
         """
         Generate an HTML report for the analysis results.
@@ -560,28 +572,10 @@ class PDFReportGenerator:
             report_filename = f"report_{binary_name}_{timestamp}.html"
             report_path = os.path.join(self.output_dir, report_filename)
 
-            # Start building HTML content
-            html_content = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Intellicrack Analysis Report - {binary_name}</title>
-                <style>
-                    body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                    h1 {{ color: #2c3e50; }}
-                    h2 {{ color: #3498db; border-bottom: 1px solid #3498db; padding-bottom: 5px; }}
-                    h3 {{ color: #2980b9; }}
-                    table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }}
-                    th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-                    th {{ background-color: #3498db; color: white; }}
-                    tr:nth-child(even) {{ background-color: #f2f2f2; }}
-                    .vulnerability {{ color: #e74c3c; }}
-                    .protection {{ color: #27ae60; }}
-                    .license {{ color: #f39c12; }}
-                    .code {{ font-family: monospace; background-color: #f8f8f8; padding: 10px; border: 1px solid #ddd; }}
-                </style>
-            </head>
-            <body>
+            from ...utils.html_templates import get_report_html_template, close_html
+            
+            # Start building HTML content using common template
+            html_content = get_report_html_template(binary_name) + f"""
                 <h1>Intellicrack Analysis Report</h1>
                 <p><strong>Binary:</strong> {binary_name}</p>
                 <p><strong>Date:</strong> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
@@ -629,10 +623,7 @@ class PDFReportGenerator:
                 plt.close()
 
             # Close HTML
-            html_content += """
-            </body>
-            </html>
-            """
+            html_content += close_html()
 
             # Write HTML to file
             with open(report_path, 'w', encoding='utf-8') as f:

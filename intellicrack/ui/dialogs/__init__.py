@@ -45,11 +45,10 @@ try:
 except ImportError as e:
     logger.warning(f"Failed to import model_finetuning_dialog: {e}")
 
-# Temporarily disabled due to indentation issues
-# try:
-#     from .plugin_manager_dialog import *
-# except ImportError as e:
-#     logger.warning(f"Failed to import plugin_manager_dialog: {e}")
+try:
+    from .plugin_manager_dialog import *
+except ImportError as e:
+    logger.warning(f"Failed to import plugin_manager_dialog: {e}")
 
 try:
     from .report_manager_dialog import *
@@ -79,40 +78,45 @@ except ImportError as e:
 # Define package exports
 __all__ = [
     # From distributed_config_dialog
-    'DistributedConfigDialog',
-    'configure_distributed_processing',
-    
+    'DistributedProcessingConfigDialog',
+    'create_distributed_config_dialog',
+
     # From guided_workflow_wizard
     'GuidedWorkflowWizard',
-    'create_workflow_wizard',
-    
+    'create_guided_workflow_wizard',
+
     # From model_finetuning_dialog
     'ModelFinetuningDialog',
-    'open_model_finetuning',
-    
+    'TrainingConfig',
+    'AugmentationConfig',
+    'TrainingThread',
+    'create_model_finetuning_dialog',
+
     # From plugin_manager_dialog
     'PluginManagerDialog',
-    'manage_plugins',
-    
+    'PluginInstallThread',
+
     # From report_manager_dialog
     'ReportManagerDialog',
-    'manage_reports',
-    
+    'ReportGenerationThread',
+
     # From similarity_search_dialog
-    'SimilaritySearchDialog',
-    'search_similar_binaries',
-    
+    'BinarySimilaritySearchDialog',
+    'create_similarity_search_dialog',
+
     # From splash_screen
     'SplashScreen',
-    'show_splash_screen',
-    
+    'create_progress_splash_screen',
+    'IntellicrackApp',
+
     # From text_editor_dialog
     'TextEditorDialog',
-    'open_text_editor',
-    
+    'PythonSyntaxHighlighter',
+    'FindReplaceDialog',
+
     # From visual_patch_editor
-    'VisualPatchEditor',
-    'open_patch_editor',
+    'VisualPatchEditorDialog',
+    'create_visual_patch_editor',
 ]
 
 # Package metadata

@@ -18,16 +18,11 @@ Modules:
     reporting: Report generation and visualization
 """
 
-from . import analysis
-from . import network
-from . import patching
-from . import processing
-from . import protection_bypass
-from . import reporting
+from . import analysis, network, patching, processing, protection_bypass, reporting
 
 __all__ = [
     'analysis',
-    'network', 
+    'network',
     'patching',
     'processing',
     'protection_bypass',

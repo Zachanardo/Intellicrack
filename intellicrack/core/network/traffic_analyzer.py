@@ -17,7 +17,7 @@ import struct
 import threading
 import time
 import traceback
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, Optional
 
 # Optional network capture dependencies - graceful fallback if not available
 try:
@@ -174,8 +174,8 @@ class NetworkTrafficAnalyzer:
         except Exception as e:
             self.logger.error(f"Packet capture failed: {str(e)}")
 
-    def _capture_with_socket(self, interface: Optional[str] = None, capture_filter: Optional[str] = None, 
-                           output_file: Optional[str] = None, packet_count: Optional[int] = None, 
+    def _capture_with_socket(self, interface: Optional[str] = None, capture_filter: Optional[str] = None,
+                           output_file: Optional[str] = None, packet_count: Optional[int] = None,
                            timeout: Optional[int] = None) -> Dict[str, Any]:
         """
         Capture packets using Python's native socket library.
@@ -213,7 +213,11 @@ class NetworkTrafficAnalyzer:
                     # Enable promiscuous mode
                     s.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
                 else:  # Linux, macOS, etc.
-                    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
+                    if hasattr(socket, 'AF_PACKET'):
+                        s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
+                    else:
+                        # Fallback for systems without AF_PACKET
+                        s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
                     if interface:
                         try:
                             s.bind((interface, 0))
@@ -368,8 +372,8 @@ class NetworkTrafficAnalyzer:
             # Just log the error and continue
             self.logger.error(f"Error processing packet: {str(e)}")
 
-    def _capture_with_pyshark(self, interface: Optional[str] = None, capture_filter: Optional[str] = None, 
-                            output_file: Optional[str] = None, packet_count: Optional[int] = None, 
+    def _capture_with_pyshark(self, interface: Optional[str] = None, capture_filter: Optional[str] = None,
+                            output_file: Optional[str] = None, packet_count: Optional[int] = None,
                             timeout: Optional[int] = None):
         """
         Capture packets using pyshark with enhanced functionality for license traffic analysis.
@@ -807,7 +811,7 @@ class NetworkTrafficAnalyzer:
             plt.legend(loc='upper center', bbox_to_anchor=(0.5, 0.05), ncol=3)
 
             # Save figure
-            plt.savefig(f"{self.config['visualization_dir']}/license_connections_{timestamp}.png", 
+            plt.savefig(f"{self.config['visualization_dir']}/license_connections_{timestamp}.png",
                        dpi=300, bbox_inches='tight')
             plt.close()
 
@@ -839,26 +843,10 @@ class NetworkTrafficAnalyzer:
                 timestamp = time.strftime('%Y%m%d_%H%M%S')
                 filename = f"{self.config['visualization_dir']}/license_report_{timestamp}.html"
 
-            # Create HTML report
-            html = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>License Traffic Analysis Report</title>
-                <style>
-                    body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                    h1, h2, h3 {{ color: #2c3e50; }}
-                    table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }}
-                    th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-                    th {{ background-color: #f2f2f2; }}
-                    tr:nth-child(even) {{ background-color: #f9f9f9; }}
-                    .license {{ color: #e74c3c; }}
-                    .summary {{ background-color: #eee; padding: 10px; border-radius: 5px; }}
-                    .visualization {{ text-align: center; margin: 20px 0; }}
-                    .visualization img {{ max-width: 100%; border: 1px solid #ddd; }}
-                </style>
-            </head>
-            <body>
+            from ...utils.html_templates import get_traffic_html_template, close_html
+            
+            # Create HTML report using common template
+            html = get_traffic_html_template() + f"""
                 <h1>License Traffic Analysis Report</h1>
                 <p>Generated on {time.strftime('%Y-%m-%d %H:%M:%S')}</p>
 
@@ -927,10 +915,7 @@ class NetworkTrafficAnalyzer:
             else:
                 html += "<p>No visualizations available.</p>"
 
-            html += """
-            </body>
-            </html>
-            """
+            html += close_html()
 
             # Write HTML file
             with open(filename, 'w') as f:

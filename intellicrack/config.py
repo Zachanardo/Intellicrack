@@ -9,23 +9,33 @@ import json
 import logging
 import os
 import sys
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 # Configure module logger
 logger = logging.getLogger(__name__)
+
+# Import path discovery
+try:
+    from .utils.path_discovery import find_tool, get_system_path
+except ImportError:
+    # Fallback if path_discovery not available yet
+    def find_tool(tool_name, required_executables=None):
+        return None
+    def get_system_path(path_type):
+        return None
 
 # Default configuration structure
 DEFAULT_CONFIG = {
     # Paths and Directories
     "log_dir": os.path.join(os.path.expanduser("~"), "intellicrack", "logs"),
-    "ghidra_path": r"C:\Program Files\Ghidra\ghidraRun.bat",
-    "radare2_path": os.path.join(os.path.dirname(__file__), "..", "..", "radare2", "radare2-5.9.8-w64", "bin", "radare2.exe") if os.name == 'nt' else "/usr/bin/r2",  # Local radare2 on Windows, system on Linux
-    "frida_path": "frida",  # Usually in PATH after pip install
+    "ghidra_path": None,  # Will be discovered dynamically
+    "radare2_path": None,  # Will be discovered dynamically
+    "frida_path": None,  # Will be discovered dynamically
     "output_dir": os.path.join(os.path.expanduser("~"), "intellicrack", "output"),
     "temp_dir": os.path.join(os.path.expanduser("~"), "intellicrack", "temp"),
     "plugin_directory": "plugins",
     "download_directory": "models/downloads",
-    
+
     # Analysis Settings
     "analysis": {
         "default_timeout": 300,  # 5 minutes
@@ -40,7 +50,7 @@ DEFAULT_CONFIG = {
         "cache_results": True,
         "cache_ttl": 3600  # 1 hour
     },
-    
+
     # Patching Settings
     "patching": {
         "enable_memory_patching": True,
@@ -51,7 +61,7 @@ DEFAULT_CONFIG = {
         "generate_launcher": True,
         "launcher_template": "default"
     },
-    
+
     # Network Settings
     "network": {
         "enable_ssl_interception": True,
@@ -61,7 +71,7 @@ DEFAULT_CONFIG = {
         "save_captures": True,
         "max_capture_size": 50 * 1024 * 1024  # 50 MB
     },
-    
+
     # UI Settings
     "ui": {
         "theme": "default",
@@ -73,7 +83,7 @@ DEFAULT_CONFIG = {
         "font_size": 10,
         "hex_columns": 16
     },
-    
+
     # Logging Settings
     "logging": {
         "level": "INFO",
@@ -83,7 +93,7 @@ DEFAULT_CONFIG = {
         "log_rotation": 5,
         "verbose_logging": False
     },
-    
+
     # Security Settings
     "security": {
         "verify_signatures": True,
@@ -92,7 +102,7 @@ DEFAULT_CONFIG = {
         "block_suspicious": True,
         "quarantine_malware": True
     },
-    
+
     # Performance Settings
     "performance": {
         "max_memory_usage": 2048,  # MB
@@ -101,7 +111,7 @@ DEFAULT_CONFIG = {
         "chunk_size": 4096,  # bytes
         "enable_multiprocessing": True
     },
-    
+
     # Runtime Settings
     "runtime": {
         "max_runtime_monitoring": 30000,  # 30 seconds
@@ -109,7 +119,7 @@ DEFAULT_CONFIG = {
         "hook_delay": 100,  # ms
         "monitor_child_processes": True
     },
-    
+
     # Plugin Settings
     "plugins": {
         "default_plugins": ["HWID Spoofer", "Anti-Debugger"],
@@ -117,7 +127,7 @@ DEFAULT_CONFIG = {
         "check_updates": True,
         "allow_third_party": True
     },
-    
+
     # General Settings
     "general": {
         "first_run_completed": False,
@@ -127,7 +137,7 @@ DEFAULT_CONFIG = {
         "send_analytics": False,
         "language": "en"
     },
-    
+
     # AI/ML Settings
     "ai": {
         "context_size": 8192,
@@ -137,7 +147,7 @@ DEFAULT_CONFIG = {
         "enable_ai_suggestions": True,
         "cache_responses": True
     },
-    
+
     # ML Model Settings
     "ml": {
         "vulnerability_model_path": os.path.join(os.path.dirname(__file__), "..", "..", "models", "ml_vulnerability_model.joblib"),
@@ -229,32 +239,32 @@ DEFAULT_CONFIG = {
 class ConfigManager:
     """
     Configuration manager for Intellicrack application.
-    
+
     Handles loading, saving, and management of configuration settings
     with JSON persistence and default fallbacks.
     """
-    
+
     def __init__(self, config_path: str = "intellicrack_config.json"):
         """
         Initialize configuration manager.
-        
+
         Args:
             config_path: Path to the configuration file
         """
         self.config_path = config_path
         self.config: Dict[str, Any] = {}
         self.load_config()
-    
+
     def load_config(self) -> Dict[str, Any]:
         """
         Load configuration from JSON file with fallback to defaults.
-        
+
         Returns:
             Dictionary containing configuration settings
         """
         logger.debug("Loading configuration...")
         logger.info(f"Looking for config file at: {os.path.abspath(self.config_path)}")
-        
+
         if os.path.exists(self.config_path):
             logger.info("Config file exists, loading...")
             try:
@@ -266,7 +276,7 @@ class ConfigManager:
                 if "ghidra_path" in loaded_config:
                     ghidra_path = loaded_config["ghidra_path"]
                     logger.info(f"Checking Ghidra path from config: {ghidra_path}")
-                    
+
                     # Check if path exists (handle both Windows and WSL contexts)
                     path_exists = False
                     if os.path.exists(ghidra_path):
@@ -277,7 +287,7 @@ class ConfigManager:
                         if os.path.exists(wsl_path):
                             path_exists = True
                             loaded_config["ghidra_path"] = wsl_path  # Update to WSL path
-                    
+
                     if path_exists:
                         logger.info(f"✓ Ghidra path exists at {ghidra_path}")
                     else:
@@ -295,7 +305,7 @@ class ConfigManager:
                 self.config = loaded_config
                 logger.debug("Configuration loaded successfully")
                 return self.config
-                
+
             except Exception as e:
                 logger.error(f"Error loading config: {e}")
                 logger.debug("Using default configuration due to error")
@@ -306,11 +316,11 @@ class ConfigManager:
             self.config = DEFAULT_CONFIG.copy()
             self.save_config()
             return self.config
-    
+
     def save_config(self) -> bool:
         """
         Save current configuration to JSON file.
-        
+
         Returns:
             True if saved successfully, False otherwise
         """
@@ -322,80 +332,121 @@ class ConfigManager:
         except Exception as e:
             logger.error(f"Error saving config: {e}")
             return False
-    
+
     def get(self, key: str, default: Any = None) -> Any:
         """
         Get a configuration value.
-        
+
         Args:
             key: Configuration key
             default: Default value if key not found
-            
+
         Returns:
             Configuration value or default
         """
         return self.config.get(key, default)
-    
+
     def set(self, key: str, value: Any) -> None:
         """
         Set a configuration value.
-        
+
         Args:
             key: Configuration key
             value: Value to set
         """
         self.config[key] = value
         logger.debug(f"Set config key '{key}' to '{value}'")
-    
+
     def update(self, updates: Dict[str, Any]) -> None:
         """
         Update multiple configuration values.
-        
+
         Args:
             updates: Dictionary of key-value pairs to update
         """
         self.config.update(updates)
         logger.debug(f"Updated config with {len(updates)} values")
-    
+
     def get_model_repositories(self) -> Dict[str, Any]:
         """
         Get model repository configuration.
-        
+
         Returns:
             Dictionary of model repository settings
         """
         return self.config.get("model_repositories", {})
-    
+
     def is_repository_enabled(self, repo_name: str) -> bool:
         """
         Check if a model repository is enabled.
-        
+
         Args:
             repo_name: Name of the repository
-            
+
         Returns:
             True if repository is enabled, False otherwise
         """
         repos = self.get_model_repositories()
         repo = repos.get(repo_name, {})
         return repo.get("enabled", False)
-    
+
     def get_ghidra_path(self) -> Optional[str]:
         """
         Get the Ghidra installation path.
-        
+
         Returns:
             Path to Ghidra or None if not configured
         """
         path = self.get("ghidra_path")
         if path and os.path.exists(path):
             return path
+        
+        # Try dynamic discovery
+        try:
+            from .utils.path_discovery import find_tool
+            discovered_path = find_tool("ghidra")
+            if discovered_path:
+                self.config["ghidra_path"] = discovered_path
+                self.save_config()
+                return discovered_path
+        except ImportError:
+            logger.warning("Path discovery not available")
+        
         return None
     
+    def get_tool_path(self, tool_name: str) -> Optional[str]:
+        """
+        Get path for any tool with dynamic discovery.
+        
+        Args:
+            tool_name: Name of the tool (e.g., 'ghidra', 'radare2', 'frida')
+            
+        Returns:
+            Path to tool or None if not found
+        """
+        # Check config first
+        config_key = f"{tool_name}_path"
+        path = self.get(config_key)
+        if path and os.path.exists(path):
+            return path
+        
+        # Try dynamic discovery
+        try:
+            from .utils.path_discovery import find_tool
+            discovered_path = find_tool(tool_name)
+            if discovered_path:
+                self.config[config_key] = discovered_path
+                self.save_config()
+                return discovered_path
+        except ImportError:
+            logger.warning(f"Path discovery not available for {tool_name}")
+        
+        return None
+
     def validate_config(self) -> bool:
         """
         Validate the current configuration.
-        
+
         Returns:
             True if configuration is valid, False otherwise
         """
@@ -406,16 +457,16 @@ class ConfigManager:
                 if key not in self.config:
                     logger.error(f"Missing required configuration key: {key}")
                     return False
-            
+
             # Validate model repositories structure
             repos = self.get_model_repositories()
             if not isinstance(repos, dict):
                 logger.error("model_repositories must be a dictionary")
                 return False
-            
+
             logger.info("Configuration validation passed")
             return True
-            
+
         except Exception as e:
             logger.error(f"Configuration validation error: {e}")
             return False
@@ -428,10 +479,10 @@ _config_manager: Optional[ConfigManager] = None
 def load_config(config_path: str = "intellicrack_config.json") -> Dict[str, Any]:
     """
     Load configuration using the global config manager.
-    
+
     Args:
         config_path: Path to configuration file
-        
+
     Returns:
         Configuration dictionary
     """
@@ -444,7 +495,7 @@ def load_config(config_path: str = "intellicrack_config.json") -> Dict[str, Any]
 def get_config() -> ConfigManager:
     """
     Get the global configuration manager instance.
-    
+
     Returns:
         ConfigManager instance
     """
@@ -457,11 +508,10 @@ def get_config() -> ConfigManager:
 def save_config() -> bool:
     """
     Save the global configuration.
-    
+
     Returns:
         True if saved successfully, False otherwise
     """
-    global _config_manager
     if _config_manager is not None:
         return _config_manager.save_config()
     return False
@@ -473,7 +523,7 @@ CONFIG = load_config()
 # Export main components
 __all__ = [
     'ConfigManager',
-    'load_config', 
+    'load_config',
     'get_config',
     'save_config',
     'CONFIG',

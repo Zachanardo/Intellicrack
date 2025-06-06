@@ -8,18 +8,18 @@ for various license verification protocols including FlexLM, HASP, Adobe, and ot
 
 import logging
 import threading
-from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
 
 
 class LicenseProtocolHandler(ABC):
     """
     Base class for license protocol handlers.
-    
+
     This abstract base class defines the interface for implementing protocol-specific
     handlers for various license verification systems. Subclasses must implement
     the abstract methods to provide protocol-specific functionality.
-    
+
     Features:
         - Proxy server management for intercepting license requests
         - Thread-safe operation with daemon threads
@@ -32,7 +32,7 @@ class LicenseProtocolHandler(ABC):
         Initialize the base LicenseProtocolHandler.
 
         Sets up the running state, proxy thread, and logger for protocol handling.
-        
+
         Args:
             config: Optional configuration dictionary for the protocol handler
         """
@@ -40,18 +40,18 @@ class LicenseProtocolHandler(ABC):
         self.running = False
         self.proxy_thread: Optional[threading.Thread] = None
         self.logger = logging.getLogger(__name__)
-        
+
         # Initialize protocol-specific configuration
         self.port = self.config.get('port', 8080)
         self.host = self.config.get('host', 'localhost')
         self.timeout = self.config.get('timeout', 30)
-        
+
         self.logger.info(f"Initialized {self.__class__.__name__} protocol handler")
 
     def clear_data(self) -> None:
         """
         Clear any captured data.
-        
+
         This method should be overridden by subclasses to clear protocol-specific
         captured data such as requests, responses, or cached information.
         """
@@ -61,10 +61,10 @@ class LicenseProtocolHandler(ABC):
     def start_proxy(self, port: int = 8080) -> bool:
         """
         Start the proxy server for intercepting license requests.
-        
+
         Args:
             port: Port number to bind the proxy server to
-            
+
         Returns:
             True if proxy started successfully, False if already running
         """
@@ -93,7 +93,7 @@ class LicenseProtocolHandler(ABC):
     def stop_proxy(self) -> bool:
         """
         Stop the proxy server.
-        
+
         Returns:
             True if proxy stopped successfully, False if not running
         """
@@ -102,7 +102,7 @@ class LicenseProtocolHandler(ABC):
             return False
 
         self.running = False
-        
+
         if self.proxy_thread and self.proxy_thread.is_alive():
             # Wait for thread to complete
             self.proxy_thread.join(timeout=5.0)
@@ -115,7 +115,7 @@ class LicenseProtocolHandler(ABC):
     def is_running(self) -> bool:
         """
         Check if the proxy server is currently running.
-        
+
         Returns:
             True if proxy is running, False otherwise
         """
@@ -124,7 +124,7 @@ class LicenseProtocolHandler(ABC):
     def get_status(self) -> Dict[str, Any]:
         """
         Get current status of the protocol handler.
-        
+
         Returns:
             Dictionary containing handler status information
         """
@@ -140,10 +140,10 @@ class LicenseProtocolHandler(ABC):
     def _run_proxy(self, port: int) -> None:
         """
         Run the proxy server - must be implemented by subclasses.
-        
+
         This method contains the main proxy server loop and should handle
         incoming connections according to the specific protocol requirements.
-        
+
         Args:
             port: Port number to bind the proxy server to
         """
@@ -153,10 +153,10 @@ class LicenseProtocolHandler(ABC):
     def handle_connection(self, socket: Any, initial_data: bytes) -> None:
         """
         Handle a client connection with the specific protocol.
-        
+
         This method should process incoming connections and implement
         protocol-specific communication handling.
-        
+
         Args:
             socket: Client socket connection
             initial_data: Initial data received from the client
@@ -167,13 +167,13 @@ class LicenseProtocolHandler(ABC):
     def generate_response(self, request_data: bytes) -> bytes:
         """
         Generate a protocol-specific response.
-        
+
         This method should analyze the request data and generate an appropriate
         response according to the specific license protocol requirements.
-        
+
         Args:
             request_data: Raw request data from the client
-            
+
         Returns:
             Protocol-specific response data
         """
@@ -182,13 +182,13 @@ class LicenseProtocolHandler(ABC):
     def log_request(self, request_data: bytes, source: str = "unknown") -> None:
         """
         Log incoming request data for analysis.
-        
+
         Args:
             request_data: Raw request data to log
             source: Source identifier for the request
         """
         self.logger.debug(f"Request from {source}: {len(request_data)} bytes")
-        
+
         # Log hex dump for debugging (limit to first 256 bytes)
         if self.logger.isEnabledFor(logging.DEBUG):
             hex_data = request_data[:256].hex()
@@ -197,13 +197,13 @@ class LicenseProtocolHandler(ABC):
     def log_response(self, response_data: bytes, destination: str = "unknown") -> None:
         """
         Log outgoing response data for analysis.
-        
+
         Args:
             response_data: Raw response data to log
             destination: Destination identifier for the response
         """
         self.logger.debug(f"Response to {destination}: {len(response_data)} bytes")
-        
+
         # Log hex dump for debugging (limit to first 256 bytes)
         if self.logger.isEnabledFor(logging.DEBUG):
             hex_data = response_data[:256].hex()
@@ -213,7 +213,7 @@ class LicenseProtocolHandler(ABC):
 class FlexLMProtocolHandler(LicenseProtocolHandler):
     """
     FlexLM license protocol handler implementation.
-    
+
     Handles FlexNet (FlexLM) license server protocol communication
     for intercepting and emulating FlexLM license verification.
     """
@@ -226,13 +226,13 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
     def _run_proxy(self, port: int) -> None:
         """
         Run FlexLM proxy server.
-        
+
         Args:
             port: Port to bind the proxy server to
         """
         # FlexLM-specific proxy implementation would go here
         self.logger.info(f"FlexLM proxy started on port {port}")
-        
+
         # Placeholder implementation
         while self.running:
             threading.Event().wait(1.0)  # Simple wait loop
@@ -240,16 +240,16 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
     def handle_connection(self, socket: Any, initial_data: bytes) -> None:
         """
         Handle FlexLM client connection.
-        
+
         Args:
             socket: Client socket
             initial_data: Initial request data
         """
         self.log_request(initial_data, "FlexLM client")
-        
+
         # Generate FlexLM response
         response = self.generate_response(initial_data)
-        
+
         try:
             socket.send(response)
             self.log_response(response, "FlexLM client")
@@ -259,10 +259,10 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
     def generate_response(self, request_data: bytes) -> bytes:
         """
         Generate FlexLM protocol response.
-        
+
         Args:
             request_data: FlexLM request data
-            
+
         Returns:
             FlexLM response data
         """
@@ -275,7 +275,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
 class HASPProtocolHandler(LicenseProtocolHandler):
     """
     HASP/Sentinel license protocol handler implementation.
-    
+
     Handles HASP (Hardware Against Software Piracy) / Sentinel
     license verification protocol communication.
     """
@@ -288,12 +288,12 @@ class HASPProtocolHandler(LicenseProtocolHandler):
     def _run_proxy(self, port: int) -> None:
         """
         Run HASP proxy server.
-        
+
         Args:
             port: Port to bind the proxy server to
         """
         self.logger.info(f"HASP proxy started on port {port}")
-        
+
         # Placeholder implementation
         while self.running:
             threading.Event().wait(1.0)  # Simple wait loop
@@ -301,15 +301,15 @@ class HASPProtocolHandler(LicenseProtocolHandler):
     def handle_connection(self, socket: Any, initial_data: bytes) -> None:
         """
         Handle HASP client connection.
-        
+
         Args:
             socket: Client socket
             initial_data: Initial request data
         """
         self.log_request(initial_data, "HASP client")
-        
+
         response = self.generate_response(initial_data)
-        
+
         try:
             socket.send(response)
             self.log_response(response, "HASP client")
@@ -319,10 +319,10 @@ class HASPProtocolHandler(LicenseProtocolHandler):
     def generate_response(self, request_data: bytes) -> bytes:
         """
         Generate HASP protocol response.
-        
+
         Args:
             request_data: HASP request data
-            
+
         Returns:
             HASP response data
         """

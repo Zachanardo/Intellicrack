@@ -9,11 +9,10 @@ Author: Intellicrack Team
 Version: 2.0.0
 """
 
-import logging
 import subprocess
 import time
-from typing import Dict, Any, Optional, List, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 try:
     import frida
@@ -148,7 +147,7 @@ class AdvancedDynamicAnalyzer:
             # Create comprehensive interceptor script
             frida_script = '''
             console.log("[Frida] Runtime analysis started");
-            
+
             // Global data collection
             var interceptedCalls = [];
             var stringReferences = [];
@@ -157,7 +156,7 @@ class AdvancedDynamicAnalyzer:
             var registryActivity = [];
             var cryptoActivity = [];
             var timingChecks = [];
-            
+
             // Helper function to read string from memory
             function readString(address) {
                 try {
@@ -166,9 +165,9 @@ class AdvancedDynamicAnalyzer:
                     return "<unreadable>";
                 }
             }
-            
+
             // Hook common Windows API functions
-            
+
             // File operations
             const CreateFileW = Module.findExportByName('kernel32.dll', 'CreateFileW');
             if (CreateFileW) {
@@ -178,7 +177,7 @@ class AdvancedDynamicAnalyzer:
                         const access = args[1].toInt32();
                         const shareMode = args[2].toInt32();
                         const creation = args[4].toInt32();
-                        
+
                         fileActivity.push({
                             function: 'CreateFileW',
                             filename: filename,
@@ -187,7 +186,7 @@ class AdvancedDynamicAnalyzer:
                             creation: creation,
                             timestamp: Date.now()
                         });
-                        
+
                         send({
                             type: 'file_access',
                             data: {
@@ -202,7 +201,7 @@ class AdvancedDynamicAnalyzer:
                     }
                 });
             }
-            
+
             // Registry operations
             const RegOpenKeyExW = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
             if (RegOpenKeyExW) {
@@ -210,14 +209,14 @@ class AdvancedDynamicAnalyzer:
                     onEnter: function(args) {
                         const keyName = args[1].readUtf16String();
                         const access = args[3].toInt32();
-                        
+
                         registryActivity.push({
                             function: 'RegOpenKeyExW',
                             keyName: keyName,
                             access: access,
                             timestamp: Date.now()
                         });
-                        
+
                         send({
                             type: 'registry_access',
                             data: {
@@ -228,7 +227,7 @@ class AdvancedDynamicAnalyzer:
                     }
                 });
             }
-            
+
             // Network operations
             const connect = Module.findExportByName('ws2_32.dll', 'connect');
             if (connect) {
@@ -236,7 +235,7 @@ class AdvancedDynamicAnalyzer:
                     onEnter: function(args) {
                         const sockaddr = args[1];
                         const addrFamily = sockaddr.readU16();
-                        
+
                         if (addrFamily === 2) { // AF_INET
                             const port = (sockaddr.add(2).readU8() << 8) | sockaddr.add(3).readU8();
                             const ip = [
@@ -245,13 +244,13 @@ class AdvancedDynamicAnalyzer:
                                 sockaddr.add(6).readU8(),
                                 sockaddr.add(7).readU8()
                             ].join('.');
-                            
+
                             networkActivity.push({
                                 function: 'connect',
                                 address: ip + ':' + port,
                                 timestamp: Date.now()
                             });
-                            
+
                             send({
                                 type: 'network_activity',
                                 data: {
@@ -263,7 +262,7 @@ class AdvancedDynamicAnalyzer:
                     }
                 });
             }
-            
+
             // Cryptographic operations
             const CryptAcquireContextW = Module.findExportByName('advapi32.dll', 'CryptAcquireContextW');
             if (CryptAcquireContextW) {
@@ -271,14 +270,14 @@ class AdvancedDynamicAnalyzer:
                     onEnter: function(args) {
                         const containerName = args[1].isNull() ? null : args[1].readUtf16String();
                         const providerName = args[2].isNull() ? null : args[2].readUtf16String();
-                        
+
                         cryptoActivity.push({
                             function: 'CryptAcquireContextW',
                             container: containerName,
                             provider: providerName,
                             timestamp: Date.now()
                         });
-                        
+
                         send({
                             type: 'crypto_activity',
                             data: {
@@ -290,7 +289,7 @@ class AdvancedDynamicAnalyzer:
                     }
                 });
             }
-            
+
             // Time-based anti-debugging
             const GetTickCount = Module.findExportByName('kernel32.dll', 'GetTickCount');
             if (GetTickCount) {
@@ -306,7 +305,7 @@ class AdvancedDynamicAnalyzer:
                                     delta: delta,
                                     timestamp: Date.now()
                                 });
-                                
+
                                 send({
                                     type: 'timing_check',
                                     data: {
@@ -320,27 +319,27 @@ class AdvancedDynamicAnalyzer:
                     }
                 });
             }
-            
+
             // License-specific function detection with patterns
             const licensePatterns = [
                 /license/i, /activation/i, /validate/i, /serial/i,
                 /key/i, /register/i, /unlock/i, /trial/i, /expire/i,
                 /authenticate/i, /authorize/i, /verify/i
             ];
-            
+
             // Enhanced module enumeration
             Process.enumerateModules().forEach(function(module) {
                 console.log('[Frida] Scanning module: ' + module.name);
-                
+
                 // Check module exports
                 Module.enumerateExports(module.name).forEach(function(exp) {
                     const expName = exp.name.toLowerCase();
-                    
+
                     // Check against license patterns
                     for (let pattern of licensePatterns) {
                         if (pattern.test(expName)) {
                             console.log('[Frida] License-related function found: ' + exp.name + ' in ' + module.name);
-                            
+
                             try {
                                 Interceptor.attach(exp.address, {
                                     onEnter: function(args) {
@@ -350,7 +349,7 @@ class AdvancedDynamicAnalyzer:
                                             args: [],
                                             timestamp: Date.now()
                                         };
-                                        
+
                                         // Try to capture arguments (up to 4)
                                         for (let i = 0; i < 4 && i < args.length; i++) {
                                             try {
@@ -363,7 +362,7 @@ class AdvancedDynamicAnalyzer:
                                                             continue;
                                                         }
                                                     } catch (e) {}
-                                                    
+
                                                     // Try as integer
                                                     callInfo.args.push({ type: 'int', value: args[i].toInt32() });
                                                 }
@@ -371,19 +370,19 @@ class AdvancedDynamicAnalyzer:
                                                 callInfo.args.push({ type: 'unknown', value: args[i].toString() });
                                             }
                                         }
-                                        
+
                                         interceptedCalls.push(callInfo);
-                                        
+
                                         send({
                                             type: 'license_function',
                                             data: callInfo
                                         });
-                                        
+
                                         this.callInfo = callInfo;
                                     },
                                     onLeave: function(retval) {
                                         this.callInfo.returnValue = retval.toInt32();
-                                        
+
                                         send({
                                             type: 'license_function_return',
                                             data: {
@@ -400,7 +399,7 @@ class AdvancedDynamicAnalyzer:
                     }
                 });
             });
-            
+
             // String scanning for license-related content
             Process.enumerateRanges('r--').forEach(function(range) {
                 try {
@@ -408,7 +407,7 @@ class AdvancedDynamicAnalyzer:
                     if (rangeSize > 0 && rangeSize < 1024 * 1024) { // Limit to 1MB
                         const data = Memory.readByteArray(range.base, Math.min(rangeSize, 65536));
                         const str = String.fromCharCode.apply(null, new Uint8Array(data));
-                        
+
                         // Look for license-related strings
                         licensePatterns.forEach(function(pattern) {
                             const matches = str.match(new RegExp(pattern.source + '.{0,50}', 'gi'));
@@ -420,7 +419,7 @@ class AdvancedDynamicAnalyzer:
                                         context: match,
                                         timestamp: Date.now()
                                     });
-                                    
+
                                     send({
                                         type: 'string_reference',
                                         data: {
@@ -437,7 +436,7 @@ class AdvancedDynamicAnalyzer:
                     // Continue on read errors
                 }
             });
-            
+
             // Report completion
             setTimeout(function() {
                 send({
@@ -457,12 +456,12 @@ class AdvancedDynamicAnalyzer:
 
             # Message handler
             analysis_data = {}
-            
+
             def on_message(message, data):
                 if message['type'] == 'send':
                     payload_data = message['payload']
                     msg_type = payload_data.get('type')
-                    
+
                     if msg_type == 'analysis_complete':
                         analysis_data.update(payload_data['data'])
                     elif msg_type in ['file_access', 'registry_access', 'network_activity', 'license_function']:
@@ -561,16 +560,16 @@ class AdvancedDynamicAnalyzer:
 
 
 # Convenience functions for application integration
-def run_dynamic_analysis(app, binary_path: Optional[Union[str, Path]] = None, 
+def run_dynamic_analysis(app, binary_path: Optional[Union[str, Path]] = None,
                         payload: Optional[bytes] = None) -> Dict[str, Any]:
     """
     Run dynamic analysis on a binary with app integration.
-    
+
     Args:
         app: Application instance with update_output signal
         binary_path: Optional path to binary (uses app.binary_path if not provided)
         payload: Optional payload to inject
-        
+
     Returns:
         Analysis results dictionary
     """
@@ -579,74 +578,74 @@ def run_dynamic_analysis(app, binary_path: Optional[Union[str, Path]] = None,
     if not path:
         app.update_output.emit(log_message("[Dynamic] No binary selected."))
         return {'error': 'No binary selected'}
-    
+
     app.update_output.emit(log_message("[Dynamic] Starting dynamic analysis..."))
-    
+
     # Create analyzer
     analyzer = AdvancedDynamicAnalyzer(path)
-    
+
     # Run analysis
     results = analyzer.run_comprehensive_analysis(payload)
-    
+
     # Display results
     app.update_output.emit(log_message("[Dynamic] Analysis completed"))
-    
+
     # Add to analyze results
     if not hasattr(app, "analyze_results"):
         app.analyze_results = []
-    
+
     app.analyze_results.append("\n=== DYNAMIC ANALYSIS RESULTS ===")
-    
+
     # Subprocess results
     if 'subprocess_execution' in results:
         sub_result = results['subprocess_execution']
-        app.analyze_results.append(f"\nSubprocess Execution:")
+        app.analyze_results.append("\nSubprocess Execution:")
         app.analyze_results.append(f"  Success: {sub_result.get('success', False)}")
         if sub_result.get('return_code') is not None:
             app.analyze_results.append(f"  Return Code: {sub_result['return_code']}")
-    
+
     # Frida runtime analysis
     if 'frida_runtime_analysis' in results:
         frida_result = results['frida_runtime_analysis']
         if frida_result.get('success'):
             analysis_data = frida_result.get('analysis_data', {})
-            app.analyze_results.append(f"\nRuntime Analysis:")
+            app.analyze_results.append("\nRuntime Analysis:")
             app.analyze_results.append(f"  File Operations: {len(analysis_data.get('file_access', []))}")
             app.analyze_results.append(f"  Registry Operations: {len(analysis_data.get('registry_access', []))}")
             app.analyze_results.append(f"  Network Connections: {len(analysis_data.get('network_activity', []))}")
             app.analyze_results.append(f"  License Functions: {len(analysis_data.get('license_function', []))}")
-            
+
             # Show some details
             if analysis_data.get('license_function'):
                 app.analyze_results.append("\n  Detected License Functions:")
                 for func in analysis_data['license_function'][:5]:
                     app.analyze_results.append(f"    - {func.get('function', 'Unknown')} in {func.get('module', 'Unknown')}")
-    
+
     # Process behavior
     if 'process_behavior_analysis' in results:
         behavior = results['process_behavior_analysis']
         if 'error' not in behavior:
-            app.analyze_results.append(f"\nProcess Behavior:")
+            app.analyze_results.append("\nProcess Behavior:")
             app.analyze_results.append(f"  PID: {behavior.get('pid', 'Unknown')}")
             app.analyze_results.append(f"  Threads: {behavior.get('threads', 0)}")
             if behavior.get('memory_info'):
                 mem = behavior['memory_info']
                 app.analyze_results.append(f"  Memory RSS: {mem.get('rss', 0) / 1024 / 1024:.2f} MB")
-    
+
     return results
 
 
 def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> List[str]:
     """
     Monitor runtime behavior of the binary using Frida instrumentation.
-    
+
     Monitors key Windows APIs for registry, file, network operations and license-related
     behavior. Provides comprehensive runtime analysis of the target binary.
-    
+
     Args:
         binary_path: Path to the binary to monitor
         timeout: Timeout in milliseconds (default: 30000)
-        
+
     Returns:
         List[str]: Log messages from the monitoring session
     """
@@ -657,7 +656,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> List[str]
         if not FRIDA_AVAILABLE:
             logs.append("Error: Frida not available for runtime monitoring")
             return logs
-            
+
         # Create a basic Frida script to monitor key APIs
         script_content = """
         function log(message) {
@@ -775,10 +774,10 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> List[str]
 def create_dynamic_analyzer(binary_path: Union[str, Path]) -> AdvancedDynamicAnalyzer:
     """
     Factory function to create a dynamic analyzer instance.
-    
+
     Args:
         binary_path: Path to the target binary
-        
+
     Returns:
         AdvancedDynamicAnalyzer: Configured analyzer instance
     """
@@ -787,11 +786,11 @@ def create_dynamic_analyzer(binary_path: Union[str, Path]) -> AdvancedDynamicAna
 def run_quick_analysis(binary_path: Union[str, Path], payload: Optional[bytes] = None) -> Dict[str, Any]:
     """
     Run a quick comprehensive analysis on a binary.
-    
+
     Args:
         binary_path: Path to the target binary
         payload: Optional payload to inject
-        
+
     Returns:
         dict: Analysis results
     """
@@ -799,143 +798,3 @@ def run_quick_analysis(binary_path: Union[str, Path], payload: Optional[bytes] =
     return analyzer.run_comprehensive_analysis(payload)
 
 
-def deep_runtime_monitoring(binary_path, timeout=30000):
-    """Monitor runtime behavior of the binary."""
-    import subprocess
-    import time
-    
-    logs = [
-        f"Starting runtime monitoring of {binary_path} (timeout: {timeout}ms)"]
-
-    try:
-        # Try to import frida for dynamic instrumentation
-        try:
-            import frida
-            frida_available = True
-        except ImportError:
-            logger.warning("Frida not available, using basic monitoring")
-            frida_available = False
-            
-        if not frida_available:
-            # Fallback to basic process monitoring
-            logs.append("Using basic process monitoring (Frida not available)")
-            logs.append("Launching process...")
-            process = subprocess.Popen([binary_path])
-            logs.append(f"Process started with PID {process.pid}")
-            time.sleep(timeout / 1000)
-            process.terminate()
-            logs.append("Process terminated")
-            return logs
-
-        # Create a basic Frida script to monitor key APIs
-        script_content = """
-        function log(message) {
-            send(message);
-            return true;
-        }
-
-        (function() {
-            log("[Intellicrack] Runtime monitoring started");
-
-            // Registry API hooks
-            var regOpenKeyExW = Module.findExportByName("advapi32.dll", "RegOpenKeyExW");
-            if (regOpenKeyExW) {
-                Interceptor.attach(regOpenKeyExW, {
-                    onEnter: function(args) {
-                        if (args[1]) {
-                            try {
-                                var keyPath = args[1].readUtf16String();
-                                log("[Registry] Opening key: " + keyPath);
-                            } catch (e) {}
-                        }
-                    }
-                });
-            }
-
-            // File API hooks
-            var createFileW = Module.findExportByName("kernel32.dll", "CreateFileW");
-            if (createFileW) {
-                Interceptor.attach(createFileW, {
-                    onEnter: function(args) {
-                        if (args[0]) {
-                            try {
-                                var filePath = args[0].readUtf16String();
-                                log("[File] Opening file: " + filePath);
-                            } catch (e) {}
-                        }
-                    }
-                });
-            }
-
-            // Network API hooks
-            var connect = Module.findExportByName("ws2_32.dll", "connect");
-            if (connect) {
-                Interceptor.attach(connect, {
-                    onEnter: function(args) {
-                        log("[Network] Connect called");
-                    }
-                });
-            }
-
-            // License validation hooks - MessageBox for errors
-            var messageBoxW = Module.findExportByName("user32.dll", "MessageBoxW");
-            if (messageBoxW) {
-                Interceptor.attach(messageBoxW, {
-                    onEnter: function(args) {
-                        if (args[1]) {
-                            try {
-                                var message = args[1].readUtf16String();
-                                log("[UI] MessageBox: " + message);
-                            } catch (e) {}
-                        }
-                    }
-                });
-            }
-
-            log("[Intellicrack] Hooks installed");
-        })();
-        """
-
-        # Launch the process
-        logs.append("Launching process...")
-        process = subprocess.Popen([binary_path])
-        logs.append(f"Process started with PID {process.pid}")
-
-        # Attach Frida
-        logs.append("Attaching Frida...")
-        session = frida.attach(process.pid)
-
-        # Create script
-        script = session.create_script(script_content)
-
-        # Set up message handler
-        def on_message(message, data):
-            """
-            Callback for handling messages from a Frida script.
-
-            Appends payloads from 'send' messages to the logs list.
-            """
-            if message["type"] == "send":
-                logs.append(message["payload"])
-
-        script.on("message", on_message)
-        script.load()
-
-        # Monitor for specified timeout
-        logs.append(f"Monitoring for {timeout / 1000} seconds...")
-        time.sleep(timeout / 1000)
-
-        # Detach and terminate
-        logs.append("Detaching Frida...")
-        session.detach()
-
-        logs.append("Terminating process...")
-        process.terminate()
-
-        logs.append("Runtime monitoring complete")
-
-    except Exception as e:
-        logs.append(f"Error during runtime monitoring: {e}")
-        logger.error(f"Error in deep_runtime_monitoring: {e}")
-
-    return logs

@@ -27,7 +27,7 @@ class LRUCache:
     def __init__(self, max_size: int = 10):
         """
         Initialize an LRU cache.
-        
+
         Args:
             max_size: Maximum number of items to store in the cache
         """
@@ -61,7 +61,7 @@ class LRUCache:
 class ChunkManager:
     """
     Manages file chunks for efficient memory usage with large files.
-    
+
     This class handles memory-mapped access to files by loading only
     the needed chunks into memory at any given time.
     """
@@ -69,7 +69,7 @@ class ChunkManager:
     def __init__(self, file_path: str, chunk_size: int = 1024*1024, cache_size: int = 10):
         """
         Initialize a chunk manager for a file.
-        
+
         Args:
             file_path: Path to the file to manage
             chunk_size: Size of each chunk in bytes (default: 1MB)
@@ -103,10 +103,10 @@ class ChunkManager:
     def get_chunk(self, offset: int):
         """
         Get the chunk containing the specified offset.
-        
+
         Args:
             offset: Byte offset into the file
-            
+
         Returns:
             Memory-mapped chunk data
         """
@@ -140,11 +140,11 @@ class ChunkManager:
     def read_data(self, offset: int, size: int) -> bytes:
         """
         Read data from the file, potentially spanning multiple chunks.
-        
+
         Args:
             offset: Starting byte offset
             size: Number of bytes to read
-            
+
         Returns:
             Read binary data
         """
@@ -214,7 +214,7 @@ class ChunkManager:
 class VirtualFileAccess:
     """
     Provides a virtual view of a file with efficient memory usage.
-    
+
     This class is the main interface for file operations in the hex viewer,
     abstracting away the details of memory mapping and chunk management.
     """
@@ -224,7 +224,7 @@ class VirtualFileAccess:
                  use_large_file_optimization: bool = True):
         """
         Initialize virtual file access.
-        
+
         Args:
             file_path: Path to the file
             read_only: Whether the file should be opened in read-only mode
@@ -336,7 +336,7 @@ class VirtualFileAccess:
         self.applied_edits = []
 
         # Initialize large file optimization if enabled and available
-        if (self.use_large_file_optimization and LARGE_FILE_SUPPORT and 
+        if (self.use_large_file_optimization and LARGE_FILE_SUPPORT and
             self.file_size > 50 * 1024 * 1024):  # Use for files > 50MB
             try:
                 # Create memory configuration based on file size
@@ -349,17 +349,17 @@ class VirtualFileAccess:
                     config.max_memory_mb = 500
                     config.chunk_size_mb = 20
                     config.cache_size_mb = 100
-                
+
                 # Use the temp file path if available
                 file_to_use = self.temp_file_path if self.using_temp_file else file_path
-                
+
                 self.large_file_handler = LargeFileHandler(
-                    file_to_use, 
+                    file_to_use,
                     read_only=read_only,
                     config=config
                 )
                 logger.info(f"Large file optimization enabled for {self.file_size / (1024*1024):.1f}MB file")
-                
+
             except Exception as e:
                 logger.warning(f"Large file optimization failed, using fallback: {e}")
                 self.large_file_handler = None
@@ -395,7 +395,7 @@ class VirtualFileAccess:
     def get_file_size(self) -> int:
         """
         Get the size of the file.
-        
+
         Returns:
             File size in bytes
         """
@@ -404,14 +404,14 @@ class VirtualFileAccess:
     def read(self, offset: int, size: int) -> bytes:
         """
         Read data from the file.
-        
+
         This method handles reading from the chunks and applies any pending
         edits to the data before returning it.
-        
+
         Args:
             offset: Starting byte offset
             size: Number of bytes to read
-            
+
         Returns:
             Read binary data with pending edits applied
         """
@@ -478,14 +478,14 @@ class VirtualFileAccess:
     def write(self, offset: int, data: bytes) -> bool:
         """
         Write data to the file.
-        
+
         This method stages the edit in the pending_edits dictionary.
         The edit is not applied to the file until apply_edits() is called.
-        
+
         Args:
             offset: Starting byte offset
             data: Data to write
-            
+
         Returns:
             True if the edit was successfully staged, False otherwise
         """
@@ -511,7 +511,7 @@ class VirtualFileAccess:
     def apply_edits(self) -> bool:
         """
         Apply all pending edits to the file.
-        
+
         Returns:
             True if all edits were successfully applied, False otherwise
         """
@@ -547,7 +547,7 @@ class VirtualFileAccess:
     def undo_last_edit(self) -> bool:
         """
         Undo the last applied edit.
-        
+
         Returns:
             True if the edit was successfully undone, False otherwise
         """
@@ -578,39 +578,39 @@ class VirtualFileAccess:
         """Discard all pending edits without applying them."""
         self.pending_edits.clear()
         logger.info("Discarded all pending edits")
-    
+
     def insert(self, offset: int, data: bytes) -> bool:
         """
         Insert data at the specified offset.
-        
+
         This operation increases the file size by the length of the inserted data.
         All subsequent data is shifted right.
-        
+
         Args:
             offset: Offset where to insert the data
             data: Data to insert
-            
+
         Returns:
             True if successful, False otherwise
         """
         if self.read_only:
             logger.error("Cannot insert data in read-only mode")
             return False
-            
+
         if offset < 0 or offset > self.file_size:
             logger.error(f"Insert offset {offset} is out of bounds (file size: {self.file_size})")
             return False
-            
+
         if not data:
             logger.warning("Insert called with empty data")
             return True
-            
+
         try:
             # For insert operations, we need to:
             # 1. Read all data from offset to end of file
             # 2. Write the new data at offset
             # 3. Write the shifted data after the new data
-            
+
             if offset < self.file_size:
                 # Read data from insertion point to end of file
                 remaining_data = self.chunk_manager.read_data(offset, self.file_size - offset)
@@ -619,68 +619,68 @@ class VirtualFileAccess:
                     return False
             else:
                 remaining_data = b''
-            
+
             # Seek to insertion point and write new data
             self.write_file.seek(offset)
             self.write_file.write(data)
-            
+
             # Write the shifted data
             if remaining_data:
                 self.write_file.write(remaining_data)
-            
+
             # Update file size
             self.file_size += len(data)
-            
+
             # Flush changes
             self.write_file.flush()
-            
+
             # Update chunk manager for new file size
             self.chunk_manager.file_size = self.file_size
-            
+
             logger.info(f"Inserted {len(data)} bytes at offset {offset}, new file size: {self.file_size}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error inserting data at offset {offset}: {e}")
             return False
-    
+
     def delete(self, offset: int, length: int) -> bool:
         """
         Delete data at the specified offset.
-        
+
         This operation decreases the file size by the length of the deleted data.
         All subsequent data is shifted left.
-        
+
         Args:
             offset: Starting offset to delete from
             length: Number of bytes to delete
-            
+
         Returns:
             True if successful, False otherwise
         """
         if self.read_only:
             logger.error("Cannot delete data in read-only mode")
             return False
-            
+
         if offset < 0 or offset >= self.file_size:
             logger.error(f"Delete offset {offset} is out of bounds (file size: {self.file_size})")
             return False
-            
+
         if length <= 0:
             logger.warning("Delete called with non-positive length")
             return True
-            
+
         # Clamp length to file bounds
         if offset + length > self.file_size:
             length = self.file_size - offset
             logger.warning(f"Delete length clamped to {length} to fit file bounds")
-            
+
         try:
             # For delete operations, we need to:
             # 1. Read all data after the deletion range
             # 2. Write that data starting at the deletion offset
             # 3. Truncate the file to the new size
-            
+
             end_offset = offset + length
             if end_offset < self.file_size:
                 # Read data after the deletion range
@@ -690,36 +690,36 @@ class VirtualFileAccess:
                     return False
             else:
                 remaining_data = b''
-            
+
             # Seek to deletion start and write the remaining data
             self.write_file.seek(offset)
             if remaining_data:
                 self.write_file.write(remaining_data)
-            
+
             # Update file size
             new_file_size = self.file_size - length
-            
+
             # Truncate the file to new size
             self.write_file.truncate(new_file_size)
             self.file_size = new_file_size
-            
+
             # Flush changes
             self.write_file.flush()
-            
+
             # Update chunk manager for new file size
             self.chunk_manager.file_size = self.file_size
-            
+
             logger.info(f"Deleted {length} bytes at offset {offset}, new file size: {self.file_size}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error deleting data at offset {offset}: {e}")
             return False
-    
+
     def get_modification_time(self) -> float:
         """
         Get the last modification time of the file.
-        
+
         Returns:
             Modification time as a timestamp
         """
@@ -731,14 +731,14 @@ class VirtualFileAccess:
         except Exception as e:
             logger.warning(f"Could not get modification time: {e}")
             return 0.0
-    
+
     def save_as(self, new_path: str) -> bool:
         """
         Save the current file state to a new path.
-        
+
         Args:
             new_path: Path to save the file to
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -748,48 +748,48 @@ class VirtualFileAccess:
                 if not self.apply_edits():
                     logger.error("Failed to apply pending edits before save")
                     return False
-            
+
             # Read entire file and write to new location
             with open(new_path, 'wb') as new_file:
                 # Read in chunks to handle large files
                 chunk_size = 1024 * 1024  # 1MB chunks
                 offset = 0
-                
+
                 while offset < self.file_size:
                     read_size = min(chunk_size, self.file_size - offset)
                     data = self.read(offset, read_size)
-                    
+
                     if not data:
                         break
-                        
+
                     new_file.write(data)
                     offset += len(data)
-            
+
             logger.info(f"Saved file to {new_path} ({self.file_size} bytes)")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error saving file to {new_path}: {e}")
             return False
-    
+
     def get_performance_stats(self) -> Optional[dict]:
         """
         Get performance statistics from large file handler.
-        
+
         Returns:
             Dictionary with performance stats or None if not available
         """
         if self.large_file_handler:
             return self.large_file_handler.get_stats()
         return None
-    
+
     def optimize_for_sequential_access(self):
         """Optimize for sequential file access patterns."""
         if self.large_file_handler:
             # Increase prefetch for sequential access
             self.large_file_handler.config.prefetch_chunks = 4
             logger.debug("Optimized for sequential access")
-    
+
     def optimize_for_random_access(self):
         """Optimize for random file access patterns."""
         if self.large_file_handler:

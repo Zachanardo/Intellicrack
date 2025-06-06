@@ -20,10 +20,10 @@ import logging
 import os
 import random
 import webbrowser
-from typing import Dict, List, Any, Optional, Union
+from typing import Any, Dict, List, Optional
 
 try:
-    from PyQt5.QtWidgets import QInputDialog, QMessageBox, QFileDialog
+    from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
     PYQT5_AVAILABLE = True
 except ImportError:
     PYQT5_AVAILABLE = False
@@ -58,7 +58,7 @@ class ROPChainGenerator:
         self.binary_path = binary_path
         return True
 
-    def add_target_function(self, function_name: str, function_address: Optional[str] = None, 
+    def add_target_function(self, function_name: str, function_address: Optional[str] = None,
                            description: Optional[str] = None) -> None:
         """Add a target function for ROP chain generation"""
         target = {
@@ -392,21 +392,14 @@ class ROPChainGenerator:
             return None
 
         # Generate HTML report
-        html = f"""
-        <html>
-        <head>
-            <title>ROP Chain Generation Report</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                h1, h2, h3 {{ color: #333; }}
-                table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }}
-                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-                th {{ background-color: #f2f2f2; }}
-                tr:nth-child(even) {{ background-color: #f9f9f9; }}
-                .gadget {{ font-family: monospace; }}
-                .address {{ color: blue; }}
-            </style>
-        </head>
+        from ...utils.html_templates import get_base_html_template
+        
+        custom_css = """
+            .gadget { font-family: monospace; }
+            .address { color: blue; }
+        """
+        
+        html = get_base_html_template("ROP Chain Generation Report", custom_css) + f"""
         <body>
             <h1>ROP Chain Generation Report</h1>
             <p>Binary: {self.binary_path}</p>
@@ -475,10 +468,8 @@ class ROPChainGenerator:
             </pre>
             """
 
-        html += """
-        </body>
-        </html>
-        """
+        from ...utils.html_templates import close_html
+        html += close_html()
 
         # Save to file if filename provided
         if filename:
@@ -504,19 +495,19 @@ class ROPChainGenerator:
         """Get analysis statistics"""
         if not self.gadgets:
             return {}
-        
+
         # Count gadgets by type
         type_counts = {}
         for gadget in self.gadgets:
             gadget_type = gadget.get('type', 'unknown')
             type_counts[gadget_type] = type_counts.get(gadget_type, 0) + 1
-        
+
         # Calculate average chain length
         avg_chain_length = 0.0
         if self.chains:
             total_length = sum(chain['length'] for chain in self.chains)
             avg_chain_length = total_length / len(self.chains)
-        
+
         return {
             "gadget_types": type_counts,
             "average_chain_length": avg_chain_length,
@@ -544,7 +535,7 @@ def run_rop_chain_generator(app: Any) -> None:
     # Set binary
     if hasattr(app, 'update_output'):
         app.update_output.emit("log_message([ROP Chain Generator] Setting binary...)")
-    
+
     if generator.set_binary(app.binary_path):
         if hasattr(app, 'update_output'):
             app.update_output.emit(f"log_message([ROP Chain Generator] Binary set: {app.binary_path})")
@@ -593,7 +584,7 @@ def run_rop_chain_generator(app: Any) -> None:
         # Find gadgets
         if hasattr(app, 'update_output'):
             app.update_output.emit("log_message([ROP Chain Generator] Finding gadgets...)")
-        
+
         if generator.find_gadgets():
             if hasattr(app, 'update_output'):
                 app.update_output.emit(f"log_message([ROP Chain Generator] Found {len(generator.gadgets)} gadgets)")
@@ -601,7 +592,7 @@ def run_rop_chain_generator(app: Any) -> None:
             # Generate chains
             if hasattr(app, 'update_output'):
                 app.update_output.emit("log_message([ROP Chain Generator] Generating chains...)")
-            
+
             if generator.generate_chains():
                 if hasattr(app, 'update_output'):
                     app.update_output.emit(f"log_message([ROP Chain Generator] Generated {len(generator.chains)} chains)")
@@ -641,21 +632,16 @@ def run_rop_chain_generator(app: Any) -> None:
 
                 # Handle report generation if PyQt5 is available
                 if PYQT5_AVAILABLE:
-                    generate_report = QMessageBox.question(
+                    from ...utils.ui_helpers import ask_yes_no_question, show_file_dialog
+                    
+                    generate_report = ask_yes_no_question(
                         app,
                         "Generate Report",
-                        "Do you want to generate a report of the ROP chain generation results?",
-                        QMessageBox.Yes | QMessageBox.No
-                    ) == QMessageBox.Yes
+                        "Do you want to generate a report of the ROP chain generation results?"
+                    )
 
                     if generate_report:
-                        # Ask for report filename
-                        filename, _ = QFileDialog.getSaveFileName(
-                            app,
-                            "Save Report",
-                            "",
-                            "HTML Files (*.html);;All Files (*)"
-                        )
+                        filename = show_file_dialog(app, "Save Report")
 
                         if filename:
                             if not filename.endswith('.html'):

@@ -28,7 +28,13 @@ logger = logging.getLogger(__name__)
 
 # Import patching modules with error handling
 try:
-    from .payload_generator import *
+    from .payload_generator import (
+        PayloadGenerator,
+        apply_patch,
+        create_nop_sled,
+        inject_shellcode,
+        generate_complete_api_hooking_script,
+    )
 except ImportError as e:
     logger.warning(f"Failed to import payload_generator: {e}")
 
@@ -37,29 +43,26 @@ try:
         AdobeInjector,
         create_adobe_injector,
         inject_running_adobe_processes,
-        start_adobe_monitoring
+        start_adobe_monitoring,
     )
 except ImportError as e:
     logger.warning(f"Failed to import adobe_injector: {e}")
 
 try:
     from .windows_activator import (
-        WindowsActivator,
         ActivationMethod,
         ActivationStatus,
-        create_windows_activator,
-        check_windows_activation,
+        WindowsActivator,
         activate_windows_hwid,
-        activate_windows_kms
+        activate_windows_kms,
+        check_windows_activation,
+        create_windows_activator,
     )
 except ImportError as e:
     logger.warning(f"Failed to import windows_activator: {e}")
 
 try:
-    from .memory_patcher import (
-        generate_launcher_script,
-        setup_memory_patching
-    )
+    from .memory_patcher import generate_launcher_script, setup_memory_patching
 except ImportError as e:
     logger.warning(f"Failed to import memory_patcher: {e}")
 
@@ -67,17 +70,17 @@ except ImportError as e:
 __all__ = [
     # From payload_generator
     'PayloadGenerator',
-    'generate_payload',
     'apply_patch',
     'create_nop_sled',
     'inject_shellcode',
-    
+    'generate_complete_api_hooking_script',
+
     # From adobe_injector
     'AdobeInjector',
     'create_adobe_injector',
     'inject_running_adobe_processes',
     'start_adobe_monitoring',
-    
+
     # From windows_activator
     'WindowsActivator',
     'ActivationMethod',
@@ -86,7 +89,7 @@ __all__ = [
     'check_windows_activation',
     'activate_windows_hwid',
     'activate_windows_kms',
-    
+
     # From memory_patcher
     'generate_launcher_script',
     'setup_memory_patching',

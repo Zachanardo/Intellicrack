@@ -10,7 +10,7 @@ import shutil
 import tempfile
 import time
 import traceback
-from typing import List, Dict, Tuple, Optional, Any
+from typing import Any, Dict, List
 
 try:
     import pefile
@@ -18,7 +18,7 @@ except ImportError:
     pefile = None
 
 try:
-    from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
+    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
 except ImportError:
     Cs = None
 
@@ -27,26 +27,25 @@ try:
 except ImportError:
     keystone = None
 
-from ..utils.logger import log_message
-from ..core.analysis.core_analysis import enhanced_deep_license_analysis
 from ..utils.exploitation import run_automated_patch_agent
+from ..utils.logger import log_message
 
 
 def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any]]) -> List[str]:
     """
     Verify that patches were applied correctly.
-    
+
     Args:
         app: Application instance
         patched_path: Path to the patched binary
         instructions: List of patch instructions with addresses and byte values
-        
+
     Returns:
         List[str]: Verification results messages
     """
     app.update_output.emit(
         log_message(f"[Verify] Verifying patches in {patched_path}..."))
-    
+
     if not pefile:
         return ["Error: pefile module not available for patch verification"]
 
@@ -121,19 +120,19 @@ def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any
 def simulate_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -> List[str]:
     """
     Simulate patch application and verify results.
-    
+
     Creates a temporary copy of the binary, applies patches, and verifies
     the resulting file integrity.
-    
+
     Args:
         binary_path: Path to the original binary
         patches: List of patch instructions
-        
+
     Returns:
         List[str]: Simulation results messages
     """
     results = [f"Simulating {len(patches)} patches on {binary_path}..."]
-    
+
     if not pefile:
         results.append("Error: pefile module not available for patch simulation")
         return results
@@ -300,7 +299,7 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
         app.update_output.emit(log_message(
             "[Patch] Error: No patch instructions provided."))
         return False
-    
+
     if not pefile:
         app.update_output.emit(log_message(
             "[Patch] Error: pefile module not available for patching."))
@@ -473,7 +472,7 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
         app.update_output.emit(log_message(
             f"[Patch] Error during patching process: {e}"))
         app.update_output.emit(log_message(traceback.format_exc()))
-    
+
     return False
 
 
@@ -481,7 +480,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
     """
     Attempts to find and rewrite license checking functions using various methods.
     Includes enhanced logging and basic safety checks for code size.
-    
+
     Args:
         app: Application instance with binary_path and UI elements
     """
@@ -499,6 +498,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
     # --- Strategy 1: Deep License Analysis ---
     app.update_output.emit(log_message(
         "[License Rewrite] Running deep license analysis to find candidates..."))
+    from ..core.analysis.core_analysis import enhanced_deep_license_analysis
     candidates = enhanced_deep_license_analysis(app.binary_path)
 
     if candidates:
@@ -507,7 +507,11 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                 f"[License Rewrite] Deep analysis found {len(candidates)} candidates. Processing top candidates..."))
         strategy_used = "Deep Analysis"
         # Sort by confidence and take top ones
-        candidates.sort(key=lambda x: x.get("confidence", 0), reverse=True)
+        if isinstance(candidates, list):
+            candidates.sort(key=lambda x: x.get("confidence", 0), reverse=True)
+        elif isinstance(candidates, dict):
+            # Convert dict to list if needed
+            candidates = list(candidates.values()) if hasattr(candidates, 'values') else []
         top_candidates = candidates[:5]  # Limit number of candidates to patch
 
         if not pefile or not Cs or not keystone:
@@ -517,7 +521,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
         else:
             try:
                 pe = pefile.PE(app.binary_path)
-                is_64bit = pe.FILE_HEADER.Machine == 0x8664
+                is_64bit = getattr(pe.FILE_HEADER, 'Machine', 0) == 0x8664
                 mode = CS_MODE_64 if is_64bit else CS_MODE_32
                 arch = keystone.KS_ARCH_X86
                 ks_mode = keystone.KS_MODE_64 if is_64bit else keystone.KS_MODE_32
@@ -631,7 +635,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
 
                                                 app.update_output.emit(
                                                     log_message(
-                                                        f"[License Rewrite] Added suggestion to potential_patches. Use 'Apply Patches' to apply after review."))
+                                                        "[License Rewrite] Added suggestion to potential_patches. Use 'Apply Patches' to apply after review."))
 
                                             # Mark that we provided a suggestion but didn't automatically patch
                                             break
@@ -654,15 +658,16 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                     if not patch_generated:
                         app.update_output.emit(log_message(f"[License Rewrite] No safe patch generated for 0x{start_addr:X}. Adding to manual review list."))
                         # Add to the list of candidates that need manual review
-                        candidates.append({
-                            "address": start_addr,
-                            "size": min_patch_size,
-                            "original_bytes": bytes_at_addr.hex().upper() if bytes_at_addr else "",
-                            "disassembly": disasm_at_addr or "Unknown",
-                            "reason": "Failed automatic patch generation",
-                            "needs_review": True,
-                            "review_priority": "high" if "check" in (disasm_at_addr or "").lower() else "medium"
-                        })
+                        if isinstance(candidates, list):
+                            candidates.append({
+                                "address": start_addr,
+                                "size": min_patch_size,
+                                "original_bytes": bytes_at_addr.hex().upper() if bytes_at_addr else "",
+                                "disassembly": disasm_at_addr or "Unknown",
+                                "reason": "Failed automatic patch generation",
+                                "needs_review": True,
+                                "review_priority": "high" if "check" in (disasm_at_addr or "").lower() else "medium"
+                            })
 
                         # Log to analysis results for reporting
                         app.analyze_results.append(f"Manual review needed for potential license check at 0x{start_addr:X}")
@@ -793,7 +798,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
 
         # Store patches for application
         app.potential_patches = patches
-        
+
         # Apply patches
         apply_parsed_patch_instructions_with_validation(app, patches)
     else:

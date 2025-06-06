@@ -30,7 +30,7 @@ class ViewMode(Enum):
 class HexViewRenderer:
     """
     Handles rendering of binary data in various formats.
-    
+
     This class is responsible for converting raw binary data into formatted
     text for display in the hex viewer.
     """
@@ -39,7 +39,7 @@ class HexViewRenderer:
                  show_ascii: bool = True, show_address: bool = True):
         """
         Initialize the hex view renderer.
-        
+
         Args:
             bytes_per_row: Number of bytes to display per row
             group_size: Number of bytes to group together (1, 2, 4, or 8)
@@ -64,7 +64,7 @@ class HexViewRenderer:
     def set_bytes_per_row(self, bytes_per_row: int):
         """
         Set the number of bytes per row.
-        
+
         Args:
             bytes_per_row: Number of bytes to display per row
         """
@@ -77,7 +77,7 @@ class HexViewRenderer:
     def set_group_size(self, group_size: int):
         """
         Set the group size for byte grouping.
-        
+
         Args:
             group_size: Number of bytes to group together (1, 2, 4, or 8)
         """
@@ -92,12 +92,12 @@ class HexViewRenderer:
                         highlight_ranges: Optional[List[Tuple[int, int, str]]] = None) -> str:
         """
         Render data in traditional hex view format.
-        
+
         Args:
             data: Binary data to render
             offset: Starting offset of the data
             highlight_ranges: List of (start, end, color) tuples for highlighting
-            
+
         Returns:
             Formatted hex view string
         """
@@ -156,11 +156,11 @@ class HexViewRenderer:
     def render_decimal_view(self, data: bytes, offset: int = 0) -> str:
         """
         Render data in decimal view format.
-        
+
         Args:
             data: Binary data to render
             offset: Starting offset of the data
-            
+
         Returns:
             Formatted decimal view string
         """
@@ -219,11 +219,11 @@ class HexViewRenderer:
     def render_binary_view(self, data: bytes, offset: int = 0) -> str:
         """
         Render data in binary view format.
-        
+
         Args:
             data: Binary data to render
             offset: Starting offset of the data
-            
+
         Returns:
             Formatted binary view string
         """
@@ -269,12 +269,12 @@ class HexViewRenderer:
                              offset: int = 0) -> str:
         """
         Render data according to a structure definition.
-        
+
         Args:
             data: Binary data to render
             structure_def: Structure definition including field types and sizes
             offset: Starting offset of the data
-            
+
         Returns:
             Formatted structure view string
         """
@@ -387,12 +387,12 @@ class HexViewRenderer:
 def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 16) -> Tuple[int, bytes]:
     """
     Parse a hex view string back to binary data.
-    
+
     Args:
         hex_view: Formatted hex view string to parse
         bytes_per_row: Number of bytes per row in the view
         offset_radix: Radix of the offset column (16 for hex, 10 for decimal)
-        
+
     Returns:
         Tuple of (starting_offset, binary_data)
     """

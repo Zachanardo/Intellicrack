@@ -26,36 +26,29 @@ logger = logging.getLogger(__name__)
 
 # Import main UI components with error handling
 try:
-    from .main_window import *
+    from .main_window import IntellicrackMainWindow
 except ImportError as e:
     logger.warning(f"Failed to import main_window: {e}")
 
 try:
-    from .dashboard_manager import *
+    from .dashboard_manager import DashboardManager
 except ImportError as e:
     logger.warning(f"Failed to import dashboard_manager: {e}")
 
 # Import subpackages
 try:
-    from . import dialogs
-    from . import widgets
+    from . import dialogs, widgets
 except ImportError as e:
     logger.warning(f"Failed to import UI subpackages: {e}")
 
 # Define package exports
 __all__ = [
     # From main_window
-    'MainWindow',
-    'ApplicationInterface',
-    'create_main_window',
-    'setup_ui',
-    
+    'IntellicrackMainWindow',
+
     # From dashboard_manager
     'DashboardManager',
-    'DashboardWidget',
-    'create_dashboard',
-    'load_dashboard_layout',
-    
+
     # Subpackages
     'dialogs',
     'widgets',

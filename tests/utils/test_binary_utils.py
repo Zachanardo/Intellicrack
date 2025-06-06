@@ -40,12 +40,12 @@ except ImportError:
 
 class TestBinaryUtils(unittest.TestCase):
     """Test cases for binary utility functions."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         self.test_dir = tempfile.mkdtemp()
         self.test_file = os.path.join(self.test_dir, "test_binary.bin")
-        
+
         # Create a test binary file
         with open(self.test_file, 'wb') as f:
             # Write some test data
@@ -53,22 +53,22 @@ class TestBinaryUtils(unittest.TestCase):
             f.write(b'PE\x00\x00')  # PE signature
             f.write(b'\x00' * 100)  # Some padding
             f.write(b'Hello World!\x00Test String\x00')  # Test strings
-    
+
     def tearDown(self):
         """Clean up test fixtures."""
         shutil.rmtree(self.test_dir)
-    
+
     @unittest.skipIf(is_pe_file is None, "binary_utils module not available")
     def test_is_pe_file(self):
         """Test PE file detection."""
         self.assertTrue(is_pe_file(self.test_file))
-        
+
         # Test non-PE file
         non_pe_file = os.path.join(self.test_dir, "not_pe.txt")
         with open(non_pe_file, 'w') as f:
             f.write("This is not a PE file")
         self.assertFalse(is_pe_file(non_pe_file))
-    
+
     @unittest.skipIf(is_elf_file is None, "binary_utils module not available")
     def test_is_elf_file(self):
         """Test ELF file detection."""
@@ -77,10 +77,10 @@ class TestBinaryUtils(unittest.TestCase):
         with open(elf_file, 'wb') as f:
             f.write(b'\x7fELF')  # ELF magic
             f.write(b'\x00' * 100)
-        
+
         self.assertTrue(is_elf_file(elf_file))
         self.assertFalse(is_elf_file(self.test_file))
-    
+
     @unittest.skipIf(is_macho_file is None, "binary_utils module not available")
     def test_is_macho_file(self):
         """Test Mach-O file detection."""
@@ -89,10 +89,10 @@ class TestBinaryUtils(unittest.TestCase):
         with open(macho_file, 'wb') as f:
             f.write(b'\xfe\xed\xfa\xce')  # Mach-O magic (32-bit)
             f.write(b'\x00' * 100)
-        
+
         self.assertTrue(is_macho_file(macho_file))
         self.assertFalse(is_macho_file(self.test_file))
-    
+
     @unittest.skipIf(get_file_hash is None, "binary_utils module not available")
     def test_get_file_hash(self):
         """Test file hash calculation."""
@@ -100,15 +100,15 @@ class TestBinaryUtils(unittest.TestCase):
         md5_hash = get_file_hash(self.test_file, algorithm='md5')
         self.assertIsNotNone(md5_hash)
         self.assertEqual(len(md5_hash), 32)  # MD5 is 32 hex chars
-        
+
         # Test SHA256
         sha256_hash = get_file_hash(self.test_file, algorithm='sha256')
         self.assertIsNotNone(sha256_hash)
         self.assertEqual(len(sha256_hash), 64)  # SHA256 is 64 hex chars
-        
+
         # Test consistency
         self.assertEqual(get_file_hash(self.test_file), get_file_hash(self.test_file))
-    
+
     @unittest.skipIf(extract_strings is None, "binary_utils module not available")
     def test_extract_strings(self):
         """Test string extraction from binary."""
@@ -116,7 +116,7 @@ class TestBinaryUtils(unittest.TestCase):
         self.assertIsInstance(strings, list)
         self.assertIn("Hello World!", strings)
         self.assertIn("Test String", strings)
-    
+
     @unittest.skipIf(get_binary_info is None, "binary_utils module not available")
     def test_get_binary_info(self):
         """Test binary information extraction."""
@@ -125,7 +125,7 @@ class TestBinaryUtils(unittest.TestCase):
         self.assertIn('size', info)
         self.assertIn('type', info)
         self.assertEqual(info['type'], 'PE')
-    
+
     @unittest.skipIf(calculate_entropy is None, "binary_utils module not available")
     def test_calculate_entropy(self):
         """Test entropy calculation."""
@@ -133,13 +133,13 @@ class TestBinaryUtils(unittest.TestCase):
         low_entropy_data = b'\x00' * 1000
         low_entropy = calculate_entropy(low_entropy_data)
         self.assertLess(low_entropy, 1.0)
-        
+
         # Test with high entropy data (random)
         import random
         high_entropy_data = bytes([random.randint(0, 255) for _ in range(1000)])
         high_entropy = calculate_entropy(high_entropy_data)
         self.assertGreater(high_entropy, 7.0)
-    
+
     @unittest.skipIf(find_binary_patterns is None, "binary_utils module not available")
     def test_find_binary_patterns(self):
         """Test binary pattern searching."""
@@ -153,15 +153,15 @@ class TestBinaryUtils(unittest.TestCase):
 
 class TestBinaryUtilsIntegration(unittest.TestCase):
     """Integration tests for binary utils with real binary analysis."""
-    
+
     def setUp(self):
         """Set up integration test fixtures."""
         self.test_dir = tempfile.mkdtemp()
-    
+
     def tearDown(self):
         """Clean up integration test fixtures."""
         shutil.rmtree(self.test_dir)
-    
+
     @unittest.skipIf(get_binary_info is None, "binary_utils module not available")
     @unittest.skipIf(not os.path.exists('/bin/ls'), "No system binary available for testing")
     def test_real_binary_analysis(self):

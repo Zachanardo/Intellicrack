@@ -13,9 +13,6 @@ import argparse
 import json
 import logging
 import time
-from pathlib import Path
-from typing import Dict, Any, List, Optional
-from contextlib import contextmanager
 
 # Import optional performance/debugging modules
 try:
@@ -43,7 +40,7 @@ try:
     from intellicrack.utils.binary_analysis import analyze_binary
     from intellicrack.utils.report_generator import generate_report
     from intellicrack.config import CONFIG
-    
+
     # Import available runner functions
     from intellicrack.utils.runner_functions import (
         run_comprehensive_analysis,
@@ -54,7 +51,7 @@ try:
         run_radare2_analysis,
         run_frida_script
     )
-    
+
     # Import additional runners from the correct location
     from intellicrack.utils.additional_runners import (
         run_detect_packing,
@@ -67,9 +64,10 @@ try:
         run_weak_crypto_detection,
         run_comprehensive_protection_scan,
         run_ml_vulnerability_prediction,
-        run_generate_patch_suggestions
+        run_generate_patch_suggestions,
+        run_ml_similarity_search
     )
-    
+
     # Core analysis classes (fix import names to match actual exports)
     from intellicrack.core.analysis import (
         SymbolicExecutionEngine,
@@ -82,7 +80,7 @@ try:
         SimilaritySearcher,  # Actual name, not BinarySimilaritySearch
         IncrementalAnalysisManager
     )
-    
+
     # Network classes (fix import name)
     from intellicrack.core.network import (
         TrafficAnalyzer,  # Actual name, not NetworkTrafficAnalyzer
@@ -91,20 +89,20 @@ try:
         SSLInterceptor,
         CloudLicenseHooker
     )
-    
+
     # Patching classes
     from intellicrack.core.patching import (
         PayloadGenerator,
         WindowsActivator,
         AdobeInjector
     )
-    
+
     # Protection bypass (fix import names)
     from intellicrack.core.protection_bypass import (
         TPMAnalyzer,  # Actual name, not TPMBypass
         VMDetector   # Actual name, not VMBypass
     )
-    
+
     # Processing classes
     from intellicrack.core.processing import (
         DistributedAnalysisManager,
@@ -112,16 +110,16 @@ try:
         QEMUSystemEmulator,
         MemoryOptimizedLoader
     )
-    
+
     # AI classes (fix import names)
     from intellicrack.ai import (
         VulnerabilityPredictor,  # Actual name, not MLVulnerabilityPredictor
         ModelManager
     )
-    
+
     # Plugin system
     from intellicrack.plugins.plugin_system import PluginSystem
-    
+
     # Utility modules
     from intellicrack.utils import (
         protection_detection,
@@ -129,15 +127,15 @@ try:
         exploitation,
         system_utils
     )
-    
+
     # Import hashlib for payload hashing
     import hashlib
-    
+
 except ImportError as e:
     print(f"Error importing Intellicrack modules: {e}")
     print("Some features may not be available.")
     print("Run: cd dependencies && INSTALL.bat")
-    
+
     # Try to continue with minimal functionality
     try:
         from intellicrack.utils.binary_analysis import analyze_binary
@@ -163,7 +161,7 @@ logger = logging.getLogger(__name__)
 
 class IntellicrackCLI:
     """Enhanced CLI handler with all features."""
-    
+
     def __init__(self, args):
         self.args = args
         self.results = {}
@@ -171,11 +169,11 @@ class IntellicrackCLI:
         self.profiler = None
         self.memory_tracer = None
         self.performance_stats = {}
-        
+
         # Initialize debug mode
         if args.debug_mode:
             self.enable_debug_mode()
-        
+
         # Initialize performance profiling
         if args.profile_performance:
             if PROFILING_AVAILABLE:
@@ -184,7 +182,7 @@ class IntellicrackCLI:
             else:
                 logger.warning("Performance profiling not available. Install cProfile.")
                 args.profile_performance = False
-        
+
         # Initialize memory tracing
         if args.memory_trace:
             if PSUTIL_AVAILABLE and PROFILING_AVAILABLE:
@@ -193,17 +191,17 @@ class IntellicrackCLI:
             else:
                 logger.warning("Memory tracing not available. Install psutil.")
                 args.memory_trace = False
-        
+
         # Load custom config if provided
         if args.config:
             self.load_custom_config(args.config)
-            
+
         # Set up output handling
         self.setup_output()
-        
+
         # Initialize components based on args
         self.init_components()
-    
+
     def load_custom_config(self, config_path):
         """Load custom configuration from file."""
         try:
@@ -215,7 +213,7 @@ class IntellicrackCLI:
             logger.error(f"Failed to load custom configuration: {e}")
             if not self.args.ignore_errors:
                 sys.exit(1)
-    
+
     def enable_debug_mode(self):
         """Enable developer debug mode with detailed tracing."""
         logging.basicConfig(
@@ -224,28 +222,28 @@ class IntellicrackCLI:
             force=True
         )
         logger.debug("Debug mode enabled")
-        
+
         # Enable import debugging
         import sys
         sys.settrace(self._trace_calls)
-    
+
     def _trace_calls(self, frame, event, arg):
         """Trace function calls for debug mode."""
         if event == 'call':
             code = frame.f_code
             logger.debug(f"Calling: {code.co_filename}:{code.co_name}")
         return self._trace_calls
-    
+
     def setup_output(self):
         """Set up output handling based on arguments."""
         self.verbose = self.args.verbose
         self.quiet = self.args.quiet
-        
+
         if self.quiet:
             logging.getLogger().setLevel(logging.ERROR)
         elif self.verbose:
             logging.getLogger().setLevel(logging.DEBUG)
-    
+
     def init_components(self):
         """Initialize components based on arguments."""
         # GPU acceleration
@@ -256,7 +254,7 @@ class IntellicrackCLI:
             except:
                 logger.warning("GPU acceleration not available, using CPU")
                 self.gpu = None
-        
+
         # Distributed processing
         if self.args.distributed:
             self.dist_manager = DistributedAnalysisManager()
@@ -265,18 +263,18 @@ class IntellicrackCLI:
                 backend='ray' if self.args.distributed_backend == 'ray' else 'dask'
             )
             logger.info(f"Distributed processing enabled with {self.args.threads} workers")
-    
+
     def run(self):
         """Main execution method."""
         start_time = time.time()
-        
+
         # Validate binary exists
         if not os.path.exists(self.binary_path):
             logger.error(f"Binary not found: {self.binary_path}")
             sys.exit(1)
-        
+
         logger.info(f"Analyzing: {self.binary_path}")
-        
+
         # Run requested analyses
         self.run_core_analysis()
         self.run_vulnerability_detection()
@@ -287,35 +285,35 @@ class IntellicrackCLI:
         self.run_ml_analysis()
         self.run_external_tools()
         self.run_advanced_features()
-        
+
         # Generate output
         elapsed = time.time() - start_time
         self.results['analysis_time'] = elapsed
         logger.info(f"Analysis completed in {elapsed:.2f} seconds")
-        
+
         # Finalize analysis (performance/memory reports)
         self.finalize_analysis()
-        
+
         self.generate_output()
-    
+
     def run_core_analysis(self):
         """Run core analysis features."""
         # Basic analysis (always run unless --skip-basic)
         if not self.args.skip_basic:
             logger.info("Running basic analysis...")
             self.results['basic'] = analyze_binary(self.binary_path)
-        
+
         # Comprehensive analysis
         if self.args.comprehensive:
             logger.info("Running comprehensive analysis...")
             self.results['comprehensive'] = run_comprehensive_analysis(self.binary_path)
-        
+
         # Control Flow Graph
         if self.args.cfg_analysis:
             logger.info("Generating control flow graph...")
             cfg_explorer = CFGExplorer()
             cfg = cfg_explorer.analyze(self.binary_path)
-            
+
             if self.args.cfg_output:
                 # Export CFG to file
                 if self.args.cfg_format == 'dot':
@@ -323,9 +321,9 @@ class IntellicrackCLI:
                 elif self.args.cfg_format == 'json':
                     cfg_explorer.export_json(cfg, self.args.cfg_output)
                 logger.info(f"CFG exported to {self.args.cfg_output}")
-            
+
             self.results['cfg'] = cfg
-        
+
         # Symbolic Execution
         if self.args.symbolic_execution:
             logger.info("Running symbolic execution...")
@@ -339,7 +337,7 @@ class IntellicrackCLI:
             else:
                 sym_results = run_symbolic_execution(self.binary_path)
             self.results['symbolic'] = sym_results
-        
+
         # Concolic Execution
         if self.args.concolic_execution:
             logger.info("Running concolic execution...")
@@ -349,7 +347,7 @@ class IntellicrackCLI:
                 target_coverage=self.args.concolic_coverage
             )
             self.results['concolic'] = concolic_results
-        
+
         # Taint Analysis
         if self.args.taint_analysis:
             logger.info("Running taint analysis...")
@@ -362,7 +360,7 @@ class IntellicrackCLI:
             else:
                 taint_results = run_taint_analysis(self.binary_path)
             self.results['taint'] = taint_results
-        
+
         # ROP Gadgets
         if self.args.rop_gadgets:
             logger.info("Finding ROP gadgets...")
@@ -371,14 +369,14 @@ class IntellicrackCLI:
                 self.binary_path,
                 max_gadgets=self.args.rop_max_gadgets
             )
-            
+
             if self.args.rop_chain:
                 # Generate ROP chain for specific goal
                 chain = rop_gen.generate_chain(gadgets, self.args.rop_chain)
                 self.results['rop_chain'] = chain
-            
+
             self.results['rop_gadgets'] = gadgets
-        
+
         # Binary Similarity
         if self.args.similarity_search and self.args.similarity_db:
             logger.info("Running binary similarity search...")
@@ -389,24 +387,24 @@ class IntellicrackCLI:
                 threshold=self.args.similarity_threshold
             )
             self.results['similar_binaries'] = similar
-        
+
         # Multi-format analysis
         if self.args.multi_format:
             logger.info("Running multi-format analysis...")
             mf_analyzer = MultiFormatBinaryAnalyzer()
             mf_results = mf_analyzer.analyze(self.binary_path)
             self.results['multi_format'] = mf_results
-        
+
         # Section analysis
         if self.args.section_analysis:
             logger.info("Analyzing sections...")
             self.results['sections'] = run_section_analysis(self.binary_path)
-        
+
         # Import/Export analysis
         if self.args.import_export:
             logger.info("Analyzing imports and exports...")
             self.results['imports_exports'] = run_import_export_analysis(self.binary_path)
-    
+
     def run_vulnerability_detection(self):
         """Run vulnerability detection features."""
         if self.args.vulnerability_scan:
@@ -417,11 +415,11 @@ class IntellicrackCLI:
                 scan_depth=self.args.vuln_scan_depth
             )
             self.results['vulnerabilities'] = vulns
-        
+
         if self.args.weak_crypto:
             logger.info("Detecting weak cryptography...")
             self.results['weak_crypto'] = run_weak_crypto_detection(self.binary_path)
-        
+
         if self.args.ml_vulnerability:
             logger.info("Running ML-based vulnerability prediction...")
             ml_predictor = VulnerabilityPredictor()
@@ -429,39 +427,39 @@ class IntellicrackCLI:
                 ml_predictor.load_model(self.args.ml_model)
             predictions = ml_predictor.predict(self.binary_path)
             self.results['ml_vulnerabilities'] = predictions
-    
+
     def run_protection_analysis(self):
         """Run protection detection and analysis."""
         if self.args.detect_packing:
             logger.info("Detecting packing and obfuscation...")
             self.results['packing'] = run_detect_packing(self.binary_path)
-        
+
         if self.args.detect_protections:
             logger.info("Scanning for all known protections...")
             self.results['protections'] = run_comprehensive_protection_scan(self.binary_path)
-        
+
         if self.args.commercial_protections:
             logger.info("Detecting commercial protection systems...")
             self.results['commercial_protections'] = protection_detection.detect_commercial_protections(
                 self.binary_path
             )
-        
+
         if self.args.anti_debug:
             logger.info("Detecting anti-debugging techniques...")
             self.results['anti_debug'] = protection_detection.detect_anti_debugging(
                 self.binary_path
             )
-        
+
         if self.args.license_analysis:
             logger.info("Analyzing license mechanisms...")
             self.results['license'] = run_deep_license_analysis(self.binary_path)
-    
+
     def run_network_analysis(self):
         """Run network analysis features."""
         if self.args.network_capture:
             logger.info(f"Starting network capture on {self.args.network_interface}...")
             analyzer = TrafficAnalyzer()
-            
+
             if self.args.capture_duration:
                 # Capture for specified duration
                 analyzer.start_capture(
@@ -472,9 +470,9 @@ class IntellicrackCLI:
                 analyzer.stop_capture()
             else:
                 logger.warning("Use --capture-duration to specify capture time")
-            
+
             self.results['network_capture'] = analyzer.get_results()
-        
+
         if self.args.protocol_fingerprint:
             logger.info("Fingerprinting network protocols...")
             fingerprinter = ProtocolFingerprinter()
@@ -483,7 +481,7 @@ class IntellicrackCLI:
             else:
                 protocols = fingerprinter.analyze_binary(self.binary_path)
             self.results['protocols'] = protocols
-        
+
         if self.args.ssl_intercept:
             logger.info("Setting up SSL/TLS interception...")
             interceptor = SSLInterceptor()
@@ -492,7 +490,7 @@ class IntellicrackCLI:
                 cert_file=self.args.ssl_cert
             )
             self.results['ssl_config'] = interceptor.get_config()
-    
+
     def run_patching_operations(self):
         """Run patching and modification operations."""
         if self.args.suggest_patches:
@@ -500,13 +498,13 @@ class IntellicrackCLI:
             self.results['patch_suggestions'] = run_generate_patch_suggestions(
                 self.binary_path
             )
-        
+
         if self.args.apply_patch:
             logger.info(f"Applying patch: {self.args.patch_file}...")
             # Load patch definition
             with open(self.args.patch_file, 'r') as f:
                 patch_def = json.load(f)
-            
+
             # Use memory patching utility functions
             from intellicrack.core.patching.memory_patcher import apply_memory_patches
             results = apply_memory_patches(
@@ -515,7 +513,7 @@ class IntellicrackCLI:
                 memory_mode=self.args.memory_patch
             )
             self.results['patching'] = results
-        
+
         if self.args.generate_payload:
             logger.info(f"Generating {self.args.payload_type} payload...")
             gen = PayloadGenerator()
@@ -524,18 +522,18 @@ class IntellicrackCLI:
                 target=self.binary_path,
                 options=self.args.payload_options
             )
-            
+
             if self.args.payload_output:
                 with open(self.args.payload_output, 'wb') as f:
                     f.write(payload)
                 logger.info(f"Payload saved to {self.args.payload_output}")
-            
+
             self.results['payload'] = {
                 'type': self.args.payload_type,
                 'size': len(payload),
                 'hash': hashlib.sha256(payload).hexdigest()
             }
-    
+
     def run_bypass_operations(self):
         """Run protection bypass operations."""
         if self.args.bypass_tpm:
@@ -545,7 +543,7 @@ class IntellicrackCLI:
                 self.binary_path,
                 method=self.args.tpm_method
             )
-        
+
         if self.args.bypass_vm_detection:
             logger.info("Generating VM detection bypass...")
             detector = VMDetector()
@@ -553,7 +551,7 @@ class IntellicrackCLI:
                 self.binary_path,
                 aggressive=self.args.aggressive_bypass
             )
-        
+
         if self.args.emulate_dongle:
             logger.info(f"Setting up {self.args.dongle_type} dongle emulation...")
             # Use protection_utils for dongle emulation
@@ -563,26 +561,26 @@ class IntellicrackCLI:
                 dongle_id=self.args.dongle_id
             )
             self.results['dongle_emulation'] = config
-        
+
         if self.args.hwid_spoof:
             logger.info("Generating HWID spoofing configuration...")
             self.results['hwid_spoof'] = protection_utils.generate_hwid_spoof_config(
                 self.binary_path,
                 target_hwid=self.args.target_hwid
             )
-        
+
         if self.args.time_bomb_defuser:
             logger.info("Generating time bomb defusion scripts...")
             self.results['time_bomb_defuser'] = protection_utils.generate_time_bomb_defuser(
                 self.binary_path
             )
-        
+
         if self.args.telemetry_blocker:
             logger.info("Generating telemetry blocking configuration...")
             self.results['telemetry_blocker'] = protection_utils.generate_telemetry_blocker(
                 self.binary_path
             )
-    
+
     def run_ml_analysis(self):
         """Run machine learning analysis."""
         if self.args.ml_similarity:
@@ -592,7 +590,7 @@ class IntellicrackCLI:
                 self.binary_path,
                 database=self.args.ml_database
             )
-        
+
         if self.args.train_model:
             logger.info("Training custom ML model...")
             manager = ModelManager()
@@ -601,11 +599,11 @@ class IntellicrackCLI:
                 model_type=self.args.model_type,
                 epochs=self.args.training_epochs
             )
-            
+
             if self.args.save_model:
                 manager.save_model(model, self.args.save_model)
                 logger.info(f"Model saved to {self.args.save_model}")
-    
+
     def run_external_tools(self):
         """Run external tool integrations."""
         if self.args.ghidra_analysis:
@@ -614,14 +612,14 @@ class IntellicrackCLI:
                 self.binary_path,
                 script=self.args.ghidra_script
             )
-        
+
         if self.args.radare2_analysis:
             logger.info("Running Radare2 analysis...")
             self.results['radare2'] = run_radare2_analysis(
                 self.binary_path,
                 commands=self.args.r2_commands
             )
-        
+
         if self.args.qemu_emulate:
             logger.info("Setting up QEMU emulation...")
             emulator = QEMUSystemEmulator()
@@ -630,7 +628,7 @@ class IntellicrackCLI:
                 arch=self.args.qemu_arch,
                 snapshot=self.args.qemu_snapshot
             )
-        
+
         if self.args.frida_script:
             logger.info(f"Running Frida script: {self.args.frida_script}...")
             self.results['frida'] = run_frida_script(
@@ -638,7 +636,7 @@ class IntellicrackCLI:
                 self.args.frida_script,
                 spawn=self.args.frida_spawn
             )
-    
+
     def run_advanced_features(self):
         """Run advanced and utility features."""
         if self.args.extract_icon:
@@ -648,7 +646,7 @@ class IntellicrackCLI:
                 output_path=self.args.icon_output
             )
             self.results['icon'] = {'path': icon_path}
-        
+
         if self.args.generate_license_key:
             logger.info("Generating license key...")
             from intellicrack.utils.exploitation import generate_license_key
@@ -661,15 +659,15 @@ class IntellicrackCLI:
                 'key': license_key,
                 'algorithm': algorithm
             }
-        
+
         if self.args.ai_assistant:
             logger.info("Running AI Assistant...")
             from intellicrack.ai.ai_tools import AIAssistant
             assistant = AIAssistant()
-            
+
             question = self.args.ai_question or "Analyze this binary"
             context = self.args.ai_context or str(self.results)
-            
+
             response = assistant.ask_question(
                 question=question,
                 context=context,
@@ -679,12 +677,12 @@ class IntellicrackCLI:
                 'question': question,
                 'response': response
             }
-        
+
         if self.args.plugin_run:
             logger.info(f"Running plugin: {self.args.plugin_run}...")
             plugin_sys = PluginSystem()
             plugin_sys.discover_plugins()
-            
+
             if self.args.plugin_remote:
                 # Remote plugin execution
                 result = plugin_sys.execute_remote_plugin(
@@ -708,32 +706,32 @@ class IntellicrackCLI:
                     self.binary_path,
                     params=self.args.plugin_params
                 )
-            
+
             self.results['plugin'] = result
-        
+
         if self.args.generate_report:
             logger.info("Generating detailed report...")
             # This will be handled in generate_output()
             self.args.format = self.args.report_format or 'pdf'
-        
+
         # GUI Integration features
         if self.args.launch_gui:
             logger.info("Launching GUI with analysis results...")
             self.launch_gui_with_results()
-        
+
         if self.args.gui_export:
             logger.info(f"Exporting results to GUI format: {self.args.gui_export}...")
             self.export_gui_format(self.args.gui_export)
-        
+
         if self.args.visual_cfg and 'cfg' in self.results:
             logger.info("Generating visual CFG...")
             output = self.args.visual_cfg_output or 'cfg.png'
             self.generate_visual_cfg(output)
-        
+
         if self.args.interactive_hex:
             logger.info("Launching interactive hex editor...")
             self.launch_hex_editor()
-    
+
     def generate_output(self):
         """Generate output in requested format."""
         if self.args.format == 'json':
@@ -748,22 +746,22 @@ class IntellicrackCLI:
             )
         else:
             output = str(self.results)
-        
+
         # Write output
         if self.args.output:
             if self.args.format in ['pdf']:
                 mode = 'wb'
             else:
                 mode = 'w'
-            
+
             with open(self.args.output, mode) as f:
                 f.write(output if isinstance(output, bytes) else output)
-            
+
             logger.info(f"Output written to {self.args.output}")
         else:
             if not isinstance(output, bytes):
                 print(output)
-    
+
     def format_text_output(self):
         """Format results as human-readable text."""
         lines = []
@@ -771,14 +769,14 @@ class IntellicrackCLI:
         lines.append(f"Binary: {self.binary_path}")
         lines.append(f"Analysis Time: {self.results.get('analysis_time', 0):.2f}s")
         lines.append("")
-        
+
         # Format each result section
         for section, data in self.results.items():
             if section == 'analysis_time':
                 continue
-                
+
             lines.append(f"[{section.upper()}]")
-            
+
             if isinstance(data, dict):
                 for key, value in data.items():
                     lines.append(f"  {key}: {value}")
@@ -787,11 +785,11 @@ class IntellicrackCLI:
                     lines.append(f"  - {item}")
             else:
                 lines.append(f"  {data}")
-            
+
             lines.append("")
-        
+
         return '\n'.join(lines)
-    
+
     def launch_gui_with_results(self):
         """Launch GUI with analysis results preloaded."""
         try:
@@ -800,17 +798,17 @@ class IntellicrackCLI:
             with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
                 json.dump(self.results, f, indent=2, default=str)
                 results_file = f.name
-            
+
             # Launch GUI with results
             from intellicrack.ui.main_app import launch_with_results
             logger.info(f"Launching GUI with results from {results_file}")
             launch_with_results(results_file, self.binary_path)
-            
+
         except ImportError:
             logger.error("GUI components not available. Install PyQt5.")
         except Exception as e:
             logger.error(f"Failed to launch GUI: {e}")
-    
+
     def export_gui_format(self, output_path):
         """Export results to GUI-compatible format."""
         gui_data = {
@@ -825,12 +823,12 @@ class IntellicrackCLI:
                 'command_line': ' '.join(sys.argv)
             }
         }
-        
+
         with open(output_path, 'w') as f:
             json.dump(gui_data, f, indent=2, default=str)
-        
+
         logger.info(f"GUI-compatible results exported to {output_path}")
-    
+
     def _get_features_used(self):
         """Get list of features used in this analysis."""
         features = []
@@ -838,34 +836,34 @@ class IntellicrackCLI:
             if not attr.startswith('_') and getattr(self.args, attr):
                 features.append(attr)
         return features
-    
+
     def generate_visual_cfg(self, output_path):
         """Generate visual CFG image from analysis results."""
         try:
             import matplotlib.pyplot as plt
             import networkx as nx
             from matplotlib.patches import FancyBboxPatch
-            
+
             if 'cfg' not in self.results:
                 logger.error("No CFG data available. Run --cfg-analysis first.")
                 return
-            
+
             cfg_data = self.results['cfg']
-            
+
             # Create directed graph
             G = nx.DiGraph()
-            
+
             # Add nodes and edges from CFG data
             for node in cfg_data.get('nodes', []):
                 G.add_node(node['id'], **node)
-            
+
             for edge in cfg_data.get('edges', []):
                 G.add_edge(edge['source'], edge['target'], **edge)
-            
+
             # Create visualization
             plt.figure(figsize=(12, 10))
             pos = nx.spring_layout(G, k=2, iterations=50)
-            
+
             # Draw nodes with different colors based on type
             node_colors = []
             for node in G.nodes():
@@ -875,52 +873,52 @@ class IntellicrackCLI:
                     node_colors.append('lightcoral')
                 else:
                     node_colors.append('lightblue')
-            
+
             nx.draw_networkx_nodes(G, pos, node_color=node_colors, 
                                  node_size=1000, alpha=0.9)
             nx.draw_networkx_edges(G, pos, edge_color='gray', 
                                  arrows=True, arrowsize=20, alpha=0.6)
             nx.draw_networkx_labels(G, pos, font_size=8)
-            
+
             plt.title(f"Control Flow Graph - {os.path.basename(self.binary_path)}")
             plt.axis('off')
             plt.tight_layout()
             plt.savefig(output_path, dpi=300, bbox_inches='tight')
             plt.close()
-            
+
             logger.info(f"Visual CFG saved to {output_path}")
             self.results['visual_cfg'] = {'path': output_path}
-            
+
         except ImportError as e:
             logger.error(f"Missing visualization dependencies: {e}")
             logger.info("Install matplotlib and networkx for CFG visualization")
         except Exception as e:
             logger.error(f"Failed to generate visual CFG: {e}")
-    
+
     def launch_hex_editor(self):
         """Launch interactive hex editor with the binary file."""
         try:
             # Try to use the integrated hex viewer
             from intellicrack.hexview.hex_widget import HexViewerWidget
             from PyQt5.QtWidgets import QApplication
-            
+
             app = QApplication.instance()
             if not app:
                 app = QApplication(sys.argv)
-            
+
             hex_viewer = HexViewerWidget()
             hex_viewer.load_file(self.binary_path)
             hex_viewer.show()
-            
+
             logger.info(f"Launched hex editor for {self.binary_path}")
             app.exec_()
-            
+
         except ImportError:
             # Fallback to external hex editor
             logger.info("Trying external hex editor...")
             import subprocess
             import platform
-            
+
             if platform.system() == 'Windows':
                 # Try HxD or other Windows hex editors
                 try:
@@ -935,55 +933,55 @@ class IntellicrackCLI:
                     subprocess.Popen(['ghex', self.binary_path])
             else:
                 logger.error("No suitable hex editor found")
-    
+
     def finalize_analysis(self):
         """Finalize analysis and generate performance/memory reports."""
         # Stop performance profiling
         if self.args.profile_performance and self.profiler and PROFILING_AVAILABLE:
             self.profiler.disable()
-            
+
             # Generate performance report
             s = io.StringIO()
             ps = pstats.Stats(self.profiler, stream=s).sort_stats('cumulative')
             ps.print_stats(30)  # Top 30 functions
-            
+
             perf_report = s.getvalue()
             logger.info("\n=== PERFORMANCE PROFILE ===")
             logger.info(perf_report)
-            
+
             # Add to results
             self.results['performance_profile'] = {
                 'top_functions': perf_report,
                 'total_time': ps.total_tt
             }
-        
+
         # Generate memory trace report
         if self.args.memory_trace and PSUTIL_AVAILABLE and PROFILING_AVAILABLE:
             current_mem = psutil.Process().memory_info().rss / 1024 / 1024  # MB
             mem_increase = current_mem - self.memory_baseline
-            
+
             # Get top memory allocations
             snapshot = tracemalloc.take_snapshot()
             top_stats = snapshot.statistics('lineno')
-            
+
             logger.info("\n=== MEMORY TRACE ===")
             logger.info(f"Memory baseline: {self.memory_baseline:.2f} MB")
             logger.info(f"Current memory: {current_mem:.2f} MB")
             logger.info(f"Memory increase: {mem_increase:.2f} MB")
             logger.info("\nTop 10 memory allocations:")
-            
+
             for stat in top_stats[:10]:
                 logger.info(f"{stat}")
-            
+
             self.results['memory_trace'] = {
                 'baseline_mb': self.memory_baseline,
                 'final_mb': current_mem,
                 'increase_mb': mem_increase,
                 'top_allocations': [str(stat) for stat in top_stats[:10]]
             }
-            
+
             tracemalloc.stop()
-        
+
         # Disable debug mode tracing
         if self.args.debug_mode:
             sys.settrace(None)
@@ -1073,19 +1071,19 @@ def show_feature_categories():
             "--watch                            # Watch file changes"
         ]
     }
-    
+
     print("🚀 INTELLICRACK CLI - COMPLETE FEATURE REFERENCE")
     print("=" * 80)
     print("Access to ALL 78 Intellicrack features via command line")
     print()
-    
+
     for category, commands in categories.items():
         print(f"📁 {category.upper()}")
         print("-" * len(category))
         for command in commands:
             print(f"  {command}")
         print()
-    
+
     print("🔥 QUICK START EXAMPLES:")
     print("-" * 25)
     examples = [
@@ -1109,10 +1107,10 @@ def show_feature_categories():
         "intellicrack-cli --help-category analysis  # Category help",
         "intellicrack-cli --list-commands           # All commands"
     ]
-    
+
     for example in examples:
         print(example)
-    
+
     print()
     print("📚 DOCUMENTATION:")
     print("- README.md      - Complete overview and usage guide")
@@ -1146,14 +1144,14 @@ def parse_arguments():
 🔥 FEATURE COVERAGE: ALL 78 Intellicrack features available via CLI!
         """
     )
-    
+
     # Positional arguments
     parser.add_argument(
         'binary',
         nargs='?',
         help='Path to the binary file to analyze'
     )
-    
+
     # Core Analysis Options
     analysis_group = parser.add_argument_group('Core Analysis')
     analysis_group.add_argument('--comprehensive', '-c', action='store_true',
@@ -1196,7 +1194,7 @@ def parse_arguments():
                                help='Analyze binary sections')
     analysis_group.add_argument('--import-export', action='store_true',
                                help='Analyze imports and exports')
-    
+
     # Vulnerability Detection
     vuln_group = parser.add_argument_group('Vulnerability Detection')
     vuln_group.add_argument('--vulnerability-scan', '-v', action='store_true',
@@ -1209,7 +1207,7 @@ def parse_arguments():
                            help='ML-based vulnerability prediction')
     vuln_group.add_argument('--ml-model', metavar='PATH',
                            help='Custom ML model for prediction')
-    
+
     # Protection Detection
     protection_group = parser.add_argument_group('Protection Detection')
     protection_group.add_argument('--detect-packing', '-p', action='store_true',
@@ -1222,7 +1220,7 @@ def parse_arguments():
                                  help='Detect anti-debugging techniques')
     protection_group.add_argument('--license-analysis', '-l', action='store_true',
                                  help='Analyze license mechanisms')
-    
+
     # Network Analysis
     network_group = parser.add_argument_group('Network Analysis')
     network_group.add_argument('--network-capture', action='store_true',
@@ -1243,7 +1241,7 @@ def parse_arguments():
                               help='SSL interception port')
     network_group.add_argument('--ssl-cert', metavar='FILE',
                               help='SSL certificate file')
-    
+
     # Patching Operations
     patch_group = parser.add_argument_group('Patching Operations')
     patch_group.add_argument('--suggest-patches', action='store_true',
@@ -1262,7 +1260,7 @@ def parse_arguments():
                             help='Payload options (JSON)')
     patch_group.add_argument('--payload-output', metavar='FILE',
                             help='Save payload to file')
-    
+
     # Protection Bypass
     bypass_group = parser.add_argument_group('Protection Bypass')
     bypass_group.add_argument('--bypass-tpm', action='store_true',
@@ -1287,7 +1285,7 @@ def parse_arguments():
                              help='Generate time bomb defusion scripts')
     bypass_group.add_argument('--telemetry-blocker', action='store_true',
                              help='Generate telemetry blocking configuration')
-    
+
     # Machine Learning
     ml_group = parser.add_argument_group('Machine Learning')
     ml_group.add_argument('--ml-similarity', action='store_true',
@@ -1304,7 +1302,7 @@ def parse_arguments():
                          help='Training epochs')
     ml_group.add_argument('--save-model', metavar='PATH',
                          help='Save trained model')
-    
+
     # External Tools
     tools_group = parser.add_argument_group('External Tools')
     tools_group.add_argument('--ghidra-analysis', action='store_true',
@@ -1325,7 +1323,7 @@ def parse_arguments():
                             help='Run Frida script')
     tools_group.add_argument('--frida-spawn', action='store_true',
                             help='Spawn process for Frida')
-    
+
     # Processing Options
     processing_group = parser.add_argument_group('Processing Options')
     processing_group.add_argument('--gpu-accelerate', '-g', action='store_true',
@@ -1340,7 +1338,7 @@ def parse_arguments():
                                  help='Use incremental analysis cache')
     processing_group.add_argument('--memory-optimized', action='store_true',
                                  help='Use memory-optimized loading')
-    
+
     # Plugin System
     plugin_group = parser.add_argument_group('Plugin System')
     plugin_group.add_argument('--plugin-list', action='store_true',
@@ -1359,7 +1357,7 @@ def parse_arguments():
                              help='Remote plugin server port')
     plugin_group.add_argument('--plugin-sandbox', action='store_true',
                              help='Run plugin in sandboxed environment')
-    
+
     # Utility Features
     utility_group = parser.add_argument_group('Utility Features')
     utility_group.add_argument('--extract-icon', action='store_true',
@@ -1380,7 +1378,7 @@ def parse_arguments():
                               help='Question for AI assistant')
     utility_group.add_argument('--ai-context', metavar='CONTEXT',
                               help='Context for AI assistant (analysis results, etc.)')
-    
+
     # GUI Integration
     gui_group = parser.add_argument_group('GUI Integration')
     gui_group.add_argument('--launch-gui', action='store_true',
@@ -1393,7 +1391,7 @@ def parse_arguments():
                           help='Output path for visual CFG (default: cfg.png)')
     gui_group.add_argument('--interactive-hex', action='store_true',
                           help='Launch interactive hex editor with file')
-    
+
     # Batch Processing
     batch_group = parser.add_argument_group('Batch Processing')
     batch_group.add_argument('--batch', metavar='FILE',
@@ -1402,7 +1400,7 @@ def parse_arguments():
                             help='Output directory for batch results')
     batch_group.add_argument('--batch-parallel', action='store_true',
                             help='Process batch files in parallel')
-    
+
     # Output Options
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument('--output', '-o', metavar='FILE',
@@ -1416,7 +1414,7 @@ def parse_arguments():
                              help='Suppress non-essential output')
     output_group.add_argument('--no-color', action='store_true',
                              help='Disable colored output')
-    
+
     # Advanced Options
     advanced_group = parser.add_argument_group('Advanced Options')
     advanced_group.add_argument('--config', metavar='FILE',
@@ -1433,7 +1431,7 @@ def parse_arguments():
                                help='Profile performance and show timing metrics')
     advanced_group.add_argument('--memory-trace', action='store_true',
                                help='Track and report memory usage during analysis')
-    
+
     # Help and Information
     help_group = parser.add_argument_group('Help and Information')
     help_group.add_argument('--help-categories', action='store_true',
@@ -1444,7 +1442,7 @@ def parse_arguments():
                            choices=['analysis', 'vulnerability', 'protection', 'network', 
                                   'bypass', 'patching', 'ml', 'tools', 'plugins', 'processing'],
                            help='Show help for specific category')
-    
+
     # Special modes
     parser.add_argument('--server', action='store_true',
                        help='Run as REST API server')
@@ -1458,7 +1456,7 @@ def parse_arguments():
                        help='Run in AI-controlled mode with confirmation safeguards')
     parser.add_argument('--ai-auto-approve-low-risk', action='store_true',
                        help='Auto-approve low-risk actions in AI mode')
-    
+
     return parser.parse_args()
 
 
@@ -1466,22 +1464,22 @@ def handle_batch_processing(args):
     """Handle batch file processing."""
     if not args.batch:
         return False
-    
+
     logger.info(f"Processing batch file: {args.batch}")
-    
+
     # Read file list
     with open(args.batch, 'r') as f:
         files = [line.strip() for line in f if line.strip()]
-    
+
     logger.info(f"Found {len(files)} files to process")
-    
+
     # Create output directory
     if args.batch_output_dir:
         os.makedirs(args.batch_output_dir, exist_ok=True)
-    
+
     # Process files
     results = {}
-    
+
     if args.batch_parallel and args.threads > 1:
         # Parallel processing
         from concurrent.futures import ProcessPoolExecutor
@@ -1492,17 +1490,17 @@ def handle_batch_processing(args):
                 file_args = argparse.Namespace(**vars(args))
                 file_args.binary = file_path
                 file_args.batch = None  # Prevent recursion
-                
+
                 if args.batch_output_dir:
                     base_name = os.path.basename(file_path)
                     file_args.output = os.path.join(
                         args.batch_output_dir,
                         f"{base_name}.{args.format}"
                     )
-                
+
                 future = executor.submit(process_single_file, file_args)
                 futures[future] = file_path
-            
+
             # Collect results
             for future in futures:
                 file_path = futures[future]
@@ -1522,14 +1520,14 @@ def handle_batch_processing(args):
                 file_args = argparse.Namespace(**vars(args))
                 file_args.binary = file_path
                 file_args.batch = None  # Prevent recursion
-                
+
                 if args.batch_output_dir:
                     base_name = os.path.basename(file_path)
                     file_args.output = os.path.join(
                         args.batch_output_dir,
                         f"{base_name}.{args.format}"
                     )
-                
+
                 result = process_single_file(file_args)
                 results[file_path] = result
                 logger.info(f"Completed: {file_path}")
@@ -1537,7 +1535,7 @@ def handle_batch_processing(args):
                 logger.error(f"Failed: {file_path} - {e}")
                 if not args.ignore_errors:
                     raise
-    
+
     # Save batch summary
     if args.output:
         summary = {
@@ -1547,12 +1545,12 @@ def handle_batch_processing(args):
             'failed': len(files) - len(results),
             'results': results
         }
-        
+
         with open(args.output, 'w') as f:
             json.dump(summary, f, indent=2, default=str)
-        
+
         logger.info(f"Batch summary saved to {args.output}")
-    
+
     return True
 
 
@@ -1567,9 +1565,9 @@ def run_server_mode(args):
     """Run as REST API server."""
     from flask import Flask, request, jsonify
     import tempfile
-    
+
     app = Flask(__name__)
-    
+
     @app.route('/analyze', methods=['POST'])
     def analyze():
         """Analyze uploaded binary."""
@@ -1578,12 +1576,12 @@ def run_server_mode(args):
             file = request.files['binary']
             with tempfile.NamedTemporaryFile(delete=False) as tmp:
                 file.save(tmp.name)
-                
+
                 # Create args for analysis
                 analysis_args = argparse.Namespace(**vars(args))
                 analysis_args.binary = tmp.name
                 analysis_args.server = False  # Prevent recursion
-                
+
                 # Get analysis options from request
                 for key in request.form:
                     if hasattr(analysis_args, key):
@@ -1594,24 +1592,24 @@ def run_server_mode(args):
                         elif value.lower() in ['false', '0', 'no']:
                             value = False
                         setattr(analysis_args, key, value)
-                
+
                 # Run analysis
                 cli = IntellicrackCLI(analysis_args)
                 cli.run()
-                
+
                 # Clean up
                 os.unlink(tmp.name)
-                
+
                 return jsonify(cli.results)
-                
+
         except Exception as e:
             return jsonify({'error': str(e)}), 500
-    
+
     @app.route('/health', methods=['GET'])
     def health():
         """Health check endpoint."""
         return jsonify({'status': 'healthy', 'version': '2.0'})
-    
+
     logger.info(f"Starting API server on port {args.server_port}")
     app.run(host='0.0.0.0', port=args.server_port, debug=args.debug)
     return True
@@ -1621,35 +1619,35 @@ def run_watch_mode(args):
     """Watch file for changes and re-analyze."""
     import time
     import hashlib
-    
+
     if not args.binary:
         logger.error("Binary path required for watch mode")
         return False
-    
+
     logger.info(f"Watching {args.binary} for changes...")
     last_hash = None
-    
+
     while True:
         try:
             # Calculate file hash
             with open(args.binary, 'rb') as f:
                 current_hash = hashlib.md5(f.read()).hexdigest()
-            
+
             if current_hash != last_hash:
                 logger.info("File changed, re-analyzing...")
-                
+
                 # Run analysis
                 watch_args = argparse.Namespace(**vars(args))
                 watch_args.watch = False  # Prevent recursion
-                
+
                 cli = IntellicrackCLI(watch_args)
                 cli.run()
-                
+
                 last_hash = current_hash
                 logger.info("Analysis complete, watching for changes...")
-            
+
             time.sleep(args.watch_interval)
-            
+
         except KeyboardInterrupt:
             logger.info("Watch mode terminated")
             break
@@ -1658,7 +1656,7 @@ def run_watch_mode(args):
             if not args.ignore_errors:
                 break
             time.sleep(args.watch_interval)
-    
+
     return True
 
 
@@ -1765,7 +1763,7 @@ def show_category_help(category):
             ]
         }
     }
-    
+
     if category in category_help:
         info = category_help[category]
         print(f"📁 {info['title']}")
@@ -1786,7 +1784,7 @@ def list_all_commands():
     print("=" * 50)
     print("Total: 78 features accessible via CLI")
     print()
-    
+
     # Import the parser to get all arguments
     parser = argparse.ArgumentParser()
     # We would add all arguments here, but it's complex
@@ -1826,10 +1824,10 @@ def list_all_commands():
         "Output & Utilities:",
         "  --format, --output, --batch, --server, --watch, --extract-icon"
     ]
-    
+
     for line in commands:
         print(line)
-    
+
     print()
     print("💡 Use --help-category <category> for detailed help on specific features")
     print("💡 Use --help-categories for organized view with examples")
@@ -1839,15 +1837,15 @@ def run_ai_mode(args):
     """Run in AI-controlled mode."""
     from ai_wrapper import IntellicrackAIInterface, ConfirmationManager
     from ai_integration import IntellicrackAIServer, create_ai_system_prompt
-    
+
     logger.info("Starting Intellicrack in AI-controlled mode")
-    
+
     # Create confirmation manager
     manager = ConfirmationManager(auto_approve_low_risk=args.ai_auto_approve_low_risk)
-    
+
     # Create AI server
     server = IntellicrackAIServer(args.ai_auto_approve_low_risk)
-    
+
     print("🤖 Intellicrack AI Mode Active")
     print("=" * 80)
     print(create_ai_system_prompt())
@@ -1855,7 +1853,7 @@ def run_ai_mode(args):
     print("\nAI models can now control Intellicrack with confirmation safeguards.")
     print("Low-risk auto-approval:", "ENABLED" if args.ai_auto_approve_low_risk else "DISABLED")
     print("\nPress Ctrl+C to exit AI mode.\n")
-    
+
     try:
         # Keep the AI mode running
         while True:
@@ -1868,33 +1866,33 @@ def run_ai_mode(args):
 def main():
     """Main entry point."""
     args = parse_arguments()
-    
+
     # Handle help options first
     if args.help_categories:
         show_feature_categories()
         return
-    
+
     if args.list_commands:
         list_all_commands()
         return
-    
+
     if args.help_category:
         show_category_help(args.help_category)
         return
-    
+
     # Handle special modes
     if args.ai_mode:
         return run_ai_mode(args)
-    
+
     if args.server:
         return run_server_mode(args)
-    
+
     if args.watch:
         return run_watch_mode(args)
-    
+
     if args.batch:
         return handle_batch_processing(args)
-    
+
     # Handle plugin operations without binary
     if args.plugin_list:
         plugin_sys = PluginSystem()
@@ -1907,7 +1905,7 @@ def main():
         print()
         print("💡 Use --plugin-run <plugin> to execute a plugin")
         return
-    
+
     if args.plugin_install:
         plugin_sys = PluginSystem()
         success = plugin_sys.install_plugin(args.plugin_install)
@@ -1916,7 +1914,7 @@ def main():
         else:
             print(f"❌ Failed to install plugin from {args.plugin_install}")
         return
-    
+
     # Require binary for analysis
     if not args.binary:
         print("❌ Error: Binary path required for analysis")
@@ -1926,7 +1924,7 @@ def main():
         print("  intellicrack-cli --help-categories")
         print("  intellicrack-cli --help")
         sys.exit(1)
-    
+
     # Run analysis
     try:
         cli = IntellicrackCLI(args)

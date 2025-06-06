@@ -10,13 +10,13 @@ import logging
 import os
 import traceback
 from pathlib import Path
-from typing import Optional, Union, Callable, Dict, Any
+from typing import Any, Callable, Dict, Optional, Union
 
 # Module logger
 logger = logging.getLogger(__name__)
 
 
-def compute_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256', 
+def compute_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256',
                      progress_signal: Optional[Callable[[int], None]] = None) -> str:
     """
     Computes the hash of a file using the specified algorithm with optional progress updates.
@@ -81,11 +81,11 @@ def compute_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256',
 def get_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256') -> str:
     """
     Simple wrapper for compute_file_hash without progress callback.
-    
+
     Args:
         file_path: Path to the file to hash
         algorithm: The hashing algorithm to use
-        
+
     Returns:
         str: Hexadecimal hash string
     """
@@ -95,14 +95,14 @@ def get_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256') -> str
 def read_binary(file_path: Union[str, Path], chunk_size: int = 8192) -> bytes:
     """
     Read a binary file in chunks.
-    
+
     Args:
         file_path: Path to the binary file
         chunk_size: Size of chunks to read (default: 8192)
-        
+
     Returns:
         bytes: File contents
-        
+
     Raises:
         FileNotFoundError: If file doesn't exist
         PermissionError: If file cannot be read
@@ -111,7 +111,7 @@ def read_binary(file_path: Union[str, Path], chunk_size: int = 8192) -> bytes:
         file_path = Path(file_path)
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
-            
+
         with open(file_path, 'rb') as f:
             chunks = []
             while True:
@@ -128,32 +128,32 @@ def read_binary(file_path: Union[str, Path], chunk_size: int = 8192) -> bytes:
 def write_binary(file_path: Union[str, Path], data: bytes, create_backup: bool = True) -> bool:
     """
     Write binary data to a file with optional backup.
-    
+
     Args:
         file_path: Path to write to
         data: Binary data to write
         create_backup: Whether to create a backup of existing file
-        
+
     Returns:
         bool: True if successful, False otherwise
     """
     try:
         file_path = Path(file_path)
-        
+
         # Create backup if file exists and backup requested
         if create_backup and file_path.exists():
             backup_path = file_path.with_suffix(file_path.suffix + '.bak')
             import shutil
             shutil.copy2(file_path, backup_path)
             logger.info(f"Created backup: {backup_path}")
-        
+
         # Write the data
         with open(file_path, 'wb') as f:
             f.write(data)
-        
+
         logger.info(f"Successfully wrote {len(data)} bytes to {file_path}")
         return True
-        
+
     except Exception as e:
         logger.error(f"Error writing binary file {file_path}: {e}")
         return False
@@ -162,10 +162,10 @@ def write_binary(file_path: Union[str, Path], data: bytes, create_backup: bool =
 def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
     """
     Analyze the format of a binary file.
-    
+
     Args:
         file_path: Path to the binary file
-        
+
     Returns:
         dict: Format information including type, architecture, etc.
     """
@@ -173,18 +173,18 @@ def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
         file_path = Path(file_path)
         if not file_path.exists():
             return {"error": "File not found"}
-        
+
         # Read file header
         with open(file_path, 'rb') as f:
             header = f.read(512)
-        
+
         format_info = {
             "path": str(file_path),
             "size": file_path.stat().st_size,
             "type": "unknown",
             "architecture": "unknown"
         }
-        
+
         # Check for common binary formats
         if header.startswith(b'MZ'):
             format_info["type"] = "PE"
@@ -194,7 +194,7 @@ def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
                 if len(header) > pe_offset + 4:
                     if header[pe_offset:pe_offset+4] == b'PE\x00\x00':
                         format_info["type"] = "PE32/PE32+"
-        
+
         elif header.startswith(b'\x7fELF'):
             format_info["type"] = "ELF"
             if len(header) > 4:
@@ -202,22 +202,22 @@ def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
                     format_info["architecture"] = "32-bit"
                 elif header[4] == 2:
                     format_info["architecture"] = "64-bit"
-        
+
         elif header.startswith(b'\xCE\xFA\xED\xFE') or header.startswith(b'\xCF\xFA\xED\xFE'):
             format_info["type"] = "Mach-O"
             format_info["architecture"] = "32-bit"
         elif header.startswith(b'\xFE\xED\xFA\xCE') or header.startswith(b'\xFE\xED\xFA\xCF'):
             format_info["type"] = "Mach-O"
             format_info["architecture"] = "64-bit"
-        
+
         elif header.startswith(b'PK\x03\x04'):
             format_info["type"] = "ZIP/JAR/APK"
             # Check if it's an APK
             if file_path.suffix.lower() == '.apk':
                 format_info["type"] = "APK"
-        
+
         return format_info
-        
+
     except Exception as e:
         logger.error(f"Error analyzing binary format for {file_path}: {e}")
         return {"error": str(e)}
@@ -226,11 +226,11 @@ def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
 def is_binary_file(file_path: Union[str, Path], sample_size: int = 8192) -> bool:
     """
     Check if a file is binary by looking for null bytes.
-    
+
     Args:
         file_path: Path to check
         sample_size: Number of bytes to sample
-        
+
     Returns:
         bool: True if file appears to be binary
     """
@@ -246,39 +246,39 @@ def is_binary_file(file_path: Union[str, Path], sample_size: int = 8192) -> bool
 def get_file_entropy(file_path: Union[str, Path], block_size: int = 256) -> float:
     """
     Calculate the entropy of a file (useful for detecting encryption/packing).
-    
+
     Args:
         file_path: Path to the file
         block_size: Size of blocks to analyze
-        
+
     Returns:
         float: Entropy value (0-8)
     """
     try:
         import math
-        
+
         with open(file_path, 'rb') as f:
             data = f.read(block_size)
-            
+
         if not data:
             return 0.0
-            
+
         # Calculate byte frequency
         frequency = {}
         for byte in data:
             frequency[byte] = frequency.get(byte, 0) + 1
-            
+
         # Calculate entropy
         entropy = 0.0
         data_len = len(data)
-        
+
         for count in frequency.values():
             if count > 0:
                 probability = count / data_len
                 entropy -= probability * math.log2(probability)
-                
+
         return entropy
-        
+
     except Exception as e:
         logger.error(f"Error calculating file entropy: {e}")
         return 0.0

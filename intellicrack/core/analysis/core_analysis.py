@@ -5,11 +5,11 @@ This module contains the fundamental analysis functions that perform deep inspec
 of binary files, including structure analysis, packing detection, and entropy calculation.
 """
 
-import os
-import math
 import logging
+import math
+import os
 from collections import Counter
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 try:
     import pefile
@@ -19,29 +19,8 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def calculate_entropy(data: bytes) -> float:
-    """
-    Calculates Shannon entropy of given data.
-    Higher values (>7.0) typically indicate encryption, compression, or obfuscation.
-
-    Args:
-        data: Binary data (bytes or bytearray)
-
-    Returns:
-        float: Shannon entropy value between 0 and 8
-    """
-    if not data:
-        return 0.0
-
-    entropy = 0.0
-    counter = Counter(bytearray(data))
-    data_len = len(data)
-
-    for count in counter.values():
-        probability = count / data_len
-        entropy -= probability * math.log2(probability)
-
-    return entropy
+# Import shared entropy calculation
+from ...utils.protection_utils import calculate_entropy
 
 
 def get_machine_type(machine: int) -> str:
@@ -71,7 +50,7 @@ def get_characteristics(characteristics: int) -> str:
     """Get human-readable characteristics from PE file header."""
     char_flags = {
         0x0001: "RELOCS_STRIPPED",
-        0x0002: "EXECUTABLE_IMAGE", 
+        0x0002: "EXECUTABLE_IMAGE",
         0x0004: "LINE_NUMBERS_STRIPPED",
         0x0008: "LOCAL_SYMS_STRIPPED",
         0x0010: "AGGR_WS_TRIM",
@@ -86,12 +65,12 @@ def get_characteristics(characteristics: int) -> str:
         0x4000: "UP_SYSTEM_ONLY",
         0x8000: "BYTES_REVERSED_HI"
     }
-    
+
     flags = []
     for flag, name in char_flags.items():
         if characteristics & flag:
             flags.append(name)
-    
+
     return " | ".join(flags) if flags else "None"
 
 
@@ -139,7 +118,7 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
         pe = pefile.PE(binary_path)
 
         # Basic PE header information
-        results.append(f"\nPE Header:")
+        results.append("\nPE Header:")
         if pe and hasattr(pe, 'FILE_HEADER') and pe.FILE_HEADER:
             machine = getattr(pe.FILE_HEADER, "Machine", None)
             if machine is not None:
@@ -157,7 +136,7 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
             results.append("PE FILE_HEADER missing or invalid")
 
         # Optional header
-        results.append(f"\nOptional Header:")
+        results.append("\nOptional Header:")
         if pe and hasattr(pe, 'OPTIONAL_HEADER') and pe.OPTIONAL_HEADER:
             magic = getattr(pe.OPTIONAL_HEADER, "Magic", None)
             if magic is not None:
@@ -168,20 +147,20 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
             image_base = getattr(pe.OPTIONAL_HEADER, "ImageBase", None)
             if image_base is not None:
                 results.append(f"Image base: 0x{image_base:08X}")
-            
+
             # Handle checksum with case variations
             checksum_val = None
             if hasattr(pe.OPTIONAL_HEADER, "CheckSum"):
-                checksum_val = getattr(pe.OPTIONAL_HEADER, "CheckSum")
+                checksum_val = pe.OPTIONAL_HEADER.CheckSum
             elif hasattr(pe.OPTIONAL_HEADER, "Checksum"):
-                checksum_val = getattr(pe.OPTIONAL_HEADER, "Checksum")
+                checksum_val = pe.OPTIONAL_HEADER.Checksum
             if checksum_val and checksum_val != 0:
                 results.append(f"Checksum: 0x{checksum_val:08X}")
         else:
             results.append("PE OPTIONAL_HEADER missing or invalid")
 
         # Section information
-        results.append(f"\nSections:")
+        results.append("\nSections:")
         suspicious_sections = []
 
         if pe and hasattr(pe, 'sections') and pe.sections:
@@ -197,26 +176,26 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
                 rdsz = getattr(section, "SizeOfRawData", None)
                 if rdsz is not None:
                     results.append(f"    Raw Data Size: 0x{rdsz:08X} ({rdsz:,} bytes)")
-                
+
                 # Calculate entropy for section
                 try:
                     section_data = section.get_data()
                     entropy = calculate_entropy(section_data)
                     results.append(f"    Entropy: {entropy:.2f}")
                     if entropy > 7.0:
-                        results.append(f"    WARNING: High entropy, possible encryption/compression")
+                        results.append("    WARNING: High entropy, possible encryption/compression")
                         suspicious_sections.append(name)
                 except Exception as e:
                     results.append(f"    ERROR: Could not calculate entropy: {e}")
 
         # Import table analysis
-        results.append(f"\nImports:")
+        results.append("\nImports:")
         license_related_imports = []
         if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
             for entry in pe.DIRECTORY_ENTRY_IMPORT:
                 dll_name = entry.dll.decode('utf-8', errors='ignore')
                 results.append(f"  {dll_name}:")
-                
+
                 for imp in entry.imports:
                     if imp.name:
                         func_name = imp.name.decode('utf-8', errors='ignore')
@@ -227,22 +206,22 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
                         results.append(f"    {func_name}")
 
         if license_related_imports:
-            results.append(f"\nLicense-related imports detected:")
+            results.append("\nLicense-related imports detected:")
             for imp in license_related_imports:
                 results.append(f"  {imp}")
 
         # Export table analysis
         if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
-            results.append(f"\nExports:")
+            results.append("\nExports:")
             for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
                 if exp.name:
                     results.append(f"  {exp.name.decode('utf-8', errors='ignore')}")
 
         # Summary
-        results.append(f"\nAnalysis Summary:")
+        results.append("\nAnalysis Summary:")
         results.append(f"  Suspicious sections: {len(suspicious_sections)}")
         results.append(f"  License-related imports: {len(license_related_imports)}")
-        
+
         pe.close()
 
     except Exception as e:
@@ -255,13 +234,13 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
 def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
     """
     Performs deep license analysis on a binary file.
-    
+
     This function analyzes the binary for license-related patterns, validation routines,
     and protection mechanisms commonly used in commercial software.
-    
+
     Args:
         binary_path: Path to the binary file to analyze
-        
+
     Returns:
         dict: Analysis results containing license-related findings
     """
@@ -274,64 +253,64 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
         "registry_access": [],
         "file_operations": []
     }
-    
+
     try:
         logger.info(f"Starting deep license analysis for: {binary_path}")
-        
+
         if not pefile:
             results["error"] = "pefile library not available"
             return results
-            
+
         pe = pefile.PE(binary_path)
-        
+
         # Analyze imports for license-related functions
         if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
             for entry in pe.DIRECTORY_ENTRY_IMPORT:
                 dll_name = entry.dll.decode('utf-8', errors='ignore').lower()
-                
+
                 for imp in entry.imports:
                     if imp.name:
                         func_name = imp.name.decode('utf-8', errors='ignore').lower()
-                        
+
                         # Network-related functions
                         if any(net in func_name for net in ['inet', 'socket', 'winhttp', 'urlmon']):
                             results["network_calls"].append(f"{dll_name}::{func_name}")
-                        
+
                         # Registry-related functions
                         if any(reg in func_name for reg in ['reg', 'key', 'value']):
                             results["registry_access"].append(f"{dll_name}::{func_name}")
-                        
+
                         # File operation functions
                         if any(file_op in func_name for file_op in ['file', 'read', 'write', 'create']):
                             results["file_operations"].append(f"{dll_name}::{func_name}")
-                        
+
                         # License validation patterns
                         license_patterns = ['license', 'activation', 'validate', 'verify', 'check', 'auth', 'trial']
                         if any(pattern in func_name for pattern in license_patterns):
                             results["validation_routines"].append(f"{dll_name}::{func_name}")
-        
+
         # Scan for strings (simplified version)
         try:
             with open(binary_path, 'rb') as f:
                 data = f.read()
-                
+
             # Look for license-related strings
             license_keywords = [
                 b'license', b'activation', b'trial', b'expired', b'invalid',
                 b'registration', b'serial', b'product key', b'unlock',
                 b'authenticate', b'verify', b'validation'
             ]
-            
+
             for keyword in license_keywords:
                 if keyword in data:
                     results["suspicious_strings"].append(keyword.decode('utf-8', errors='ignore'))
-                    
+
         except Exception as e:
             logger.warning(f"Could not scan strings in {binary_path}: {e}")
-        
+
         # Identify protection mechanisms
         protection_indicators = []
-        
+
         # Check for high-entropy sections (potential packing/encryption)
         if hasattr(pe, 'sections'):
             for section in pe.sections:
@@ -341,30 +320,30 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
                     if entropy > 7.0:
                         section_name = section.Name.decode('utf-8', errors='ignore').rstrip('\0')
                         protection_indicators.append(f"High entropy section: {section_name} ({entropy:.2f})")
-                except:
+                except (UnicodeDecodeError, AttributeError, ValueError):
                     pass
-        
+
         results["protection_mechanisms"] = protection_indicators
-        
+
         pe.close()
-        
+
     except Exception as e:
         logger.exception(f"Error in deep license analysis: {binary_path}")
         results["error"] = str(e)
-    
+
     return results
 
 
 def detect_packing(binary_path: str) -> Dict[str, Any]:
     """
     Detects if a binary is packed or obfuscated.
-    
+
     Analyzes various indicators that suggest the binary has been packed,
     compressed, or obfuscated to hide its true functionality.
-    
+
     Args:
         binary_path: Path to the binary file to analyze
-        
+
     Returns:
         dict: Packing detection results
     """
@@ -376,38 +355,38 @@ def detect_packing(binary_path: str) -> Dict[str, Any]:
         "section_analysis": {},
         "import_analysis": {}
     }
-    
+
     try:
         logger.info(f"Starting packing detection for: {binary_path}")
-        
+
         if not pefile:
             results["error"] = "pefile library not available"
             return results
-            
+
         pe = pefile.PE(binary_path)
-        
+
         # Entropy analysis - packed files typically have high entropy
         high_entropy_sections = 0
         total_sections = 0
         entropy_scores = []
-        
+
         if hasattr(pe, 'sections'):
             for section in pe.sections:
                 try:
                     section_data = section.get_data()
                     entropy = calculate_entropy(section_data)
                     section_name = section.Name.decode('utf-8', errors='ignore').rstrip('\0')
-                    
+
                     entropy_scores.append(entropy)
                     total_sections += 1
-                    
+
                     if entropy > 7.0:
                         high_entropy_sections += 1
                         results["indicators"].append(f"High entropy section: {section_name} ({entropy:.2f})")
-                        
+
                 except Exception as e:
                     logger.warning(f"Could not analyze section entropy: {e}")
-        
+
         # Calculate average entropy
         avg_entropy = sum(entropy_scores) / len(entropy_scores) if entropy_scores else 0
         results["entropy_analysis"] = {
@@ -416,7 +395,7 @@ def detect_packing(binary_path: str) -> Dict[str, Any]:
             "total_sections": total_sections,
             "entropy_scores": entropy_scores
         }
-        
+
         # Section analysis - look for suspicious section names/characteristics
         suspicious_section_names = [
             'upx0', 'upx1', 'upx2', '.aspack', '.adata', '.boom', '.ccg',
@@ -425,59 +404,59 @@ def detect_packing(binary_path: str) -> Dict[str, Any]:
             '.sforce3', '.spack', '.svkp', '.taz', '.tsuarch', '.tsustub',
             '.packed', '.wwpack', '.y0da'
         ]
-        
+
         for section in pe.sections:
             section_name = section.Name.decode('utf-8', errors='ignore').rstrip('\0').lower()
             if any(sus_name in section_name for sus_name in suspicious_section_names):
                 results["indicators"].append(f"Suspicious section name: {section_name}")
                 results["section_analysis"][section_name] = "Suspicious packer signature"
-        
+
         # Import analysis - packed files often have minimal imports
         import_count = 0
         if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
             for entry in pe.DIRECTORY_ENTRY_IMPORT:
                 for imp in entry.imports:
                     import_count += 1
-        
+
         results["import_analysis"]["import_count"] = import_count
-        
+
         if import_count < 10:
             results["indicators"].append(f"Unusually low import count: {import_count}")
-        
+
         # Calculate confidence score
         confidence_factors = []
-        
+
         # High entropy factor
         if avg_entropy > 7.0:
             confidence_factors.append(0.4)
         elif avg_entropy > 6.5:
             confidence_factors.append(0.2)
-            
+
         # High entropy sections factor
         if high_entropy_sections > 0 and total_sections > 0:
             ratio = high_entropy_sections / total_sections
             confidence_factors.append(ratio * 0.3)
-        
+
         # Low imports factor
         if import_count < 10:
             confidence_factors.append(0.2)
         elif import_count < 5:
             confidence_factors.append(0.3)
-        
+
         # Suspicious section names
         if any("suspicious" in indicator.lower() for indicator in results["indicators"]):
             confidence_factors.append(0.3)
-        
+
         # Calculate final confidence
         results["confidence"] = min(sum(confidence_factors), 1.0)
         results["is_packed"] = results["confidence"] > 0.5
-        
+
         pe.close()
-        
+
     except Exception as e:
         logger.exception(f"Error in packing detection: {binary_path}")
         results["error"] = str(e)
-    
+
     return results
 
 

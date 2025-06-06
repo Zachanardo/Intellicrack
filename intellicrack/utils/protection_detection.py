@@ -5,22 +5,35 @@ This module provides functions for detecting various software protections,
 commercial protectors, and anti-analysis techniques.
 """
 
+import hashlib
+import logging
 import os
 import sys
-import logging
-import hashlib
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
+
+def _get_driver_path(driver_name: str) -> str:
+    """Get Windows driver path dynamically."""
+    try:
+        from .path_discovery import get_system_path
+        drivers_dir = get_system_path('windows_drivers')
+        if drivers_dir:
+            return os.path.join(drivers_dir, driver_name)
+    except ImportError:
+        pass
+    
+    # Fallback
+    return os.path.join(os.environ.get('SystemRoot', r'C:\Windows'), 'System32', 'drivers', driver_name)
 
 
 def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Detect virtualization-based protections.
-    
+
     Args:
         binary_path: Path to binary to analyze
-        
+
     Returns:
         Detection results
     """
@@ -30,27 +43,27 @@ def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[
         "indicators": [],
         "confidence": 0.0
     }
-    
+
     try:
         # Check for known VM detection techniques
         vm_indicators = [
             "VirtualBox", "VMware", "QEMU", "Xen", "Hyper-V",
             "vbox", "vmtoolsd", "vmwareuser", "qemu-ga"
         ]
-        
+
         # Check running processes (if possible)
         try:
             import psutil
             running_processes = [p.info['name'].lower() for p in psutil.process_iter(['name']) if p.info['name']]
-            
+
             for indicator in vm_indicators:
                 if any(indicator.lower() in proc for proc in running_processes):
                     results["indicators"].append(f"VM process detected: {indicator}")
                     results["virtualization_detected"] = True
-                    
+
         except ImportError:
             logger.debug("psutil not available for process checking")
-        
+
         # Check registry for VM artifacts (Windows)
         if sys.platform == 'win32':
             try:
@@ -60,7 +73,7 @@ def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[
                     r"SOFTWARE\VMware, Inc.\VMware Tools",
                     r"HARDWARE\DEVICEMAP\Scsi\Scsi Port 0\Scsi Bus 0\Target Id 0\Logical Unit Id 0",
                 ]
-                
+
                 for key_path in vm_registry_keys:
                     try:
                         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path)
@@ -69,18 +82,18 @@ def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[
                         winreg.CloseKey(key)
                     except FileNotFoundError:
                         pass
-                        
+
             except ImportError:
                 logger.debug("winreg not available")
-        
+
         # Check for VM-specific files
         vm_files = [
             "/proc/scsi/scsi",  # Linux
             "/sys/class/dmi/id/product_name",  # Linux
-            "C:\\Windows\\System32\\drivers\\vboxguest.sys",  # Windows VirtualBox
-            "C:\\Windows\\System32\\drivers\\vmhgfs.sys",  # Windows VMware
+            _get_driver_path("vboxguest.sys"),  # Windows VirtualBox
+            _get_driver_path("vmhgfs.sys"),  # Windows VMware
         ]
-        
+
         for vm_file in vm_files:
             if os.path.exists(vm_file):
                 try:
@@ -92,28 +105,28 @@ def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[
                                 results["virtualization_detected"] = True
                 except:
                     pass
-        
+
         # Calculate confidence
         if results["virtualization_detected"]:
             results["confidence"] = min(len(results["indicators"]) * 0.3, 1.0)
             results["protection_types"].append("VM Detection")
-        
+
         logger.info(f"Virtualization detection complete: {results['virtualization_detected']}")
-        
+
     except Exception as e:
         logger.error(f"Error in virtualization detection: {e}")
         results["error"] = str(e)
-    
+
     return results
 
 
 def detect_commercial_protections(binary_path: str) -> Dict[str, Any]:
     """
     Detect commercial software protections.
-    
+
     Args:
         binary_path: Path to binary to analyze
-        
+
     Returns:
         Detection results
     """
@@ -122,11 +135,11 @@ def detect_commercial_protections(binary_path: str) -> Dict[str, Any]:
         "confidence_scores": {},
         "indicators": []
     }
-    
+
     try:
         if not os.path.exists(binary_path):
             return {"error": "Binary file not found"}
-        
+
         # Known protection signatures
         protection_signatures = {
             "UPX": [b"UPX!", b"$Info: This file is packed with the UPX"],
@@ -140,11 +153,11 @@ def detect_commercial_protections(binary_path: str) -> Dict[str, Any]:
             "CodeVirtualizer": [b"CodeVirtualizer", b"Oreans"],
             "WinLicense": [b"WinLicense", b"Oreans Technologies"],
         }
-        
+
         # Read binary file
         with open(binary_path, 'rb') as f:
             binary_data = f.read()
-        
+
         # Check for protection signatures
         for protection, signatures in protection_signatures.items():
             found_signatures = 0
@@ -152,17 +165,17 @@ def detect_commercial_protections(binary_path: str) -> Dict[str, Any]:
                 if signature in binary_data:
                     found_signatures += 1
                     results["indicators"].append(f"{protection} signature found: {signature}")
-            
+
             if found_signatures > 0:
                 confidence = min(found_signatures / len(signatures), 1.0)
                 results["protections_found"].append(protection)
                 results["confidence_scores"][protection] = confidence
-        
+
         # Check section names for protection indicators
         try:
             import pefile
             pe = pefile.PE(binary_path)
-            
+
             protection_sections = {
                 "UPX": ["UPX0", "UPX1", "UPX2"],
                 "ASPack": [".aspack", ".adata"],
@@ -170,40 +183,40 @@ def detect_commercial_protections(binary_path: str) -> Dict[str, Any]:
                 "Themida": [".themida", ".oreans"],
                 "VMProtect": [".vmp0", ".vmp1", ".vmp2"],
             }
-            
-            section_names = [section.Name.decode('utf-8', errors='ignore').strip('\x00') 
+
+            section_names = [section.Name.decode('utf-8', errors='ignore').strip('\x00')
                            for section in pe.sections]
-            
+
             for protection, sections in protection_sections.items():
                 for section in sections:
                     if any(section.lower() in name.lower() for name in section_names):
                         if protection not in results["protections_found"]:
                             results["protections_found"].append(protection)
                         results["indicators"].append(f"{protection} section found: {section}")
-            
+
             pe.close()
-            
+
         except ImportError:
             logger.debug("pefile not available for section analysis")
         except Exception as e:
             logger.debug(f"PE analysis failed: {e}")
-        
+
         logger.info(f"Commercial protection detection complete: {len(results['protections_found'])} found")
-        
+
     except Exception as e:
         logger.error(f"Error in commercial protection detection: {e}")
         results["error"] = str(e)
-    
+
     return results
 
 
 def run_comprehensive_protection_scan(binary_path: str) -> Dict[str, Any]:
     """
     Run comprehensive protection scanning.
-    
+
     Args:
         binary_path: Path to binary to analyze
-        
+
     Returns:
         Comprehensive scan results
     """
@@ -212,18 +225,18 @@ def run_comprehensive_protection_scan(binary_path: str) -> Dict[str, Any]:
         "total_protections": 0,
         "scan_results": {}
     }
-    
+
     try:
         logger.info(f"Starting comprehensive protection scan: {binary_path}")
-        
+
         # Run virtualization detection
         vm_results = detect_virtualization_protection(binary_path)
         results["scan_results"]["virtualization"] = vm_results
-        
+
         # Run commercial protection detection
         commercial_results = detect_commercial_protections(binary_path)
         results["scan_results"]["commercial"] = commercial_results
-        
+
         # Run TPM detection
         try:
             from intellicrack.utils.process_utils import detect_tpm_protection
@@ -231,32 +244,32 @@ def run_comprehensive_protection_scan(binary_path: str) -> Dict[str, Any]:
             results["scan_results"]["tpm"] = tpm_results
         except ImportError:
             logger.debug("TPM detection not available")
-        
+
         # Calculate total protections found
         total = 0
         if vm_results.get("virtualization_detected"):
             total += 1
         total += len(commercial_results.get("protections_found", []))
-        
+
         results["total_protections"] = total
-        
+
         logger.info(f"Comprehensive protection scan complete: {total} protections found")
-        
+
     except Exception as e:
         logger.error(f"Error in comprehensive protection scan: {e}")
         results["error"] = str(e)
-    
+
     return results
 
 
 def generate_checksum(data: bytes, algorithm: str = "sha256") -> str:
     """
     Generate checksum for data.
-    
+
     Args:
         data: Data to checksum
         algorithm: Hash algorithm to use
-        
+
     Returns:
         Hex digest of checksum
     """
@@ -272,10 +285,10 @@ def generate_checksum(data: bytes, algorithm: str = "sha256") -> str:
 def detect_checksum_verification(binary_path: str) -> Dict[str, Any]:
     """
     Detect checksum verification in binary.
-    
+
     Args:
         binary_path: Path to binary to analyze
-        
+
     Returns:
         Detection results
     """
@@ -284,7 +297,7 @@ def detect_checksum_verification(binary_path: str) -> Dict[str, Any]:
         "algorithms_found": [],
         "indicators": []
     }
-    
+
     try:
         # Known checksum/hash function names
         hash_functions = [
@@ -292,10 +305,10 @@ def detect_checksum_verification(binary_path: str) -> Dict[str, Any]:
             b"md5", b"sha1", b"sha256", b"sha512", b"crc32",
             b"HashData", b"CheckSum", b"VerifyHash", b"ComputeHash"
         ]
-        
+
         with open(binary_path, 'rb') as f:
             binary_data = f.read()
-        
+
         for hash_func in hash_functions:
             if hash_func in binary_data:
                 results["checksum_verification_detected"] = True
@@ -303,23 +316,23 @@ def detect_checksum_verification(binary_path: str) -> Dict[str, Any]:
                 if algo_name not in results["algorithms_found"]:
                     results["algorithms_found"].append(algo_name)
                 results["indicators"].append(f"Hash function reference: {algo_name}")
-        
+
         logger.info(f"Checksum verification detection: {results['checksum_verification_detected']}")
-        
+
     except Exception as e:
         logger.error(f"Error detecting checksum verification: {e}")
         results["error"] = str(e)
-    
+
     return results
 
 
 def detect_self_healing_code(binary_path: str) -> Dict[str, Any]:
     """
     Detect self-healing/self-modifying code.
-    
+
     Args:
         binary_path: Path to binary to analyze
-        
+
     Returns:
         Detection results
     """
@@ -328,7 +341,7 @@ def detect_self_healing_code(binary_path: str) -> Dict[str, Any]:
         "indicators": [],
         "techniques": []
     }
-    
+
     try:
         # Indicators of self-modifying code
         self_mod_indicators = [
@@ -336,39 +349,39 @@ def detect_self_healing_code(binary_path: str) -> Dict[str, Any]:
             b"FlushInstructionCache", b"NtProtectVirtualMemory",
             b"mprotect", b"mmap", b"munmap"  # Linux equivalents
         ]
-        
+
         with open(binary_path, 'rb') as f:
             binary_data = f.read()
-        
+
         for indicator in self_mod_indicators:
             if indicator in binary_data:
                 results["self_healing_detected"] = True
                 func_name = indicator.decode('utf-8', errors='ignore')
                 results["indicators"].append(f"Self-modification API: {func_name}")
-                
+
                 if "Protect" in func_name or "mprotect" in func_name:
                     results["techniques"].append("Memory protection modification")
                 elif "Alloc" in func_name or "mmap" in func_name:
                     results["techniques"].append("Dynamic memory allocation")
                 elif "Write" in func_name:
                     results["techniques"].append("Memory writing")
-        
+
         logger.info(f"Self-healing code detection: {results['self_healing_detected']}")
-        
+
     except Exception as e:
         logger.error(f"Error detecting self-healing code: {e}")
         results["error"] = str(e)
-    
+
     return results
 
 
 def detect_obfuscation(binary_path: str) -> Dict[str, Any]:
     """
     Detect code obfuscation techniques.
-    
+
     Args:
         binary_path: Path to binary to analyze
-        
+
     Returns:
         Detection results
     """
@@ -378,54 +391,54 @@ def detect_obfuscation(binary_path: str) -> Dict[str, Any]:
         "entropy_score": 0.0,
         "indicators": []
     }
-    
+
     try:
         # Calculate entropy to detect obfuscation
         from intellicrack.core.analysis.core_analysis import calculate_entropy
-        
+
         with open(binary_path, 'rb') as f:
             binary_data = f.read()
-        
+
         entropy = calculate_entropy(binary_data)
         results["entropy_score"] = entropy
-        
+
         if entropy > 7.5:
             results["obfuscation_detected"] = True
             results["techniques"].append("High entropy (likely packed/encrypted)")
             results["indicators"].append(f"High entropy score: {entropy:.2f}")
-        
+
         # Check for obfuscation indicators
         obfuscation_indicators = [
             b"GetProcAddress", b"LoadLibrary", b"VirtualAlloc",
             b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent",
             b"OutputDebugString", b"anti", b"debug", b"trace"
         ]
-        
+
         api_count = 0
         for indicator in obfuscation_indicators:
             if indicator in binary_data:
                 api_count += 1
                 results["indicators"].append(f"Obfuscation API: {indicator.decode('utf-8', errors='ignore')}")
-        
+
         if api_count > 3:
             results["obfuscation_detected"] = True
             results["techniques"].append("Anti-debugging APIs")
-        
+
         logger.info(f"Obfuscation detection: {results['obfuscation_detected']}")
-        
+
     except Exception as e:
         logger.error(f"Error detecting obfuscation: {e}")
         results["error"] = str(e)
-    
+
     return results
 
 
 def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
     """Detect anti-debugging techniques in binary.
-    
+
     Args:
         binary_path: Path to binary to analyze
-        
+
     Returns:
         Detection results including techniques found and confidence
     """
@@ -437,11 +450,11 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
         "indicators": [],
         "confidence": 0.0
     }
-    
+
     try:
         if not os.path.exists(binary_path):
             return {"error": "Binary file not found"}
-        
+
         # Anti-debugging API functions
         anti_debug_apis = [
             # Windows debugging APIs
@@ -462,7 +475,7 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
             b"/proc/self/stat",
             b"/proc/self/cmdline"
         ]
-        
+
         # Anti-debugging strings and indicators
         debug_strings = [
             b"debugger",
@@ -483,11 +496,11 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
             b"Trace",
             b"debug"
         ]
-        
+
         # Read binary data
         with open(binary_path, 'rb') as f:
             binary_data = f.read()
-        
+
         # Check for anti-debugging APIs
         for api in anti_debug_apis:
             if api in binary_data:
@@ -495,7 +508,7 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
                 results["api_calls"].append(api_name)
                 results["indicators"].append(f"Anti-debug API found: {api_name}")
                 results["anti_debug_detected"] = True
-                
+
                 # Categorize techniques
                 if api_name in ["IsDebuggerPresent", "CheckRemoteDebuggerPresent"]:
                     if "Windows Debugger Detection" not in results["techniques"]:
@@ -509,7 +522,7 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
                 elif "NtQuery" in api_name or "NtSet" in api_name:
                     if "NT API Detection" not in results["techniques"]:
                         results["techniques"].append("NT API Detection")
-        
+
         # Check for debugger strings
         for debug_str in debug_strings:
             if debug_str.lower() in binary_data.lower():
@@ -518,7 +531,7 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
                 if "Debugger Name Detection" not in results["techniques"]:
                     results["techniques"].append("Debugger Name Detection")
                 results["anti_debug_detected"] = True
-        
+
         # Check for specific x86/x64 anti-debugging instructions
         # INT 3 (CC) - Breakpoint instruction check
         int3_count = binary_data.count(b'\xCC')
@@ -527,20 +540,20 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
             results["indicators"].append(f"High INT3 count: {int3_count}")
             results["techniques"].append("INT3 Detection")
             results["anti_debug_detected"] = True
-        
+
         # INT 2D (anti-debug interrupt)
         if b'\xCD\x2D' in binary_data:
             results["instructions"].append("INT 2D")
             results["indicators"].append("INT 2D anti-debug interrupt found")
             results["techniques"].append("INT 2D Detection")
             results["anti_debug_detected"] = True
-        
+
         # Check for PEB access patterns (Windows)
         peb_patterns = [
             b'\x64\xA1\x30\x00\x00\x00',  # mov eax, fs:[30h] - 32-bit PEB
             b'\x65\x48\x8B\x04\x25\x60\x00\x00\x00',  # mov rax, gs:[60h] - 64-bit PEB
         ]
-        
+
         for pattern in peb_patterns:
             if pattern in binary_data:
                 results["instructions"].append("PEB Access")
@@ -548,7 +561,7 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
                 if "PEB BeingDebugged Check" not in results["techniques"]:
                     results["techniques"].append("PEB BeingDebugged Check")
                 results["anti_debug_detected"] = True
-        
+
         # Check for exception-based anti-debugging
         exception_apis = [
             b"SetUnhandledExceptionFilter",
@@ -556,64 +569,65 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
             b"__try",
             b"__except"
         ]
-        
+
         exception_count = 0
         for exc_api in exception_apis:
             if exc_api in binary_data:
                 exception_count += 1
                 results["indicators"].append(f"Exception handling API: {exc_api.decode('utf-8', errors='ignore')}")
-        
+
         if exception_count >= 2:
             results["techniques"].append("Exception-based Detection")
             results["anti_debug_detected"] = True
-        
+
         # Check for hardware breakpoint detection
         if b"GetThreadContext" in binary_data or b"SetThreadContext" in binary_data:
             results["techniques"].append("Hardware Breakpoint Detection")
             results["indicators"].append("Thread context manipulation for DR register checking")
             results["anti_debug_detected"] = True
-        
+
         # Calculate confidence based on findings
         if results["anti_debug_detected"]:
             # Base confidence on number and variety of techniques
             technique_score = len(results["techniques"]) * 0.15
             api_score = len(results["api_calls"]) * 0.05
             indicator_score = len(results["indicators"]) * 0.02
-            
+
             results["confidence"] = min(technique_score + api_score + indicator_score, 1.0)
-        
+
         # Try PE analysis for more detailed checks
         try:
             import pefile
             pe = pefile.PE(binary_path)
-            
+
             # Check TLS callbacks (often used for anti-debugging)
             if hasattr(pe, 'DIRECTORY_ENTRY_TLS'):
                 results["techniques"].append("TLS Callback Detection")
                 results["indicators"].append("TLS callbacks present (common anti-debug location)")
                 results["anti_debug_detected"] = True
-            
+
             pe.close()
-            
+
         except ImportError:
             logger.debug("pefile not available for detailed PE analysis")
         except Exception as e:
             logger.debug(f"PE analysis failed: {e}")
-        
+
         logger.info(f"Anti-debugging detection complete: {results['anti_debug_detected']}")
-        
+
     except Exception as e:
         logger.error(f"Error in anti-debugging detection: {e}")
         results["error"] = str(e)
-    
+
     return results
 
 
 def scan_for_bytecode_protectors(binary_path):
     """Scan for bytecode protectors."""
     import time
+
     from .protection_utils import calculate_entropy
-    
+
     results = {}
 
     try:
@@ -663,10 +677,10 @@ def scan_for_bytecode_protectors(binary_path):
         # Check section names if PE parsing is available
         section_names = []
         high_entropy_sections = []
-        
+
         if pe:
             section_names = [
-                section.Name.decode('utf-8', 'ignore').strip('\x00') 
+                section.Name.decode('utf-8', 'ignore').strip('\x00')
                 for section in pe.sections
             ]
 
@@ -764,3 +778,99 @@ def scan_for_bytecode_protectors(binary_path):
         logger.error(f"Error scanning for bytecode protectors: {e}")
 
     return results
+
+
+def detect_protection_mechanisms(binary_path: str) -> Dict[str, Any]:
+    """Detect various protection mechanisms in a binary."""
+    return run_comprehensive_protection_scan(binary_path)
+
+
+def detect_packing_methods(binary_path: str) -> Dict[str, Any]:
+    """Detect packing methods in a binary."""
+    return scan_for_bytecode_protectors(binary_path)
+
+
+def detect_all_protections(binary_path: str) -> Dict[str, Any]:
+    """Detect all types of protections in a binary."""
+    return run_comprehensive_protection_scan(binary_path)
+
+
+def detect_anti_debug(binary_path: str) -> Dict[str, Any]:
+    """Detect anti-debugging techniques in a binary."""
+    return detect_anti_debugging_techniques(binary_path)
+
+
+def detect_commercial_protectors(binary_path: str) -> Dict[str, Any]:
+    """Detect commercial protectors in a binary."""
+    return detect_commercial_protections(binary_path)
+
+
+def detect_tpm_protection(binary_path: str) -> Dict[str, Any]:
+    """Detect TPM-based protection in a binary."""
+    results = {
+        "tpm_detected": False,
+        "indicators": [],
+        "confidence": "Low"
+    }
+    
+    try:
+        with open(binary_path, 'rb') as f:
+            data = f.read()
+            
+        tpm_indicators = [
+            b"TPM",
+            b"Trusted Platform Module", 
+            b"TrEE",
+            b"tpm.dll",
+            b"TBS.dll",
+            b"Ncrypt.dll"
+        ]
+        
+        for indicator in tpm_indicators:
+            if indicator in data:
+                results["tpm_detected"] = True
+                results["indicators"].append(indicator.decode('utf-8', 'ignore'))
+                results["confidence"] = "Medium"
+                
+    except Exception as e:
+        results["error"] = str(e)
+        logger.error(f"Error detecting TPM protection: {e}")
+    
+    return results
+
+
+def detect_anti_debugging(binary_path: str) -> Dict[str, Any]:
+    """Alias for detect_anti_debugging_techniques."""
+    return detect_anti_debugging_techniques(binary_path)
+
+
+def detect_vm_detection(binary_path: str) -> Dict[str, Any]:
+    """Detect VM detection techniques in a binary."""
+    return detect_virtualization_protection(binary_path)
+
+
+def detect_self_healing(binary_path: str) -> Dict[str, Any]:
+    """Alias for detect_self_healing_code."""
+    return detect_self_healing_code(binary_path)
+
+
+# Export all functions
+__all__ = [
+    'detect_virtualization_protection',
+    'detect_commercial_protections',
+    'run_comprehensive_protection_scan',
+    'generate_checksum',
+    'detect_checksum_verification',
+    'detect_self_healing_code',
+    'detect_obfuscation',
+    'detect_anti_debugging_techniques',
+    'scan_for_bytecode_protectors',
+    'detect_protection_mechanisms',
+    'detect_packing_methods',
+    'detect_all_protections',
+    'detect_anti_debug',
+    'detect_commercial_protectors',
+    'detect_tpm_protection',
+    'detect_anti_debugging',
+    'detect_vm_detection',
+]

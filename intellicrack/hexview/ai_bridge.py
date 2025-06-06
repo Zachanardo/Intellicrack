@@ -30,7 +30,7 @@ class AIFeatureType(Enum):
 class BinaryContextBuilder:
     """
     Builds context about binary data for AI analysis.
-    
+
     This class extracts various features and metadata from binary data
     to provide rich context for AI analysis.
     """
@@ -44,7 +44,7 @@ class BinaryContextBuilder:
                      include_structure_hints: bool = True) -> Dict[str, Any]:
         """
         Build a rich context dictionary for the given binary data.
-        
+
         Args:
             binary_data: Binary data to analyze
             offset: Starting offset of the data
@@ -52,7 +52,7 @@ class BinaryContextBuilder:
             include_entropy: Whether to include entropy analysis
             include_strings: Whether to include string extraction
             include_structure_hints: Whether to include structure hints
-            
+
         Returns:
             Dictionary of context information
         """
@@ -130,11 +130,11 @@ class BinaryContextBuilder:
     def _segment_by_entropy(self, data: bytes, block_size: int = 64) -> List[Dict[str, Any]]:
         """
         Segment data into blocks and calculate entropy for each block.
-        
+
         Args:
             data: Binary data
             block_size: Size of each block
-            
+
         Returns:
             List of dictionaries with offset, size, and entropy for each block
         """
@@ -156,11 +156,11 @@ class BinaryContextBuilder:
     def _extract_strings(self, data: bytes, min_length: int = 4) -> List[Dict[str, Any]]:
         """
         Extract ASCII and UTF-16 strings from binary data.
-        
+
         Args:
             data: Binary data
             min_length: Minimum string length to extract
-            
+
         Returns:
             List of dictionaries with string information
         """
@@ -177,7 +177,7 @@ class BinaryContextBuilder:
                     "value": string_value,
                     "encoding": "ASCII"
                 })
-            except:
+            except (UnicodeDecodeError, ValueError):
                 pass
 
         # UTF-16LE strings (Windows)
@@ -204,7 +204,7 @@ class BinaryContextBuilder:
                                 "value": string_value,
                                 "encoding": "UTF-16LE"
                             })
-                        except:
+                        except (ValueError, OverflowError):
                             pass
                     utf16_chars = []
                     in_utf16 = False
@@ -218,7 +218,7 @@ class BinaryContextBuilder:
                                 "value": string_value,
                                 "encoding": "UTF-16LE"
                             })
-                        except:
+                        except (ValueError, OverflowError):
                             pass
                     utf16_chars = []
                     in_utf16 = False
@@ -228,10 +228,10 @@ class BinaryContextBuilder:
     def _detect_structure_hints(self, data: bytes) -> List[Dict[str, Any]]:
         """
         Detect potential structures in the binary data.
-        
+
         Args:
             data: Binary data
-            
+
         Returns:
             List of dictionaries with structure hints
         """
@@ -300,10 +300,10 @@ class BinaryContextBuilder:
     def _detect_repeating_patterns(self, data: bytes) -> List[Dict[str, Any]]:
         """
         Detect repeating patterns in the data that might indicate arrays or tables.
-        
+
         Args:
             data: Binary data
-            
+
         Returns:
             List of dictionaries with pattern information
         """
@@ -347,10 +347,10 @@ class BinaryContextBuilder:
     def _interpret_common_types(self, data: bytes) -> Dict[str, Any]:
         """
         Interpret data as common types (integers, floats, etc.)
-        
+
         Args:
             data: Binary data
-            
+
         Returns:
             Dictionary of interpretations
         """
@@ -386,7 +386,7 @@ class BinaryContextBuilder:
         # Try to interpret as a utf-8 string
         try:
             result["utf8_string"] = data.decode("utf-8")
-        except:
+        except UnicodeDecodeError:
             pass
 
         # Try to interpret as a timestamp
@@ -397,7 +397,7 @@ class BinaryContextBuilder:
                 import datetime
                 try:
                     result["unix_timestamp"] = datetime.datetime.fromtimestamp(uint32).isoformat()
-                except:
+                except (ValueError, OSError, OverflowError):
                     pass
 
             # Windows FILETIME (64-bit value representing 100-nanosecond intervals since January 1, 1601)
@@ -410,7 +410,7 @@ class BinaryContextBuilder:
                         import datetime
                         try:
                             result["windows_filetime"] = datetime.datetime.fromtimestamp(unix_time).isoformat()
-                        except:
+                        except (ValueError, OSError, OverflowError):
                             pass
 
         return result
@@ -419,7 +419,7 @@ class BinaryContextBuilder:
 class AIBinaryBridge:
     """
     Bridge between AI model and binary data analysis.
-    
+
     This class provides methods for analyzing binary data using AI models,
     including pattern recognition, anomaly detection, and edit suggestions.
     """
@@ -427,7 +427,7 @@ class AIBinaryBridge:
     def __init__(self, model_manager=None):
         """
         Initialize the AI binary bridge.
-        
+
         Args:
             model_manager: Instance of the model manager class
         """
@@ -440,13 +440,13 @@ class AIBinaryBridge:
                              query: Optional[str] = None) -> Dict[str, Any]:
         """
         Analyze a region of binary data with AI assistance.
-        
+
         Args:
             binary_data: Binary data to analyze
             offset: Starting offset of the data
             size: Size of the data
             query: User query to guide the analysis
-            
+
         Returns:
             Dictionary with analysis results
         """
@@ -477,13 +477,13 @@ class AIBinaryBridge:
                      edit_intent: str) -> Dict[str, Any]:
         """
         Suggest binary edits based on natural language intent.
-        
+
         Args:
             binary_data: Binary data to edit
             offset: Starting offset of the data
             size: Size of the data
             edit_intent: Natural language description of the desired edit
-            
+
         Returns:
             Dictionary with edit suggestions
         """
@@ -514,13 +514,13 @@ class AIBinaryBridge:
                          known_patterns: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
         """
         Identify known patterns in binary data.
-        
+
         Args:
             binary_data: Binary data to analyze
             offset: Starting offset of the data
             size: Size of the data
             known_patterns: List of known patterns to look for
-            
+
         Returns:
             List of identified patterns
         """
@@ -551,13 +551,13 @@ class AIBinaryBridge:
                               start_offset: int = 0, end_offset: Optional[int] = None) -> List[Dict[str, Any]]:
         """
         Search binary data based on semantic meaning.
-        
+
         Args:
             binary_data: Binary data to search
             query: Semantic search query
             start_offset: Starting offset for the search
             end_offset: Ending offset for the search
-            
+
         Returns:
             List of search results
         """
@@ -1050,7 +1050,7 @@ class AIBinaryBridge:
     def _mock_ai_response(self, context: Dict[str, Any], query: Optional[str]) -> str:
         """
         Generate a mock AI response for testing.
-        
+
         This method is used when no model manager is available.
         """
         patterns = []
@@ -1184,13 +1184,74 @@ class AIBinaryBridge:
 
         return json.dumps(mock_response, indent=2)
 
+    def analyze_binary_patterns(self, binary_path: str) -> Dict[str, Any]:
+        """
+        Analyze binary patterns in a file.
+        
+        Args:
+            binary_path: Path to the binary file to analyze
+            
+        Returns:
+            Dictionary containing pattern analysis results
+        """
+        try:
+            if not os.path.exists(binary_path):
+                return {
+                    "error": f"File not found: {binary_path}",
+                    "confidence": 0.0
+                }
+                
+            # Read a sample of the binary
+            with open(binary_path, 'rb') as f:
+                # Read first 4KB for analysis
+                data = f.read(4096)
+                
+            if not data:
+                return {
+                    "error": "Empty file or read error",
+                    "confidence": 0.0
+                }
+                
+            # Analyze patterns using AI bridge
+            patterns = self.identify_patterns(data, 0, len(data))
+            
+            # Build context
+            context = self.context_builder.build_context(
+                data, 0, len(data),
+                include_entropy=True,
+                include_strings=True,
+                include_structure_hints=True
+            )
+            
+            result = {
+                "status": "success",
+                "binary_path": binary_path,
+                "confidence": 0.8,
+                "patterns_identified": len(patterns),
+                "patterns": patterns[:10],  # Limit to first 10 patterns
+                "entropy": context.get("entropy", 0.0),
+                "strings_found": len(context.get("strings", [])),
+                "file_size": os.path.getsize(binary_path),
+                "analysis_summary": f"Analyzed {len(data)} bytes, found {len(patterns)} patterns"
+            }
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error analyzing binary patterns: {e}")
+            return {
+                "error": str(e),
+                "confidence": 0.0,
+                "patterns_identified": 0
+            }
+
 
 # AI tool functions for Intellicrack integration
 
 def wrapper_ai_binary_analyze(app_instance, parameters):
     """
     AI tool wrapper for analyzing binary data.
-    
+
     Args:
         app_instance: Intellicrack application instance
         parameters: Tool parameters including:
@@ -1198,7 +1259,7 @@ def wrapper_ai_binary_analyze(app_instance, parameters):
             - offset: Starting offset for analysis (default: 0)
             - size: Size of data to analyze (default: 1024)
             - query: User query to guide the analysis (optional)
-            
+
     Returns:
         Dictionary with analysis results
     """
@@ -1240,7 +1301,7 @@ def wrapper_ai_binary_analyze(app_instance, parameters):
 def wrapper_ai_binary_pattern_search(app_instance, parameters):
     """
     AI tool wrapper for searching binary patterns.
-    
+
     Args:
         app_instance: Intellicrack application instance
         parameters: Tool parameters including:
@@ -1248,7 +1309,7 @@ def wrapper_ai_binary_pattern_search(app_instance, parameters):
             - pattern_description: Description of pattern to search for
             - start_offset: Starting offset for search (default: 0)
             - max_size: Maximum size to search (default: entire file)
-            
+
     Returns:
         Dictionary with search results
     """
@@ -1315,7 +1376,7 @@ def wrapper_ai_binary_pattern_search(app_instance, parameters):
 def wrapper_ai_binary_edit_suggest(app_instance, parameters):
     """
     AI tool wrapper for suggesting binary edits.
-    
+
     Args:
         app_instance: Intellicrack application instance
         parameters: Tool parameters including:
@@ -1323,7 +1384,7 @@ def wrapper_ai_binary_edit_suggest(app_instance, parameters):
             - offset: Starting offset for region to edit (default: 0)
             - size: Size of region to edit (default: 1024)
             - edit_intent: Description of desired edit
-            
+
     Returns:
         Dictionary with edit suggestions
     """

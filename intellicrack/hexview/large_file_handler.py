@@ -10,11 +10,10 @@ import mmap
 import os
 import threading
 import time
-from pathlib import Path
-from typing import Optional, Dict, Any, List, Tuple, Callable
 from collections import OrderedDict
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Optional psutil for system monitoring
 try:
@@ -25,7 +24,7 @@ except ImportError:
     psutil = None
 
 try:
-    from PyQt5.QtCore import QObject, pyqtSignal, QThread, QTimer
+    from PyQt5.QtCore import QObject, QThread, QTimer, pyqtSignal
     PYQT5_AVAILABLE = True
 except ImportError:
     PYQT5_AVAILABLE = False
@@ -35,7 +34,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'LargeFileHandler', 'MemoryStrategy', 'LoadingStrategy', 
+    'LargeFileHandler', 'MemoryStrategy', 'LoadingStrategy',
     'FileCache', 'MemoryMonitor', 'BackgroundLoader'
 ]
 
@@ -80,19 +79,19 @@ class FileRegion:
 
 class FileCache:
     """LRU cache for file regions with memory management."""
-    
+
     def __init__(self, config: MemoryConfig):
         self.config = config
         self.regions: OrderedDict[int, FileRegion] = OrderedDict()
         self.total_memory = 0
         self.lock = threading.RLock()
-        
+
     def get_region(self, offset: int, size: int) -> Optional[FileRegion]:
         """Get a cached region containing the requested data."""
         with self.lock:
             # Check if we have a region that contains this data
             for region_offset, region in self.regions.items():
-                if (region_offset <= offset and 
+                if (region_offset <= offset and
                     region_offset + region.size >= offset + size):
                     # Move to end (most recently used)
                     self.regions.move_to_end(region_offset)
@@ -100,65 +99,65 @@ class FileCache:
                     region.ref_count += 1
                     return region
             return None
-    
+
     def add_region(self, region: FileRegion) -> bool:
         """Add a region to the cache."""
         with self.lock:
             # Check if we have enough memory
             region_size = len(region.data) if region.data else 0
             max_bytes = self.config.cache_size_mb * 1024 * 1024
-            
+
             # Evict old regions if necessary
-            while (self.total_memory + region_size > max_bytes and 
+            while (self.total_memory + region_size > max_bytes and
                    len(self.regions) > 0):
                 self._evict_oldest()
-            
+
             # Add the new region
             self.regions[region.offset] = region
             self.total_memory += region_size
             region.last_accessed = time.time()
             region.ref_count = 1
-            
+
             logger.debug(f"Cached region: offset=0x{region.offset:X}, size={region.size}, "
                         f"total_memory={self.total_memory / (1024*1024):.1f}MB")
             return True
-    
+
     def _evict_oldest(self):
         """Evict the oldest region from cache."""
         if not self.regions:
             return
-        
+
         # Find region with lowest reference count and oldest access time
         oldest_key = None
         oldest_time = float('inf')
-        
+
         for key, region in self.regions.items():
             if region.ref_count == 0 and region.last_accessed < oldest_time:
                 oldest_time = region.last_accessed
                 oldest_key = key
-        
+
         # If no unreferenced regions, evict the oldest one anyway
         if oldest_key is None:
             oldest_key = next(iter(self.regions))
-        
+
         # Remove the region
         region = self.regions.pop(oldest_key)
         region_size = len(region.data) if region.data else 0
         self.total_memory -= region_size
-        
+
         logger.debug(f"Evicted region: offset=0x{region.offset:X}, size={region.size}")
-    
+
     def release_region(self, region: FileRegion):
         """Release a reference to a region."""
         with self.lock:
             region.ref_count = max(0, region.ref_count - 1)
-    
+
     def clear(self):
         """Clear all cached regions."""
         with self.lock:
             self.regions.clear()
             self.total_memory = 0
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics."""
         with self.lock:
@@ -172,34 +171,34 @@ class FileCache:
 
 class MemoryMonitor:
     """Monitors system memory usage and adjusts caching strategy."""
-    
+
     def __init__(self, config: MemoryConfig):
         self.config = config
         self.callbacks: List[Callable[[float], None]] = []
         self.monitoring = False
         self.thread: Optional[threading.Thread] = None
-        
+
     def add_callback(self, callback: Callable[[float], None]):
         """Add a callback for memory usage changes."""
         self.callbacks.append(callback)
-        
+
     def start_monitoring(self):
         """Start memory monitoring in background thread."""
         if self.monitoring:
             return
-        
+
         self.monitoring = True
         self.thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self.thread.start()
         logger.debug("Memory monitoring started")
-        
+
     def stop_monitoring(self):
         """Stop memory monitoring."""
         self.monitoring = False
         if self.thread:
             self.thread.join(timeout=1.0)
         logger.debug("Memory monitoring stopped")
-        
+
     def _monitor_loop(self):
         """Main monitoring loop."""
         while self.monitoring:
@@ -209,15 +208,15 @@ class MemoryMonitor:
                     process = psutil.Process()
                     memory_info = process.memory_info()
                     memory_mb = memory_info.rss / (1024 * 1024)
-                    
+
                     # Get system memory
                     system_memory = psutil.virtual_memory()
                     memory_percent = system_memory.percent / 100.0
-                    
+
                     # Check if we exceed thresholds
                     if memory_percent > self.config.memory_threshold:
                         logger.warning(f"High system memory usage: {memory_percent:.1%}")
-                        
+
                     # Notify callbacks
                     for callback in self.callbacks:
                         try:
@@ -232,9 +231,9 @@ class MemoryMonitor:
                             callback(memory_percent)
                         except Exception as e:
                             logger.error(f"Memory monitor callback error: {e}")
-                
+
                 time.sleep(1.0)  # Check every second
-                
+
             except Exception as e:
                 logger.error(f"Memory monitoring error: {e}")
                 time.sleep(5.0)  # Wait longer on error
@@ -242,25 +241,25 @@ class MemoryMonitor:
 
 class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
     """Background thread for loading file data."""
-    
+
     # Signals for Qt integration
     progress_updated = pyqtSignal(int) if PYQT5_AVAILABLE else None
     region_loaded = pyqtSignal(object) if PYQT5_AVAILABLE else None
     error_occurred = pyqtSignal(str) if PYQT5_AVAILABLE else None
-    
+
     def __init__(self, file_path: str, cache: FileCache, config: MemoryConfig):
         if PYQT5_AVAILABLE:
             super().__init__()
         else:
             super().__init__(daemon=True)
-        
+
         self.file_path = file_path
         self.cache = cache
         self.config = config
         self.load_queue: List[Tuple[int, int]] = []
         self.queue_lock = threading.Lock()
         self.should_stop = False
-        
+
     def queue_load(self, offset: int, size: int):
         """Queue a region for loading."""
         with self.queue_lock:
@@ -269,7 +268,7 @@ class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
             if request not in self.load_queue:
                 self.load_queue.append(request)
                 logger.debug(f"Queued load: offset=0x{offset:X}, size={size}")
-    
+
     def run(self):
         """Main loading loop."""
         try:
@@ -281,34 +280,34 @@ class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
                             time.sleep(0.1)
                             continue
                         offset, size = self.load_queue.pop(0)
-                    
+
                     # Load the data
                     try:
                         file.seek(offset)
                         data = file.read(size)
-                        
+
                         if data:
                             region = FileRegion(offset=offset, size=len(data), data=data)
                             self.cache.add_region(region)
-                            
+
                             if self.region_loaded:
                                 self.region_loaded.emit(region)
-                            
+
                             logger.debug(f"Background loaded: offset=0x{offset:X}, size={len(data)}")
-                        
+
                     except Exception as e:
                         logger.error(f"Background load error: {e}")
                         if self.error_occurred:
                             self.error_occurred.emit(str(e))
-                    
+
                     # Small delay to avoid overwhelming the system
                     time.sleep(0.01)
-                    
+
         except Exception as e:
             logger.error(f"Background loader thread error: {e}")
             if self.error_occurred:
                 self.error_occurred.emit(str(e))
-    
+
     def stop(self):
         """Stop the background loader."""
         self.should_stop = True
@@ -316,41 +315,41 @@ class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
 
 class LargeFileHandler:
     """Enhanced file handler optimized for large files."""
-    
+
     def __init__(self, file_path: str, read_only: bool = True, config: Optional[MemoryConfig] = None):
         self.file_path = file_path
         self.read_only = read_only
         self.config = config or MemoryConfig()
-        
+
         # Initialize components
         self.cache = FileCache(self.config)
         self.memory_monitor = MemoryMonitor(self.config)
         self.background_loader: Optional[BackgroundLoader] = None
-        
+
         # File information
         self.file_size = 0
         self.memory_strategy = MemoryStrategy.HYBRID
         self.loading_strategy = LoadingStrategy.PROGRESSIVE
-        
+
         # Memory mapped file (for medium-sized files)
         self.mmap_file: Optional[mmap.mmap] = None
         self.file_handle: Optional[object] = None
-        
+
         # Performance tracking
         self.access_patterns: List[Tuple[int, int, float]] = []  # offset, size, timestamp
-        
+
         # Initialize the file
         self._initialize_file()
-        
+
     def _initialize_file(self):
         """Initialize file access based on size and available memory."""
         try:
             # Get file size
             self.file_size = os.path.getsize(self.file_path)
-            
+
             # Determine optimal strategy based on file size
             size_mb = self.file_size / (1024 * 1024)
-            
+
             if size_mb < 100:
                 self.memory_strategy = MemoryStrategy.DIRECT_LOAD
                 self.loading_strategy = LoadingStrategy.IMMEDIATE
@@ -360,9 +359,9 @@ class LargeFileHandler:
             else:
                 self.memory_strategy = MemoryStrategy.STREAMING
                 self.loading_strategy = LoadingStrategy.ON_DEMAND
-            
+
             logger.info(f"File size: {size_mb:.1f}MB, strategy: {self.memory_strategy.value}")
-            
+
             # Initialize based on strategy
             if self.memory_strategy == MemoryStrategy.DIRECT_LOAD:
                 self._init_direct_load()
@@ -370,38 +369,38 @@ class LargeFileHandler:
                 self._init_memory_map()
             elif self.memory_strategy == MemoryStrategy.STREAMING:
                 self._init_streaming()
-            
+
             # Start background loader for progressive/on-demand strategies
             if self.loading_strategy in [LoadingStrategy.PROGRESSIVE, LoadingStrategy.BACKGROUND]:
                 self.background_loader = BackgroundLoader(self.file_path, self.cache, self.config)
                 self.background_loader.start()
-            
+
             # Start memory monitoring
             self.memory_monitor.add_callback(self._on_memory_pressure)
             self.memory_monitor.start_monitoring()
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize large file handler: {e}")
             raise
-    
+
     def _init_direct_load(self):
         """Initialize direct loading strategy."""
         try:
             with open(self.file_path, 'rb') as f:
                 data = f.read()
-            
+
             # Cache the entire file
             region = FileRegion(offset=0, size=len(data), data=data)
             self.cache.add_region(region)
-            
+
             logger.debug(f"Direct loaded entire file: {len(data)} bytes")
-            
+
         except Exception as e:
             logger.error(f"Direct load failed: {e}")
             # Fallback to streaming
             self.memory_strategy = MemoryStrategy.STREAMING
             self._init_streaming()
-    
+
     def _init_memory_map(self):
         """Initialize memory mapping strategy."""
         try:
@@ -412,41 +411,41 @@ class LargeFileHandler:
                 access=mmap.ACCESS_READ
             )
             logger.debug(f"Memory mapped file: {self.file_size} bytes")
-            
+
         except Exception as e:
             logger.error(f"Memory mapping failed: {e}")
             # Fallback to streaming
             self.memory_strategy = MemoryStrategy.STREAMING
             self._init_streaming()
-    
+
     def _init_streaming(self):
         """Initialize streaming strategy."""
         # Streaming doesn't require initialization
         # Data is loaded on-demand through the cache
         logger.debug("Initialized streaming mode")
-    
+
     def read(self, offset: int, size: int) -> bytes:
         """
         Read data from the file using the optimal strategy.
-        
+
         Args:
             offset: Starting byte offset
             size: Number of bytes to read
-            
+
         Returns:
             Read binary data
         """
         if offset < 0 or size <= 0 or offset >= self.file_size:
             return b''
-        
+
         # Adjust size to file bounds
         size = min(size, self.file_size - offset)
-        
+
         # Track access pattern
         self.access_patterns.append((offset, size, time.time()))
         if len(self.access_patterns) > 1000:
             self.access_patterns = self.access_patterns[-500:]  # Keep recent patterns
-        
+
         # Try different read strategies
         if self.memory_strategy == MemoryStrategy.DIRECT_LOAD:
             return self._read_direct(offset, size)
@@ -454,7 +453,7 @@ class LargeFileHandler:
             return self._read_mmap(offset, size)
         else:
             return self._read_streaming(offset, size)
-    
+
     def _read_direct(self, offset: int, size: int) -> bytes:
         """Read using direct loading (cached data)."""
         region = self.cache.get_region(offset, size)
@@ -464,20 +463,20 @@ class LargeFileHandler:
             data = region.data[start_in_region:end_in_region]
             self.cache.release_region(region)
             return data
-        
+
         return b''  # Should not happen with direct loading
-    
+
     def _read_mmap(self, offset: int, size: int) -> bytes:
         """Read using memory mapping."""
         if not self.mmap_file:
             return self._read_streaming(offset, size)
-        
+
         try:
             return self.mmap_file[offset:offset + size]
         except Exception as e:
             logger.error(f"Memory map read error: {e}")
             return self._read_streaming(offset, size)
-    
+
     def _read_streaming(self, offset: int, size: int) -> bytes:
         """Read using streaming with cache."""
         # Check cache first
@@ -487,22 +486,22 @@ class LargeFileHandler:
             end_in_region = start_in_region + size
             data = region.data[start_in_region:end_in_region]
             self.cache.release_region(region)
-            
+
             # Prefetch next chunks if configured
             self._prefetch_chunks(offset + size)
-            
+
             return data
-        
+
         # Load from file
         try:
             # Calculate optimal chunk size for loading
             chunk_size = max(size, self.config.chunk_size_mb * 1024 * 1024)
             chunk_offset = (offset // chunk_size) * chunk_size
-            
+
             with open(self.file_path, 'rb') as f:
                 f.seek(chunk_offset)
                 chunk_data = f.read(min(chunk_size, self.file_size - chunk_offset))
-            
+
             if chunk_data:
                 # Cache the chunk
                 chunk_region = FileRegion(
@@ -511,30 +510,30 @@ class LargeFileHandler:
                     data=chunk_data
                 )
                 self.cache.add_region(chunk_region)
-                
+
                 # Extract requested data
                 start_in_chunk = offset - chunk_offset
                 end_in_chunk = start_in_chunk + size
                 data = chunk_data[start_in_chunk:end_in_chunk]
-                
+
                 # Prefetch next chunks
                 self._prefetch_chunks(offset + size)
-                
+
                 return data
-        
+
         except Exception as e:
             logger.error(f"Streaming read error: {e}")
-        
+
         return b''
-    
+
     def _prefetch_chunks(self, next_offset: int):
         """Prefetch chunks for better performance."""
-        if (self.config.prefetch_chunks > 0 and 
-            self.background_loader and 
+        if (self.config.prefetch_chunks > 0 and
+            self.background_loader and
             self.loading_strategy == LoadingStrategy.PROGRESSIVE):
-            
+
             chunk_size = self.config.chunk_size_mb * 1024 * 1024
-            
+
             for i in range(self.config.prefetch_chunks):
                 prefetch_offset = next_offset + (i * chunk_size)
                 if prefetch_offset < self.file_size:
@@ -544,34 +543,34 @@ class LargeFileHandler:
                             prefetch_offset,
                             min(chunk_size, self.file_size - prefetch_offset)
                         )
-    
+
     def _on_memory_pressure(self, memory_usage: float):
         """Handle memory pressure by adjusting cache."""
         if memory_usage > self.config.memory_threshold:
             # Reduce cache size
             old_size = self.config.cache_size_mb
             self.config.cache_size_mb = max(50, int(old_size * 0.8))
-            
+
             # Clear some cache entries
             cache_stats = self.cache.get_stats()
             if cache_stats['utilization'] > 0.9:
                 self.cache.clear()
-            
+
             logger.warning(f"Memory pressure detected: {memory_usage:.1%}, "
                          f"reduced cache from {old_size}MB to {self.config.cache_size_mb}MB")
-    
+
     def get_file_size(self) -> int:
         """Get the file size."""
         return self.file_size
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get performance and usage statistics."""
         cache_stats = self.cache.get_stats()
-        
+
         # Analyze access patterns
         recent_patterns = [p for p in self.access_patterns if time.time() - p[2] < 60]
         sequential_ratio = self._calculate_sequential_ratio(recent_patterns)
-        
+
         return {
             'file_size_mb': self.file_size / (1024 * 1024),
             'memory_strategy': self.memory_strategy.value,
@@ -581,25 +580,25 @@ class LargeFileHandler:
             'sequential_ratio': sequential_ratio,
             'background_loader_active': self.background_loader is not None and self.background_loader.isAlive() if hasattr(self.background_loader, 'isAlive') else False
         }
-    
+
     def _calculate_sequential_ratio(self, patterns: List[Tuple[int, int, float]]) -> float:
         """Calculate the ratio of sequential vs random access."""
         if len(patterns) < 2:
             return 0.0
-        
+
         sequential_count = 0
         total_count = len(patterns) - 1
-        
+
         for i in range(1, len(patterns)):
             prev_offset, prev_size, _ = patterns[i-1]
             curr_offset, _, _ = patterns[i]
-            
+
             # Consider sequential if current offset is close to previous end
             if abs(curr_offset - (prev_offset + prev_size)) < 1024:
                 sequential_count += 1
-        
+
         return sequential_count / total_count if total_count > 0 else 0.0
-    
+
     def close(self):
         """Close the file handler and clean up resources."""
         try:
@@ -608,28 +607,28 @@ class LargeFileHandler:
                 self.background_loader.stop()
                 if hasattr(self.background_loader, 'wait'):
                     self.background_loader.wait()
-            
+
             # Stop memory monitoring
             self.memory_monitor.stop_monitoring()
-            
+
             # Close memory map
             if self.mmap_file:
                 self.mmap_file.close()
                 self.mmap_file = None
-            
+
             # Close file handle
             if self.file_handle:
                 self.file_handle.close()
                 self.file_handle = None
-            
+
             # Clear cache
             self.cache.clear()
-            
+
             logger.debug("Large file handler closed")
-            
+
         except Exception as e:
             logger.error(f"Error closing large file handler: {e}")
-    
+
     def __del__(self):
         """Cleanup when object is destroyed."""
         self.close()

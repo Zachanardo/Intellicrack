@@ -10,36 +10,37 @@ This module provides the core plugin system functionality including:
 Author: Intellicrack Development Team
 """
 
-import os
-import sys
+import importlib
 import json
+import multiprocessing
+import os
 import shutil
+import subprocess
+import sys
 import tempfile
 import traceback
-import subprocess
-import importlib
-import multiprocessing
-import pickle
-import time
-from typing import Dict, List, Any, Optional, Union
-from PyQt5.QtWidgets import QMessageBox, QInputDialog
+from typing import Any, Dict, List, Optional
 
-try:
+from PyQt5.QtWidgets import QInputDialog, QMessageBox
+
+from ..utils.common_imports import FRIDA_AVAILABLE
+
+if FRIDA_AVAILABLE:
     import frida
-    FRIDA_AVAILABLE = True
-except ImportError:
-    FRIDA_AVAILABLE = False
+else:
+    frida = None
 
 try:
     import resource
     RESOURCE_AVAILABLE = True
 except ImportError:
     RESOURCE_AVAILABLE = False
-    
+
+from ..config import CONFIG
 from ..utils.logger import logger
 from ..utils.process_utils import get_target_process_pid
-from ..config import CONFIG
 from .remote_executor import RemotePluginExecutor
+
 
 def log_message(msg: str) -> str:
     """Helper function to format log messages consistently."""
@@ -50,10 +51,10 @@ def load_plugins(plugin_dir: str = "plugins") -> Dict[str, List[Dict[str, Any]]]
     """
     Loads and initializes plugins from the plugin directory.
     Returns a dictionary of loaded plugins by category.
-    
+
     Args:
         plugin_dir: Directory containing plugin subdirectories
-        
+
     Returns:
         Dictionary with plugin categories (frida, ghidra, custom) and their plugins
     """
@@ -172,7 +173,7 @@ def load_plugins(plugin_dir: str = "plugins") -> Dict[str, List[Dict[str, Any]]]
 def run_plugin(app, plugin_name: str) -> None:
     """
     Runs a built-in plugin.
-    
+
     Args:
         app: Application instance
         plugin_name: Name of the built-in plugin to run
@@ -186,7 +187,7 @@ def run_plugin(app, plugin_name: str) -> None:
     # Import API hooking functions dynamically to avoid circular imports
     from ..core.patching.payload_generator import generate_complete_api_hooking_script
     from ..utils.protection_utils import inject_comprehensive_api_hooks
-    
+
     if plugin_name == "HWID Spoofer":
         script = generate_complete_api_hooking_script(
             app, hook_types=["hardware_id"])
@@ -281,7 +282,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
     """
     Runs a Frida plugin script from a file.
     Enhanced with robust PID finding and error handling.
-    
+
     Args:
         app: Application instance
         plugin_path: Path to the Frida script file
@@ -290,7 +291,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
         app.update_output.emit(log_message(
             "[Plugin] Frida is not available. Please install frida-tools."))
         return
-    
+
     if not app.binary_path:
         app.update_output.emit(log_message("[Plugin] No binary selected."))
         return
@@ -324,6 +325,10 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
         f"[Plugin] Attempting to attach to PID {target_pid} for script '{plugin_name}'"))
 
     # Run the Frida script with improved error handling
+    if not FRIDA_AVAILABLE or frida is None:
+        app.update_output.emit(log_message("[Plugin] Frida not available - cannot run script"))
+        return
+        
     session = None  # Initialize session to None
     try:
         session = frida.attach(target_pid)
@@ -401,11 +406,6 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
             log_message(
                 f"[Plugin] Error running '{plugin_name}': "
                 f"Frida could not find required executable: {e}"))
-    except frida.IncompatibleExecutableError as e:
-        app.update_output.emit(
-            log_message(
-                f"[Plugin] Error running '{plugin_name}': "
-                f"Target executable is incompatible: {e}"))
     except Exception as e:
         # Catch generic exceptions during attach or script load
         app.update_output.emit(
@@ -474,15 +474,8 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
             "[Plugin] Running Ghidra headless analyzer..."))
 
         # Run Ghidra
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding="utf-8"
-        )
-
-        stdout, stderr = process.communicate()
+        from ..utils.process_helpers import run_ghidra_process
+        returncode, stdout, stderr = run_ghidra_process(cmd)
 
         # Process output
         if stdout and isinstance(stdout, (str, bytes)):
@@ -529,18 +522,18 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
 def create_sample_plugins(plugin_dir: str = "plugins") -> None:
     """
     Creates sample plugin files for users to reference.
-    
+
     Args:
         plugin_dir: Directory to create plugin samples in
     """
     logger.info("Creating sample plugins...")
-    
+
     # Ensure directories exist
     os.makedirs(plugin_dir, exist_ok=True)
     os.makedirs(os.path.join(plugin_dir, "frida_scripts"), exist_ok=True)
     os.makedirs(os.path.join(plugin_dir, "ghidra_scripts"), exist_ok=True)
     os.makedirs(os.path.join(plugin_dir, "custom_modules"), exist_ok=True)
-    
+
     # Create sample Frida script
     sample_frida = '''// Registry Monitor - Monitors registry access
 // This script hooks Windows registry APIs
@@ -561,13 +554,13 @@ Interceptor.attach(Module.findExportByName("advapi32.dll", "RegQueryValueExW"), 
 
 send("[Registry Monitor] Started monitoring registry access");
 '''
-    
+
     frida_path = os.path.join(plugin_dir, "frida_scripts", "registry_monitor.js")
     if not os.path.exists(frida_path):
         with open(frida_path, "w", encoding="utf-8") as f:
             f.write(sample_frida)
         logger.info(f"Created sample Frida script: {frida_path}")
-    
+
     # Create sample Ghidra script
     sample_ghidra = '''//License Pattern Scanner
 //Searches for common license validation patterns
@@ -581,27 +574,27 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 
 public class LicensePatternScanner extends GhidraScript {
-    
+
     @Override
     public void run() throws Exception {
         println("Scanning for license validation patterns...");
-        
+
         // Common license-related strings
         String[] patterns = {
             "license", "activation", "serial", "key",
             "validate", "verify", "check", "trial",
             "expire", "register", "unlock"
         };
-        
+
         Memory memory = currentProgram.getMemory();
-        
+
         for (String pattern : patterns) {
             println("Searching for: " + pattern);
-            
+
             // Search for strings
             byte[] searchBytes = pattern.getBytes();
             Address start = memory.getMinAddress();
-            
+
             while (start != null) {
                 start = memory.findBytes(start, searchBytes, null, true, monitor);
                 if (start != null) {
@@ -610,18 +603,18 @@ public class LicensePatternScanner extends GhidraScript {
                 }
             }
         }
-        
+
         println("License pattern scan complete!");
     }
 }
 '''
-    
+
     ghidra_path = os.path.join(plugin_dir, "ghidra_scripts", "LicensePatternScanner.java")
     if not os.path.exists(ghidra_path):
         with open(ghidra_path, "w", encoding="utf-8") as f:
             f.write(sample_ghidra)
         logger.info(f"Created sample Ghidra script: {ghidra_path}")
-    
+
     # Create sample custom Python module
     sample_custom = '''"""
 Demo Plugin for Intellicrack
@@ -632,58 +625,58 @@ class DemoPlugin:
     def __init__(self):
         self.name = "Demo Plugin"
         self.description = "A sample plugin showing the plugin interface"
-    
+
     def analyze(self, binary_path):
         """
         Analyze the binary and return findings.
-        
+
         Args:
             binary_path: Path to the binary to analyze
-            
+
         Returns:
             List of strings with analysis results
         """
         results = []
         results.append(f"Analyzing: {binary_path}")
-        
+
         # Add your analysis logic here
         import os
         file_size = os.path.getsize(binary_path)
         results.append(f"File size: {file_size:,} bytes")
-        
+
         # Example: Check for common packers
         with open(binary_path, "rb") as f:
             header = f.read(1024)
-            
+
             if b"UPX" in header:
                 results.append("Detected: UPX packer")
             elif b"ASPack" in header:
                 results.append("Detected: ASPack packer")
             else:
                 results.append("No common packers detected in header")
-        
+
         return results
-    
+
     def patch(self, binary_path):
         """
         Apply patches to the binary.
-        
+
         Args:
             binary_path: Path to the binary to patch
-            
+
         Returns:
             List of strings with patching results
         """
         results = []
         results.append("Patch function called")
         results.append("This is where you would implement patching logic")
-        
+
         # Example: Create a backup
         import shutil
         backup_path = binary_path + ".bak"
         shutil.copy2(binary_path, backup_path)
         results.append(f"Created backup: {backup_path}")
-        
+
         return results
 
 def register():
@@ -693,20 +686,20 @@ def register():
     """
     return DemoPlugin()
 '''
-    
+
     custom_path = os.path.join(plugin_dir, "custom_modules", "demo_plugin.py")
     if not os.path.exists(custom_path):
         with open(custom_path, "w", encoding="utf-8") as f:
             f.write(sample_custom)
         logger.info(f"Created sample custom plugin: {custom_path}")
-    
+
     logger.info("Sample plugins created successfully!")
 
 
 def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_queue: multiprocessing.Queue) -> None:
     """
     Worker function for sandboxed plugin execution.
-    
+
     Args:
         plugin_path: Path to the plugin module
         function_name: Name of the function to execute
@@ -720,20 +713,20 @@ def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_qu
             resource.setrlimit(resource.RLIMIT_CPU, (30, 30))
             # Limit memory to 500MB
             resource.setrlimit(resource.RLIMIT_AS, (500 * 1024 * 1024, 500 * 1024 * 1024))
-        
+
         # Import and execute the plugin
         import importlib.util
         spec = importlib.util.spec_from_file_location("sandboxed_plugin", plugin_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        
+
         # Get the function and execute it
         func = getattr(module, function_name)
         result = func(*args)
-        
+
         # Put result in queue
         result_queue.put(("success", result))
-        
+
     except Exception as e:
         result_queue.put(("error", str(e)))
 
@@ -741,38 +734,38 @@ def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_qu
 def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> Optional[List[str]]:
     """
     Runs a plugin in a sandboxed process with resource limits.
-    
+
     Args:
         plugin_path: Path to the plugin file
         function_name: Name of the function to execute  
         *args: Arguments to pass to the function
-        
+
     Returns:
         List of strings with results, or None on error
     """
     logger.info(f"Running plugin in sandbox: {plugin_path}")
-    
+
     # Create a queue for results
     result_queue = multiprocessing.Queue()
-    
+
     # Create the sandboxed process
     process = multiprocessing.Process(
         target=_sandbox_worker,
         args=(plugin_path, function_name, args, result_queue)
     )
-    
+
     # Start the process
     process.start()
-    
+
     # Wait for completion with timeout
     process.join(timeout=35)  # 5 seconds grace period beyond CPU limit
-    
+
     if process.is_alive():
         logger.warning("Plugin execution timed out, terminating...")
         process.terminate()
         process.join()
         return ["Plugin execution timed out"]
-    
+
     # Get results
     try:
         status, result = result_queue.get_nowait()
@@ -790,11 +783,11 @@ def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> Option
 def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]:
     """
     Runs a plugin on a remote system.
-    
+
     Args:
         app: Application instance
         plugin_info: Plugin information dictionary
-        
+
     Returns:
         List of strings with results, or None on error
     """
@@ -803,35 +796,35 @@ def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]
         app.update_output.emit(log_message(
             "[Plugin] Remote plugins are disabled in settings"))
         return None
-    
+
     # Get remote host information
     default_host = CONFIG.get("remote_plugin_host", "localhost")
     default_port = CONFIG.get("remote_plugin_port", 9999)
-    
+
     # Ask user for host and port
     host, ok = QInputDialog.getText(
         app, "Remote Plugin Execution",
         "Enter remote host:", text=default_host
     )
-    
+
     if not ok:
         return None
-    
+
     port, ok = QInputDialog.getInt(
-        app, "Remote Plugin Execution", 
+        app, "Remote Plugin Execution",
         "Enter remote port:", value=default_port,
         min=1, max=65535
     )
-    
+
     if not ok:
         return None
-    
+
     app.update_output.emit(log_message(
         f"[Plugin] Executing {plugin_info['name']} on {host}:{port}..."))
-    
+
     # Create remote executor
     executor = RemotePluginExecutor(host, port)
-    
+
     try:
         # Execute the plugin remotely
         results = executor.execute_plugin(
@@ -839,12 +832,12 @@ def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]
             'analyze',
             app.binary_path
         )
-        
+
         if results:
             return results
         else:
             return ["No results returned from remote execution"]
-            
+
     except Exception as e:
         app.update_output.emit(log_message(
             f"[Plugin] Remote execution error: {e}"))
@@ -854,7 +847,7 @@ def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]
 # Export all plugin system functions
 __all__ = [
     'load_plugins',
-    'run_plugin', 
+    'run_plugin',
     'run_custom_plugin',
     'run_frida_plugin_from_file',
     'run_ghidra_plugin_from_file',

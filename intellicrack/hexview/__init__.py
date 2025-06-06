@@ -11,11 +11,11 @@ Usage:
     # Simple usage - show hex viewer for a file
     from Intellicrack.hexview import show_hex_viewer
     show_hex_viewer(file_path)
-    
+
     # Integrate with Intellicrack
     from Intellicrack.hexview import integrate_with_intellicrack
     integrate_with_intellicrack(app_instance)
-    
+
     # Work with binary data
     from Intellicrack.hexview import analyze_binary_data
     results = analyze_binary_data(data)
@@ -55,8 +55,15 @@ from .hex_widget import HexViewerWidget
 
 # Large file optimization components
 try:
-    from .large_file_handler import LargeFileHandler, MemoryConfig, MemoryStrategy
-    from .performance_monitor import PerformanceMonitor, PerformanceWidget
+    from .large_file_handler import (
+        LargeFileHandler as LargeFileHandler,
+        MemoryConfig as MemoryConfig,
+        MemoryStrategy as MemoryStrategy,
+    )
+    from .performance_monitor import (
+        PerformanceMonitor as PerformanceMonitor,
+        PerformanceWidget as PerformanceWidget,
+    )
     LARGE_FILE_SUPPORT = True
 except ImportError:
     LARGE_FILE_SUPPORT = False
@@ -69,6 +76,63 @@ from .integration import (
     restore_standard_hex_viewer,
     show_enhanced_hex_viewer,
 )
+
+# Public API - explicitly export all imported components
+__all__ = [
+    # Core components
+    'AIBinaryBridge',
+    'BinaryContextBuilder',
+    'ChunkManager', 
+    'VirtualFileAccess',
+    'HexViewerDialog',
+    'HexHighlighter',
+    'HighlightType',
+    'HexViewRenderer',
+    'ViewMode',
+    'parse_hex_view',
+    'HexViewerWidget',
+    
+    # API functions
+    'add_hex_viewer_to_application',
+    'analyze_binary_data',
+    'bytes_to_hex_string',
+    'create_binary_context',
+    'create_hex_viewer_dialog',
+    'create_hex_viewer_widget',
+    'hex_string_to_bytes',
+    'integrate_with_intellicrack',
+    'launch_hex_viewer',
+    'open_hex_file',
+    'read_hex_region',
+    'register_ai_tools',
+    'search_binary_pattern',
+    'suggest_binary_edits',
+    'write_hex_region',
+    
+    # Integration functions
+    'initialize_hex_viewer',
+    'integrate_enhanced_hex_viewer',
+    'register_hex_viewer_ai_tools',
+    'restore_standard_hex_viewer',
+    'show_enhanced_hex_viewer',
+    
+    # Convenience aliases
+    'show_hex_viewer',
+    'integrate',
+    
+    # Large file optimization (conditionally available)
+    'LARGE_FILE_SUPPORT',
+]
+
+# Conditionally add large file components to __all__ if available
+if LARGE_FILE_SUPPORT:
+    __all__.extend([
+        'LargeFileHandler',
+        'MemoryConfig', 
+        'MemoryStrategy',
+        'PerformanceMonitor',
+        'PerformanceWidget',
+    ])
 
 # Convenience aliases
 show_hex_viewer = show_enhanced_hex_viewer

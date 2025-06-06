@@ -15,17 +15,17 @@ The emulator supports:
 Author: Intellicrack Development Team
 """
 
-import os
-import ssl
-import json
-import time
-import socket
-import logging
-import traceback
-import threading
-import socketserver
 import ipaddress
-from typing import Dict, List, Optional, Any, Tuple, Union
+import json
+import logging
+import os
+import socket
+import socketserver
+import ssl
+import threading
+import time
+import traceback
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     from PyQt5.QtWidgets import QInputDialog, QLineEdit
@@ -194,7 +194,7 @@ class NetworkLicenseServerEmulator:
         """
         try:
             self.running = True
-            
+
             # Start DNS server if enabled
             if self.config['dns_redirect']:
                 self._start_dns_server()
@@ -229,7 +229,7 @@ class NetworkLicenseServerEmulator:
         """
         try:
             self.running = False
-            
+
             # Stop all TCP servers
             for server in self.servers:
                 server.shutdown()
@@ -409,60 +409,60 @@ class NetworkLicenseServerEmulator:
     def _start_ssl_interceptor(self) -> Optional[Any]:
         """
         Start an SSL interceptor for HTTPS license verification.
-        
+
         This interceptor uses a man-in-the-middle approach to decrypt and analyze HTTPS traffic,
         allowing the emulator to respond to license verification requests over SSL/TLS.
         """
         try:
             class SSLInterceptor:
                 """SSL/TLS interceptor for HTTPS license verification"""
-                
+
                 def __init__(self, parent: 'NetworkLicenseServerEmulator') -> None:
                     self.parent = parent
                     self.context = self._create_ssl_context()
                     self.running = False
-                    
+
                 def _create_ssl_context(self) -> ssl.SSLContext:
                     """Create SSL context with custom certificate"""
                     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-                    
+
                     # Check for certificate files or create them
                     cert_dir = os.path.join(os.path.dirname(__file__), 'certs')
                     cert_file = os.path.join(cert_dir, 'server.crt')
                     key_file = os.path.join(cert_dir, 'server.key')
-                    
+
                     if not os.path.exists(cert_dir):
                         os.makedirs(cert_dir)
-                        
+
                     if not os.path.exists(cert_file) or not os.path.exists(key_file):
                         # Generate self-signed certificate
                         self._generate_self_signed_cert(cert_file, key_file)
-                    
+
                     try:
                         context.load_cert_chain(certfile=cert_file, keyfile=key_file)
                         context.check_hostname = False
                         context.verify_mode = ssl.CERT_NONE
                     except Exception as e:
                         self.parent.logger.error(f"Failed to load SSL certificates: {e}")
-                    
+
                     return context
-                    
+
                 def _generate_self_signed_cert(self, cert_file: str, key_file: str) -> None:
                     """Generate a self-signed certificate for SSL interception"""
                     try:
-                        from cryptography import x509
-                        from cryptography.x509.oid import NameOID
-                        from cryptography.hazmat.primitives import hashes
-                        from cryptography.hazmat.primitives.asymmetric import rsa
-                        from cryptography.hazmat.primitives import serialization
                         import datetime
-                        
+
+                        from cryptography import x509
+                        from cryptography.hazmat.primitives import hashes, serialization
+                        from cryptography.hazmat.primitives.asymmetric import rsa
+                        from cryptography.x509.oid import NameOID
+
                         # Generate private key
                         key = rsa.generate_private_key(
                             public_exponent=65537,
                             key_size=2048,
                         )
-                        
+
                         # Generate certificate
                         subject = issuer = x509.Name([
                             x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
@@ -471,7 +471,7 @@ class NetworkLicenseServerEmulator:
                             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "License Server"),
                             x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
                         ])
-                        
+
                         cert = x509.CertificateBuilder().subject_name(
                             subject
                         ).issuer_name(
@@ -492,7 +492,7 @@ class NetworkLicenseServerEmulator:
                             ]),
                             critical=False,
                         ).sign(key, hashes.SHA256())
-                        
+
                         # Write private key
                         with open(key_file, 'wb') as f:
                             f.write(key.private_bytes(
@@ -500,52 +500,52 @@ class NetworkLicenseServerEmulator:
                                 format=serialization.PrivateFormat.TraditionalOpenSSL,
                                 encryption_algorithm=serialization.NoEncryption()
                             ))
-                            
+
                         # Write certificate
                         with open(cert_file, 'wb') as f:
                             f.write(cert.public_bytes(serialization.Encoding.PEM))
-                            
+
                         self.parent.logger.info("Generated self-signed certificate for SSL interception")
-                        
+
                     except ImportError:
                         self.parent.logger.error("cryptography module not available, using basic SSL")
                         # Fallback to basic SSL without custom cert
                         pass
                     except Exception as e:
                         self.parent.logger.error(f"Error generating certificate: {e}")
-                
+
                 def intercept_connection(self, client_socket: socket.socket, server_address: Tuple[str, int]) -> None:
                     """Intercept and handle SSL connection"""
                     try:
                         # Wrap socket with SSL
                         ssl_socket = self.context.wrap_socket(client_socket, server_side=True)
-                        
+
                         # Read request
                         request_data = ssl_socket.recv(8192)
-                        
+
                         # Analyze request
                         protocol = self.parent._identify_protocol(request_data, server_address[1])
-                        
+
                         # Generate response
                         if protocol in self.parent.response_templates:
                             response = self.parent.response_templates[protocol]['license_ok']
                         else:
                             response = b'OK'
-                            
+
                         # Send response
                         ssl_socket.send(response)
                         ssl_socket.close()
-                        
+
                     except Exception as e:
                         self.parent.logger.error(f"SSL interception error: {e}")
-                        
+
                 def stop(self) -> None:
                     """Stop the SSL interceptor"""
                     self.running = False
-                        
+
             self.ssl_interceptor = SSLInterceptor(self)
             self.logger.info("SSL interceptor initialized")
-            
+
             # Start interceptor for HTTPS ports
             https_ports = [443, 8443]
             for port in self.config['listen_ports']:
@@ -558,9 +558,9 @@ class NetworkLicenseServerEmulator:
                     )
                     thread.start()
                     self.logger.info(f"SSL interceptor started on port {port}")
-                    
+
             return self.ssl_interceptor
-            
+
         except Exception as e:
             self.logger.error(f"Failed to start SSL interceptor: {e}")
             return None
@@ -568,7 +568,7 @@ class NetworkLicenseServerEmulator:
     def _run_ssl_server(self, port: int) -> None:
         """
         Run SSL server on specified port.
-        
+
         Args:
             port: Port number to listen on
         """
@@ -577,14 +577,14 @@ class NetworkLicenseServerEmulator:
             server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             server_socket.bind((self.config['listen_ip'], port))
             server_socket.listen(5)
-            
+
             self.logger.info(f"SSL server listening on {self.config['listen_ip']}:{port}")
-            
+
             while self.running:
                 try:
                     client_socket, address = server_socket.accept()
                     self.logger.info(f"SSL connection from {address}")
-                    
+
                     # Handle connection in a thread
                     thread = threading.Thread(
                         target=self.ssl_interceptor.intercept_connection,
@@ -592,26 +592,26 @@ class NetworkLicenseServerEmulator:
                         daemon=True
                     )
                     thread.start()
-                    
+
                 except Exception as e:
                     if self.running:
                         self.logger.error(f"SSL server error: {e}")
-                        
+
             server_socket.close()
-            
+
         except Exception as e:
             self.logger.error(f"Failed to start SSL server on port {port}: {e}")
-        
+
     def _start_traffic_recorder(self) -> Optional[Any]:
         """
         Start a traffic recorder for license communications.
-        
+
         Records all intercepted traffic for analysis and pattern learning.
         """
         try:
             class TrafficRecorder:
                 """Records network traffic for analysis"""
-                
+
                 def __init__(self, parent: 'NetworkLicenseServerEmulator') -> None:
                     self.parent = parent
                     self.traffic_log: List[Dict[str, Any]] = []
@@ -619,7 +619,7 @@ class NetworkLicenseServerEmulator:
                     self.max_entries = 10000
                     self.save_interval = 60  # seconds
                     self.last_save = time.time()
-                    
+
                 def record(self, source: str, destination: str, data: bytes, protocol: str = 'unknown') -> None:
                     """Record a traffic entry"""
                     entry = {
@@ -630,25 +630,25 @@ class NetworkLicenseServerEmulator:
                         'protocol': protocol,
                         'size': len(data) if data else 0
                     }
-                    
+
                     self.traffic_log.append(entry)
-                    
+
                     # Maintain size limit
                     if len(self.traffic_log) > self.max_entries:
                         self.traffic_log.pop(0)
-                        
+
                     # Auto-save periodically
                     if time.time() - self.last_save > self.save_interval:
                         self.save_log()
-                        
+
                 def save_log(self) -> None:
                     """Save traffic log to file"""
                     try:
                         log_dir = os.path.join(os.path.dirname(__file__), 'logs', 'traffic')
                         os.makedirs(log_dir, exist_ok=True)
-                        
+
                         log_file = os.path.join(log_dir, f"traffic_{time.strftime('%Y%m%d_%H%M%S')}.json")
-                        
+
                         # Convert bytes to string for JSON serialization
                         serializable_log = []
                         for entry in self.traffic_log:
@@ -656,52 +656,52 @@ class NetworkLicenseServerEmulator:
                             if isinstance(serializable_entry['data'], bytes):
                                 serializable_entry['data'] = serializable_entry['data'].hex()
                             serializable_log.append(serializable_entry)
-                        
+
                         with open(log_file, 'w') as f:
                             json.dump(serializable_log, f, indent=2, default=str)
-                            
+
                         self.parent.logger.info(f"Saved traffic log to {log_file}")
                         self.last_save = time.time()
-                        
+
                     except Exception as e:
                         self.parent.logger.error(f"Failed to save traffic log: {e}")
-                        
+
                 def analyze_patterns(self) -> Dict[str, List[str]]:
                     """Analyze recorded traffic for patterns"""
                     patterns: Dict[str, List[str]] = {}
-                    
+
                     for entry in self.traffic_log:
                         protocol = entry['protocol']
                         if protocol not in patterns:
                             patterns[protocol] = []
-                            
+
                         # Extract patterns from data
                         if entry['data']:
                             data_str = entry['data'][:100] if isinstance(entry['data'], bytes) else str(entry['data'])[:100]
                             patterns[protocol].append(data_str)
-                            
+
                     return patterns
-                    
+
                 def stop(self) -> None:
                     """Stop traffic recording"""
                     self.recording = False
                     self.save_log()
-                    
+
             self.traffic_recorder = TrafficRecorder(self)
             self.logger.info("Traffic recorder initialized")
-            
+
             # Start auto-save thread
             def auto_save_thread() -> None:
                 while self.running:
                     time.sleep(self.traffic_recorder.save_interval)
                     if self.traffic_recorder.recording:
                         self.traffic_recorder.save_log()
-                        
+
             thread = threading.Thread(target=auto_save_thread, daemon=True)
             thread.start()
-            
+
             return self.traffic_recorder
-            
+
         except Exception as e:
             self.logger.error(f"Failed to start traffic recorder: {e}")
             return None
@@ -709,7 +709,7 @@ class NetworkLicenseServerEmulator:
     def get_status(self) -> Dict[str, Any]:
         """
         Get the current status of the license server emulator.
-        
+
         Returns:
             Dict containing emulator status information
         """
@@ -736,11 +736,11 @@ def run_network_license_emulator(app: Any) -> None:
     except ImportError:
         def log_message(msg):
             return msg
-    
+
     if not QT_AVAILABLE:
         print("PyQt5 not available, cannot run interactive emulator")
         return
-        
+
     app.update_output.emit(log_message("[Network] Starting network license server emulator..."))
 
     # Create emulator

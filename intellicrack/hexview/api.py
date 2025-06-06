@@ -28,11 +28,11 @@ logger = logging.getLogger('Intellicrack.HexView')
 def open_hex_file(file_path: str, read_only: bool = True) -> Optional[VirtualFileAccess]:
     """
     Open a file for hex viewing/editing.
-    
+
     Args:
         file_path: Path to the file to open
         read_only: Whether to open the file in read-only mode
-        
+
     Returns:
         VirtualFileAccess instance or None if the file couldn't be opened
     """
@@ -52,12 +52,12 @@ def open_hex_file(file_path: str, read_only: bool = True) -> Optional[VirtualFil
 def read_hex_region(file_path: str, offset: int, size: int) -> Optional[bytes]:
     """
     Read a region of a file as binary data.
-    
+
     Args:
         file_path: Path to the file to read
         offset: Starting offset
         size: Number of bytes to read
-        
+
     Returns:
         Binary data or None if the file couldn't be read
     """
@@ -76,12 +76,12 @@ def read_hex_region(file_path: str, offset: int, size: int) -> Optional[bytes]:
 def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
     """
     Write binary data to a region of a file.
-    
+
     Args:
         file_path: Path to the file to write
         offset: Starting offset
         data: Binary data to write
-        
+
     Returns:
         True if the write was successful, False otherwise
     """
@@ -106,12 +106,12 @@ def analyze_binary_data(data: bytes, query: Optional[str] = None,
                       model_manager=None) -> Dict[str, Any]:
     """
     Analyze binary data using AI assistance.
-    
+
     Args:
         data: Binary data to analyze
         query: User query to guide the analysis
         model_manager: Model manager instance
-        
+
     Returns:
         Dictionary with analysis results
     """
@@ -128,12 +128,12 @@ def search_binary_pattern(data: bytes, pattern_desc: str,
                         model_manager=None) -> List[Dict[str, Any]]:
     """
     Search for a pattern in binary data using AI assistance.
-    
+
     Args:
         data: Binary data to search
         pattern_desc: Description of the pattern to search for
         model_manager: Model manager instance
-        
+
     Returns:
         List of search results
     """
@@ -150,12 +150,12 @@ def suggest_binary_edits(data: bytes, edit_intent: str,
                        model_manager=None) -> Dict[str, Any]:
     """
     Suggest edits to binary data using AI assistance.
-    
+
     Args:
         data: Binary data to edit
         edit_intent: Description of the desired edit
         model_manager: Model manager instance
-        
+
     Returns:
         Dictionary with edit suggestions
     """
@@ -173,10 +173,10 @@ def suggest_binary_edits(data: bytes, edit_intent: str,
 def create_hex_viewer_widget(parent=None) -> HexViewerWidget:
     """
     Create a new hex viewer widget.
-    
+
     Args:
         parent: Parent widget
-        
+
     Returns:
         HexViewerWidget instance
     """
@@ -187,12 +187,12 @@ def create_hex_viewer_dialog(parent=None, file_path: Optional[str] = None,
                            read_only: bool = True) -> HexViewerDialog:
     """
     Create a new hex viewer dialog.
-    
+
     Args:
         parent: Parent widget
         file_path: Path to the file to load
         read_only: Whether to open the file in read-only mode
-        
+
     Returns:
         HexViewerDialog instance
     """
@@ -203,11 +203,11 @@ def create_hex_viewer_dialog(parent=None, file_path: Optional[str] = None,
 def launch_hex_viewer(file_path: str, read_only: bool = True) -> QDialog:
     """
     Launch the hex viewer as a standalone application.
-    
+
     Args:
         file_path: Path to the file to open
         read_only: Whether to open the file in read-only mode
-        
+
     Returns:
         QDialog instance
     """
@@ -223,10 +223,10 @@ def launch_hex_viewer(file_path: str, read_only: bool = True) -> QDialog:
 def integrate_with_intellicrack(app_instance) -> bool:
     """
     Integrate the enhanced hex viewer with Intellicrack.
-    
+
     Args:
         app_instance: Intellicrack application instance
-        
+
     Returns:
         True if integration was successful, False otherwise
     """
@@ -236,10 +236,10 @@ def integrate_with_intellicrack(app_instance) -> bool:
 def add_hex_viewer_to_application(app_instance) -> bool:
     """
     Add the enhanced hex viewer to an application.
-    
+
     Args:
         app_instance: Application instance
-        
+
     Returns:
         True if the hex viewer was added successfully, False otherwise
     """
@@ -262,10 +262,10 @@ def add_hex_viewer_to_application(app_instance) -> bool:
 def register_ai_tools(app_instance) -> bool:
     """
     Register hex viewer AI tools with the application.
-    
+
     Args:
         app_instance: Application instance
-        
+
     Returns:
         True if tools were registered successfully, False otherwise
     """
@@ -282,11 +282,11 @@ def register_ai_tools(app_instance) -> bool:
 def bytes_to_hex_string(data: bytes, bytes_per_line: int = 16) -> str:
     """
     Convert binary data to a formatted hex string.
-    
+
     Args:
         data: Binary data to convert
         bytes_per_line: Number of bytes per line
-        
+
     Returns:
         Formatted hex string
     """
@@ -308,10 +308,10 @@ def bytes_to_hex_string(data: bytes, bytes_per_line: int = 16) -> str:
 def hex_string_to_bytes(hex_string: str) -> bytes:
     """
     Convert a hex string to binary data.
-    
+
     Args:
         hex_string: Hex string to convert
-        
+
     Returns:
         Binary data
     """
@@ -351,10 +351,10 @@ def hex_string_to_bytes(hex_string: str) -> bytes:
 def create_binary_context(data: bytes) -> Dict[str, Any]:
     """
     Create a context dictionary for binary data.
-    
+
     Args:
         data: Binary data
-        
+
     Returns:
         Context dictionary
     """

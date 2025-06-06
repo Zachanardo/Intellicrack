@@ -19,15 +19,15 @@ except ImportError:
 
 class TestNetworkTrafficAnalyzer(unittest.TestCase):
     """Test cases for NetworkTrafficAnalyzer."""
-    
+
     def setUp(self):
         """Set up test fixtures."""
         self.temp_dir = tempfile.mkdtemp()
         self.capture_file = os.path.join(self.temp_dir, "test_capture.pcap")
-        
+
         if NetworkTrafficAnalyzer:
             self.analyzer = NetworkTrafficAnalyzer()
-    
+
     def tearDown(self):
         """Clean up test fixtures."""
         # Clean up temp files
@@ -35,14 +35,14 @@ class TestNetworkTrafficAnalyzer(unittest.TestCase):
             os.remove(self.capture_file)
         if os.path.exists(self.temp_dir):
             os.rmdir(self.temp_dir)
-    
+
     @unittest.skipIf(NetworkTrafficAnalyzer is None, "NetworkTrafficAnalyzer not available")
     def test_initialization(self):
         """Test analyzer initialization."""
         self.assertIsNotNone(self.analyzer)
         self.assertIsInstance(self.analyzer.captured_packets, list)
         self.assertIsInstance(self.analyzer.license_packets, list)
-    
+
     @unittest.skipIf(NetworkTrafficAnalyzer is None, "NetworkTrafficAnalyzer not available")
     @patch('intellicrack.core.network.traffic_analyzer.pyshark')
     def test_start_capture_with_pyshark(self, mock_pyshark):
@@ -50,28 +50,28 @@ class TestNetworkTrafficAnalyzer(unittest.TestCase):
         # Mock pyshark capture
         mock_capture = MagicMock()
         mock_pyshark.LiveCapture.return_value = mock_capture
-        
+
         # Start capture
         result = self.analyzer.start_capture(interface='eth0', use_pyshark=True)
-        
+
         # Verify
         self.assertTrue(result)
         mock_pyshark.LiveCapture.assert_called_once()
         self.assertTrue(self.analyzer.is_capturing)
-    
+
     @unittest.skipIf(NetworkTrafficAnalyzer is None, "NetworkTrafficAnalyzer not available")
     def test_stop_capture(self):
         """Test stopping packet capture."""
         # Set up analyzer as if capture is running
         self.analyzer.is_capturing = True
         self.analyzer.capture_thread = Mock()
-        
+
         # Stop capture
         self.analyzer.stop_capture()
-        
+
         # Verify
         self.assertFalse(self.analyzer.is_capturing)
-    
+
     @unittest.skipIf(NetworkTrafficAnalyzer is None, "NetworkTrafficAnalyzer not available")
     def test_save_capture(self):
         """Test saving captured packets."""
@@ -79,13 +79,13 @@ class TestNetworkTrafficAnalyzer(unittest.TestCase):
         mock_packet = Mock()
         mock_packet.summary = lambda: "Test packet"
         self.analyzer.captured_packets = [mock_packet, mock_packet]
-        
+
         # Save capture
         result = self.analyzer.save_capture(self.capture_file)
-        
+
         # Verify
         self.assertTrue(result)
-    
+
     @unittest.skipIf(NetworkTrafficAnalyzer is None, "NetworkTrafficAnalyzer not available")
     def test_analyze_license_traffic(self):
         """Test license traffic analysis."""
@@ -93,19 +93,19 @@ class TestNetworkTrafficAnalyzer(unittest.TestCase):
         license_packet = Mock()
         license_packet.haslayer = lambda x: x == 'TCP'
         license_packet.__getitem__ = lambda self, x: Mock(dport=1947)  # HASP port
-        
+
         normal_packet = Mock()
         normal_packet.haslayer = lambda x: x == 'TCP'
         normal_packet.__getitem__ = lambda self, x: Mock(dport=80)
-        
+
         self.analyzer.captured_packets = [license_packet, normal_packet]
-        
+
         # Analyze
         self.analyzer.analyze_license_traffic()
-        
+
         # Verify
         self.assertEqual(len(self.analyzer.license_packets), 1)
-    
+
     @unittest.skipIf(NetworkTrafficAnalyzer is None, "NetworkTrafficAnalyzer not available")
     def test_generate_report(self):
         """Test report generation."""
@@ -116,15 +116,15 @@ class TestNetworkTrafficAnalyzer(unittest.TestCase):
             'protocols': ['TCP', 'UDP'],
             'license_servers': ['192.168.1.100']
         }
-        
+
         # Generate report
         report = self.analyzer.generate_report()
-        
+
         # Verify
         self.assertIn('total_packets', report)
         self.assertIn('license_packets', report)
         self.assertEqual(report['total_packets'], 100)
-    
+
     @unittest.skipIf(NetworkTrafficAnalyzer is None, "NetworkTrafficAnalyzer not available")
     def test_clear_capture(self):
         """Test clearing captured data."""
@@ -132,10 +132,10 @@ class TestNetworkTrafficAnalyzer(unittest.TestCase):
         self.analyzer.captured_packets = [Mock(), Mock()]
         self.analyzer.license_packets = [Mock()]
         self.analyzer.analysis_results = {'test': 'data'}
-        
+
         # Clear
         self.analyzer.clear_capture()
-        
+
         # Verify
         self.assertEqual(len(self.analyzer.captured_packets), 0)
         self.assertEqual(len(self.analyzer.license_packets), 0)

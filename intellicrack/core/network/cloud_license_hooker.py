@@ -24,7 +24,7 @@ import logging
 import random
 import re
 import string
-from typing import Dict, List, Any, Optional, Union
+from typing import Any, Dict, List, Optional
 
 try:
     from PyQt5.QtWidgets import QMessageBox
@@ -78,7 +78,7 @@ class CloudLicenseResponseGenerator:
         self.learned_patterns: Dict[str, Dict[str, Any]] = {}
 
         # Load response templates
-        
+
         # Network API hooking functionality for Feature #41
         self.api_hooks_enabled = False
         self.hooked_apis = {
@@ -96,110 +96,8 @@ class CloudLicenseResponseGenerator:
         """
         Load response templates for various cloud license services.
         """
-        # Adobe Creative Cloud
-        self.response_templates['adobe'] = {
-            'json': {
-                'status': 'SUCCESS',
-                'message': 'License is valid',
-                'expiry': '2099-12-31',
-                'serial': '1234-5678-9012-3456-7890',
-                'valid': True,
-                'activated': True,
-                'expired': False,
-                'products': [
-                    {'id': 'PHSP', 'name': 'Photoshop', 'status': 'ACTIVATED'},
-                    {'id': 'ILST', 'name': 'Illustrator', 'status': 'ACTIVATED'},
-                    {'id': 'AEFT', 'name': 'After Effects', 'status': 'ACTIVATED'}
-                ]
-            },
-            'xml': """
-                <response>
-                    <status>SUCCESS</status>
-                    <license>
-                        <valid>true</valid>
-                        <expired>false</expired>
-                        <expiry>2099-12-31</expiry>
-                        <serial>1234-5678-9012-3456-7890</serial>
-                    </license>
-                </response>
-            """
-        }
-
-        # Autodesk
-        self.response_templates['autodesk'] = {
-            'json': {
-                'status': 'success',
-                'license': {
-                    'status': 'ACTIVATED',
-                    'type': 'PERMANENT',
-                    'expiry': '2099-12-31'
-                },
-                'user': {
-                    'name': 'Licensed User',
-                    'email': 'user@example.com',
-                    'type': 'PREMIUM'
-                },
-                'products': [
-                    {'id': 'AUTOCAD', 'name': 'AutoCAD', 'status': 'ACTIVATED'},
-                    {'id': '3DSMAX', 'name': '3ds Max', 'status': 'ACTIVATED'},
-                    {'id': 'REVIT', 'name': 'Revit', 'status': 'ACTIVATED'}
-                ]
-            }
-        }
-
-        # JetBrains
-        self.response_templates['jetbrains'] = {
-            'json': {
-                'licenseId': '1234567890',
-                'licenseType': 'commercial',
-                'evaluationLicense': False,
-                'expired': False,
-                'perpetualLicense': True,
-                'errorCode': 0,
-                'errorMessage': None,
-                'licenseExpirationDate': '2099-12-31',
-                'licenseExpirationDateMs': 4102444800000,
-                'products': [
-                    {'code': 'II', 'name': 'IntelliJ IDEA', 'status': 'ACTIVATED'},
-                    {'code': 'PS', 'name': 'PhpStorm', 'status': 'ACTIVATED'},
-                    {'code': 'WS', 'name': 'WebStorm', 'status': 'ACTIVATED'}
-                ]
-            }
-        }
-
-        # Microsoft
-        self.response_templates['microsoft'] = {
-            'json': {
-                'status': 'licensed',
-                'licenseStatus': 'licensed',
-                'gracePeriodDays': 0,
-                'errorCode': 0,
-                'errorMessage': None,
-                'products': [
-                    {'id': 'O365', 'name': 'Office 365', 'status': 'ACTIVATED'},
-                    {'id': 'WINPRO', 'name': 'Windows 10 Pro', 'status': 'ACTIVATED'},
-                    {'id': 'VISIO', 'name': 'Visio', 'status': 'ACTIVATED'}
-                ]
-            }
-        }
-
-        # Generic template
-        self.response_templates['generic'] = {
-            'json': {
-                'status': 'success',
-                'license': 'valid',
-                'expiry': '2099-12-31',
-                'message': 'License is valid'
-            },
-            'xml': """
-                <response>
-                    <status>success</status>
-                    <license>valid</license>
-                    <expiry>2099-12-31</expiry>
-                    <message>License is valid</message>
-                </response>
-            """
-        }
+        from ...utils.license_response_templates import get_all_response_templates
+        self.response_templates = get_all_response_templates()
 
     def _load_request_patterns(self) -> None:
         """
@@ -375,7 +273,7 @@ class CloudLicenseResponseGenerator:
         request_str = f"{request['url']}|{request.get('method', 'GET')}|{str(request['headers'])}|{request.get('body', '')}"
 
         # Generate hash
-        return hashlib.md5(request_str.encode('utf-8')).hexdigest()
+        return hashlib.sha256(request_str.encode('utf-8')).hexdigest()
 
     def _determine_response_format(self, request: Dict[str, Any]) -> str:
         """
@@ -794,31 +692,31 @@ class CloudLicenseResponseGenerator:
         """Clear learned patterns."""
         self.learned_patterns.clear()
         self.logger.info("Cleared learned patterns")
-    
+
     # Network API Hooking Methods for Feature #41
     def enable_network_api_hooks(self) -> bool:
         """
         Enable comprehensive network API hooking (Winsock, WinINet).
-        
+
         Returns:
             bool: True if hooks were enabled successfully, False otherwise
         """
         try:
             self.api_hooks_enabled = True
             self.logger.info("Enabled network API hooks for Winsock and WinINet")
-            
+
             # In a real implementation, this would use DLL injection or similar techniques
             # to hook the actual Windows API functions. For now, we simulate this.
-            
+
             return True
         except Exception as e:
             self.logger.error(f"Failed to enable network API hooks: {e}")
             return False
-    
+
     def disable_network_api_hooks(self) -> bool:
         """
         Disable network API hooking.
-        
+
         Returns:
             bool: True if hooks were disabled successfully, False otherwise
         """
@@ -829,14 +727,14 @@ class CloudLicenseResponseGenerator:
         except Exception as e:
             self.logger.error(f"Failed to disable network API hooks: {e}")
             return False
-    
+
     def hook_winsock_api(self, api_name: str) -> bool:
         """
         Hook a specific Winsock API function.
-        
+
         Args:
             api_name: Name of the Winsock API function to hook
-            
+
         Returns:
             bool: True if hook was successful, False otherwise
         """
@@ -846,14 +744,14 @@ class CloudLicenseResponseGenerator:
         else:
             self.logger.warning(f"Unknown Winsock API: {api_name}")
             return False
-    
+
     def hook_wininet_api(self, api_name: str) -> bool:
         """
         Hook a specific WinINet API function.
-        
+
         Args:
             api_name: Name of the WinINet API function to hook
-            
+
         Returns:
             bool: True if hook was successful, False otherwise
         """
@@ -863,46 +761,46 @@ class CloudLicenseResponseGenerator:
         else:
             self.logger.warning(f"Unknown WinINet API: {api_name}")
             return False
-    
+
     def get_hooked_apis(self) -> Dict[str, List[str]]:
         """
         Get list of available APIs that can be hooked.
-        
+
         Returns:
             Dict containing API categories and their function names
         """
         return self.hooked_apis.copy()
-    
+
     def intercept_network_call(self, api_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Intercept and potentially modify a network API call.
-        
+
         Args:
             api_name: Name of the API function being called
             params: Parameters for the API call
-            
+
         Returns:
             Dict containing the response or modified parameters
         """
         if not self.api_hooks_enabled:
             return {'status': 'passthrough', 'params': params}
-        
+
         self.logger.info(f"Intercepted {api_name} call with params: {params}")
-        
+
         # Check if this is a license-related network call
         if self._is_license_related_call(api_name, params):
             return self._handle_license_network_call(api_name, params)
-        
+
         return {'status': 'passthrough', 'params': params}
-    
+
     def _is_license_related_call(self, api_name: str, params: Dict[str, Any]) -> bool:
         """
         Check if a network API call is related to license verification.
-        
+
         Args:
             api_name: Name of the API function
             params: Parameters for the API call
-            
+
         Returns:
             bool: True if this appears to be a license-related call
         """
@@ -910,36 +808,36 @@ class CloudLicenseResponseGenerator:
             'license', 'activation', 'auth', 'verify', 'check',
             'adobe', 'autodesk', 'microsoft', 'flexlm', 'hasp'
         ]
-        
+
         # Check URL or hostname for license indicators
         url = params.get('url', '').lower()
         hostname = params.get('hostname', '').lower()
-        
+
         for indicator in license_indicators:
             if indicator in url or indicator in hostname:
                 return True
-                
+
         return False
-    
+
     def _handle_license_network_call(self, api_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle a license-related network API call.
-        
+
         Args:
             api_name: Name of the API function
             params: Parameters for the API call
-            
+
         Returns:
             Dict containing the modified response
         """
         self.logger.info(f"Handling license-related {api_name} call")
-        
+
         # Generate a fake success response for license calls
         fake_response = {
             'status': 'success',
             'data': '{"status":"valid","license":"activated","expires":"2099-12-31"}'
         }
-        
+
         return {'status': 'intercepted', 'response': fake_response}
 
 

@@ -1,8 +1,9 @@
 
-import psutil
-import frida
-import time
 import os
+import time
+
+import frida
+import psutil
 
 FRIDA_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "adobe_bypass.js")
 
@@ -35,7 +36,7 @@ def inject(target_name):
             script = session.create_script(f.read())
             script.load()
         injected.add(target_name)
-    except Exception as e:
+    except Exception:
         pass  # Silent fail to remain stealthy
 
 def get_running_adobe_apps():

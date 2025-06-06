@@ -12,7 +12,7 @@ Version: 2.0.0
 import logging
 import random
 import traceback
-from typing import Optional, Dict, Any, List, Union
+from typing import Any, Dict, Optional
 
 try:
     import keystone
@@ -29,29 +29,29 @@ class PayloadGenerator:
     """
     Basic payload generator for creating patches and shellcode.
     """
-    
+
     def __init__(self):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-    
+
     def generate_nop_sled(self, length: int) -> bytes:
         """
         Generate a NOP sled of specified length.
-        
+
         Args:
             length: Length of NOP sled in bytes
-            
+
         Returns:
             bytes: NOP sled
         """
         return b'\x90' * length
-    
+
     def generate_simple_payload(self, payload_type: str) -> Optional[bytes]:
         """
         Generate a simple payload of the specified type.
-        
+
         Args:
             payload_type: Type of payload to generate
-            
+
         Returns:
             Optional[bytes]: Generated payload or None if type not supported
         """
@@ -60,7 +60,7 @@ class PayloadGenerator:
             'ret_0': b'\x31\xc0\xc3',                # xor eax, eax; ret
             'infinite_loop': b'\xeb\xfe',            # jmp $
         }
-        
+
         return payloads.get(payload_type)
 
 
@@ -88,7 +88,7 @@ class AdvancedPayloadGenerator:
             bytes: Assembled machine code payload ready for injection or patching
         """
         self.logger.info(f"Generating license bypass payload for strategy: {strategy.get('strategy', 'generic_bypass')}")
-        
+
         payload_generators = {
             'function_hijacking': self._function_hijack_payload,
             'memory_manipulation': self._memory_manipulation_payload,
@@ -126,7 +126,7 @@ class AdvancedPayloadGenerator:
             bytes: Assembled machine code ready for injection at the target function address
         """
         self.logger.debug(f"Generating function hijack payload for strategy: {strategy}")
-        
+
         hijack_template = """
         mov rax, 1      ; Return success
         ret             ; Return from function
@@ -149,7 +149,7 @@ class AdvancedPayloadGenerator:
             bytes: Assembled machine code for memory manipulation
         """
         self.logger.debug(f"Generating memory manipulation payload for strategy: {strategy}")
-        
+
         manipulation_templates = [
             """
             nop             ; No-operation sled
@@ -184,7 +184,7 @@ class AdvancedPayloadGenerator:
             bytes: Assembled machine code payload optimized for license validation bypass
         """
         self.logger.debug(f"Generating license validation bypass payload for strategy: {strategy}")
-        
+
         bypass_techniques = [
             """
             xor rax, rax    ; Zero out return register
@@ -317,11 +317,11 @@ class AdvancedPayloadGenerator:
 def generate_payload(payload_type: str, **kwargs) -> Optional[bytes]:
     """
     Generate a payload using the default generator.
-    
+
     Args:
         payload_type: Type of payload to generate
         **kwargs: Additional arguments
-        
+
     Returns:
         Optional[bytes]: Generated payload
     """
@@ -331,10 +331,10 @@ def generate_payload(payload_type: str, **kwargs) -> Optional[bytes]:
 def generate_advanced_payload(strategy: Dict[str, Any]) -> Optional[bytes]:
     """
     Generate an advanced payload using the AdvancedPayloadGenerator.
-    
+
     Args:
         strategy: Strategy dictionary for payload generation
-        
+
     Returns:
         Optional[bytes]: Generated payload
     """
@@ -344,12 +344,12 @@ def generate_advanced_payload(strategy: Dict[str, Any]) -> Optional[bytes]:
 def apply_patch(binary_data: bytes, offset: int, patch_data: bytes) -> bytes:
     """
     Apply a patch to binary data.
-    
+
     Args:
         binary_data: Original binary data
         offset: Offset to apply patch
         patch_data: Patch data to apply
-        
+
     Returns:
         bytes: Patched binary data
     """
@@ -358,10 +358,10 @@ def apply_patch(binary_data: bytes, offset: int, patch_data: bytes) -> bytes:
 def create_nop_sled(length: int) -> bytes:
     """
     Create a NOP sled of specified length.
-    
+
     Args:
         length: Length in bytes
-        
+
     Returns:
         bytes: NOP sled
     """
@@ -371,34 +371,34 @@ def create_nop_sled(length: int) -> bytes:
 def generate_complete_api_hooking_script(app, hook_types=None) -> str:
     """
     Generate comprehensive Frida API hooking scripts for various protection bypass types.
-    
+
     Args:
         app: Application instance
         hook_types: List of hook types to include (hardware_id, debugger, time, network)
-        
+
     Returns:
         str: Frida script for API hooking
     """
     if hook_types is None:
         hook_types = ["hardware_id", "debugger", "time", "network"]
-    
+
     script_parts = []
-    
+
     # Base script setup
     script_parts.append("""
         console.log('[Intellicrack] Comprehensive API hooking script loaded');
-        
+
         // Global variables for tracking
         var hooksInstalled = {};
         var spoofedValues = {};
     """)
-    
+
     # HWID Spoofing hooks
     if "hardware_id" in hook_types:
         script_parts.append("""
         // === HWID SPOOFING HOOKS ===
         console.log('[HWID] Installing hardware ID spoofing hooks...');
-        
+
         // Spoof GetVolumeInformation (drive serial numbers)
         var getVolumeInfo = Module.findExportByName("kernel32.dll", "GetVolumeInformationW");
         if (getVolumeInfo) {
@@ -416,7 +416,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             });
             hooksInstalled['GetVolumeInformation'] = true;
         }
-        
+
         // Spoof GetAdaptersInfo (MAC addresses)
         var getAdaptersInfo = Module.findExportByName("iphlpapi.dll", "GetAdaptersInfo");
         if (getAdaptersInfo) {
@@ -435,7 +435,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             });
             hooksInstalled['GetAdaptersInfo'] = true;
         }
-        
+
         // Spoof GetSystemInfo (processor information)
         var getSystemInfo = Module.findExportByName("kernel32.dll", "GetSystemInfo");
         if (getSystemInfo) {
@@ -452,16 +452,16 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             });
             hooksInstalled['GetSystemInfo'] = true;
         }
-        
+
         console.log('[HWID] Hardware ID spoofing hooks installed');
         """)
-    
+
     # Anti-debugger hooks
     if "debugger" in hook_types:
         script_parts.append("""
         // === ANTI-DEBUGGER COUNTERMEASURES ===
         console.log('[Anti-Debug] Installing anti-debugger countermeasures...');
-        
+
         // Hook IsDebuggerPresent
         var isDebuggerPresent = Module.findExportByName("kernel32.dll", "IsDebuggerPresent");
         if (isDebuggerPresent) {
@@ -471,7 +471,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             }, 'int', []));
             hooksInstalled['IsDebuggerPresent'] = true;
         }
-        
+
         // Hook CheckRemoteDebuggerPresent
         var checkRemoteDebugger = Module.findExportByName("kernel32.dll", "CheckRemoteDebuggerPresent");
         if (checkRemoteDebugger) {
@@ -489,7 +489,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             });
             hooksInstalled['CheckRemoteDebuggerPresent'] = true;
         }
-        
+
         // Hook NtQueryInformationProcess for debug flags
         var ntQueryInfo = Module.findExportByName("ntdll.dll", "NtQueryInformationProcess");
         if (ntQueryInfo) {
@@ -512,7 +512,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             });
             hooksInstalled['NtQueryInformationProcess'] = true;
         }
-        
+
         // Hook OutputDebugString
         var outputDebugStringA = Module.findExportByName("kernel32.dll", "OutputDebugStringA");
         if (outputDebugStringA) {
@@ -522,16 +522,16 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             }, 'void', ['pointer']));
             hooksInstalled['OutputDebugStringA'] = true;
         }
-        
+
         console.log('[Anti-Debug] Anti-debugger countermeasures installed');
         """)
-    
+
     # Time bomb defuser hooks
     if "time" in hook_types:
         script_parts.append("""
         // === TIME BOMB DEFUSER ===
         console.log('[Time Bomb] Installing time bomb defuser hooks...');
-        
+
         // Hook GetSystemTime
         var getSystemTime = Module.findExportByName("kernel32.dll", "GetSystemTime");
         if (getSystemTime) {
@@ -549,7 +549,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             });
             hooksInstalled['GetSystemTime'] = true;
         }
-        
+
         // Hook GetLocalTime  
         var getLocalTime = Module.findExportByName("kernel32.dll", "GetLocalTime");
         if (getLocalTime) {
@@ -567,7 +567,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             });
             hooksInstalled['GetLocalTime'] = true;
         }
-        
+
         // Hook GetTickCount and GetTickCount64
         var getTickCount = Module.findExportByName("kernel32.dll", "GetTickCount");
         if (getTickCount) {
@@ -578,7 +578,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             }, 'uint32', []));
             hooksInstalled['GetTickCount'] = true;
         }
-        
+
         // Hook time() function from CRT
         var timeFunc = Module.findExportByName("msvcrt.dll", "time");
         if (timeFunc) {
@@ -592,16 +592,16 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             }, 'uint32', ['pointer']));
             hooksInstalled['time'] = true;
         }
-        
+
         console.log('[Time Bomb] Time bomb defuser hooks installed');
         """)
-    
+
     # Telemetry blocking hooks
     if "network" in hook_types:
         script_parts.append("""
         // === TELEMETRY BLOCKING ===
         console.log('[Telemetry] Installing telemetry blocking hooks...');
-        
+
         // Block HTTP/HTTPS requests to telemetry endpoints
         var winHttpOpen = Module.findExportByName("winhttp.dll", "WinHttpOpen");
         if (winHttpOpen) {
@@ -614,13 +614,13 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
                 }
             });
         }
-        
+
         var winHttpConnect = Module.findExportByName("winhttp.dll", "WinHttpConnect");
         if (winHttpConnect) {
             Interceptor.attach(winHttpConnect, {
                 onEnter: function(args) {
                     var serverName = args[1].readUtf16String();
-                    
+
                     // Block known telemetry domains
                     var blockedDomains = [
                         'telemetry.microsoft.com',
@@ -630,7 +630,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
                         'adobe.com/activation',
                         'genuine.microsoft.com'
                     ];
-                    
+
                     for (var domain of blockedDomains) {
                         if (serverName && serverName.toLowerCase().includes(domain)) {
                             console.log('[Telemetry] Blocked connection to: ' + serverName);
@@ -647,7 +647,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             });
             hooksInstalled['WinHttpConnect'] = true;
         }
-        
+
         // Block Winsock connections
         var wsaConnect = Module.findExportByName("ws2_32.dll", "WSAConnect");
         if (wsaConnect) {
@@ -659,7 +659,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
                         if (family === 2) { // AF_INET
                             var port = (sockAddr.add(2).readU8() << 8) | sockAddr.add(3).readU8();
                             var ip = sockAddr.add(4).readU32();
-                            
+
                             // Block common telemetry ports
                             if (port === 80 || port === 443 || port === 8080) {
                                 console.log('[Telemetry] Blocked WSA connection to port ' + port);
@@ -676,10 +676,10 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             });
             hooksInstalled['WSAConnect'] = true;
         }
-        
+
         console.log('[Telemetry] Telemetry blocking hooks installed');
         """)
-    
+
     # Summary and completion
     script_parts.append("""
         // === INSTALLATION SUMMARY ===
@@ -690,15 +690,15 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             }
             console.log('[Intellicrack] All requested API hooks are now active!');
         }, 100);
-        
+
         // Utility function to check hook status
         function getHookStatus() {
             return hooksInstalled;
         }
     """)
-    
+
     final_script = '\n'.join(script_parts)
-    
+
     if hasattr(app, 'update_output'):
         hook_names = []
         if "hardware_id" in hook_types:
@@ -709,20 +709,20 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             hook_names.append("Time Bomb Defuser")
         if "network" in hook_types:
             hook_names.append("Telemetry Blocking")
-        
+
         app.update_output.emit(f"[Payload] Generated API hooking script for: {', '.join(hook_names)}")
-    
+
     return final_script
 
 def inject_shellcode(binary_data: bytes, shellcode: bytes, injection_point: int) -> bytes:
     """
     Inject shellcode into binary data.
-    
+
     Args:
         binary_data: Original binary data
         shellcode: Shellcode to inject
         injection_point: Point to inject shellcode
-        
+
     Returns:
         bytes: Modified binary data
     """

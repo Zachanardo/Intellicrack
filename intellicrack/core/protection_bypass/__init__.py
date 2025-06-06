@@ -25,17 +25,25 @@ logger = logging.getLogger(__name__)
 
 # Import protection bypass modules with error handling
 try:
-    from .tpm_bypass import *
+    from .tpm_bypass import (
+        TPMProtectionBypass, bypass_tpm_protection,
+        TPMAnalyzer, analyze_tpm_protection, 
+        detect_tpm_usage, tpm_research_tools
+    )
 except ImportError as e:
     logger.warning(f"Failed to import tpm_bypass: {e}")
 
 try:
-    from .vm_bypass import *
+    from .vm_bypass import (
+        VirtualizationDetectionBypass, bypass_vm_detection,
+        VMDetector, VirtualizationAnalyzer,
+        detect_virtualization, analyze_vm_protection
+    )
 except ImportError as e:
     logger.warning(f"Failed to import vm_bypass: {e}")
 
 try:
-    from .dongle_emulator import *
+    from .dongle_emulator import HardwareDongleEmulator, activate_hardware_dongle_emulation
 except ImportError as e:
     logger.warning(f"Failed to import dongle_emulator: {e}")
 
@@ -46,13 +54,13 @@ __all__ = [
     'analyze_tpm_protection',
     'detect_tpm_usage',
     'tpm_research_tools',
-    
+
     # From vm_bypass
     'VMDetector',
     'VirtualizationAnalyzer',
     'detect_virtualization',
     'analyze_vm_protection',
-    
+
     # From dongle_emulator
     'HardwareDongleEmulator',
     'activate_hardware_dongle_emulation',

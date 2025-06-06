@@ -5,42 +5,36 @@ from the modular structure. These are implementation details that support
 the main functionality.
 """
 
-import os
-import sys
-import json
-import time
-import struct
 import hashlib
-import threading
+import json
+import os
+import struct
 import subprocess
-from typing import Dict, List, Any, Optional, Tuple, Union, Callable
-from pathlib import Path
-import logging
+import threading
+import time
+from typing import Any, Callable, Dict, List, Optional
 
-# Optional imports with graceful fallbacks
-try:
+# Import availability flags from common imports
+from .common_imports import (
+    HAS_NUMPY, HAS_TORCH, HAS_TENSORFLOW, 
+    PSUTIL_AVAILABLE as HAS_PSUTIL
+)
+
+# Import actual modules when available
+if HAS_PSUTIL:
     import psutil
-    HAS_PSUTIL = True
-except ImportError:
-    HAS_PSUTIL = False
+else:
+    psutil = None
 
-try:
-    import numpy as np
-    HAS_NUMPY = True
-except ImportError:
-    HAS_NUMPY = False
-
-try:
+if HAS_TORCH:
     import torch
-    HAS_TORCH = True
-except ImportError:
-    HAS_TORCH = False
+else:
+    torch = None
 
-try:
-    import tensorflow as tf
-    HAS_TENSORFLOW = True
-except ImportError:
-    HAS_TENSORFLOW = False
+if HAS_TENSORFLOW:
+    import tensorflow as tf  # pylint: disable=import-error
+else:
+    tf = None
 
 try:
     import pyopencl as cl
@@ -55,7 +49,7 @@ logger = setup_logger(__name__)
 
 # === Protocol and Network Helpers ===
 
-def _add_protocol_fingerprinter_results(results: Dict[str, Any], 
+def _add_protocol_fingerprinter_results(results: Dict[str, Any],
                                        fingerprints: Dict[str, Any]) -> None:
     """Add protocol fingerprinter results to analysis results."""
     if 'network_analysis' not in results:
@@ -71,21 +65,21 @@ def _analyze_requests(requests: List[Dict[str, Any]]) -> Dict[str, Any]:
         'protocols': {},
         'suspicious_patterns': []
     }
-    
+
     for req in requests:
         if 'host' in req:
             analysis['unique_hosts'].add(req['host'])
-        
+
         protocol = req.get('protocol', 'unknown')
         analysis['protocols'][protocol] = analysis['protocols'].get(protocol, 0) + 1
-        
+
         # Check for suspicious patterns
         if 'license' in req.get('path', '').lower():
             analysis['suspicious_patterns'].append({
                 'type': 'license_check',
                 'request': req
             })
-    
+
     analysis['unique_hosts'] = list(analysis['unique_hosts'])
     return analysis
 
@@ -219,7 +213,7 @@ def _handle_request(request_type: str, data: Dict[str, Any]) -> Dict[str, Any]:
         'login': lambda d: _handle_login(d),
         'logout': lambda d: _handle_logout(d.get('token', ''))
     }
-    
+
     handler = handlers.get(request_type)
     if handler:
         return handler(data)
@@ -240,7 +234,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
 
 # === Analysis and Comparison Helpers ===
 
-def _analyze_snapshot_differences(snapshot1: Dict[str, Any], 
+def _analyze_snapshot_differences(snapshot1: Dict[str, Any],
                                 snapshot2: Dict[str, Any]) -> Dict[str, Any]:
     """Analyze differences between two snapshots."""
     differences = {
@@ -264,7 +258,7 @@ def _analyze_snapshot_differences(snapshot1: Dict[str, Any],
     return differences
 
 
-def _compare_filesystem_state(state1: Dict[str, Any], 
+def _compare_filesystem_state(state1: Dict[str, Any],
                             state2: Dict[str, Any]) -> Dict[str, Any]:
     """Compare filesystem states."""
     return {
@@ -272,13 +266,13 @@ def _compare_filesystem_state(state1: Dict[str, Any],
         'removed_files': list(set(state1.get('files', [])) - set(state2.get('files', []))),
         'modified_files': [
             f for f in state1.get('files', [])
-            if f in state2.get('files', []) and 
+            if f in state2.get('files', []) and
             state1.get('hashes', {}).get(f) != state2.get('hashes', {}).get(f)
         ]
     }
 
 
-def _compare_memory_dumps(dump1: Dict[str, Any], 
+def _compare_memory_dumps(dump1: Dict[str, Any],
                         dump2: Dict[str, Any]) -> Dict[str, Any]:
     """Compare memory dumps."""
     return {
@@ -288,7 +282,7 @@ def _compare_memory_dumps(dump1: Dict[str, Any],
     }
 
 
-def _compare_mmap_state(state1: Dict[str, Any], 
+def _compare_mmap_state(state1: Dict[str, Any],
                        state2: Dict[str, Any]) -> Dict[str, Any]:
     """Compare memory mapping states."""
     return {
@@ -303,7 +297,7 @@ def _compare_mmap_state(state1: Dict[str, Any],
     }
 
 
-def _compare_network_state(state1: Dict[str, Any], 
+def _compare_network_state(state1: Dict[str, Any],
                          state2: Dict[str, Any]) -> Dict[str, Any]:
     """Compare network states."""
     return {
@@ -320,7 +314,7 @@ def _compare_network_state(state1: Dict[str, Any],
     }
 
 
-def _compare_process_state(state1: Dict[str, Any], 
+def _compare_process_state(state1: Dict[str, Any],
                          state2: Dict[str, Any]) -> Dict[str, Any]:
     """Compare process states."""
     return {
@@ -341,7 +335,7 @@ def _get_filesystem_state() -> Dict[str, Any]:
         'hashes': {},
         'timestamp': time.time()
     }
-    
+
     # Get files in current directory as example
     try:
         for root, dirs, files in os.walk('.', topdown=True):
@@ -352,20 +346,20 @@ def _get_filesystem_state() -> Dict[str, Any]:
                 state['files'].append(filepath)
                 try:
                     with open(filepath, 'rb') as f:
-                        state['hashes'][filepath] = hashlib.md5(f.read(1024)).hexdigest()
-                except:
+                        state['hashes'][filepath] = hashlib.sha256(f.read(1024)).hexdigest()
+                except (OSError, IOError, PermissionError):
                     pass
             break  # Only process current directory
     except Exception as e:
         logger.error(f"Error getting filesystem state: {e}")
-    
+
     return state
 
 
 def _get_memory_regions() -> List[Dict[str, Any]]:
     """Get memory regions of current process."""
     regions = []
-    
+
     if HAS_PSUTIL:
         try:
             process = psutil.Process()
@@ -378,7 +372,7 @@ def _get_memory_regions() -> List[Dict[str, Any]]:
                 })
         except Exception as e:
             logger.error(f"Error getting memory regions: {e}")
-    
+
     return regions
 
 
@@ -397,7 +391,7 @@ def _get_network_state() -> Dict[str, Any]:
         'ports': [],
         'timestamp': time.time()
     }
-    
+
     if HAS_PSUTIL:
         try:
             connections = psutil.net_connections()
@@ -412,7 +406,7 @@ def _get_network_state() -> Dict[str, Any]:
                     state['ports'].append(conn.laddr.port)
         except Exception as e:
             logger.error(f"Error getting network state: {e}")
-    
+
     return state
 
 
@@ -423,7 +417,7 @@ def _get_process_state() -> Dict[str, Any]:
         'processes': {},
         'timestamp': time.time()
     }
-    
+
     if HAS_PSUTIL:
         try:
             for proc in psutil.process_iter(['pid', 'name', 'cpu_percent']):
@@ -436,7 +430,7 @@ def _get_process_state() -> Dict[str, Any]:
                     break
         except Exception as e:
             logger.error(f"Error getting process state: {e}")
-    
+
     return state
 
 
@@ -468,7 +462,7 @@ def _browse_for_source() -> Optional[str]:
 def _build_knowledge_index(knowledge_base: List[Dict[str, Any]]) -> Dict[str, List[int]]:
     """Build an index for the knowledge base."""
     index = {}
-    
+
     for i, item in enumerate(knowledge_base):
         # Index by keywords
         for key in ['type', 'category', 'name', 'pattern']:
@@ -477,7 +471,7 @@ def _build_knowledge_index(knowledge_base: List[Dict[str, Any]]) -> Dict[str, Li
                 if value not in index:
                     index[value] = []
                 index[value].append(i)
-    
+
     return index
 
 
@@ -501,24 +495,24 @@ def _export_validation_report(report: Dict[str, Any], output_path: str) -> bool:
 def _fix_dataset_issues(dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Fix common dataset issues."""
     fixed = []
-    
+
     for item in dataset:
         # Skip empty items
         if not item:
             continue
-        
+
         # Ensure required fields
         fixed_item = item.copy()
         if 'id' not in fixed_item:
             fixed_item['id'] = len(fixed)
-        
+
         # Clean string fields
         for key, value in fixed_item.items():
             if isinstance(value, str):
                 fixed_item[key] = value.strip()
-        
+
         fixed.append(fixed_item)
-    
+
     return fixed
 
 
@@ -541,11 +535,11 @@ def _match_pattern(data: bytes, pattern: bytes) -> List[int]:
     """Find pattern matches in data."""
     matches = []
     pattern_len = len(pattern)
-    
+
     for i in range(len(data) - pattern_len + 1):
         if data[i:i + pattern_len] == pattern:
             matches.append(i)
-    
+
     return matches
 
 
@@ -578,7 +572,7 @@ def _calculate_hash_opencl(data: bytes, algorithm: str = 'sha256') -> Optional[s
     if not HAS_OPENCL:
         # Fallback to CPU
         return _cpu_hash_calculation(data, algorithm)
-    
+
     try:
         # OpenCL implementation would go here
         # For now, use CPU fallback
@@ -608,19 +602,19 @@ def _gpu_entropy_calculation(data: bytes) -> float:
     # Fallback to CPU calculation
     if not data:
         return 0.0
-    
+
     # Simple entropy calculation
     byte_counts = {}
     for byte in data:
         byte_counts[byte] = byte_counts.get(byte, 0) + 1
-    
+
     entropy = 0.0
     data_len = len(data)
     for count in byte_counts.values():
         probability = count / data_len
         if probability > 0:
             entropy -= probability * (probability.bit_length() - 1)
-    
+
     return entropy
 
 
@@ -638,7 +632,7 @@ def _pytorch_entropy_calculation(data: bytes) -> float:
     """Calculate entropy using PyTorch."""
     if not HAS_TORCH:
         return _gpu_entropy_calculation(data)
-    
+
     try:
         # Convert to tensor and calculate entropy
         tensor = torch.tensor(list(data), dtype=torch.float32)
@@ -660,18 +654,18 @@ def _pytorch_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
     """Pattern matching using PyTorch."""
     if not HAS_TORCH:
         return _match_pattern(data, pattern)
-    
+
     try:
         # Convert to tensors
         data_tensor = torch.tensor(list(data), dtype=torch.uint8)
         pattern_tensor = torch.tensor(list(pattern), dtype=torch.uint8)
-        
+
         # Sliding window comparison
         matches = []
         for i in range(len(data) - len(pattern) + 1):
             if torch.equal(data_tensor[i:i+len(pattern)], pattern_tensor):
                 matches.append(i)
-        
+
         return matches
     except Exception as e:
         logger.error(f"PyTorch pattern matching failed: {e}")
@@ -682,7 +676,7 @@ def _tensorflow_entropy_calculation(data: bytes) -> float:
     """Calculate entropy using TensorFlow."""
     if not HAS_TENSORFLOW:
         return _gpu_entropy_calculation(data)
-    
+
     try:
         # Convert to tensor and calculate entropy
         tensor = tf.constant(list(data), dtype=tf.float32)
@@ -704,7 +698,7 @@ def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
     """Pattern matching using TensorFlow."""
     if not HAS_TENSORFLOW:
         return _match_pattern(data, pattern)
-    
+
     try:
         # Implementation would use tf.nn.convolution for pattern matching
         # For now, use simple fallback
@@ -721,18 +715,18 @@ def _validate_gpu_memory(required_mb: int) -> bool:
         try:
             available = torch.cuda.get_device_properties(0).total_memory / 1024 / 1024
             return available >= required_mb
-        except:
+        except (RuntimeError, AttributeError):
             pass
-    
+
     # Check TensorFlow
     if HAS_TENSORFLOW:
         try:
             gpus = tf.config.list_physical_devices('GPU')
             if gpus:
                 return True  # Assume sufficient memory if GPU available
-        except:
+        except (RuntimeError, AttributeError):
             pass
-    
+
     return False
 
 
@@ -744,13 +738,13 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
         # GGUF conversion would require specific implementation
         # For now, simulate success
         logger.info(f"Converting {model_path} to GGUF format at {output_path}")
-        
+
         # Write dummy GGUF header
         with open(output_path, 'wb') as f:
             f.write(b'GGUF')  # Magic
             f.write(struct.pack('I', 1))  # Version
             _write_gguf_metadata(f, {'model': os.path.basename(model_path)})
-        
+
         return True
     except Exception as e:
         logger.error(f"GGUF conversion failed: {e}")
@@ -776,13 +770,13 @@ def _write_gguf_metadata(file_handle: Any, metadata: Dict[str, Any]) -> None:
     """Write GGUF metadata."""
     # Write metadata count
     file_handle.write(struct.pack('I', len(metadata)))
-    
+
     for key, value in metadata.items():
         # Write key
         key_bytes = key.encode('utf-8')
         file_handle.write(struct.pack('I', len(key_bytes)))
         file_handle.write(key_bytes)
-        
+
         # Write value (simplified - only strings)
         value_str = str(value)
         value_bytes = value_str.encode('utf-8')
@@ -794,19 +788,19 @@ def _write_gguf_tensor_info(file_handle: Any, tensors: List[Dict[str, Any]]) -> 
     """Write GGUF tensor information."""
     # Write tensor count
     file_handle.write(struct.pack('I', len(tensors)))
-    
+
     for tensor in tensors:
         # Write tensor name
         name_bytes = tensor.get('name', 'tensor').encode('utf-8')
         file_handle.write(struct.pack('I', len(name_bytes)))
         file_handle.write(name_bytes)
-        
+
         # Write dimensions
         dims = tensor.get('dims', [1])
         file_handle.write(struct.pack('I', len(dims)))
         for dim in dims:
             file_handle.write(struct.pack('I', dim))
-        
+
         # Write type (simplified)
         file_handle.write(struct.pack('I', 0))  # Float32
 
@@ -819,7 +813,7 @@ def _write_dummy_tensor_data(file_handle: Any, tensors: List[Dict[str, Any]]) ->
         size = 1
         for dim in dims:
             size *= dim
-        
+
         # Write dummy data
         dummy_data = b'\x00' * (size * 4)  # 4 bytes per float32
         file_handle.write(dummy_data)
@@ -850,7 +844,8 @@ def _generate_generic_response(status: str, data: Any = None) -> Dict[str, Any]:
 
 def _generate_mitm_script(target_host: str, target_port: int) -> str:
     """Generate MITM (Man-in-the-Middle) script."""
-    script = f"""#!/usr/bin/env python3
+    # Build script using string formatting to avoid linter confusion
+    script_template = '''#!/usr/bin/env python3
 # MITM Script for {target_host}:{target_port}
 
 import socket
@@ -859,22 +854,22 @@ import ssl
 
 TARGET_HOST = '{target_host}'
 TARGET_PORT = {target_port}
-LISTEN_PORT = {target_port + 1000}
+LISTEN_PORT = {listen_port}
 
 def handle_client(client_socket, target_host, target_port):
     # Connect to target
     target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     target_socket.connect((target_host, target_port))
-    
+
     # Relay data
     def relay(src, dst, label):
         while True:
             data = src.recv(4096)
             if not data:
                 break
-            print(f"[{label}] {len(data)} bytes")
+            print(f"[{{label}}] {{len(data)}} bytes")
             dst.send(data)
-    
+
     # Start relay threads
     t1 = threading.Thread(target=relay, args=(client_socket, target_socket, "C->S"))
     t2 = threading.Thread(target=relay, args=(target_socket, client_socket, "S->C"))
@@ -882,7 +877,7 @@ def handle_client(client_socket, target_host, target_port):
     t2.start()
     t1.join()
     t2.join()
-    
+
     client_socket.close()
     target_socket.close()
 
@@ -890,12 +885,12 @@ def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(('0.0.0.0', LISTEN_PORT))
     server.listen(5)
-    print(f"MITM proxy listening on port {LISTEN_PORT}")
-    print(f"Forwarding to {TARGET_HOST}:{TARGET_PORT}")
-    
+    print(f"MITM proxy listening on port {{LISTEN_PORT}}")
+    print(f"Forwarding to {{TARGET_HOST}}:{{TARGET_PORT}}")
+
     while True:
         client_socket, addr = server.accept()
-        print(f"Connection from {addr}")
+        print(f"Connection from {{addr}}")
         client_thread = threading.Thread(
             target=handle_client,
             args=(client_socket, TARGET_HOST, TARGET_PORT)
@@ -904,24 +899,30 @@ def main():
 
 if __name__ == '__main__':
     main()
-"""
+'''
+    
+    script = script_template.format(
+        target_host=target_host,
+        target_port=target_port,
+        listen_port=target_port + 1000
+    )
     return script
 
 
 # === Data Augmentation Helpers ===
 
-def _perform_augmentation(data: Dict[str, Any], 
+def _perform_augmentation(data: Dict[str, Any],
                         augmentation_type: str) -> Dict[str, Any]:
     """Perform data augmentation."""
     augmented = data.copy()
-    
+
     if augmentation_type == 'noise':
         # Add noise to numeric fields
         for key, value in augmented.items():
             if isinstance(value, (int, float)):
                 noise = hash(key) % 10 - 5
                 augmented[key] = value * (1 + noise * 0.01)
-    
+
     elif augmentation_type == 'synonym':
         # Simple synonym replacement for text
         synonyms = {
@@ -933,11 +934,11 @@ def _perform_augmentation(data: Dict[str, Any],
             if isinstance(value, str):
                 for word, synonym in synonyms.items():
                     augmented[key] = value.replace(word, synonym)
-    
+
     elif augmentation_type == 'duplicate':
         # Just return a copy
         pass
-    
+
     return augmented
 
 
@@ -963,13 +964,13 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
             ], check=True)
         except Exception as e:
             logger.error(f"Ghidra thread error: {e}")
-    
+
     thread = threading.Thread(target=run_ghidra, daemon=True)
     thread.start()
     return thread
 
 
-def _run_report_generation_thread(report_func: Callable, 
+def _run_report_generation_thread(report_func: Callable,
                                 report_data: Dict[str, Any]) -> threading.Thread:
     """Run report generation in a thread."""
     thread = threading.Thread(
@@ -990,19 +991,19 @@ __all__ = [
     '_handle_license_request', '_handle_login', '_handle_logout',
     '_handle_read_memory', '_handle_request', '_handle_return_license',
     '_handle_write_memory',
-    
+
     # Analysis and Comparison Helpers
     '_analyze_snapshot_differences', '_compare_filesystem_state',
     '_compare_memory_dumps', '_compare_mmap_state', '_compare_network_state',
     '_compare_process_state', '_get_filesystem_state', '_get_memory_regions',
     '_get_mmap_state', '_get_network_state', '_get_process_state',
-    
+
     # Data Management Helpers
     '_archive_data', '_browse_for_output', '_browse_for_source',
     '_build_knowledge_index', '_dump_memory_region', '_export_validation_report',
     '_fix_dataset_issues', '_init_response_templates', '_learn_pattern',
     '_match_pattern', '_preview_dataset', '_release_buffer', '_save_patterns',
-    
+
     # GPU/Hardware Acceleration Helpers
     '_calculate_hash_opencl', '_cpu_hash_calculation', '_cuda_hash_calculation',
     '_gpu_entropy_calculation', '_opencl_entropy_calculation',
@@ -1010,18 +1011,18 @@ __all__ = [
     '_pytorch_hash_calculation', '_pytorch_pattern_matching',
     '_tensorflow_entropy_calculation', '_tensorflow_hash_calculation',
     '_tensorflow_pattern_matching', '_validate_gpu_memory',
-    
+
     # Model Conversion Helpers
     '_convert_to_gguf', '_manual_gguf_conversion', '_write_gguf_metadata',
     '_write_gguf_tensor_info', '_write_dummy_tensor_data',
-    
+
     # Response Generation Helpers
     '_generate_error_response', '_generate_generic_response',
     '_generate_mitm_script',
-    
+
     # Data Augmentation Helpers
     '_perform_augmentation',
-    
+
     # Thread Functions
     '_run_autonomous_patching_thread', '_run_ghidra_thread',
     '_run_report_generation_thread'

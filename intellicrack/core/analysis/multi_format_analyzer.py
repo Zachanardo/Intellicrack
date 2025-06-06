@@ -6,9 +6,9 @@ formats including PE, ELF, Mach-O, .NET assemblies, and Java class files.
 """
 
 import logging
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 # Optional imports for binary analysis
 try:
@@ -41,59 +41,59 @@ from ...utils.protection_utils import calculate_entropy
 class MultiFormatBinaryAnalyzer:
     """
     Multi-format binary analyzer supporting PE, ELF, Mach-O, and other formats.
-    
+
     This class provides a unified interface for analyzing different binary formats
     and extracting relevant information for security research and reverse engineering.
     """
-    
+
     def __init__(self):
         """Initialize the multi-format binary analyzer."""
         self.logger = logging.getLogger(__name__)
-        
+
         # Check for required dependencies
         self.lief_available = LIEF_AVAILABLE
         self.pefile_available = PEFILE_AVAILABLE
         self.pyelftools_available = PYELFTOOLS_AVAILABLE
         self.macholib_available = MACHOLIB_AVAILABLE
-        
+
         self._check_available_backends()
-    
+
     def _check_available_backends(self):
         """Check which binary analysis backends are available."""
         if self.lief_available:
             self.logger.info("LIEF multi-format binary analysis available")
         else:
             self.logger.info("LIEF multi-format binary analysis not available")
-            
+
         if self.pefile_available:
             self.logger.info("pefile PE analysis available")
         else:
             self.logger.info("pefile PE analysis not available")
-            
+
         if self.pyelftools_available:
             self.logger.info("pyelftools ELF analysis available")
         else:
             self.logger.info("pyelftools ELF analysis not available")
-            
+
         if self.macholib_available:
             self.logger.info("macholib Mach-O analysis available")
         else:
             self.logger.info("macholib Mach-O analysis not available")
-    
+
     def identify_format(self, binary_path: Union[str, Path]) -> str:
         """
         Identify the format of a binary file.
-        
+
         Args:
             binary_path: Path to the binary file
-            
+
         Returns:
             Format of the binary ('PE', 'ELF', 'MACHO', 'DOTNET', 'CLASS', 'UNKNOWN')
         """
         try:
             with open(binary_path, 'rb') as f:
                 magic = f.read(4)
-                
+
                 # Check for PE format (MZ header)
                 if magic.startswith(b'MZ'):
                     # Need to check if it's a .NET assembly
@@ -108,39 +108,39 @@ class MultiFormatBinaryAnalyzer:
                         if any(cli_header):
                             return 'DOTNET'
                     return 'PE'
-                
+
                 # Check for ELF format
                 if magic.startswith(b'\x7fELF'):
                     return 'ELF'
-                
+
                 # Check for Mach-O format (32-bit or 64-bit)
-                if magic in [b'\xfe\xed\xfa\xce', b'\xfe\xed\xfa\xcf', 
+                if magic in [b'\xfe\xed\xfa\xce', b'\xfe\xed\xfa\xcf',
                             b'\xce\xfa\xed\xfe', b'\xcf\xfa\xed\xfe']:
                     return 'MACHO'
-                
+
                 # Check for Java class file
                 if magic.startswith(b'\xca\xfe\xba\xbe'):
                     return 'CLASS'
-                
+
                 return 'UNKNOWN'
-                
+
         except Exception as e:
             self.logger.error(f"Error identifying binary format: {e}")
             return 'UNKNOWN'
-    
+
     def analyze_binary(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Analyze a binary file of any supported format.
-        
+
         Args:
             binary_path: Path to the binary file
-            
+
         Returns:
             Analysis results dictionary
         """
         # Identify format
         binary_format = self.identify_format(binary_path)
-        
+
         # Choose appropriate analysis method
         if binary_format == 'PE':
             return self.analyze_pe(binary_path)
@@ -157,14 +157,14 @@ class MultiFormatBinaryAnalyzer:
                 'format': 'UNKNOWN',
                 'error': 'Unsupported binary format'
             }
-    
+
     def analyze_pe(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Analyze a PE (Windows) binary.
-        
+
         Args:
             binary_path: Path to the binary file
-            
+
         Returns:
             Analysis results dictionary
         """
@@ -173,22 +173,22 @@ class MultiFormatBinaryAnalyzer:
                 'format': 'PE',
                 'error': 'pefile library not available'
             }
-            
+
         try:
             pe = pefile.PE(str(binary_path))
-            
+
             # Basic information
             info = {
                 'format': 'PE',
-                'machine': self._get_machine_type(pe.FILE_HEADER.Machine),
-                'timestamp': self._get_pe_timestamp(pe.FILE_HEADER.TimeDateStamp),
-                'subsystem': pe.OPTIONAL_HEADER.Subsystem,
-                'characteristics': self._get_characteristics(pe.FILE_HEADER.Characteristics),
+                'machine': self._get_machine_type(getattr(pe.FILE_HEADER, 'Machine', 0)),
+                'timestamp': self._get_pe_timestamp(getattr(pe.FILE_HEADER, 'TimeDateStamp', 0)),
+                'subsystem': getattr(pe.OPTIONAL_HEADER, 'Subsystem', 0),
+                'characteristics': self._get_characteristics(getattr(pe.FILE_HEADER, 'Characteristics', 0)),
                 'sections': [],
                 'imports': [],
                 'exports': []
             }
-            
+
             # Section information
             for section in pe.sections:
                 section_name = section.Name.decode('utf-8', 'ignore').strip('\x00')
@@ -201,23 +201,23 @@ class MultiFormatBinaryAnalyzer:
                     'entropy': calculate_entropy(section.get_data())
                 }
                 info['sections'].append(section_info)
-            
+
             # Import information
             if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
                     dll_name = entry.dll.decode('utf-8', 'ignore')
                     imports = []
-                    
+
                     for imp in entry.imports:
                         if imp.name:
                             import_name = imp.name.decode('utf-8', 'ignore')
                             imports.append(import_name)
-                    
+
                     info['imports'].append({
                         'dll': dll_name,
                         'functions': imports
                     })
-            
+
             # Export information
             if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
                 for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
@@ -227,23 +227,23 @@ class MultiFormatBinaryAnalyzer:
                             'name': export_name,
                             'address': hex(exp.address)
                         })
-            
+
             return info
-            
+
         except Exception as e:
             self.logger.error(f"Error analyzing PE binary: {e}")
             return {
                 'format': 'PE',
                 'error': str(e)
             }
-    
+
     def analyze_elf(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Analyze an ELF (Linux) binary.
-        
+
         Args:
             binary_path: Path to the binary file
-            
+
         Returns:
             Analysis results dictionary
         """
@@ -252,12 +252,12 @@ class MultiFormatBinaryAnalyzer:
                 'format': 'ELF',
                 'error': 'No ELF analysis backend available'
             }
-        
+
         try:
             # Use LIEF if available
-            if self.lief_available:
+            if self.lief_available and hasattr(lief, 'parse'):
                 binary = lief.parse(str(binary_path))
-                
+
                 # Basic information
                 info = {
                     'format': 'ELF',
@@ -269,7 +269,7 @@ class MultiFormatBinaryAnalyzer:
                     'symbols': [],
                     'dynamic': []
                 }
-                
+
                 # Section information
                 for section in binary.sections:
                     section_info = {
@@ -278,13 +278,13 @@ class MultiFormatBinaryAnalyzer:
                         'address': hex(section.virtual_address),
                         'size': section.size
                     }
-                    
+
                     # Calculate entropy if section has content
                     if section.content and section.size > 0:
                         section_info['entropy'] = calculate_entropy(bytes(section.content))
-                    
+
                     info['sections'].append(section_info)
-                
+
                 # Symbol information
                 for symbol in binary.symbols:
                     if symbol.name:
@@ -295,14 +295,14 @@ class MultiFormatBinaryAnalyzer:
                             'size': symbol.size
                         }
                         info['symbols'].append(symbol_info)
-                
+
                 return info
-                
+
             # Use pyelftools if LIEF not available
             elif self.pyelftools_available:
                 with open(binary_path, 'rb') as f:
                     elf = ELFFile(f)
-                    
+
                     # Basic information
                     info = {
                         'format': 'ELF',
@@ -313,7 +313,7 @@ class MultiFormatBinaryAnalyzer:
                         'sections': [],
                         'symbols': []
                     }
-                    
+
                     # Section information
                     for section in elf.iter_sections():
                         section_info = {
@@ -322,25 +322,25 @@ class MultiFormatBinaryAnalyzer:
                             'address': hex(section['sh_addr']),
                             'size': section['sh_size']
                         }
-                        
+
                         info['sections'].append(section_info)
-                    
+
                     return info
-                    
+
         except Exception as e:
             self.logger.error(f"Error analyzing ELF binary: {e}")
             return {
                 'format': 'ELF',
                 'error': str(e)
             }
-    
+
     def analyze_macho(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Analyze a Mach-O (macOS) binary.
-        
+
         Args:
             binary_path: Path to the binary file
-            
+
         Returns:
             Analysis results dictionary
         """
@@ -349,12 +349,12 @@ class MultiFormatBinaryAnalyzer:
                 'format': 'MACHO',
                 'error': 'No Mach-O analysis backend available'
             }
-        
+
         try:
             # Use LIEF if available
-            if self.lief_available:
+            if self.lief_available and hasattr(lief, 'parse'):
                 binary = lief.parse(str(binary_path))
-                
+
                 # Basic information
                 info = {
                     'format': 'MACHO',
@@ -363,7 +363,7 @@ class MultiFormatBinaryAnalyzer:
                     'symbols': [],
                     'libraries': []
                 }
-                
+
                 # Header information
                 header_info = {
                     'magic': hex(binary.magic),
@@ -371,7 +371,7 @@ class MultiFormatBinaryAnalyzer:
                     'file_type': binary.header.file_type.name if hasattr(binary.header.file_type, 'name') else str(binary.header.file_type)
                 }
                 info['headers'].append(header_info)
-                
+
                 # Segment information
                 for segment in binary.segments:
                     segment_info = {
@@ -380,7 +380,7 @@ class MultiFormatBinaryAnalyzer:
                         'size': segment.virtual_size,
                         'sections': []
                     }
-                    
+
                     # Section information
                     for section in segment.sections:
                         section_info = {
@@ -388,17 +388,17 @@ class MultiFormatBinaryAnalyzer:
                             'address': hex(section.virtual_address),
                             'size': section.size
                         }
-                        
+
                         segment_info['sections'].append(section_info)
-                    
+
                     info['segments'].append(segment_info)
-                
+
                 return info
-                
+
             # Use macholib if LIEF not available
             elif self.macholib_available:
                 macho = MachO(str(binary_path))
-                
+
                 # Basic information
                 info = {
                     'format': 'MACHO',
@@ -406,7 +406,7 @@ class MultiFormatBinaryAnalyzer:
                     'segments': [],
                     'libraries': []
                 }
-                
+
                 # Process each header
                 for header in macho.headers:
                     header_info = {
@@ -416,23 +416,23 @@ class MultiFormatBinaryAnalyzer:
                         'filetype': header.header.filetype
                     }
                     info['headers'].append(header_info)
-                
+
                 return info
-                
+
         except Exception as e:
             self.logger.error(f"Error analyzing Mach-O binary: {e}")
             return {
                 'format': 'MACHO',
                 'error': str(e)
             }
-    
+
     def analyze_dotnet(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Analyze a .NET assembly.
-        
+
         Args:
             binary_path: Path to the binary file
-            
+
         Returns:
             Analysis results dictionary
         """
@@ -441,14 +441,14 @@ class MultiFormatBinaryAnalyzer:
         if 'error' not in result:
             result['note'] = 'This is a .NET assembly. Consider using specialized .NET analysis tools.'
         return result
-    
+
     def analyze_java(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Analyze a Java class file.
-        
+
         Args:
             binary_path: Path to the binary file
-            
+
         Returns:
             Analysis results dictionary
         """
@@ -456,7 +456,7 @@ class MultiFormatBinaryAnalyzer:
             'format': 'CLASS',
             'note': 'Java class file analysis not yet implemented'
         }
-    
+
     # Helper methods
     def _get_machine_type(self, machine_value: int) -> str:
         """Get readable machine type from Machine value."""
@@ -488,14 +488,14 @@ class MultiFormatBinaryAnalyzer:
             0x169: "WCEMIPSV2"
         }
         return machine_types.get(machine_value, f"UNKNOWN (0x{machine_value:04X})")
-    
+
     def _get_pe_timestamp(self, timestamp: int) -> str:
         """Convert PE timestamp to readable date string."""
         try:
             return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
         except:
             return f"Invalid timestamp ({timestamp})"
-    
+
     def _get_characteristics(self, characteristics: int) -> List[str]:
         """Convert PE characteristics flags to readable descriptions."""
         char_flags = {
@@ -515,107 +515,107 @@ class MultiFormatBinaryAnalyzer:
             0x4000: "Uniprocessor machine only",
             0x8000: "Bytes reversed hi"
         }
-        
+
         result = []
         for flag, desc in char_flags.items():
             if characteristics & flag:
                 result.append(desc)
-        
+
         return result
 
 
 def run_multi_format_analysis(app, binary_path: Optional[Union[str, Path]] = None) -> Dict[str, Any]:
     """
     Run analysis on a binary of any supported format.
-    
+
     Args:
         app: Application instance with update_output signal
         binary_path: Optional path to binary (uses app.binary_path if not provided)
-        
+
     Returns:
         Analysis results dictionary
     """
     from ...utils.logger import log_message
-    
+
     # Use provided path or get from app
     path = binary_path or getattr(app, 'binary_path', None)
     if not path:
         app.update_output.emit(log_message("[Multi-Format] No binary selected."))
         return {'error': 'No binary selected'}
-    
+
     app.update_output.emit(log_message("[Multi-Format] Starting multi-format binary analysis..."))
-    
+
     # Create multi-format analyzer
     analyzer = MultiFormatBinaryAnalyzer()
-    
+
     # Identify format
     binary_format = analyzer.identify_format(path)
     app.update_output.emit(log_message(f"[Multi-Format] Detected format: {binary_format}"))
-    
+
     # Run analysis
     app.update_output.emit(log_message(f"[Multi-Format] Analyzing {binary_format} binary..."))
     results = analyzer.analyze_binary(path)
-    
+
     # Check for error
     if 'error' in results:
         app.update_output.emit(log_message(f"[Multi-Format] Error: {results['error']}"))
         return results
-    
+
     # Display results
     app.update_output.emit(log_message(f"[Multi-Format] Analysis completed for {binary_format} binary"))
-    
+
     # Add to analyze results
     if not hasattr(app, "analyze_results"):
         app.analyze_results = []
-    
+
     app.analyze_results.append(f"\n=== MULTI-FORMAT BINARY ANALYSIS ({binary_format}) ===")
-    
+
     # Format-specific information
     if binary_format == 'PE':
         app.analyze_results.append(f"Machine: {results['machine']}")
         app.analyze_results.append(f"Timestamp: {results['timestamp']}")
         app.analyze_results.append(f"Characteristics: {results['characteristics']}")
-        
+
         app.analyze_results.append("\nSections:")
         for section in results['sections']:
             entropy_str = f", Entropy: {section['entropy']:.2f}" if 'entropy' in section else ""
             app.analyze_results.append(f"  {section['name']} - VA: {section['virtual_address']}, Size: {section['virtual_size']}{entropy_str}")
-        
+
         app.analyze_results.append("\nImports:")
         for imp in results['imports']:
             app.analyze_results.append(f"  {imp['dll']} - {len(imp['functions'])} functions")
-        
+
         app.analyze_results.append("\nExports:")
         for exp in results['exports'][:10]:  # Limit to first 10
             app.analyze_results.append(f"  {exp['name']} - {exp['address']}")
-    
+
     elif binary_format == 'ELF':
         app.analyze_results.append(f"Machine: {results['machine']}")
         app.analyze_results.append(f"Class: {results['class']}")
         app.analyze_results.append(f"Type: {results['type']}")
         app.analyze_results.append(f"Entry Point: {results['entry_point']}")
-        
+
         app.analyze_results.append("\nSections:")
         for section in results['sections']:
             entropy_str = f", Entropy: {section['entropy']:.2f}" if 'entropy' in section else ""
             app.analyze_results.append(f"  {section['name']} - Addr: {section['address']}, Size: {section['size']}{entropy_str}")
-        
+
         app.analyze_results.append("\nSymbols:")
         for symbol in results['symbols'][:10]:  # Limit to first 10
             app.analyze_results.append(f"  {symbol['name']} - {symbol['value']}")
-    
+
     elif binary_format == 'MACHO':
         app.analyze_results.append(f"CPU Type: {results['headers'][0]['cpu_type']}")
         app.analyze_results.append(f"File Type: {results['headers'][0]['file_type']}")
-        
+
         app.analyze_results.append("\nSegments:")
         for segment in results['segments']:
             app.analyze_results.append(f"  {segment['name']} - Addr: {segment['address']}, Size: {segment['size']}")
-            
+
             app.analyze_results.append("  Sections:")
             for section in segment['sections']:
                 app.analyze_results.append(f"    {section['name']} - Addr: {section['address']}, Size: {section['size']}")
-    
+
     # Add recommendations based on format
     app.analyze_results.append("\nRecommendations:")
     if binary_format == 'PE':
@@ -627,5 +627,5 @@ def run_multi_format_analysis(app, binary_path: Optional[Union[str, Path]] = Non
     elif binary_format == 'MACHO':
         app.analyze_results.append("- Use macOS-specific analysis tools for deeper inspection")
         app.analyze_results.append("- Check for code signing and entitlements")
-    
+
     return results

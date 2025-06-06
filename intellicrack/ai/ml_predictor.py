@@ -5,10 +5,10 @@ This module provides machine learning capabilities for vulnerability prediction
 and binary analysis using trained models for security research.
 """
 
-import logging
 import os
 import pickle
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 
 # Third-party imports with graceful fallbacks
@@ -19,22 +19,21 @@ except ImportError:
     JOBLIB_AVAILABLE = False
 
 try:
-    import sklearn
-    from sklearn.preprocessing import StandardScaler
     from sklearn.ensemble import RandomForestClassifier
+    from sklearn.preprocessing import StandardScaler
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
 
 try:
-    import pefile
-    PEFILE_AVAILABLE = True
+    import importlib.util
+    PEFILE_AVAILABLE = importlib.util.find_spec("pefile") is not None
 except ImportError:
     PEFILE_AVAILABLE = False
 
 # Local imports
-from ..utils.logger import get_logger
 from ..core.analysis.vulnerability_engine import calculate_entropy
+from ..utils.logger import get_logger
 
 # Configure module logger
 logger = get_logger(__name__)
@@ -43,7 +42,7 @@ logger = get_logger(__name__)
 class MLVulnerabilityPredictor:
     """
     Machine Learning-powered Vulnerability Prediction
-    
+
     This class provides ML-based vulnerability detection and prediction
     capabilities for binary analysis and security research.
     """
@@ -60,14 +59,14 @@ class MLVulnerabilityPredictor:
         self.model_path = None
         self.logger = logger
         self.feature_names = []
-        
+
         self.logger.info(f"MLVulnerabilityPredictor initializing with model_path: {model_path}")
 
         # Check dependencies
         if not SKLEARN_AVAILABLE:
             self.logger.warning("scikit-learn not available, ML prediction disabled")
             return
-            
+
         if not JOBLIB_AVAILABLE:
             self.logger.warning("joblib not available, model loading may be limited")
 
@@ -89,7 +88,7 @@ class MLVulnerabilityPredictor:
                 self.model_path = model_path
         else:
             self.logger.warning("No valid ML model path provided or model file not found")
-                
+
         self.logger.info("MLVulnerabilityPredictor initialization complete.")
 
     def load_model(self, model_path: str) -> bool:
@@ -104,12 +103,12 @@ class MLVulnerabilityPredictor:
         """
         try:
             self.logger.info(f"Loading ML model from: {model_path}")
-            
+
             if JOBLIB_AVAILABLE:
                 # Try joblib first (preferred for sklearn models)
                 try:
                     model_data = joblib.load(model_path)
-                    
+
                     if isinstance(model_data, dict):
                         self.model = model_data.get('model')
                         self.scaler = model_data.get('scaler')
@@ -118,16 +117,16 @@ class MLVulnerabilityPredictor:
                         # Assume it's just the model
                         self.model = model_data
                         self.scaler = StandardScaler()  # Create default scaler
-                        
+
                 except Exception as e:
                     self.logger.warning(f"joblib loading failed: {e}, trying pickle")
                     raise e
-            
+
             # Fallback to pickle if joblib fails or isn't available
             if self.model is None:
                 with open(model_path, 'rb') as f:
                     model_data = pickle.load(f)
-                    
+
                     if isinstance(model_data, dict):
                         self.model = model_data.get('model')
                         self.scaler = model_data.get('scaler')
@@ -160,7 +159,7 @@ class MLVulnerabilityPredictor:
         if not SKLEARN_AVAILABLE:
             self.logger.error("scikit-learn not available, cannot extract features")
             return None
-            
+
         try:
             self.logger.debug(f"Extracting features from: {binary_path}")
             features = []
@@ -180,13 +179,13 @@ class MLVulnerabilityPredictor:
             byte_counts = np.zeros(256)
             for byte in binary_data[:10000]:  # Sample first 10KB for performance
                 byte_counts[byte] += 1
-            
+
             # Normalize byte frequencies
             if len(binary_data) > 0:
                 byte_frequencies = byte_counts / min(len(binary_data), 10000)
             else:
                 byte_frequencies = byte_counts
-                
+
             features.extend(byte_frequencies.tolist())
 
             # PE file analysis if available
@@ -248,25 +247,25 @@ class MLVulnerabilityPredictor:
             List of PE-specific features
         """
         import pefile
-        
+
         features = []
-        
+
         try:
             pe = pefile.PE(binary_path)
 
             # Basic PE header features
-            features.append(pe.FILE_HEADER.NumberOfSections)
-            features.append(pe.FILE_HEADER.TimeDateStamp)
-            features.append(pe.OPTIONAL_HEADER.SizeOfCode)
-            features.append(pe.OPTIONAL_HEADER.SizeOfInitializedData)
-            features.append(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
+            features.append(getattr(pe.FILE_HEADER, 'NumberOfSections', 0))
+            features.append(getattr(pe.FILE_HEADER, 'TimeDateStamp', 0))
+            features.append(getattr(pe.OPTIONAL_HEADER, 'SizeOfCode', 0))
+            features.append(getattr(pe.OPTIONAL_HEADER, 'SizeOfInitializedData', 0))
+            features.append(getattr(pe.OPTIONAL_HEADER, 'AddressOfEntryPoint', 0))
 
             # Section characteristics (process up to 3 sections)
             for i, section in enumerate(pe.sections[:3]):
                 features.append(int(section.Characteristics & 0x20000000 > 0))  # Executable
                 features.append(int(section.Characteristics & 0x80000000 > 0))  # Writable
                 features.append(len(section.get_data()))
-                
+
             # Pad if fewer than 3 sections
             while len(features) < 5 + (3 * 3):  # 5 header + 3*3 section features
                 features.append(0)
@@ -275,7 +274,7 @@ class MLVulnerabilityPredictor:
             import_count = 0
             dangerous_import_count = 0
             dangerous_keywords = ['exec', 'shell', 'process', 'alloc', 'protect']
-            
+
             if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
                     for imp in entry.imports:
@@ -329,7 +328,7 @@ class MLVulnerabilityPredictor:
 
             # Make prediction
             prediction = self.model.predict(features)[0]
-            
+
             # Get prediction probability if available
             probability = None
             if hasattr(self.model, 'predict_proba'):
@@ -362,7 +361,7 @@ class MLVulnerabilityPredictor:
             self.logger.error(f"Prediction error: {e}")
             return None
 
-    def train_model(self, training_data: List[Tuple[str, int]], 
+    def train_model(self, training_data: List[Tuple[str, int]],
                    model_output_path: Optional[str] = None) -> bool:
         """
         Train a new vulnerability prediction model.
@@ -384,7 +383,7 @@ class MLVulnerabilityPredictor:
             # Extract features for all training samples
             X = []
             y = []
-            
+
             for binary_path, label in training_data:
                 features = self.extract_features(binary_path)
                 if features is not None:
@@ -485,6 +484,339 @@ class MLVulnerabilityPredictor:
 
         return info
 
+    def predict_vulnerabilities(self, binary_path: str) -> Dict[str, Any]:
+        """
+        Predict vulnerabilities in a binary file.
+        
+        Args:
+            binary_path: Path to the binary file to analyze
+            
+        Returns:
+            Dictionary containing vulnerability predictions
+        """
+        try:
+            if self.model is None:
+                return {
+                    "error": "No model loaded",
+                    "status": "failed",
+                    "predictions": []
+                }
 
-# Export main class
-__all__ = ['MLVulnerabilityPredictor']
+            # Extract features from binary
+            features = self.extract_features(binary_path)
+            if features is None:
+                return {
+                    "error": "Failed to extract features",
+                    "status": "failed", 
+                    "predictions": []
+                }
+
+            # Scale features if scaler is available
+            if self.scaler is not None:
+                features = self.scaler.transform(features.reshape(1, -1))
+            else:
+                features = features.reshape(1, -1)
+
+            # Make prediction
+            prediction = self.model.predict(features)[0]
+            
+            # Get prediction probability if available
+            prediction_proba = None
+            if hasattr(self.model, 'predict_proba'):
+                prediction_proba = self.model.predict_proba(features)[0]
+
+            # Format results
+            result = {
+                "status": "success",
+                "binary_path": binary_path,
+                "is_vulnerable": bool(prediction),
+                "confidence": float(prediction_proba[1]) if prediction_proba is not None else None,
+                "predictions": [
+                    {
+                        "type": "vulnerability",
+                        "prediction": bool(prediction),
+                        "confidence": float(prediction_proba[1]) if prediction_proba is not None else None
+                    }
+                ]
+            }
+
+            return result
+
+        except Exception as e:
+            self.logger.error(f"Error predicting vulnerabilities: {e}")
+            return {
+                "error": str(e),
+                "status": "failed",
+                "predictions": []
+            }
+
+    def _extract_features(self, binary_path: str) -> Optional[np.ndarray]:
+        """
+        Extract features for ML prediction (alias for extract_features).
+        
+        Args:
+            binary_path: Path to the binary file
+            
+        Returns:
+            Feature array or None if extraction failed
+        """
+        return self.extract_features(binary_path)
+
+    def predict(self, binary_path: str) -> Dict[str, Any]:
+        """
+        Predict method for compatibility (alias for predict_vulnerabilities).
+        
+        Args:
+            binary_path: Path to the binary file to analyze
+            
+        Returns:
+            Dictionary containing vulnerability predictions
+        """
+        return self.predict_vulnerabilities(binary_path)
+
+    def get_confidence_score(self, binary_path: str) -> float:
+        """
+        Get confidence score for a prediction.
+        
+        Args:
+            binary_path: Path to the binary file
+            
+        Returns:
+            Confidence score between 0 and 1
+        """
+        try:
+            result = self.predict_vulnerabilities(binary_path)
+            return result.get('confidence', 0.0) or 0.0
+        except Exception as e:
+            self.logger.error(f"Error getting confidence score: {e}")
+            return 0.0
+
+    def analyze_binary_features(self, binary_path: str) -> Dict[str, Any]:
+        """
+        Analyze binary features for ML prediction.
+        
+        Args:
+            binary_path: Path to the binary file
+            
+        Returns:
+            Dictionary containing feature analysis
+        """
+        try:
+            features = self.extract_features(binary_path)
+            if features is None:
+                return {"error": "Failed to extract features"}
+                
+            analysis = {
+                "feature_count": len(features),
+                "features": features.tolist() if hasattr(features, 'tolist') else features,
+                "feature_names": self.feature_names if self.feature_names else None
+            }
+            
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing binary features: {e}")
+            return {"error": str(e)}
+
+
+# Standalone convenience functions for backward compatibility
+
+# Create aliases for common use
+MLPredictor = MLVulnerabilityPredictor
+VulnerabilityPredictor = MLVulnerabilityPredictor
+
+
+def predict_vulnerabilities(binary_path: str, model_path: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Standalone function to predict vulnerabilities in a binary.
+    
+    Args:
+        binary_path: Path to the binary file to analyze
+        model_path: Optional path to custom model
+        
+    Returns:
+        Dictionary containing vulnerability predictions
+    """
+    try:
+        predictor = MLVulnerabilityPredictor(model_path)
+        return predictor.predict_vulnerabilities(binary_path)
+    except Exception as e:
+        logger.error(f"Vulnerability prediction failed: {e}")
+        return {
+            "error": str(e),
+            "status": "failed",
+            "predictions": []
+        }
+
+
+def train_model(training_data: List[Tuple[str, int]], 
+               model_output_path: str,
+               model_type: str = "random_forest") -> Dict[str, Any]:
+    """
+    Train a new vulnerability prediction model.
+    
+    Args:
+        training_data: List of (binary_path, is_vulnerable) tuples
+        model_output_path: Where to save the trained model
+        model_type: Type of model to train
+        
+    Returns:
+        Training results and metrics
+    """
+    try:
+        predictor = MLVulnerabilityPredictor()
+        
+        # Extract features and labels
+        X_data = []
+        y_data = []
+        
+        for binary_path, label in training_data:
+            try:
+                features = predictor._extract_features(binary_path)
+                X_data.append(features)
+                y_data.append(label)
+            except Exception as e:
+                logger.warning(f"Failed to extract features from {binary_path}: {e}")
+                continue
+        
+        if not X_data:
+            return {
+                "error": "No valid training data extracted",
+                "status": "failed"
+            }
+        
+        X = np.array(X_data)
+        y = np.array(y_data)
+        
+        # Train model based on type
+        if model_type == "random_forest" and SKLEARN_AVAILABLE:
+            from sklearn.ensemble import RandomForestClassifier
+            from sklearn.model_selection import train_test_split
+            from sklearn.metrics import accuracy_score, classification_report
+            
+            # Split data
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42
+            )
+            
+            # Train model
+            model = RandomForestClassifier(n_estimators=100, random_state=42)
+            model.fit(X_train, y_train)
+            
+            # Evaluate
+            y_pred = model.predict(X_test)
+            accuracy = accuracy_score(y_test, y_pred)
+            
+            # Save model
+            if JOBLIB_AVAILABLE:
+                joblib.dump(model, model_output_path)
+            else:
+                with open(model_output_path, 'wb') as f:
+                    pickle.dump(model, f)
+            
+            return {
+                "status": "success",
+                "model_type": model_type,
+                "model_path": model_output_path,
+                "accuracy": accuracy,
+                "training_samples": len(X_train),
+                "test_samples": len(X_test)
+            }
+        else:
+            return {
+                "error": f"Model type '{model_type}' not supported or dependencies missing",
+                "status": "failed"
+            }
+            
+    except Exception as e:
+        logger.error(f"Model training failed: {e}")
+        return {
+            "error": str(e),
+            "status": "failed"
+        }
+
+
+def evaluate_model(model_path: str, test_data: List[Tuple[str, int]]) -> Dict[str, Any]:
+    """
+    Evaluate a trained model on test data.
+    
+    Args:
+        model_path: Path to the trained model
+        test_data: List of (binary_path, expected_label) tuples
+        
+    Returns:
+        Evaluation metrics and results
+    """
+    try:
+        predictor = MLVulnerabilityPredictor(model_path)
+        
+        predictions = []
+        actual_labels = []
+        
+        for binary_path, expected_label in test_data:
+            try:
+                result = predictor.predict_vulnerabilities(binary_path)
+                
+                # Extract prediction (assuming highest confidence prediction)
+                if result.get("predictions"):
+                    prediction = max(result["predictions"], key=lambda x: x.get("confidence", 0))
+                    predicted_label = 1 if prediction.get("confidence", 0) > 0.5 else 0
+                else:
+                    predicted_label = 0
+                
+                predictions.append(predicted_label)
+                actual_labels.append(expected_label)
+                
+            except Exception as e:
+                logger.warning(f"Failed to predict for {binary_path}: {e}")
+                continue
+        
+        if not predictions:
+            return {
+                "error": "No valid predictions generated",
+                "status": "failed"
+            }
+        
+        # Calculate metrics
+        correct = sum(1 for p, a in zip(predictions, actual_labels) if p == a)
+        accuracy = correct / len(predictions)
+        
+        # Calculate precision, recall for positive class
+        tp = sum(1 for p, a in zip(predictions, actual_labels) if p == 1 and a == 1)
+        fp = sum(1 for p, a in zip(predictions, actual_labels) if p == 1 and a == 0)
+        fn = sum(1 for p, a in zip(predictions, actual_labels) if p == 0 and a == 1)
+        
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+        f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+        
+        return {
+            "status": "success",
+            "model_path": model_path,
+            "test_samples": len(predictions),
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1_score,
+            "true_positives": tp,
+            "false_positives": fp,
+            "false_negatives": fn
+        }
+        
+    except Exception as e:
+        logger.error(f"Model evaluation failed: {e}")
+        return {
+            "error": str(e),
+            "status": "failed"
+        }
+
+
+# Export all classes and functions
+__all__ = [
+    'MLVulnerabilityPredictor', 
+    'MLPredictor', 
+    'VulnerabilityPredictor',
+    'predict_vulnerabilities',
+    'train_model', 
+    'evaluate_model'
+]

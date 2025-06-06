@@ -7,20 +7,19 @@ enabling bypass of secure license verification mechanisms.
 """
 
 import datetime
-import json
 import logging
 import os
 import subprocess
 import tempfile
 import traceback
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Optional cryptography dependencies - graceful fallback if not available
 try:
     from cryptography import x509
     from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.primitives.asymmetric import rsa
-    from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
+    from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
     from cryptography.x509.oid import NameOID
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError:
@@ -90,66 +89,8 @@ class SSLTLSInterceptor:
         """
         Load response templates for various license verification endpoints.
         """
-        # Adobe response template
-        self.response_templates['adobe'] = {
-            'json': {
-                'status': 'SUCCESS',
-                'message': 'License is valid',
-                'expiry': 'never',
-                'serial': '1234-5678-9012-3456-7890',
-                'valid': True,
-                'activated': True,
-                'expired': False
-            },
-            'xml': """
-                <response>
-                    <status>SUCCESS</status>
-                    <license>
-                        <valid>true</valid>
-                        <expired>false</expired>
-                        <expiry>2099-12-31</expiry>
-                        <serial>1234-5678-9012-3456-7890</serial>
-                    </license>
-                </response>
-            """
-        }
-
-        # Autodesk response template
-        self.response_templates['autodesk'] = {
-            'json': {
-                'status': 'success',
-                'license': {
-                    'status': 'ACTIVATED',
-                    'type': 'PERMANENT',
-                    'expiry': '2099-12-31'
-                }
-            }
-        }
-
-        # JetBrains response template
-        self.response_templates['jetbrains'] = {
-            'json': {
-                'licenseId': '1234567890',
-                'licenseType': 'commercial',
-                'evaluationLicense': False,
-                'expired': False,
-                'perpetualLicense': True,
-                'errorCode': 0,
-                'errorMessage': None,
-                'licenseExpirationDate': '2099-12-31'
-            }
-        }
-
-        # Microsoft response template
-        self.response_templates['microsoft'] = {
-            'json': {
-                'status': 'licensed',
-                'licenseStatus': 'licensed',
-                'gracePeriodDays': 0,
-                'errorCode': 0,
-                'errorMessage': None
-            }
-        }
+        from ...utils.license_response_templates import get_all_response_templates
+        self.response_templates = get_all_response_templates()
 
     def generate_ca_certificate(self) -> Tuple[Optional[bytes], Optional[bytes]]:
         """

@@ -8,14 +8,25 @@ to find similar cracking patterns and techniques.
 import json
 import logging
 import os
-import time
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QSplitter,
-    QWidget, QSlider, QPushButton, QTableWidget, QTableWidgetItem,
-    QTextEdit, QAbstractItemView, QHeaderView, QMessageBox, QInputDialog
+    QAbstractItemView,
+    QDialog,
+    QHBoxLayout,
+    QHeaderView,
+    QInputDialog,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QSlider,
+    QSplitter,
+    QTableWidget,
+    QTableWidgetItem,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
 try:
@@ -30,7 +41,7 @@ __all__ = ['BinarySimilaritySearchDialog']
 class BinarySimilaritySearchDialog(QDialog):
     """
     Dialog for searching and comparing binary files for similarity.
-    
+
     Provides an interface to search for binaries with similar characteristics
     and apply patterns from similar cracking attempts.
     """
@@ -47,7 +58,7 @@ class BinarySimilaritySearchDialog(QDialog):
         self.binary_path = binary_path
         self.database_path = os.path.join(os.getcwd(), "binary_database.json")
         self.similar_binaries: List[Dict[str, Any]] = []
-        
+
         if HAS_SIMILARITY_SEARCH:
             self.search_engine = BinarySimilaritySearch(self.database_path)
         else:
@@ -191,7 +202,7 @@ class BinarySimilaritySearchDialog(QDialog):
         """Search for similar binaries."""
         if not self.search_engine:
             QMessageBox.warning(
-                self, "Error", 
+                self, "Error",
                 "Binary similarity search engine not available. "
                 "Please ensure all dependencies are installed."
             )
@@ -308,7 +319,7 @@ class BinarySimilaritySearchDialog(QDialog):
             response = QMessageBox.question(
                 self,
                 "Apply Pattern",
-                f"Apply pattern from this similar binary?\n\nThis will attempt to apply the cracking pattern to your binary.",
+                "Apply pattern from this similar binary?\n\nThis will attempt to apply the cracking pattern to your binary.",
                 QMessageBox.Yes | QMessageBox.No
             )
 
@@ -341,7 +352,7 @@ class BinarySimilaritySearchDialog(QDialog):
         """Add the current binary to the similarity database."""
         if not self.search_engine:
             QMessageBox.warning(
-                self, "Error", 
+                self, "Error",
                 "Binary similarity search engine not available. "
                 "Please ensure all dependencies are installed."
             )
@@ -389,7 +400,7 @@ class BinarySimilaritySearchDialog(QDialog):
     def get_selected_pattern(self) -> Optional[str]:
         """
         Get the currently selected pattern.
-        
+
         Returns:
             Selected pattern text or None if no pattern selected
         """
@@ -403,16 +414,16 @@ class BinarySimilaritySearchDialog(QDialog):
 
         result = self.similar_binaries[row]
         patterns = result.get("cracking_patterns", [])
-        
+
         if patterns:
             return patterns[0]  # Return first pattern
-        
+
         return None
 
     def get_search_results(self) -> List[Dict[str, Any]]:
         """
         Get the current search results.
-        
+
         Returns:
             List of similar binary results
         """
@@ -422,11 +433,11 @@ class BinarySimilaritySearchDialog(QDialog):
 def create_similarity_search_dialog(binary_path: str, parent=None) -> BinarySimilaritySearchDialog:
     """
     Factory function to create a BinarySimilaritySearchDialog.
-    
+
     Args:
         binary_path: Path to binary for similarity search
         parent: Parent widget
-        
+
     Returns:
         Configured dialog instance
     """

@@ -14,32 +14,11 @@ import re
 import time
 import traceback
 from collections import Counter
-from typing import Dict, List, Optional, Any, Union
+from typing import Any, Dict, List, Optional, Union
 
 
-def calculate_entropy(data: Union[bytes, bytearray]) -> float:
-    """
-    Calculates Shannon entropy of given data.
-    Higher values (>7.0) typically indicate encryption, compression, or obfuscation.
-
-    Args:
-        data: Binary data (bytes or bytearray)
-
-    Returns:
-        float: Shannon entropy value between 0 and 8
-    """
-    if not data:
-        return 0
-
-    entropy = 0
-    counter = Counter(bytearray(data))
-    data_len = len(data)
-
-    for count in counter.values():
-        probability = count / data_len
-        entropy -= probability * math.log2(probability)
-
-    return entropy
+# Import shared entropy calculation
+from ...utils.protection_utils import calculate_entropy
 
 
 class ProtocolFingerprinter:
@@ -228,10 +207,10 @@ class ProtocolFingerprinter:
     def _calculate_byte_frequency(self, data: Union[bytes, bytearray]) -> Dict[int, float]:
         """
         Calculate the frequency distribution of bytes in the given data.
-        
+
         Args:
             data: Binary data to analyze
-            
+
         Returns:
             dict: Mapping of byte values to their frequency (0.0 to 1.0)
         """
@@ -239,7 +218,7 @@ class ProtocolFingerprinter:
         length = len(data)
         if length == 0:
             return {}
-        
+
         counts = Counter(data)
         freq = {byte: count / length for byte, count in counts.items()}
         return freq
@@ -428,7 +407,7 @@ class ProtocolFingerprinter:
             self.logger.error(f"Error parsing packet: {e}")
             return None
 
-    def generate_response(self, protocol_id: str, request_packet: Union[bytes, bytearray], 
+    def generate_response(self, protocol_id: str, request_packet: Union[bytes, bytearray],
                          response_type: str = 'license_ok') -> Optional[bytes]:
         """
         Generate a response packet for a license check request.
@@ -527,7 +506,7 @@ class ProtocolFingerprinter:
 
             signature = {
                 'name': f"Learned Protocol {len(self.learned_signatures) + 1}",
-                'description': f"Automatically learned protocol signature",
+                'description': "Automatically learned protocol signature",
                 'ports': [port] if port else [],
                 'patterns': patterns,
                 'header_format': [

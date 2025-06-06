@@ -5,14 +5,13 @@ This module provides system-level utilities including process management,
 dependency checking, platform detection, and system information retrieval.
 """
 
-import datetime
 import logging
 import os
 import platform
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional, Dict, List, Tuple, Any, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:
     import psutil
@@ -26,26 +25,26 @@ logger = logging.getLogger(__name__)
 def get_target_process_pid(binary_path: str) -> Optional[int]:
     """
     Gets PID of target process, handling multiple instances and partial matches.
-    
+
     Searches for processes matching the given binary name and handles cases where
     multiple instances are found. In GUI mode, prompts the user to select the
     correct process.
-    
+
     Args:
         binary_path: Path to the binary file
-        
+
     Returns:
         Optional[int]: Process ID if found, None otherwise
     """
     if psutil is None:
         logger.error("psutil is not installed. Cannot search for processes.")
         return None
-        
+
     target_name = os.path.basename(binary_path).lower()
     potential_pids = []
-    
+
     logger.info(f"[PID Finder] Searching for process matching '{target_name}'...")
-    
+
     # Find all matching processes (exact and partial)
     try:
         for proc in psutil.process_iter(['pid', 'name', 'create_time']):
@@ -69,14 +68,14 @@ def get_target_process_pid(binary_path: str) -> Optional[int]:
     except Exception as e:
         logger.error(f"Error iterating processes: {e}")
         return None
-    
+
     if not potential_pids:
         logger.warning(f"[PID Finder] No process found matching '{target_name}'.")
         return None
-    
+
     # Sort by match type (exact first) and then by creation time (newest first)
     potential_pids.sort(key=lambda x: (x['match'] != 'exact', -x['create_time']))
-    
+
     if len(potential_pids) == 1:
         pid_info = potential_pids[0]
         logger.info(
@@ -97,7 +96,7 @@ def get_target_process_pid(binary_path: str) -> Optional[int]:
 def get_system_info() -> Dict[str, Any]:
     """
     Get comprehensive system information.
-    
+
     Returns:
         dict: System information including OS, architecture, CPU, memory, etc.
     """
@@ -110,7 +109,7 @@ def get_system_info() -> Dict[str, Any]:
         'python_version': sys.version,
         'python_implementation': platform.python_implementation(),
     }
-    
+
     # Add psutil information if available
     if psutil:
         try:
@@ -121,23 +120,23 @@ def get_system_info() -> Dict[str, Any]:
             info['memory_percent'] = psutil.virtual_memory().percent
         except Exception as e:
             logger.warning(f"Error getting psutil system info: {e}")
-    
+
     return info
 
 
 def check_dependencies(dependencies: Dict[str, str]) -> Tuple[bool, Dict[str, bool]]:
     """
     Check if Python dependencies are installed.
-    
+
     Args:
         dependencies: Dict mapping module names to descriptions
-        
+
     Returns:
         tuple: (all_satisfied, results) where results maps module names to availability
     """
     results = {}
     all_satisfied = True
-    
+
     for module_name, description in dependencies.items():
         try:
             __import__(module_name)
@@ -147,34 +146,34 @@ def check_dependencies(dependencies: Dict[str, str]) -> Tuple[bool, Dict[str, bo
             results[module_name] = False
             all_satisfied = False
             logger.warning(f"✗ {module_name}: {description} - NOT INSTALLED")
-    
+
     return all_satisfied, results
 
 
-def run_command(command: Union[str, List[str]], shell: bool = False, 
+def run_command(command: Union[str, List[str]], shell: bool = False,
                 capture_output: bool = True, timeout: Optional[int] = None) -> subprocess.CompletedProcess:
     """
     Run a system command with proper error handling.
-    
+
     Args:
         command: Command to run (string or list of arguments)
         shell: Whether to run through shell
         capture_output: Whether to capture stdout/stderr
         timeout: Command timeout in seconds
-        
+
     Returns:
         subprocess.CompletedProcess: Command result
-        
+
     Raises:
         subprocess.TimeoutExpired: If command times out
         subprocess.CalledProcessError: If command fails
     """
     try:
         logger.debug(f"Running command: {command}")
-        
+
         if isinstance(command, str) and not shell:
             command = command.split()
-        
+
         result = subprocess.run(
             command,
             shell=shell,
@@ -182,14 +181,14 @@ def run_command(command: Union[str, List[str]], shell: bool = False,
             text=True,
             timeout=timeout
         )
-        
+
         if result.returncode != 0:
             logger.error(f"Command failed with return code {result.returncode}")
             logger.error(f"stderr: {result.stderr}")
-        
+
         return result
-        
-    except subprocess.TimeoutExpired as e:
+
+    except subprocess.TimeoutExpired:
         logger.error(f"Command timed out after {timeout} seconds: {command}")
         raise
     except Exception as e:
@@ -215,14 +214,14 @@ def is_macos() -> bool:
 def get_process_list() -> List[Dict[str, Any]]:
     """
     Get list of running processes.
-    
+
     Returns:
         list: List of process info dictionaries
     """
     if psutil is None:
         logger.error("psutil is not installed. Cannot get process list.")
         return []
-    
+
     processes = []
     try:
         for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
@@ -232,35 +231,35 @@ def get_process_list() -> List[Dict[str, Any]]:
                 pass
     except Exception as e:
         logger.error(f"Error getting process list: {e}")
-    
+
     return processes
 
 
 def kill_process(pid: int, force: bool = False) -> bool:
     """
     Kill a process by PID.
-    
+
     Args:
         pid: Process ID
         force: Whether to force kill (SIGKILL vs SIGTERM)
-        
+
     Returns:
         bool: True if successful
     """
     if psutil is None:
         logger.error("psutil is not installed. Cannot kill process.")
         return False
-    
+
     try:
         process = psutil.Process(pid)
         if force:
             process.kill()  # SIGKILL
         else:
             process.terminate()  # SIGTERM
-        
+
         logger.info(f"Successfully {'killed' if force else 'terminated'} process {pid}")
         return True
-        
+
     except psutil.NoSuchProcess:
         logger.warning(f"Process {pid} does not exist")
         return False
@@ -275,11 +274,11 @@ def kill_process(pid: int, force: bool = False) -> bool:
 def get_environment_variable(name: str, default: Optional[str] = None) -> Optional[str]:
     """
     Get environment variable with optional default.
-    
+
     Args:
         name: Variable name
         default: Default value if not found
-        
+
     Returns:
         Optional[str]: Variable value or default
     """
@@ -289,7 +288,7 @@ def get_environment_variable(name: str, default: Optional[str] = None) -> Option
 def set_environment_variable(name: str, value: str) -> None:
     """
     Set environment variable.
-    
+
     Args:
         name: Variable name
         value: Variable value
@@ -301,7 +300,7 @@ def set_environment_variable(name: str, value: str) -> None:
 def get_temp_directory() -> Path:
     """
     Get system temporary directory.
-    
+
     Returns:
         Path: Temporary directory path
     """
@@ -312,7 +311,7 @@ def get_temp_directory() -> Path:
 def get_home_directory() -> Path:
     """
     Get user's home directory.
-    
+
     Returns:
         Path: Home directory path
     """
@@ -322,7 +321,7 @@ def get_home_directory() -> Path:
 def check_admin_privileges() -> bool:
     """
     Check if running with administrator/root privileges.
-    
+
     Returns:
         bool: True if running with elevated privileges
     """
@@ -332,7 +331,7 @@ def check_admin_privileges() -> bool:
             return ctypes.windll.shell32.IsUserAnAdmin() != 0
         else:
             # Unix-like systems
-            return os.geteuid() == 0
+            return hasattr(os, 'geteuid') and os.geteuid() == 0
     except Exception as e:
         logger.warning(f"Could not check admin privileges: {e}")
         return False
@@ -341,7 +340,7 @@ def check_admin_privileges() -> bool:
 def is_admin() -> bool:
     """
     Alias for check_admin_privileges() for compatibility.
-    
+
     Returns:
         bool: True if running with elevated privileges
     """
@@ -351,11 +350,11 @@ def is_admin() -> bool:
 def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
     """
     Run a command with elevated privileges.
-    
+
     Args:
         command: Command to run
         shell: Whether to run through shell
-        
+
     Returns:
         bool: True if command executed successfully
     """
@@ -364,7 +363,7 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
             # On Windows, use runas or PowerShell Start-Process -Verb RunAs
             if isinstance(command, list):
                 command = ' '.join(command)
-            
+
             # Use PowerShell to run with elevated privileges
             ps_command = f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
             result = subprocess.run(
@@ -377,11 +376,11 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
             # On Unix-like systems, use sudo
             if isinstance(command, str):
                 command = command.split()
-            
+
             sudo_command = ['sudo'] + command
             result = subprocess.run(sudo_command, capture_output=True, text=True)
             return result.returncode == 0
-            
+
     except Exception as e:
         logger.error(f"Error running command as admin: {e}")
         return False
@@ -390,78 +389,77 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
 def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[str]:
     """
     Extract icon from an executable file.
-    
+
     Args:
         exe_path: Path to the executable file
         output_path: Output path for the icon (optional)
-        
+
     Returns:
         Optional[str]: Path to the extracted icon file, or None if failed
     """
     try:
-        import struct
         from PIL import Image
-        
+
         if not os.path.exists(exe_path):
             logger.error(f"Executable not found: {exe_path}")
             return None
-        
+
         # Default output path
         if output_path is None:
             output_path = os.path.splitext(exe_path)[0] + "_icon.png"
-        
+
         if is_windows():
             try:
                 # Windows-specific icon extraction using win32api
                 import win32api
                 import win32con
-                import win32ui
                 import win32gui
-                
+                import win32ui
+
                 # Extract icon
                 ico_x = win32api.GetSystemMetrics(win32con.SM_CXICON)
                 ico_y = win32api.GetSystemMetrics(win32con.SM_CYICON)
-                
+
                 large, small = win32gui.ExtractIconEx(exe_path, 0)
                 if large:
                     win32gui.DestroyIcon(small[0])
-                    
+
                     # Convert to PIL Image
                     hdc = win32ui.CreateDCFromHandle(win32gui.GetDC(0))
                     hbmp = win32ui.CreateBitmap()
                     hbmp.CreateCompatibleBitmap(hdc, ico_x, ico_y)
                     hdc_mem = hdc.CreateCompatibleDC()
                     hdc_mem.SelectObject(hbmp)
-                    
-                    win32gui.DrawIconEx(hdc_mem.GetHandleOutput(), 0, 0, large[0], 
+
+                    win32gui.DrawIconEx(hdc_mem.GetHandleOutput(), 0, 0, large[0],
                                        ico_x, ico_y, 0, None, win32con.DI_NORMAL)
-                    
+
                     # Save to file
                     bmpinfo = hbmp.GetInfo()
                     bmpstr = hbmp.GetBitmapBits(True)
-                    
+
                     img = Image.frombuffer(
                         'RGB',
                         (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
                         bmpstr, 'raw', 'BGRX', 0, 1
                     )
-                    
+
                     img.save(output_path, 'PNG')
                     win32gui.DestroyIcon(large[0])
-                    
+
                     logger.info(f"Icon extracted to: {output_path}")
                     return output_path
-                    
+
             except ImportError:
                 logger.warning("win32api not available, trying alternative method")
             except Exception as e:
                 logger.error(f"Windows icon extraction failed: {e}")
-        
+
         # Cross-platform fallback: Try to extract from PE file
         try:
             import pefile
             pe = pefile.PE(exe_path)
-            
+
             # Look for RT_ICON resources
             if hasattr(pe, 'DIRECTORY_ENTRY_RESOURCE'):
                 for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
@@ -472,12 +470,12 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
                                     resource_lang.data.struct.OffsetToData,
                                     resource_lang.data.struct.Size
                                 )
-                                
+
                                 # Save as ICO file first
                                 ico_path = output_path.replace('.png', '.ico')
                                 with open(ico_path, 'wb') as f:
                                     f.write(data)
-                                
+
                                 # Convert ICO to PNG using PIL
                                 try:
                                     img = Image.open(ico_path)
@@ -487,12 +485,12 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
                                     return output_path
                                 except Exception as e:
                                     logger.error(f"Failed to convert ICO to PNG: {e}")
-                                    
+
         except ImportError:
             logger.error("pefile not available for icon extraction")
         except Exception as e:
             logger.error(f"PE icon extraction failed: {e}")
-        
+
         # If all methods fail, create a default icon
         logger.warning("All icon extraction methods failed, creating default icon")
         try:
@@ -506,7 +504,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
             return output_path
         except Exception as e:
             logger.error(f"Failed to create default icon: {e}")
-            
+
     except Exception as e:
         logger.error(f"Icon extraction failed: {e}")
         return None
@@ -515,18 +513,18 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
 def optimize_memory_usage() -> Dict[str, Any]:
     """
     Optimize system memory usage by clearing caches and garbage collection.
-    
+
     Returns:
         Dict[str, Any]: Memory statistics before and after optimization
     """
     import gc
-    
+
     stats = {
         'before': {},
         'after': {},
         'freed': 0
     }
-    
+
     # Get initial memory stats
     if psutil:
         mem = psutil.virtual_memory()
@@ -536,21 +534,21 @@ def optimize_memory_usage() -> Dict[str, Any]:
             'percent': mem.percent,
             'used': mem.used
         }
-    
+
     # Force garbage collection
     collected = gc.collect()
     logger.info(f"Garbage collector: collected {collected} objects")
-    
+
     # Clear Python's internal caches
     try:
         # Clear linecache
         import linecache
         linecache.clearcache()
-        
+
         # Clear re cache
         import re
         re.purge()
-        
+
         # Clear functools caches
         import functools
         if hasattr(functools, 'lru_cache'):
@@ -563,7 +561,7 @@ def optimize_memory_usage() -> Dict[str, Any]:
                         pass
     except Exception as e:
         logger.warning(f"Error clearing caches: {e}")
-    
+
     # Get final memory stats
     if psutil:
         mem = psutil.virtual_memory()
@@ -573,11 +571,11 @@ def optimize_memory_usage() -> Dict[str, Any]:
             'percent': mem.percent,
             'used': mem.used
         }
-        
+
         # Calculate freed memory
         stats['freed'] = stats['before']['used'] - stats['after']['used']
         logger.info(f"Memory optimization freed: {stats['freed'] / 1024 / 1024:.2f} MB")
-    
+
     return stats
 
 

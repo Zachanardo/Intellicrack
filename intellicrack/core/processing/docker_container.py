@@ -6,22 +6,20 @@ This module provides comprehensive Docker container operations for distributed b
 with container lifecycle management, state snapshots, and artifact collection.
 """
 
-import os
-import time
 import logging
+import os
 import subprocess
-from typing import Dict, Any, Optional, List, Set
-
-from ...utils.logger import log_message
+import time
+from typing import Any, Dict, Optional
 
 
 class DockerContainer:
     """
     Manages Docker container operations for distributed analysis.
-    
+
     This class provides a complete Docker container management interface for running
     isolated binary analysis tasks with state management and artifact collection.
-    
+
     Features:
         - Container lifecycle management (start, stop, remove)
         - Command execution inside containers
@@ -38,7 +36,7 @@ class DockerContainer:
         Args:
             binary_path: Path to the binary to analyze
             image: Docker image to use for the container
-            
+
         Raises:
             RuntimeError: If Docker is not available on the system
         """
@@ -48,36 +46,36 @@ class DockerContainer:
         self.container_name: Optional[str] = None
         self.snapshots: Dict[str, Dict[str, Any]] = {}
         self.logger = logging.getLogger(__name__)
-        
+
         # Validate binary path if provided
         if binary_path and not os.path.exists(binary_path):
             raise FileNotFoundError(f"Binary file not found: {binary_path}")
 
         # Check Docker availability
         self._check_docker_availability()
-        
+
         self.logger.info(f"DockerContainer initialized with image: {image}")
 
     def _check_docker_availability(self) -> None:
         """
         Check if Docker is available and accessible.
-        
+
         Raises:
             RuntimeError: If Docker is not available or accessible
         """
         try:
             result = subprocess.run(
-                ["docker", "--version"], 
-                capture_output=True, 
-                text=True, 
+                ["docker", "--version"],
+                capture_output=True,
+                text=True,
                 timeout=10
             )
-            
+
             if result.returncode != 0:
                 raise RuntimeError("Docker not available on this system")
-                
+
             self.logger.info(f"Docker available: {result.stdout.strip()}")
-            
+
             # Check if Docker daemon is running
             result = subprocess.run(
                 ["docker", "info"],
@@ -85,10 +83,10 @@ class DockerContainer:
                 text=True,
                 timeout=10
             )
-            
+
             if result.returncode != 0:
                 raise RuntimeError("Docker daemon not running")
-                
+
         except subprocess.TimeoutExpired:
             raise RuntimeError("Docker command timed out - daemon may not be running")
         except FileNotFoundError:
@@ -104,7 +102,7 @@ class DockerContainer:
         Args:
             privileged: Whether to run container in privileged mode
             network_mode: Network mode for the container
-            
+
         Returns:
             True if container started successfully, False otherwise
         """
@@ -112,18 +110,18 @@ class DockerContainer:
             # Pull the image if not already available
             self.logger.info(f"Pulling Docker image: {self.image}")
             result = subprocess.run(
-                ["docker", "pull", self.image], 
-                capture_output=True, 
+                ["docker", "pull", self.image],
+                capture_output=True,
                 text=True,
                 timeout=300  # 5 minute timeout for image pulls
             )
-            
+
             if result.returncode != 0:
                 self.logger.warning(f"Failed to pull image (may already exist): {result.stderr}")
 
             # Generate unique container name
             self.container_name = f"intellicrack_analysis_{int(time.time())}"
-            
+
             # Build docker run command
             docker_cmd = [
                 "docker", "run",
@@ -131,16 +129,16 @@ class DockerContainer:
                 "--name", self.container_name,
                 "--network", network_mode
             ]
-            
+
             # Add privileged mode if requested
             if privileged:
                 docker_cmd.append("--privileged")
-            
+
             # Mount binary directory if binary path is provided
             if self.binary_path:
                 binary_dir = os.path.dirname(os.path.abspath(self.binary_path))
                 docker_cmd.extend(["-v", f"{binary_dir}:/mnt/host:ro"])
-            
+
             # Add image and keep-alive command
             docker_cmd.extend([self.image, "tail", "-f", "/dev/null"])
 
@@ -159,12 +157,12 @@ class DockerContainer:
 
             self.container_id = result.stdout.strip()
             self.logger.info(f"Container started successfully - ID: {self.container_id}")
-            
+
             # Verify container is running
             if not self._is_container_running():
                 self.logger.error("Container started but is not running")
                 return False
-                
+
             return True
 
         except subprocess.TimeoutExpired:
@@ -180,7 +178,7 @@ class DockerContainer:
 
         Args:
             force: Whether to force stop the container
-            
+
         Returns:
             True if container stopped successfully, False otherwise
         """
@@ -194,12 +192,12 @@ class DockerContainer:
             if force:
                 stop_cmd.append("-t")
                 stop_cmd.append("0")  # Immediate stop
-            
+
             stop_cmd.append(self.container_id)
-            
+
             self.logger.info(f"Stopping container {self.container_id}")
             result = subprocess.run(stop_cmd, capture_output=True, text=True, timeout=30)
-            
+
             if result.returncode != 0:
                 self.logger.warning(f"Failed to stop container gracefully: {result.stderr}")
                 if not force:
@@ -209,12 +207,12 @@ class DockerContainer:
             # Remove the container
             self.logger.info(f"Removing container {self.container_id}")
             result = subprocess.run(
-                ["docker", "rm", self.container_id], 
-                capture_output=True, 
+                ["docker", "rm", self.container_id],
+                capture_output=True,
                 text=True,
                 timeout=30
             )
-            
+
             if result.returncode != 0:
                 self.logger.warning(f"Failed to remove container: {result.stderr}")
 
@@ -233,13 +231,13 @@ class DockerContainer:
     def _is_container_running(self) -> bool:
         """
         Check if the container is currently running.
-        
+
         Returns:
             True if container is running, False otherwise
         """
         if not self.container_id:
             return False
-            
+
         try:
             result = subprocess.run(
                 ["docker", "inspect", "-f", "{{.State.Running}}", self.container_id],
@@ -247,9 +245,9 @@ class DockerContainer:
                 text=True,
                 timeout=10
             )
-            
+
             return result.returncode == 0 and result.stdout.strip() == "true"
-            
+
         except Exception:
             return False
 
@@ -261,7 +259,7 @@ class DockerContainer:
             command: Command to execute
             timeout: Command timeout in seconds
             working_dir: Working directory for the command
-            
+
         Returns:
             Command output as string
         """
@@ -272,15 +270,15 @@ class DockerContainer:
 
         try:
             self.logger.debug(f"Executing in container: {command}")
-            
+
             # Build command
             docker_cmd = ["docker", "exec"]
-            
+
             if working_dir:
                 docker_cmd.extend(["-w", working_dir])
-                
+
             docker_cmd.extend([self.container_id, "bash", "-c", command])
-            
+
             result = subprocess.run(
                 docker_cmd,
                 capture_output=True,
@@ -311,7 +309,7 @@ class DockerContainer:
         Args:
             source_path: Source file path on host
             dest_path: Destination path in container
-            
+
         Returns:
             True if file copied successfully, False otherwise
         """
@@ -367,7 +365,7 @@ class DockerContainer:
 
         Args:
             name: Unique snapshot name
-            
+
         Returns:
             True if snapshot created successfully, False otherwise
         """
@@ -380,7 +378,7 @@ class DockerContainer:
 
         try:
             self.logger.info(f"Creating container snapshot: {name}")
-            
+
             # Get filesystem state (recent files only for performance)
             files = self.execute_command(
                 "find / -type f -mtime -1 -not -path '/proc/*' -not -path '/sys/*' "
@@ -392,10 +390,10 @@ class DockerContainer:
 
             # Get network connections
             network = self.execute_command("netstat -tuln 2>/dev/null")
-            
+
             # Get environment variables
             env_vars = self.execute_command("env | sort")
-            
+
             # Get disk usage
             disk_usage = self.execute_command("df -h")
 
@@ -423,7 +421,7 @@ class DockerContainer:
         Args:
             snapshot1: First snapshot name
             snapshot2: Second snapshot name
-            
+
         Returns:
             Dictionary containing differences between snapshots
         """
@@ -431,7 +429,7 @@ class DockerContainer:
             error_msg = f"Snapshot '{snapshot1}' not found"
             self.logger.error(error_msg)
             return {"error": error_msg}
-            
+
         if snapshot2 not in self.snapshots:
             error_msg = f"Snapshot '{snapshot2}' not found"
             self.logger.error(error_msg)
@@ -439,7 +437,7 @@ class DockerContainer:
 
         try:
             self.logger.info(f"Comparing snapshots: {snapshot1} vs {snapshot2}")
-            
+
             s1 = self.snapshots[snapshot1]
             s2 = self.snapshots[snapshot2]
 
@@ -457,12 +455,12 @@ class DockerContainer:
             # Extract command parts for comparison
             proc1 = set()
             proc2 = set()
-            
+
             for p in processes1:
                 parts = p.split()
                 if len(parts) > 10:
                     proc1.add(' '.join(parts[10:]))
-                    
+
             for p in processes2:
                 parts = p.split()
                 if len(parts) > 10:
@@ -481,7 +479,7 @@ class DockerContainer:
             # Compare environment variables
             env1 = set(s1["environment"].splitlines() if s1.get("environment") else [])
             env2 = set(s2["environment"].splitlines() if s2.get("environment") else [])
-            
+
             new_env = list(env2 - env1)
             removed_env = list(env1 - env2)
 
@@ -503,7 +501,7 @@ class DockerContainer:
                                 len(ended_processes) + len(new_connections) + len(closed_connections) +
                                 len(new_env) + len(removed_env))
             }
-            
+
             self.logger.info(f"Snapshot comparison complete: {result['total_changes']} total changes")
             return result
 
@@ -545,13 +543,13 @@ class DockerContainer:
             open_files = self.execute_command(
                 "lsof 2>/dev/null | grep -v '/lib/' | grep -v '/usr/lib/' | head -50"
             )
-            
+
             # Check running processes
             processes = self.execute_command("ps aux --no-headers")
-            
+
             # Check memory usage
             memory = self.execute_command("free -h")
-            
+
             # Check disk usage
             disk = self.execute_command("df -h")
 
@@ -566,7 +564,7 @@ class DockerContainer:
                 "memory_usage": memory,
                 "disk_usage": disk
             }
-            
+
             self.logger.info("Analysis artifacts collected successfully")
             return artifacts
 
@@ -578,7 +576,7 @@ class DockerContainer:
     def get_container_status(self) -> Dict[str, Any]:
         """
         Get comprehensive container status information.
-        
+
         Returns:
             Dictionary containing container status and metadata
         """
@@ -591,7 +589,7 @@ class DockerContainer:
             "snapshots": list(self.snapshots.keys()),
             "snapshot_count": len(self.snapshots)
         }
-        
+
         if self.container_id and self._is_container_running():
             try:
                 # Get container details
@@ -601,7 +599,7 @@ class DockerContainer:
                     text=True,
                     timeout=10
                 )
-                
+
                 if inspect_result.returncode == 0:
                     import json
                     container_info = json.loads(inspect_result.stdout)[0]
@@ -611,29 +609,29 @@ class DockerContainer:
                         "network_mode": container_info["HostConfig"]["NetworkMode"],
                         "privileged": container_info["HostConfig"]["Privileged"]
                     })
-                    
+
             except Exception as e:
                 self.logger.warning(f"Failed to get detailed container status: {e}")
-        
+
         return status
 
     def cleanup(self) -> bool:
         """
         Clean up container and resources.
-        
+
         Returns:
             True if cleanup successful, False otherwise
         """
         success = True
-        
+
         # Stop container if running
         if self.container_id:
             if not self.stop_container():
                 success = False
-        
+
         # Clear snapshots
         self.snapshots.clear()
-        
+
         self.logger.info("Container cleanup completed")
         return success
 

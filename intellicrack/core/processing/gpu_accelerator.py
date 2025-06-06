@@ -9,9 +9,7 @@ Author: Intellicrack Team
 Version: 2.0.0
 """
 
-import logging
-import sys
-from typing import Dict, Any, Optional, List, Union
+from typing import Any, Dict, List, Optional
 
 # Optional GPU backend imports
 try:
@@ -31,8 +29,8 @@ except ImportError:
     cp = None
 
 try:
-    import torch
     import intel_extension_for_pytorch as ipex
+    import torch
     INTEL_PYTORCH_AVAILABLE = True
 except ImportError:
     INTEL_PYTORCH_AVAILABLE = False
@@ -52,10 +50,10 @@ logger = get_logger(__name__)
 
 class GPUAccelerationManager:
     """Manages GPU acceleration for analysis operations."""
-    
+
     def __init__(self, use_intel_pytorch: bool = False):
         """Initialize GPU acceleration manager.
-        
+
         Args:
             use_intel_pytorch: Whether to try Intel Extension for PyTorch (default: False)
         """
@@ -63,14 +61,14 @@ class GPUAccelerationManager:
         self.gpu_type = None
         self.gpu_backend = None
         self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
-        
+
         # Prioritize PyOpenCL as it works on all vendors (Intel, AMD, NVIDIA)
         if OPENCL_AVAILABLE:
             try:
                 # Look for the best GPU device
                 best_device = None
                 best_platform = None
-                
+
                 for platform in cl.get_platforms():
                     try:
                         devices = platform.get_devices(device_type=cl.device_type.GPU)
@@ -88,9 +86,9 @@ class GPUAccelerationManager:
                                     # Also prefer discrete GPUs from NVIDIA/AMD
                                     best_device = device
                                     best_platform = platform
-                    except:
+                    except (AttributeError, RuntimeError):
                         continue
-                
+
                 if best_device:
                     self.context = cl.Context([best_device])
                     self.queue = cl.CommandQueue(self.context)
@@ -100,19 +98,19 @@ class GPUAccelerationManager:
                     self.gpu_available = True
                     self.gpu_type = f'OpenCL ({best_platform.name}, {best_device.name})'
                     self.logger.info(f"PyOpenCL GPU acceleration available: {self.gpu_type}")
-                    
+
             except Exception as e:
                 self.logger.debug(f"PyOpenCL initialization failed: {e}")
         else:
             self.logger.info("PyOpenCL not available - install with: pip install pyopencl")
-            
+
         # Only try CuPy if PyOpenCL is not available and we have NVIDIA GPU
         if not self.gpu_available and CUPY_AVAILABLE:
             try:
                 # Verify it actually works
                 test_array = cp.array([1, 2, 3])
                 test_result = cp.sum(test_array)
-                
+
                 self.cupy = cp
                 self.gpu_backend = 'cupy'
                 self.gpu_available = True
@@ -120,7 +118,7 @@ class GPUAccelerationManager:
                 self.logger.info("CuPy GPU acceleration available")
             except Exception as e:
                 self.logger.debug(f"CuPy initialization failed: {e}")
-                
+
         # Only try Intel Extension for PyTorch if explicitly requested
         if not self.gpu_available and use_intel_pytorch and INTEL_PYTORCH_AVAILABLE:
             try:
@@ -133,18 +131,18 @@ class GPUAccelerationManager:
                     self.logger.info(f"Intel PyTorch GPU acceleration available: {self.gpu_type}")
             except Exception as e:
                 self.logger.debug(f"Intel PyTorch initialization failed: {e}")
-                
+
         if not self.gpu_available:
             self.logger.info("No GPU acceleration available. Install pyopencl for universal GPU support: pip install pyopencl")
-        
+
     def is_acceleration_available(self) -> bool:
         """Check if GPU acceleration is available."""
         return self.gpu_available
-        
+
     def get_gpu_type(self) -> Optional[str]:
         """Get the type of GPU acceleration available."""
         return self.gpu_type
-        
+
     def get_backend(self) -> Optional[str]:
         """Get the GPU backend type."""
         return self.gpu_backend
@@ -152,18 +150,18 @@ class GPUAccelerationManager:
     def accelerate_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
         """
         GPU-accelerated pattern matching.
-        
+
         Args:
             data: Binary data to search in
             patterns: List of byte patterns to search for
-            
+
         Returns:
             List of match positions
         """
         if not self.gpu_available:
             self.logger.warning("GPU acceleration not available, falling back to CPU")
             return self._cpu_pattern_matching(data, patterns)
-        
+
         try:
             if self.gpu_backend == 'pyopencl':
                 return self._opencl_pattern_matching(data, patterns)
@@ -193,7 +191,7 @@ class GPUAccelerationManager:
         """OpenCL-based pattern matching."""
         if not self.cl:
             return self._cpu_pattern_matching(data, patterns)
-        
+
         # Simple implementation - for production use would need more sophisticated OpenCL kernels
         matches = []
         for pattern in patterns:
@@ -201,10 +199,10 @@ class GPUAccelerationManager:
             import numpy as np
             data_array = np.frombuffer(data, dtype=np.uint8)
             pattern_array = np.frombuffer(pattern, dtype=np.uint8)
-            
+
             # Create OpenCL buffers
             data_buffer = cl.Buffer(self.context, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=data_array)
-            
+
             # For now, fall back to CPU - implementing full OpenCL kernel is complex
             pos = 0
             while True:
@@ -213,14 +211,14 @@ class GPUAccelerationManager:
                     break
                 matches.append(pos)
                 pos += 1
-        
+
         return sorted(matches)
 
     def _cupy_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
         """CUDA-based pattern matching using CuPy."""
         if not cp:
             return self._cpu_pattern_matching(data, patterns)
-        
+
         # Simple implementation - for production would use custom CUDA kernels
         matches = []
         for pattern in patterns:
@@ -231,7 +229,7 @@ class GPUAccelerationManager:
                     break
                 matches.append(pos)
                 pos += 1
-        
+
         return sorted(matches)
 
 
@@ -324,7 +322,7 @@ class GPUAccelerator:
                         })
                 except Exception as e:
                     self.logger.debug(f"Error getting CUDA device properties: {e}")
-                    
+
             except Exception as e:
                 self.logger.debug(f"CUDA initialization failed: {e}")
 
@@ -335,7 +333,7 @@ class GPUAccelerator:
                 if platforms:
                     self.opencl_available = True
                     self.logger.info("OpenCL acceleration available")
-                    
+
                     # Get OpenCL devices
                     for platform in platforms:
                         try:
@@ -351,7 +349,7 @@ class GPUAccelerator:
                                 })
                         except Exception as e:
                             self.logger.debug(f"Error getting OpenCL devices for platform {platform.name}: {e}")
-                            
+
             except Exception as e:
                 self.logger.debug(f"OpenCL initialization failed: {e}")
 
@@ -407,19 +405,19 @@ class GPUAccelerator:
                             self.opencl_context = cl.Context(devices)
                             self.opencl_queue = cl.CommandQueue(self.opencl_context)
                             break
-                    except:
+                    except (AttributeError, RuntimeError):
                         continue
-                        
+
                 if not self.opencl_context:
                     # Fall back to any device
                     self.opencl_context = cl.create_some_context()
                     self.opencl_queue = cl.CommandQueue(self.opencl_context)
-                    
+
             except Exception as e:
                 self.logger.error(f"Failed to initialize OpenCL context: {e}")
                 self.blacklisted_backends.add('opencl')
                 self.selected_backend = None
-                
+
         elif self.cuda_available and 'cuda' not in self.blacklisted_backends:
             self.selected_backend = 'cuda'
         elif self.tensorflow_available and 'tensorflow' not in self.blacklisted_backends:
@@ -440,14 +438,14 @@ class GPUAccelerator:
             return
 
         self.logger.info("Running initial GPU benchmarks...")
-        
+
         # Simple benchmark operations
         benchmark_data = list(range(1000000))  # 1M integers
-        
+
         try:
             import time
             start_time = time.time()
-            
+
             if self.selected_backend == 'opencl':
                 self._benchmark_opencl(benchmark_data)
             elif self.selected_backend == 'cuda':
@@ -456,17 +454,17 @@ class GPUAccelerator:
                 self._benchmark_tensorflow(benchmark_data)
             elif self.selected_backend == 'pytorch':
                 self._benchmark_pytorch(benchmark_data)
-                
+
             end_time = time.time()
             benchmark_time = end_time - start_time
-            
+
             self.backend_benchmarks[self.selected_backend] = {
                 'simple_operation_time': benchmark_time,
                 'operations_per_second': len(benchmark_data) / benchmark_time
             }
-            
+
             self.logger.info(f"Benchmark completed: {benchmark_time:.3f}s for {len(benchmark_data)} operations")
-            
+
         except Exception as e:
             self.logger.error(f"Benchmark failed: {e}")
             self.error_counts[self.selected_backend] += 1
@@ -475,16 +473,16 @@ class GPUAccelerator:
         """Run OpenCL benchmark."""
         if not self.opencl_context:
             return
-        
+
         import numpy as np
-        
+
         # Convert data to numpy array
         np_data = np.array(data, dtype=np.float32)
-        
+
         # Create OpenCL buffer
         data_buffer = cl.Buffer(self.opencl_context, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np_data)
         result_buffer = cl.Buffer(self.opencl_context, cl.mem_flags.WRITE_ONLY, np_data.nbytes)
-        
+
         # Simple kernel to double values
         kernel_source = """
         __kernel void double_values(__global const float* input, __global float* output) {
@@ -492,10 +490,10 @@ class GPUAccelerator:
             output[gid] = input[gid] * 2.0f;
         }
         """
-        
+
         program = cl.Program(self.opencl_context, kernel_source).build()
         kernel = program.double_values
-        
+
         # Execute kernel
         kernel(self.opencl_queue, (len(data),), None, data_buffer, result_buffer)
         self.opencl_queue.finish()
@@ -504,7 +502,7 @@ class GPUAccelerator:
         """Run CUDA benchmark."""
         if not cp:
             return
-        
+
         # Convert to CuPy array and perform operation
         gpu_data = cp.array(data, dtype=cp.float32)
         result = gpu_data * 2.0
@@ -514,7 +512,7 @@ class GPUAccelerator:
         """Run TensorFlow benchmark."""
         if not tf:
             return
-        
+
         with tf.device('/GPU:0'):
             tensor_data = tf.constant(data, dtype=tf.float32)
             result = tf.multiply(tensor_data, 2.0)
@@ -523,7 +521,7 @@ class GPUAccelerator:
         """Run PyTorch benchmark."""
         if not torch:
             return
-        
+
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         tensor_data = torch.tensor(data, dtype=torch.float32, device=device)
         result = tensor_data * 2.0
@@ -533,17 +531,17 @@ class GPUAccelerator:
     def accelerate_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
         """
         GPU-accelerated pattern matching.
-        
+
         Args:
             data: Binary data to search
             patterns: List of patterns to find
-            
+
         Returns:
             List of match positions
         """
         if not self.selected_backend:
             return self._cpu_pattern_matching(data, patterns)
-        
+
         try:
             if self.selected_backend == 'opencl':
                 return self._opencl_pattern_matching(data, patterns)
@@ -582,16 +580,16 @@ class GPUAccelerator:
     def accelerate_entropy_calculation(self, data: bytes) -> float:
         """
         GPU-accelerated entropy calculation.
-        
+
         Args:
             data: Binary data to analyze
-            
+
         Returns:
             Entropy value
         """
         if not self.selected_backend:
             return self._cpu_entropy_calculation(data)
-        
+
         try:
             if self.selected_backend == 'cuda' and cp:
                 return self._cuda_entropy_calculation(data)
@@ -605,52 +603,52 @@ class GPUAccelerator:
         """CPU entropy calculation."""
         if not data:
             return 0.0
-        
+
         # Count byte frequencies
         frequencies = [0] * 256
         for byte in data:
             frequencies[byte] += 1
-        
+
         # Calculate entropy
         entropy = 0.0
         data_len = len(data)
-        
+
         for freq in frequencies:
             if freq > 0:
                 prob = freq / data_len
                 import math
                 entropy -= prob * math.log2(prob)
-        
+
         return entropy
 
     def _cuda_entropy_calculation(self, data: bytes) -> float:
         """CUDA-accelerated entropy calculation."""
         import numpy as np
-        
+
         # Convert to numpy array
         np_data = np.frombuffer(data, dtype=np.uint8)
-        
+
         # Move to GPU
         gpu_data = cp.asarray(np_data)
-        
+
         # Calculate histogram on GPU
         hist = cp.histogram(gpu_data, bins=256, range=(0, 256))[0]
-        
+
         # Calculate entropy
         hist_norm = hist / len(data)
-        
+
         # Remove zeros to avoid log(0)
         hist_norm = hist_norm[hist_norm > 0]
-        
+
         # Calculate entropy using GPU operations
         entropy = -cp.sum(hist_norm * cp.log2(hist_norm))
-        
+
         return float(entropy)
 
     def get_acceleration_status(self) -> Dict[str, Any]:
         """
         Get current GPU acceleration status.
-        
+
         Returns:
             Status information dictionary
         """
@@ -679,11 +677,11 @@ class GPUAccelerator:
             if self.opencl_context:
                 # OpenCL cleanup happens automatically
                 pass
-            
+
             if self.selected_backend == 'cuda' and cp:
                 # Clear GPU memory
                 cp.get_default_memory_pool().free_all_blocks()
-                
+
         except Exception as e:
             self.logger.error(f"GPU cleanup error: {e}")
 
@@ -692,10 +690,10 @@ class GPUAccelerator:
 def create_gpu_acceleration_manager(use_intel_pytorch: bool = False) -> GPUAccelerationManager:
     """
     Factory function to create GPU acceleration manager.
-    
+
     Args:
         use_intel_pytorch: Whether to try Intel Extension for PyTorch
-        
+
     Returns:
         GPUAccelerationManager instance
     """
@@ -704,7 +702,7 @@ def create_gpu_acceleration_manager(use_intel_pytorch: bool = False) -> GPUAccel
 def create_gpu_accelerator() -> GPUAccelerator:
     """
     Factory function to create GPU accelerator.
-    
+
     Returns:
         GPUAccelerator instance
     """
@@ -713,7 +711,7 @@ def create_gpu_accelerator() -> GPUAccelerator:
 def is_gpu_acceleration_available() -> bool:
     """
     Quick check if any GPU acceleration is available.
-    
+
     Returns:
         True if GPU acceleration is available
     """

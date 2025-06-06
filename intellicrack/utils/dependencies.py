@@ -5,10 +5,10 @@ This module provides functions to check for optional dependencies
 and provide graceful fallbacks when they are not available.
 """
 
+import logging
 import os
 import sys
-import logging
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -16,43 +16,43 @@ logger = logging.getLogger(__name__)
 def check_weasyprint_dependencies() -> List[str]:
     """
     Check WeasyPrint dependencies with detailed logging.
-    
+
     Returns:
         List[str]: List of missing dependencies
     """
     missing_deps = []
-    
+
     try:
         import cffi
         logger.info("✓ CFFI dependency found")
     except ImportError as e:
         logger.error(f"✗ CFFI import error: {e}")
         missing_deps.append("cffi")
-        
+
     try:
         import cairocffi
         logger.info("✓ Cairo dependency found")
     except ImportError as e:
         logger.error(f"✗ Cairo import error: {e}")
         missing_deps.append("cairocffi")
-        
+
     try:
         import tinycss2
         logger.info("✓ TinyCSS2 dependency found")
     except ImportError as e:
         logger.error(f"✗ TinyCSS2 import error: {e}")
         missing_deps.append("tinycss2")
-        
+
     if sys.platform == 'win32':
         try:
             gtk_paths = [
-                "C:\\GTK\\bin",
-                "C:\\Program Files\\GTK3-Runtime Win64\\bin",
+                os.path.join(os.environ.get('ProgramFiles', r'C:\Program Files'), 'GTK3-Runtime Win64', 'bin'),
+                r"C:\GTK\bin",
                 os.environ.get("GTK_BASEPATH", "") + "\\bin"
             ]
             logger.info(f"Checking GTK paths: {gtk_paths}")
             dll_found = False
-            
+
             for gtk_path in gtk_paths:
                 if os.path.exists(gtk_path):
                     for dll in ["libcairo-2.dll", "libgdk_pixbuf-2.0-0.dll", "libpango-1.0-0.dll"]:
@@ -63,33 +63,33 @@ def check_weasyprint_dependencies() -> List[str]:
                             break
                     if dll_found:
                         break
-                        
+
             if not dll_found:
                 logger.warning("✗ GTK runtime libraries not found")
                 missing_deps.append("gtk-runtime")
-                
+
         except Exception as e:
             logger.error(f"Error checking GTK dependencies: {e}")
             missing_deps.append("gtk-runtime")
-    
+
     return missing_deps
 
 
 def check_and_install_dependencies() -> bool:
     """
     Check for required dependencies and attempt to install missing ones.
-    
+
     Returns:
         bool: True if all dependencies are available, False otherwise
     """
     missing_deps = []
-    
+
     # Core dependencies
     core_deps = [
-        "psutil", "requests", "pefile", "capstone", "keystone", 
+        "psutil", "requests", "pefile", "capstone", "keystone",
         "unicorn", "lief", "yara", "cryptography"
     ]
-    
+
     for dep in core_deps:
         try:
             __import__(dep)
@@ -97,11 +97,11 @@ def check_and_install_dependencies() -> bool:
         except ImportError:
             logger.warning(f"✗ {dep} missing")
             missing_deps.append(dep)
-    
+
     # Optional dependencies with graceful fallbacks
     optional_deps = {
         "PyQt5": "GUI interface",
-        "numpy": "Machine learning features", 
+        "numpy": "Machine learning features",
         "scikit-learn": "ML model training",
         "matplotlib": "Visualization features",
         "networkx": "Graph analysis",
@@ -109,44 +109,44 @@ def check_and_install_dependencies() -> bool:
         "angr": "Symbolic execution",
         "manticore": "Concolic execution"
     }
-    
+
     for dep, description in optional_deps.items():
         try:
             __import__(dep)
             logger.info(f"✓ {dep} available ({description})")
         except ImportError:
             logger.info(f"ℹ {dep} not available - {description} will be disabled")
-    
+
     return len(missing_deps) == 0
 
 
 def install_dependencies(deps: List[str]) -> bool:
     """
     Attempt to install missing dependencies using pip.
-    
+
     Args:
         deps: List of dependency names to install
-        
+
     Returns:
         bool: True if installation succeeded, False otherwise
     """
     import subprocess
-    
+
     try:
         for dep in deps:
             logger.info(f"Installing {dep}...")
             result = subprocess.run([
                 sys.executable, "-m", "pip", "install", dep
             ], capture_output=True, text=True)
-            
+
             if result.returncode == 0:
                 logger.info(f"✓ Successfully installed {dep}")
             else:
                 logger.error(f"✗ Failed to install {dep}: {result.stderr}")
                 return False
-                
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Error installing dependencies: {e}")
         return False
@@ -155,7 +155,7 @@ def install_dependencies(deps: List[str]) -> bool:
 def setup_required_environment() -> Dict[str, Any]:
     """
     Set up the required environment for Intellicrack operation.
-    
+
     Returns:
         Dict with environment setup status and available features
     """
@@ -167,7 +167,7 @@ def setup_required_environment() -> Dict[str, Any]:
         "symbolic_execution_available": False,
         "missing_dependencies": []
     }
-    
+
     # Check GUI availability
     try:
         import PyQt5
@@ -176,16 +176,17 @@ def setup_required_environment() -> Dict[str, Any]:
     except ImportError:
         logger.warning("✗ GUI interface not available - running in CLI mode")
         env_status["missing_dependencies"].append("PyQt5")
-    
+
     # Check ML availability
     try:
-        import numpy, sklearn
+        import numpy
+        import sklearn
         env_status["ml_available"] = True
         logger.info("✓ Machine learning features available")
     except ImportError:
         logger.warning("✗ ML features not available")
         env_status["missing_dependencies"].extend(["numpy", "scikit-learn"])
-    
+
     # Check dynamic analysis
     try:
         import frida
@@ -194,7 +195,7 @@ def setup_required_environment() -> Dict[str, Any]:
     except ImportError:
         logger.warning("✗ Dynamic analysis not available")
         env_status["missing_dependencies"].append("frida")
-    
+
     # Check symbolic execution
     try:
         import angr
@@ -203,5 +204,5 @@ def setup_required_environment() -> Dict[str, Any]:
     except ImportError:
         logger.warning("✗ Symbolic execution not available")
         env_status["missing_dependencies"].append("angr")
-    
+
     return env_status

@@ -25,67 +25,69 @@ logger = logging.getLogger(__name__)
 
 # Import processing modules with error handling
 try:
-    from .distributed_manager import *
+    from .distributed_manager import DistributedProcessingManager, create_distributed_manager
 except ImportError as e:
     logger.warning(f"Failed to import distributed_manager: {e}")
 
 try:
-    from .gpu_accelerator import *
+    from .gpu_accelerator import (
+        GPUAccelerationManager,
+        GPUAccelerator,
+        create_gpu_acceleration_manager,
+        create_gpu_accelerator,
+        is_gpu_acceleration_available,
+    )
 except ImportError as e:
     logger.warning(f"Failed to import gpu_accelerator: {e}")
 
 try:
-    from .memory_optimizer import *
+    from .memory_optimizer import MemoryOptimizer, create_memory_optimizer
 except ImportError as e:
     logger.warning(f"Failed to import memory_optimizer: {e}")
 
 try:
-    from .memory_loader import *
+    from .memory_loader import MemoryOptimizedBinaryLoader, create_memory_loader
 except ImportError as e:
     logger.warning(f"Failed to import memory_loader: {e}")
 
 try:
-    from .qiling_emulator import *
+    from .qiling_emulator import QilingEmulator, run_qiling_emulation, QILING_AVAILABLE
 except ImportError as e:
     logger.warning(f"Failed to import qiling_emulator: {e}")
 
 try:
-    from .qemu_emulator import *
+    from .qemu_emulator import QEMUSystemEmulator, run_qemu_analysis
 except ImportError as e:
     logger.warning(f"Failed to import qemu_emulator: {e}")
 
 # Define package exports
 __all__ = [
     # From distributed_manager
-    'DistributedManager',
-    'TaskDistributor',
-    'NodeManager',
-    'distribute_analysis',
-    
+    'DistributedProcessingManager',
+    'create_distributed_manager',
+
     # From gpu_accelerator
+    'GPUAccelerationManager',
     'GPUAccelerator',
-    'CUDAProcessor',
-    'accelerate_computation',
-    'gpu_available',
-    
+    'create_gpu_acceleration_manager',
+    'create_gpu_accelerator',
+    'is_gpu_acceleration_available',
+
     # From memory_optimizer
     'MemoryOptimizer',
-    'optimize_memory',
-    'profile_memory_usage',
-    'clear_cache',
-    
+    'create_memory_optimizer',
+
     # From memory_loader
     'MemoryOptimizedBinaryLoader',
     'create_memory_loader',
-    
+
     # From qiling_emulator
     'QilingEmulator',
-    'run_qiling_analysis',
-    'create_qiling_sandbox',
-    
+    'run_qiling_emulation',
+    'QILING_AVAILABLE',
+
     # From qemu_emulator
-    'QemuEmulator',
-    'VirtualMachine',
+    'QEMUSystemEmulator',
     'run_qemu_analysis',
 ]
 

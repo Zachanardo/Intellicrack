@@ -5,8 +5,8 @@ This allows the package to be run with:
     python -m intellicrack
 """
 
-import sys
 import os
+import sys
 
 # Set Qt to offscreen mode for WSL/headless environments if no display
 if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:

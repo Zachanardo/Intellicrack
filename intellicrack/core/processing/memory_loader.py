@@ -7,10 +7,10 @@ to reduce memory footprint.
 """
 
 import logging
-import mmap
 import math
+import mmap
 import os
-from typing import Optional, Dict, Any, Iterator, Tuple, Union
+from typing import Any, Dict, Iterator, Optional, Tuple, Union
 
 try:
     import psutil
@@ -24,7 +24,7 @@ __all__ = ['MemoryOptimizedBinaryLoader']
 class MemoryOptimizedBinaryLoader:
     """
     Memory-efficient binary file loader for analyzing large executables.
-    
+
     Uses memory mapping, partial loading, and caching strategies to minimize
     memory usage while providing efficient access to binary data.
     """
@@ -32,7 +32,7 @@ class MemoryOptimizedBinaryLoader:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize the memory optimized binary loader.
-        
+
         Args:
             config: Configuration dictionary with optional settings:
                 - chunk_size: Size of data chunks in bytes (default: 1MB)
@@ -50,10 +50,10 @@ class MemoryOptimizedBinaryLoader:
     def load_file(self, file_path: str) -> bool:
         """
         Load a binary file with memory optimization.
-        
+
         Args:
             file_path: Path to the binary file to load
-            
+
         Returns:
             True if file loaded successfully, False otherwise
         """
@@ -110,11 +110,11 @@ class MemoryOptimizedBinaryLoader:
     def read_chunk(self, offset: int, size: int) -> Optional[bytes]:
         """
         Read a chunk of data from the file.
-        
+
         Args:
             offset: Byte offset in the file
             size: Number of bytes to read
-            
+
         Returns:
             Bytes data if successful, None otherwise
         """
@@ -140,12 +140,12 @@ class MemoryOptimizedBinaryLoader:
     def read_section(self, section_name: str, section_offset: int, section_size: int) -> Optional[bytes]:
         """
         Read a section from the file with caching.
-        
+
         Args:
             section_name: Name of the section for caching
             section_offset: Byte offset of the section
             section_size: Size of the section in bytes
-            
+
         Returns:
             Section data if successful, None otherwise
         """
@@ -168,10 +168,10 @@ class MemoryOptimizedBinaryLoader:
     def iterate_file(self, chunk_size: Optional[int] = None) -> Iterator[Tuple[int, bytes]]:
         """
         Iterate through the file in chunks.
-        
+
         Args:
             chunk_size: Size of chunks to iterate (default: configured chunk_size)
-            
+
         Yields:
             Tuples of (offset, chunk_data)
         """
@@ -194,7 +194,7 @@ class MemoryOptimizedBinaryLoader:
     def get_memory_usage(self) -> int:
         """
         Get current memory usage of the process.
-        
+
         Returns:
             Memory usage in bytes, or 0 if psutil not available
         """
@@ -212,7 +212,7 @@ class MemoryOptimizedBinaryLoader:
     def get_file_info(self) -> Dict[str, Any]:
         """
         Get information about the currently loaded file.
-        
+
         Returns:
             Dictionary with file information
         """
@@ -231,17 +231,17 @@ class MemoryOptimizedBinaryLoader:
     def calculate_entropy(self, data: Union[bytes, None] = None) -> float:
         """
         Calculate the entropy of data or the entire file.
-        
+
         Args:
             data: Optional data to analyze (if None, analyzes entire file)
-            
+
         Returns:
             Entropy value in bits per byte
         """
         if data is None:
             if not self.mapped_file:
                 return 0.0
-            
+
             # Calculate entropy for entire file in chunks
             byte_counts = [0] * 256
             total_bytes = 0
@@ -254,7 +254,7 @@ class MemoryOptimizedBinaryLoader:
             # Calculate entropy for provided data
             byte_counts = [0] * 256
             total_bytes = len(data)
-            
+
             for byte_val in data:
                 byte_counts[byte_val] += 1
 
@@ -270,21 +270,15 @@ class MemoryOptimizedBinaryLoader:
     def _format_size(self, size_bytes: int) -> str:
         """
         Format size in bytes to human-readable format.
-        
+
         Args:
             size_bytes: Size in bytes
-            
+
         Returns:
             Human-readable size string
         """
-        if size_bytes < 1024:
-            return f"{size_bytes} B"
-        elif size_bytes < 1024 * 1024:
-            return f"{size_bytes / 1024:.2f} KB"
-        elif size_bytes < 1024 * 1024 * 1024:
-            return f"{size_bytes / (1024 * 1024):.2f} MB"
-        else:
-            return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+        from ...utils.string_utils import format_bytes
+        return format_bytes(size_bytes)
 
     def __enter__(self):
         """Context manager entry."""
@@ -302,11 +296,11 @@ class MemoryOptimizedBinaryLoader:
 def create_memory_loader(chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024) -> MemoryOptimizedBinaryLoader:
     """
     Factory function to create a MemoryOptimizedBinaryLoader.
-    
+
     Args:
         chunk_size: Size of data chunks in bytes (default: 1MB)
         max_memory: Maximum memory usage in bytes (default: 1GB)
-        
+
     Returns:
         Configured MemoryOptimizedBinaryLoader instance
     """

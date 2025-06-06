@@ -17,18 +17,16 @@ The manager supports:
 Author: Intellicrack Development Team
 """
 
+import logging
+import math
+import multiprocessing
 import os
-import gc
+import queue
 import re
 import time
-import math
-import queue
-import logging
 import traceback
-import threading
-import multiprocessing
 from collections import Counter
-from typing import Dict, List, Optional, Any, Tuple, Union, Callable
+from typing import Any, Callable, Dict, List, Optional, Union
 
 try:
     import ray
@@ -458,7 +456,7 @@ class DistributedProcessingManager:
             self.stop_processing()
             return False
 
-    def _worker_process(self, worker_id: int, task_queue: multiprocessing.Queue, result_queue: multiprocessing.Queue, 
+    def _worker_process(self, worker_id: int, task_queue: multiprocessing.Queue, result_queue: multiprocessing.Queue,
                        binary_path: str, chunk_size: int) -> None:
         """
         Worker process function for task-based processing.
@@ -611,7 +609,7 @@ class DistributedProcessingManager:
         """Calculate Shannon entropy of data."""
         if not data:
             return 0.0
-            
+
         counts = Counter(data)
         total = len(data)
         entropy = -sum((count/total) * math.log2(count/total) for count in counts.values())
@@ -1102,7 +1100,7 @@ class DistributedProcessingManager:
     def cleanup(self) -> None:
         """Clean up resources."""
         self.stop_processing()
-        
+
         # Clean up Ray if initialized
         if RAY_AVAILABLE and ray.is_initialized():
             try:
@@ -1114,10 +1112,10 @@ class DistributedProcessingManager:
 def create_distributed_manager(config: Optional[Dict[str, Any]] = None) -> DistributedProcessingManager:
     """
     Factory function to create a DistributedProcessingManager instance.
-    
+
     Args:
         config: Configuration dictionary
-        
+
     Returns:
         DistributedProcessingManager: Configured manager instance
     """

@@ -38,7 +38,7 @@ logger = logging.getLogger('Intellicrack.HexView')
 class HexViewerDialog(QDialog):
     """
     Dialog window for hex viewer/editor.
-    
+
     This dialog integrates the hex viewer widget with additional controls
     for navigation, searching, and display options.
     """
@@ -46,7 +46,7 @@ class HexViewerDialog(QDialog):
     def __init__(self, parent=None, file_path: Optional[str] = None, read_only: bool = True):
         """
         Initialize the hex viewer dialog.
-        
+
         Args:
             parent: Parent widget
             file_path: Path to the file to open (optional)
@@ -140,7 +140,7 @@ class HexViewerDialog(QDialog):
     def create_toolbar(self) -> QToolBar:
         """
         Create the toolbar with controls.
-        
+
         Returns:
             Configured toolbar
         """
@@ -179,7 +179,7 @@ class HexViewerDialog(QDialog):
         search_action.setStatusTip("Search for pattern")
         search_action.triggered.connect(self.hex_viewer.show_search_dialog)
         toolbar.addAction(search_action)
-        
+
         perf_action = QAction("Performance", self)
         perf_action.setStatusTip("Show performance statistics")
         perf_action.triggered.connect(self.hex_viewer.show_performance_dialog)
@@ -228,7 +228,7 @@ class HexViewerDialog(QDialog):
     def create_sidebar(self) -> QFrame:
         """
         Create the sidebar with bookmark list and other panels.
-        
+
         Returns:
             Configured sidebar frame
         """
@@ -270,11 +270,11 @@ class HexViewerDialog(QDialog):
     def load_file(self, file_path: str, read_only: bool = True) -> bool:
         """
         Load a file into the hex viewer.
-        
+
         Args:
             file_path: Path to the file to load
             read_only: Whether to open the file in read-only mode
-            
+
         Returns:
             True if the file was loaded successfully, False otherwise
         """
@@ -410,7 +410,7 @@ class HexViewerDialog(QDialog):
     def update_status_bar(self, start: int = 0, end: int = None):
         """
         Update the status bar with current selection and offset information.
-        
+
         Args:
             start: Start offset of selection or current position
             end: End offset of selection (optional)
@@ -490,7 +490,7 @@ class HexViewerDialog(QDialog):
     def update_view_mode_combo(self, mode: ViewMode):
         """
         Update the view mode combo box to match the current view mode.
-        
+
         Args:
             mode: Current view mode
         """
@@ -499,7 +499,7 @@ class HexViewerDialog(QDialog):
     def change_view_mode(self, mode_text: str):
         """
         Change the view mode based on combo box selection.
-        
+
         Args:
             mode_text: View mode name
         """
@@ -511,7 +511,7 @@ class HexViewerDialog(QDialog):
     def change_bytes_per_row(self, value_text: str):
         """
         Change the number of bytes per row.
-        
+
         Args:
             value_text: Number of bytes per row as string
         """
@@ -524,7 +524,7 @@ class HexViewerDialog(QDialog):
     def change_group_size(self, value_text: str):
         """
         Change the byte grouping size.
-        
+
         Args:
             value_text: Group size as string
         """
@@ -537,7 +537,7 @@ class HexViewerDialog(QDialog):
     def show_bookmark_context_menu(self, position):
         """
         Show context menu for bookmarks list.
-        
+
         Args:
             position: Position where the menu should be shown
         """
@@ -558,7 +558,7 @@ class HexViewerDialog(QDialog):
     def show_search_context_menu(self, position):
         """
         Show context menu for search results list.
-        
+
         Args:
             position: Position where the menu should be shown
         """
@@ -579,7 +579,7 @@ class HexViewerDialog(QDialog):
     def jump_to_bookmark(self, item):
         """
         Jump to the location of a bookmark.
-        
+
         Args:
             item: List widget item for the bookmark
         """
@@ -592,7 +592,7 @@ class HexViewerDialog(QDialog):
     def remove_bookmark(self, item):
         """
         Remove a bookmark.
-        
+
         Args:
             item: List widget item for the bookmark
         """
@@ -608,7 +608,7 @@ class HexViewerDialog(QDialog):
     def jump_to_search_result(self, item):
         """
         Jump to the location of a search result.
-        
+
         Args:
             item: List widget item for the search result
         """

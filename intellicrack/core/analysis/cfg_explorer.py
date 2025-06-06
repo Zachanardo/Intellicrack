@@ -8,8 +8,7 @@ to help identify license validation routines and potential bypass points in bina
 import json
 import logging
 import os
-import webbrowser
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 # Optional dependencies - graceful fallback if not available
 try:
@@ -38,11 +37,11 @@ except ImportError:
 
 try:
     import capstone
-    from capstone import *
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
-    
+
 try:
     import subprocess
     SUBPROCESS_AVAILABLE = True
@@ -95,7 +94,7 @@ class CFGExplorer:
             # Configure radare2 path if available in config
             from ...config import CONFIG
             radare2_path = CONFIG.get('radare2_path', None)
-            
+
             # Open the binary with radare2
             if radare2_path and os.path.exists(radare2_path):
                 # Use specific radare2 binary path
@@ -177,6 +176,48 @@ class CFGExplorer:
         else:
             self.logger.error(f"Function {function_name} not found")
             return False
+            
+    # Alias methods for compatibility
+    def get_functions(self) -> List[Dict]:
+        """Get list of functions (alias for get_function_list)."""
+        function_names = self.get_function_list()
+        return [{"name": name, "address": "0x0"} for name in function_names]
+        
+    def analyze_function(self, function_name: str) -> Optional[Dict]:
+        """Analyze a specific function (compatibility method)."""
+        if self.set_current_function(function_name):
+            return {"name": function_name, "graph": self.graph}
+        return None
+        
+    def visualize_cfg(self, function_name: str = None) -> bool:
+        """Visualize CFG (compatibility method)."""
+        if function_name and not self.set_current_function(function_name):
+            return False
+        return self.export_graph_image("cfg_visualization.png")
+        
+    def export_dot(self, output_file: str) -> bool:
+        """Export DOT file (alias for export_dot_file)."""
+        return self.export_dot_file(output_file)
+        
+    def analyze(self, binary_path: str = None) -> bool:
+        """Analyze binary (compatibility method)."""
+        if binary_path:
+            return self.load_binary(binary_path)
+        return True
+        
+    def get_complexity_metrics(self) -> Dict:
+        """Get complexity metrics for the current function."""
+        if not self.graph or not NETWORKX_AVAILABLE:
+            return {"error": "No graph or NetworkX not available"}
+        
+        try:
+            return {
+                "nodes": self.graph.number_of_nodes(),
+                "edges": self.graph.number_of_edges(),
+                "cyclomatic_complexity": len(list(nx.simple_cycles(self.graph))) + 1
+            }
+        except Exception as e:
+            return {"error": str(e)}
 
     def get_graph_layout(self, layout_type: str = 'spring') -> Optional[Dict]:
         """Get a layout for the current function graph"""
@@ -194,7 +235,7 @@ class CFGExplorer:
         elif layout_type == 'dot':
             try:
                 layout = nx.nx_pydot.graphviz_layout(self.graph, prog='dot')
-            except:
+            except (ImportError, OSError, FileNotFoundError):
                 self.logger.warning("Graphviz not available, falling back to spring layout")
                 layout = nx.spring_layout(self.graph)
         elif layout_type == 'circular':
@@ -293,31 +334,11 @@ class CFGExplorer:
             if not graph_data:
                 return False
 
-            # Create the HTML content
-            html_content = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <title>CFG: {function_name}</title>
-                <script src="https://d3js.org/d3.v7.min.js"></script>
+            from ...utils.html_templates import get_cfg_html_template, close_html
+            
+            # Create the HTML content using common template
+            html_content = get_cfg_html_template(function_name) + f"""
                 <style>
-                    body {{ margin: 0; font-family: Arial, sans-serif; overflow: hidden; }}
-                    .node {{ stroke: #fff; stroke-width: 1.5px; }}
-                    .node.license {{ fill: #ff7777; }}
-                    .node.normal {{ fill: #77aaff; }}
-                    .link {{ stroke: #999; stroke-opacity: 0.6; stroke-width: 1px; }}
-                    .label {{ font-size: 10px; pointer-events: none; }}
-                    #tooltip {{
-                        position: absolute;
-                        background: rgba(0, 0, 0, 0.7);
-                        color: white;
-                        padding: 5px;
-                        border-radius: 4px;
-                        font-size: 12px;
-                        pointer-events: none;
-                        opacity: 0;
-                    }}
                     #controls {{
                         position: absolute;
                         top: 10px;
@@ -350,9 +371,7 @@ class CFGExplorer:
                     // Implementation would go here - simplified for brevity
                     console.log("CFG Visualization for {function_name}");
                 </script>
-            </body>
-            </html>
-            """
+            """ + close_html()
 
             # Write HTML to file
             with open(output_file, 'w', encoding='utf-8') as f:
@@ -437,21 +456,21 @@ def run_deep_cfg_analysis(app):
                 log_message("[CFG Analysis] pefile not available"))
             app.analyze_status.setText("pefile not available")
             return
-            
+
         if not CAPSTONE_AVAILABLE:
             app.update_output.emit(
                 log_message("[CFG Analysis] capstone not available"))
             app.analyze_status.setText("capstone not available")
             return
-            
+
         if not NETWORKX_AVAILABLE:
             app.update_output.emit(
                 log_message("[CFG Analysis] networkx not available"))
             app.analyze_status.setText("networkx not available")
             return
-            
+
         pe = pefile.PE(app.binary_path)
-        is_64bit = pe.FILE_HEADER.Machine == 0x8664
+        is_64bit = getattr(pe.FILE_HEADER, 'Machine', 0) == 0x8664
         mode = CS_MODE_64 if is_64bit else CS_MODE_32
 
         # Find text section

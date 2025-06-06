@@ -1,0 +1,16 @@
+[MASTER]
+# Add PyQt5 to the extension whitelist
+extension-pkg-whitelist=PyQt5
+
+[MESSAGES CONTROL]
+# Disable all C (Convention) codes
+disable=C
+# Optionally, disable the no-name-in-module error specifically for PyQt5
+# disable=no-name-in-module
+
+[TYPECHECK]
+# List of module names for which member attributes should not be checked
+ignored-modules=PyQt5,PyQt5.QtCore,PyQt5.QtGui,PyQt5.QtWidgets
+
+# List of classes for which member attributes should not be checked
+ignored-classes=QApplication,QWidget,QDialog,QMainWindow,QPushButton,QLabel,QLineEdit,QTextEdit,QTableWidget,QMessageBox,QFileDialog,QVBoxLayout,QHBoxLayout,Qt,pyqtSignal,QThread,QTimer,QFont,QIcon,QPixmap,QAction,QCheckBox,QComboBox,QSpinBox,QGroupBox,QFormLayout,QListWidget,QTreeWidget,QTabWidget,QSplitter,QProgressBar,QStatusBar,QToolBar,QMenu,QAbstractScrollArea,QPlainTextEdit,QInputDialog,QDesktopWidget,QSplashScreen,QWizard,QWizardPage,QTextBrowser,QHeaderView,QAbstractItemView,QDialogButtonBox,QSizePolicy,QSpacerItem,QFrame,QListWidgetItem,QTreeWidgetItem,QTableWidgetItem,QSize,QPoint,QRect,QColor,QPainter,QPen,QKeyEvent,QMouseEvent,QPaintEvent,QResizeEvent,QFontMetrics,QKeySequence

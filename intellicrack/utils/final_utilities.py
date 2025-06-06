@@ -6,17 +6,15 @@ are omitted as they are implementation details that have been replaced
 by the modular architecture.
 """
 
-import os
-import sys
-import json
-import time
 import hashlib
-import threading
-import subprocess
-from typing import Dict, List, Any, Optional, Tuple, Callable
-from pathlib import Path
-import logging
+import json
+import os
 import platform
+import subprocess
+import threading
+import time
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
 # Optional imports with graceful fallbacks
 try:
@@ -26,7 +24,7 @@ except ImportError:
     HAS_PSUTIL = False
 
 try:
-    from PyQt5.QtCore import QThread, pyqtSignal, QTimer
+    from PyQt5.QtCore import QThread, QTimer, pyqtSignal
     from PyQt5.QtWidgets import QApplication, QWidget
     HAS_PYQT = True
 except ImportError:
@@ -50,16 +48,16 @@ def add_table(parent: Any, headers: List[str], data: List[List[Any]]) -> Any:
     if not HAS_PYQT:
         logger.warning("PyQt5 not available, cannot create table")
         return None
-    
+
     from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
-    
+
     table = QTableWidget(len(data), len(headers), parent)
     table.setHorizontalHeaderLabels(headers)
-    
+
     for row, row_data in enumerate(data):
         for col, value in enumerate(row_data):
             table.setItem(row, col, QTableWidgetItem(str(value)))
-    
+
     return table
 
 
@@ -68,9 +66,9 @@ def browse_dataset(parent: Any = None) -> Optional[str]:
     if not HAS_PYQT:
         logger.warning("PyQt5 not available, cannot browse dataset")
         return None
-    
+
     from PyQt5.QtWidgets import QFileDialog
-    
+
     file_path, _ = QFileDialog.getOpenFileName(
         parent,
         "Select Dataset",
@@ -85,9 +83,9 @@ def browse_model(parent: Any = None) -> Optional[str]:
     if not HAS_PYQT:
         logger.warning("PyQt5 not available, cannot browse model")
         return None
-    
+
     from PyQt5.QtWidgets import QFileDialog
-    
+
     file_path, _ = QFileDialog.getOpenFileName(
         parent,
         "Select Model",
@@ -102,24 +100,24 @@ def show_simulation_results(results: Dict[str, Any], parent: Any = None) -> None
     if not HAS_PYQT:
         logger.info(f"Simulation Results: {json.dumps(results, indent=2)}")
         return
-    
-    from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton
-    
+
+    from PyQt5.QtWidgets import QDialog, QPushButton, QTextEdit, QVBoxLayout
+
     dialog = QDialog(parent)
     dialog.setWindowTitle("Simulation Results")
     dialog.resize(600, 400)
-    
+
     layout = QVBoxLayout()
-    
+
     text_edit = QTextEdit()
     text_edit.setPlainText(json.dumps(results, indent=2))
     text_edit.setReadOnly(True)
     layout.addWidget(text_edit)
-    
+
     close_btn = QPushButton("Close")
     close_btn.clicked.connect(dialog.accept)
     layout.addWidget(close_btn)
-    
+
     dialog.setLayout(layout)
     dialog.exec_()
 
@@ -136,12 +134,12 @@ def update_visualization(data: Any, viz_type: str = "plot") -> None:
 
 # === Analysis Functions ===
 
-def monitor_memory(process_name: Optional[str] = None, 
+def monitor_memory(process_name: Optional[str] = None,
                   threshold_mb: float = 1000.0) -> Dict[str, Any]:
     """Monitor memory usage of a process or the system."""
     if not HAS_PSUTIL:
         return {"error": "psutil not available"}
-    
+
     try:
         if process_name:
             # Monitor specific process
@@ -149,7 +147,7 @@ def monitor_memory(process_name: Optional[str] = None,
                 if proc.info['name'] == process_name:
                     memory_info = proc.info['memory_info']
                     memory_mb = memory_info.rss / 1024 / 1024
-                    
+
                     return {
                         "process": process_name,
                         "pid": proc.info['pid'],
@@ -157,7 +155,7 @@ def monitor_memory(process_name: Optional[str] = None,
                         "threshold_exceeded": memory_mb > threshold_mb,
                         "virtual_memory_mb": memory_info.vms / 1024 / 1024
                     }
-            
+
             return {"error": f"Process '{process_name}' not found"}
         else:
             # Monitor system memory
@@ -179,7 +177,7 @@ def accelerate_hash_calculation(data: bytes, algorithm: str = "sha256",
     """Calculate hash with optional GPU acceleration."""
     if use_gpu:
         logger.info("GPU acceleration requested but using CPU fallback")
-    
+
     hash_obj = hashlib.new(algorithm)
     hash_obj.update(data)
     return hash_obj.hexdigest()
@@ -201,17 +199,17 @@ def compute_binary_hash(binary_path: str, algorithm: str = "sha256") -> Optional
 def compute_section_hashes(binary_path: str) -> Dict[str, str]:
     """Compute hashes for each section of a binary."""
     section_hashes = {}
-    
+
     try:
         import pefile
         pe = pefile.PE(binary_path)
-        
+
         for section in pe.sections:
             section_name = section.Name.decode('utf-8').rstrip('\x00')
             section_data = section.get_data()
             section_hash = hashlib.sha256(section_data).hexdigest()
             section_hashes[section_name] = section_hash
-            
+
     except ImportError:
         logger.warning("pefile not available, returning file hash only")
         file_hash = compute_binary_hash(binary_path)
@@ -219,7 +217,7 @@ def compute_section_hashes(binary_path: str) -> Dict[str, str]:
             section_hashes["_file"] = file_hash
     except Exception as e:
         logger.error(f"Error computing section hashes: {e}")
-    
+
     return section_hashes
 
 
@@ -227,10 +225,10 @@ def identify_changed_sections(binary1: str, binary2: str) -> List[str]:
     """Identify which sections changed between two binaries."""
     hashes1 = compute_section_hashes(binary1)
     hashes2 = compute_section_hashes(binary2)
-    
+
     changed_sections = []
     all_sections = set(hashes1.keys()) | set(hashes2.keys())
-    
+
     for section in all_sections:
         if section not in hashes1:
             changed_sections.append(f"+{section}")  # Added
@@ -238,14 +236,14 @@ def identify_changed_sections(binary1: str, binary2: str) -> List[str]:
             changed_sections.append(f"-{section}")  # Removed
         elif hashes1[section] != hashes2[section]:
             changed_sections.append(section)  # Changed
-    
+
     return changed_sections
 
 
 def get_file_icon(file_path: str) -> Optional[str]:
     """Get an appropriate icon name for a file type."""
     ext = Path(file_path).suffix.lower()
-    
+
     icon_map = {
         '.exe': 'application-x-executable',
         '.dll': 'application-x-sharedlib',
@@ -259,14 +257,14 @@ def get_file_icon(file_path: str) -> Optional[str]:
         '.rar': 'application-x-rar',
         '.7z': 'application-x-7z-compressed'
     }
-    
+
     return icon_map.get(ext, 'application-octet-stream')
 
 
 def get_resource_type(file_path: str) -> str:
     """Determine the resource type of a file."""
     ext = Path(file_path).suffix.lower()
-    
+
     if ext in ['.exe', '.dll', '.so', '.dylib']:
         return 'binary'
     elif ext in ['.py', '.js', '.java', '.c', '.cpp', '.h']:
@@ -283,19 +281,19 @@ def get_resource_type(file_path: str) -> str:
         return 'unknown'
 
 
-def cache_analysis_results(key: str, results: Dict[str, Any], 
+def cache_analysis_results(key: str, results: Dict[str, Any],
                          cache_dir: str = ".cache") -> bool:
     """Cache analysis results to disk."""
     try:
         os.makedirs(cache_dir, exist_ok=True)
         cache_file = os.path.join(cache_dir, f"{key}.json")
-        
+
         with open(cache_file, 'w') as f:
             json.dump({
                 'timestamp': time.time(),
                 'results': results
             }, f)
-        
+
         return True
     except Exception as e:
         logger.error(f"Failed to cache results: {e}")
@@ -312,19 +310,19 @@ def get_captured_requests(limit: int = 100) -> List[Dict[str, Any]]:
 def force_memory_cleanup() -> Dict[str, Any]:
     """Force garbage collection and memory cleanup."""
     import gc
-    
+
     before_memory = 0
     if HAS_PSUTIL:
         process = psutil.Process()
         before_memory = process.memory_info().rss / 1024 / 1024
-    
+
     # Force garbage collection
     gc.collect()
-    
+
     after_memory = 0
     if HAS_PSUTIL:
         after_memory = process.memory_info().rss / 1024 / 1024
-    
+
     return {
         "before_mb": before_memory,
         "after_mb": after_memory,
@@ -341,11 +339,11 @@ def initialize_memory_optimizer(threshold_mb: float = 500.0) -> Dict[str, Any]:
         "monitoring_enabled": HAS_PSUTIL,
         "optimization_level": "aggressive"
     }
-    
+
     # Set garbage collection thresholds
     import gc
     gc.set_threshold(700, 10, 10)  # More aggressive GC
-    
+
     return config
 
 
@@ -364,7 +362,7 @@ def sandbox_process(command: List[str], timeout: int = 60) -> Dict[str, Any]:
                 "HOME": "/tmp"
             }
         )
-        
+
         return {
             "success": result.returncode == 0,
             "stdout": result.stdout,
@@ -383,7 +381,7 @@ def sandbox_process(command: List[str], timeout: int = 60) -> Dict[str, Any]:
         }
 
 
-def select_backend_for_workload(workload_type: str, 
+def select_backend_for_workload(workload_type: str,
                               available_backends: List[str]) -> str:
     """Select the best backend for a given workload type."""
     # Priority mapping for different workload types
@@ -394,23 +392,23 @@ def select_backend_for_workload(workload_type: str,
         "memory_intensive": ["dask", "multiprocessing", "threading"],
         "io_intensive": ["asyncio", "threading", "multiprocessing"]
     }
-    
+
     priorities = backend_priority.get(workload_type, ["multiprocessing"])
-    
+
     for backend in priorities:
         if backend in available_backends:
             return backend
-    
+
     # Default to first available
     return available_backends[0] if available_backends else "sequential"
 
 
-def truncate_text(text: str, max_length: int = 100, 
+def truncate_text(text: str, max_length: int = 100,
                  suffix: str = "...") -> str:
     """Truncate text to specified length."""
     if len(text) <= max_length:
         return text
-    
+
     return text[:max_length - len(suffix)] + suffix
 
 
@@ -418,27 +416,28 @@ def center_on_screen(widget: Any) -> None:
     """Center a widget on the screen."""
     if not HAS_PYQT or not widget:
         return
-    
+
     from PyQt5.QtWidgets import QDesktopWidget
-    
+
     desktop = QDesktopWidget()
     screen_rect = desktop.screenGeometry()
     widget_rect = widget.geometry()
-    
+
     x = (screen_rect.width() - widget_rect.width()) // 2
     y = (screen_rect.height() - widget_rect.height()) // 2
-    
+
     widget.move(x, y)
 
 
 def copy_to_clipboard(text: str) -> bool:
     """Copy text to system clipboard."""
     try:
-        if HAS_PYQT and QApplication.instance():
+        if HAS_PYQT:
             from PyQt5.QtWidgets import QApplication
-            clipboard = QApplication.clipboard()
-            clipboard.setText(text)
-            return True
+            if QApplication.instance():
+                clipboard = QApplication.clipboard()
+                clipboard.setText(text)
+                return True
         elif platform.system() == "Windows":
             subprocess.run(["clip"], input=text, text=True, check=True)
             return True
@@ -446,12 +445,12 @@ def copy_to_clipboard(text: str) -> bool:
             subprocess.run(["pbcopy"], input=text, text=True, check=True)
             return True
         elif platform.system() == "Linux":
-            subprocess.run(["xclip", "-selection", "clipboard"], 
+            subprocess.run(["xclip", "-selection", "clipboard"],
                          input=text, text=True, check=True)
             return True
     except Exception as e:
         logger.error(f"Failed to copy to clipboard: {e}")
-    
+
     return False
 
 
@@ -466,7 +465,7 @@ def async_wrapper(func: Callable) -> Callable:
         )
         thread.start()
         return thread
-    
+
     return wrapped
 
 
@@ -478,7 +477,7 @@ def hash_func(data: Any, algorithm: str = "sha256") -> str:
         hash_data = data.encode('utf-8')
     else:
         hash_data = json.dumps(data, sort_keys=True).encode('utf-8')
-    
+
     hash_obj = hashlib.new(algorithm)
     hash_obj.update(hash_data)
     return hash_obj.hexdigest()
@@ -497,7 +496,7 @@ def export_metrics(metrics: Dict[str, Any], output_path: str) -> bool:
         return False
 
 
-def submit_report(report_data: Dict[str, Any], 
+def submit_report(report_data: Dict[str, Any],
                  endpoint: Optional[str] = None) -> Dict[str, Any]:
     """Submit a report to an endpoint or save locally."""
     if endpoint:
@@ -508,7 +507,7 @@ def submit_report(report_data: Dict[str, Any],
         # Save locally
         report_id = hash_func(report_data)[:8]
         report_path = f"report_{report_id}.json"
-        
+
         try:
             with open(report_path, 'w') as f:
                 json.dump(report_data, f, indent=2)
@@ -522,7 +521,7 @@ def submit_report(report_data: Dict[str, Any],
 def start_training(model_config: Dict[str, Any]) -> Dict[str, Any]:
     """Start model training with given configuration."""
     logger.info(f"Starting training with config: {model_config}")
-    
+
     # This would typically start a training thread
     # For now, return a status dict
     return {
@@ -546,7 +545,7 @@ def on_training_finished(results: Dict[str, Any]) -> None:
 
 # === Model Functions ===
 
-def create_dataset(data: List[Dict[str, Any]], 
+def create_dataset(data: List[Dict[str, Any]],
                   format: str = "json") -> Dict[str, Any]:
     """Create a dataset from raw data."""
     dataset = {
@@ -555,25 +554,25 @@ def create_dataset(data: List[Dict[str, Any]],
         "created": time.time(),
         "data": data
     }
-    
+
     # Calculate statistics
     if data:
         keys = set()
         for item in data:
             keys.update(item.keys())
         dataset["fields"] = list(keys)
-    
+
     return dataset
 
 
-def augment_dataset(dataset: List[Dict[str, Any]], 
+def augment_dataset(dataset: List[Dict[str, Any]],
                    augmentation_config: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Augment a dataset with various techniques."""
     augmented = []
-    
+
     for item in dataset:
         augmented.append(item)  # Original
-        
+
         # Simple augmentation examples
         if augmentation_config.get("add_noise"):
             noisy = item.copy()
@@ -582,10 +581,10 @@ def augment_dataset(dataset: List[Dict[str, Any]],
                 if isinstance(value, (int, float)):
                     noisy[key] = value * (1 + 0.1 * (hash(key) % 10 - 5) / 5)
             augmented.append(noisy)
-        
+
         if augmentation_config.get("duplicate"):
             augmented.append(item.copy())
-    
+
     return augmented
 
 
@@ -613,7 +612,7 @@ def load_dataset_preview(dataset_path: str, limit: int = 10) -> List[Dict[str, A
         return []
 
 
-def create_full_feature_model(features: List[str], 
+def create_full_feature_model(features: List[str],
                             model_type: str = "ensemble") -> Dict[str, Any]:
     """Create a model configuration with all features."""
     return {
@@ -629,7 +628,7 @@ def create_full_feature_model(features: List[str],
     }
 
 
-def predict_vulnerabilities(binary_features: Dict[str, Any], 
+def predict_vulnerabilities(binary_features: Dict[str, Any],
                           model: Optional[Any] = None) -> Dict[str, Any]:
     """Predict vulnerabilities in a binary."""
     # Simplified prediction logic
@@ -640,13 +639,13 @@ def predict_vulnerabilities(binary_features: Dict[str, Any],
         "use_after_free": 0.15,
         "null_pointer": 0.1
     }
-    
+
     # Adjust based on features
     if binary_features.get("has_strcpy"):
         predictions["buffer_overflow"] += 0.3
     if binary_features.get("has_printf"):
         predictions["format_string"] += 0.2
-    
+
     return {
         "predictions": predictions,
         "high_risk": [k for k, v in predictions.items() if v > 0.5],
@@ -656,7 +655,7 @@ def predict_vulnerabilities(binary_features: Dict[str, Any],
 
 # === Misc Functions ===
 
-def add_code_snippet(snippets: List[Dict[str, Any]], 
+def add_code_snippet(snippets: List[Dict[str, Any]],
                     title: str, code: str, language: str = "python") -> None:
     """Add a code snippet to a collection."""
     snippets.append({
@@ -672,7 +671,7 @@ def add_dataset_row(dataset: List[Dict[str, Any]], row: Dict[str, Any]) -> None:
     dataset.append(row)
 
 
-def add_image(document: Any, image_path: str, 
+def add_image(document: Any, image_path: str,
              caption: Optional[str] = None) -> bool:
     """Add an image to a document."""
     # This would typically add to a PDF or HTML document
@@ -680,7 +679,7 @@ def add_image(document: Any, image_path: str,
     return os.path.exists(image_path)
 
 
-def add_recommendations(report: Dict[str, Any], 
+def add_recommendations(report: Dict[str, Any],
                        recommendations: List[str]) -> None:
     """Add recommendations to a report."""
     if "recommendations" not in report:
@@ -709,14 +708,14 @@ def do_GET(request_handler: Any) -> None:
 # Export all functions
 __all__ = [
     # UI Functions
-    'add_table', 'browse_dataset', 'browse_model', 
+    'add_table', 'browse_dataset', 'browse_model',
     'show_simulation_results', 'update_training_progress',
     'update_visualization', 'center_on_screen', 'copy_to_clipboard',
     'showEvent',
-    
+
     # Analysis Functions
     'monitor_memory', 'predict_vulnerabilities',
-    
+
     # Core Utility Functions
     'accelerate_hash_calculation', 'compute_binary_hash',
     'compute_section_hashes', 'identify_changed_sections',
@@ -725,17 +724,17 @@ __all__ = [
     'initialize_memory_optimizer', 'sandbox_process',
     'select_backend_for_workload', 'truncate_text',
     'async_wrapper', 'hash_func',
-    
+
     # Report Functions
     'export_metrics', 'submit_report',
-    
+
     # Training Functions
     'start_training', 'stop_training', 'on_training_finished',
-    
+
     # Model Functions
     'create_dataset', 'augment_dataset', 'load_dataset_preview',
     'create_full_feature_model',
-    
+
     # Misc Functions
     'add_code_snippet', 'add_dataset_row', 'add_image',
     'add_recommendations', 'patches_reordered', 'do_GET'
