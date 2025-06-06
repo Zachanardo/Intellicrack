@@ -690,7 +690,6 @@ def train_model(training_data: List[Tuple[str, int]],
         
         # Train model based on type
         if model_type == "random_forest" and SKLEARN_AVAILABLE:
-            from sklearn.ensemble import RandomForestClassifier
             from sklearn.model_selection import train_test_split
             from sklearn.metrics import accuracy_score, classification_report
             

@@ -1,221 +1,170 @@
 #!/usr/bin/env python3
 """
-Fix W0613 (unused-argument) issues in the codebase.
-Prefixes unused arguments with underscore to indicate they're intentionally unused.
+Fix W0613 unused-argument warnings by prefixing with underscore.
+This script is conservative and only fixes simple cases.
 """
 
 import re
-import ast
 import os
+import ast
 import sys
-from pathlib import Path
 
 class UnusedArgumentFixer(ast.NodeVisitor):
     """AST visitor to find and fix unused arguments."""
     
     def __init__(self, source_lines):
         self.source_lines = source_lines
-        self.modifications = []
+        self.fixes = []
         self.current_function = None
-        self.used_names = set()
         
     def visit_FunctionDef(self, node):
         """Visit function definitions."""
-        old_function = self.current_function
-        old_used_names = self.used_names
+        self.current_function = node.name
         
-        self.current_function = node
-        self.used_names = set()
-        
-        # First pass: collect all used names in the function
+        # Get function body as text to check for argument usage
+        func_body_lines = []
         for child in ast.walk(node):
-            if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Load):
-                self.used_names.add(child.id)
+            if hasattr(child, 'lineno') and child.lineno > node.lineno:
+                if child.lineno <= node.end_lineno:
+                    line_idx = child.lineno - 1
+                    if line_idx < len(self.source_lines):
+                        func_body_lines.append(self.source_lines[line_idx])
         
-        # Check arguments
-        all_args = []
-        
-        # Regular args
-        for arg in node.args.args:
-            all_args.append((arg, 'regular'))
-        
-        # *args
-        if node.args.vararg:
-            all_args.append((node.args.vararg, 'vararg'))
-            
-        # **kwargs  
-        if node.args.kwarg:
-            all_args.append((node.args.kwarg, 'kwarg'))
-            
-        # Keyword only args
-        for arg in node.args.kwonlyargs:
-            all_args.append((arg, 'kwonly'))
+        func_body = '\n'.join(func_body_lines)
         
         # Check each argument
-        for arg, arg_type in all_args:
+        for arg in node.args.args:
             arg_name = arg.arg
             
-            # Skip self and cls (common in methods)
-            if arg_name in ('self', 'cls'):
+            # Skip self, cls, and already underscored args
+            if arg_name in ('self', 'cls') or arg_name.startswith('_'):
                 continue
                 
-            # Skip already prefixed with underscore
-            if arg_name.startswith('_'):
-                continue
+            # Check if argument is used in function body
+            # Simple heuristic: look for the argument name as a whole word
+            pattern = r'\b' + re.escape(arg_name) + r'\b'
             
-            # Skip if used in function
-            if arg_name in self.used_names:
-                continue
-                
-            # Skip if it's a special method that requires specific signatures
-            if (self.current_function.name.startswith('__') and 
-                self.current_function.name.endswith('__')):
-                continue
-            
-            # Mark for modification
-            self.modifications.append({
-                'line': arg.lineno,
-                'col': arg.col_offset,
-                'old_name': arg_name,
-                'new_name': f'_{arg_name}',
-                'node': arg
-            })
+            # Check if used in function body (excluding the def line)
+            if not re.search(pattern, func_body):
+                # Argument appears unused, suggest fix
+                self.fixes.append({
+                    'line': node.lineno,
+                    'function': node.name,
+                    'arg_name': arg_name,
+                    'new_name': '_' + arg_name
+                })
         
-        # Continue visiting
         self.generic_visit(node)
-        
-        self.current_function = old_function
-        self.used_names = old_used_names
+        self.current_function = None
 
-def fix_unused_arguments_ast(content):
-    """Fix unused arguments using AST parsing."""
-    try:
-        tree = ast.parse(content)
-        lines = content.split('\n')
-        
-        fixer = UnusedArgumentFixer(lines)
-        fixer.visit(tree)
-        
-        if not fixer.modifications:
-            return content, False
-        
-        # Sort modifications by line and column (reverse order for replacement)
-        modifications = sorted(fixer.modifications, 
-                             key=lambda x: (x['line'], x['col']), 
-                             reverse=True)
-        
-        # Apply modifications
-        for mod in modifications:
-            line_idx = mod['line'] - 1
-            if 0 <= line_idx < len(lines):
-                line = lines[line_idx]
-                # Use regex to replace the argument name
-                old_pattern = r'\b' + re.escape(mod['old_name']) + r'\b'
-                new_line = re.sub(old_pattern, mod['new_name'], line, count=1)
-                if new_line != line:
-                    lines[line_idx] = new_line
-        
-        return '\n'.join(lines), True
-        
-    except SyntaxError:
-        # If AST parsing fails, return original content
-        return content, False
-
-def fix_unused_arguments_regex(content):
-    """Fallback regex-based approach for fixing unused arguments."""
-    # This is a simplified approach that only handles clear cases
-    modified = False
-    lines = content.split('\n')
-    
-    for i, line in enumerate(lines):
-        # Skip if line doesn't contain function definition
-        if 'def ' not in line:
-            continue
-            
-        # Match function definitions
-        match = re.match(r'^(\s*def\s+\w+\s*\()(.*)(\)\s*:.*)', line)
-        if match:
-            indent, args_str, suffix = match.groups()
-            
-            # Simple check: if argument is never used in following lines
-            # This is very basic and won't catch all cases
-            args = [arg.strip() for arg in args_str.split(',')]
-            new_args = []
-            
-            for arg in args:
-                # Extract argument name (handle type annotations)
-                arg_match = re.match(r'(\w+)(\s*:\s*.+)?(\s*=\s*.+)?', arg.strip())
-                if arg_match:
-                    arg_name = arg_match.group(1)
-                    rest = (arg_match.group(2) or '') + (arg_match.group(3) or '')
-                    
-                    if arg_name in ('self', 'cls') or arg_name.startswith('_'):
-                        new_args.append(arg)
-                    else:
-                        # Check if used in next 50 lines (simple heuristic)
-                        used = False
-                        for j in range(i + 1, min(i + 51, len(lines))):
-                            if re.search(r'\b' + arg_name + r'\b', lines[j]):
-                                used = True
-                                break
-                        
-                        if used:
-                            new_args.append(arg)
-                        else:
-                            new_args.append(f'_{arg_name}{rest}')
-                            modified = True
-                else:
-                    new_args.append(arg)
-            
-            if modified:
-                lines[i] = f"{indent}{', '.join(new_args)}{suffix}"
-    
-    return '\n'.join(lines), modified
-
-def process_file(filepath):
-    """Process a single Python file."""
+def fix_unused_arguments_in_file(filepath, target_warnings):
+    """Fix unused arguments in a single file based on pylint warnings."""
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
+            lines = content.splitlines()
         
-        # Try AST-based approach first
-        new_content, modified = fix_unused_arguments_ast(content)
+        # Parse the file
+        try:
+            tree = ast.parse(content)
+        except SyntaxError:
+            print(f"Syntax error in {filepath}, skipping")
+            return False
+            
+        # Find unused arguments
+        fixer = UnusedArgumentFixer(lines)
+        fixer.visit(tree)
         
-        # If AST approach didn't work, try regex approach
-        if not modified:
-            new_content, modified = fix_unused_arguments_regex(content)
+        # Apply fixes based on warnings
+        modifications = []
+        for warning in target_warnings:
+            if warning['file'] == filepath:
+                line_num = warning['line']
+                arg_name = warning['arg']
+                
+                # Find the corresponding fix
+                for fix in fixer.fixes:
+                    if fix['arg_name'] == arg_name:
+                        # We need to fix both the definition and any default value
+                        line_idx = line_num - 1
+                        if line_idx < len(lines):
+                            old_line = lines[line_idx]
+                            # Replace argument name with underscore version
+                            # Be careful to match whole words only
+                            new_line = re.sub(
+                                r'\b' + re.escape(arg_name) + r'\b',
+                                '_' + arg_name,
+                                old_line
+                            )
+                            if new_line != old_line:
+                                lines[line_idx] = new_line
+                                modifications.append({
+                                    'line': line_num,
+                                    'old': old_line.strip(),
+                                    'new': new_line.strip()
+                                })
         
-        if modified:
+        if modifications:
+            # Write back the file
             with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(new_content)
+                f.write('\n'.join(lines) + '\n')
+            
+            print(f"Fixed {len(modifications)} unused arguments in {filepath}")
+            for mod in modifications:
+                print(f"  Line {mod['line']}: {mod['old']} -> {mod['new']}")
             return True
+            
         return False
+        
     except Exception as e:
         print(f"Error processing {filepath}: {e}")
         return False
 
+def parse_warnings_from_file(errors_file):
+    """Parse W0613 warnings from the errors file."""
+    warnings = []
+    
+    with open(errors_file, 'r') as f:
+        for line in f:
+            # Match lines like: intellicrack/ai/ai_assistant_enhanced.py:345:29: W0613: Unused argument 'message' (unused-argument)
+            match = re.match(r'^(.+?):(\d+):\d+: W0613: Unused argument \'(.+?)\' \(unused-argument\)$', line.strip())
+            if match:
+                warnings.append({
+                    'file': '/' + match.group(1).replace('\\', '/'),
+                    'line': int(match.group(2)),
+                    'arg': match.group(3)
+                })
+    
+    return warnings
+
 def main():
-    """Main function to process all Python files."""
-    project_root = Path("/mnt/c/Intellicrack/Intellicrack_Project/Intellicrack_Project")
-    intellicrack_dir = project_root / "intellicrack"
-    scripts_dir = project_root / "scripts"
+    """Main function to process files."""
+    errors_file = '/mnt/c/Intellicrack/IntellicrackErrors.txt'
     
-    if not intellicrack_dir.exists():
-        print(f"Error: {intellicrack_dir} does not exist")
-        return 1
+    print("Parsing W0613 warnings from errors file...")
+    warnings = parse_warnings_from_file(errors_file)
+    print(f"Found {len(warnings)} unused argument warnings")
     
-    modified_files = []
+    # Group warnings by file
+    warnings_by_file = {}
+    for warning in warnings:
+        filepath = '/mnt/c/Intellicrack/' + warning['file'].lstrip('/')
+        if filepath not in warnings_by_file:
+            warnings_by_file[filepath] = []
+        warnings_by_file[filepath].append(warning)
     
-    # Process all Python files in intellicrack and scripts directories
-    for directory in [intellicrack_dir, scripts_dir]:
-        if directory.exists():
-            for py_file in directory.rglob("*.py"):
-                if process_file(py_file):
-                    modified_files.append(py_file)
-                    print(f"Fixed: {py_file.relative_to(project_root)}")
+    print(f"\nProcessing {len(warnings_by_file)} files...")
     
-    print(f"\nTotal files modified: {len(modified_files)}")
-    return 0
+    fixed_files = 0
+    for filepath, file_warnings in warnings_by_file.items():
+        if os.path.exists(filepath):
+            if fix_unused_arguments_in_file(filepath, file_warnings):
+                fixed_files += 1
+        else:
+            print(f"File not found: {filepath}")
+    
+    print(f"\nFixed unused arguments in {fixed_files} files")
+    print("\nNote: Review changes carefully as some arguments might be used in ways not detected by this script")
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

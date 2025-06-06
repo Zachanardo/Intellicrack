@@ -457,7 +457,7 @@ class AdvancedDynamicAnalyzer:
             # Message handler
             analysis_data = {}
 
-            def on_message(message, data):
+            def on_message(message, _data):
                 if message['type'] == 'send':
                     payload_data = message['payload']
                     msg_type = payload_data.get('type')
@@ -739,7 +739,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> List[str]
         script = session.create_script(script_content)
 
         # Set up message handler
-        def on_message(message, data):
+        def on_message(message, _data):
             """
             Callback for handling messages from a Frida script.
 

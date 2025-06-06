@@ -115,15 +115,15 @@ class ConcolicExecutionEngine:
                     super().__init__()
                     self.logger = logging.getLogger(__name__)
 
-                def will_run_callback(self, *args, **kwargs):
+                def will_run_callback(self, *_args, **_kwargs):
                     """Called when path exploration is about to start."""
                     self.logger.info("Starting path exploration")
 
-                def did_finish_run_callback(self, *args, **kwargs):
+                def did_finish_run_callback(self, *_args, **_kwargs):
                     """Called when path exploration has finished execution."""
                     self.logger.info("Finished path exploration")
 
-                def will_fork_state_callback(self, state, *args, **kwargs):
+                def will_fork_state_callback(self, state, *_args, **_kwargs):
                     """Called before a state is about to be forked during exploration.
 
                     Args:

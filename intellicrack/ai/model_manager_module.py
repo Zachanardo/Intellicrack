@@ -1071,18 +1071,16 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto"):
             with open(save_path, 'wb') as f:
                 pickle.dump(model, f)
         elif model_format == 'joblib':
-            try:
-                import joblib
+            if HAS_JOBLIB:
                 joblib.dump(model, save_path)
-            except ImportError:
+            else:
                 import pickle
                 with open(save_path, 'wb') as f:
                     pickle.dump(model, f)
         elif model_format == 'pytorch':
-            try:
-                import torch
+            if HAS_TORCH and torch is not None:
                 torch.save(model, save_path)
-            except ImportError:
+            else:
                 raise ImportError("PyTorch not available for saving .pt/.pth files")
         else:
             # Default to pickle

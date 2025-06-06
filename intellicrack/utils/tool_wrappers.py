@@ -804,7 +804,8 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) ->
                 "error": "No binary_path provided for runtime monitoring"
             }
 
-        from .core_utilities import deep_runtime_monitoring
+        # Import directly from dynamic_analyzer to avoid cyclic import
+        from ..core.analysis.dynamic_analyzer import deep_runtime_monitoring as analyzer_drm
 
         # Create monitoring config
         monitoring_config = {
@@ -816,8 +817,17 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) ->
             "timeout": timeout
         }
 
-        # Run the monitoring
-        result = deep_runtime_monitoring(binary_path, monitoring_config)
+        # Call the analyzer function directly
+        logs = analyzer_drm(binary_path, timeout)
+        
+        # Format result similar to core_utilities wrapper
+        result = {
+            "status": "success",
+            "target_process": binary_path,
+            "timeout": timeout,
+            "logs": logs,
+            "config": monitoring_config
+        }
 
         # Extract logs from result
         if isinstance(result, dict) and 'logs' in result:

@@ -442,7 +442,7 @@ class MultiFormatBinaryAnalyzer:
             result['note'] = 'This is a .NET assembly. Consider using specialized .NET analysis tools.'
         return result
 
-    def analyze_java(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
+    def analyze_java(self, _binary_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Analyze a Java class file.
 

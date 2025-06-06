@@ -403,8 +403,8 @@ class ConfigManager:
         
         # Try dynamic discovery
         try:
-            from .utils.path_discovery import find_tool
-            discovered_path = find_tool("ghidra")
+            from .utils.path_discovery import find_tool as discovery_find_tool
+            discovered_path = discovery_find_tool("ghidra")
             if discovered_path:
                 self.config["ghidra_path"] = discovered_path
                 self.save_config()
@@ -432,8 +432,8 @@ class ConfigManager:
         
         # Try dynamic discovery
         try:
-            from .utils.path_discovery import find_tool
-            discovered_path = find_tool(tool_name)
+            from .utils.path_discovery import find_tool as discovery_find_tool
+            discovered_path = discovery_find_tool(tool_name)
             if discovered_path:
                 self.config[config_key] = discovered_path
                 self.save_config()

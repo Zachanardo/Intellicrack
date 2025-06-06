@@ -333,8 +333,6 @@ class AICoordinationLayer:
 
     def _start_parallel_threads(self, request: AnalysisRequest, ml_queue, llm_queue):
         """Start ML and LLM analysis threads."""
-        import threading
-
         ml_thread_obj = threading.Thread(target=self._ml_thread_worker, args=(request, ml_queue))
         llm_thread_obj = threading.Thread(target=self._llm_thread_worker, args=(request, llm_queue))
 

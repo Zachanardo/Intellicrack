@@ -214,7 +214,6 @@ class ProtocolFingerprinter:
         Returns:
             dict: Mapping of byte values to their frequency (0.0 to 1.0)
         """
-        from collections import Counter
         length = len(data)
         if length == 0:
             return {}

@@ -17,7 +17,7 @@ class AIAssistant:
     def __init__(self):
         self.llm_manager = None
     
-    def analyze_code(self, code: str, language: str = "auto") -> Dict[str, Any]:
+    def analyze_code(self, _code: str, language: str = "auto") -> Dict[str, Any]:
         """Analyze code and provide insights."""
         try:
             # Basic analysis without LLM
@@ -32,7 +32,7 @@ class AIAssistant:
             logger.error("Code analysis failed: %s", e)
             return {"status": "error", "error": str(e)}
     
-    def get_suggestions(self, context: str) -> List[str]:
+    def get_suggestions(self, _context: str) -> List[str]:
         """Get AI suggestions for given context."""
         return [
             "Consider analyzing the binary structure",
@@ -61,7 +61,7 @@ class CodeAnalyzer:
             logger.error("Binary analysis failed: %s", e)
             return {"error": str(e)}
     
-    def analyze_assembly(self, assembly_code: str) -> Dict[str, Any]:
+    def analyze_assembly(self, _assembly_code: str) -> Dict[str, Any]:
         """Analyze assembly code."""
         try:
             return {

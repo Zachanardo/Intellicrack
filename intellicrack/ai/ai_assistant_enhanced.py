@@ -342,12 +342,12 @@ Remember: Your goal is to help users understand binary protection mechanisms and
         else:
             return "auto"
 
-    def _extract_topic(self, message: str) -> str:
+    def _extract_topic(self, _message: str) -> str:
         """Extract help topic from message."""
         # Simple extraction logic
         return "general"
 
-    def _extract_aspect(self, message: str) -> str:
+    def _extract_aspect(self, _message: str) -> str:
         """Extract network aspect from message."""
         return "protocol"
 
@@ -398,7 +398,7 @@ Remember: Your goal is to help users understand binary protection mechanisms and
 
         return f"Based on my analysis, I can suggest patches for {target} mechanisms. However, I need your confirmation before applying any modifications.\n\nWould you like me to:\n1. Show suggested patches\n2. Explain how the patches work\n3. Create a backup before patching"
 
-    def _handle_explanation_intent(self, intent: Dict[str, Any]) -> str:
+    def _handle_explanation_intent(self, _intent: Dict[str, Any]) -> str:
         """Handle explanation intent."""
         return """I can help you understand:
 
@@ -409,7 +409,7 @@ Remember: Your goal is to help users understand binary protection mechanisms and
 
 What would you like to learn about?"""
 
-    def _handle_network_intent(self, intent: Dict[str, Any]) -> str:
+    def _handle_network_intent(self, _intent: Dict[str, Any]) -> str:
         """Handle network intent."""
         return "I can analyze network communications, including:\n- Protocol identification\n- License server communication\n- SSL/TLS traffic\n\nWould you like me to start network analysis?"
 
@@ -445,7 +445,7 @@ What would you like to learn about?"""
             )
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _suggest_patches(self, binary_path: str, target: str = "auto") -> Dict[str, Any]:
+    def _suggest_patches(self, binary_path: str, _target: str = "auto") -> Dict[str, Any]:
         """Suggest patches for the binary."""
         if self.cli_interface:
             return self.cli_interface.suggest_patches(binary_path)
@@ -500,7 +500,7 @@ What would you like to learn about?"""
             )
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _view_hex(self, binary_path: str, address: str, size: int = 64) -> Dict[str, Any]:
+    def _view_hex(self, _binary_path: str, address: str, size: int = 64) -> Dict[str, Any]:
         """View hex dump at specific address."""
         # This would integrate with the hex viewer
         return {
@@ -508,7 +508,7 @@ What would you like to learn about?"""
             "message": f"Hex view at {address} for {size} bytes would be displayed here"
         }
 
-    def _disassemble(self, binary_path: str, address: str, count: int = 20) -> Dict[str, Any]:
+    def _disassemble(self, _binary_path: str, address: str, count: int = 20) -> Dict[str, Any]:
         """Disassemble code at address."""
         # This would integrate with disassembly tools
         return {
