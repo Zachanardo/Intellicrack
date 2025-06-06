@@ -671,7 +671,7 @@ class TrainingThread(QThread):
 
         except Exception as e:
             error_msg = f"Error in training thread: {str(e)}"
-            self.logger.exception("Training error", exc_info=True)
+            self.logger.exception("Training error")
             self.progress_signal.emit({
                 'status': 'error',
                 'message': error_msg,

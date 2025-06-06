@@ -110,7 +110,7 @@ class AdvancedDynamicAnalyzer:
                 'return_code': result.returncode
             }
         except subprocess.TimeoutExpired:
-            self.logger.error("Subprocess analysis error: Timeout expired", exc_info=True)
+            self.logger.error("Subprocess analysis error: Timeout expired")
             return {'success': False, 'error': 'Timeout expired'}
         except Exception as e:
             self.logger.error(f"Subprocess analysis error: {e}", exc_info=True)
