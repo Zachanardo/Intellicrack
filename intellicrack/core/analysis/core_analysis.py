@@ -107,7 +107,7 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
     results = []
 
     try:
-        logger.info(f"Starting internal binary analysis for: {binary_path}. Flags: {flags}")
+        logger.info("Starting internal binary analysis for: %s. Flags: %s", binary_path, flags)
         results.append(f"Analyzing binary: {os.path.basename(binary_path)}")
         results.append(f"File size: {os.path.getsize(binary_path):,} bytes")
 
@@ -255,7 +255,7 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
     }
 
     try:
-        logger.info(f"Starting deep license analysis for: {binary_path}")
+        logger.info("Starting deep license analysis for: %s", binary_path)
 
         if not pefile:
             results["error"] = "pefile library not available"
@@ -306,7 +306,7 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
                     results["suspicious_strings"].append(keyword.decode('utf-8', errors='ignore'))
 
         except Exception as e:
-            logger.warning(f"Could not scan strings in {binary_path}: {e}")
+            logger.warning("Could not scan strings in %s: %s", binary_path, e)
 
         # Identify protection mechanisms
         protection_indicators = []
@@ -357,7 +357,7 @@ def detect_packing(binary_path: str) -> Dict[str, Any]:
     }
 
     try:
-        logger.info(f"Starting packing detection for: {binary_path}")
+        logger.info("Starting packing detection for: %s", binary_path)
 
         if not pefile:
             results["error"] = "pefile library not available"
@@ -385,7 +385,7 @@ def detect_packing(binary_path: str) -> Dict[str, Any]:
                         results["indicators"].append(f"High entropy section: {section_name} ({entropy:.2f})")
 
                 except Exception as e:
-                    logger.warning(f"Could not analyze section entropy: {e}")
+                    logger.warning("Could not analyze section entropy: %s", e)
 
         # Calculate average entropy
         avg_entropy = sum(entropy_scores) / len(entropy_scores) if entropy_scores else 0
@@ -596,6 +596,6 @@ def decrypt_embedded_script(binary_path):
 
     except Exception as e:
         results.append(f"Error searching for embedded scripts: {e}")
-        logger.error(f"Error in decrypt_embedded_script: {e}")
+        logger.error("Error in decrypt_embedded_script: %s", e)
 
     return results

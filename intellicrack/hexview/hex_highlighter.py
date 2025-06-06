@@ -150,7 +150,7 @@ class HexHighlighter:
         highlight = HexHighlight(start, end, highlight_type, color, alpha, description, metadata)
         self.highlights.append(highlight)
 
-        logger.debug(f"Added highlight ID {highlight.id}: {start}-{end}, type: {highlight_type.name}")
+        logger.debug("Added highlight ID %s: %s-%s, type: %s", highlight.id, start, end, highlight_type.name)
         return highlight.id
 
     def remove_highlight(self, highlight_id: int) -> bool:
@@ -166,10 +166,10 @@ class HexHighlighter:
         for i, h in enumerate(self.highlights):
             if h.id == highlight_id:
                 self.highlights.pop(i)
-                logger.debug(f"Removed highlight ID {highlight_id}")
+                logger.debug("Removed highlight ID %s", highlight_id)
                 return True
 
-        logger.debug(f"Highlight ID {highlight_id} not found")
+        logger.debug("Highlight ID %s not found", highlight_id)
         return False
 
     def clear_highlights(self, highlight_type: Optional[HighlightType] = None) -> int:
@@ -185,7 +185,7 @@ class HexHighlighter:
         if highlight_type is None:
             count = len(self.highlights)
             self.highlights.clear()
-            logger.debug(f"Cleared all {count} highlights")
+            logger.debug("Cleared all %s highlights", count)
             return count
 
         # Clear highlights of the specified type
@@ -193,7 +193,7 @@ class HexHighlighter:
         self.highlights = [h for h in self.highlights if h.highlight_type != highlight_type]
         count = original_count - len(self.highlights)
 
-        logger.debug(f"Cleared {count} highlights of type {highlight_type.name}")
+        logger.debug("Cleared %s highlights of type %s", count, highlight_type.name)
         return count
 
     def get_highlights_for_region(self, start: int, end: int) -> List[HexHighlight]:
@@ -264,7 +264,7 @@ class HexHighlighter:
         """
         highlight = self.get_highlight_by_id(highlight_id)
         if not highlight:
-            logger.debug(f"Highlight ID {highlight_id} not found for update")
+            logger.debug("Highlight ID %s not found for update", highlight_id)
             return False
 
         # Update the highlight properties
@@ -272,7 +272,7 @@ class HexHighlighter:
             if hasattr(highlight, key):
                 setattr(highlight, key, value)
 
-        logger.debug(f"Updated highlight ID {highlight_id} with {kwargs}")
+        logger.debug("Updated highlight ID %s with %s", highlight_id, kwargs)
         return True
 
     def add_bookmark(self, offset: int, size: int = 1, description: str = "",

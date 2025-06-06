@@ -75,7 +75,7 @@ class ProtocolFingerprinter:
                 self._save_signatures()
 
         except Exception as e:
-            self.logger.error(f"Error loading signatures: {e}")
+            self.logger.error("Error loading signatures: %s", e)
             self._initialize_signatures()
 
     def _save_signatures(self):
@@ -93,7 +93,7 @@ class ProtocolFingerprinter:
             self.logger.info(f"Saved {len(self.signatures)} protocol signatures")
 
         except Exception as e:
-            self.logger.error(f"Error saving signatures: {e}")
+            self.logger.error("Error saving signatures: %s", e)
 
     def _initialize_signatures(self):
         """
@@ -351,7 +351,7 @@ class ProtocolFingerprinter:
             return None
 
         except Exception as e:
-            self.logger.error(f"Error analyzing traffic: {e}")
+            self.logger.error("Error analyzing traffic: %s", e)
             self.logger.error(traceback.format_exc())
             return None
 
@@ -404,7 +404,7 @@ class ProtocolFingerprinter:
             return result
 
         except Exception as e:
-            self.logger.error(f"Error parsing packet: {e}")
+            self.logger.error("Error parsing packet: %s", e)
             return None
 
     def generate_response(self, protocol_id: str, request_packet: Union[bytes, bytearray],
@@ -464,7 +464,7 @@ class ProtocolFingerprinter:
             return bytes(response)
 
         except Exception as e:
-            self.logger.error(f"Error generating response: {e}")
+            self.logger.error("Error generating response: %s", e)
             return None
 
     def _learn_new_signature(self, packet_data: Union[bytes, bytearray], port: Optional[int] = None) -> bool:
@@ -527,11 +527,11 @@ class ProtocolFingerprinter:
             # Save signatures
             self._save_signatures()
 
-            self.logger.info(f"Learned new protocol signature: {signature_id}")
+            self.logger.info("Learned new protocol signature: %s", signature_id)
             return True
 
         except Exception as e:
-            self.logger.error(f"Error learning new signature: {e}")
+            self.logger.error("Error learning new signature: %s", e)
             return False
 
     def _calculate_similarity(self, data1: Union[bytes, bytearray], data2: Union[bytes, bytearray]) -> float:

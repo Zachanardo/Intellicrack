@@ -64,9 +64,9 @@ class IncrementalAnalysisManager:
         if self.enable_caching:
             try:
                 os.makedirs(self.cache_dir, exist_ok=True)
-                self.logger.info(f"Cache directory initialized: {self.cache_dir}")
+                self.logger.info("Cache directory initialized: %s", self.cache_dir)
             except OSError as e:
-                self.logger.error(f"Failed to create cache directory: {e}")
+                self.logger.error("Failed to create cache directory: %s", e)
                 self.enable_caching = False
 
         # Load cache index
@@ -97,7 +97,7 @@ class IncrementalAnalysisManager:
                 self._cleanup_invalid_entries()
 
             except (json.JSONDecodeError, IOError) as e:
-                self.logger.error(f"Error loading cache index: {e}")
+                self.logger.error("Error loading cache index: %s", e)
                 self.cache = {}
         else:
             self.logger.info("No existing cache index found")
@@ -132,7 +132,7 @@ class IncrementalAnalysisManager:
             return True
 
         except (IOError, OSError) as e:
-            self.logger.error(f"Error saving cache index: {e}")
+            self.logger.error("Error saving cache index: %s", e)
 
             # Restore backup if available
             backup_path = index_path + '.backup'
@@ -167,7 +167,7 @@ class IncrementalAnalysisManager:
 
         # Remove invalid entries
         for binary_hash in invalid_hashes:
-            self.logger.warning(f"Removing invalid cache entry: {binary_hash}")
+            self.logger.warning("Removing invalid cache entry: %s", binary_hash)
             self._remove_cache_entry(binary_hash)
 
     def set_binary(self, binary_path: str) -> bool:
@@ -181,7 +181,7 @@ class IncrementalAnalysisManager:
             True if binary is found in cache, False if new analysis needed
         """
         if not os.path.exists(binary_path):
-            self.logger.error(f"Binary not found: {binary_path}")
+            self.logger.error("Binary not found: %s", binary_path)
             return False
 
         self.current_binary = os.path.abspath(binary_path)
@@ -196,9 +196,9 @@ class IncrementalAnalysisManager:
         is_cached = self.current_binary_hash in self.cache
 
         if is_cached:
-            self.logger.info(f"Binary found in cache: {binary_path}")
+            self.logger.info("Binary found in cache: %s", binary_path)
         else:
-            self.logger.info(f"Binary not found in cache: {binary_path}")
+            self.logger.info("Binary not found in cache: %s", binary_path)
 
         return is_cached
 
@@ -223,7 +223,7 @@ class IncrementalAnalysisManager:
             return hash_sha256.hexdigest()
 
         except (IOError, OSError) as e:
-            self.logger.error(f"Error calculating file hash: {e}")
+            self.logger.error("Error calculating file hash: %s", e)
             return None
 
     def get_cached_analysis(self, analysis_type: str) -> Optional[Any]:
@@ -250,18 +250,18 @@ class IncrementalAnalysisManager:
         cache_file = cache_entry[analysis_type]
 
         if not isinstance(cache_file, str) or not os.path.exists(cache_file):
-            self.logger.warning(f"Cache file not found: {cache_file}")
+            self.logger.warning("Cache file not found: %s", cache_file)
             return None
 
         try:
             with open(cache_file, 'rb') as f:
                 result = pickle.load(f)
 
-            self.logger.info(f"Loaded cached analysis: {analysis_type}")
+            self.logger.info("Loaded cached analysis: %s", analysis_type)
             return result
 
         except (pickle.PickleError, IOError) as e:
-            self.logger.error(f"Error loading cache file: {e}")
+            self.logger.error("Error loading cache file: %s", e)
             return None
 
     def cache_analysis(self, analysis_type: str, results: Any) -> bool:
@@ -300,7 +300,7 @@ class IncrementalAnalysisManager:
             self.cache[self.current_binary_hash][analysis_type] = cache_file
 
             if self._save_cache_index():
-                self.logger.info(f"Cached analysis results: {analysis_type}")
+                self.logger.info("Cached analysis results: %s", analysis_type)
                 return True
             else:
                 # Clean up cache file if index save failed
@@ -309,7 +309,7 @@ class IncrementalAnalysisManager:
                 return False
 
         except (pickle.PickleError, IOError) as e:
-            self.logger.error(f"Error caching analysis results: {e}")
+            self.logger.error("Error caching analysis results: %s", e)
             return False
 
     def clear_cache(self, binary_hash: Optional[str] = None) -> bool:
@@ -345,7 +345,7 @@ class IncrementalAnalysisManager:
             True if removal successful, False otherwise
         """
         if binary_hash not in self.cache:
-            self.logger.warning(f"Binary not found in cache: {binary_hash}")
+            self.logger.warning("Binary not found in cache: %s", binary_hash)
             return False
 
         cache_entry = self.cache[binary_hash]
@@ -356,15 +356,15 @@ class IncrementalAnalysisManager:
                 if os.path.exists(cache_file):
                     try:
                         os.remove(cache_file)
-                        self.logger.debug(f"Removed cache file: {cache_file}")
+                        self.logger.debug("Removed cache file: %s", cache_file)
                     except OSError as e:
-                        self.logger.error(f"Failed to remove cache file {cache_file}: {e}")
+                        self.logger.error("Failed to remove cache file %s: %s", cache_file, e)
 
         # Remove from cache index
         del self.cache[binary_hash]
 
         if self._save_cache_index():
-            self.logger.info(f"Cleared cache for binary: {binary_hash}")
+            self.logger.info("Cleared cache for binary: %s", binary_hash)
             return True
         else:
             return False
@@ -437,7 +437,7 @@ class IncrementalAnalysisManager:
                 cleaned_count += 1
 
         if cleaned_count > 0:
-            self.logger.info(f"Cleaned up {cleaned_count} old cache entries")
+            self.logger.info("Cleaned up %s old cache entries", cleaned_count)
 
         return cleaned_count
 

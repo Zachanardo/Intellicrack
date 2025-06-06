@@ -102,7 +102,7 @@ class AdvancedPayloadGenerator:
             self._generic_bypass_payload
         )
 
-        self.logger.debug(f"Selected generator: {generator.__name__}")
+        self.logger.debug("Selected generator: %s", generator.__name__)
 
         payload_bytes = generator(strategy)
         if payload_bytes:
@@ -125,7 +125,7 @@ class AdvancedPayloadGenerator:
         Returns:
             bytes: Assembled machine code ready for injection at the target function address
         """
-        self.logger.debug(f"Generating function hijack payload for strategy: {strategy}")
+        self.logger.debug("Generating function hijack payload for strategy: %s", strategy)
 
         hijack_template = """
         mov rax, 1      ; Return success
@@ -148,7 +148,7 @@ class AdvancedPayloadGenerator:
         Returns:
             bytes: Assembled machine code for memory manipulation
         """
-        self.logger.debug(f"Generating memory manipulation payload for strategy: {strategy}")
+        self.logger.debug("Generating memory manipulation payload for strategy: %s", strategy)
 
         manipulation_templates = [
             """
@@ -183,7 +183,7 @@ class AdvancedPayloadGenerator:
         Returns:
             bytes: Assembled machine code payload optimized for license validation bypass
         """
-        self.logger.debug(f"Generating license validation bypass payload for strategy: {strategy}")
+        self.logger.debug("Generating license validation bypass payload for strategy: %s", strategy)
 
         bypass_techniques = [
             """
@@ -219,7 +219,7 @@ class AdvancedPayloadGenerator:
         Returns:
             bytes: Assembled machine code payload for cryptographic validation bypass
         """
-        self.logger.debug(f"Generating crypto bypass payload for strategy: {strategy}")
+        self.logger.debug("Generating crypto bypass payload for strategy: %s", strategy)
 
         crypto_bypass_techniques = [
             """
@@ -252,7 +252,7 @@ class AdvancedPayloadGenerator:
         Returns:
             bytes: Assembled machine code payload with generic bypass techniques
         """
-        self.logger.debug(f"Generating generic bypass payload for strategy: {strategy}")
+        self.logger.debug("Generating generic bypass payload for strategy: %s", strategy)
 
         generic_techniques = [
             """
@@ -294,13 +294,13 @@ class AdvancedPayloadGenerator:
 
         try:
             formatted_assembly = "\n".join(f"{i+1}: {line}" for i, line in enumerate(assembly_code.split('\n')))
-            self.logger.debug(f"Assembling x86_64 code:\n{formatted_assembly}")
+            self.logger.debug("Assembling x86_64 code:\n%s", formatted_assembly)
 
             ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_64)
             encoding, count = ks.asm(assembly_code)
 
             if not encoding:
-                self.logger.warning(f"Assembly produced empty encoding for code:\n{formatted_assembly}")
+                self.logger.warning("Assembly produced empty encoding for code:\n%s", formatted_assembly)
                 return None
 
             self.logger.debug(f"Successfully assembled {count} instructions ({len(encoding)} bytes)")
@@ -308,8 +308,8 @@ class AdvancedPayloadGenerator:
 
         except Exception as e:
             error_trace = traceback.format_exc()
-            self.logger.error(f"Assembly error: {e}")
-            self.logger.debug(f"Assembly error traceback:\n{error_trace}")
+            self.logger.error("Assembly error: %s", e)
+            self.logger.debug("Assembly error traceback:\n%s", error_trace)
             return None
 
 

@@ -279,7 +279,7 @@ class HexViewerDialog(QDialog):
             True if the file was loaded successfully, False otherwise
         """
         try:
-            logger.info(f"HexDialog.load_file: Attempting to load {file_path}, read_only={read_only}")
+            logger.info("HexDialog.load_file: Attempting to load %s, read_only=%s", file_path, read_only)
 
             # Check if file exists and is accessible
             if not os.path.exists(file_path):
@@ -298,9 +298,9 @@ class HexViewerDialog(QDialog):
             # Get file size before loading
             try:
                 file_size = os.path.getsize(file_path)
-                logger.debug(f"File size: {file_size} bytes")
+                logger.debug("File size: %s bytes", file_size)
             except Exception as e:
-                logger.warning(f"Could not get file size: {e}")
+                logger.warning("Could not get file size: %s", e)
 
             # Attempt to load the file
             result = self.hex_viewer.load_file(file_path, read_only)
@@ -321,7 +321,7 @@ class HexViewerDialog(QDialog):
                 self.hex_viewer.viewport().update()
                 QApplication.processEvents()  # Process pending UI events
 
-                logger.info(f"Successfully loaded file {file_path} in {mode_str} mode")
+                logger.info("Successfully loaded file %s in %s mode", file_path, mode_str)
             else:
                 error_msg = f"Failed to load file: {file_path}"
                 logger.error(error_msg)
@@ -465,7 +465,7 @@ class HexViewerDialog(QDialog):
                                 logger.debug(f"Can't show 32-bit value - got {len(data)} bytes, need 4")
                         except Exception as e:
                             value_str = " | Value: <error>"
-                            logger.error(f"Error unpacking 32-bit value: {e}")
+                            logger.error("Error unpacking 32-bit value: %s", e)
                     elif selection_size == 8:
                         # 64-bit
                         import struct
@@ -481,7 +481,7 @@ class HexViewerDialog(QDialog):
                                 logger.debug(f"Can't show 64-bit value - got {len(data)} bytes, need 8")
                         except Exception as e:
                             value_str = " | Value: <error>"
-                            logger.error(f"Error unpacking 64-bit value: {e}")
+                            logger.error("Error unpacking 64-bit value: %s", e)
 
             info += f" | Selection: 0x{start:X}-0x{end-1:X} ({end-start} bytes){value_str}"
 

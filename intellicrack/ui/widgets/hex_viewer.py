@@ -197,7 +197,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
             self.save_btn.setEnabled(not self.read_only)
             
         except Exception as e:
-            logger.error(f"Failed to load data: {e}")
+            logger.error("Failed to load data: %s", e)
             self.status_label.setText(f"Error loading data: {e}")
     
     def _display_hex_fallback(self, data: bytes):
@@ -252,7 +252,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                 self.load_file(file_path)
                 
         except Exception as e:
-            logger.error(f"Failed to open file dialog: {e}")
+            logger.error("Failed to open file dialog: %s", e)
             self.status_label.setText(f"Error: {e}")
     
     def load_file(self, file_path: str):
@@ -269,7 +269,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
             self.load_data(data, file_path)
             
         except Exception as e:
-            logger.error(f"Failed to load file {file_path}: {e}")
+            logger.error("Failed to load file %s: %s", file_path, e)
             self.status_label.setText(f"Failed to load file: {e}")
     
     def save_file(self):
@@ -284,7 +284,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
             self.status_label.setText("File saved successfully")
             
         except Exception as e:
-            logger.error(f"Failed to save file: {e}")
+            logger.error("Failed to save file: %s", e)
             self.status_label.setText(f"Save failed: {e}")
     
     def open_search(self):
@@ -307,7 +307,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                 if perf_widget:
                     perf_widget.show()
             except Exception as e:
-                logger.error(f"Failed to show performance monitor: {e}")
+                logger.error("Failed to show performance monitor: %s", e)
                 self.status_label.setText("Performance monitor not available")
     
     def set_read_only(self, read_only: bool):
@@ -745,7 +745,7 @@ class LogViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                     with open(filename, 'w') as f:
                         f.write('\n'.join(self.log_entries))
                 except Exception as e:
-                    logger.error(f"Failed to save log: {e}")
+                    logger.error("Failed to save log: %s", e)
 
 
 # Export all widgets

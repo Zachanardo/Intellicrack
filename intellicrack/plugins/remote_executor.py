@@ -102,7 +102,7 @@ class RemotePluginExecutor:
                 return results
             else:
                 error = response_data.get("error", "Unknown error")
-                self.logger.error(f"Remote execution error: {error}")
+                self.logger.error("Remote execution error: %s", error)
                 return [f"Remote execution error: {error}"]
 
         except ConnectionError as e:
@@ -200,7 +200,7 @@ class RemotePluginExecutor:
 
                 except Exception as e:
                     # Create error response
-                    logger.error(f"Plugin execution error: {e}")
+                    logger.error("Plugin execution error: %s", e)
                     response = {
                         "status": "error",
                         "error": str(e)
@@ -223,7 +223,7 @@ class RemotePluginExecutor:
                 client_socket.sendall(response_data)
 
             except Exception as e:
-                logger.error(f"Error handling client: {e}")
+                logger.error("Error handling client: %s", e)
 
                 # Send error response
                 try:
@@ -251,13 +251,13 @@ class RemotePluginExecutor:
             server_socket.bind((host, port))
             server_socket.listen(5)
 
-            logger.info(f"Remote plugin execution server started on {host}:{port}")
+            logger.info("Remote plugin execution server started on %s:%s", host, port)
 
             # Accept connections
             while True:
                 try:
                     client_socket, addr = server_socket.accept()
-                    logger.info(f"Accepted connection from {addr}")
+                    logger.info("Accepted connection from %s", addr)
 
                     # Handle client in a new thread
                     client_thread = threading.Thread(
@@ -271,10 +271,10 @@ class RemotePluginExecutor:
                     logger.info("Server shutting down")
                     break
                 except Exception as e:
-                    logger.error(f"Error accepting connection: {e}")
+                    logger.error("Error accepting connection: %s", e)
 
         except Exception as e:
-            logger.error(f"Server error: {e}")
+            logger.error("Server error: %s", e)
         finally:
             try:
                 server_socket.close()
@@ -294,7 +294,7 @@ class RemotePluginExecutor:
                 s.connect((self.remote_host, self.remote_port))
                 return True
         except Exception as e:
-            self.logger.error(f"Connection test failed: {e}")
+            self.logger.error("Connection test failed: %s", e)
             return False
 
 

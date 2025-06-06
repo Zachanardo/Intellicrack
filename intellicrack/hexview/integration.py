@@ -57,7 +57,7 @@ def show_enhanced_hex_viewer(app_instance, file_path: Optional[str] = None, read
         if not file_path:
             if hasattr(app_instance, "binary_path") and app_instance.binary_path:
                 file_path = app_instance.binary_path
-                logger.debug(f"Using current binary path: {file_path}")
+                logger.debug("Using current binary path: %s", file_path)
             else:
                 # Show a message box if no file is loaded
                 logger.warning("No file path provided and no binary loaded")
@@ -70,7 +70,7 @@ def show_enhanced_hex_viewer(app_instance, file_path: Optional[str] = None, read
 
         # Validate file before creating dialog
         if not os.path.exists(file_path):
-            logger.error(f"File does not exist: {file_path}")
+            logger.error("File does not exist: %s", file_path)
             QMessageBox.critical(
                 app_instance,
                 "Error Opening File",
@@ -80,7 +80,7 @@ def show_enhanced_hex_viewer(app_instance, file_path: Optional[str] = None, read
 
         # Check for read permission
         if not os.access(file_path, os.R_OK):
-            logger.error(f"No permission to read file: {file_path}")
+            logger.error("No permission to read file: %s", file_path)
             QMessageBox.critical(
                 app_instance,
                 "Error Opening File",
@@ -91,9 +91,9 @@ def show_enhanced_hex_viewer(app_instance, file_path: Optional[str] = None, read
         # Check file size
         try:
             file_size = os.path.getsize(file_path)
-            logger.debug(f"File size: {file_size} bytes")
+            logger.debug("File size: %s bytes", file_size)
             if file_size == 0:
-                logger.warning(f"File is empty: {file_path}")
+                logger.warning("File is empty: %s", file_path)
                 QMessageBox.warning(
                     app_instance,
                     "Empty File",
@@ -101,10 +101,10 @@ def show_enhanced_hex_viewer(app_instance, file_path: Optional[str] = None, read
                 )
                 # Continue anyway - we'll show an empty hex view
         except Exception as e:
-            logger.warning(f"Could not get file size: {e}")
+            logger.warning("Could not get file size: %s", e)
 
         # Create the dialog
-        logger.debug(f"Creating HexViewerDialog for {file_path}, read_only={read_only}")
+        logger.debug("Creating HexViewerDialog for %s, read_only=%s", file_path, read_only)
         dialog = HexViewerDialog(app_instance, file_path, read_only)
 
         # Show the dialog (non-modal)
@@ -115,7 +115,7 @@ def show_enhanced_hex_viewer(app_instance, file_path: Optional[str] = None, read
         # Force update after showing
         dialog.hex_viewer.viewport().update()
 
-        logger.info(f"Opened enhanced hex viewer for {file_path}")
+        logger.info("Opened enhanced hex viewer for %s", file_path)
         return dialog
     except Exception as e:
         logger.error(f"Error showing enhanced hex viewer: {e}", exc_info=True)
@@ -209,7 +209,7 @@ def add_hex_viewer_menu(app_instance, menu_name: str = None):
     edit_hex_action.setStatusTip("Open binary in editable hex editor")
     menu.addAction(edit_hex_action)
 
-    logger.info(f"Added Enhanced Hex Viewer options to {menu_name} menu")
+    logger.info("Added Enhanced Hex Viewer options to %s menu", menu_name)
 
 
 def add_hex_viewer_toolbar_button(app_instance, toolbar: Optional[QToolBar] = None):
@@ -302,7 +302,7 @@ def integrate_enhanced_hex_viewer(app_instance):
         logger.info("Hex viewer integration completed successfully")
         return True
     except Exception as e:
-        logger.error(f"Error integrating enhanced hex viewer: {e}")
+        logger.error("Error integrating enhanced hex viewer: %s", e)
         return False
 
 
@@ -322,12 +322,12 @@ def hex_viewer_ai_tool(func):
     """
     def wrapper(app_instance, parameters):
         try:
-            logger.debug(f"Calling hex viewer AI tool: {func.__name__}")
+            logger.debug("Calling hex viewer AI tool: %s", func.__name__)
             result = func(app_instance, parameters)
-            logger.debug(f"Hex viewer AI tool {func.__name__} completed successfully")
+            logger.debug("Hex viewer AI tool %s completed successfully", func.__name__)
             return result
         except Exception as e:
-            logger.error(f"Error in hex viewer AI tool {func.__name__}: {e}")
+            logger.error("Error in hex viewer AI tool %s: %s", func.__name__, e)
             return {"error": str(e)}
 
     return wrapper

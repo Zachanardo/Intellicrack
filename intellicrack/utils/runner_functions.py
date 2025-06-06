@@ -44,7 +44,7 @@ def run_network_license_server(app_instance=None, **kwargs) -> Dict[str, Any]:
             return {"status": "error", "message": "Network license server not available"}
 
     except Exception as e:
-        logger.error(f"Error running network license server: {e}")
+        logger.error("Error running network license server: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -63,7 +63,7 @@ def run_ssl_tls_interceptor(app_instance=None, **kwargs) -> Dict[str, Any]:
             return {"status": "error", "message": "SSL/TLS interceptor not available"}
 
     except Exception as e:
-        logger.error(f"Error running SSL/TLS interceptor: {e}")
+        logger.error("Error running SSL/TLS interceptor: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -82,7 +82,7 @@ def run_protocol_fingerprinter(app_instance=None, **kwargs) -> Dict[str, Any]:
             return {"status": "error", "message": "Protocol fingerprinter not available"}
 
     except Exception as e:
-        logger.error(f"Error running protocol fingerprinter: {e}")
+        logger.error("Error running protocol fingerprinter: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -100,7 +100,7 @@ def run_cloud_license_hooker(app_instance=None, **kwargs) -> Dict[str, Any]:
             return {"status": "error", "message": "Cloud license hooker not available"}
 
     except Exception as e:
-        logger.error(f"Error running cloud license hooker: {e}")
+        logger.error("Error running cloud license hooker: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -126,7 +126,7 @@ def run_cfg_explorer(app_instance=None, binary_path: Optional[str] = None, **kwa
             return {"status": "error", "message": "CFG explorer not available"}
 
     except Exception as e:
-        logger.error(f"Error running CFG explorer: {e}")
+        logger.error("Error running CFG explorer: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -151,7 +151,7 @@ def run_concolic_execution(app_instance=None, binary_path: Optional[str] = None,
             return {"status": "error", "message": "Concolic execution not available"}
 
     except Exception as e:
-        logger.error(f"Error running concolic execution: {e}")
+        logger.error("Error running concolic execution: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -187,7 +187,7 @@ def run_enhanced_protection_scan(app_instance=None, binary_path: Optional[str] =
             return {"status": "error", "message": "Protection scanning not available"}
 
     except Exception as e:
-        logger.error(f"Error running enhanced protection scan: {e}")
+        logger.error("Error running enhanced protection scan: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -206,7 +206,7 @@ def run_visual_network_traffic_analyzer(app_instance=None, **kwargs) -> Dict[str
             return {"status": "error", "message": "Network traffic analyzer not available"}
 
     except Exception as e:
-        logger.error(f"Error running network traffic analyzer: {e}")
+        logger.error("Error running network traffic analyzer: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -231,7 +231,7 @@ def run_multi_format_analysis(app_instance=None, binary_path: Optional[str] = No
             return {"status": "error", "message": "Multi-format analyzer not available"}
 
     except Exception as e:
-        logger.error(f"Error running multi-format analysis: {e}")
+        logger.error("Error running multi-format analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -252,7 +252,7 @@ def run_distributed_processing(app_instance=None, **kwargs) -> Dict[str, Any]:
             return {"status": "error", "message": "Distributed processing not available"}
 
     except Exception as e:
-        logger.error(f"Error running distributed processing: {e}")
+        logger.error("Error running distributed processing: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -374,7 +374,7 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> Dict[str, Any]:
             return {"status": "error", "message": "GPU accelerator not available"}
 
     except Exception as e:
-        logger.error(f"Error running GPU accelerated analysis: {e}")
+        logger.error("Error running GPU accelerated analysis: %s", e)
         if app_instance:
             app_instance.update_output.emit(f"❌ Error in GPU analysis: {e}")
         return {"status": "error", "message": str(e)}
@@ -396,7 +396,7 @@ def run_ai_guided_patching(app_instance=None, binary_path: Optional[str] = None,
         return {"status": "success", "message": f"Autonomous patching complete. Applied {patches_applied} patches"}
 
     except Exception as e:
-        logger.error(f"Error running autonomous patching: {e}")
+        logger.error("Error running autonomous patching: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -519,7 +519,7 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
         return {"status": "success", "message": "Ghidra analysis started"}
 
     except Exception as e:
-        logger.error(f"Error running Ghidra analysis: {e}")
+        logger.error("Error running Ghidra analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -727,7 +727,7 @@ def run_symbolic_execution(app_instance=None, binary_path: Optional[str] = None,
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
-        logger.info(f"Running symbolic execution on {binary_path}")
+        logger.info("Running symbolic execution on %s", binary_path)
 
         # Create and run the symbolic execution engine
         engine = SymbolicExecutionEngine(binary_path)
@@ -768,7 +768,7 @@ def run_symbolic_execution(app_instance=None, binary_path: Optional[str] = None,
         }
 
     except Exception as e:
-        logger.error(f"Error running symbolic execution: {e}")
+        logger.error("Error running symbolic execution: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -791,7 +791,7 @@ def run_incremental_analysis(app_instance=None, binary_path: Optional[str] = Non
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
-        logger.info(f"Running incremental analysis on {binary_path}")
+        logger.info("Running incremental analysis on %s", binary_path)
 
         # Create and run the incremental analysis manager
         manager = IncrementalAnalysisManager()
@@ -821,7 +821,7 @@ def run_incremental_analysis(app_instance=None, binary_path: Optional[str] = Non
             }
 
     except Exception as e:
-        logger.error(f"Error running incremental analysis: {e}")
+        logger.error("Error running incremental analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -844,7 +844,7 @@ def run_memory_optimized_analysis(app_instance=None, binary_path: Optional[str] 
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
-        logger.info(f"Running memory-optimized analysis on {binary_path}")
+        logger.info("Running memory-optimized analysis on %s", binary_path)
 
         # Create and use the memory-optimized loader
         loader = MemoryOptimizedBinaryLoader()
@@ -885,7 +885,7 @@ def run_memory_optimized_analysis(app_instance=None, binary_path: Optional[str] 
             raise e
 
     except Exception as e:
-        logger.error(f"Error running memory-optimized analysis: {e}")
+        logger.error("Error running memory-optimized analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -908,7 +908,7 @@ def run_taint_analysis(app_instance=None, binary_path: Optional[str] = None, **k
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
-        logger.info(f"Running taint analysis on {binary_path}")
+        logger.info("Running taint analysis on %s", binary_path)
 
         # Create and run the taint analysis engine
         engine = TaintAnalysisEngine()
@@ -929,7 +929,7 @@ def run_taint_analysis(app_instance=None, binary_path: Optional[str] = None, **k
         }
 
     except Exception as e:
-        logger.error(f"Error running taint analysis: {e}")
+        logger.error("Error running taint analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -955,7 +955,7 @@ def run_rop_chain_generator(app_instance=None, binary_path: Optional[str] = None
         return {"status": "success", "message": "ROP chain generation completed"}
 
     except Exception as e:
-        logger.error(f"Error running ROP chain generation: {e}")
+        logger.error("Error running ROP chain generation: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -976,7 +976,7 @@ def run_qemu_analysis(app_instance=None, binary_path: Optional[str] = None, **kw
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
-        logger.info(f"Running QEMU analysis on {binary_path}")
+        logger.info("Running QEMU analysis on %s", binary_path)
 
         # Use the working implementation from qemu_emulator.py
         from ..core.processing.qemu_emulator import run_qemu_analysis as qemu_run
@@ -1006,7 +1006,7 @@ def run_qemu_analysis(app_instance=None, binary_path: Optional[str] = None, **kw
         return results
 
     except Exception as e:
-        logger.error(f"Error running QEMU analysis: {e}")
+        logger.error("Error running QEMU analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1052,7 +1052,7 @@ def run_qiling_emulation(app_instance=None, binary_path: Optional[str] = None, *
         return {"status": "success", "message": "Qiling emulation complete", "results": results}
 
     except Exception as e:
-        logger.error(f"Error running Qiling emulation: {e}")
+        logger.error("Error running Qiling emulation: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1072,7 +1072,7 @@ def run_selected_analysis(app_instance=None, analysis_type: Optional[str] = None
         if not analysis_type:
             return {"status": "error", "message": "No analysis type specified"}
 
-        logger.info(f"Running selected analysis: {analysis_type}")
+        logger.info("Running selected analysis: %s", analysis_type)
 
         # Map analysis types to runner functions
         analysis_runners = {
@@ -1101,7 +1101,7 @@ def run_selected_analysis(app_instance=None, analysis_type: Optional[str] = None
         return runner(app_instance, **kwargs)
 
     except Exception as e:
-        logger.error(f"Error running selected analysis: {e}")
+        logger.error("Error running selected analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1121,7 +1121,7 @@ def run_selected_patching(app_instance=None, patch_type: Optional[str] = None, *
         if not patch_type:
             return {"status": "error", "message": "No patch type specified"}
 
-        logger.info(f"Running selected patching: {patch_type}")
+        logger.info("Running selected patching: %s", patch_type)
 
         # Map patch types to functions/modules
         patch_runners = {
@@ -1140,7 +1140,7 @@ def run_selected_patching(app_instance=None, patch_type: Optional[str] = None, *
         return runner(app_instance, **kwargs)
 
     except Exception as e:
-        logger.error(f"Error running selected patching: {e}")
+        logger.error("Error running selected patching: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1170,7 +1170,7 @@ def run_memory_analysis(app_instance=None, binary_path: Optional[str] = None, **
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
-        logger.info(f"Running memory analysis on {binary_path}")
+        logger.info("Running memory analysis on %s", binary_path)
 
         results = {
             "status": "success",
@@ -1219,7 +1219,7 @@ def run_memory_analysis(app_instance=None, binary_path: Optional[str] = None, **
                 results["static_analysis"]["estimated_memory_mb"] = estimated_memory / (1024 * 1024)
 
             except Exception as e:
-                logger.error(f"Error in static memory analysis: {e}")
+                logger.error("Error in static memory analysis: %s", e)
                 results["static_analysis"]["error"] = str(e)
 
         # Dynamic analysis if process is running
@@ -1265,16 +1265,16 @@ def run_memory_analysis(app_instance=None, binary_path: Optional[str] = None, **
                             })
 
                     except Exception as e:
-                        logger.error(f"Error analyzing memory maps: {e}")
+                        logger.error("Error analyzing memory maps: %s", e)
 
             except Exception as e:
-                logger.error(f"Error in dynamic memory analysis: {e}")
+                logger.error("Error in dynamic memory analysis: %s", e)
                 results["dynamic_analysis"]["error"] = str(e)
 
         return results
 
     except Exception as e:
-        logger.error(f"Error running memory analysis: {e}")
+        logger.error("Error running memory analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1305,7 +1305,7 @@ def run_network_analysis(app_instance=None, binary_path: Optional[str] = None, *
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
-        logger.info(f"Running network analysis on {binary_path}")
+        logger.info("Running network analysis on %s", binary_path)
 
         results = {
             "status": "success",
@@ -1391,7 +1391,7 @@ def run_network_analysis(app_instance=None, binary_path: Optional[str] = None, *
                         results["static_analysis"]["embedded_ips"] = unique_ips
 
             except Exception as e:
-                logger.error(f"Error in static network analysis: {e}")
+                logger.error("Error in static network analysis: %s", e)
                 results["static_analysis"]["error"] = str(e)
 
         # Dynamic analysis if available
@@ -1432,7 +1432,7 @@ def run_network_analysis(app_instance=None, binary_path: Optional[str] = None, *
                         results["dynamic_analysis"]["connection_summary"] = connection_summary
 
                 except Exception as e:
-                    logger.error(f"Error checking active connections: {e}")
+                    logger.error("Error checking active connections: %s", e)
 
             # Check for traffic capture data
             if hasattr(app_instance, 'traffic_recorder'):
@@ -1451,12 +1451,12 @@ def run_network_analysis(app_instance=None, binary_path: Optional[str] = None, *
                             })
 
                 except Exception as e:
-                    logger.error(f"Error getting traffic summary: {e}")
+                    logger.error("Error getting traffic summary: %s", e)
 
         return results
 
     except Exception as e:
-        logger.error(f"Error running network analysis: {e}")
+        logger.error("Error running network analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1723,7 +1723,7 @@ def run_deep_license_analysis(app_instance=None, binary_path: Optional[str] = No
             return {"status": "error", "message": "Deep license analysis not available"}
 
     except Exception as e:
-        logger.error(f"Error running deep license analysis: {e}")
+        logger.error("Error running deep license analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1749,7 +1749,7 @@ def run_frida_analysis(app_instance=None, binary_path: Optional[str] = None, **k
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
-        logger.info(f"Starting Frida analysis on {binary_path}")
+        logger.info("Starting Frida analysis on %s", binary_path)
 
         if app_instance:
             app_instance.update_output.emit(log_message(
@@ -1909,7 +1909,7 @@ def run_frida_analysis(app_instance=None, binary_path: Optional[str] = None, **k
         }
 
     except Exception as e:
-        logger.error(f"Error running Frida analysis: {e}")
+        logger.error("Error running Frida analysis: %s", e)
         error_msg = f"Frida analysis failed: {str(e)}"
 
         if app_instance:
@@ -1940,7 +1940,7 @@ def run_dynamic_instrumentation(app_instance=None, binary_path: Optional[str] = 
         if not binary_path:
             return {"status": "error", "message": "No binary path provided"}
 
-        logger.info(f"Starting dynamic instrumentation on {binary_path}")
+        logger.info("Starting dynamic instrumentation on %s", binary_path)
 
         if app_instance:
             app_instance.update_output.emit(log_message(
@@ -1994,7 +1994,7 @@ def run_dynamic_instrumentation(app_instance=None, binary_path: Optional[str] = 
             return result
 
     except Exception as e:
-        logger.error(f"Error running dynamic instrumentation: {e}")
+        logger.error("Error running dynamic instrumentation: %s", e)
         error_msg = f"Dynamic instrumentation failed: {str(e)}"
 
         if app_instance:
@@ -2022,7 +2022,7 @@ def run_comprehensive_analysis(app_instance=None, binary_path: Optional[str] = N
         return comprehensive_analysis(binary_path)
 
     except Exception as e:
-        logger.error(f"Error in comprehensive analysis: {e}")
+        logger.error("Error in comprehensive analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2122,7 +2122,7 @@ def run_radare2_analysis(app_instance=None, binary_path: Optional[str] = None, *
                 }
 
     except Exception as e:
-        logger.error(f"Error in Radare2 analysis: {e}")
+        logger.error("Error in Radare2 analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2174,7 +2174,7 @@ def run_frida_script(app_instance=None, binary_path: Optional[str] = None,
                 if message['type'] == 'send':
                     logger.info(f"Frida: {message['payload']}")
                 elif message['type'] == 'error':
-                    logger.error(f"Frida error: {message}")
+                    logger.error("Frida error: %s", message)
 
             script.on('message', on_message)
 
@@ -2201,7 +2201,7 @@ def run_frida_script(app_instance=None, binary_path: Optional[str] = None,
             }
 
     except Exception as e:
-        logger.error(f"Error running Frida script: {e}")
+        logger.error("Error running Frida script: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2258,7 +2258,7 @@ def run_autonomous_patching(app_instance=None, **kwargs) -> Dict[str, Any]:
         }
         
     except Exception as e:
-        logger.error(f"Error running autonomous patching: {e}")
+        logger.error("Error running autonomous patching: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2309,7 +2309,7 @@ def run_ghidra_analysis_gui(app_instance=None, **kwargs) -> Dict[str, Any]:
         return results
         
     except Exception as e:
-        logger.error(f"Error running Ghidra GUI analysis: {e}")
+        logger.error("Error running Ghidra GUI analysis: %s", e)
         if app_instance:
             app_instance.update_output.emit(log_message(f"[Ghidra] Error: {str(e)}"))
             app_instance.update_status.emit("Ghidra analysis failed")

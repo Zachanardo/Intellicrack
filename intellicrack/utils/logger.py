@@ -337,7 +337,7 @@ def setup_persistent_logging(log_dir: str = None, log_name: str = "intellicrack"
         backup_count=backup_count
     )
 
-    logger.info(f"Persistent logging initialized. Log file: {log_file}")
+    logger.info("Persistent logging initialized. Log file: %s", log_file)
     logger.info(f"Log rotation: {'Enabled' if enable_rotation else 'Disabled'}")
     logger.info(f"Max file size: {max_bytes / 1024 / 1024:.1f} MB, Backup count: {backup_count}")
 

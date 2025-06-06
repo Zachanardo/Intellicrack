@@ -235,7 +235,7 @@ class CloudLicenseResponseGenerator:
 
         # Identify service
         service = self.identify_service(request)
-        self.logger.info(f"Identified service: {service}")
+        self.logger.info("Identified service: %s", service)
 
         # Determine response format
         response_format = self._determine_response_format(request)
@@ -522,13 +522,13 @@ class CloudLicenseResponseGenerator:
                 # Extract response template
                 self._extract_response_template(service, request, response)
 
-                self.logger.info(f"Learned from successful {service} license check")
+                self.logger.info("Learned from successful %s license check", service)
                 return True
 
             return False
 
         except Exception as e:
-            self.logger.error(f"Error learning from request: {e}")
+            self.logger.error("Error learning from request: %s", e)
             return False
 
     def _is_success_response(self, response: Dict[str, Any]) -> bool:
@@ -643,7 +643,7 @@ class CloudLicenseResponseGenerator:
             self.response_templates[service]['json'] = template
 
         except Exception as e:
-            self.logger.error(f"Error extracting JSON template: {e}")
+            self.logger.error("Error extracting JSON template: %s", e)
 
     def _extract_xml_template(self, service: str, response: Dict[str, Any]) -> None:
         """
@@ -666,7 +666,7 @@ class CloudLicenseResponseGenerator:
             self.response_templates[service]['xml'] = body
 
         except Exception as e:
-            self.logger.error(f"Error extracting XML template: {e}")
+            self.logger.error("Error extracting XML template: %s", e)
 
     def get_statistics(self) -> Dict[str, Any]:
         """
@@ -710,7 +710,7 @@ class CloudLicenseResponseGenerator:
 
             return True
         except Exception as e:
-            self.logger.error(f"Failed to enable network API hooks: {e}")
+            self.logger.error("Failed to enable network API hooks: %s", e)
             return False
 
     def disable_network_api_hooks(self) -> bool:
@@ -725,7 +725,7 @@ class CloudLicenseResponseGenerator:
             self.logger.info("Disabled network API hooks")
             return True
         except Exception as e:
-            self.logger.error(f"Failed to disable network API hooks: {e}")
+            self.logger.error("Failed to disable network API hooks: %s", e)
             return False
 
     def hook_winsock_api(self, api_name: str) -> bool:
@@ -739,10 +739,10 @@ class CloudLicenseResponseGenerator:
             bool: True if hook was successful, False otherwise
         """
         if api_name in self.hooked_apis['winsock']:
-            self.logger.info(f"Hooked Winsock API: {api_name}")
+            self.logger.info("Hooked Winsock API: %s", api_name)
             return True
         else:
-            self.logger.warning(f"Unknown Winsock API: {api_name}")
+            self.logger.warning("Unknown Winsock API: %s", api_name)
             return False
 
     def hook_wininet_api(self, api_name: str) -> bool:
@@ -756,10 +756,10 @@ class CloudLicenseResponseGenerator:
             bool: True if hook was successful, False otherwise
         """
         if api_name in self.hooked_apis['wininet']:
-            self.logger.info(f"Hooked WinINet API: {api_name}")
+            self.logger.info("Hooked WinINet API: %s", api_name)
             return True
         else:
-            self.logger.warning(f"Unknown WinINet API: {api_name}")
+            self.logger.warning("Unknown WinINet API: %s", api_name)
             return False
 
     def get_hooked_apis(self) -> Dict[str, List[str]]:
@@ -785,7 +785,7 @@ class CloudLicenseResponseGenerator:
         if not self.api_hooks_enabled:
             return {'status': 'passthrough', 'params': params}
 
-        self.logger.info(f"Intercepted {api_name} call with params: {params}")
+        self.logger.info("Intercepted %s call with params: %s", api_name, params)
 
         # Check if this is a license-related network call
         if self._is_license_related_call(api_name, params):
@@ -830,7 +830,7 @@ class CloudLicenseResponseGenerator:
         Returns:
             Dict containing the modified response
         """
-        self.logger.info(f"Handling license-related {api_name} call")
+        self.logger.info("Handling license-related %s call", api_name)
 
         # Generate a fake success response for license calls
         fake_response = {

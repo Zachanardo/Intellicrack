@@ -36,7 +36,7 @@ try:
         generate_complete_api_hooking_script,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import payload_generator: {e}")
+    logger.warning("Failed to import payload_generator: %s", e)
 
 try:
     from .adobe_injector import (
@@ -46,7 +46,7 @@ try:
         start_adobe_monitoring,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import adobe_injector: {e}")
+    logger.warning("Failed to import adobe_injector: %s", e)
 
 try:
     from .windows_activator import (
@@ -59,12 +59,12 @@ try:
         create_windows_activator,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import windows_activator: {e}")
+    logger.warning("Failed to import windows_activator: %s", e)
 
 try:
     from .memory_patcher import generate_launcher_script, setup_memory_patching
 except ImportError as e:
-    logger.warning(f"Failed to import memory_patcher: {e}")
+    logger.warning("Failed to import memory_patcher: %s", e)
 
 # Define package exports
 __all__ = [

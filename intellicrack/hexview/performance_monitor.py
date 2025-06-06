@@ -289,7 +289,7 @@ class PerformanceWidget(QWidget if PYQT5_AVAILABLE else object):
             self.update_patterns_tab(stats)
 
         except Exception as e:
-            logger.error(f"Error updating performance display: {e}")
+            logger.error("Error updating performance display: %s", e)
 
     def update_overview_tab(self, stats: Dict[str, Any]):
         """Update the overview tab."""
@@ -392,7 +392,7 @@ class PerformanceWidget(QWidget if PYQT5_AVAILABLE else object):
             self.optimization_status.setStyleSheet("color: blue; font-weight: bold;")
 
         except Exception as e:
-            logger.error(f"Auto-optimization failed: {e}")
+            logger.error("Auto-optimization failed: %s", e)
 
     def clear_stats(self):
         """Clear statistics history."""

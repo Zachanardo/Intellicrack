@@ -359,7 +359,7 @@ class IntellicrackMainWindow(QMainWindow):
             self.scan_vulnerabilities_button.setEnabled(True)
 
             self.update_status.emit(f"Selected: {os.path.basename(file_path)}")
-            self.logger.info(f"Selected binary file: {file_path}")
+            self.logger.info("Selected binary file: %s", file_path)
 
     def _run_analysis(self):
         """Run binary analysis."""

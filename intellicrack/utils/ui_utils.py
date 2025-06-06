@@ -83,13 +83,13 @@ def show_message(message: str, msg_type: MessageType = MessageType.INFO,
 
     # Log the message
     if msg_type == MessageType.ERROR:
-        logger.error(f"{title}: {message}")
+        logger.error("%s: %s", title, message)
     elif msg_type == MessageType.WARNING:
-        logger.warning(f"{title}: {message}")
+        logger.warning("%s: %s", title, message)
     elif msg_type == MessageType.DEBUG:
-        logger.debug(f"{title}: {message}")
+        logger.debug("%s: %s", title, message)
     else:
-        logger.info(f"{title}: {message}")
+        logger.info("%s: %s", title, message)
 
     # In a real UI implementation, this would show a dialog
     # For now, we just print to console

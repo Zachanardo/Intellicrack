@@ -97,10 +97,10 @@ class GPUAccelerationManager:
                     self.gpu_backend = 'pyopencl'
                     self.gpu_available = True
                     self.gpu_type = f'OpenCL ({best_platform.name}, {best_device.name})'
-                    self.logger.info(f"PyOpenCL GPU acceleration available: {self.gpu_type}")
+                    self.logger.info("PyOpenCL GPU acceleration available: %s", self.gpu_type)
 
             except Exception as e:
-                self.logger.debug(f"PyOpenCL initialization failed: {e}")
+                self.logger.debug("PyOpenCL initialization failed: %s", e)
         else:
             self.logger.info("PyOpenCL not available - install with: pip install pyopencl")
 
@@ -117,7 +117,7 @@ class GPUAccelerationManager:
                 self.gpu_type = 'CUDA (CuPy)'
                 self.logger.info("CuPy GPU acceleration available")
             except Exception as e:
-                self.logger.debug(f"CuPy initialization failed: {e}")
+                self.logger.debug("CuPy initialization failed: %s", e)
 
         # Only try Intel Extension for PyTorch if explicitly requested
         if not self.gpu_available and use_intel_pytorch and INTEL_PYTORCH_AVAILABLE:
@@ -128,9 +128,9 @@ class GPUAccelerationManager:
                     self.gpu_backend = 'intel_pytorch'
                     self.gpu_available = True
                     self.gpu_type = f'Intel XPU ({torch.xpu.get_device_name(0)})'
-                    self.logger.info(f"Intel PyTorch GPU acceleration available: {self.gpu_type}")
+                    self.logger.info("Intel PyTorch GPU acceleration available: %s", self.gpu_type)
             except Exception as e:
-                self.logger.debug(f"Intel PyTorch initialization failed: {e}")
+                self.logger.debug("Intel PyTorch initialization failed: %s", e)
 
         if not self.gpu_available:
             self.logger.info("No GPU acceleration available. Install pyopencl for universal GPU support: pip install pyopencl")
@@ -168,10 +168,10 @@ class GPUAccelerationManager:
             elif self.gpu_backend == 'cupy':
                 return self._cupy_pattern_matching(data, patterns)
             else:
-                self.logger.warning(f"Pattern matching not implemented for backend: {self.gpu_backend}")
+                self.logger.warning("Pattern matching not implemented for backend: %s", self.gpu_backend)
                 return self._cpu_pattern_matching(data, patterns)
         except Exception as e:
-            self.logger.error(f"GPU pattern matching failed: {e}")
+            self.logger.error("GPU pattern matching failed: %s", e)
             return self._cpu_pattern_matching(data, patterns)
 
     def _cpu_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
@@ -291,7 +291,7 @@ class GPUAccelerator:
         try:
             self._run_initial_benchmarks()
         except Exception as e:
-            self.logger.warning(f"Initial benchmark failed: {e}")
+            self.logger.warning("Initial benchmark failed: %s", e)
             # Don't let benchmark failure prevent GPU usage
 
     def _check_available_backends(self):
@@ -321,10 +321,10 @@ class GPUAccelerator:
                             'max_threads_per_block': device_props['maxThreadsPerBlock']
                         })
                 except Exception as e:
-                    self.logger.debug(f"Error getting CUDA device properties: {e}")
+                    self.logger.debug("Error getting CUDA device properties: %s", e)
 
             except Exception as e:
-                self.logger.debug(f"CUDA initialization failed: {e}")
+                self.logger.debug("CUDA initialization failed: %s", e)
 
         # Check for OpenCL
         if OPENCL_AVAILABLE:
@@ -348,10 +348,10 @@ class GPUAccelerator:
                                     'max_work_group_size': device.max_work_group_size
                                 })
                         except Exception as e:
-                            self.logger.debug(f"Error getting OpenCL devices for platform {platform.name}: {e}")
+                            self.logger.debug("Error getting OpenCL devices for platform %s: %s", platform.name, e)
 
             except Exception as e:
-                self.logger.debug(f"OpenCL initialization failed: {e}")
+                self.logger.debug("OpenCL initialization failed: %s", e)
 
         # Check for TensorFlow GPU
         if TENSORFLOW_AVAILABLE:
@@ -367,7 +367,7 @@ class GPUAccelerator:
                             'device_type': gpu.device_type
                         })
             except Exception as e:
-                self.logger.debug(f"TensorFlow GPU check failed: {e}")
+                self.logger.debug("TensorFlow GPU check failed: %s", e)
 
         # Check for PyTorch CUDA
         if INTEL_PYTORCH_AVAILABLE:
@@ -375,7 +375,7 @@ class GPUAccelerator:
                 if torch.cuda.is_available():
                     self.pytorch_available = True
                     num_devices = torch.cuda.device_count()
-                    self.logger.info(f"PyTorch CUDA acceleration available: {num_devices} devices")
+                    self.logger.info("PyTorch CUDA acceleration available: %s devices", num_devices)
                     for i in range(num_devices):
                         props = torch.cuda.get_device_properties(i)
                         self.pytorch_devices.append({
@@ -386,7 +386,7 @@ class GPUAccelerator:
                             'multiprocessors': props.multi_processor_count
                         })
             except Exception as e:
-                self.logger.debug(f"PyTorch CUDA check failed: {e}")
+                self.logger.debug("PyTorch CUDA check failed: %s", e)
 
     def _select_preferred_backend(self):
         """
@@ -414,7 +414,7 @@ class GPUAccelerator:
                     self.opencl_queue = cl.CommandQueue(self.opencl_context)
 
             except Exception as e:
-                self.logger.error(f"Failed to initialize OpenCL context: {e}")
+                self.logger.error("Failed to initialize OpenCL context: %s", e)
                 self.blacklisted_backends.add('opencl')
                 self.selected_backend = None
 
@@ -428,7 +428,7 @@ class GPUAccelerator:
             self.logger.info("No suitable GPU backend available")
 
         if self.selected_backend:
-            self.logger.info(f"Selected GPU backend: {self.selected_backend}")
+            self.logger.info("Selected GPU backend: %s", self.selected_backend)
 
     def _run_initial_benchmarks(self):
         """
@@ -466,7 +466,7 @@ class GPUAccelerator:
             self.logger.info(f"Benchmark completed: {benchmark_time:.3f}s for {len(benchmark_data)} operations")
 
         except Exception as e:
-            self.logger.error(f"Benchmark failed: {e}")
+            self.logger.error("Benchmark failed: %s", e)
             self.error_counts[self.selected_backend] += 1
 
     def _benchmark_opencl(self, data):
@@ -550,7 +550,7 @@ class GPUAccelerator:
             else:
                 return self._cpu_pattern_matching(data, patterns)
         except Exception as e:
-            self.logger.error(f"GPU pattern matching failed: {e}")
+            self.logger.error("GPU pattern matching failed: %s", e)
             self.error_counts[self.selected_backend] += 1
             return self._cpu_pattern_matching(data, patterns)
 
@@ -596,7 +596,7 @@ class GPUAccelerator:
             else:
                 return self._cpu_entropy_calculation(data)
         except Exception as e:
-            self.logger.error(f"GPU entropy calculation failed: {e}")
+            self.logger.error("GPU entropy calculation failed: %s", e)
             return self._cpu_entropy_calculation(data)
 
     def _cpu_entropy_calculation(self, data: bytes) -> float:
@@ -683,7 +683,7 @@ class GPUAccelerator:
                 cp.get_default_memory_pool().free_all_blocks()
 
         except Exception as e:
-            self.logger.error(f"GPU cleanup error: {e}")
+            self.logger.error("GPU cleanup error: %s", e)
 
 
 # Convenience functions

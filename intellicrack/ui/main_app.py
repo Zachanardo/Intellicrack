@@ -284,7 +284,7 @@ try:
     from ..core.protection_bypass.tpm_bypass import bypass_tpm_protection
     from ..core.protection_bypass.vm_bypass import bypass_vm_detection
 except ImportError as e:
-    logger.warning(f"Failed to import runner functions: {e}")
+    logger.warning("Failed to import runner functions: %s", e)
     # Define dummy functions
     def run_rop_chain_generator(app, *args, **kwargs):
         pass
@@ -889,40 +889,40 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
             # Log all the path information for diagnostic purposes
             for info in model_path_debug_info:
-                self.logger.info(f"[ML Path Diagnostic] {info}")
+                self.logger.info("[ML Path Diagnostic] %s", info)
 
             # If model was found in any location, initialize the predictor
             if model_found and model_path:
                 try:
                     self.ml_predictor = MLVulnerabilityPredictor(model_path)
-                    self.logger.info(f"ML predictor successfully initialized with model: {model_path}")
+                    self.logger.info("ML predictor successfully initialized with model: %s", model_path)
 
                     # Update CONFIG to remember this path for next time
                     CONFIG["ml_model_path"] = model_path
                     self.save_config()
                 except Exception as e:
-                    self.logger.error(f"Failed to initialize ML predictor despite finding model file: {e}")
+                    self.logger.error("Failed to initialize ML predictor despite finding model file: %s", e)
                     self.logger.error(f"Exception details: {traceback.format_exc()}")
                     self.ml_predictor = None
             else:
                 # Create a placeholder model file if no model was found anywhere
                 default_model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "vuln_predict_model.joblib")
-                self.logger.warning(f"ML model file not found in any location. Creating a placeholder model at: {default_model_path}")
+                self.logger.warning("ML model file not found in any location. Creating a placeholder model at: %s", default_model_path)
                 self._create_default_ml_model(default_model_path)
                 try:
                     self.ml_predictor = MLVulnerabilityPredictor(default_model_path)
-                    self.logger.info(f"ML predictor initialized with placeholder model: {default_model_path}")
+                    self.logger.info("ML predictor initialized with placeholder model: %s", default_model_path)
 
                     # Update config with the new path
                     CONFIG["ml_model_path"] = default_model_path  # Use default_model_path which is defined above
                     self.save_config()
                 except Exception as e:
-                    self.logger.error(f"Failed to initialize ML predictor with placeholder model: {e}")
+                    self.logger.error("Failed to initialize ML predictor with placeholder model: %s", e)
                     self.logger.error(f"Exception details: {traceback.format_exc()}")
                     self.ml_predictor = None
             self.logger.info("ML predictor initialization complete.")
         except Exception as e:
-            self.logger.error(f"Failed to initialize ML predictor: {e}")
+            self.logger.error("Failed to initialize ML predictor: %s", e)
             self.logger.error(f"Exception details: {traceback.format_exc()}")
             self.ml_predictor = None
 
@@ -947,7 +947,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             
             self.logger.info("IntellicrackApp initialization complete with agentic AI system.")
         except Exception as e:
-            self.logger.error(f"Failed to initialize AI Orchestrator: {e}")
+            self.logger.error("Failed to initialize AI Orchestrator: %s", e)
             self.logger.error(f"Exception details: {traceback.format_exc()}")
             self.ai_orchestrator = None
             self.ai_coordinator = None
@@ -1075,43 +1075,43 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.memory_optimized_loader = MemoryOptimizedBinaryLoader() if MemoryOptimizedBinaryLoader else None
         except Exception as e:
             self.memory_optimized_loader = None
-            logger.warning(f"Failed to initialize MemoryOptimizedBinaryLoader: {e}")
+            logger.warning("Failed to initialize MemoryOptimizedBinaryLoader: %s", e)
             
         try:
             self.symbolic_execution_engine = SymbolicExecutionEngine("") if SymbolicExecutionEngine else None
         except Exception as e:
             self.symbolic_execution_engine = None
-            logger.warning(f"Failed to initialize SymbolicExecutionEngine: {e}")
+            logger.warning("Failed to initialize SymbolicExecutionEngine: %s", e)
             
         try:
             self.taint_analysis_engine = TaintAnalysisEngine() if TaintAnalysisEngine else None
         except Exception as e:
             self.taint_analysis_engine = None
-            logger.warning(f"Failed to initialize TaintAnalysisEngine: {e}")
+            logger.warning("Failed to initialize TaintAnalysisEngine: %s", e)
             
         try:
             self.concolic_execution_engine = ConcolicExecutionEngine("") if ConcolicExecutionEngine else None
         except Exception as e:
             self.concolic_execution_engine = None
-            logger.warning(f"Failed to initialize ConcolicExecutionEngine: {e}")
+            logger.warning("Failed to initialize ConcolicExecutionEngine: %s", e)
             
         try:
             self.rop_chain_generator = ROPChainGenerator() if ROPChainGenerator else None
         except Exception as e:
             self.rop_chain_generator = None
-            logger.warning(f"Failed to initialize ROPChainGenerator: {e}")
+            logger.warning("Failed to initialize ROPChainGenerator: %s", e)
             
         try:
             self.distributed_processing_manager = DistributedProcessingManager() if DistributedProcessingManager else None
         except Exception as e:
             self.distributed_processing_manager = None
-            logger.warning(f"Failed to initialize DistributedProcessingManager: {e}")
+            logger.warning("Failed to initialize DistributedProcessingManager: %s", e)
             
         try:
             self.gpu_accelerator = GPUAccelerator() if GPUAccelerator else None
         except Exception as e:
             self.gpu_accelerator = None
-            logger.warning(f"Failed to initialize GPUAccelerator: {e}")
+            logger.warning("Failed to initialize GPUAccelerator: %s", e)
             
         # Initialize network components
         try:
@@ -1119,28 +1119,28 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.network_traffic_analyzer = NetworkTrafficAnalyzer()
         except Exception as e:
             self.network_traffic_analyzer = None
-            logger.warning(f"Failed to initialize NetworkTrafficAnalyzer: {e}")
+            logger.warning("Failed to initialize NetworkTrafficAnalyzer: %s", e)
             
         try:
             from ..core.network.ssl_interceptor import SSLTLSInterceptor
             self.ssl_interceptor = SSLTLSInterceptor()
         except Exception as e:
             self.ssl_interceptor = None
-            logger.warning(f"Failed to initialize SSLTLSInterceptor: {e}")
+            logger.warning("Failed to initialize SSLTLSInterceptor: %s", e)
             
         try:
             from ..core.network.protocol_fingerprinter import ProtocolFingerprinter
             self.protocol_fingerprinter = ProtocolFingerprinter()
         except Exception as e:
             self.protocol_fingerprinter = None
-            logger.warning(f"Failed to initialize ProtocolFingerprinter: {e}")
+            logger.warning("Failed to initialize ProtocolFingerprinter: %s", e)
             
         try:
             from ..core.network.license_server_emulator import NetworkLicenseServerEmulator
             self.network_license_server = NetworkLicenseServerEmulator()
         except Exception as e:
             self.network_license_server = None
-            logger.warning(f"Failed to initialize NetworkLicenseServerEmulator: {e}")
+            logger.warning("Failed to initialize NetworkLicenseServerEmulator: %s", e)
         
         # Add TOOL_REGISTRY for hexview integration
         self.TOOL_REGISTRY = TOOL_REGISTRY.copy()
@@ -1239,7 +1239,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.setup_project_dashboard_tab()
             self.logger.info("Project dashboard tab setup complete")
         except Exception as e:
-            self.logger.error(f"Failed to setup project dashboard tab: {e}")
+            self.logger.error("Failed to setup project dashboard tab: %s", e)
             self.logger.error(traceback.format_exc())
             raise
             
@@ -1248,7 +1248,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.setup_analysis_tab()
             self.logger.info("Analysis tab setup complete")
         except Exception as e:
-            self.logger.error(f"Failed to setup analysis tab: {e}")
+            self.logger.error("Failed to setup analysis tab: %s", e)
             self.logger.error(traceback.format_exc())
             raise
             
@@ -1257,7 +1257,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.setup_patching_exploitation_tab()
             self.logger.info("Patching exploitation tab setup complete")
         except Exception as e:
-            self.logger.error(f"Failed to setup patching exploitation tab: {e}")
+            self.logger.error("Failed to setup patching exploitation tab: %s", e)
             self.logger.error(traceback.format_exc())
             raise
             
@@ -1266,7 +1266,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.setup_ai_assistant_tab()
             self.logger.info("AI assistant tab setup complete")
         except Exception as e:
-            self.logger.error(f"Failed to setup AI assistant tab: {e}")
+            self.logger.error("Failed to setup AI assistant tab: %s", e)
             self.logger.error(traceback.format_exc())
             raise
             
@@ -1275,7 +1275,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.setup_netanalysis_emulation_tab()
             self.logger.info("Network analysis emulation tab setup complete")
         except Exception as e:
-            self.logger.error(f"Failed to setup network analysis emulation tab: {e}")
+            self.logger.error("Failed to setup network analysis emulation tab: %s", e)
             self.logger.error(traceback.format_exc())
             raise
             
@@ -1284,7 +1284,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.setup_tools_plugins_tab()
             self.logger.info("Tools plugins tab setup complete")
         except Exception as e:
-            self.logger.error(f"Failed to setup tools plugins tab: {e}")
+            self.logger.error("Failed to setup tools plugins tab: %s", e)
             self.logger.error(traceback.format_exc())
             raise
             
@@ -1293,7 +1293,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.setup_settings_tab()
             self.logger.info("Settings tab setup complete")
         except Exception as e:
-            self.logger.error(f"Failed to setup settings tab: {e}")
+            self.logger.error("Failed to setup settings tab: %s", e)
             self.logger.error(traceback.format_exc())
             raise
             
@@ -1313,7 +1313,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                            f"{len(self.available_plugins.get('frida', []))} Frida scripts, "
                            f"{len(self.available_plugins.get('ghidra', []))} Ghidra scripts")
         except Exception as e:
-            self.logger.warning(f"Plugin initialization failed: {e}")
+            self.logger.warning("Plugin initialization failed: %s", e)
             self.available_plugins = {"custom": [], "frida": [], "ghidra": []}
         
         self.logger.info("Window configuration complete")
@@ -4574,10 +4574,10 @@ Description: {results.get('description', 'License bypass successful')}"""
             font.setPointSize(font_size)
             self.setFont(font)
             
-            self.logger.info(f"Applied theme settings: {theme} theme with {font_size}pt font")
+            self.logger.info("Applied theme settings: %s theme with %spt font", theme, font_size)
             
         except Exception as e:
-            self.logger.error(f"Error applying theme settings: {e}")
+            self.logger.error("Error applying theme settings: %s", e)
             # Fall back to default theme
             self.setPalette(QApplication.style().standardPalette())
             
@@ -4606,7 +4606,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             return img_byte_array.getvalue()
             
         except Exception as e:
-            self.logger.error(f"Error creating placeholder image: {e}")
+            self.logger.error("Error creating placeholder image: %s", e)
             # Return a minimal valid PNG if PIL fails
             return bytes.fromhex(
                 '89504e470d0a1a0a0000000d49484452000000100000001008060000001ff3ff61'
@@ -5432,7 +5432,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             logger.info("Enhanced hex viewer functionality fully integrated")
         except Exception as e:
             self.update_output.emit(log_message(f"[Hex Viewer] Error initializing enhanced hex viewer: {str(e)}"))
-            logger.error(f"Error initializing enhanced hex viewer: {e}")
+            logger.error("Error initializing enhanced hex viewer: %s", e)
             logger.error(traceback.format_exc())
 
         ml_model_path = CONFIG.get("ml_model_path")
@@ -6290,14 +6290,14 @@ def register():
             self._hex_viewer_dialogs.append(dialog)
 
             self.update_output.emit(log_message(f"[Hex Viewer] Opened {os.path.basename(file_path)} in {'read-only' if read_only else 'editable'} mode"))
-            logger.info(f"Opened enhanced hex viewer for {file_path}")
+            logger.info("Opened enhanced hex viewer for %s", file_path)
         except Exception as e:
             QMessageBox.critical(
                 self,
                 "Error Opening Hex Viewer",
                 f"Failed to open the hex viewer: {str(e)}"
             )
-            logger.error(f"Error opening hex viewer: {e}")
+            logger.error("Error opening hex viewer: %s", e)
             logger.error(traceback.format_exc())
 
     def create_toolbar(self):
@@ -6994,11 +6994,11 @@ def register():
                     # Unload the script first
                     if script:
                         script.unload()
-                        self.logger.info(f"Unloaded Frida script for session: {session_name}")
+                        self.logger.info("Unloaded Frida script for session: %s", session_name)
 
                     # Then detach the session
                     session.detach()
-                    self.logger.info(f"Detached Frida session: {session_name}")
+                    self.logger.info("Detached Frida session: %s", session_name)
 
                     # Add to cleanup summary
                     cleanup_summary.append(f"Cleaned up Frida session: {session_name}")
@@ -7219,7 +7219,7 @@ def register():
                 self.update_analysis_results.emit(f"AI Analysis Results:\n{result_text}\n")
                 
         except Exception as e:
-            self.logger.error(f"Error handling AI task completion: {e}")
+            self.logger.error("Error handling AI task completion: %s", e)
     
     def _on_coordinated_analysis_complete(self, data, source_component):
         """Handle coordinated analysis completion events."""
@@ -7236,7 +7236,7 @@ def register():
             self.update_output.emit(f"[AI Coordinator] {status_msg}")
             
         except Exception as e:
-            self.logger.error(f"Error handling coordinated analysis completion: {e}")
+            self.logger.error("Error handling coordinated analysis completion: %s", e)
     # --- End AI Event Handlers ---
 
     def load_binary(self, path=None):
@@ -9752,7 +9752,7 @@ def register():
                 binary_path = binary_info.get("path", "Unknown")
                 binary_name = os.path.basename(binary_path) if binary_path != "Unknown" else "Unknown"
                 binary_name_label.setText(f"<b>{binary_name}</b><br><small>{binary_path}</small>")
-                self.logger.debug(f"Updated dashboard binary name label with: {binary_name}")
+                self.logger.debug("Updated dashboard binary name label with: %s", binary_name)
 
             if binary_icon_label:
                 # Update binary icon label with icon from file
@@ -10709,7 +10709,7 @@ def register():
             wizard = GuidedWorkflowWizard(parent=self)
             wizard.exec_()
         except Exception as e:
-            self.logger.error(f"Failed to start guided wizard: {e}")
+            self.logger.error("Failed to start guided wizard: %s", e)
             QMessageBox.warning(self, "Error", f"Failed to start guided wizard:\n{str(e)}")
             import traceback
             traceback.print_exc()
@@ -12656,7 +12656,7 @@ def register():
                 # Default formatting
                 return json.dumps(result, indent=2)
         except Exception as e:
-            logger.error(f"Error formatting tool result: {e}")
+            logger.error("Error formatting tool result: %s", e)
             # Return the original result as a string if formatting fails
             return str(result)
 
@@ -12747,9 +12747,9 @@ def register():
             # Save the model
             joblib.dump(model_data, model_path)
 
-            self.logger.info(f"Created default ML model at: {model_path}")
+            self.logger.info("Created default ML model at: %s", model_path)
         except Exception as e:
-            self.logger.error(f"Error creating default ML model: {e}")
+            self.logger.error("Error creating default ML model: %s", e)
             raise e
 
 # -------------------------------
@@ -14999,7 +14999,7 @@ def launch():
     time.sleep(1)  # Short delay for splash visibility
 
     logger.info(f"IntellicrackApp type: {type(IntellicrackApp)}")
-    logger.info(f"IntellicrackApp value: {IntellicrackApp}")
+    logger.info("IntellicrackApp value: %s", IntellicrackApp)
     
     try:
         logger.info("Creating IntellicrackApp instance...")
@@ -15023,7 +15023,7 @@ def launch():
             x = screen_rect.x() + screen_rect.width() // 10
             y = screen_rect.y() + screen_rect.height() // 10
             window.move(x, y)
-            logger.info(f"Positioned window at {x}, {y} on screen {screen_rect}")
+            logger.info("Positioned window at %s, %s on screen %s", x, y, screen_rect)
         else:
             window.move(100, 100)  # Fallback position
             
@@ -15068,14 +15068,14 @@ def launch():
         window.setWindowState(window.windowState() | Qt.WindowActive)
         
     except Exception as e:
-        logger.error(f"Error creating IntellicrackApp: {e}")
+        logger.error("Error creating IntellicrackApp: %s", e)
         logger.error(traceback.format_exc())
         raise
 
     logger.info("Starting Qt event loop...")
     logger.info(f"Active windows: {QApplication.topLevelWindows()}")
-    logger.info(f"App instance: {app_instance}")
-    logger.info(f"App is about to quit: {app_instance.aboutToQuit}")
+    logger.info("App instance: %s", app_instance)
+    logger.info("App is about to quit: %s", app_instance.aboutToQuit)
     
     # Add a single-shot timer to log after event loop starts
     from PyQt5.QtCore import QTimer
@@ -15482,7 +15482,7 @@ def launch():
             QMessageBox.critical(self, "Import Error", f"Failed to import LLM config dialog: {e}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open LLM configuration: {e}")
-            self.logger.error(f"LLM config dialog error: {e}")
+            self.logger.error("LLM config dialog error: %s", e)
 
     def analyze_process_behavior(self):
         """Analyze live process behavior."""
@@ -15938,7 +15938,7 @@ def launch():
             y = max(0, y)
             window.move(x, y)
             logger.info(f"Moved window to position: {window.pos()}")
-            logger.info(f"Screen geometry: {screen_rect}")
+            logger.info("Screen geometry: %s", screen_rect)
         else:
             # Fallback to safe position
             window.move(100, 100)
@@ -15949,7 +15949,7 @@ def launch():
     
     # Start event loop
     exit_code = app_instance.exec_()
-    logger.info(f"Event loop ended with code: {exit_code}")
+    logger.info("Event loop ended with code: %s", exit_code)
     sys.exit(exit_code)
 
 if __name__ == "__main__":

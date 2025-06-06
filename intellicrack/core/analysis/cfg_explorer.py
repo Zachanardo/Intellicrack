@@ -160,7 +160,7 @@ class CFGExplorer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error loading binary: {e}")
+            self.logger.error("Error loading binary: %s", e)
             return False
 
     def get_function_list(self) -> List[str]:
@@ -174,7 +174,7 @@ class CFGExplorer:
             self.graph = self.functions[function_name]['graph']
             return True
         else:
-            self.logger.error(f"Function {function_name} not found")
+            self.logger.error("Function %s not found", function_name)
             return False
             
     # Alias methods for compatibility
@@ -380,7 +380,7 @@ class CFGExplorer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error generating HTML visualization: {e}")
+            self.logger.error("Error generating HTML visualization: %s", e)
             return False
 
     def export_graph_image(self, output_file: str, format: str = 'png') -> bool:
@@ -422,7 +422,7 @@ class CFGExplorer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error exporting graph image: {e}")
+            self.logger.error("Error exporting graph image: %s", e)
             return False
 
     def export_dot_file(self, output_file: str) -> bool:
@@ -435,7 +435,7 @@ class CFGExplorer:
             nx.drawing.nx_pydot.write_dot(self.graph, output_file)
             return True
         except Exception as e:
-            self.logger.error(f"Error exporting DOT file: {e}")
+            self.logger.error("Error exporting DOT file: %s", e)
             return False
 
 

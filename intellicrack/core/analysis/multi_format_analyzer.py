@@ -125,7 +125,7 @@ class MultiFormatBinaryAnalyzer:
                 return 'UNKNOWN'
 
         except Exception as e:
-            self.logger.error(f"Error identifying binary format: {e}")
+            self.logger.error("Error identifying binary format: %s", e)
             return 'UNKNOWN'
 
     def analyze_binary(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
@@ -231,7 +231,7 @@ class MultiFormatBinaryAnalyzer:
             return info
 
         except Exception as e:
-            self.logger.error(f"Error analyzing PE binary: {e}")
+            self.logger.error("Error analyzing PE binary: %s", e)
             return {
                 'format': 'PE',
                 'error': str(e)
@@ -328,7 +328,7 @@ class MultiFormatBinaryAnalyzer:
                     return info
 
         except Exception as e:
-            self.logger.error(f"Error analyzing ELF binary: {e}")
+            self.logger.error("Error analyzing ELF binary: %s", e)
             return {
                 'format': 'ELF',
                 'error': str(e)
@@ -420,7 +420,7 @@ class MultiFormatBinaryAnalyzer:
                 return info
 
         except Exception as e:
-            self.logger.error(f"Error analyzing Mach-O binary: {e}")
+            self.logger.error("Error analyzing Mach-O binary: %s", e)
             return {
                 'format': 'MACHO',
                 'error': str(e)

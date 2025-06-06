@@ -156,7 +156,7 @@ class AIEventBus:
                 "component": component_name
             })
 
-        logger.debug(f"Component {component_name} subscribed to {event_type}")
+        logger.debug("Component %s subscribed to %s", component_name, event_type)
 
     def emit(self, event_type: str, data: Dict[str, Any], source_component: str) -> None:
         """Emit an event to all subscribers."""
@@ -234,7 +234,7 @@ class AIOrchestrator:
                 self.ml_predictor = None
                 logger.warning("ML Vulnerability Predictor not available")
         except Exception as e:
-            logger.error(f"Failed to initialize ML Predictor: {e}")
+            logger.error("Failed to initialize ML Predictor: %s", e)
             self.ml_predictor = None
 
         # Large model manager for complex reasoning
@@ -246,7 +246,7 @@ class AIOrchestrator:
                 self.model_manager = None
                 logger.warning("Model Manager not available")
         except Exception as e:
-            logger.error(f"Failed to initialize Model Manager: {e}")
+            logger.error("Failed to initialize Model Manager: %s", e)
             self.model_manager = None
 
         # LLM manager for GGUF and API-based models
@@ -258,7 +258,7 @@ class AIOrchestrator:
                 self.llm_manager = None
                 logger.warning("LLM Manager not available")
         except Exception as e:
-            logger.error(f"Failed to initialize LLM Manager: {e}")
+            logger.error("Failed to initialize LLM Manager: %s", e)
             self.llm_manager = None
 
         # AI assistant for tool-based workflows
@@ -270,7 +270,7 @@ class AIOrchestrator:
                 self.ai_assistant = None
                 logger.warning("AI Assistant not available")
         except Exception as e:
-            logger.error(f"Failed to initialize AI Assistant: {e}")
+            logger.error("Failed to initialize AI Assistant: %s", e)
             self.ai_assistant = None
 
         # Hex viewer AI bridge
@@ -282,7 +282,7 @@ class AIOrchestrator:
                 self.hex_bridge = None
                 logger.warning("Hex AI Bridge not available")
         except Exception as e:
-            logger.error(f"Failed to initialize Hex Bridge: {e}")
+            logger.error("Failed to initialize Hex Bridge: %s", e)
             self.hex_bridge = None
 
     def _setup_event_subscriptions(self):
@@ -306,7 +306,7 @@ class AIOrchestrator:
 
     def _on_ml_prediction_complete(self, data: Dict[str, Any], source: str):
         """Handle ML prediction completion events."""
-        logger.info(f"ML prediction complete from {source}")
+        logger.info("ML prediction complete from %s", source)
 
         # Check if we need to escalate to complex analysis
         confidence = data.get("confidence", 0.0)
@@ -367,7 +367,7 @@ class AIOrchestrator:
                 self._execute_task(task)
 
             except Exception as e:
-                logger.error(f"Error in task processing loop: {e}")
+                logger.error("Error in task processing loop: %s", e)
 
     def _execute_task(self, task: AITask) -> AIResult:
         """Execute an AI task using the appropriate components."""
@@ -379,7 +379,7 @@ class AIOrchestrator:
         confidence = 0.0
 
         try:
-            logger.info(f"Executing task {task.task_id} (type: {task.task_type}, complexity: {task.complexity})")
+            logger.info("Executing task %s (type: %s, complexity: %s)", task.task_id, task.task_type, task.complexity)
 
             # Route task based on type and complexity
             if task.task_type == AITaskType.VULNERABILITY_SCAN:
@@ -400,11 +400,11 @@ class AIOrchestrator:
 
             else:
                 errors.append(f"Unknown task type: {task.task_type}")
-                logger.warning(f"Unknown task type: {task.task_type}")
+                logger.warning("Unknown task type: %s", task.task_type)
 
         except Exception as e:
             errors.append(str(e))
-            logger.error(f"Error executing task {task.task_id}: {e}")
+            logger.error("Error executing task %s: %s", task.task_id, e)
 
         # Create result
         processing_time = (datetime.now() - start_time).total_seconds()
@@ -431,7 +431,7 @@ class AIOrchestrator:
             try:
                 task.callback(result)
             except Exception as e:
-                logger.error(f"Error in task callback: {e}")
+                logger.error("Error in task callback: %s", e)
 
         return result
 
@@ -467,7 +467,7 @@ class AIOrchestrator:
                 }, "ml_predictor")
 
             except Exception as e:
-                logger.error(f"ML prediction failed: {e}")
+                logger.error("ML prediction failed: %s", e)
 
         # Escalate to LLM if complexity requires it or ML confidence is low
         if (task.complexity in [AnalysisComplexity.COMPLEX, AnalysisComplexity.CRITICAL] or
@@ -489,7 +489,7 @@ class AIOrchestrator:
                     confidence = max(confidence, llm_results.get("confidence", 0.0))
 
                 except Exception as e:
-                    logger.error(f"LLM analysis failed: {e}")
+                    logger.error("LLM analysis failed: %s", e)
 
         return result_data, components_used, confidence
 
@@ -513,7 +513,7 @@ class AIOrchestrator:
                 confidence = license_results.get("confidence", 0.8)  # License analysis is typically high confidence
 
             except Exception as e:
-                logger.error(f"License analysis failed: {e}")
+                logger.error("License analysis failed: %s", e)
 
         return result_data, components_used, confidence
 
@@ -539,7 +539,7 @@ class AIOrchestrator:
                 confidence = hex_results.get("confidence", 0.7)
 
             except Exception as e:
-                logger.error(f"Hex analysis failed: {e}")
+                logger.error("Hex analysis failed: %s", e)
 
         # Add ML analysis if available
         if self.ml_predictor:
@@ -555,7 +555,7 @@ class AIOrchestrator:
                 confidence = max(confidence, ml_results.get("confidence", 0.0))
 
             except Exception as e:
-                logger.error(f"ML feature analysis failed: {e}")
+                logger.error("ML feature analysis failed: %s", e)
 
         return result_data, components_used, confidence
 
@@ -592,12 +592,12 @@ class AIOrchestrator:
                     components_used.append("llm_manager")
                     confidence = 0.85
 
-                    logger.info(f"LLM reasoning completed using model: {response.model}")
+                    logger.info("LLM reasoning completed using model: %s", response.model)
                 else:
                     logger.warning("LLM returned empty response")
 
             except Exception as e:
-                logger.error(f"LLM reasoning failed: {e}")
+                logger.error("LLM reasoning failed: %s", e)
 
         # Fallback to AI assistant if LLM not available
         elif self.ai_assistant:
@@ -613,7 +613,7 @@ class AIOrchestrator:
                 confidence = reasoning_results.get("confidence", 0.8)
 
             except Exception as e:
-                logger.error(f"AI Assistant reasoning failed: {e}")
+                logger.error("AI Assistant reasoning failed: %s", e)
 
         return result_data, components_used, confidence
 
@@ -637,7 +637,7 @@ class AIOrchestrator:
         self.task_queue.put((-task.priority, task))
         self.active_tasks[task.task_id] = task
 
-        logger.info(f"Task {task.task_id} submitted with priority {task.priority}")
+        logger.info("Task %s submitted with priority %s", task.task_id, task.priority)
         return task.task_id
 
     def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
@@ -717,7 +717,7 @@ class AIOrchestrator:
             try:
                 self.llm_manager.shutdown()
             except Exception as e:
-                logger.error(f"Error shutting down LLM manager: {e}")
+                logger.error("Error shutting down LLM manager: %s", e)
 
         self.shared_context.clear_session()
         logger.info("AI Orchestrator shutdown complete")

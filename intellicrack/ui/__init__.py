@@ -28,18 +28,18 @@ logger = logging.getLogger(__name__)
 try:
     from .main_window import IntellicrackMainWindow
 except ImportError as e:
-    logger.warning(f"Failed to import main_window: {e}")
+    logger.warning("Failed to import main_window: %s", e)
 
 try:
     from .dashboard_manager import DashboardManager
 except ImportError as e:
-    logger.warning(f"Failed to import dashboard_manager: {e}")
+    logger.warning("Failed to import dashboard_manager: %s", e)
 
 # Import subpackages
 try:
     from . import dialogs, widgets
 except ImportError as e:
-    logger.warning(f"Failed to import UI subpackages: {e}")
+    logger.warning("Failed to import UI subpackages: %s", e)
 
 # Define package exports
 __all__ = [

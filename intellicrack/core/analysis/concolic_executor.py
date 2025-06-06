@@ -91,7 +91,7 @@ class ConcolicExecutionEngine:
             return {"error": "Required dependencies not available. Please install manticore."}
 
         try:
-            self.logger.info(f"Starting concolic execution on {self.binary_path}")
+            self.logger.info("Starting concolic execution on %s", self.binary_path)
 
             # Create Manticore instance
             m = Manticore(self.binary_path)
@@ -165,7 +165,7 @@ class ConcolicExecutionEngine:
             return results
 
         except Exception as e:
-            self.logger.error(f"Error during concolic execution: {e}")
+            self.logger.error("Error during concolic execution: %s", e)
             self.logger.error(traceback.format_exc())
             return {"error": f"Concolic execution failed: {str(e)}"}
 
@@ -203,7 +203,7 @@ class ConcolicExecutionEngine:
             return {"error": "Required dependencies not available"}
 
         try:
-            self.logger.info(f"Finding license bypass for {self.binary_path}")
+            self.logger.info("Finding license bypass for %s", self.binary_path)
 
             # If license check address is not provided, try to find it
             if license_check_address is None:
@@ -212,7 +212,7 @@ class ConcolicExecutionEngine:
                 if license_check_address is None:
                     return {"error": "Could not automatically find license check address"}
 
-            self.logger.info(f"License check identified at address: {license_check_address}")
+            self.logger.info("License check identified at address: %s", license_check_address)
 
             # Create Manticore instance
             m = Manticore(self.binary_path)
@@ -276,7 +276,7 @@ class ConcolicExecutionEngine:
                             bypass_input[0] = state.input_symbols
                             self.logger.info(f"Found potential license bypass at {hex(pc)}")
                         except Exception as e:
-                            self.logger.debug(f"Could not constrain condition: {e}")
+                            self.logger.debug("Could not constrain condition: %s", e)
 
             m.register_plugin(LicenseCheckPlugin())
 
@@ -308,7 +308,7 @@ class ConcolicExecutionEngine:
                 }
 
         except Exception as e:
-            self.logger.error(f"Error finding license bypass: {e}")
+            self.logger.error("Error finding license bypass: %s", e)
             self.logger.error(traceback.format_exc())
             return {"error": f"License bypass search failed: {str(e)}"}
 
@@ -352,7 +352,7 @@ class ConcolicExecutionEngine:
             return None
 
         except Exception as e:
-            self.logger.error(f"Error finding license check address: {e}")
+            self.logger.error("Error finding license check address: %s", e)
             return None
 
 

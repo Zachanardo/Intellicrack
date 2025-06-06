@@ -38,14 +38,14 @@ def open_hex_file(file_path: str, read_only: bool = True) -> Optional[VirtualFil
     """
     try:
         if not os.path.exists(file_path):
-            logger.error(f"File not found: {file_path}")
+            logger.error("File not found: %s", file_path)
             return None
 
         file_handler = VirtualFileAccess(file_path, read_only)
-        logger.info(f"Opened file {file_path} for hex viewing/editing")
+        logger.info("Opened file %s for hex viewing/editing", file_path)
         return file_handler
     except Exception as e:
-        logger.error(f"Error opening file: {e}")
+        logger.error("Error opening file: %s", e)
         return None
 
 
@@ -69,7 +69,7 @@ def read_hex_region(file_path: str, offset: int, size: int) -> Optional[bytes]:
         data = file_handler.read(offset, size)
         return data
     except Exception as e:
-        logger.error(f"Error reading hex region: {e}")
+        logger.error("Error reading hex region: %s", e)
         return None
 
 
@@ -96,7 +96,7 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
 
         return result
     except Exception as e:
-        logger.error(f"Error writing hex region: {e}")
+        logger.error("Error writing hex region: %s", e)
         return False
 
 
@@ -120,7 +120,7 @@ def analyze_binary_data(data: bytes, query: Optional[str] = None,
         result = ai_bridge.analyze_binary_region(data, 0, len(data), query)
         return result
     except Exception as e:
-        logger.error(f"Error analyzing binary data: {e}")
+        logger.error("Error analyzing binary data: %s", e)
         return {"error": str(e)}
 
 
@@ -142,7 +142,7 @@ def search_binary_pattern(data: bytes, pattern_desc: str,
         results = ai_bridge.search_binary_semantic(data, pattern_desc)
         return results
     except Exception as e:
-        logger.error(f"Error searching binary pattern: {e}")
+        logger.error("Error searching binary pattern: %s", e)
         return []
 
 
@@ -164,7 +164,7 @@ def suggest_binary_edits(data: bytes, edit_intent: str,
         result = ai_bridge.suggest_edits(data, 0, len(data), edit_intent)
         return result
     except Exception as e:
-        logger.error(f"Error suggesting binary edits: {e}")
+        logger.error("Error suggesting binary edits: %s", e)
         return {"error": str(e)}
 
 
@@ -255,7 +255,7 @@ def add_hex_viewer_to_application(app_instance) -> bool:
         logger.info("Enhanced hex viewer added to application")
         return True
     except Exception as e:
-        logger.error(f"Error adding hex viewer to application: {e}")
+        logger.error("Error adding hex viewer to application: %s", e)
         return False
 
 
@@ -273,7 +273,7 @@ def register_ai_tools(app_instance) -> bool:
         register_hex_viewer_ai_tools(app_instance)
         return True
     except Exception as e:
-        logger.error(f"Error registering AI tools: {e}")
+        logger.error("Error registering AI tools: %s", e)
         return False
 
 

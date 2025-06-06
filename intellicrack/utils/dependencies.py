@@ -26,21 +26,21 @@ def check_weasyprint_dependencies() -> List[str]:
         import cffi
         logger.info("✓ CFFI dependency found")
     except ImportError as e:
-        logger.error(f"✗ CFFI import error: {e}")
+        logger.error("✗ CFFI import error: %s", e)
         missing_deps.append("cffi")
 
     try:
         import cairocffi
         logger.info("✓ Cairo dependency found")
     except ImportError as e:
-        logger.error(f"✗ Cairo import error: {e}")
+        logger.error("✗ Cairo import error: %s", e)
         missing_deps.append("cairocffi")
 
     try:
         import tinycss2
         logger.info("✓ TinyCSS2 dependency found")
     except ImportError as e:
-        logger.error(f"✗ TinyCSS2 import error: {e}")
+        logger.error("✗ TinyCSS2 import error: %s", e)
         missing_deps.append("tinycss2")
 
     if sys.platform == 'win32':
@@ -50,7 +50,7 @@ def check_weasyprint_dependencies() -> List[str]:
                 r"C:\GTK\bin",
                 os.environ.get("GTK_BASEPATH", "") + "\\bin"
             ]
-            logger.info(f"Checking GTK paths: {gtk_paths}")
+            logger.info("Checking GTK paths: %s", gtk_paths)
             dll_found = False
 
             for gtk_path in gtk_paths:
@@ -58,7 +58,7 @@ def check_weasyprint_dependencies() -> List[str]:
                     for dll in ["libcairo-2.dll", "libgdk_pixbuf-2.0-0.dll", "libpango-1.0-0.dll"]:
                         dll_path = os.path.join(gtk_path, dll)
                         if os.path.exists(dll_path):
-                            logger.info(f"✓ Found GTK DLL: {dll_path}")
+                            logger.info("✓ Found GTK DLL: %s", dll_path)
                             dll_found = True
                             break
                     if dll_found:
@@ -69,7 +69,7 @@ def check_weasyprint_dependencies() -> List[str]:
                 missing_deps.append("gtk-runtime")
 
         except Exception as e:
-            logger.error(f"Error checking GTK dependencies: {e}")
+            logger.error("Error checking GTK dependencies: %s", e)
             missing_deps.append("gtk-runtime")
 
     return missing_deps
@@ -93,9 +93,9 @@ def check_and_install_dependencies() -> bool:
     for dep in core_deps:
         try:
             __import__(dep)
-            logger.info(f"✓ {dep} available")
+            logger.info("✓ %s available", dep)
         except ImportError:
-            logger.warning(f"✗ {dep} missing")
+            logger.warning("✗ %s missing", dep)
             missing_deps.append(dep)
 
     # Optional dependencies with graceful fallbacks
@@ -113,9 +113,9 @@ def check_and_install_dependencies() -> bool:
     for dep, description in optional_deps.items():
         try:
             __import__(dep)
-            logger.info(f"✓ {dep} available ({description})")
+            logger.info("✓ %s available (%s)", dep, description)
         except ImportError:
-            logger.info(f"ℹ {dep} not available - {description} will be disabled")
+            logger.info("ℹ %s not available - %s will be disabled", dep, description)
 
     return len(missing_deps) == 0
 
@@ -134,21 +134,21 @@ def install_dependencies(deps: List[str]) -> bool:
 
     try:
         for dep in deps:
-            logger.info(f"Installing {dep}...")
+            logger.info("Installing %s...", dep)
             result = subprocess.run([
                 sys.executable, "-m", "pip", "install", dep
             ], capture_output=True, text=True)
 
             if result.returncode == 0:
-                logger.info(f"✓ Successfully installed {dep}")
+                logger.info("✓ Successfully installed %s", dep)
             else:
-                logger.error(f"✗ Failed to install {dep}: {result.stderr}")
+                logger.error("✗ Failed to install %s: %s", dep, result.stderr)
                 return False
 
         return True
 
     except Exception as e:
-        logger.error(f"Error installing dependencies: {e}")
+        logger.error("Error installing dependencies: %s", e)
         return False
 
 

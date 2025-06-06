@@ -145,7 +145,7 @@ class FileCache:
         region_size = len(region.data) if region.data else 0
         self.total_memory -= region_size
 
-        logger.debug(f"Evicted region: offset=0x{region.offset:X}, size={region.size}")
+        logger.debug("Evicted region: offset=0x%s, size=%s", region.offset, region.size)
 
     def release_region(self, region: FileRegion):
         """Release a reference to a region."""
@@ -215,14 +215,14 @@ class MemoryMonitor:
 
                     # Check if we exceed thresholds
                     if memory_percent > self.config.memory_threshold:
-                        logger.warning(f"High system memory usage: {memory_percent:.1%}")
+                        logger.warning("High system memory usage: %s", memory_percent)
 
                     # Notify callbacks
                     for callback in self.callbacks:
                         try:
                             callback(memory_percent)
                         except Exception as e:
-                            logger.error(f"Memory monitor callback error: {e}")
+                            logger.error("Memory monitor callback error: %s", e)
                 else:
                     # Fallback: use basic estimation
                     memory_percent = 0.5  # Assume 50% usage without psutil
@@ -230,12 +230,12 @@ class MemoryMonitor:
                         try:
                             callback(memory_percent)
                         except Exception as e:
-                            logger.error(f"Memory monitor callback error: {e}")
+                            logger.error("Memory monitor callback error: %s", e)
 
                 time.sleep(1.0)  # Check every second
 
             except Exception as e:
-                logger.error(f"Memory monitoring error: {e}")
+                logger.error("Memory monitoring error: %s", e)
                 time.sleep(5.0)  # Wait longer on error
 
 
@@ -267,7 +267,7 @@ class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
             request = (offset, size)
             if request not in self.load_queue:
                 self.load_queue.append(request)
-                logger.debug(f"Queued load: offset=0x{offset:X}, size={size}")
+                logger.debug("Queued load: offset=0x%s, size=%s", offset, size)
 
     def run(self):
         """Main loading loop."""
@@ -296,7 +296,7 @@ class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
                             logger.debug(f"Background loaded: offset=0x{offset:X}, size={len(data)}")
 
                     except Exception as e:
-                        logger.error(f"Background load error: {e}")
+                        logger.error("Background load error: %s", e)
                         if self.error_occurred:
                             self.error_occurred.emit(str(e))
 
@@ -304,7 +304,7 @@ class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
                     time.sleep(0.01)
 
         except Exception as e:
-            logger.error(f"Background loader thread error: {e}")
+            logger.error("Background loader thread error: %s", e)
             if self.error_occurred:
                 self.error_occurred.emit(str(e))
 
@@ -380,7 +380,7 @@ class LargeFileHandler:
             self.memory_monitor.start_monitoring()
 
         except Exception as e:
-            logger.error(f"Failed to initialize large file handler: {e}")
+            logger.error("Failed to initialize large file handler: %s", e)
             raise
 
     def _init_direct_load(self):
@@ -396,7 +396,7 @@ class LargeFileHandler:
             logger.debug(f"Direct loaded entire file: {len(data)} bytes")
 
         except Exception as e:
-            logger.error(f"Direct load failed: {e}")
+            logger.error("Direct load failed: %s", e)
             # Fallback to streaming
             self.memory_strategy = MemoryStrategy.STREAMING
             self._init_streaming()
@@ -410,10 +410,10 @@ class LargeFileHandler:
                 length=0,
                 access=mmap.ACCESS_READ
             )
-            logger.debug(f"Memory mapped file: {self.file_size} bytes")
+            logger.debug("Memory mapped file: %s bytes", self.file_size)
 
         except Exception as e:
-            logger.error(f"Memory mapping failed: {e}")
+            logger.error("Memory mapping failed: %s", e)
             # Fallback to streaming
             self.memory_strategy = MemoryStrategy.STREAMING
             self._init_streaming()
@@ -474,7 +474,7 @@ class LargeFileHandler:
         try:
             return self.mmap_file[offset:offset + size]
         except Exception as e:
-            logger.error(f"Memory map read error: {e}")
+            logger.error("Memory map read error: %s", e)
             return self._read_streaming(offset, size)
 
     def _read_streaming(self, offset: int, size: int) -> bytes:
@@ -522,7 +522,7 @@ class LargeFileHandler:
                 return data
 
         except Exception as e:
-            logger.error(f"Streaming read error: {e}")
+            logger.error("Streaming read error: %s", e)
 
         return b''
 
@@ -627,7 +627,7 @@ class LargeFileHandler:
             logger.debug("Large file handler closed")
 
         except Exception as e:
-            logger.error(f"Error closing large file handler: {e}")
+            logger.error("Error closing large file handler: %s", e)
 
     def __del__(self):
         """Cleanup when object is destroyed."""

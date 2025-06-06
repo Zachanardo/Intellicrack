@@ -351,7 +351,7 @@ class HardwareDongleEmulator:
                     patches_applied += 1
                     offset = binary_data.find(pattern, offset + 1)
 
-            self.logger.info(f"Found {patches_applied} dongle check patterns to patch")
+            self.logger.info("Found %s dongle check patterns to patch", patches_applied)
 
         except Exception as e:
             self.logger.error(f"Error patching dongle checks: {str(e)}")
@@ -393,7 +393,7 @@ class HardwareDongleEmulator:
                     else:
                         winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
                     winreg.CloseKey(key)
-                    self.logger.info(f"Set registry entry {path}\\{name} = {value}")
+                    self.logger.info("Set registry entry %s\\%s = %s", path, name, value)
                 except Exception as e:
                     self.logger.warning(f"Could not set registry entry {path}\\{name}: {str(e)}")
 

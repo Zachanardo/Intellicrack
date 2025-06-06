@@ -104,7 +104,7 @@ class QilingEmulator:
         # Qiling instance (created on run)
         self.ql = None
 
-        self.logger.info(f"Qiling emulator initialized for {self.ostype}/{self.arch}")
+        self.logger.info("Qiling emulator initialized for %s/%s", self.ostype, self.arch)
 
     def _get_default_rootfs(self) -> str:
         """Get default rootfs path for the OS type."""
@@ -273,7 +273,7 @@ class QilingEmulator:
             return results
 
         except Exception as e:
-            self.logger.error(f"Qiling emulation error: {e}")
+            self.logger.error("Qiling emulation error: %s", e)
             self.logger.debug(traceback.format_exc())
 
             return {
@@ -438,7 +438,7 @@ def run_qiling_emulation(binary_path: str, options: Dict[str, Any] = None) -> Di
         return results
 
     except Exception as e:
-        logging.error(f"Qiling emulation failed: {e}")
+        logging.error("Qiling emulation failed: %s", e)
         return {
             'status': 'error',
             'error': str(e)

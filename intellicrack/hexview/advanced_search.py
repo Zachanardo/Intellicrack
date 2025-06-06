@@ -110,7 +110,7 @@ class SearchHistory:
                     data = json.load(f)
                     self.entries = data.get('searches', [])
         except Exception as e:
-            logger.warning(f"Could not load search history: {e}")
+            logger.warning("Could not load search history: %s", e)
             self.entries = []
 
     def save_history(self):
@@ -120,7 +120,7 @@ class SearchHistory:
             with open(self.history_file, 'w') as f:
                 json.dump({'searches': self.entries}, f, indent=2)
         except Exception as e:
-            logger.warning(f"Could not save search history: {e}")
+            logger.warning("Could not save search history: %s", e)
 
 
 class SearchEngine:
@@ -285,7 +285,7 @@ class SearchEngine:
                 return re.compile(escaped, flags)
 
         except Exception as e:
-            logger.error(f"Error compiling pattern: {e}")
+            logger.error("Error compiling pattern: %s", e)
 
         return None
 
@@ -402,7 +402,7 @@ class SearchEngine:
                         matches.append(result)
 
         except Exception as e:
-            logger.error(f"Error finding matches in chunk: {e}")
+            logger.error("Error finding matches in chunk: %s", e)
 
         return matches
 
@@ -465,7 +465,7 @@ class SearchThread(QThread if PYQT5_AVAILABLE else object):
                 if result and self.result_found:
                     self.result_found.emit(result)
         except Exception as e:
-            logger.error(f"Search thread error: {e}")
+            logger.error("Search thread error: %s", e)
 
     def stop(self):
         """Stop the search operation."""

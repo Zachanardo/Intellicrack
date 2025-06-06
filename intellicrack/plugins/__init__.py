@@ -48,10 +48,10 @@ def load_plugin(plugin_name, plugin_type="custom"):
         if plugin_type == "custom":
             module = importlib.import_module(f".custom_modules.{plugin_name}", package="intellicrack.plugins")
             _plugins[plugin_name] = module
-            logger.info(f"Loaded plugin: {plugin_name}")
+            logger.info("Loaded plugin: %s", plugin_name)
             return module
     except Exception as e:
-        logger.error(f"Failed to load plugin {plugin_name}: {e}")
+        logger.error("Failed to load plugin %s: %s", plugin_name, e)
         return None
 
 def list_plugins(plugin_type="custom"):
@@ -97,7 +97,7 @@ try:
         run_plugin_remotely,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import plugin system functions: {e}")
+    logger.warning("Failed to import plugin system functions: %s", e)
     # Provide fallback empty functions
     def load_plugins(*args, **kwargs): return {}
     def run_plugin(*args, **kwargs): pass
@@ -112,7 +112,7 @@ except ImportError as e:
 try:
     from .remote_executor import RemotePluginExecutor
 except ImportError as e:
-    logger.warning(f"Remote plugin executor not available: {e}")
+    logger.warning("Remote plugin executor not available: %s", e)
     RemotePluginExecutor = None
 
 # Define package exports

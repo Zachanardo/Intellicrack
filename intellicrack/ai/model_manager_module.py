@@ -85,7 +85,7 @@ class PyTorchBackend(ModelBackend):
                 model.eval()
             return model
         except Exception as e:
-            logger.error(f"Failed to load PyTorch model: {e}")
+            logger.error("Failed to load PyTorch model: %s", e)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -106,7 +106,7 @@ class PyTorchBackend(ModelBackend):
 
             return output.numpy() if hasattr(output, 'numpy') else output
         except Exception as e:
-            logger.error(f"PyTorch prediction failed: {e}")
+            logger.error("PyTorch prediction failed: %s", e)
             raise
 
     def get_model_info(self, model: Any) -> Dict[str, Any]:
@@ -138,7 +138,7 @@ class TensorFlowBackend(ModelBackend):
             model = tf.keras.models.load_model(model_path)
             return model
         except Exception as e:
-            logger.error(f"Failed to load TensorFlow model: {e}")
+            logger.error("Failed to load TensorFlow model: %s", e)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -153,7 +153,7 @@ class TensorFlowBackend(ModelBackend):
             predictions = model.predict(input_data)
             return predictions
         except Exception as e:
-            logger.error(f"TensorFlow prediction failed: {e}")
+            logger.error("TensorFlow prediction failed: %s", e)
             raise
 
     def get_model_info(self, model: Any) -> Dict[str, Any]:
@@ -185,7 +185,7 @@ class ONNXBackend(ModelBackend):
             session = ort.InferenceSession(model_path)
             return session
         except Exception as e:
-            logger.error(f"Failed to load ONNX model: {e}")
+            logger.error("Failed to load ONNX model: %s", e)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -202,7 +202,7 @@ class ONNXBackend(ModelBackend):
 
             return outputs[0] if len(outputs) == 1 else outputs
         except Exception as e:
-            logger.error(f"ONNX prediction failed: {e}")
+            logger.error("ONNX prediction failed: %s", e)
             raise
 
     def get_model_info(self, model: Any) -> Dict[str, Any]:
@@ -246,7 +246,7 @@ class SklearnBackend(ModelBackend):
             model = joblib.load(model_path)
             return model
         except Exception as e:
-            logger.error(f"Failed to load sklearn model: {e}")
+            logger.error("Failed to load sklearn model: %s", e)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -260,7 +260,7 @@ class SklearnBackend(ModelBackend):
             else:
                 return model.predict(input_data)
         except Exception as e:
-            logger.error(f"Sklearn prediction failed: {e}")
+            logger.error("Sklearn prediction failed: %s", e)
             raise
 
     def get_model_info(self, model: Any) -> Dict[str, Any]:
@@ -308,7 +308,7 @@ class ModelCache:
 
             if cache_key in self.cache:
                 self.access_times[cache_key] = time.time()
-                logger.debug(f"Model cache hit for {model_path}")
+                logger.debug("Model cache hit for %s", model_path)
                 return self.cache[cache_key]
 
             return None
@@ -324,7 +324,7 @@ class ModelCache:
 
             self.cache[cache_key] = model
             self.access_times[cache_key] = time.time()
-            logger.debug(f"Model cached for {model_path}")
+            logger.debug("Model cached for %s", model_path)
 
     def _evict_oldest(self):
         """Evict the oldest accessed model from cache."""
@@ -334,7 +334,7 @@ class ModelCache:
         oldest_key = min(self.access_times, key=self.access_times.get)
         del self.cache[oldest_key]
         del self.access_times[oldest_key]
-        logger.debug(f"Evicted model from cache: {oldest_key}")
+        logger.debug("Evicted model from cache: %s", oldest_key)
 
     def clear(self):
         """Clear the cache."""
@@ -400,7 +400,7 @@ class ModelManager:
                 with open(metadata_file, 'r') as f:
                     self.model_metadata = json.load(f)
             except Exception as e:
-                logger.warning(f"Failed to load model metadata: {e}")
+                logger.warning("Failed to load model metadata: %s", e)
                 self.model_metadata = {}
 
     def _save_model_metadata(self):
@@ -411,7 +411,7 @@ class ModelManager:
             with open(metadata_file, 'w') as f:
                 json.dump(self.model_metadata, f, indent=2)
         except Exception as e:
-            logger.error(f"Failed to save model metadata: {e}")
+            logger.error("Failed to save model metadata: %s", e)
 
     def _detect_model_type(self, model_path: str) -> str:
         """Detect the model type from file extension or content."""
@@ -454,7 +454,7 @@ class ModelManager:
             }
 
             self._save_model_metadata()
-            logger.info(f"Registered model: {model_id} ({model_type})")
+            logger.info("Registered model: %s (%s)", model_id, model_type)
 
     def load_model(self, model_id: str) -> Any:
         """Load a model by ID."""
@@ -484,7 +484,7 @@ class ModelManager:
             self.cache.put(model_path, model)
             self.loaded_models[model_id] = model
 
-            logger.info(f"Loaded model: {model_id}")
+            logger.info("Loaded model: %s", model_id)
             return model
 
     def predict(self, model_id: str, input_data: Any) -> Any:
@@ -526,7 +526,7 @@ class ModelManager:
         with self.lock:
             if model_id in self.loaded_models:
                 del self.loaded_models[model_id]
-                logger.info(f"Unloaded model: {model_id}")
+                logger.info("Unloaded model: %s", model_id)
 
     def unregister_model(self, model_id: str):
         """Unregister a model."""
@@ -538,7 +538,7 @@ class ModelManager:
             if model_id in self.loaded_models:
                 del self.loaded_models[model_id]
 
-            logger.info(f"Unregistered model: {model_id}")
+            logger.info("Unregistered model: %s", model_id)
 
     def get_available_backends(self) -> List[str]:
         """Get list of available backends."""
@@ -582,7 +582,7 @@ class ModelManager:
                 'type': model_type
             }
         except Exception as e:
-            logger.error(f"Failed to import local model: {e}")
+            logger.error("Failed to import local model: %s", e)
             return None
 
     def get_available_repositories(self) -> List[str]:
@@ -631,7 +631,7 @@ class ModelManager:
                 'config': api_config
             }
         except Exception as e:
-            logger.error(f"Failed to import API model: {e}")
+            logger.error("Failed to import API model: %s", e)
             return None
 
     @property
@@ -797,10 +797,10 @@ class ModelFineTuner:
                 # Store training history
                 self.training_history[fine_tuned_id] = results
 
-                logger.info(f"Fine-tuning completed. New model ID: {fine_tuned_id}")
+                logger.info("Fine-tuning completed. New model ID: %s", fine_tuned_id)
 
             except Exception as e:
-                logger.error(f"Fine-tuning failed: {e}")
+                logger.error("Fine-tuning failed: %s", e)
                 results['error'] = str(e)
 
             return results
@@ -987,7 +987,7 @@ def import_custom_model(model_path: str, model_type: str = None,
         }
 
     except Exception as e:
-        logger.error(f"Failed to import model: {e}")
+        logger.error("Failed to import model: %s", e)
         return {
             'success': False,
             'error': str(e),
@@ -1032,7 +1032,7 @@ def load_model(model_id: str, model_path: Optional[str] = None):
         return manager.load_model(model_id)
         
     except Exception as e:
-        logger.error(f"Failed to load model {model_id}: {e}")
+        logger.error("Failed to load model %s: %s", model_id, e)
         raise
 
 
@@ -1098,7 +1098,7 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto"):
         }
         
     except Exception as e:
-        logger.error(f"Failed to save model {model_id}: {e}")
+        logger.error("Failed to save model %s: %s", model_id, e)
         return {
             "success": False,
             "error": str(e),
@@ -1134,7 +1134,7 @@ def list_available_models() -> Dict[str, Any]:
         }
         
     except Exception as e:
-        logger.error(f"Failed to list models: {e}")
+        logger.error("Failed to list models: %s", e)
         return {
             "success": False,
             "error": str(e),
@@ -1174,7 +1174,7 @@ def configure_ai_provider(provider_name: str, config: Dict[str, Any]) -> Dict[st
             }
         
         # Store configuration (in a real implementation, this would be persistent)
-        logger.info(f"Configured AI provider: {provider_name}")
+        logger.info("Configured AI provider: %s", provider_name)
         
         return {
             "success": True,
@@ -1185,7 +1185,7 @@ def configure_ai_provider(provider_name: str, config: Dict[str, Any]) -> Dict[st
         }
         
     except Exception as e:
-        logger.error(f"Failed to configure AI provider {provider_name}: {e}")
+        logger.error("Failed to configure AI provider %s: %s", provider_name, e)
         return {
             "success": False,
             "error": str(e),

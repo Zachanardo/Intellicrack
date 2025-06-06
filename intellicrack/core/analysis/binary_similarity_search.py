@@ -57,7 +57,7 @@ class BinarySimilaritySearch:
                 with open(self.database_path, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
-                self.logger.error(f"Error loading binary database: {e}")
+                self.logger.error("Error loading binary database: %s", e)
                 return {"binaries": []}
         else:
             return {"binaries": []}
@@ -68,7 +68,7 @@ class BinarySimilaritySearch:
             with open(self.database_path, "w", encoding="utf-8") as f:
                 json.dump(self.database, f, indent=4)
         except Exception as e:
-            self.logger.error(f"Error saving binary database: {e}")
+            self.logger.error("Error saving binary database: %s", e)
 
     def add_binary(self, binary_path: str, cracking_patterns: Optional[List[str]] = None) -> bool:
         """
@@ -85,7 +85,7 @@ class BinarySimilaritySearch:
             # Check if binary already exists in database
             for existing in self.database["binaries"]:
                 if existing["path"] == binary_path:
-                    self.logger.warning(f"Binary {binary_path} already exists in database")
+                    self.logger.warning("Binary %s already exists in database", binary_path)
                     return False
 
             # Extract binary features
@@ -104,11 +104,11 @@ class BinarySimilaritySearch:
             self.database["binaries"].append(binary_entry)
             self._save_database()
 
-            self.logger.info(f"Added binary {binary_path} to database")
+            self.logger.info("Added binary %s to database", binary_path)
             return True
 
         except Exception as e:
-            self.logger.error(f"Error adding binary {binary_path} to database: {e}")
+            self.logger.error("Error adding binary %s to database: %s", binary_path, e)
             return False
 
     def _extract_binary_features(self, binary_path: str) -> Dict[str, Any]:
@@ -188,12 +188,12 @@ class BinarySimilaritySearch:
                     features["strings"] = strings[:50]  # Limit to first 50 strings
 
                 except Exception as e:
-                    self.logger.warning(f"PE analysis failed for {binary_path}: {e}")
+                    self.logger.warning("PE analysis failed for %s: %s", binary_path, e)
 
             return features
 
         except Exception as e:
-            self.logger.error(f"Error extracting features from {binary_path}: {e}")
+            self.logger.error("Error extracting features from %s: %s", binary_path, e)
             return features
 
     def _extract_strings(self, data: bytes, min_length: int = 4) -> List[str]:
@@ -237,7 +237,7 @@ class BinarySimilaritySearch:
             return similar_binaries
 
         except Exception as e:
-            self.logger.error(f"Error searching similar binaries for {binary_path}: {e}")
+            self.logger.error("Error searching similar binaries for %s: %s", binary_path, e)
             return []
 
     def _calculate_similarity(self, features1: Dict[str, Any], features2: Dict[str, Any]) -> float:
@@ -307,7 +307,7 @@ class BinarySimilaritySearch:
             return min(1.0, max(0.0, similarity))
 
         except Exception as e:
-            self.logger.error(f"Error calculating similarity: {e}")
+            self.logger.error("Error calculating similarity: %s", e)
             return 0.0
 
     def _calculate_section_similarity(self, sections1: List[Dict[str, Any]], sections2: List[Dict[str, Any]]) -> float:
@@ -345,7 +345,7 @@ class BinarySimilaritySearch:
             return name_similarity * 0.6 + entropy_similarity * 0.4
 
         except Exception as e:
-            self.logger.error(f"Error calculating section similarity: {e}")
+            self.logger.error("Error calculating section similarity: %s", e)
             return 0.0
 
     def _calculate_list_similarity(self, list1: List[str], list2: List[str]) -> float:
@@ -374,7 +374,7 @@ class BinarySimilaritySearch:
             return intersection / union if union > 0 else 0.0
 
         except Exception as e:
-            self.logger.error(f"Error calculating list similarity: {e}")
+            self.logger.error("Error calculating list similarity: %s", e)
             return 0.0
 
     def get_database_stats(self) -> Dict[str, Any]:
@@ -431,14 +431,14 @@ class BinarySimilaritySearch:
 
             if len(self.database["binaries"]) < original_count:
                 self._save_database()
-                self.logger.info(f"Removed binary {binary_path} from database")
+                self.logger.info("Removed binary %s from database", binary_path)
                 return True
             else:
-                self.logger.warning(f"Binary {binary_path} not found in database")
+                self.logger.warning("Binary %s not found in database", binary_path)
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error removing binary {binary_path}: {e}")
+            self.logger.error("Error removing binary %s: %s", binary_path, e)
             return False
 
 

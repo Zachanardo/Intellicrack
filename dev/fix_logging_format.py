@@ -1,134 +1,185 @@
 #!/usr/bin/env python3
 """
-Fix W1203 (logging-fstring-interpolation) issues in the codebase.
-Converts f-string formatting in logging functions to lazy % formatting.
+Fix W1203 logging-fstring-interpolation warnings.
+Convert f-strings in logging to lazy % formatting.
+This script is conservative and only fixes simple cases.
 """
 
 import re
 import os
 import sys
-from pathlib import Path
+from datetime import datetime
 
-def fix_logging_fstring(content):
-    """Fix logging f-string issues in content."""
+# Track changes for reporting
+changes_made = []
+skipped_complex = []
+
+def is_simple_variable(expr):
+    """Check if expression is a simple variable (no method calls, attributes, etc.)"""
+    # Simple variable: just alphanumeric and underscore
+    # Allow simple attributes like obj.attr but not method calls
+    return re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$', expr.strip())
+
+def convert_fstring_to_percent(match):
+    """Convert f-string logging to % formatting."""
+    prefix = match.group(1)  # logger.error
+    quote = match.group(2)   # " or '
+    content = match.group(3)  # string content
     
-    # Pattern to match logging calls with f-strings
-    # This will match logger.info(f"..."), logging.debug(f"..."), etc.
+    # Find all {expression} in the f-string
+    expressions = []
+    new_content = content
+    
+    # Pattern to match {expression} including format specs
+    pattern = r'\{([^}:]+)(?::([^}]+))?\}'
+    
+    for expr_match in re.finditer(pattern, content):
+        expr = expr_match.group(1)
+        format_spec = expr_match.group(2)
+        
+        # Skip complex expressions
+        if not is_simple_variable(expr):
+            return None  # Signal to skip this one
+        
+        expressions.append(expr.strip())
+        
+        # Replace with appropriate format specifier
+        if format_spec:
+            # Handle format specifiers like .2f, >10, etc.
+            if 'd' in format_spec or 'x' in format_spec or 'o' in format_spec:
+                replacement = '%d'
+            elif 'f' in format_spec or 'e' in format_spec or 'g' in format_spec:
+                replacement = '%f'
+            else:
+                replacement = '%s'
+        else:
+            replacement = '%s'
+        
+        # Replace this specific occurrence
+        old_pattern = '{' + expr + (':' + format_spec if format_spec else '') + '}'
+        new_content = new_content.replace(old_pattern, replacement, 1)
+    
+    if expressions:
+        # Build the new logging call
+        return f'{prefix}({quote}{new_content}{quote}, {", ".join(expressions)})'
+    else:
+        # No expressions found, just remove the f prefix
+        return f'{prefix}({quote}{content}{quote})'
+
+def fix_logging_in_line(line, filename, line_num):
+    """Fix logging f-strings in a single line."""
+    # Patterns for different logging calls
     patterns = [
-        # Pattern for logger.method(f"...")
-        (r'(logger\.\w+)\(f(["\'])(.+?)\2\)', r'\1(\3', 'logger_fstring'),
-        # Pattern for logging.method(f"...")
-        (r'(logging\.\w+)\(f(["\'])(.+?)\2\)', r'\1(\3', 'logging_fstring'),
-        # Pattern for self.logger.method(f"...")
-        (r'(self\.logger\.\w+)\(f(["\'])(.+?)\2\)', r'\1(\3', 'self_logger_fstring'),
+        r'((?:self\.)?logger\.(?:debug|info|warning|error|critical))\(f(["\'])([^"\']+)\2\)',
+        r'(logging\.(?:debug|info|warning|error|critical))\(f(["\'])([^"\']+)\2\)',
     ]
     
-    modified = False
-    lines = content.split('\n')
+    for pattern in patterns:
+        match = re.search(pattern, line)
+        if match:
+            result = convert_fstring_to_percent(match)
+            if result is None:
+                # Complex expression, skip
+                skipped_complex.append(f"{filename}:{line_num} - {line.strip()}")
+                return line
+            else:
+                # Track the change
+                changes_made.append({
+                    'file': filename,
+                    'line': line_num,
+                    'old': line.strip(),
+                    'new': re.sub(pattern, result, line).strip()
+                })
+                return re.sub(pattern, result, line)
     
-    for i, line in enumerate(lines):
-        original_line = line
-        
-        for pattern, replacement, pattern_type in patterns:
-            if re.search(pattern, line):
-                # Extract the f-string content
-                match = re.search(pattern, line)
-                if match:
-                    # Convert f-string placeholders {var} to %s and collect variables
-                    fstring_content = match.group(3)
-                    variables = []
-                    
-                    # Find all {variable} or {expression} patterns
-                    var_pattern = r'\{([^}]+)\}'
-                    var_matches = list(re.finditer(var_pattern, fstring_content))
-                    
-                    if var_matches:
-                        # Replace {var} with %s and collect variables
-                        new_content = fstring_content
-                        for var_match in reversed(var_matches):  # Process in reverse to maintain positions
-                            var_expr = var_match.group(1)
-                            # Handle special formatting like {var:.2f}
-                            if ':' in var_expr:
-                                var_name, format_spec = var_expr.split(':', 1)
-                                # Convert format specifiers
-                                if format_spec.endswith('f'):
-                                    replacement_fmt = '%f'
-                                elif format_spec.endswith('d'):
-                                    replacement_fmt = '%d'
-                                elif format_spec.endswith('s'):
-                                    replacement_fmt = '%s'
-                                else:
-                                    replacement_fmt = '%s'
-                                variables.insert(0, var_name.strip())
-                            else:
-                                replacement_fmt = '%s'
-                                variables.insert(0, var_expr.strip())
-                            
-                            new_content = new_content[:var_match.start()] + replacement_fmt + new_content[var_match.end():]
-                        
-                        # Reconstruct the line
-                        quote_char = match.group(2)
-                        method_call = match.group(1)
-                        
-                        if variables:
-                            # Create tuple of variables
-                            var_tuple = ', '.join(variables)
-                            if len(variables) == 1:
-                                var_tuple += ','  # Single element tuple needs trailing comma
-                            new_line = f'{method_call}({quote_char}{new_content}{quote_char}, {var_tuple})'
-                        else:
-                            new_line = f'{method_call}({quote_char}{new_content}{quote_char})'
-                        
-                        # Preserve indentation
-                        indent = len(original_line) - len(original_line.lstrip())
-                        line = ' ' * indent + new_line.strip()
-                        
-                        if line != original_line:
-                            modified = True
-                            lines[i] = line
-                            break  # Only apply first matching pattern
-    
-    return '\n'.join(lines), modified
+    return line
 
 def process_file(filepath):
-    """Process a single Python file."""
+    """Process a single file to fix logging f-strings."""
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
+            lines = f.readlines()
         
-        new_content, modified = fix_logging_fstring(content)
+        modified = False
+        new_lines = []
+        filename = os.path.relpath(filepath, '/mnt/c/Intellicrack')
+        
+        for i, line in enumerate(lines, 1):
+            new_line = fix_logging_in_line(line, filename, i)
+            if new_line != line:
+                modified = True
+            new_lines.append(new_line)
         
         if modified:
             with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(new_content)
+                f.writelines(new_lines)
             return True
         return False
     except Exception as e:
         print(f"Error processing {filepath}: {e}")
         return False
 
+def write_report():
+    """Write a detailed report of changes."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    report_file = f'/mnt/c/Intellicrack/dev/logging_fixes_report_{timestamp}.txt'
+    
+    with open(report_file, 'w') as f:
+        f.write("W1203 Logging Format Fixes Report\n")
+        f.write("=" * 80 + "\n\n")
+        
+        f.write(f"Total changes made: {len(changes_made)}\n")
+        f.write(f"Complex expressions skipped: {len(skipped_complex)}\n\n")
+        
+        if changes_made:
+            f.write("CHANGES MADE:\n")
+            f.write("-" * 80 + "\n")
+            for change in changes_made:
+                f.write(f"\nFile: {change['file']} (line {change['line']})\n")
+                f.write(f"OLD: {change['old']}\n")
+                f.write(f"NEW: {change['new']}\n")
+        
+        if skipped_complex:
+            f.write("\n\nCOMPLEX EXPRESSIONS SKIPPED (need manual review):\n")
+            f.write("-" * 80 + "\n")
+            for skip in skipped_complex:
+                f.write(f"{skip}\n")
+    
+    return report_file
+
 def main():
-    """Main function to process all Python files."""
-    project_root = Path("/mnt/c/Intellicrack/Intellicrack_Project/Intellicrack_Project")
-    intellicrack_dir = project_root / "intellicrack"
-    scripts_dir = project_root / "scripts"
+    """Main function to process Python files."""
+    print("Starting W1203 logging format fixes...")
+    print("This script will only fix simple variable substitutions.")
+    print("Complex expressions will be skipped for manual review.\n")
     
-    if not intellicrack_dir.exists():
-        print(f"Error: {intellicrack_dir} does not exist")
-        return 1
+    # Process all Python files in intellicrack directory
+    files_processed = 0
+    files_modified = 0
     
-    modified_files = []
+    for root, dirs, files in os.walk('/mnt/c/Intellicrack/intellicrack'):
+        # Skip __pycache__ directories
+        if '__pycache__' in root:
+            continue
+            
+        for file in files:
+            if file.endswith('.py'):
+                filepath = os.path.join(root, file)
+                files_processed += 1
+                if process_file(filepath):
+                    files_modified += 1
+                    print(f"Modified: {os.path.relpath(filepath, '/mnt/c/Intellicrack')}")
     
-    # Process all Python files in intellicrack and scripts directories
-    for directory in [intellicrack_dir, scripts_dir]:
-        if directory.exists():
-            for py_file in directory.rglob("*.py"):
-                if process_file(py_file):
-                    modified_files.append(py_file)
-                    print(f"Fixed: {py_file.relative_to(project_root)}")
+    # Write report
+    report_file = write_report()
     
-    print(f"\nTotal files modified: {len(modified_files)}")
-    return 0
+    print(f"\n{'=' * 60}")
+    print(f"Files processed: {files_processed}")
+    print(f"Files modified: {files_modified}")
+    print(f"Total changes: {len(changes_made)}")
+    print(f"Skipped complex: {len(skipped_complex)}")
+    print(f"\nDetailed report saved to: {report_file}")
+    print("\nTo revert changes if needed: git checkout -- intellicrack/")
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

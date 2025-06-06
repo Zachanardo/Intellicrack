@@ -99,7 +99,7 @@ def load_plugins(plugin_dir: str = "plugins") -> Dict[str, List[Dict[str, Any]]]
                             "description": description
                         })
                 except Exception as e:
-                    logger.error(f"Error loading Frida plugin {file}: {e}")
+                    logger.error("Error loading Frida plugin %s: %s", file, e)
 
     # Load Ghidra scripts
     ghidra_dir = os.path.join(plugin_dir, "ghidra_scripts")
@@ -126,7 +126,7 @@ def load_plugins(plugin_dir: str = "plugins") -> Dict[str, List[Dict[str, Any]]]
                             "description": description
                         })
                 except Exception as e:
-                    logger.error(f"Error loading Ghidra plugin {file}: {e}")
+                    logger.error("Error loading Ghidra plugin %s: %s", file, e)
 
     # Load custom Python modules
     custom_dir = os.path.join(plugin_dir, "custom_modules")
@@ -159,7 +159,7 @@ def load_plugins(plugin_dir: str = "plugins") -> Dict[str, List[Dict[str, Any]]]
                             "description": description
                         })
                 except Exception as e:
-                    logger.error(f"Error loading custom plugin {file}: {e}")
+                    logger.error("Error loading custom plugin %s: %s", file, e)
                     logger.error(traceback.format_exc())
 
     logger.info(
@@ -559,7 +559,7 @@ send("[Registry Monitor] Started monitoring registry access");
     if not os.path.exists(frida_path):
         with open(frida_path, "w", encoding="utf-8") as f:
             f.write(sample_frida)
-        logger.info(f"Created sample Frida script: {frida_path}")
+        logger.info("Created sample Frida script: %s", frida_path)
 
     # Create sample Ghidra script
     sample_ghidra = '''//License Pattern Scanner
@@ -613,7 +613,7 @@ public class LicensePatternScanner extends GhidraScript {
     if not os.path.exists(ghidra_path):
         with open(ghidra_path, "w", encoding="utf-8") as f:
             f.write(sample_ghidra)
-        logger.info(f"Created sample Ghidra script: {ghidra_path}")
+        logger.info("Created sample Ghidra script: %s", ghidra_path)
 
     # Create sample custom Python module
     sample_custom = '''"""
@@ -691,7 +691,7 @@ def register():
     if not os.path.exists(custom_path):
         with open(custom_path, "w", encoding="utf-8") as f:
             f.write(sample_custom)
-        logger.info(f"Created sample custom plugin: {custom_path}")
+        logger.info("Created sample custom plugin: %s", custom_path)
 
     logger.info("Sample plugins created successfully!")
 
@@ -743,7 +743,7 @@ def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> Option
     Returns:
         List of strings with results, or None on error
     """
-    logger.info(f"Running plugin in sandbox: {plugin_path}")
+    logger.info("Running plugin in sandbox: %s", plugin_path)
 
     # Create a queue for results
     result_queue = multiprocessing.Queue()

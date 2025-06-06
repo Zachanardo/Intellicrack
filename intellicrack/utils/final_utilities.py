@@ -124,12 +124,12 @@ def show_simulation_results(results: Dict[str, Any], parent: Any = None) -> None
 
 def update_training_progress(progress: float, message: str = "") -> None:
     """Update training progress in the UI."""
-    logger.info(f"Training Progress: {progress:.1f}% - {message}")
+    logger.info("Training Progress: %f% - %s", progress, message)
 
 
 def update_visualization(data: Any, viz_type: str = "plot") -> None:
     """Update visualization with new data."""
-    logger.info(f"Updating {viz_type} visualization with data")
+    logger.info("Updating %s visualization with data", viz_type)
 
 
 # === Analysis Functions ===
@@ -192,7 +192,7 @@ def compute_binary_hash(binary_path: str, algorithm: str = "sha256") -> Optional
                 hash_obj.update(chunk)
         return hash_obj.hexdigest()
     except Exception as e:
-        logger.error(f"Error computing hash: {e}")
+        logger.error("Error computing hash: %s", e)
         return None
 
 
@@ -216,7 +216,7 @@ def compute_section_hashes(binary_path: str) -> Dict[str, str]:
         if file_hash:
             section_hashes["_file"] = file_hash
     except Exception as e:
-        logger.error(f"Error computing section hashes: {e}")
+        logger.error("Error computing section hashes: %s", e)
 
     return section_hashes
 
@@ -296,7 +296,7 @@ def cache_analysis_results(key: str, results: Dict[str, Any],
 
         return True
     except Exception as e:
-        logger.error(f"Failed to cache results: {e}")
+        logger.error("Failed to cache results: %s", e)
         return False
 
 
@@ -449,7 +449,7 @@ def copy_to_clipboard(text: str) -> bool:
                          input=text, text=True, check=True)
             return True
     except Exception as e:
-        logger.error(f"Failed to copy to clipboard: {e}")
+        logger.error("Failed to copy to clipboard: %s", e)
 
     return False
 
@@ -492,7 +492,7 @@ def export_metrics(metrics: Dict[str, Any], output_path: str) -> bool:
             json.dump(metrics, f, indent=2)
         return True
     except Exception as e:
-        logger.error(f"Failed to export metrics: {e}")
+        logger.error("Failed to export metrics: %s", e)
         return False
 
 
@@ -501,7 +501,7 @@ def submit_report(report_data: Dict[str, Any],
     """Submit a report to an endpoint or save locally."""
     if endpoint:
         # Would typically POST to endpoint
-        logger.info(f"Would submit report to {endpoint}")
+        logger.info("Would submit report to %s", endpoint)
         return {"status": "simulated", "id": hash_func(report_data)[:8]}
     else:
         # Save locally
@@ -520,7 +520,7 @@ def submit_report(report_data: Dict[str, Any],
 
 def start_training(model_config: Dict[str, Any]) -> Dict[str, Any]:
     """Start model training with given configuration."""
-    logger.info(f"Starting training with config: {model_config}")
+    logger.info("Starting training with config: %s", model_config)
 
     # This would typically start a training thread
     # For now, return a status dict
@@ -533,14 +533,14 @@ def start_training(model_config: Dict[str, Any]) -> Dict[str, Any]:
 
 def stop_training(training_id: str) -> bool:
     """Stop an ongoing training process."""
-    logger.info(f"Stopping training: {training_id}")
+    logger.info("Stopping training: %s", training_id)
     # Would typically signal training thread to stop
     return True
 
 
 def on_training_finished(results: Dict[str, Any]) -> None:
     """Callback when training finishes."""
-    logger.info(f"Training finished with results: {results}")
+    logger.info("Training finished with results: %s", results)
 
 
 # === Model Functions ===
@@ -608,7 +608,7 @@ def load_dataset_preview(dataset_path: str, limit: int = 10) -> List[Dict[str, A
                 else:
                     return [data]
     except Exception as e:
-        logger.error(f"Failed to load dataset preview: {e}")
+        logger.error("Failed to load dataset preview: %s", e)
         return []
 
 
@@ -675,7 +675,7 @@ def add_image(document: Any, image_path: str,
              caption: Optional[str] = None) -> bool:
     """Add an image to a document."""
     # This would typically add to a PDF or HTML document
-    logger.info(f"Adding image {image_path} with caption: {caption}")
+    logger.info("Adding image %s with caption: %s", image_path, caption)
     return os.path.exists(image_path)
 
 
@@ -694,7 +694,7 @@ def showEvent(event: Any) -> None:
 
 def patches_reordered(old_order: List[int], new_order: List[int]) -> None:
     """Handle patch reordering."""
-    logger.info(f"Patches reordered from {old_order} to {new_order}")
+    logger.info("Patches reordered from %s to %s", old_order, new_order)
 
 
 def do_GET(request_handler: Any) -> None:

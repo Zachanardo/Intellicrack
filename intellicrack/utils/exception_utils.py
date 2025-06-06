@@ -71,7 +71,7 @@ def _display_exception_dialog(exc_type, exc_value, exc_traceback) -> None:
         msg_box.exec_()
 
     except Exception as e:
-        logger.error(f"Failed to display exception dialog: {e}")
+        logger.error("Failed to display exception dialog: %s", e)
 
 
 def _report_error(exc_type, exc_value, exc_traceback) -> None:
@@ -104,10 +104,10 @@ def _report_error(exc_type, exc_value, exc_traceback) -> None:
         with open(error_log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(error_report, indent=2) + "\n")
 
-        logger.info(f"Error report written to {error_log_path}")
+        logger.info("Error report written to %s", error_log_path)
 
     except Exception as e:
-        logger.error(f"Failed to write error report: {e}")
+        logger.error("Failed to write error report: %s", e)
 
 
 def load_config(config_path: str = "config.json") -> Dict[str, Any]:
@@ -124,14 +124,14 @@ def load_config(config_path: str = "config.json") -> Dict[str, Any]:
         if os.path.exists(config_path):
             with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
-            logger.info(f"Configuration loaded from {config_path}")
+            logger.info("Configuration loaded from %s", config_path)
             return config
         else:
-            logger.warning(f"Configuration file not found: {config_path}")
+            logger.warning("Configuration file not found: %s", config_path)
             return {}
 
     except Exception as e:
-        logger.error(f"Failed to load configuration: {e}")
+        logger.error("Failed to load configuration: %s", e)
         return {}
 
 
@@ -149,11 +149,11 @@ def save_config(config: Dict[str, Any], config_path: str = "config.json") -> boo
     try:
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2)
-        logger.info(f"Configuration saved to {config_path}")
+        logger.info("Configuration saved to %s", config_path)
         return True
 
     except Exception as e:
-        logger.error(f"Failed to save configuration: {e}")
+        logger.error("Failed to save configuration: %s", e)
         return False
 
 
@@ -190,7 +190,7 @@ def setup_file_logging(log_file: str = "intellicrack.log",
         root_logger.addHandler(file_handler)
         root_logger.setLevel(level)
 
-        logger.info(f"File logging set up: {log_file}")
+        logger.info("File logging set up: %s", log_file)
         return root_logger
 
     except Exception as e:
@@ -259,11 +259,11 @@ def register():
         with open(plugin_file, "w", encoding="utf-8") as f:
             f.write(sample_plugin)
 
-        logger.info(f"Sample plugin created: {plugin_file}")
+        logger.info("Sample plugin created: %s", plugin_file)
         return True
 
     except Exception as e:
-        logger.error(f"Failed to create sample plugins: {e}")
+        logger.error("Failed to create sample plugins: %s", e)
         return False
 
 
@@ -279,7 +279,7 @@ def load_ai_model(model_path: str) -> Optional[Any]:
     """
     try:
         if not os.path.exists(model_path):
-            logger.error(f"Model file not found: {model_path}")
+            logger.error("Model file not found: %s", model_path)
             return None
 
         # Try different model formats
@@ -287,7 +287,7 @@ def load_ai_model(model_path: str) -> Optional[Any]:
             try:
                 import joblib
                 model = joblib.load(model_path)
-                logger.info(f"Joblib model loaded: {model_path}")
+                logger.info("Joblib model loaded: %s", model_path)
                 return model
             except ImportError:
                 logger.warning("joblib not available for model loading")
@@ -297,23 +297,23 @@ def load_ai_model(model_path: str) -> Optional[Any]:
                 import pickle
                 with open(model_path, 'rb') as f:
                     model = pickle.load(f)
-                logger.info(f"Pickle model loaded: {model_path}")
+                logger.info("Pickle model loaded: %s", model_path)
                 return model
             except Exception as e:
-                logger.error(f"Failed to load pickle model: {e}")
+                logger.error("Failed to load pickle model: %s", e)
 
         elif model_path.endswith('.onnx'):
             try:
                 import onnxruntime
                 model = onnxruntime.InferenceSession(model_path)
-                logger.info(f"ONNX model loaded: {model_path}")
+                logger.info("ONNX model loaded: %s", model_path)
                 return model
             except ImportError:
                 logger.warning("onnxruntime not available for ONNX model loading")
 
-        logger.warning(f"Unsupported model format: {model_path}")
+        logger.warning("Unsupported model format: %s", model_path)
         return None
 
     except Exception as e:
-        logger.error(f"Failed to load AI model: {e}")
+        logger.error("Failed to load AI model: %s", e)
         return None

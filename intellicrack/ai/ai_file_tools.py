@@ -159,7 +159,7 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
             return results
 
         except Exception as e:
-            logger.error(f"Error in file search: {e}")
+            logger.error("Error in file search: %s", e)
             return {"status": "error", "message": str(e)}
 
     def quick_license_scan(self, program_directory: str) -> Dict[str, Any]:
@@ -267,7 +267,7 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
             return result
 
         except Exception as e:
-            logger.error(f"Error reading file {file_path}: {e}")
+            logger.error("Error reading file %s: %s", file_path, e)
             return {"status": "error", "message": str(e)}
 
     def read_multiple_files(self, file_paths: List[str], purpose: str = "License analysis") -> Dict[str, Any]:

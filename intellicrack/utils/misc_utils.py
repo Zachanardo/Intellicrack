@@ -79,18 +79,18 @@ def validate_path(path: Union[str, Path], must_exist: bool = True) -> bool:
 
         # Check if path is absolute
         if not path.is_absolute():
-            logger.warning(f"Path is not absolute: {path}")
+            logger.warning("Path is not absolute: %s", path)
             return False
 
         # Check existence if required
         if must_exist and not path.exists():
-            logger.warning(f"Path does not exist: {path}")
+            logger.warning("Path does not exist: %s", path)
             return False
 
         return True
 
     except Exception as e:
-        logger.error(f"Error validating path {path}: {e}")
+        logger.error("Error validating path %s: %s", path, e)
         return False
 
 
@@ -227,7 +227,7 @@ def ensure_directory_exists(directory: Union[str, Path]) -> bool:
         path.mkdir(parents=True, exist_ok=True)
         return True
     except Exception as e:
-        logger.error(f"Failed to create directory {directory}: {e}")
+        logger.error("Failed to create directory %s: %s", directory, e)
         return False
 
 

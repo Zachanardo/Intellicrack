@@ -126,7 +126,7 @@ class OpenAIBackend(LLMBackend):
             logger.error("OpenAI package not installed. Install with: pip install openai")
             return False
         except Exception as e:
-            logger.error(f"Failed to initialize OpenAI backend: {e}")
+            logger.error("Failed to initialize OpenAI backend: %s", e)
             return False
 
     def chat(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> LLMResponse:
@@ -170,7 +170,7 @@ class OpenAIBackend(LLMBackend):
             )
 
         except Exception as e:
-            logger.error(f"OpenAI API error: {e}")
+            logger.error("OpenAI API error: %s", e)
             raise
 
 
@@ -203,7 +203,7 @@ class AnthropicBackend(LLMBackend):
             logger.error("Anthropic package not installed. Install with: pip install anthropic")
             return False
         except Exception as e:
-            logger.error(f"Failed to initialize Anthropic backend: {e}")
+            logger.error("Failed to initialize Anthropic backend: %s", e)
             return False
 
     def chat(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> LLMResponse:
@@ -245,7 +245,7 @@ class AnthropicBackend(LLMBackend):
             )
 
         except Exception as e:
-            logger.error(f"Anthropic API error: {e}")
+            logger.error("Anthropic API error: %s", e)
             raise
 
 
@@ -281,7 +281,7 @@ class LlamaCppBackend(LLMBackend):
             logger.error("llama-cpp-python not installed. Install with: pip install llama-cpp-python")
             return False
         except Exception as e:
-            logger.error(f"Failed to initialize llama.cpp backend: {e}")
+            logger.error("Failed to initialize llama.cpp backend: %s", e)
             return False
 
     def chat(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> LLMResponse:
@@ -317,7 +317,7 @@ class LlamaCppBackend(LLMBackend):
             )
 
         except Exception as e:
-            logger.error(f"llama.cpp generation error: {e}")
+            logger.error("llama.cpp generation error: %s", e)
             raise
 
     def _messages_to_prompt(self, messages: List[LLMMessage]) -> str:
@@ -390,11 +390,11 @@ class OllamaBackend(LLMBackend):
                 logger.info(f"Ollama backend initialized with model: {self.config.model_name}")
                 return True
             else:
-                logger.error(f"Ollama not accessible at {self.base_url}")
+                logger.error("Ollama not accessible at %s", self.base_url)
                 return False
 
         except Exception as e:
-            logger.error(f"Failed to initialize Ollama backend: {e}")
+            logger.error("Failed to initialize Ollama backend: %s", e)
             return False
 
     def chat(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> LLMResponse:
@@ -444,7 +444,7 @@ class OllamaBackend(LLMBackend):
             )
 
         except Exception as e:
-            logger.error(f"Ollama API error: {e}")
+            logger.error("Ollama API error: %s", e)
             raise
 
 
@@ -477,7 +477,7 @@ class LLMManager:
 
                 # Initialize backend
                 if not backend.initialize():
-                    logger.error(f"Failed to initialize LLM backend: {llm_id}")
+                    logger.error("Failed to initialize LLM backend: %s", llm_id)
                     return False
 
                 self.backends[llm_id] = backend
@@ -491,18 +491,18 @@ class LLMManager:
                 return True
 
             except Exception as e:
-                logger.error(f"Failed to register LLM {llm_id}: {e}")
+                logger.error("Failed to register LLM %s: %s", llm_id, e)
                 return False
 
     def set_active_llm(self, llm_id: str) -> bool:
         """Set the active LLM for inference."""
         with self.lock:
             if llm_id not in self.backends:
-                logger.error(f"LLM not registered: {llm_id}")
+                logger.error("LLM not registered: %s", llm_id)
                 return False
 
             self.active_backend = llm_id
-            logger.info(f"Set active LLM: {llm_id}")
+            logger.info("Set active LLM: %s", llm_id)
             return True
 
     def chat(self, messages: List[LLMMessage], llm_id: Optional[str] = None,
@@ -523,7 +523,7 @@ class LLMManager:
                 return response
 
             except Exception as e:
-                logger.error(f"LLM chat error: {e}")
+                logger.error("LLM chat error: %s", e)
                 return None
 
     def get_available_llms(self) -> List[str]:
@@ -560,7 +560,7 @@ class LLMManager:
                 try:
                     backend.shutdown()
                 except (AttributeError, Exception) as e:
-                    logger.warning(f"Error shutting down backend: {e}")
+                    logger.warning("Error shutting down backend: %s", e)
 
             self.backends.clear()
             self.configs.clear()

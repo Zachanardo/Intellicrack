@@ -29,7 +29,7 @@ class AIAssistant:
                 "complexity": "unknown"
             }
         except Exception as e:
-            logger.error(f"Code analysis failed: {e}")
+            logger.error("Code analysis failed: %s", e)
             return {"status": "error", "error": str(e)}
     
     def get_suggestions(self, context: str) -> List[str]:
@@ -58,7 +58,7 @@ class CodeAnalyzer:
                 "recommendations": ["Implement binary analysis engine"]
             }
         except Exception as e:
-            logger.error(f"Binary analysis failed: {e}")
+            logger.error("Binary analysis failed: %s", e)
             return {"error": str(e)}
     
     def analyze_assembly(self, assembly_code: str) -> Dict[str, Any]:
@@ -70,7 +70,7 @@ class CodeAnalyzer:
                 "vulnerabilities": ["Vulnerability detection requires implementation"]
             }
         except Exception as e:
-            logger.error(f"Assembly analysis failed: {e}")
+            logger.error("Assembly analysis failed: %s", e)
             return {"error": str(e)}
 
 
@@ -91,7 +91,7 @@ def analyze_with_ai(data: Any, analysis_type: str = "general") -> Dict[str, Any]
                 "summary": "AI analysis requires specific implementation for this data type"
             }
     except Exception as e:
-        logger.error(f"AI analysis failed: {e}")
+        logger.error("AI analysis failed: %s", e)
         return {"error": str(e)}
 
 
@@ -125,7 +125,7 @@ def get_ai_suggestions(context: str, domain: str = "security") -> List[str]:
         return base_suggestions + domain_suggestions.get(domain, [])
         
     except Exception as e:
-        logger.error(f"Getting AI suggestions failed: {e}")
+        logger.error("Getting AI suggestions failed: %s", e)
         return [f"Error getting suggestions: {e}"]
 
 
@@ -153,7 +153,7 @@ def explain_code(code: str, language: str = "auto", detail_level: str = "medium"
         return explanation
         
     except Exception as e:
-        logger.error(f"Code explanation failed: {e}")
+        logger.error("Code explanation failed: %s", e)
         return f"Error explaining code: {e}"
 
 

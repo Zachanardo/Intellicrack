@@ -215,7 +215,7 @@ class NetworkLicenseServerEmulator:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error starting Network License Server Emulator: {e}")
+            self.logger.error("Error starting Network License Server Emulator: %s", e)
             self.logger.error(traceback.format_exc())
             self.stop()
             return False
@@ -251,7 +251,7 @@ class NetworkLicenseServerEmulator:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error stopping Network License Server Emulator: {e}")
+            self.logger.error("Error stopping Network License Server Emulator: %s", e)
             return False
 
     def _start_tcp_server(self, port: int) -> socketserver.TCPServer:
@@ -323,7 +323,7 @@ class NetworkLicenseServerEmulator:
                             )
 
                 except Exception as e:
-                    emulator.logger.error(f"Error handling request: {e}")
+                    emulator.logger.error("Error handling request: %s", e)
 
         # Create server
         server = socketserver.ThreadingTCPServer((self.config['listen_ip'], port), LicenseRequestHandler)
@@ -340,7 +340,7 @@ class NetworkLicenseServerEmulator:
         # Store server instance
         self.servers.append(server)
 
-        self.logger.info(f"TCP server started on port {port}")
+        self.logger.info("TCP server started on port %s", port)
         return server
 
     def _identify_protocol(self, data: bytes, port: int) -> str:
@@ -443,7 +443,7 @@ class NetworkLicenseServerEmulator:
                         context.check_hostname = False
                         context.verify_mode = ssl.CERT_NONE
                     except Exception as e:
-                        self.parent.logger.error(f"Failed to load SSL certificates: {e}")
+                        self.parent.logger.error("Failed to load SSL certificates: %s", e)
 
                     return context
 
@@ -512,7 +512,7 @@ class NetworkLicenseServerEmulator:
                         # Fallback to basic SSL without custom cert
                         pass
                     except Exception as e:
-                        self.parent.logger.error(f"Error generating certificate: {e}")
+                        self.parent.logger.error("Error generating certificate: %s", e)
 
                 def intercept_connection(self, client_socket: socket.socket, server_address: Tuple[str, int]) -> None:
                     """Intercept and handle SSL connection"""
@@ -537,7 +537,7 @@ class NetworkLicenseServerEmulator:
                         ssl_socket.close()
 
                     except Exception as e:
-                        self.parent.logger.error(f"SSL interception error: {e}")
+                        self.parent.logger.error("SSL interception error: %s", e)
 
                 def stop(self) -> None:
                     """Stop the SSL interceptor"""
@@ -557,12 +557,12 @@ class NetworkLicenseServerEmulator:
                         daemon=True
                     )
                     thread.start()
-                    self.logger.info(f"SSL interceptor started on port {port}")
+                    self.logger.info("SSL interceptor started on port %s", port)
 
             return self.ssl_interceptor
 
         except Exception as e:
-            self.logger.error(f"Failed to start SSL interceptor: {e}")
+            self.logger.error("Failed to start SSL interceptor: %s", e)
             return None
 
     def _run_ssl_server(self, port: int) -> None:
@@ -583,7 +583,7 @@ class NetworkLicenseServerEmulator:
             while self.running:
                 try:
                     client_socket, address = server_socket.accept()
-                    self.logger.info(f"SSL connection from {address}")
+                    self.logger.info("SSL connection from %s", address)
 
                     # Handle connection in a thread
                     thread = threading.Thread(
@@ -595,12 +595,12 @@ class NetworkLicenseServerEmulator:
 
                 except Exception as e:
                     if self.running:
-                        self.logger.error(f"SSL server error: {e}")
+                        self.logger.error("SSL server error: %s", e)
 
             server_socket.close()
 
         except Exception as e:
-            self.logger.error(f"Failed to start SSL server on port {port}: {e}")
+            self.logger.error("Failed to start SSL server on port %s: %s", port, e)
 
     def _start_traffic_recorder(self) -> Optional[Any]:
         """
@@ -660,11 +660,11 @@ class NetworkLicenseServerEmulator:
                         with open(log_file, 'w') as f:
                             json.dump(serializable_log, f, indent=2, default=str)
 
-                        self.parent.logger.info(f"Saved traffic log to {log_file}")
+                        self.parent.logger.info("Saved traffic log to %s", log_file)
                         self.last_save = time.time()
 
                     except Exception as e:
-                        self.parent.logger.error(f"Failed to save traffic log: {e}")
+                        self.parent.logger.error("Failed to save traffic log: %s", e)
 
                 def analyze_patterns(self) -> Dict[str, List[str]]:
                     """Analyze recorded traffic for patterns"""
@@ -703,7 +703,7 @@ class NetworkLicenseServerEmulator:
             return self.traffic_recorder
 
         except Exception as e:
-            self.logger.error(f"Failed to start traffic recorder: {e}")
+            self.logger.error("Failed to start traffic recorder: %s", e)
             return None
 
     def get_status(self) -> Dict[str, Any]:

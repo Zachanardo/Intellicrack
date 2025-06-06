@@ -52,7 +52,7 @@ class ROPChainGenerator:
     def set_binary(self, binary_path: str) -> bool:
         """Set the binary to analyze"""
         if not os.path.exists(binary_path):
-            self.logger.error(f"Binary not found: {binary_path}")
+            self.logger.error("Binary not found: %s", binary_path)
             return False
 
         self.binary_path = binary_path
@@ -68,7 +68,7 @@ class ROPChainGenerator:
         }
 
         self.target_functions.append(target)
-        self.logger.info(f"Added target function: {function_name}")
+        self.logger.info("Added target function: %s", function_name)
 
     def find_gadgets(self) -> bool:
         """Find ROP gadgets in the binary"""
@@ -91,7 +91,7 @@ class ROPChainGenerator:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error finding gadgets: {e}")
+            self.logger.error("Error finding gadgets: %s", e)
             return False
 
     def generate_chains(self) -> bool:
@@ -124,7 +124,7 @@ class ROPChainGenerator:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error generating chains: {e}")
+            self.logger.error("Error generating chains: %s", e)
             return False
 
     def _add_default_targets(self) -> None:
@@ -476,10 +476,10 @@ class ROPChainGenerator:
             try:
                 with open(filename, 'w') as f:
                     f.write(html)
-                self.logger.info(f"Report saved to {filename}")
+                self.logger.info("Report saved to %s", filename)
                 return filename
             except Exception as e:
-                self.logger.error(f"Error saving report: {e}")
+                self.logger.error("Error saving report: %s", e)
                 return None
         else:
             return html

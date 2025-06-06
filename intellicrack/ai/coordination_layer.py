@@ -117,7 +117,7 @@ class AICoordinationLayer:
             else:
                 logger.warning("ML Predictor not available")
         except Exception as e:
-            logger.error(f"Failed to initialize ML Predictor: {e}")
+            logger.error("Failed to initialize ML Predictor: %s", e)
 
         # Initialize model manager
         try:
@@ -127,7 +127,7 @@ class AICoordinationLayer:
             else:
                 logger.warning("Model Manager not available")
         except Exception as e:
-            logger.error(f"Failed to initialize Model Manager: {e}")
+            logger.error("Failed to initialize Model Manager: %s", e)
 
     def _get_cache_key(self, request: AnalysisRequest) -> str:
         """Generate cache key for analysis request."""
@@ -179,7 +179,7 @@ class AICoordinationLayer:
         start_time = time.time()
         strategy = self._choose_strategy(request)
 
-        logger.info(f"Starting coordinated vulnerability analysis with strategy: {strategy}")
+        logger.info("Starting coordinated vulnerability analysis with strategy: %s", strategy)
 
         # Check cache first
         cache_key = self._get_cache_key(request)
@@ -223,11 +223,11 @@ class AICoordinationLayer:
                 "escalated": result.escalated
             }, "coordination_layer")
 
-            logger.info(f"Coordinated analysis complete in {result.processing_time:.2f}s")
+            logger.info("Coordinated analysis complete in %fs", result.processing_time)
             return result
 
         except Exception as e:
-            logger.error(f"Error in coordinated analysis: {e}")
+            logger.error("Error in coordinated analysis: %s", e)
             result.processing_time = time.time() - start_time
             return result
 
@@ -266,7 +266,7 @@ class AICoordinationLayer:
                 )
 
                 if should_escalate and self.model_manager:
-                    logger.info(f"Escalating to LLM analysis (ML confidence: {ml_confidence:.2f})")
+                    logger.info("Escalating to LLM analysis (ML confidence: %f)", ml_confidence)
                     result = self._add_llm_analysis(request, result)
                     result.escalated = True
                     self.performance_stats["escalations"] += 1
@@ -274,7 +274,7 @@ class AICoordinationLayer:
                     result.combined_confidence = ml_confidence
 
             except Exception as e:
-                logger.error(f"ML analysis failed: {e}")
+                logger.error("ML analysis failed: %s", e)
                 if self.model_manager:
                     # Fallback to LLM analysis
                     result = self._add_llm_analysis(request, result)
@@ -308,7 +308,7 @@ class AICoordinationLayer:
                     result.combined_confidence = 0.7 * llm_confidence + 0.3 * ml_confidence
 
                 except Exception as e:
-                    logger.error(f"ML validation failed: {e}")
+                    logger.error("ML validation failed: %s", e)
 
         return result
 
@@ -427,7 +427,7 @@ class AICoordinationLayer:
                 self.performance_stats["ml_calls"] += 1
 
             except Exception as e:
-                logger.error(f"ML-only analysis failed: {e}")
+                logger.error("ML-only analysis failed: %s", e)
 
         return result
 
@@ -467,7 +467,7 @@ class AICoordinationLayer:
                 result.combined_confidence = llm_results.get("confidence", 0.0)
 
         except Exception as e:
-            logger.error(f"LLM analysis failed: {e}")
+            logger.error("LLM analysis failed: %s", e)
 
         return result
 

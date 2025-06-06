@@ -135,7 +135,7 @@ class NetworkTrafficAnalyzer:
                 try:
                     self._capture_packets(interface)
                 except Exception as e:
-                    self.logger.error(f"Error in capture thread: {e}")
+                    self.logger.error("Error in capture thread: %s", e)
 
             # Start capture in a separate thread
             thread = threading.Thread(target=capture_thread)
@@ -146,7 +146,7 @@ class NetworkTrafficAnalyzer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error starting capture: {e}")
+            self.logger.error("Error starting capture: %s", e)
             self.logger.error(traceback.format_exc())
             return False
 
@@ -293,7 +293,7 @@ class NetworkTrafficAnalyzer:
 
                     # Display basic packet info (simplified)
                     if packets_captured % 10 == 0:  # Don't flood the logs
-                        self.logger.info(f"Captured {packets_captured} packets")
+                        self.logger.info("Captured %s packets", packets_captured)
 
                     # Process the packet (simplified)
                     self._process_captured_packet(packet)
@@ -348,7 +348,7 @@ class NetworkTrafficAnalyzer:
 
                 # Log and validate IP version
                 if version != 4:
-                    self.logger.warning(f"Unexpected IP version: {version}, expected IPv4")
+                    self.logger.warning("Unexpected IP version: %s, expected IPv4", version)
                     return
 
                 # Extract other IP header fields if needed
@@ -367,7 +367,7 @@ class NetworkTrafficAnalyzer:
 
                                 # Common license server ports
                                 if src_port in self.license_ports or dst_port in self.license_ports:
-                                    self.logger.info(f"Potential license traffic detected: port {src_port}->{dst_port}")
+                                    self.logger.info("Potential license traffic detected: port %s->%s", src_port, dst_port)
                             except Exception as e:
                                 self.logger.debug(f"Error extracting TCP ports: {str(e)}")
         except Exception as e:
@@ -439,7 +439,7 @@ class NetworkTrafficAnalyzer:
 
             # Log capture start
             self.logger.info(f"Starting packet capture on {'all interfaces' if not interface else interface}")
-            self.logger.info(f"Using filter: {display_filter}")
+            self.logger.info("Using filter: %s", display_filter)
 
             # Define signal handler for graceful exit
             original_sigint_handler = signal.getsignal(signal.SIGINT)
@@ -463,7 +463,7 @@ class NetworkTrafficAnalyzer:
             for packet in capture.sniff_continuously():
                 # Check for timeout
                 if timeout and time.time() - capture_start_time > timeout:
-                    self.logger.info(f"Capture timeout reached ({timeout}s), stopping...")
+                    self.logger.info("Capture timeout reached (%ss), stopping...", timeout)
                     break
 
                 # Process the packet
@@ -478,7 +478,7 @@ class NetworkTrafficAnalyzer:
 
                     # Check if we've reached the max packet count
                     if len(self.packets) >= max_packets:
-                        self.logger.info(f"Reached maximum packet count ({max_packets}), stopping capture")
+                        self.logger.info("Reached maximum packet count (%s), stopping capture", max_packets)
                         capture.close()
                         break
 
@@ -512,7 +512,7 @@ class NetworkTrafficAnalyzer:
 
             # If output file was specified, verify it was saved
             if output_file and os.path.exists(output_file):
-                self.logger.info(f"Capture saved to file: {output_file}")
+                self.logger.info("Capture saved to file: %s", output_file)
 
         except Exception as e:
             self.logger.error(f"Failed to capture packets: {str(e)}")
@@ -570,9 +570,9 @@ class NetworkTrafficAnalyzer:
                     if int(dst_port) in self.license_ports or int(src_port) in self.license_ports:
                         self.connections[conn_key]['type'] = 'license'
                         self.license_connections.append(conn_key)
-                        self.logger.info(f"Potential license traffic detected: {conn_key}")
+                        self.logger.info("Potential license traffic detected: %s", conn_key)
 
-                    self.logger.debug(f"New {direction} connection detected: {conn_key}")
+                    self.logger.debug("New %s connection detected: %s", direction, conn_key)
 
                 # Check for payload
                 payload = None
@@ -634,7 +634,7 @@ class NetworkTrafficAnalyzer:
                 return True
 
         except Exception as e:
-            self.logger.error(f"Error processing packet: {e}")
+            self.logger.error("Error processing packet: %s", e)
             return False
 
         return False
@@ -657,7 +657,7 @@ class NetworkTrafficAnalyzer:
                     return True
             return False
         except Exception as e:
-            self.logger.debug(f"Error checking payload for license content: {e}")
+            self.logger.debug("Error checking payload for license content: %s", e)
             return False
 
     def _capture_with_scapy(self, interface: Optional[str] = None):
@@ -734,7 +734,7 @@ class NetworkTrafficAnalyzer:
             return results
 
         except Exception as e:
-            self.logger.error(f"Error analyzing traffic: {e}")
+            self.logger.error("Error analyzing traffic: %s", e)
             return None
 
     def _generate_visualizations(self, results: Dict[str, Any]):
@@ -820,7 +820,7 @@ class NetworkTrafficAnalyzer:
             self.logger.info(f"Generated visualizations in {self.config['visualization_dir']}")
 
         except Exception as e:
-            self.logger.error(f"Error generating visualizations: {e}")
+            self.logger.error("Error generating visualizations: %s", e)
 
     def generate_report(self, filename: Optional[str] = None) -> bool:
         """
@@ -923,11 +923,11 @@ class NetworkTrafficAnalyzer:
             with open(filename, 'w') as f:
                 f.write(html)
 
-            self.logger.info(f"Generated HTML report: {filename}")
+            self.logger.info("Generated HTML report: %s", filename)
             return True
 
         except Exception as e:
-            self.logger.error(f"Error generating report: {e}")
+            self.logger.error("Error generating report: %s", e)
             self.logger.error(traceback.format_exc())
             return False
 

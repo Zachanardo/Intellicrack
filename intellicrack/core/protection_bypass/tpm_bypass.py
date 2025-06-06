@@ -239,7 +239,7 @@ class TPMProtectionBypass:
                     patches_applied += 1
                     offset = binary_data.find(pattern, offset + 1)
 
-            self.logger.info(f"Found {patches_applied} TPM check patterns to patch")
+            self.logger.info("Found %s TPM check patterns to patch", patches_applied)
 
         except Exception as e:
             self.logger.error(f"Error patching TPM checks: {str(e)}")
@@ -273,7 +273,7 @@ class TPMProtectionBypass:
                     else:
                         winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
                     winreg.CloseKey(key)
-                    self.logger.info(f"Set registry key {path}\\{name} = {value}")
+                    self.logger.info("Set registry key %s\\%s = %s", path, name, value)
                 except Exception as e:
                     self.logger.warning(f"Could not set registry key {path}\\{name}: {str(e)}")
 

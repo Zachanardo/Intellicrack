@@ -228,7 +228,7 @@ class BinarySimilaritySearchDialog(QDialog):
                     results = self.search_engine.search_similar_binaries(self.binary_path, self.threshold)
                     self.result_signal.emit(results)
                 except Exception as e:
-                    logging.error(f"Binary similarity search failed: {e}")
+                    logging.error("Binary similarity search failed: %s", e)
                     # Emit empty list on error
                     self.result_signal.emit([])
 

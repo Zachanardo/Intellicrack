@@ -290,7 +290,7 @@ def check_anti_debug_tricks(binary_path: Union[str, Path]) -> List[Dict[str, Any
         pe.close()
 
     except Exception as e:
-        logger.error(f"Error checking anti-debug tricks: {e}")
+        logger.error("Error checking anti-debug tricks: %s", e)
 
     return tricks
 
@@ -325,7 +325,7 @@ def identify_protection_vendor(binary_path: Union[str, Path]) -> Optional[str]:
                     return vendor
 
     except Exception as e:
-        logger.error(f"Error identifying protection vendor: {e}")
+        logger.error("Error identifying protection vendor: %s", e)
 
     return None
 

@@ -39,14 +39,14 @@ def wrapper_find_file(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any
 
     try:
         app_instance.update_output.emit(log_message(f"[Tool] Searching for file: {filename}"))
-        logger.info(f"Searching for file: {filename}")
+        logger.info("Searching for file: %s", filename)
 
         # Start search from current directory
         for root, _, files in os.walk('.'):
             for file in files:
                 if filename in file:
                     file_path = os.path.join(root, file)
-                    logger.info(f"Found file at: {file_path}")
+                    logger.info("Found file at: %s", file_path)
                     return {
                         "status": "success",
                         "path": file_path,
@@ -79,7 +79,7 @@ def wrapper_load_binary(app_instance, parameters: Dict[str, Any]) -> Dict[str, A
 
     try:
         app_instance.update_output.emit(log_message(f"[Tool] Loading binary: {path}"))
-        logger.info(f"Loading binary: {path}")
+        logger.info("Loading binary: %s", path)
 
         if not os.path.exists(path):
             return {"status": "error", "message": f"File not found: {path}"}
@@ -167,7 +167,7 @@ def wrapper_read_file_chunk(app_instance, parameters: Dict[str, Any]) -> Dict[st
 
     try:
         app_instance.update_output.emit(log_message(f"[Tool] Reading file chunk: {path}"))
-        logger.info(f"Reading file chunk: {path} (offset: {offset}, size: {size})")
+        logger.info("Reading file chunk: %s (offset: %s, size: %s)", path, offset, size)
 
         if not os.path.exists(path):
             return {"status": "error", "message": f"File not found: {path}"}
@@ -208,7 +208,7 @@ def wrapper_get_file_metadata(app_instance, parameters: Dict[str, Any]) -> Dict[
 
     try:
         app_instance.update_output.emit(log_message(f"[Tool] Getting file metadata: {path}"))
-        logger.info(f"Getting file metadata: {path}")
+        logger.info("Getting file metadata: %s", path)
 
         if not os.path.exists(path):
             return {"status": "error", "message": f"File not found: {path}"}
@@ -338,7 +338,7 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
     Returns:
         dict: Disassembly listing
     """
-    logger.debug(f"Entering wrapper_disassemble_address with parameters: {parameters}")
+    logger.debug("Entering wrapper_disassemble_address with parameters: %s", parameters)
     address = parameters.get("address")
     num_instructions = parameters.get("num_instructions", 10)
 
@@ -349,7 +349,7 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
         address = int(address) if isinstance(address, str) else address
         num_instructions = int(num_instructions)
 
-        logger.info(f"Disassembling address: 0x{address:x}, {num_instructions} instructions")
+        logger.info("Disassembling address: 0x%d, %s instructions", address, num_instructions)
         app_instance.update_output.emit(log_message(f"[Tool] Disassembling address: 0x{address:x}, {num_instructions} instructions"))
 
         if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
@@ -400,7 +400,7 @@ def wrapper_get_cfg(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
                     "message": "Control flow graph generated"
                 }
             except Exception as e:
-                logger.warning(f"CFG explorer failed: {e}")
+                logger.warning("CFG explorer failed: %s", e)
 
         # Fallback response
         return {
@@ -461,7 +461,7 @@ def wrapper_attach_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
     try:
         process_id = int(process_id)
         app_instance.update_output.emit(log_message(f"[Tool] Attaching to process: {process_id}"))
-        logger.info(f"Attaching to process: {process_id}")
+        logger.info("Attaching to process: %s", process_id)
 
         # Simplified attach - would need actual process attachment
         return {
@@ -496,7 +496,7 @@ def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[s
 
     try:
         app_instance.update_output.emit(log_message(f"[Tool] Running Frida script: {script_path}"))
-        logger.info(f"Running Frida script: {script_path}")
+        logger.info("Running Frida script: %s", script_path)
 
         if not os.path.exists(script_path):
             return {"status": "error", "message": f"Script file not found: {script_path}"}
@@ -634,7 +634,7 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
 
     try:
         app_instance.update_output.emit(log_message(f"[Tool] Applying patch: {patch_id}"))
-        logger.info(f"Applying patch: {patch_id}")
+        logger.info("Applying patch: %s", patch_id)
 
         if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
@@ -668,7 +668,7 @@ def wrapper_generate_launcher_script(app_instance, parameters: Dict[str, Any]) -
 
     try:
         app_instance.update_output.emit(log_message(f"[Tool] Generating launcher script: {output_path}"))
-        logger.info(f"Generating launcher script: {output_path}")
+        logger.info("Generating launcher script: %s", output_path)
 
         if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
@@ -706,7 +706,7 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
     Returns:
         dict: Tool execution results
     """
-    logger.info(f"Dispatching tool: {tool_name} with parameters: {parameters}")
+    logger.info("Dispatching tool: %s with parameters: %s", tool_name, parameters)
 
     tool_map = {
         "find_file": wrapper_find_file,
@@ -730,7 +730,7 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
     }
 
     if tool_name not in tool_map:
-        logger.warning(f"Unknown tool: {tool_name}")
+        logger.warning("Unknown tool: %s", tool_name)
         return {"status": "error", "message": f"Unknown tool: {tool_name}"}
 
     try:
@@ -756,15 +756,15 @@ def run_external_tool(args):
             text=True,
             encoding="utf-8"
         )
-        logger.info(f"Subprocess started: {args} (PID: {process.pid})")
+        logger.info("Subprocess started: %s (PID: %s)", args, process.pid)
 
         # Get output
         stdout, stderr = process.communicate()
-        logger.info(f"Subprocess finished with exit code {process.returncode}")
+        logger.info("Subprocess finished with exit code %s", process.returncode)
         if stdout:
-            logger.info(f"Subprocess stdout:\n{stdout}")
+            logger.info("Subprocess stdout:\n%s", stdout)
         if stderr:
-            logger.warning(f"Subprocess stderr:\n{stderr}")
+            logger.warning("Subprocess stderr:\n%s", stderr)
 
         # Format results
         results += f"\nExit code: {process.returncode}\n"
@@ -1116,7 +1116,7 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
     except Exception as e:
         results["status"] = "error"
         results["errors"].append(str(e))
-        logger.error(f"Error running Ghidra headless: {e}")
+        logger.error("Error running Ghidra headless: %s", e)
         
     return results
 

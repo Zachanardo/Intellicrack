@@ -55,7 +55,7 @@ class WindowsActivator:
         self.temp_dir.mkdir(exist_ok=True)
 
         if not self.script_path.exists():
-            logger.error(f"Windows activator script not found: {self.script_path}")
+            logger.error("Windows activator script not found: %s", self.script_path)
 
     def check_prerequisites(self) -> Tuple[bool, List[str]]:
         """
@@ -116,7 +116,7 @@ class WindowsActivator:
             return status_info
 
         except Exception as e:
-            logger.error(f"Error checking activation status: {e}")
+            logger.error("Error checking activation status: %s", e)
             return {
                 'status': ActivationStatus.ERROR.value,
                 'error': str(e)
@@ -154,7 +154,7 @@ class WindowsActivator:
                     'error': f'Unsupported activation method: {method.value}'
                 }
 
-            logger.info(f"Starting Windows activation with method: {method.value}")
+            logger.info("Starting Windows activation with method: %s", method.value)
 
             # Run the activation script
             result = subprocess.run(
@@ -176,11 +176,11 @@ class WindowsActivator:
             }
 
             if success:
-                logger.info(f"Windows activation completed successfully with {method.value}")
+                logger.info("Windows activation completed successfully with %s", method.value)
                 # Get updated status
                 activation_result['post_activation_status'] = self.get_activation_status()
             else:
-                logger.error(f"Windows activation failed with {method.value}: {result.stderr}")
+                logger.error("Windows activation failed with %s: %s", method.value, result.stderr)
 
             return activation_result
 
@@ -191,7 +191,7 @@ class WindowsActivator:
                 'error': 'Activation process timed out'
             }
         except Exception as e:
-            logger.error(f"Error during Windows activation: {e}")
+            logger.error("Error during Windows activation: %s", e)
             return {
                 'success': False,
                 'error': str(e)
@@ -221,7 +221,7 @@ class WindowsActivator:
             }
 
         except Exception as e:
-            logger.error(f"Error resetting activation: {e}")
+            logger.error("Error resetting activation: %s", e)
             return {
                 'success': False,
                 'error': str(e)
@@ -249,7 +249,7 @@ class WindowsActivator:
             }
 
         except Exception as e:
-            logger.error(f"Error getting product key info: {e}")
+            logger.error("Error getting product key info: %s", e)
             return {
                 'success': False,
                 'error': str(e)

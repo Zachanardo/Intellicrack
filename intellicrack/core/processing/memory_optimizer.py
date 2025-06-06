@@ -85,7 +85,7 @@ class MemoryOptimizer:
             _, _, _ = self.get_current_memory_usage()
             self.logger.info("Memory tracking initialized successfully")
         except Exception as e:
-            self.logger.error(f"Failed to initialize memory tracking: {e}")
+            self.logger.error("Failed to initialize memory tracking: %s", e)
 
     def enable(self) -> None:
         """Enable memory optimization."""
@@ -169,7 +169,7 @@ class MemoryOptimizer:
             return (used_memory, total_memory, usage_percentage)
 
         except Exception as e:
-            self.logger.error(f"Error getting memory usage: {e}")
+            self.logger.error("Error getting memory usage: %s", e)
             return (0, 0, 0.0)
 
     def check_memory_usage(self) -> bool:
@@ -265,7 +265,7 @@ class MemoryOptimizer:
             return memory_saved
 
         except Exception as e:
-            self.logger.error(f"Error during memory optimization: {e}")
+            self.logger.error("Error during memory optimization: %s", e)
             return 0
 
     def _optimize_data_structures(self) -> None:
@@ -319,7 +319,7 @@ class MemoryOptimizer:
             return leak_summary
 
         except Exception as e:
-            self.logger.error(f"Error during leak detection: {e}")
+            self.logger.error("Error during leak detection: %s", e)
             return "error"
 
     def get_optimization_stats(self) -> Dict[str, Union[int, float, str, None]]:
@@ -387,7 +387,7 @@ class MemoryOptimizer:
             return report
 
         except Exception as e:
-            self.logger.error(f"Error generating memory report: {e}")
+            self.logger.error("Error generating memory report: %s", e)
             return {"error": str(e)}
 
     def force_optimization(self) -> int:
@@ -436,7 +436,7 @@ class MemoryOptimizer:
             self.logger.info(f"Optimization technique '{technique}' {'enabled' if enabled else 'disabled'}")
             return True
         else:
-            self.logger.warning(f"Unknown optimization technique: {technique}")
+            self.logger.warning("Unknown optimization technique: %s", technique)
             return False
 
     def get_memory_usage_mb(self) -> Tuple[float, float, float]:

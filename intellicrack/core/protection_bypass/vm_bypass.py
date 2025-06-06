@@ -259,7 +259,7 @@ class VirtualizationDetectionBypass:
                     patches_applied += 1
                     offset = binary_data.find(pattern, offset + 1)
 
-            self.logger.info(f"Found {patches_applied} VM detection patterns to patch")
+            self.logger.info("Found %s VM detection patterns to patch", patches_applied)
 
         except Exception as e:
             self.logger.error(f"Error patching VM detection: {str(e)}")
@@ -296,7 +296,7 @@ class VirtualizationDetectionBypass:
                 try:
                     # Try to delete or rename the key
                     winreg.DeleteKey(hkey, path)
-                    self.logger.info(f"Deleted VM registry key: {path}")
+                    self.logger.info("Deleted VM registry key: %s", path)
                 except FileNotFoundError:
                     pass  # Key doesn't exist, good
                 except Exception as e:

@@ -285,7 +285,7 @@ class DataInterpreter:
                     return ':'.join(f"{b:02X}" for b in data[:6])
 
         except Exception as e:
-            logger.warning(f"Error interpreting data as {data_type.value}: {e}")
+            logger.warning("Error interpreting data as %s: %s", data_type.value, e)
 
         return "Insufficient data"
 
@@ -753,7 +753,7 @@ class DataInspector(QWidget if PYQT5_AVAILABLE else object):
                 self.data_modified.emit(new_data)
 
         except Exception as e:
-            logger.warning(f"Error parsing input value: {e}")
+            logger.warning("Error parsing input value: %s", e)
 
     def clear_modification(self):
         """Clear the modification input."""

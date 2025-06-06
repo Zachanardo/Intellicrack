@@ -90,7 +90,7 @@ def parse_patch_instructions(text: str) -> List[Dict[str, Any]]:
                 f"Address='{address_hex}', Bytes='{new_bytes_hex_raw}'. Error: {e}"
             )
         except Exception as e:
-            logger.error(f"Unexpected error parsing line {lines_processed}: {e}")
+            logger.error("Unexpected error parsing line %s: %s", lines_processed, e)
 
     # Log summary
     if not potential_matches:
@@ -162,7 +162,7 @@ def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
     file_path = Path(file_path)
 
     if not file_path.exists():
-        logger.error(f"File not found: {file_path}")
+        logger.error("File not found: %s", file_path)
         return False, None
 
     if not patches:
@@ -174,9 +174,9 @@ def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
         backup_path = file_path.with_suffix(file_path.suffix + f".backup_{int(time.time())}")
         try:
             shutil.copy2(file_path, backup_path)
-            logger.info(f"Created backup: {backup_path}")
+            logger.info("Created backup: %s", backup_path)
         except Exception as e:
-            logger.error(f"Failed to create backup: {e}")
+            logger.error("Failed to create backup: %s", e)
             return False, None
 
     # Create patched file
@@ -211,7 +211,7 @@ def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
                     logger.error(f"Failed to apply patch {i+1}: {e}")
 
         if applied_count > 0:
-            logger.info(f"Successfully applied {applied_count} patches to {patched_path}")
+            logger.info("Successfully applied %s patches to %s", applied_count, patched_path)
             return True, str(patched_path)
         else:
             logger.warning("No patches were applied")
@@ -220,7 +220,7 @@ def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
             return False, None
 
     except Exception as e:
-        logger.error(f"Error during patching: {e}")
+        logger.error("Error during patching: %s", e)
         # Clean up on error
         if patched_path.exists():
             patched_path.unlink(missing_ok=True)
@@ -241,7 +241,7 @@ def validate_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]]) -
     file_path = Path(file_path)
 
     if not file_path.exists():
-        logger.error(f"File not found for validation: {file_path}")
+        logger.error("File not found for validation: %s", file_path)
         return False
 
     try:
@@ -266,7 +266,7 @@ def validate_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]]) -
         return True
 
     except Exception as e:
-        logger.error(f"Error during patch validation: {e}")
+        logger.error("Error during patch validation: %s", e)
         return False
 
 
@@ -291,7 +291,7 @@ def convert_rva_to_offset(file_path: Union[str, Path], rva: int) -> Optional[int
         pe.close()
         return offset
     except Exception as e:
-        logger.error(f"Error converting RVA to offset: {e}")
+        logger.error("Error converting RVA to offset: %s", e)
         return None
 
 
@@ -328,7 +328,7 @@ def get_section_info(file_path: Union[str, Path]) -> List[Dict[str, Any]]:
         pe.close()
 
     except Exception as e:
-        logger.error(f"Error reading section info: {e}")
+        logger.error("Error reading section info: %s", e)
 
     return sections
 

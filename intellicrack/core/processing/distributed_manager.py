@@ -97,7 +97,7 @@ class DistributedProcessingManager:
         # Check available backends
         self._check_available_backends()
 
-        self.logger.info(f"Distributed processing initialized with {self.num_workers} workers")
+        self.logger.info("Distributed processing initialized with %s workers", self.num_workers)
         self.logger.info(f"Available backends: {', '.join(self._get_available_backends())}")
 
     def _check_available_backends(self) -> None:
@@ -157,11 +157,11 @@ class DistributedProcessingManager:
             bool: True if binary file exists, False otherwise
         """
         if not os.path.exists(binary_path):
-            self.logger.error(f"Binary not found: {binary_path}")
+            self.logger.error("Binary not found: %s", binary_path)
             return False
 
         self.binary_path = binary_path
-        self.logger.info(f"Binary set: {binary_path}")
+        self.logger.info("Binary set: %s", binary_path)
         return True
 
     def add_task(self, task_type: str, task_params: Optional[Dict[str, Any]] = None, task_description: Optional[str] = None) -> int:
@@ -215,7 +215,7 @@ class DistributedProcessingManager:
 
         # Choose backend based on availability
         backend = self._select_backend()
-        self.logger.info(f"Using {backend} backend for processing")
+        self.logger.info("Using %s backend for processing", backend)
 
         if backend == 'ray':
             return self._process_with_ray(process_func, num_chunks)
@@ -286,7 +286,7 @@ class DistributedProcessingManager:
             return results
 
         except Exception as e:
-            self.logger.error(f"Error in Ray processing: {e}")
+            self.logger.error("Error in Ray processing: %s", e)
             self.logger.info("Falling back to multiprocessing")
             return self._process_with_multiprocessing(process_func, num_chunks)
 
@@ -349,7 +349,7 @@ class DistributedProcessingManager:
             return list(results)
 
         except Exception as e:
-            self.logger.error(f"Error in Dask processing: {e}")
+            self.logger.error("Error in Dask processing: %s", e)
             self.logger.info("Falling back to multiprocessing")
             return self._process_with_multiprocessing(process_func, num_chunks)
 
@@ -447,12 +447,12 @@ class DistributedProcessingManager:
                 self.workers.append(worker)
 
             self.running = True
-            self.logger.info(f"Started {self.num_workers} workers for task-based processing")
+            self.logger.info("Started %s workers for task-based processing", self.num_workers)
 
             return True
 
         except Exception as e:
-            self.logger.error(f"Error starting processing: {e}")
+            self.logger.error("Error starting processing: %s", e)
             self.stop_processing()
             return False
 
@@ -471,7 +471,7 @@ class DistributedProcessingManager:
         try:
             # Set up worker
             logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-            logger.info(f"Worker {worker_id} started")
+            logger.info("Worker %s started", worker_id)
 
             # Process tasks
             while True:
@@ -480,7 +480,7 @@ class DistributedProcessingManager:
 
                 # Check for sentinel
                 if task is None:
-                    logger.info(f"Worker {worker_id} shutting down")
+                    logger.info("Worker %s shutting down", worker_id)
                     break
 
                 # Process task
@@ -525,7 +525,7 @@ class DistributedProcessingManager:
                     result_queue.put((worker_id, task, error_result))
 
         except Exception as e:
-            logger.error(f"Worker {worker_id} error: {e}")
+            logger.error("Worker %s error: %s", worker_id, e)
 
     def _task_find_patterns(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:
         """Process a pattern-finding task."""
@@ -557,7 +557,7 @@ class DistributedProcessingManager:
                         'match': match.group()
                     })
             except Exception as e:
-                logger.warning(f"Error processing pattern {pattern}: {e}")
+                logger.warning("Error processing pattern %s: %s", pattern, e)
 
         logger.info(f"Found {len(matches)} pattern matches in chunk at offset {chunk_start}")
         return {'matches': matches, 'patterns_found': len(matches)}
@@ -595,7 +595,7 @@ class DistributedProcessingManager:
         # Find high entropy regions
         high_entropy_regions = [w for w in window_results if w['entropy'] > 7.0]  # High entropy threshold
 
-        logger.info(f"Analyzed entropy in chunk at offset {chunk_start}: {chunk_entropy:.2f}")
+        logger.info("Analyzed entropy in chunk at offset %s: %f", chunk_start, chunk_entropy)
         return {
             'chunk_offset': chunk_start,
             'chunk_size': len(chunk_data),
@@ -668,7 +668,7 @@ class DistributedProcessingManager:
             }
 
         except Exception as e:
-            logger.error(f"Error analyzing section {section_name}: {e}")
+            logger.error("Error analyzing section %s: %s", section_name, e)
             return {'error': str(e), 'section_name': section_name}
 
     def _task_symbolic_execution(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:
@@ -684,7 +684,7 @@ class DistributedProcessingManager:
         if not ANGR_AVAILABLE:
             return {'error': "angr not available for symbolic execution"}
 
-        logger.info(f"Starting symbolic execution of {target_function}")
+        logger.info("Starting symbolic execution of %s", target_function)
 
         try:
             # Load the binary with angr
@@ -704,7 +704,7 @@ class DistributedProcessingManager:
             if target_address is None:
                 return {'error': f"Could not resolve address for function {target_function}"}
 
-            logger.info(f"Resolved {target_function} to address 0x{target_address:x}")
+            logger.info("Resolved %s to address 0x%d", target_function, target_address)
 
             # Create a starting state at the function
             initial_state = proj.factory.call_state(target_address)
@@ -758,7 +758,7 @@ class DistributedProcessingManager:
             f.seek(chunk_start)
             chunk_data = f.read(chunk_size)
 
-        logger.info(f"Worker {worker_id} processed generic task on chunk at offset {chunk_start}")
+        logger.info("Worker %s processed generic task on chunk at offset %s", worker_id, chunk_start)
         return {
             'worker_id': worker_id,
             'chunk_offset': chunk_start,
@@ -796,7 +796,7 @@ class DistributedProcessingManager:
             while tasks_remaining > 0:
                 # Check timeout
                 if timeout is not None and time.time() - start_time > timeout:
-                    self.logger.warning(f"Timeout after {timeout} seconds")
+                    self.logger.warning("Timeout after %s seconds", timeout)
                     break
 
                 # Get result from queue
@@ -811,7 +811,7 @@ class DistributedProcessingManager:
 
                 # Process result
                 task_type = task['type']
-                self.logger.info(f"Processing result from worker {worker_id} for task {task_type}")
+                self.logger.info("Processing result from worker %s for task %s", worker_id, task_type)
 
                 # Initialize task type in results if not already present
                 if task_type not in self.results['task_results']:
@@ -845,7 +845,7 @@ class DistributedProcessingManager:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error collecting results: {e}")
+            self.logger.error("Error collecting results: %s", e)
             return False
 
     def stop_processing(self) -> bool:
@@ -888,7 +888,7 @@ class DistributedProcessingManager:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error stopping processing: {e}")
+            self.logger.error("Error stopping processing: %s", e)
             return False
 
     def get_results(self) -> Dict[str, Any]:
@@ -1089,10 +1089,10 @@ class DistributedProcessingManager:
             try:
                 with open(filename, 'w') as f:
                     f.write(html)
-                self.logger.info(f"Report saved to {filename}")
+                self.logger.info("Report saved to %s", filename)
                 return filename
             except Exception as e:
-                self.logger.error(f"Error saving report: {e}")
+                self.logger.error("Error saving report: %s", e)
                 return None
         else:
             return html
@@ -1106,7 +1106,7 @@ class DistributedProcessingManager:
             try:
                 ray.shutdown()
             except Exception as e:
-                self.logger.error(f"Error shutting down Ray: {e}")
+                self.logger.error("Error shutting down Ray: %s", e)
 
 
 def create_distributed_manager(config: Optional[Dict[str, Any]] = None) -> DistributedProcessingManager:

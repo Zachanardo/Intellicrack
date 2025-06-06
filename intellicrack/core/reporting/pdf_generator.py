@@ -167,7 +167,7 @@ class PDFReportGenerator:
             }
             self.sections[section_index]["subsections"].append(subsection)
         else:
-            self.logger.error(f"Invalid section index: {section_index}")
+            self.logger.error("Invalid section index: %s", section_index)
 
     def generate_report(self, binary_path: Optional[str] = None, analysis_results: Optional[Dict[str, Any]] = None,
                        report_type: str = "comprehensive", output_path: Optional[str] = None) -> Optional[str]:
@@ -213,7 +213,7 @@ class PDFReportGenerator:
         elif report_type == "license":
             return self._generate_license_report(binary_path, analysis_results, output_path)
         else:
-            self.logger.warning(f"Unknown report type: {report_type}")
+            self.logger.warning("Unknown report type: %s", report_type)
             return None
 
     def _generate_comprehensive_report(self, binary_path: Optional[str], analysis_results: Optional[Dict[str, Any]],
@@ -392,11 +392,11 @@ class PDFReportGenerator:
             # Build the PDF
             doc.build(content)
 
-            self.logger.info(f"Generated comprehensive PDF report: {output_path}")
+            self.logger.info("Generated comprehensive PDF report: %s", output_path)
             return output_path
 
         except Exception as e:
-            self.logger.error(f"Error generating comprehensive PDF report: {e}")
+            self.logger.error("Error generating comprehensive PDF report: %s", e)
             self.logger.error(traceback.format_exc())
             return None
 
@@ -482,7 +482,7 @@ class PDFReportGenerator:
                     raise ImportError("pefile not available")
 
             except Exception as e:
-                self.logger.warning(f"Detailed PE analysis failed: {e}, using fallback")
+                self.logger.warning("Detailed PE analysis failed: %s, using fallback", e)
                 # Fallback to basic section names if detailed analysis fails
                 if hasattr(self.app, "binary_info") and "sections" in self.app.binary_info:
                     section_names = self.app.binary_info["sections"][:10]
@@ -544,11 +544,11 @@ class PDFReportGenerator:
             return True
 
         except ImportError as e:
-            self.logger.warning(f"Could not create PE section chart: {e}")
+            self.logger.warning("Could not create PE section chart: %s", e)
             elements.append(Paragraph("PE Section visualization requires reportlab charts", styles.get("Italic", styles["Normal"])))
             return False
         except Exception as e:
-            self.logger.error(f"Error in PE section analysis: {e}")
+            self.logger.error("Error in PE section analysis: %s", e)
             self.logger.error(traceback.format_exc())
             return False
 
@@ -629,7 +629,7 @@ class PDFReportGenerator:
             with open(report_path, 'w', encoding='utf-8') as f:
                 f.write(html_content)
 
-            self.logger.info(f"Generated HTML report: {report_path}")
+            self.logger.info("Generated HTML report: %s", report_path)
 
             # Convert to PDF if PDFKit is available
             if self.pdfkit_available:
@@ -638,16 +638,16 @@ class PDFReportGenerator:
                     pdf_path = report_path.replace('.html', '.pdf')
                     pdfkit.from_file(report_path, pdf_path)
 
-                    self.logger.info(f"Converted HTML report to PDF: {pdf_path}")
+                    self.logger.info("Converted HTML report to PDF: %s", pdf_path)
                     return pdf_path
                 except Exception as e:
-                    self.logger.error(f"Error converting HTML to PDF: {e}")
+                    self.logger.error("Error converting HTML to PDF: %s", e)
                     return report_path
 
             return report_path
 
         except Exception as e:
-            self.logger.error(f"Error generating HTML report: {e}")
+            self.logger.error("Error generating HTML report: %s", e)
             self.logger.error(traceback.format_exc())
             return None
 

@@ -54,7 +54,7 @@ class DockerContainer:
         # Check Docker availability
         self._check_docker_availability()
 
-        self.logger.info(f"DockerContainer initialized with image: {image}")
+        self.logger.info("DockerContainer initialized with image: %s", image)
 
     def _check_docker_availability(self) -> None:
         """
@@ -108,7 +108,7 @@ class DockerContainer:
         """
         try:
             # Pull the image if not already available
-            self.logger.info(f"Pulling Docker image: {self.image}")
+            self.logger.info("Pulling Docker image: %s", self.image)
             result = subprocess.run(
                 ["docker", "pull", self.image],
                 capture_output=True,
@@ -117,7 +117,7 @@ class DockerContainer:
             )
 
             if result.returncode != 0:
-                self.logger.warning(f"Failed to pull image (may already exist): {result.stderr}")
+                self.logger.warning("Failed to pull image (may already exist): %s", result.stderr)
 
             # Generate unique container name
             self.container_name = f"intellicrack_analysis_{int(time.time())}"
@@ -143,7 +143,7 @@ class DockerContainer:
             docker_cmd.extend([self.image, "tail", "-f", "/dev/null"])
 
             # Start the container
-            self.logger.info(f"Starting Docker container: {self.container_name}")
+            self.logger.info("Starting Docker container: %s", self.container_name)
             result = subprocess.run(
                 docker_cmd,
                 capture_output=True,
@@ -152,11 +152,11 @@ class DockerContainer:
             )
 
             if result.returncode != 0:
-                self.logger.error(f"Failed to start container: {result.stderr}")
+                self.logger.error("Failed to start container: %s", result.stderr)
                 return False
 
             self.container_id = result.stdout.strip()
-            self.logger.info(f"Container started successfully - ID: {self.container_id}")
+            self.logger.info("Container started successfully - ID: %s", self.container_id)
 
             # Verify container is running
             if not self._is_container_running():
@@ -195,17 +195,17 @@ class DockerContainer:
 
             stop_cmd.append(self.container_id)
 
-            self.logger.info(f"Stopping container {self.container_id}")
+            self.logger.info("Stopping container %s", self.container_id)
             result = subprocess.run(stop_cmd, capture_output=True, text=True, timeout=30)
 
             if result.returncode != 0:
-                self.logger.warning(f"Failed to stop container gracefully: {result.stderr}")
+                self.logger.warning("Failed to stop container gracefully: %s", result.stderr)
                 if not force:
                     # Try force stop
                     return self.stop_container(force=True)
 
             # Remove the container
-            self.logger.info(f"Removing container {self.container_id}")
+            self.logger.info("Removing container %s", self.container_id)
             result = subprocess.run(
                 ["docker", "rm", self.container_id],
                 capture_output=True,
@@ -214,9 +214,9 @@ class DockerContainer:
             )
 
             if result.returncode != 0:
-                self.logger.warning(f"Failed to remove container: {result.stderr}")
+                self.logger.warning("Failed to remove container: %s", result.stderr)
 
-            self.logger.info(f"Container {self.container_id} stopped and removed")
+            self.logger.info("Container %s stopped and removed", self.container_id)
             self.container_id = None
             self.container_name = None
             return True
@@ -269,7 +269,7 @@ class DockerContainer:
             return f"ERROR: {error_msg}"
 
         try:
-            self.logger.debug(f"Executing in container: {command}")
+            self.logger.debug("Executing in container: %s", command)
 
             # Build command
             docker_cmd = ["docker", "exec"]
@@ -287,8 +287,8 @@ class DockerContainer:
             )
 
             if result.returncode != 0:
-                self.logger.warning(f"Command exited with status {result.returncode}")
-                self.logger.warning(f"Stderr: {result.stderr}")
+                self.logger.warning("Command exited with status %s", result.returncode)
+                self.logger.warning("Stderr: %s", result.stderr)
                 return f"EXIT_CODE_{result.returncode}: {result.stdout}\nSTDERR: {result.stderr}"
 
             return result.stdout
@@ -318,7 +318,7 @@ class DockerContainer:
             return False
 
         if not os.path.exists(source_path):
-            self.logger.error(f"Source file does not exist: {source_path}")
+            self.logger.error("Source file does not exist: %s", source_path)
             return False
 
         try:
@@ -327,11 +327,11 @@ class DockerContainer:
             if dest_dir:
                 mkdir_result = self.execute_command(f"mkdir -p {dest_dir}")
                 if "ERROR:" in mkdir_result:
-                    self.logger.error(f"Failed to create directory {dest_dir}: {mkdir_result}")
+                    self.logger.error("Failed to create directory %s: %s", dest_dir, mkdir_result)
                     return False
 
             # Copy file using docker cp
-            self.logger.info(f"Copying {source_path} to container:{dest_path}")
+            self.logger.info("Copying %s to container:%s", source_path, dest_path)
             result = subprocess.run(
                 ["docker", "cp", source_path, f"{self.container_id}:{dest_path}"],
                 capture_output=True,
@@ -340,16 +340,16 @@ class DockerContainer:
             )
 
             if result.returncode != 0:
-                self.logger.error(f"Failed to copy file: {result.stderr}")
+                self.logger.error("Failed to copy file: %s", result.stderr)
                 return False
 
             # Verify file was copied
             verify_result = self.execute_command(f"test -f {dest_path} && echo 'SUCCESS' || echo 'FAILED'")
             if "SUCCESS" not in verify_result:
-                self.logger.error(f"File copy verification failed: {verify_result}")
+                self.logger.error("File copy verification failed: %s", verify_result)
                 return False
 
-            self.logger.info(f"File copied successfully to {dest_path}")
+            self.logger.info("File copied successfully to %s", dest_path)
             return True
 
         except subprocess.TimeoutExpired:
@@ -374,10 +374,10 @@ class DockerContainer:
             return False
 
         if name in self.snapshots:
-            self.logger.warning(f"Snapshot {name} already exists, overwriting")
+            self.logger.warning("Snapshot %s already exists, overwriting", name)
 
         try:
-            self.logger.info(f"Creating container snapshot: {name}")
+            self.logger.info("Creating container snapshot: %s", name)
 
             # Get filesystem state (recent files only for performance)
             files = self.execute_command(
@@ -436,7 +436,7 @@ class DockerContainer:
             return {"error": error_msg}
 
         try:
-            self.logger.info(f"Comparing snapshots: {snapshot1} vs {snapshot2}")
+            self.logger.info("Comparing snapshots: %s vs %s", snapshot1, snapshot2)
 
             s1 = self.snapshots[snapshot1]
             s2 = self.snapshots[snapshot2]
@@ -611,7 +611,7 @@ class DockerContainer:
                     })
 
             except Exception as e:
-                self.logger.warning(f"Failed to get detailed container status: {e}")
+                self.logger.warning("Failed to get detailed container status: %s", e)
 
         return status
 

@@ -49,7 +49,7 @@ class AdvancedDynamicAnalyzer:
         """
         self.binary_path = str(binary_path)
         self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
-        self.logger.info(f"AdvancedDynamicAnalyzer initialized with binary_path: {binary_path}")
+        self.logger.info("AdvancedDynamicAnalyzer initialized with binary_path: %s", binary_path)
 
     def run_comprehensive_analysis(self, payload: Optional[bytes] = None) -> Dict[str, Any]:
         """
@@ -75,7 +75,7 @@ class AdvancedDynamicAnalyzer:
         }
 
         self.logger.info("Comprehensive dynamic analysis completed.")
-        self.logger.debug(f"Dynamic analysis results: {analysis_results}")
+        self.logger.debug("Dynamic analysis results: %s", analysis_results)
 
         return analysis_results
 
@@ -91,7 +91,7 @@ class AdvancedDynamicAnalyzer:
             dict: Execution results including success status, stdout/stderr output,
                  and return code or error information
         """
-        self.logger.info(f"Starting subprocess analysis for {self.binary_path}")
+        self.logger.info("Starting subprocess analysis for %s", self.binary_path)
 
         try:
             result = subprocess.run(
@@ -498,7 +498,7 @@ class AdvancedDynamicAnalyzer:
                 if pid is not None:
                     frida.kill(pid)
             except Exception as cleanup_error:
-                self.logger.error(f"Error during Frida cleanup: {cleanup_error}")
+                self.logger.error("Error during Frida cleanup: %s", cleanup_error)
 
     def _process_behavior_analysis(self) -> Dict[str, Any]:
         """
@@ -516,7 +516,7 @@ class AdvancedDynamicAnalyzer:
             self.logger.error("psutil not available for process behavior analysis")
             return {'success': False, 'error': 'psutil not available'}
 
-        self.logger.info(f"Starting process behavior analysis for {self.binary_path}")
+        self.logger.info("Starting process behavior analysis for %s", self.binary_path)
 
         try:
             # Use psutil for detailed process analysis

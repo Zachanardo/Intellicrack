@@ -55,11 +55,11 @@ def get_target_process_pid(process_name: str) -> Optional[int]:
                 logger.info(f"Found process {process_name} with PID: {proc.info['pid']}")
                 return proc.info['pid']
 
-        logger.warning(f"Process {process_name} not found")
+        logger.warning("Process %s not found", process_name)
         return None
 
     except Exception as e:
-        logger.error(f"Error finding process {process_name}: {e}")
+        logger.error("Error finding process %s: %s", process_name, e)
         return None
 
 
@@ -76,7 +76,7 @@ def compute_file_hash(file_path: str, algorithm: str = 'sha256') -> Optional[str
     """
     try:
         if not os.path.exists(file_path):
-            logger.error(f"File not found: {file_path}")
+            logger.error("File not found: %s", file_path)
             return None
 
         hasher = hashlib.new(algorithm)
@@ -86,11 +86,11 @@ def compute_file_hash(file_path: str, algorithm: str = 'sha256') -> Optional[str
                 hasher.update(chunk)
 
         hash_value = hasher.hexdigest()
-        logger.info(f"Computed {algorithm} hash for {file_path}: {hash_value}")
+        logger.info("Computed %s hash for %s: %s", algorithm, file_path, hash_value)
         return hash_value
 
     except Exception as e:
-        logger.error(f"Error computing hash for {file_path}: {e}")
+        logger.error("Error computing hash for %s: %s", file_path, e)
         return None
 
 
@@ -135,14 +135,14 @@ def detect_hardware_dongles(app=None) -> List[str]:
         if not os.path.exists(dir_path):
             continue
 
-        logger.debug(f"Scanning directory for dongle drivers: {dir_path}")
+        logger.debug("Scanning directory for dongle drivers: %s", dir_path)
 
         for dongle, files in dongle_drivers.items():
             for file in files:
                 if os.path.exists(os.path.join(dir_path, file)):
                     found_dongles.add(dongle)
                     driver_path = os.path.join(dir_path, file)
-                    logger.info(f"Found {dongle} driver: {driver_path}")
+                    logger.info("Found %s driver: %s", dongle, driver_path)
                     results.append(f"Found {dongle} dongle driver: {driver_path}")
 
     # Check running processes for dongle service processes
@@ -162,11 +162,11 @@ def detect_hardware_dongles(app=None) -> List[str]:
                 for process in processes:
                     if any(process.lower() in proc.lower() for proc in running_processes if proc):
                         found_dongles.add(dongle)
-                        logger.info(f"Found {dongle} service process: {process}")
+                        logger.info("Found %s service process: %s", dongle, process)
                         results.append(f"Found {dongle} service process: {process}")
 
         except Exception as e:
-            logger.warning(f"Error checking dongle processes: {e}")
+            logger.warning("Error checking dongle processes: %s", e)
             results.append(f"Error checking processes: {e}")
     else:
         results.append("psutil not available - cannot check running processes")
@@ -190,13 +190,13 @@ def detect_hardware_dongles(app=None) -> List[str]:
             for key_path in dongle_registry_keys:
                 try:
                     key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path)
-                    logger.info(f"Found dongle registry key: {key_path}")
+                    logger.info("Found dongle registry key: %s", key_path)
                     results.append(f"Found dongle registry key: {key_path}")
                     winreg.CloseKey(key)
                 except FileNotFoundError:
                     pass  # Key doesn't exist
                 except Exception as e:
-                    logger.debug(f"Error accessing registry key {key_path}: {e}")
+                    logger.debug("Error accessing registry key %s: %s", key_path, e)
 
         except ImportError:
             results.append("winreg not available - cannot check registry")
@@ -251,7 +251,7 @@ def detect_tpm_protection() -> Dict[str, Any]:
             except ImportError:
                 logger.debug("WMI not available for TPM detection")
             except Exception as e:
-                logger.warning(f"WMI TPM detection failed: {e}")
+                logger.warning("WMI TPM detection failed: %s", e)
 
         # Check TPM device files on Linux
         elif sys.platform.startswith('linux'):
@@ -280,12 +280,12 @@ def detect_tpm_protection() -> Dict[str, Any]:
                             results["detection_methods"].append(f"Kernel module: {module}")
                             results["tpm_present"] = True
             except Exception as e:
-                logger.debug(f"Could not check kernel modules: {e}")
+                logger.debug("Could not check kernel modules: %s", e)
 
-        logger.info(f"TPM detection completed: {results}")
+        logger.info("TPM detection completed: %s", results)
 
     except Exception as e:
-        logger.error(f"Error in TPM detection: {e}")
+        logger.error("Error in TPM detection: %s", e)
         results["error"] = str(e)
 
     return results
@@ -317,7 +317,7 @@ def get_system_processes() -> List[Dict[str, Any]]:
                 pass  # Process may have terminated or access denied
 
     except Exception as e:
-        logger.error(f"Error getting process list: {e}")
+        logger.error("Error getting process list: %s", e)
 
     return processes
 
@@ -342,7 +342,7 @@ def run_command(command: str, timeout: int = 30) -> Dict[str, Any]:
     }
 
     try:
-        logger.info(f"Running command: {command}")
+        logger.info("Running command: %s", command)
 
         process = subprocess.run(
             command,
@@ -357,13 +357,13 @@ def run_command(command: str, timeout: int = 30) -> Dict[str, Any]:
         result["stderr"] = process.stderr
         result["return_code"] = process.returncode
 
-        logger.info(f"Command completed with return code: {process.returncode}")
+        logger.info("Command completed with return code: %s", process.returncode)
 
     except subprocess.TimeoutExpired:
         result["error"] = f"Command timed out after {timeout} seconds"
         logger.error(result["error"])
     except Exception as e:
         result["error"] = str(e)
-        logger.error(f"Error running command: {e}")
+        logger.error("Error running command: %s", e)
 
     return result

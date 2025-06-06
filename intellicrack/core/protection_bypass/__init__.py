@@ -31,7 +31,7 @@ try:
         detect_tpm_usage, tpm_research_tools
     )
 except ImportError as e:
-    logger.warning(f"Failed to import tpm_bypass: {e}")
+    logger.warning("Failed to import tpm_bypass: %s", e)
 
 try:
     from .vm_bypass import (
@@ -40,12 +40,12 @@ try:
         detect_virtualization, analyze_vm_protection
     )
 except ImportError as e:
-    logger.warning(f"Failed to import vm_bypass: {e}")
+    logger.warning("Failed to import vm_bypass: %s", e)
 
 try:
     from .dongle_emulator import HardwareDongleEmulator, activate_hardware_dongle_emulation
 except ImportError as e:
-    logger.warning(f"Failed to import dongle_emulator: {e}")
+    logger.warning("Failed to import dongle_emulator: %s", e)
 
 # Define package exports
 __all__ = [

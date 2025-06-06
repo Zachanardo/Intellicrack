@@ -108,10 +108,10 @@ for (let name of targets) {
             script = session.create_script(self.FRIDA_SCRIPT)
             script.load()
             self.injected.add(target_name)
-            logger.info(f"Successfully injected into {target_name}")
+            logger.info("Successfully injected into %s", target_name)
             return True
         except Exception as e:
-            logger.debug(f"Failed to inject into {target_name}: {e}")
+            logger.debug("Failed to inject into %s: %s", target_name, e)
             return False
 
     def get_running_adobe_processes(self) -> List[str]:
@@ -134,7 +134,7 @@ for (let name of targets) {
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
         except Exception as e:
-            logger.error(f"Error scanning processes: {e}")
+            logger.error("Error scanning processes: %s", e)
 
         return running
 

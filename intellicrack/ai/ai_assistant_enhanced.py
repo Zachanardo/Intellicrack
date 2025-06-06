@@ -533,7 +533,7 @@ What would you like to learn about?"""
 
             return result
         except Exception as e:
-            logger.error(f"Error in file search tool: {e}")
+            logger.error("Error in file search tool: %s", e)
             return {"status": "error", "message": str(e)}
 
     def _read_file(self, file_path: str, purpose: str = "License analysis") -> Dict[str, Any]:
@@ -552,7 +552,7 @@ What would you like to learn about?"""
 
             return result
         except Exception as e:
-            logger.error(f"Error in file read tool: {e}")
+            logger.error("Error in file read tool: %s", e)
             return {"status": "error", "message": str(e)}
 
     def _analyze_program_directory(self, program_path: str) -> Dict[str, Any]:
@@ -573,7 +573,7 @@ What would you like to learn about?"""
 
             return result
         except Exception as e:
-            logger.error(f"Error in program directory analysis: {e}")
+            logger.error("Error in program directory analysis: %s", e)
             return {"status": "error", "message": str(e)}
 
     def analyze_binary_complex(self, binary_path: str, ml_results: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -620,7 +620,7 @@ What would you like to learn about?"""
             return analysis
             
         except Exception as e:
-            logger.error(f"Error in complex binary analysis: {e}")
+            logger.error("Error in complex binary analysis: %s", e)
             return {
                 "error": str(e),
                 "confidence": 0.0,
@@ -687,7 +687,7 @@ What would you like to learn about?"""
             return analysis
             
         except Exception as e:
-            logger.error(f"Error in license pattern analysis: {e}")
+            logger.error("Error in license pattern analysis: %s", e)
             return {
                 "error": str(e),
                 "confidence": 0.0,
@@ -742,7 +742,7 @@ What would you like to learn about?"""
             return reasoning
             
         except Exception as e:
-            logger.error(f"Error in AI reasoning: {e}")
+            logger.error("Error in AI reasoning: %s", e)
             return {
                 "error": str(e),
                 "reasoning_confidence": 0.0,
@@ -752,7 +752,7 @@ What would you like to learn about?"""
 
     def _log_tool_usage(self, message: str):
         """Log tool usage for user visibility."""
-        logger.info(f"[AI Tool] {message}")
+        logger.info("[AI Tool] %s", message)
         if self.cli_interface and hasattr(self.cli_interface, 'update_output'):
             self.cli_interface.update_output.emit(f"[AI Tool] {message}")
 

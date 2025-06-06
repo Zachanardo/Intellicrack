@@ -114,7 +114,7 @@ def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[
         logger.info(f"Virtualization detection complete: {results['virtualization_detected']}")
 
     except Exception as e:
-        logger.error(f"Error in virtualization detection: {e}")
+        logger.error("Error in virtualization detection: %s", e)
         results["error"] = str(e)
 
     return results
@@ -199,12 +199,12 @@ def detect_commercial_protections(binary_path: str) -> Dict[str, Any]:
         except ImportError:
             logger.debug("pefile not available for section analysis")
         except Exception as e:
-            logger.debug(f"PE analysis failed: {e}")
+            logger.debug("PE analysis failed: %s", e)
 
         logger.info(f"Commercial protection detection complete: {len(results['protections_found'])} found")
 
     except Exception as e:
-        logger.error(f"Error in commercial protection detection: {e}")
+        logger.error("Error in commercial protection detection: %s", e)
         results["error"] = str(e)
 
     return results
@@ -227,7 +227,7 @@ def run_comprehensive_protection_scan(binary_path: str) -> Dict[str, Any]:
     }
 
     try:
-        logger.info(f"Starting comprehensive protection scan: {binary_path}")
+        logger.info("Starting comprehensive protection scan: %s", binary_path)
 
         # Run virtualization detection
         vm_results = detect_virtualization_protection(binary_path)
@@ -253,10 +253,10 @@ def run_comprehensive_protection_scan(binary_path: str) -> Dict[str, Any]:
 
         results["total_protections"] = total
 
-        logger.info(f"Comprehensive protection scan complete: {total} protections found")
+        logger.info("Comprehensive protection scan complete: %s protections found", total)
 
     except Exception as e:
-        logger.error(f"Error in comprehensive protection scan: {e}")
+        logger.error("Error in comprehensive protection scan: %s", e)
         results["error"] = str(e)
 
     return results
@@ -278,7 +278,7 @@ def generate_checksum(data: bytes, algorithm: str = "sha256") -> str:
         hasher.update(data)
         return hasher.hexdigest()
     except Exception as e:
-        logger.error(f"Error generating checksum: {e}")
+        logger.error("Error generating checksum: %s", e)
         return ""
 
 
@@ -320,7 +320,7 @@ def detect_checksum_verification(binary_path: str) -> Dict[str, Any]:
         logger.info(f"Checksum verification detection: {results['checksum_verification_detected']}")
 
     except Exception as e:
-        logger.error(f"Error detecting checksum verification: {e}")
+        logger.error("Error detecting checksum verification: %s", e)
         results["error"] = str(e)
 
     return results
@@ -369,7 +369,7 @@ def detect_self_healing_code(binary_path: str) -> Dict[str, Any]:
         logger.info(f"Self-healing code detection: {results['self_healing_detected']}")
 
     except Exception as e:
-        logger.error(f"Error detecting self-healing code: {e}")
+        logger.error("Error detecting self-healing code: %s", e)
         results["error"] = str(e)
 
     return results
@@ -427,7 +427,7 @@ def detect_obfuscation(binary_path: str) -> Dict[str, Any]:
         logger.info(f"Obfuscation detection: {results['obfuscation_detected']}")
 
     except Exception as e:
-        logger.error(f"Error detecting obfuscation: {e}")
+        logger.error("Error detecting obfuscation: %s", e)
         results["error"] = str(e)
 
     return results
@@ -611,12 +611,12 @@ def detect_anti_debugging_techniques(binary_path: str) -> Dict[str, Any]:
         except ImportError:
             logger.debug("pefile not available for detailed PE analysis")
         except Exception as e:
-            logger.debug(f"PE analysis failed: {e}")
+            logger.debug("PE analysis failed: %s", e)
 
         logger.info(f"Anti-debugging detection complete: {results['anti_debug_detected']}")
 
     except Exception as e:
-        logger.error(f"Error in anti-debugging detection: {e}")
+        logger.error("Error in anti-debugging detection: %s", e)
         results["error"] = str(e)
 
     return results
@@ -771,11 +771,11 @@ def scan_for_bytecode_protectors(binary_path):
                         results["Themida/WinLicense"]["detected"] = True
                         results["Themida/WinLicense"]["import"] = dll_name
             except Exception as e:
-                logger.warning(f"Error checking imports: {e}")
+                logger.warning("Error checking imports: %s", e)
 
     except Exception as e:
         results["error"] = str(e)
-        logger.error(f"Error scanning for bytecode protectors: {e}")
+        logger.error("Error scanning for bytecode protectors: %s", e)
 
     return results
 
@@ -834,7 +834,7 @@ def detect_tpm_protection(binary_path: str) -> Dict[str, Any]:
                 
     except Exception as e:
         results["error"] = str(e)
-        logger.error(f"Error detecting TPM protection: {e}")
+        logger.error("Error detecting TPM protection: %s", e)
     
     return results
 

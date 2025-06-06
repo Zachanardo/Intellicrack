@@ -118,7 +118,7 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
             results["risk_level"] = "low"
 
     except Exception as e:
-        logger.error(f"Error checking buffer overflow: {e}")
+        logger.error("Error checking buffer overflow: %s", e)
         results["error"] = str(e)
 
     return results
@@ -224,7 +224,7 @@ def check_for_memory_leaks(binary_path: str, process_pid: Optional[int] = None) 
                         })
 
             except Exception as e:
-                logger.error(f"Error in dynamic memory analysis: {e}")
+                logger.error("Error in dynamic memory analysis: %s", e)
 
         # Calculate risk level
         high_severity = sum(1 for leak in results["static_analysis"]["potential_leaks"] if leak["severity"] == "high")
@@ -238,7 +238,7 @@ def check_for_memory_leaks(binary_path: str, process_pid: Optional[int] = None) 
             results["risk_level"] = "low"
 
     except Exception as e:
-        logger.error(f"Error checking for memory leaks: {e}")
+        logger.error("Error checking for memory leaks: %s", e)
         results["error"] = str(e)
 
     return results
@@ -302,7 +302,7 @@ def check_memory_usage(process_pid: int) -> Dict[str, Any]:
             results["memory_categories"] = categories
 
         except Exception as e:
-            logger.debug(f"Could not get memory maps: {e}")
+            logger.debug("Could not get memory maps: %s", e)
 
         # Check for high memory usage
         if mem_percent > 80:
@@ -315,7 +315,7 @@ def check_memory_usage(process_pid: int) -> Dict[str, Any]:
     except psutil.NoSuchProcess:
         return {"error": f"Process {process_pid} not found"}
     except Exception as e:
-        logger.error(f"Error checking memory usage: {e}")
+        logger.error("Error checking memory usage: %s", e)
         return {"error": str(e)}
 
 
@@ -399,7 +399,7 @@ def bypass_tpm_checks(binary_path: str) -> Dict[str, Any]:
         ]
 
     except Exception as e:
-        logger.error(f"Error analyzing TPM checks: {e}")
+        logger.error("Error analyzing TPM checks: %s", e)
         results["error"] = str(e)
 
     return results
@@ -516,7 +516,7 @@ def scan_protectors(binary_path: str) -> Dict[str, Any]:
                 results["protections_found"].append(f"Checksum: {description}")
 
     except Exception as e:
-        logger.error(f"Error scanning protectors: {e}")
+        logger.error("Error scanning protectors: %s", e)
         results["error"] = str(e)
 
     return results
@@ -588,7 +588,7 @@ def run_vm_bypass(binary_path: str, output_path: Optional[str] = None) -> Dict[s
             results["status"] = "analysis_only"
 
     except Exception as e:
-        logger.error(f"Error in VM bypass: {e}")
+        logger.error("Error in VM bypass: %s", e)
         results["error"] = str(e)
 
     return results

@@ -146,7 +146,7 @@ class TrainingThread(QThread):
                 return self._create_simple_transformer()
 
         except Exception as e:
-            self.logger.error(f"Failed to create PyTorch model: {e}")
+            self.logger.error("Failed to create PyTorch model: %s", e)
             return None
 
     def _load_pretrained_model(self, base_model: str) -> Optional[Any]:
@@ -160,7 +160,7 @@ class TrainingThread(QThread):
             Loaded model or None if loading fails
         """
         try:
-            self.logger.info(f"Loading pre-trained model from {base_model}")
+            self.logger.info("Loading pre-trained model from %s", base_model)
 
             # Handle GGUF models
             model_format = self.params.get('model_format', 'standard')
@@ -192,7 +192,7 @@ class TrainingThread(QThread):
             return model
 
         except Exception as e:
-            self.logger.warning(f"Failed to load pre-trained model: {e}")
+            self.logger.warning("Failed to load pre-trained model: %s", e)
             return None
 
     def _detect_model_type(self, base_model: str) -> str:
@@ -212,7 +212,7 @@ class TrainingThread(QThread):
                     config = json.load(f)
                 return config.get('model_type', 'gpt2')
             except Exception as e:
-                self.logger.warning(f"Failed to read model config: {e}")
+                self.logger.warning("Failed to read model config: %s", e)
 
         return 'gpt2'  # Default fallback
 
@@ -248,7 +248,7 @@ class TrainingThread(QThread):
             return model, tokenizer
 
         except Exception as e:
-            self.logger.error(f"Failed to load {model_type} model: {e}")
+            self.logger.error("Failed to load %s model: %s", model_type, e)
             return None, None
 
     def _apply_lora(self, model: Any) -> Any:
@@ -275,7 +275,7 @@ class TrainingThread(QThread):
             return model
 
         except Exception as e:
-            self.logger.warning(f"Failed to apply LoRA: {e}")
+            self.logger.warning("Failed to apply LoRA: %s", e)
             return model
 
     def _create_simple_transformer(self) -> Any:
@@ -338,7 +338,7 @@ class TrainingThread(QThread):
             return model
 
         except Exception as e:
-            self.logger.error(f"Failed to create TensorFlow model: {e}")
+            self.logger.error("Failed to create TensorFlow model: %s", e)
             return None
 
     def _train_real_batch(self, model: Any, optimizer: Any, dataset_path: str,
@@ -372,7 +372,7 @@ class TrainingThread(QThread):
                 return 2.0 * random.random()
 
         except Exception as e:
-            self.logger.error(f"Error in real training batch: {e}")
+            self.logger.error("Error in real training batch: %s", e)
             return 2.0 * random.random()
 
     def _train_pytorch_batch(self, model: Any, optimizer: Any,
@@ -450,7 +450,7 @@ class TrainingThread(QThread):
             batch_data = self._tokenize_batch(batch)
 
         except Exception as e:
-            self.logger.error(f"Error loading batch: {e}")
+            self.logger.error("Error loading batch: %s", e)
             # Return dummy data
             batch_data['input_ids'] = [[0] * self.params['cutoff_len']] * batch_size
             batch_data['labels'] = [[0] * self.params['cutoff_len']] * batch_size
@@ -580,7 +580,7 @@ class TrainingThread(QThread):
                     return sum(1 for _ in f)
 
         except Exception as e:
-            self.logger.error(f"Error getting dataset size: {e}")
+            self.logger.error("Error getting dataset size: %s", e)
             return 0
 
     def run(self) -> None:
@@ -594,7 +594,7 @@ class TrainingThread(QThread):
             batch_size = self.params['batch_size']
             dataset_path = self.params.get('dataset_path')
 
-            self.logger.info(f"Training started: {epochs} epochs, batch size {batch_size}")
+            self.logger.info("Training started: %s epochs, batch size %s", epochs, batch_size)
 
             # Validate dataset
             if not dataset_path or not os.path.exists(dataset_path):
@@ -605,7 +605,7 @@ class TrainingThread(QThread):
                 raise ValueError("Dataset is empty or invalid")
 
             total_batches = math.ceil(dataset_size / batch_size)
-            self.logger.info(f"Dataset size: {dataset_size}, Total batches: {total_batches}")
+            self.logger.info("Dataset size: %s, Total batches: %s", dataset_size, total_batches)
 
             # Initialize model and optimizer
             model, optimizer, real_training = self._initialize_training()
@@ -713,7 +713,7 @@ class TrainingThread(QThread):
                     real_training = True
                     self.logger.info("Using TensorFlow for training")
         except Exception as e:
-            self.logger.warning(f"Failed to initialize real training: {e}")
+            self.logger.warning("Failed to initialize real training: %s", e)
             real_training = False
 
         if not real_training:
@@ -775,7 +775,7 @@ class TrainingThread(QThread):
             True if save successful, False otherwise
         """
         # This would be implemented to save the actual trained model
-        self.logger.info(f"Model save requested to: {save_path}")
+        self.logger.info("Model save requested to: %s", save_path)
         return True
 
 

@@ -60,7 +60,7 @@ class MLVulnerabilityPredictor:
         self.logger = logger
         self.feature_names = []
 
-        self.logger.info(f"MLVulnerabilityPredictor initializing with model_path: {model_path}")
+        self.logger.info("MLVulnerabilityPredictor initializing with model_path: %s", model_path)
 
         # Check dependencies
         if not SKLEARN_AVAILABLE:
@@ -76,11 +76,11 @@ class MLVulnerabilityPredictor:
                 from ..config import CONFIG
                 model_path = CONFIG.get("ml", {}).get("vulnerability_model_path")
                 if model_path and os.path.exists(model_path):
-                    self.logger.info(f"Using default ML model from config: {model_path}")
+                    self.logger.info("Using default ML model from config: %s", model_path)
                 else:
-                    self.logger.warning(f"Default ML model not found at: {model_path}")
+                    self.logger.warning("Default ML model not found at: %s", model_path)
             except Exception as e:
-                self.logger.error(f"Error loading config for ML model: {e}")
+                self.logger.error("Error loading config for ML model: %s", e)
 
         if model_path and os.path.exists(model_path):
             self.load_model(model_path)
@@ -102,7 +102,7 @@ class MLVulnerabilityPredictor:
             bool: True if model loaded successfully, False otherwise
         """
         try:
-            self.logger.info(f"Loading ML model from: {model_path}")
+            self.logger.info("Loading ML model from: %s", model_path)
 
             if JOBLIB_AVAILABLE:
                 # Try joblib first (preferred for sklearn models)
@@ -119,7 +119,7 @@ class MLVulnerabilityPredictor:
                         self.scaler = StandardScaler()  # Create default scaler
 
                 except Exception as e:
-                    self.logger.warning(f"joblib loading failed: {e}, trying pickle")
+                    self.logger.warning("joblib loading failed: %s, trying pickle", e)
                     raise e
 
             # Fallback to pickle if joblib fails or isn't available
@@ -143,7 +143,7 @@ class MLVulnerabilityPredictor:
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error loading model from {model_path}: {e}")
+            self.logger.error("Error loading model from %s: %s", model_path, e)
             return False
 
     def extract_features(self, binary_path: str) -> Optional[np.ndarray]:
@@ -161,7 +161,7 @@ class MLVulnerabilityPredictor:
             return None
 
         try:
-            self.logger.debug(f"Extracting features from: {binary_path}")
+            self.logger.debug("Extracting features from: %s", binary_path)
             features = []
 
             # Read binary data
@@ -194,7 +194,7 @@ class MLVulnerabilityPredictor:
                     pe_features = self._extract_pe_features(binary_path)
                     features.extend(pe_features)
                 except Exception as e:
-                    self.logger.warning(f"PE feature extraction failed: {e}")
+                    self.logger.warning("PE feature extraction failed: %s", e)
                     # Add default PE features that match expected structure
                     features.extend([
                         4,      # NumberOfSections (typical)
@@ -233,7 +233,7 @@ class MLVulnerabilityPredictor:
             return np.array(features).reshape(1, -1)
 
         except Exception as e:
-            self.logger.error(f"Feature extraction error: {e}")
+            self.logger.error("Feature extraction error: %s", e)
             return None
 
     def _extract_pe_features(self, binary_path: str) -> List[float]:
@@ -288,7 +288,7 @@ class MLVulnerabilityPredictor:
             features.append(dangerous_import_count)
 
         except Exception as e:
-            self.logger.warning(f"PE feature extraction error: {e}")
+            self.logger.warning("PE feature extraction error: %s", e)
             # Return zeros if PE analysis fails
             features = [0] * 20
 
@@ -324,7 +324,7 @@ class MLVulnerabilityPredictor:
                 try:
                     features = self.scaler.transform(features)
                 except Exception as e:
-                    self.logger.warning(f"Feature scaling failed: {e}, using raw features")
+                    self.logger.warning("Feature scaling failed: %s, using raw features", e)
 
             # Make prediction
             prediction = self.model.predict(features)[0]
@@ -336,7 +336,7 @@ class MLVulnerabilityPredictor:
                     probabilities = self.model.predict_proba(features)[0]
                     probability = float(max(probabilities))
                 except Exception as e:
-                    self.logger.warning(f"Probability calculation failed: {e}")
+                    self.logger.warning("Probability calculation failed: %s", e)
 
             # Get feature importance if available
             feature_importance = None
@@ -344,7 +344,7 @@ class MLVulnerabilityPredictor:
                 try:
                     feature_importance = self.model.feature_importances_.tolist()
                 except Exception as e:
-                    self.logger.warning(f"Feature importance extraction failed: {e}")
+                    self.logger.warning("Feature importance extraction failed: %s", e)
 
             result = {
                 'prediction': int(prediction),
@@ -354,11 +354,11 @@ class MLVulnerabilityPredictor:
                 'feature_count': features.shape[1]
             }
 
-            self.logger.info(f"Vulnerability prediction: {prediction} (probability: {probability})")
+            self.logger.info("Vulnerability prediction: %s (probability: %s)", prediction, probability)
             return result
 
         except Exception as e:
-            self.logger.error(f"Prediction error: {e}")
+            self.logger.error("Prediction error: %s", e)
             return None
 
     def train_model(self, training_data: List[Tuple[str, int]],
@@ -421,7 +421,7 @@ class MLVulnerabilityPredictor:
             return True
 
         except Exception as e:
-            self.logger.error(f"Model training error: {e}")
+            self.logger.error("Model training error: %s", e)
             return False
 
     def save_model(self, model_path: str) -> bool:
@@ -451,11 +451,11 @@ class MLVulnerabilityPredictor:
                 with open(model_path, 'wb') as f:
                     pickle.dump(model_data, f)
 
-            self.logger.info(f"Model saved to: {model_path}")
+            self.logger.info("Model saved to: %s", model_path)
             return True
 
         except Exception as e:
-            self.logger.error(f"Error saving model to {model_path}: {e}")
+            self.logger.error("Error saving model to %s: %s", model_path, e)
             return False
 
     def get_model_info(self) -> Dict[str, Any]:
@@ -543,7 +543,7 @@ class MLVulnerabilityPredictor:
             return result
 
         except Exception as e:
-            self.logger.error(f"Error predicting vulnerabilities: {e}")
+            self.logger.error("Error predicting vulnerabilities: %s", e)
             return {
                 "error": str(e),
                 "status": "failed",
@@ -588,7 +588,7 @@ class MLVulnerabilityPredictor:
             result = self.predict_vulnerabilities(binary_path)
             return result.get('confidence', 0.0) or 0.0
         except Exception as e:
-            self.logger.error(f"Error getting confidence score: {e}")
+            self.logger.error("Error getting confidence score: %s", e)
             return 0.0
 
     def analyze_binary_features(self, binary_path: str) -> Dict[str, Any]:
@@ -615,7 +615,7 @@ class MLVulnerabilityPredictor:
             return analysis
             
         except Exception as e:
-            self.logger.error(f"Error analyzing binary features: {e}")
+            self.logger.error("Error analyzing binary features: %s", e)
             return {"error": str(e)}
 
 
@@ -641,7 +641,7 @@ def predict_vulnerabilities(binary_path: str, model_path: Optional[str] = None) 
         predictor = MLVulnerabilityPredictor(model_path)
         return predictor.predict_vulnerabilities(binary_path)
     except Exception as e:
-        logger.error(f"Vulnerability prediction failed: {e}")
+        logger.error("Vulnerability prediction failed: %s", e)
         return {
             "error": str(e),
             "status": "failed",
@@ -676,7 +676,7 @@ def train_model(training_data: List[Tuple[str, int]],
                 X_data.append(features)
                 y_data.append(label)
             except Exception as e:
-                logger.warning(f"Failed to extract features from {binary_path}: {e}")
+                logger.warning("Failed to extract features from %s: %s", binary_path, e)
                 continue
         
         if not X_data:
@@ -729,7 +729,7 @@ def train_model(training_data: List[Tuple[str, int]],
             }
             
     except Exception as e:
-        logger.error(f"Model training failed: {e}")
+        logger.error("Model training failed: %s", e)
         return {
             "error": str(e),
             "status": "failed"
@@ -768,7 +768,7 @@ def evaluate_model(model_path: str, test_data: List[Tuple[str, int]]) -> Dict[st
                 actual_labels.append(expected_label)
                 
             except Exception as e:
-                logger.warning(f"Failed to predict for {binary_path}: {e}")
+                logger.warning("Failed to predict for %s: %s", binary_path, e)
                 continue
         
         if not predictions:
@@ -804,7 +804,7 @@ def evaluate_model(model_path: str, test_data: List[Tuple[str, int]]) -> Dict[st
         }
         
     except Exception as e:
-        logger.error(f"Model evaluation failed: {e}")
+        logger.error("Model evaluation failed: %s", e)
         return {
             "error": str(e),
             "status": "failed"

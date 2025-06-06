@@ -99,7 +99,7 @@ def process_binary_chunks(binary_path: str, chunk_size: int = 1024 * 1024,
         results["aggregated"] = _aggregate_chunk_results(results["chunk_results"])
 
     except Exception as e:
-        logger.error(f"Error in binary chunk processing: {e}")
+        logger.error("Error in binary chunk processing: %s", e)
         results["error"] = str(e)
 
     return results
@@ -246,14 +246,14 @@ def run_distributed_analysis(binary_path: str, analysis_type: str = "comprehensi
                 try:
                     results["analyses"][task] = future.result()
                 except Exception as e:
-                    logger.error(f"Error in {task} analysis: {e}")
+                    logger.error("Error in %s analysis: %s", task, e)
                     results["analyses"][task] = {"error": str(e)}
 
         results["end_time"] = time.time()
         results["total_time"] = results["end_time"] - results["start_time"]
 
     except Exception as e:
-        logger.error(f"Error in distributed analysis: {e}")
+        logger.error("Error in distributed analysis: %s", e)
         results["error"] = str(e)
 
     return results
@@ -461,7 +461,7 @@ def extract_binary_info(binary_path: str) -> Dict[str, Any]:
             info["format"] = "Unknown"
 
     except Exception as e:
-        logger.error(f"Error extracting binary info: {e}")
+        logger.error("Error extracting binary info: %s", e)
         info["error"] = str(e)
 
     return info
@@ -502,7 +502,7 @@ def extract_binary_features(binary_path: str) -> Dict[str, Any]:
         # (PE imports, sections, etc.)
 
     except Exception as e:
-        logger.error(f"Error extracting features: {e}")
+        logger.error("Error extracting features: %s", e)
         features["error"] = str(e)
 
     return features
@@ -549,7 +549,7 @@ def run_gpu_accelerator(task_type: str, data: Any,
             results["error"] = f"Unsupported GPU task type: {task_type}"
 
     except Exception as e:
-        logger.error(f"GPU acceleration error: {e}")
+        logger.error("GPU acceleration error: %s", e)
         results["error"] = str(e)
         results["cpu_result"] = _run_cpu_fallback(task_type, data)
 
@@ -604,7 +604,7 @@ def run_incremental_analysis(binary_path: str, cache_dir: Optional[str] = None,
                 results["cache_hits"] = len(results["cached_results"])
 
         except Exception as e:
-            logger.warning(f"Error loading cache: {e}")
+            logger.warning("Error loading cache: %s", e)
 
     # Determine what analyses need to be run
     required_analyses = ["entropy", "patterns", "strings", "features"]
@@ -638,7 +638,7 @@ def run_incremental_analysis(binary_path: str, cache_dir: Optional[str] = None,
             with open(cache_file, 'w') as f:
                 json.dump(cache_data, f, indent=2)
         except Exception as e:
-            logger.error(f"Error saving cache: {e}")
+            logger.error("Error saving cache: %s", e)
 
     # Combine all results
     results["all_results"] = {**results["cached_results"], **results["new_results"]}
@@ -734,7 +734,7 @@ def run_pdf_report_generator(analysis_results: Dict[str, Any],
         results["status"] = "error"
         results["message"] = "PDF generation not available"
     except Exception as e:
-        logger.error(f"Error generating PDF report: {e}")
+        logger.error("Error generating PDF report: %s", e)
         results["status"] = "error"
         results["message"] = str(e)
 
@@ -858,7 +858,7 @@ def _distributed_hash_calculation(binary_path: str,
                 results["hashes"][algo] = hash_value
             except Exception as e:
                 algo = future_to_algo[future]
-                logger.error(f"Error calculating {algo}: {e}")
+                logger.error("Error calculating %s: %s", algo, e)
 
     return results
 
@@ -1062,7 +1062,7 @@ def _gpu_ml_inference(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
             confidence = 0.0
 
     except Exception as e:
-        logger.debug(f"GPU ML inference fallback: {e}")
+        logger.debug("GPU ML inference fallback: %s", e)
         # Simple fallback prediction
         predictions = [0.5]  # Neutral prediction
         confidence = 0.0

@@ -98,7 +98,7 @@ def generate_report(analysis_results: Dict[str, Any], output_format: str = 'text
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(content)
 
-    logger.info(f"Report generated: {output_path}")
+    logger.info("Report generated: %s", output_path)
     return str(output_path)
 
 
@@ -243,7 +243,7 @@ def export_report(report_data: Dict[str, Any], format: str = 'pdf') -> Optional[
     Returns:
         Optional[str]: Path to exported file
     """
-    logger.warning(f"Export to {format} format not yet implemented")
+    logger.warning("Export to %s format not yet implemented", format)
     return None
 
 

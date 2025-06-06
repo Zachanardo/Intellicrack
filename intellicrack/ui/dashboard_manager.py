@@ -83,10 +83,10 @@ class DashboardManager:
                     "last_modified": datetime.datetime.fromtimestamp(last_modified).strftime("%Y-%m-%d %H:%M:%S")
                 }
 
-                self.logger.debug(f"Updated binary stats for {binary_name}")
+                self.logger.debug("Updated binary stats for %s", binary_name)
 
             except (OSError, ValueError) as e:
-                self.logger.warning(f"Failed to update binary stats: {e}")
+                self.logger.warning("Failed to update binary stats: %s", e)
                 self.stats["binary"] = None
         else:
             self.stats["binary"] = None
@@ -114,7 +114,7 @@ class DashboardManager:
                 "types": patch_types
             }
 
-            self.logger.debug(f"Updated patch stats: {patch_count} total, {applied_count} applied")
+            self.logger.debug("Updated patch stats: %s total, %s applied", patch_count, applied_count)
 
         else:
             self.stats["patches"] = {
@@ -140,7 +140,7 @@ class DashboardManager:
                 "last_run": last_run
             }
 
-            self.logger.debug(f"Updated analysis stats: {result_count} results")
+            self.logger.debug("Updated analysis stats: %s results", result_count)
 
         else:
             self.stats["analysis"] = {
@@ -200,7 +200,7 @@ class DashboardManager:
             "active_count": active_count
         }
 
-        self.logger.debug(f"Updated advanced analysis stats: {active_count} features active")
+        self.logger.debug("Updated advanced analysis stats: %s features active", active_count)
 
     def update_statistics(self, stats_dict: Dict[str, Any]) -> None:
         """
@@ -248,7 +248,7 @@ class DashboardManager:
         if len(self.recent_activities) > self.max_recent_activities:
             self.recent_activities = self.recent_activities[:self.max_recent_activities]
 
-        self.logger.info(f"Activity added: {activity_type} - {description}")
+        self.logger.info("Activity added: %s - %s", activity_type, description)
 
     def get_stats(self) -> Dict[str, Any]:
         """
@@ -338,11 +338,11 @@ class DashboardManager:
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(export_data, f, indent=2, default=str)
 
-            self.logger.info(f"Statistics exported to {filepath}")
+            self.logger.info("Statistics exported to %s", filepath)
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to export statistics: {e}")
+            self.logger.error("Failed to export statistics: %s", e)
             return False
 
 

@@ -73,7 +73,7 @@ def compute_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256',
 
         # Include traceback information for debugging
         traceback_info = traceback.format_exc()
-        logger.debug(f"Traceback: {traceback_info}")
+        logger.debug("Traceback: %s", traceback_info)
 
         return ""
 
@@ -121,7 +121,7 @@ def read_binary(file_path: Union[str, Path], chunk_size: int = 8192) -> bytes:
                 chunks.append(chunk)
             return b''.join(chunks)
     except Exception as e:
-        logger.error(f"Error reading binary file {file_path}: {e}")
+        logger.error("Error reading binary file %s: %s", file_path, e)
         raise
 
 
@@ -145,7 +145,7 @@ def write_binary(file_path: Union[str, Path], data: bytes, create_backup: bool =
             backup_path = file_path.with_suffix(file_path.suffix + '.bak')
             import shutil
             shutil.copy2(file_path, backup_path)
-            logger.info(f"Created backup: {backup_path}")
+            logger.info("Created backup: %s", backup_path)
 
         # Write the data
         with open(file_path, 'wb') as f:
@@ -155,7 +155,7 @@ def write_binary(file_path: Union[str, Path], data: bytes, create_backup: bool =
         return True
 
     except Exception as e:
-        logger.error(f"Error writing binary file {file_path}: {e}")
+        logger.error("Error writing binary file %s: %s", file_path, e)
         return False
 
 
@@ -219,7 +219,7 @@ def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
         return format_info
 
     except Exception as e:
-        logger.error(f"Error analyzing binary format for {file_path}: {e}")
+        logger.error("Error analyzing binary format for %s: %s", file_path, e)
         return {"error": str(e)}
 
 
@@ -239,7 +239,7 @@ def is_binary_file(file_path: Union[str, Path], sample_size: int = 8192) -> bool
             chunk = f.read(sample_size)
             return b'\x00' in chunk
     except Exception as e:
-        logger.error(f"Error checking if file is binary: {e}")
+        logger.error("Error checking if file is binary: %s", e)
         return False
 
 
@@ -280,7 +280,7 @@ def get_file_entropy(file_path: Union[str, Path], block_size: int = 256) -> floa
         return entropy
 
     except Exception as e:
-        logger.error(f"Error calculating file entropy: {e}")
+        logger.error("Error calculating file entropy: %s", e)
         return 0.0
 
 

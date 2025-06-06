@@ -164,17 +164,17 @@ class HexViewerWidget(QAbstractScrollArea):
             True if the file was loaded successfully, False otherwise
         """
         if not os.path.exists(file_path):
-            logger.error(f"File not found: {file_path}")
+            logger.error("File not found: %s", file_path)
             return False
 
-        logger.debug(f"HexWidget.load_file: Loading {file_path}, read_only={read_only}")
+        logger.debug("HexWidget.load_file: Loading %s, read_only=%s", file_path, read_only)
         try:
             # Log detailed debugging info
-            logger.info(f"HexWidget.load_file: Loading {file_path}, read_only={read_only}")
+            logger.info("HexWidget.load_file: Loading %s, read_only=%s", file_path, read_only)
 
             # Check access permissions
             if not os.access(file_path, os.R_OK):
-                logger.error(f"Cannot read file (permission denied): {file_path}")
+                logger.error("Cannot read file (permission denied): %s", file_path)
                 return False
 
             # Create a new file handler with explicit error handling
@@ -188,12 +188,12 @@ class HexViewerWidget(QAbstractScrollArea):
             # Verify we have data with explicit error handling
             try:
                 file_size = self.file_handler.get_file_size()
-                logger.info(f"File loaded, size={file_size} bytes")
+                logger.info("File loaded, size=%s bytes", file_size)
 
                 # Test read to verify file is readable
                 test_data = self.file_handler.read(0, min(1024, file_size))
                 if not test_data and file_size > 0:
-                    logger.error(f"File appears to be unreadable - read test returned empty data for {file_path}")
+                    logger.error("File appears to be unreadable - read test returned empty data for %s", file_path)
                 else:
                     logger.debug(f"Read test successful: got {len(test_data)} bytes")
             except Exception as e:
@@ -201,7 +201,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 return False
 
             if file_size == 0:
-                logger.warning(f"Loaded file has zero size: {file_path}")
+                logger.warning("Loaded file has zero size: %s", file_path)
 
             # Reset state
             self.current_offset = 0
@@ -234,10 +234,10 @@ class HexViewerWidget(QAbstractScrollArea):
                 filename = os.path.basename(file_path)
                 self.window().setWindowTitle(f"Hex Viewer - {filename}")
 
-            logger.info(f"Loaded file: {file_path} ({file_size} bytes)")
+            logger.info("Loaded file: %s (%s bytes)", file_path, file_size)
             return True
         except Exception as e:
-            logger.error(f"Error loading file: {e}")
+            logger.error("Error loading file: %s", e)
             if hasattr(self, 'file_handler') and self.file_handler:
                 del self.file_handler
                 self.file_handler = None
@@ -271,7 +271,7 @@ class HexViewerWidget(QAbstractScrollArea):
             temp_file.close()
 
             # Load the temporary file
-            logger.debug(f"Loading temporary file: {temp_file_path}")
+            logger.debug("Loading temporary file: %s", temp_file_path)
             result = self.load_file(temp_file_path, read_only=True)
 
             # Set the file path to indicate this is in-memory data
@@ -458,7 +458,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Read data with detailed error handling
         try:
             # Read the visible data
-            logger.info(f"Reading data: offset={start_offset}, size={size}")
+            logger.info("Reading data: offset=%s, size=%s", start_offset, size)
             data = self.file_handler.read(start_offset, size)
 
             # Verify we got data
@@ -497,7 +497,7 @@ class HexViewerWidget(QAbstractScrollArea):
             # Adjust for horizontal scroll
             painter.translate(-h_scroll, 0)
         except Exception as e:
-            logger.error(f"Error in header rendering: {e}")
+            logger.error("Error in header rendering: %s", e)
             return
 
         # Draw rows within a separate try block
@@ -519,7 +519,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
                     row_data = data[start_idx:start_idx + row_size]
                     if not row_data:
-                        logger.warning(f"Empty row data at offset {row_offset}")
+                        logger.warning("Empty row data at offset %s", row_offset)
                         continue
 
                     # Log the data being rendered
@@ -534,14 +534,14 @@ class HexViewerWidget(QAbstractScrollArea):
                     elif self.view_mode == ViewMode.BINARY:
                         self.draw_binary_row(painter, row_data, row_offset, y)
                 except Exception as e:
-                    logger.error(f"Error rendering row at offset {row_offset}: {e}")
+                    logger.error("Error rendering row at offset %s: %s", row_offset, e)
                     # Draw error indicator
                     painter.setPen(Qt.red)
                     painter.drawText(10, y, f"Error: {str(e)[:30]}...")
 
                 y += self.char_height
         except Exception as e:
-            logger.error(f"Error in row rendering loop: {e}")
+            logger.error("Error in row rendering loop: %s", e)
             # Draw a final error indicator at the top
             painter.setPen(Qt.red)
             painter.drawText(10, 80, f"Error in rendering: {str(e)[:50]}...")
@@ -638,7 +638,7 @@ class HexViewerWidget(QAbstractScrollArea):
         try:
             # Add debug logging
             if not data:
-                logger.warning(f"Empty data passed to draw_hex_row at offset {offset}")
+                logger.warning("Empty data passed to draw_hex_row at offset %s", offset)
 
             # Force QT to show the widget is active and receiving paint events
             logger.debug(f"Drawing hex row at y={y}, offset={offset:X}, data_len={len(data)}")
@@ -669,7 +669,7 @@ class HexViewerWidget(QAbstractScrollArea):
             row_end = offset + len(data)
             highlights = self.highlighter.get_highlights_for_region(offset, row_end)
         except Exception as e:
-            logger.error(f"Exception in draw_hex_row setup: {e}")
+            logger.error("Exception in draw_hex_row setup: %s", e)
             painter.setPen(Qt.red)
             painter.drawText(10, y, f"Error in hex row: {str(e)[:30]}...")
             return
@@ -1851,7 +1851,7 @@ class HexViewerWidget(QAbstractScrollArea):
             dialog.exec_()
 
         except Exception as e:
-            logger.error(f"Error showing performance dialog: {e}")
+            logger.error("Error showing performance dialog: %s", e)
 
     def optimize_for_large_files(self):
         """Optimize settings for large file handling."""

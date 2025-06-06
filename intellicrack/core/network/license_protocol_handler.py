@@ -192,7 +192,7 @@ class LicenseProtocolHandler(ABC):
         # Log hex dump for debugging (limit to first 256 bytes)
         if self.logger.isEnabledFor(logging.DEBUG):
             hex_data = request_data[:256].hex()
-            self.logger.debug(f"Request hex: {hex_data}")
+            self.logger.debug("Request hex: %s", hex_data)
 
     def log_response(self, response_data: bytes, destination: str = "unknown") -> None:
         """
@@ -207,7 +207,7 @@ class LicenseProtocolHandler(ABC):
         # Log hex dump for debugging (limit to first 256 bytes)
         if self.logger.isEnabledFor(logging.DEBUG):
             hex_data = response_data[:256].hex()
-            self.logger.debug(f"Response hex: {hex_data}")
+            self.logger.debug("Response hex: %s", hex_data)
 
 
 class FlexLMProtocolHandler(LicenseProtocolHandler):
@@ -231,7 +231,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             port: Port to bind the proxy server to
         """
         # FlexLM-specific proxy implementation would go here
-        self.logger.info(f"FlexLM proxy started on port {port}")
+        self.logger.info("FlexLM proxy started on port %s", port)
 
         # Placeholder implementation
         while self.running:
@@ -254,7 +254,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             socket.send(response)
             self.log_response(response, "FlexLM client")
         except Exception as e:
-            self.logger.error(f"Failed to send FlexLM response: {e}")
+            self.logger.error("Failed to send FlexLM response: %s", e)
 
     def generate_response(self, request_data: bytes) -> bytes:
         """
@@ -292,7 +292,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         Args:
             port: Port to bind the proxy server to
         """
-        self.logger.info(f"HASP proxy started on port {port}")
+        self.logger.info("HASP proxy started on port %s", port)
 
         # Placeholder implementation
         while self.running:
@@ -314,7 +314,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             socket.send(response)
             self.log_response(response, "HASP client")
         except Exception as e:
-            self.logger.error(f"Failed to send HASP response: {e}")
+            self.logger.error("Failed to send HASP response: %s", e)
 
     def generate_response(self, request_data: bytes) -> bytes:
         """

@@ -50,7 +50,7 @@ class TaintAnalysisEngine:
     def set_binary(self, binary_path: str) -> bool:
         """Set the binary to analyze"""
         if not os.path.exists(binary_path):
-            self.logger.error(f"Binary not found: {binary_path}")
+            self.logger.error("Binary not found: %s", binary_path)
             return False
 
         self.binary_path = binary_path
@@ -66,7 +66,7 @@ class TaintAnalysisEngine:
         }
 
         self.taint_sources.append(source)
-        self.logger.info(f"Added taint source: {source_type} at {source_location}")
+        self.logger.info("Added taint source: %s at %s", source_type, source_location)
 
     def add_taint_sink(self, sink_type: str, sink_location: str,
                       sink_description: Optional[str] = None) -> None:
@@ -78,7 +78,7 @@ class TaintAnalysisEngine:
         }
 
         self.taint_sinks.append(sink)
-        self.logger.info(f"Added taint sink: {sink_type} at {sink_location}")
+        self.logger.info("Added taint sink: %s at %s", sink_type, sink_location)
 
     def run_analysis(self) -> bool:
         """Run taint analysis on the binary"""
@@ -116,7 +116,7 @@ class TaintAnalysisEngine:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error during taint analysis: {e}")
+            self.logger.error("Error during taint analysis: %s", e)
             return False
 
     def _add_default_taint_sources(self) -> None:
@@ -354,10 +354,10 @@ class TaintAnalysisEngine:
             try:
                 with open(filename, 'w') as f:
                     f.write(html)
-                self.logger.info(f"Report saved to {filename}")
+                self.logger.info("Report saved to %s", filename)
                 return filename
             except Exception as e:
-                self.logger.error(f"Error saving report: {e}")
+                self.logger.error("Error saving report: %s", e)
                 return None
         else:
             return html

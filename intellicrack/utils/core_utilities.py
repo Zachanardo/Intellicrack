@@ -103,7 +103,7 @@ def main(args: Optional[List[str]] = None):
         logger.info("Interrupted by user")
         return 1
     except Exception as e:
-        logger.error(f"Fatal error: {e}")
+        logger.error("Fatal error: %s", e)
         logger.error(traceback.format_exc())
         return 1
 
@@ -133,11 +133,11 @@ def run_gui_mode(args) -> int:
         return app.exec_()
 
     except ImportError as e:
-        logger.error(f"GUI dependencies not available: {e}")
+        logger.error("GUI dependencies not available: %s", e)
         logger.info("Please install PyQt5 to use GUI mode")
         return 1
     except Exception as e:
-        logger.error(f"Error launching GUI: {e}")
+        logger.error("Error launching GUI: %s", e)
         return 1
 
 
@@ -162,7 +162,7 @@ def run_cli_mode(args) -> int:
 
         # Run analysis if requested
         if args.analyze:
-            logger.info(f"Analyzing {args.binary}...")
+            logger.info("Analyzing %s...", args.binary)
             results["analysis"] = run_comprehensive_analysis(
                 args.binary,
                 output_dir=args.output
@@ -176,7 +176,7 @@ def run_cli_mode(args) -> int:
 
         # Run cracking if requested
         if args.crack:
-            logger.info(f"Running autonomous crack on {args.binary}...")
+            logger.info("Running autonomous crack on %s...", args.binary)
             results["crack"] = run_autonomous_crack(args.binary)
 
             if results["crack"].get("success"):
@@ -194,7 +194,7 @@ def run_cli_mode(args) -> int:
         return 0
 
     except Exception as e:
-        logger.error(f"Error in CLI mode: {e}")
+        logger.error("Error in CLI mode: %s", e)
         logger.error(traceback.format_exc())
         return 1
 
@@ -211,7 +211,7 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
     Returns:
         Dict containing tool execution results
     """
-    logger.info(f"Dispatching tool: {tool_name}")
+    logger.info("Dispatching tool: %s", tool_name)
 
     # Update UI if available
     if app_instance and hasattr(app_instance, 'update_output'):
@@ -294,10 +294,10 @@ def register_tool(name: str, func: Callable, category: str = "general") -> bool:
     """
     try:
         TOOL_REGISTRY[name] = func
-        logger.info(f"Registered tool: {name} (category: {category})")
+        logger.info("Registered tool: %s (category: %s)", name, category)
         return True
     except Exception as e:
-        logger.error(f"Error registering tool {name}: {e}")
+        logger.error("Error registering tool %s: %s", name, e)
         return False
 
 
@@ -357,7 +357,7 @@ def register_default_tools():
         return True
 
     except Exception as e:
-        logger.error(f"Error registering default tools: {e}")
+        logger.error("Error registering default tools: %s", e)
         return False
 
 
@@ -375,7 +375,7 @@ def on_message(message: Dict[str, Any], data: Any = None) -> None:
         payload = message.get('payload', {})
 
         # Log the message
-        logger.info(f"[Frida] {payload}")
+        logger.info("[Frida] %s", payload)
 
         # Handle specific message types
         if isinstance(payload, dict):
@@ -408,7 +408,7 @@ def register(plugin_info: Dict[str, Any]) -> bool:
     # Validate plugin info
     for field in required_fields:
         if field not in plugin_info:
-            logger.error(f"Missing required field: {field}")
+            logger.error("Missing required field: %s", field)
             return False
 
     try:
@@ -422,11 +422,11 @@ def register(plugin_info: Dict[str, Any]) -> bool:
             for tool_name, tool_func in plugin_info["tools"].items():
                 register_tool(f"plugin_{plugin_name}_{tool_name}", tool_func, category="plugin")
 
-        logger.info(f"Plugin {plugin_name} registered successfully")
+        logger.info("Plugin %s registered successfully", plugin_name)
         return True
 
     except Exception as e:
-        logger.error(f"Error registering plugin: {e}")
+        logger.error("Error registering plugin: %s", e)
         return False
 
 
@@ -521,7 +521,7 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: Optional[Dic
         }
 
     except Exception as e:
-        logger.error(f"Error in deep runtime monitoring: {e}")
+        logger.error("Error in deep runtime monitoring: %s", e)
         return {
             "status": "error",
             "error": str(e),
@@ -533,7 +533,7 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: Optional[Dic
 try:
     register_default_tools()
 except Exception as e:
-    logger.warning(f"Could not register default tools: {e}")
+    logger.warning("Could not register default tools: %s", e)
 
 
 # Export all functions

@@ -120,7 +120,7 @@ def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> Dic
         return results
 
     except Exception as e:
-        logger.error(f"Error in performance-optimized analysis: {e}")
+        logger.error("Error in performance-optimized analysis: %s", e)
         # Fallback to standard analysis
         return analyze_binary(binary_path, detailed)
 
@@ -204,7 +204,7 @@ def identify_binary_format(binary_path: str) -> str:
                 return 'DOTNET'
 
     except Exception as e:
-        logger.error(f"Error identifying binary format: {e}")
+        logger.error("Error identifying binary format: %s", e)
 
     return 'UNKNOWN'
 
@@ -309,7 +309,7 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
         return info
 
     except Exception as e:
-        logger.error(f"Error analyzing PE binary: {e}")
+        logger.error("Error analyzing PE binary: %s", e)
         return {
             "format": "PE",
             "error": str(e),
@@ -393,7 +393,7 @@ def analyze_elf_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
         return info
 
     except Exception as e:
-        logger.error(f"Error analyzing ELF with LIEF: {e}")
+        logger.error("Error analyzing ELF with LIEF: %s", e)
         return {"format": "ELF", "error": str(e)}
 
 
@@ -426,7 +426,7 @@ def analyze_elf_with_pyelftools(binary_path: str, detailed: bool) -> Dict[str, A
             return info
 
     except Exception as e:
-        logger.error(f"Error analyzing ELF with pyelftools: {e}")
+        logger.error("Error analyzing ELF with pyelftools: %s", e)
         return {"format": "ELF", "error": str(e)}
 
 
@@ -500,7 +500,7 @@ def analyze_macho_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
         return info
 
     except Exception as e:
-        logger.error(f"Error analyzing Mach-O with LIEF: {e}")
+        logger.error("Error analyzing Mach-O with LIEF: %s", e)
         return {"format": "MACHO", "error": str(e)}
 
 
@@ -529,7 +529,7 @@ def analyze_macho_with_macholib(binary_path: str, detailed: bool) -> Dict[str, A
         return info
 
     except Exception as e:
-        logger.error(f"Error analyzing Mach-O with macholib: {e}")
+        logger.error("Error analyzing Mach-O with macholib: %s", e)
         return {"format": "MACHO", "error": str(e)}
 
 
@@ -607,7 +607,7 @@ def analyze_patterns(binary_path: str, patterns: Optional[List[bytes]] = None) -
         return results
 
     except Exception as e:
-        logger.error(f"Error analyzing patterns: {e}")
+        logger.error("Error analyzing patterns: %s", e)
         return {"error": str(e)}
 
 
@@ -730,7 +730,7 @@ def extract_binary_info(binary_path: str) -> Dict[str, Any]:
             info["sha1"] = hashlib.sha256(data).hexdigest()  # Using sha256 instead of sha1 for security
             info["sha256"] = hashlib.sha256(data).hexdigest()
     except Exception as e:
-        logger.error(f"Error calculating hashes: {e}")
+        logger.error("Error calculating hashes: %s", e)
 
     return info
 
@@ -789,7 +789,7 @@ def extract_binary_features(binary_path: str) -> Dict[str, Any]:
             features["has_resources"] = hasattr(pe, 'DIRECTORY_ENTRY_RESOURCE')
 
     except Exception as e:
-        logger.error(f"Error extracting features: {e}")
+        logger.error("Error extracting features: %s", e)
 
     return features
 
@@ -835,7 +835,7 @@ def extract_patterns_from_binary(binary_path: str, pattern_size: int = 16,
         return frequent_patterns[:100]  # Return top 100 patterns
 
     except Exception as e:
-        logger.error(f"Error extracting patterns: {e}")
+        logger.error("Error extracting patterns: %s", e)
         return []
 
 
@@ -891,7 +891,7 @@ def scan_binary(binary_path: str, signatures: Optional[Dict[str, bytes]] = None)
         results["scan_time"] = time.time() - start_time
 
     except Exception as e:
-        logger.error(f"Error scanning binary: {e}")
+        logger.error("Error scanning binary: %s", e)
         results["error"] = str(e)
 
     return results

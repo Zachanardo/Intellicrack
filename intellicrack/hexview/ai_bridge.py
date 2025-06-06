@@ -936,7 +936,7 @@ class AIBinaryBridge:
 
             return result
         except Exception as e:
-            logger.error(f"Error parsing analysis response: {e}")
+            logger.error("Error parsing analysis response: %s", e)
 
             # Return a basic result
             return {
@@ -979,7 +979,7 @@ class AIBinaryBridge:
 
             return result
         except Exception as e:
-            logger.error(f"Error parsing edit response: {e}")
+            logger.error("Error parsing edit response: %s", e)
 
             # Return a basic result
             return {
@@ -1016,7 +1016,7 @@ class AIBinaryBridge:
 
             return patterns
         except Exception as e:
-            logger.error(f"Error parsing pattern response: {e}")
+            logger.error("Error parsing pattern response: %s", e)
             return []
 
     def _parse_search_response(self, response: str, binary_data: bytes, offset: int) -> List[Dict[str, Any]]:
@@ -1044,7 +1044,7 @@ class AIBinaryBridge:
 
             return matches
         except Exception as e:
-            logger.error(f"Error parsing search response: {e}")
+            logger.error("Error parsing search response: %s", e)
             return []
 
     def _mock_ai_response(self, context: Dict[str, Any], query: Optional[str]) -> str:
@@ -1238,7 +1238,7 @@ class AIBinaryBridge:
             return result
             
         except Exception as e:
-            logger.error(f"Error analyzing binary patterns: {e}")
+            logger.error("Error analyzing binary patterns: %s", e)
             return {
                 "error": str(e),
                 "confidence": 0.0,
@@ -1294,7 +1294,7 @@ def wrapper_ai_binary_analyze(app_instance, parameters):
 
         return result
     except Exception as e:
-        logger.error(f"Error in AI binary analysis: {e}")
+        logger.error("Error in AI binary analysis: %s", e)
         return {"error": str(e)}
 
 
@@ -1369,7 +1369,7 @@ def wrapper_ai_binary_pattern_search(app_instance, parameters):
 
         return {"results": results, "count": len(results)}
     except Exception as e:
-        logger.error(f"Error in AI binary pattern search: {e}")
+        logger.error("Error in AI binary pattern search: %s", e)
         return {"error": str(e)}
 
 
@@ -1421,5 +1421,5 @@ def wrapper_ai_binary_edit_suggest(app_instance, parameters):
 
         return result
     except Exception as e:
-        logger.error(f"Error in AI binary edit suggestion: {e}")
+        logger.error("Error in AI binary edit suggestion: %s", e)
         return {"error": str(e)}

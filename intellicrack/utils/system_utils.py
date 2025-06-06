@@ -66,7 +66,7 @@ def get_target_process_pid(binary_path: str) -> Optional[int]:
                         'match': 'partial'
                     })
     except Exception as e:
-        logger.error(f"Error iterating processes: {e}")
+        logger.error("Error iterating processes: %s", e)
         return None
 
     if not potential_pids:
@@ -119,7 +119,7 @@ def get_system_info() -> Dict[str, Any]:
             info['memory_available'] = psutil.virtual_memory().available
             info['memory_percent'] = psutil.virtual_memory().percent
         except Exception as e:
-            logger.warning(f"Error getting psutil system info: {e}")
+            logger.warning("Error getting psutil system info: %s", e)
 
     return info
 
@@ -141,11 +141,11 @@ def check_dependencies(dependencies: Dict[str, str]) -> Tuple[bool, Dict[str, bo
         try:
             __import__(module_name)
             results[module_name] = True
-            logger.debug(f"✓ {module_name}: {description}")
+            logger.debug("✓ %s: %s", module_name, description)
         except ImportError:
             results[module_name] = False
             all_satisfied = False
-            logger.warning(f"✗ {module_name}: {description} - NOT INSTALLED")
+            logger.warning("✗ %s: %s - NOT INSTALLED", module_name, description)
 
     return all_satisfied, results
 
@@ -169,7 +169,7 @@ def run_command(command: Union[str, List[str]], shell: bool = False,
         subprocess.CalledProcessError: If command fails
     """
     try:
-        logger.debug(f"Running command: {command}")
+        logger.debug("Running command: %s", command)
 
         if isinstance(command, str) and not shell:
             command = command.split()
@@ -183,13 +183,13 @@ def run_command(command: Union[str, List[str]], shell: bool = False,
         )
 
         if result.returncode != 0:
-            logger.error(f"Command failed with return code {result.returncode}")
-            logger.error(f"stderr: {result.stderr}")
+            logger.error("Command failed with return code %s", result.returncode)
+            logger.error("stderr: %s", result.stderr)
 
         return result
 
     except subprocess.TimeoutExpired:
-        logger.error(f"Command timed out after {timeout} seconds: {command}")
+        logger.error("Command timed out after %s seconds: %s", timeout, command)
         raise
     except Exception as e:
         logger.error(f"Error running command '{command}': {e}")
@@ -230,7 +230,7 @@ def get_process_list() -> List[Dict[str, Any]]:
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
     except Exception as e:
-        logger.error(f"Error getting process list: {e}")
+        logger.error("Error getting process list: %s", e)
 
     return processes
 
@@ -261,13 +261,13 @@ def kill_process(pid: int, force: bool = False) -> bool:
         return True
 
     except psutil.NoSuchProcess:
-        logger.warning(f"Process {pid} does not exist")
+        logger.warning("Process %s does not exist", pid)
         return False
     except psutil.AccessDenied:
-        logger.error(f"Access denied when trying to kill process {pid}")
+        logger.error("Access denied when trying to kill process %s", pid)
         return False
     except Exception as e:
-        logger.error(f"Error killing process {pid}: {e}")
+        logger.error("Error killing process %s: %s", pid, e)
         return False
 
 
@@ -294,7 +294,7 @@ def set_environment_variable(name: str, value: str) -> None:
         value: Variable value
     """
     os.environ[name] = value
-    logger.debug(f"Set environment variable: {name}={value}")
+    logger.debug("Set environment variable: %s=%s", name, value)
 
 
 def get_temp_directory() -> Path:
@@ -333,7 +333,7 @@ def check_admin_privileges() -> bool:
             # Unix-like systems
             return hasattr(os, 'geteuid') and os.geteuid() == 0
     except Exception as e:
-        logger.warning(f"Could not check admin privileges: {e}")
+        logger.warning("Could not check admin privileges: %s", e)
         return False
 
 
@@ -382,7 +382,7 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
             return result.returncode == 0
 
     except Exception as e:
-        logger.error(f"Error running command as admin: {e}")
+        logger.error("Error running command as admin: %s", e)
         return False
 
 
@@ -401,7 +401,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
         from PIL import Image
 
         if not os.path.exists(exe_path):
-            logger.error(f"Executable not found: {exe_path}")
+            logger.error("Executable not found: %s", exe_path)
             return None
 
         # Default output path
@@ -447,13 +447,13 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
                     img.save(output_path, 'PNG')
                     win32gui.DestroyIcon(large[0])
 
-                    logger.info(f"Icon extracted to: {output_path}")
+                    logger.info("Icon extracted to: %s", output_path)
                     return output_path
 
             except ImportError:
                 logger.warning("win32api not available, trying alternative method")
             except Exception as e:
-                logger.error(f"Windows icon extraction failed: {e}")
+                logger.error("Windows icon extraction failed: %s", e)
 
         # Cross-platform fallback: Try to extract from PE file
         try:
@@ -481,15 +481,15 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
                                     img = Image.open(ico_path)
                                     img.save(output_path, 'PNG')
                                     os.remove(ico_path)  # Clean up ICO file
-                                    logger.info(f"Icon extracted to: {output_path}")
+                                    logger.info("Icon extracted to: %s", output_path)
                                     return output_path
                                 except Exception as e:
-                                    logger.error(f"Failed to convert ICO to PNG: {e}")
+                                    logger.error("Failed to convert ICO to PNG: %s", e)
 
         except ImportError:
             logger.error("pefile not available for icon extraction")
         except Exception as e:
-            logger.error(f"PE icon extraction failed: {e}")
+            logger.error("PE icon extraction failed: %s", e)
 
         # If all methods fail, create a default icon
         logger.warning("All icon extraction methods failed, creating default icon")
@@ -503,10 +503,10 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
             img.save(output_path, 'PNG')
             return output_path
         except Exception as e:
-            logger.error(f"Failed to create default icon: {e}")
+            logger.error("Failed to create default icon: %s", e)
 
     except Exception as e:
-        logger.error(f"Icon extraction failed: {e}")
+        logger.error("Icon extraction failed: %s", e)
         return None
 
 
@@ -537,7 +537,7 @@ def optimize_memory_usage() -> Dict[str, Any]:
 
     # Force garbage collection
     collected = gc.collect()
-    logger.info(f"Garbage collector: collected {collected} objects")
+    logger.info("Garbage collector: collected %s objects", collected)
 
     # Clear Python's internal caches
     try:
@@ -560,7 +560,7 @@ def optimize_memory_usage() -> Dict[str, Any]:
                     except:
                         pass
     except Exception as e:
-        logger.warning(f"Error clearing caches: {e}")
+        logger.warning("Error clearing caches: %s", e)
 
     # Get final memory stats
     if psutil:

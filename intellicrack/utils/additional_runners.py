@@ -60,14 +60,14 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
         from .protection_detection import run_comprehensive_protection_scan
         from .security_analysis import check_buffer_overflow, scan_protectors
     except ImportError as e:
-        logger.error(f"Import error: {e}")
+        logger.error("Import error: %s", e)
         results["error"] = f"Missing dependencies: {e}"
         return results
 
     # Run each analysis
     for analysis in analyses:
         try:
-            logger.info(f"Running {analysis}...")
+            logger.info("Running %s...", analysis)
 
             if analysis == "binary_info":
                 results["analyses"]["binary_info"] = analyze_binary(binary_path)
@@ -104,7 +104,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
                 results["analyses"]["license"] = analyze_patterns(binary_path, license_patterns)
 
         except Exception as e:
-            logger.error(f"Error in {analysis}: {e}")
+            logger.error("Error in %s: %s", analysis, e)
             results["analyses"][analysis] = {"error": str(e)}
 
     # Generate summary
@@ -117,7 +117,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
             json.dump(results, f, indent=2, default=str)
         results["results_file"] = results_file
     except Exception as e:
-        logger.error(f"Error saving results: {e}")
+        logger.error("Error saving results: %s", e)
 
     return results
 
@@ -171,7 +171,7 @@ def run_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
             results["bypass_suggestions"] = _generate_bypass_suggestions(pattern_results)
 
     except Exception as e:
-        logger.error(f"Error in deep license analysis: {e}")
+        logger.error("Error in deep license analysis: %s", e)
         results["error"] = str(e)
 
     return results
@@ -211,7 +211,7 @@ def run_detect_packing(binary_path: str) -> Dict[str, Any]:
         return results
 
     except Exception as e:
-        logger.error(f"Error detecting packing: {e}")
+        logger.error("Error detecting packing: %s", e)
         return {"error": str(e)}
 
 
@@ -294,7 +294,7 @@ def run_autonomous_crack(binary_path: str, target_type: Optional[str] = None) ->
             results["message"] = "No patches generated"
 
     except Exception as e:
-        logger.error(f"Error in autonomous crack: {e}")
+        logger.error("Error in autonomous crack: %s", e)
         results["error"] = str(e)
 
     return results
@@ -353,7 +353,7 @@ def run_full_autonomous_mode(binary_path: str, config: Optional[Dict[str, Any]] 
         results["overall_success"] = results["phases"]["crack"].get("success", False)
 
     except Exception as e:
-        logger.error(f"Error in full autonomous mode: {e}")
+        logger.error("Error in full autonomous mode: %s", e)
         results["error"] = str(e)
 
     return results
@@ -406,7 +406,7 @@ def run_ghidra_analysis_gui(binary_path: str, ghidra_path: Optional[str] = None)
             results["error"] = f"Ghidra run script not found: {ghidra_run}"
 
     except Exception as e:
-        logger.error(f"Error launching Ghidra GUI: {e}")
+        logger.error("Error launching Ghidra GUI: %s", e)
         results["error"] = str(e)
 
     return results
@@ -441,7 +441,7 @@ def run_incremental_analysis_ui(binary_path: str, cache_dir: Optional[str] = Non
         return results
 
     except Exception as e:
-        logger.error(f"Error in incremental analysis UI: {e}")
+        logger.error("Error in incremental analysis UI: %s", e)
         return {"error": str(e)}
 
 
@@ -502,7 +502,7 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> Dict
         return results
 
     except Exception as e:
-        logger.error(f"Error in deep CFG analysis: {e}")
+        logger.error("Error in deep CFG analysis: %s", e)
         return {"error": str(e)}
 
 
@@ -568,7 +568,7 @@ def run_external_tool(tool_name: str, binary_path: str,
     except FileNotFoundError:
         results["error"] = f"Tool '{tool_name}' not found in PATH"
     except Exception as e:
-        logger.error(f"Error running external tool: {e}")
+        logger.error("Error running external tool: %s", e)
         results["error"] = str(e)
 
     return results
@@ -603,7 +603,7 @@ def run_windows_activator(product: str = "windows", method: str = "kms") -> Dict
         return {"error": f"Unknown product/method: {product}/{method}"}
 
     except Exception as e:
-        logger.error(f"Error in Windows activation: {e}")
+        logger.error("Error in Windows activation: %s", e)
         return {"error": str(e)}
 
 
@@ -651,7 +651,7 @@ def check_adobe_licensex_status() -> Dict[str, Any]:
                             break
 
     except Exception as e:
-        logger.error(f"Error checking Adobe license: {e}")
+        logger.error("Error checking Adobe license: %s", e)
         results["error"] = str(e)
 
     return results
@@ -682,7 +682,7 @@ def run_adobe_licensex_manually(action: str = "bypass") -> Dict[str, Any]:
         return {"error": f"Unknown action: {action}"}
 
     except Exception as e:
-        logger.error(f"Error in Adobe license operation: {e}")
+        logger.error("Error in Adobe license operation: %s", e)
         return {"error": str(e)}
 
 
@@ -731,7 +731,7 @@ def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> Dict[st
                 results["issues"].append("File not found")
 
     except Exception as e:
-        logger.error(f"Error validating dataset: {e}")
+        logger.error("Error validating dataset: %s", e)
         results["issues"].append(str(e))
 
     return results
@@ -769,7 +769,7 @@ def verify_hash(file_path: str, expected_hash: str,
         results["verified"] = actual_hash.lower() == expected_hash.lower()
 
     except Exception as e:
-        logger.error(f"Error verifying hash: {e}")
+        logger.error("Error verifying hash: %s", e)
         results["error"] = str(e)
 
     return results
@@ -807,7 +807,7 @@ def run_external_command(command: Union[str, List[str]],
     except subprocess.TimeoutExpired:
         results["error"] = "Command timed out"
     except Exception as e:
-        logger.error(f"Error running command: {e}")
+        logger.error("Error running command: %s", e)
         results["error"] = str(e)
 
     return results
@@ -910,7 +910,7 @@ console.log("Sample Frida script loaded");
         results["success"] = True
 
     except Exception as e:
-        logger.error(f"Error creating sample plugins: {e}")
+        logger.error("Error creating sample plugins: %s", e)
         results["error"] = str(e)
 
     return results
@@ -959,7 +959,7 @@ def load_ai_model(model_path: str, model_type: str = "auto") -> Dict[str, Any]:
             results["error"] = f"Model type {model_type} not implemented"
 
     except Exception as e:
-        logger.error(f"Error loading AI model: {e}")
+        logger.error("Error loading AI model: %s", e)
         results["error"] = str(e)
 
     return results
@@ -983,7 +983,7 @@ def get_target_process_pid(process_name: str) -> Optional[int]:
                 return proc.info['pid']
 
     except Exception as e:
-        logger.error(f"Error getting process PID: {e}")
+        logger.error("Error getting process PID: %s", e)
 
     return None
 
@@ -1014,7 +1014,7 @@ def detect_hardware_dongles() -> Dict[str, Any]:
         results["message"] = "Hardware dongle detection requires platform-specific implementation"
 
     except Exception as e:
-        logger.error(f"Error detecting hardware dongles: {e}")
+        logger.error("Error detecting hardware dongles: %s", e)
         results["error"] = str(e)
 
     return results
@@ -1034,7 +1034,7 @@ def detect_tpm_protection(binary_path: str) -> Dict[str, Any]:
         from .protection_detection import detect_tpm_protection as tpm_detect
         return tpm_detect(binary_path)
     except Exception as e:
-        logger.error(f"Error detecting TPM protection: {e}")
+        logger.error("Error detecting TPM protection: %s", e)
         return {"error": str(e)}
 
 
@@ -1181,7 +1181,7 @@ def run_vulnerability_scan(binary_path: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error in vulnerability scan: {e}")
+        logger.error("Error in vulnerability scan: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1209,7 +1209,7 @@ def run_cfg_analysis(binary_path: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error in CFG analysis: {e}")
+        logger.error("Error in CFG analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1252,7 +1252,7 @@ def run_rop_gadget_finder(binary_path: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error finding ROP gadgets: {e}")
+        logger.error("Error finding ROP gadgets: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1304,7 +1304,7 @@ def run_section_analysis(binary_path: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error in section analysis: {e}")
+        logger.error("Error in section analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1352,7 +1352,7 @@ def run_import_export_analysis(binary_path: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error in import/export analysis: {e}")
+        logger.error("Error in import/export analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1405,7 +1405,7 @@ def run_weak_crypto_detection(binary_path: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error in weak crypto detection: {e}")
+        logger.error("Error in weak crypto detection: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1469,7 +1469,7 @@ def run_comprehensive_protection_scan(binary_path: str) -> Dict[str, Any]:
         return results
 
     except Exception as e:
-        logger.error(f"Error in protection scan: {e}")
+        logger.error("Error in protection scan: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1497,7 +1497,7 @@ def run_ml_vulnerability_prediction(binary_path: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error in ML vulnerability prediction: {e}")
+        logger.error("Error in ML vulnerability prediction: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1550,7 +1550,7 @@ def run_generate_patch_suggestions(binary_path: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error generating patch suggestions: {e}")
+        logger.error("Error generating patch suggestions: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1578,7 +1578,7 @@ def run_multi_format_analysis(binary_path: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error in multi-format analysis: {e}")
+        logger.error("Error in multi-format analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1610,7 +1610,7 @@ def run_ml_similarity_search(binary_path: str, database: Optional[str] = None) -
         }
 
     except Exception as e:
-        logger.error(f"Error in ML similarity search: {e}")
+        logger.error("Error in ML similarity search: %s", e)
         return {"status": "error", "message": str(e)}
 
 

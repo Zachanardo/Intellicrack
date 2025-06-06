@@ -71,8 +71,8 @@ class SymbolicExecutionEngine:
                 "format_string", "command_injection", "path_traversal"
             ]
 
-        self.logger.info(f"Starting symbolic execution on {self.binary_path}")
-        self.logger.info(f"Looking for vulnerability types: {vulnerability_types}")
+        self.logger.info("Starting symbolic execution on %s", self.binary_path)
+        self.logger.info("Looking for vulnerability types: %s", vulnerability_types)
 
         try:
             # Create project
@@ -150,7 +150,7 @@ class SymbolicExecutionEngine:
             return vulnerabilities
 
         except Exception as e:
-            self.logger.error(f"Error during symbolic execution: {e}")
+            self.logger.error("Error during symbolic execution: %s", e)
             self.logger.error(traceback.format_exc())
             return [{"error": f"Symbolic execution failed: {str(e)}"}]
 
@@ -168,7 +168,7 @@ class SymbolicExecutionEngine:
         try:
             # Check if constraint involves arithmetic that could overflow
             constraint_str = str(constraint)
-            self.logger.debug(f"Checking for integer overflow in constraint: {constraint_str} at 0x{state.addr:x}")
+            self.logger.debug("Checking for integer overflow in constraint: %s at 0x%d", constraint_str, state.addr)
             if "+" in constraint_str or "*" in constraint_str:
                 # Try to find cases where large values are possible
                 if state.solver.satisfiable(extra_constraints=[constraint]):
@@ -199,12 +199,12 @@ class SymbolicExecutionEngine:
         """
         try:
             # Look for printf-like function calls with user-controlled format string
-            self.logger.debug(f"Checking for format string vulnerability at 0x{state.addr:x}")
+            self.logger.debug("Checking for format string vulnerability at 0x%d", state.addr)
             for addr in state.history.bbl_addrs:
                 try:
                     function = project.kb.functions.get_by_addr(addr)
                     if function and function.name:
-                        self.logger.debug(f"Found call to {function.name} at 0x{addr:x}")
+                        self.logger.debug("Found call to %s at 0x%d", function.name, addr)
                         if "printf" in function.name or "sprintf" in function.name or "fprintf" in function.name:
                             # Check if first argument (format string) is symbolic
                             for var in state.solver.variables:
@@ -269,7 +269,7 @@ class SymbolicExecutionEngine:
             return {"error": f"Exploit generation not implemented for {vuln_type}"}
 
         except Exception as e:
-            self.logger.error(f"Error generating exploit: {e}")
+            self.logger.error("Error generating exploit: %s", e)
             return {"error": f"Exploit generation failed: {str(e)}"}
 
 

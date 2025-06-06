@@ -123,7 +123,7 @@ class ReplaceCommand(HexCommand):
                 logger.debug(f"Replaced {len(self.new_data)} bytes at offset 0x{self.offset:X}")
             return success
         except Exception as e:
-            logger.error(f"Error executing replace command: {e}")
+            logger.error("Error executing replace command: %s", e)
             return False
 
     def undo(self, file_handler) -> bool:
@@ -138,7 +138,7 @@ class ReplaceCommand(HexCommand):
                 logger.debug(f"Undid replace of {len(self.old_data)} bytes at offset 0x{self.offset:X}")
             return success
         except Exception as e:
-            logger.error(f"Error undoing replace command: {e}")
+            logger.error("Error undoing replace command: %s", e)
             return False
 
     def get_affected_range(self) -> tuple:
@@ -183,7 +183,7 @@ class InsertCommand(HexCommand):
                 logger.debug(f"Inserted {len(self.data)} bytes at offset 0x{self.offset:X}")
             return success
         except Exception as e:
-            logger.error(f"Error executing insert command: {e}")
+            logger.error("Error executing insert command: %s", e)
             return False
 
     def undo(self, file_handler) -> bool:
@@ -198,7 +198,7 @@ class InsertCommand(HexCommand):
                 logger.debug(f"Undid insert of {len(self.data)} bytes at offset 0x{self.offset:X}")
             return success
         except Exception as e:
-            logger.error(f"Error undoing insert command: {e}")
+            logger.error("Error undoing insert command: %s", e)
             return False
 
     def get_affected_range(self) -> tuple:
@@ -225,10 +225,10 @@ class DeleteCommand(HexCommand):
             success = file_handler.delete(self.offset, self.length)
             if success:
                 self.executed = True
-                logger.debug(f"Deleted {self.length} bytes at offset 0x{self.offset:X}")
+                logger.debug("Deleted %s bytes at offset 0x%s", self.length, self.offset)
             return success
         except Exception as e:
-            logger.error(f"Error executing delete command: {e}")
+            logger.error("Error executing delete command: %s", e)
             return False
 
     def undo(self, file_handler) -> bool:
@@ -240,10 +240,10 @@ class DeleteCommand(HexCommand):
             success = file_handler.insert(self.offset, self.deleted_data)
             if success:
                 self.executed = False
-                logger.debug(f"Undid delete of {self.length} bytes at offset 0x{self.offset:X}")
+                logger.debug("Undid delete of %s bytes at offset 0x%s", self.length, self.offset)
             return success
         except Exception as e:
-            logger.error(f"Error undoing delete command: {e}")
+            logger.error("Error undoing delete command: %s", e)
             return False
 
     def get_affected_range(self) -> tuple:
@@ -274,10 +274,10 @@ class FillCommand(HexCommand):
             success = file_handler.write(self.offset, fill_data)
             if success:
                 self.executed = True
-                logger.debug(f"Filled {self.length} bytes at offset 0x{self.offset:X} with 0x{self.fill_value:02X}")
+                logger.debug("Filled %s bytes at offset 0x%s with 0x%s", self.length, self.offset, self.fill_value)
             return success
         except Exception as e:
-            logger.error(f"Error executing fill command: {e}")
+            logger.error("Error executing fill command: %s", e)
             return False
 
     def undo(self, file_handler) -> bool:
@@ -289,10 +289,10 @@ class FillCommand(HexCommand):
             success = file_handler.write(self.offset, self.old_data)
             if success:
                 self.executed = False
-                logger.debug(f"Undid fill of {self.length} bytes at offset 0x{self.offset:X}")
+                logger.debug("Undid fill of %s bytes at offset 0x%s", self.length, self.offset)
             return success
         except Exception as e:
-            logger.error(f"Error undoing fill command: {e}")
+            logger.error("Error undoing fill command: %s", e)
             return False
 
     def get_affected_range(self) -> tuple:
@@ -329,7 +329,7 @@ class PasteCommand(HexCommand):
                 logger.debug(f"Pasted {len(self.data)} bytes at offset 0x{self.offset:X} ({mode_str})")
             return success
         except Exception as e:
-            logger.error(f"Error executing paste command: {e}")
+            logger.error("Error executing paste command: %s", e)
             return False
 
     def undo(self, file_handler) -> bool:
@@ -353,7 +353,7 @@ class PasteCommand(HexCommand):
                 logger.debug(f"Undid paste ({mode_str}) of {len(self.data)} bytes at offset 0x{self.offset:X}")
             return success
         except Exception as e:
-            logger.error(f"Error undoing paste command: {e}")
+            logger.error("Error undoing paste command: %s", e)
             return False
 
     def get_affected_range(self) -> tuple:
@@ -407,13 +407,13 @@ class CommandManager:
                     if merged_command.execute(self.file_handler):
                         # Replace the last command with the merged one
                         self.command_history[self.current_index] = merged_command
-                        logger.debug(f"Merged command: {merged_command.description}")
+                        logger.debug("Merged command: %s", merged_command.description)
                         return True
                     else:
                         # If merge fails, re-execute the last command and continue with normal execution
                         last_command.execute(self.file_handler)
                 except Exception as e:
-                    logger.warning(f"Command merge failed: {e}")
+                    logger.warning("Command merge failed: %s", e)
                     # Continue with normal execution
 
         # Execute the command
@@ -433,7 +433,7 @@ class CommandManager:
             self.command_history.pop(0)
             self.current_index -= 1
 
-        logger.debug(f"Executed command: {command.description}")
+        logger.debug("Executed command: %s", command.description)
         return True
 
     def undo(self) -> bool:
@@ -449,10 +449,10 @@ class CommandManager:
         command = self.command_history[self.current_index]
         if command.undo(self.file_handler):
             self.current_index -= 1
-            logger.debug(f"Undid command: {command.description}")
+            logger.debug("Undid command: %s", command.description)
             return True
         else:
-            logger.error(f"Failed to undo command: {command.description}")
+            logger.error("Failed to undo command: %s", command.description)
             return False
 
     def redo(self) -> bool:
@@ -468,10 +468,10 @@ class CommandManager:
         command = self.command_history[self.current_index + 1]
         if command.execute(self.file_handler):
             self.current_index += 1
-            logger.debug(f"Redid command: {command.description}")
+            logger.debug("Redid command: %s", command.description)
             return True
         else:
-            logger.error(f"Failed to redo command: {command.description}")
+            logger.error("Failed to redo command: %s", command.description)
             return False
 
     def can_undo(self) -> bool:

@@ -351,7 +351,7 @@ def _get_filesystem_state() -> Dict[str, Any]:
                     pass
             break  # Only process current directory
     except Exception as e:
-        logger.error(f"Error getting filesystem state: {e}")
+        logger.error("Error getting filesystem state: %s", e)
 
     return state
 
@@ -371,7 +371,7 @@ def _get_memory_regions() -> List[Dict[str, Any]]:
                     'perm': mmap.perms
                 })
         except Exception as e:
-            logger.error(f"Error getting memory regions: {e}")
+            logger.error("Error getting memory regions: %s", e)
 
     return regions
 
@@ -405,7 +405,7 @@ def _get_network_state() -> Dict[str, Any]:
                 if conn.laddr:
                     state['ports'].append(conn.laddr.port)
         except Exception as e:
-            logger.error(f"Error getting network state: {e}")
+            logger.error("Error getting network state: %s", e)
 
     return state
 
@@ -429,7 +429,7 @@ def _get_process_state() -> Dict[str, Any]:
                 if len(state['pids']) > 50:  # Limit to 50 processes
                     break
         except Exception as e:
-            logger.error(f"Error getting process state: {e}")
+            logger.error("Error getting process state: %s", e)
 
     return state
 
@@ -443,7 +443,7 @@ def _archive_data(data: Any, archive_path: str) -> bool:
             json.dump(data, f, indent=2)
         return True
     except Exception as e:
-        logger.error(f"Error archiving data: {e}")
+        logger.error("Error archiving data: %s", e)
         return False
 
 
@@ -488,7 +488,7 @@ def _export_validation_report(report: Dict[str, Any], output_path: str) -> bool:
             json.dump(report, f, indent=2)
         return True
     except Exception as e:
-        logger.error(f"Error exporting report: {e}")
+        logger.error("Error exporting report: %s", e)
         return False
 
 
@@ -528,7 +528,7 @@ def _init_response_templates() -> Dict[str, Any]:
 
 def _learn_pattern(pattern: Dict[str, Any], category: str) -> None:
     """Learn a new pattern."""
-    logger.info(f"Learning pattern in category {category}: {pattern}")
+    logger.info("Learning pattern in category %s: %s", category, pattern)
 
 
 def _match_pattern(data: bytes, pattern: bytes) -> List[int]:
@@ -550,7 +550,7 @@ def _preview_dataset(dataset: List[Dict[str, Any]], limit: int = 10) -> List[Dic
 
 def _release_buffer(buffer_id: str) -> bool:
     """Release a buffer (memory management)."""
-    logger.info(f"Releasing buffer: {buffer_id}")
+    logger.info("Releasing buffer: %s", buffer_id)
     return True
 
 
@@ -561,7 +561,7 @@ def _save_patterns(patterns: Dict[str, Any], output_path: str) -> bool:
             json.dump(patterns, f, indent=2)
         return True
     except Exception as e:
-        logger.error(f"Error saving patterns: {e}")
+        logger.error("Error saving patterns: %s", e)
         return False
 
 
@@ -578,7 +578,7 @@ def _calculate_hash_opencl(data: bytes, algorithm: str = 'sha256') -> Optional[s
         # For now, use CPU fallback
         return _cpu_hash_calculation(data, algorithm)
     except Exception as e:
-        logger.error(f"OpenCL hash calculation failed: {e}")
+        logger.error("OpenCL hash calculation failed: %s", e)
         return None
 
 
@@ -641,7 +641,7 @@ def _pytorch_entropy_calculation(data: bytes) -> float:
         # Simple entropy approximation
         return float(-torch.sum(tensor * torch.log2(tensor + 1e-10)))
     except Exception as e:
-        logger.error(f"PyTorch entropy calculation failed: {e}")
+        logger.error("PyTorch entropy calculation failed: %s", e)
         return _gpu_entropy_calculation(data)
 
 
@@ -668,7 +668,7 @@ def _pytorch_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
 
         return matches
     except Exception as e:
-        logger.error(f"PyTorch pattern matching failed: {e}")
+        logger.error("PyTorch pattern matching failed: %s", e)
         return _match_pattern(data, pattern)
 
 
@@ -685,7 +685,7 @@ def _tensorflow_entropy_calculation(data: bytes) -> float:
         # Simple entropy approximation
         return float(-tf.reduce_sum(tensor * tf.math.log(tensor + 1e-10)))
     except Exception as e:
-        logger.error(f"TensorFlow entropy calculation failed: {e}")
+        logger.error("TensorFlow entropy calculation failed: %s", e)
         return _gpu_entropy_calculation(data)
 
 
@@ -704,7 +704,7 @@ def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
         # For now, use simple fallback
         return _match_pattern(data, pattern)
     except Exception as e:
-        logger.error(f"TensorFlow pattern matching failed: {e}")
+        logger.error("TensorFlow pattern matching failed: %s", e)
         return _match_pattern(data, pattern)
 
 
@@ -737,7 +737,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
     try:
         # GGUF conversion would require specific implementation
         # For now, simulate success
-        logger.info(f"Converting {model_path} to GGUF format at {output_path}")
+        logger.info("Converting %s to GGUF format at %s", model_path, output_path)
 
         # Write dummy GGUF header
         with open(output_path, 'wb') as f:
@@ -747,7 +747,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
 
         return True
     except Exception as e:
-        logger.error(f"GGUF conversion failed: {e}")
+        logger.error("GGUF conversion failed: %s", e)
         return False
 
 
@@ -762,7 +762,7 @@ def _manual_gguf_conversion(model_data: Dict[str, Any], output_path: str) -> boo
             _write_dummy_tensor_data(f, model_data.get('tensors', []))
         return True
     except Exception as e:
-        logger.error(f"Manual GGUF conversion failed: {e}")
+        logger.error("Manual GGUF conversion failed: %s", e)
         return False
 
 
@@ -963,7 +963,7 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
                 '-postScript', os.path.basename(script)
             ], check=True)
         except Exception as e:
-            logger.error(f"Ghidra thread error: {e}")
+            logger.error("Ghidra thread error: %s", e)
 
     thread = threading.Thread(target=run_ghidra, daemon=True)
     thread.start()

@@ -33,7 +33,7 @@ try:
         ProgressWidget, StatusBar, LogViewer
     )
 except ImportError as e:
-    logger.warning(f"Failed to import widgets from hex_viewer: {e}")
+    logger.warning("Failed to import widgets from hex_viewer: %s", e)
     # Define fallback classes
     class HexViewer: pass
     class AssemblyView: pass

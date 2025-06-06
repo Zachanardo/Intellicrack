@@ -240,7 +240,7 @@ class CacheManager:
 
                 return result
             except Exception as e:
-                logger.warning(f"Error reading cache file {cache_file}: {e}")
+                logger.warning("Error reading cache file %s: %s", cache_file, e)
 
         return None
 
@@ -259,7 +259,7 @@ class CacheManager:
             with open(cache_file, 'w') as f:
                 json.dump(result, f, indent=2, default=str)
         except Exception as e:
-            logger.warning(f"Error writing cache file {cache_file}: {e}")
+            logger.warning("Error writing cache file %s: %s", cache_file, e)
 
     def clear_cache(self):
         """Clear all cached results."""
@@ -271,7 +271,7 @@ class CacheManager:
             try:
                 cache_file.unlink()
             except Exception as e:
-                logger.warning(f"Error removing cache file {cache_file}: {e}")
+                logger.warning("Error removing cache file %s: %s", cache_file, e)
 
 
 class AdaptiveAnalyzer:
@@ -373,7 +373,7 @@ class AdaptiveAnalyzer:
                             break
 
         except Exception as e:
-            logger.warning(f"Error identifying priority sections: {e}")
+            logger.warning("Error identifying priority sections: %s", e)
 
         return priority_sections
 
@@ -426,7 +426,7 @@ class PerformanceOptimizer:
             if cached_result:
                 results["analysis_results"][func_name] = cached_result
                 results["cache_hits"] += 1
-                logger.info(f"Using cached result for {func_name}")
+                logger.info("Using cached result for %s", func_name)
                 continue
 
             results["cache_misses"] += 1
@@ -446,7 +446,7 @@ class PerformanceOptimizer:
                 self.cache_manager.cache_result(file_path, func_name, result)
 
             except Exception as e:
-                logger.error(f"Error in {func_name}: {e}")
+                logger.error("Error in %s: %s", func_name, e)
                 results["analysis_results"][func_name] = {
                     "error": str(e),
                     "status": "failed"
@@ -468,7 +468,7 @@ class PerformanceOptimizer:
             if (results["cache_hits"] + results["cache_misses"]) > 0 else 0
         )
 
-        logger.info(f"Analysis completed in {total_time:.2f}s")
+        logger.info("Analysis completed in %fs", total_time)
         logger.info(f"Cache efficiency: {results['performance_metrics']['cache_efficiency']:.1%}")
 
         return results

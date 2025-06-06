@@ -58,7 +58,7 @@ class MemoryOptimizedBinaryLoader:
             True if file loaded successfully, False otherwise
         """
         if not os.path.exists(file_path):
-            self.logger.error(f"File not found: {file_path}")
+            self.logger.error("File not found: %s", file_path)
             return False
 
         try:
@@ -80,7 +80,7 @@ class MemoryOptimizedBinaryLoader:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error loading file: {e}")
+            self.logger.error("Error loading file: %s", e)
             self.close()
             return False
 
@@ -123,7 +123,7 @@ class MemoryOptimizedBinaryLoader:
             return None
 
         if offset < 0 or offset >= self.file_size:
-            self.logger.error(f"Invalid offset: {offset}")
+            self.logger.error("Invalid offset: %s", offset)
             return None
 
         # Adjust size if it would read past end of file
@@ -134,7 +134,7 @@ class MemoryOptimizedBinaryLoader:
             self.mapped_file.seek(offset)
             return self.mapped_file.read(size)
         except Exception as e:
-            self.logger.error(f"Error reading chunk: {e}")
+            self.logger.error("Error reading chunk: %s", e)
             return None
 
     def read_section(self, section_name: str, section_offset: int, section_size: int) -> Optional[bytes]:
@@ -151,7 +151,7 @@ class MemoryOptimizedBinaryLoader:
         """
         # Check if section is in cache
         if section_name in self.section_cache:
-            self.logger.debug(f"Using cached section: {section_name}")
+            self.logger.debug("Using cached section: %s", section_name)
             return self.section_cache[section_name]
 
         # Read section
@@ -206,7 +206,7 @@ class MemoryOptimizedBinaryLoader:
             process = psutil.Process(os.getpid())
             return process.memory_info().rss
         except Exception as e:
-            self.logger.error(f"Error getting memory usage: {e}")
+            self.logger.error("Error getting memory usage: %s", e)
             return 0
 
     def get_file_info(self) -> Dict[str, Any]:

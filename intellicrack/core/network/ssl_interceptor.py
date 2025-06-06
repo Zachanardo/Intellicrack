@@ -146,7 +146,7 @@ class SSLTLSInterceptor:
             return cert_pem, key_pem
 
         except Exception as e:
-            self.logger.error(f"Error generating CA certificate: {e}")
+            self.logger.error("Error generating CA certificate: %s", e)
             self.logger.error(traceback.format_exc())
             return None, None
 
@@ -289,7 +289,7 @@ def response(flow: http.HTTPFlow) -> None:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error starting SSL/TLS interceptor: {e}")
+            self.logger.error("Error starting SSL/TLS interceptor: %s", e)
             self.logger.error(traceback.format_exc())
             return False
 
@@ -310,7 +310,7 @@ def response(flow: http.HTTPFlow) -> None:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error stopping SSL/TLS interceptor: {e}")
+            self.logger.error("Error stopping SSL/TLS interceptor: %s", e)
             return False
 
     def _find_executable(self, executable: str) -> Optional[str]:
@@ -353,7 +353,7 @@ def response(flow: http.HTTPFlow) -> None:
         """
         if host not in self.config['target_hosts']:
             self.config['target_hosts'].append(host)
-            self.logger.info(f"Added target host: {host}")
+            self.logger.info("Added target host: %s", host)
 
     def remove_target_host(self, host: str):
         """
@@ -364,7 +364,7 @@ def response(flow: http.HTTPFlow) -> None:
         """
         if host in self.config['target_hosts']:
             self.config['target_hosts'].remove(host)
-            self.logger.info(f"Removed target host: {host}")
+            self.logger.info("Removed target host: %s", host)
 
     def get_target_hosts(self) -> List[str]:
         """

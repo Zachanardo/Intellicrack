@@ -80,7 +80,7 @@ class QEMUSystemEmulator:
         # Validate QEMU availability
         self._validate_qemu_setup()
 
-        self.logger.info(f"QEMU emulator initialized for {architecture} architecture")
+        self.logger.info("QEMU emulator initialized for %s architecture", architecture)
 
     def _set_default_config(self) -> None:
         """Set default configuration parameters."""
@@ -151,7 +151,7 @@ class QEMUSystemEmulator:
 
         # Check if rootfs exists (optional for some use cases)
         if not os.path.exists(self.rootfs_path):
-            self.logger.warning(f"Rootfs image not found: {self.rootfs_path}")
+            self.logger.warning("Rootfs image not found: %s", self.rootfs_path)
 
     def start_system(self, headless: bool = True, enable_snapshot: bool = True) -> bool:
         """
@@ -197,7 +197,7 @@ class QEMUSystemEmulator:
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error starting QEMU system: {e}")
+            self.logger.error("Error starting QEMU system: %s", e)
             return False
 
     def _build_qemu_command(self, qemu_binary: str, headless: bool, enable_snapshot: bool) -> List[str]:
@@ -287,7 +287,7 @@ class QEMUSystemEmulator:
 
             time.sleep(2)
 
-        self.logger.error(f"System boot timeout after {timeout} seconds")
+        self.logger.error("System boot timeout after %s seconds", timeout)
         return False
 
     def _test_monitor_connection(self) -> bool:
@@ -345,7 +345,7 @@ class QEMUSystemEmulator:
             return True
 
         except Exception as e:
-            self.logger.error(f"Error stopping QEMU system: {e}")
+            self.logger.error("Error stopping QEMU system: %s", e)
             return False
         finally:
             self.qemu_process = None
@@ -372,7 +372,7 @@ class QEMUSystemEmulator:
             return None
 
         try:
-            self.logger.debug(f"Executing command in guest: {command}")
+            self.logger.debug("Executing command in guest: %s", command)
 
             # This is a simplified implementation
             # In practice, you'd need guest agent or SSH connectivity
@@ -381,7 +381,7 @@ class QEMUSystemEmulator:
             return result
 
         except Exception as e:
-            self.logger.error(f"Error executing command: {e}")
+            self.logger.error("Error executing command: %s", e)
             return None
 
     def _send_monitor_command(self, command: str) -> Optional[str]:
@@ -418,7 +418,7 @@ class QEMUSystemEmulator:
             return response.strip()
 
         except Exception as e:
-            self.logger.error(f"Monitor command failed: {e}")
+            self.logger.error("Monitor command failed: %s", e)
             return None
 
     def create_snapshot(self, name: str) -> bool:
@@ -436,7 +436,7 @@ class QEMUSystemEmulator:
             return False
 
         try:
-            self.logger.info(f"Creating snapshot: {name}")
+            self.logger.info("Creating snapshot: %s", name)
 
             # Create snapshot via monitor
             result = self._send_monitor_command(f'savevm {name}')
@@ -452,11 +452,11 @@ class QEMUSystemEmulator:
                 self.logger.info(f"Snapshot '{name}' created successfully")
                 return True
             else:
-                self.logger.error(f"Failed to create snapshot: {result}")
+                self.logger.error("Failed to create snapshot: %s", result)
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error creating snapshot: {e}")
+            self.logger.error("Error creating snapshot: %s", e)
             return False
 
     def restore_snapshot(self, name: str) -> bool:
@@ -478,7 +478,7 @@ class QEMUSystemEmulator:
             return False
 
         try:
-            self.logger.info(f"Restoring snapshot: {name}")
+            self.logger.info("Restoring snapshot: %s", name)
 
             result = self._send_monitor_command(f'loadvm {name}')
 
@@ -486,11 +486,11 @@ class QEMUSystemEmulator:
                 self.logger.info(f"Snapshot '{name}' restored successfully")
                 return True
             else:
-                self.logger.error(f"Failed to restore snapshot: {result}")
+                self.logger.error("Failed to restore snapshot: %s", result)
                 return False
 
         except Exception as e:
-            self.logger.error(f"Error restoring snapshot: {e}")
+            self.logger.error("Error restoring snapshot: %s", e)
             return False
 
     def compare_snapshots(self, snapshot1: str, snapshot2: str) -> Dict[str, Any]:
@@ -510,7 +510,7 @@ class QEMUSystemEmulator:
             return {"error": error_msg}
 
         try:
-            self.logger.info(f"Comparing snapshots: {snapshot1} vs {snapshot2}")
+            self.logger.info("Comparing snapshots: %s vs %s", snapshot1, snapshot2)
 
             s1 = self.snapshots[snapshot1]
             s2 = self.snapshots[snapshot2]
@@ -731,7 +731,7 @@ class QEMUSystemEmulator:
                     }
 
         except Exception as e:
-            self.logger.error(f"Binary execution error: {e}")
+            self.logger.error("Binary execution error: %s", e)
             return {
                 'success': False,
                 'error': str(e)

@@ -74,13 +74,13 @@ class DistributedAnalysisManager:
                     "instance": vm,
                     "status": "created"
                 })
-                self.logger.info(f"Added QEMU VM (ID: {vm_id}, Arch: {arch})")
+                self.logger.info("Added QEMU VM (ID: %s, Arch: %s)", vm_id, arch)
                 return vm_id
             except Exception as e:
-                self.logger.error(f"Failed to create QEMU VM: {e}")
+                self.logger.error("Failed to create QEMU VM: %s", e)
                 return -1
         else:
-            self.logger.error(f"Unsupported VM type: {vm_type}")
+            self.logger.error("Unsupported VM type: %s", vm_type)
             return -1
 
     def add_container(self, container_type: str = "docker", image: str = "ubuntu:latest") -> int:
@@ -110,13 +110,13 @@ class DistributedAnalysisManager:
                     "instance": instance,
                     "status": "created"
                 })
-                self.logger.info(f"Added Docker container (ID: {container_id}, Image: {image})")
+                self.logger.info("Added Docker container (ID: %s, Image: %s)", container_id, image)
                 return container_id
             except Exception as e:
-                self.logger.error(f"Failed to create Docker container: {e}")
+                self.logger.error("Failed to create Docker container: %s", e)
                 return -1
         else:
-            self.logger.error(f"Unsupported container type: {container_type}")
+            self.logger.error("Unsupported container type: %s", container_type)
             return -1
 
     def start_all(self) -> bool:
@@ -364,7 +364,7 @@ class DistributedAnalysisManager:
                 self.logger.info(f"Assigned task '{task}' to container {node_id}")
                 return True
 
-        self.logger.error(f"Node {node_id} not found")
+        self.logger.error("Node %s not found", node_id)
         return False
 
     def get_status(self) -> Dict[str, Any]:

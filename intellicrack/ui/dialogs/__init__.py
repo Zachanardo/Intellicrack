@@ -33,47 +33,47 @@ logger = logging.getLogger(__name__)
 try:
     from .distributed_config_dialog import *
 except ImportError as e:
-    logger.warning(f"Failed to import distributed_config_dialog: {e}")
+    logger.warning("Failed to import distributed_config_dialog: %s", e)
 
 try:
     from .guided_workflow_wizard import *
 except ImportError as e:
-    logger.warning(f"Failed to import guided_workflow_wizard: {e}")
+    logger.warning("Failed to import guided_workflow_wizard: %s", e)
 
 try:
     from .model_finetuning_dialog import *
 except ImportError as e:
-    logger.warning(f"Failed to import model_finetuning_dialog: {e}")
+    logger.warning("Failed to import model_finetuning_dialog: %s", e)
 
 try:
     from .plugin_manager_dialog import *
 except ImportError as e:
-    logger.warning(f"Failed to import plugin_manager_dialog: {e}")
+    logger.warning("Failed to import plugin_manager_dialog: %s", e)
 
 try:
     from .report_manager_dialog import *
 except ImportError as e:
-    logger.warning(f"Failed to import report_manager_dialog: {e}")
+    logger.warning("Failed to import report_manager_dialog: %s", e)
 
 try:
     from .similarity_search_dialog import *
 except ImportError as e:
-    logger.warning(f"Failed to import similarity_search_dialog: {e}")
+    logger.warning("Failed to import similarity_search_dialog: %s", e)
 
 try:
     from .splash_screen import *
 except ImportError as e:
-    logger.warning(f"Failed to import splash_screen: {e}")
+    logger.warning("Failed to import splash_screen: %s", e)
 
 try:
     from .text_editor_dialog import *
 except ImportError as e:
-    logger.warning(f"Failed to import text_editor_dialog: {e}")
+    logger.warning("Failed to import text_editor_dialog: %s", e)
 
 try:
     from .visual_patch_editor import *
 except ImportError as e:
-    logger.warning(f"Failed to import visual_patch_editor: {e}")
+    logger.warning("Failed to import visual_patch_editor: %s", e)
 
 # Define package exports
 __all__ = [

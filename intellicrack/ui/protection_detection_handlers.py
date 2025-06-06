@@ -44,7 +44,7 @@ class ProtectionDetectionHandlers:
 
         try:
             self.update_status("Detecting commercial protections...")
-            logger.info(f"Starting commercial protection detection for: {self.binary_path}")
+            logger.info("Starting commercial protection detection for: %s", self.binary_path)
 
             # Run the detection
             results = detect_commercial_protections(self.binary_path)
@@ -154,7 +154,7 @@ class ProtectionDetectionHandlers:
 
         try:
             self.update_status("Detecting checksum/integrity verification...")
-            logger.info(f"Starting checksum detection for: {self.binary_path}")
+            logger.info("Starting checksum detection for: %s", self.binary_path)
 
             # Run the detection
             results = detect_checksum_verification(self.binary_path)
@@ -201,7 +201,7 @@ class ProtectionDetectionHandlers:
 
         try:
             self.update_status("Detecting self-healing code...")
-            logger.info(f"Starting self-healing code detection for: {self.binary_path}")
+            logger.info("Starting self-healing code detection for: %s", self.binary_path)
 
             # Run the detection
             results = detect_self_healing_code(self.binary_path)
@@ -248,7 +248,7 @@ class ProtectionDetectionHandlers:
 
         try:
             self.update_status("Attempting TPM bypass...")
-            logger.info(f"Starting TPM bypass for: {self.binary_path}")
+            logger.info("Starting TPM bypass for: %s", self.binary_path)
 
             # Create TPM bypass instance
             tpm_bypass = TPMProtectionBypass(self)
@@ -295,7 +295,7 @@ class ProtectionDetectionHandlers:
 
         try:
             self.update_status("Attempting VM detection bypass...")
-            logger.info(f"Starting VM detection bypass for: {self.binary_path}")
+            logger.info("Starting VM detection bypass for: %s", self.binary_path)
 
             # Create VM bypass instance
             vm_bypass = VMDetectionBypass(self)
@@ -392,7 +392,7 @@ class ProtectionDetectionHandlers:
 
         try:
             self.update_status("Detecting embedded/encrypted scripts...")
-            logger.info(f"Starting embedded script detection for: {self.binary_path}")
+            logger.info("Starting embedded script detection for: %s", self.binary_path)
 
             # Run the detection
             results = decrypt_embedded_script(self.binary_path)

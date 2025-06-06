@@ -176,7 +176,7 @@ class TrainingThread(QThread):
     def run(self):
         """Run the model training process."""
         try:
-            self.logger.info(f"Starting training with config: {self.config}")
+            self.logger.info("Starting training with config: %s", self.config)
 
             # Load model and tokenizer
             self._load_model()
@@ -237,7 +237,7 @@ class TrainingThread(QThread):
                 })
 
         except Exception as e:
-            self.logger.error(f"Failed to load model: {e}")
+            self.logger.error("Failed to load model: %s", e)
             raise
 
     def _create_dummy_model(self):
@@ -310,7 +310,7 @@ class TrainingThread(QThread):
             return data
 
         except Exception as e:
-            self.logger.error(f"Failed to load dataset: {e}")
+            self.logger.error("Failed to load dataset: %s", e)
             raise
 
     def _setup_training(self, dataset):
@@ -350,7 +350,7 @@ class TrainingThread(QThread):
                 })
 
         except Exception as e:
-            self.logger.error(f"Failed to setup training: {e}")
+            self.logger.error("Failed to setup training: %s", e)
             raise
 
     def _train_model(self):
@@ -411,7 +411,7 @@ class TrainingThread(QThread):
                 })
 
         except Exception as e:
-            self.logger.error(f"Training failed: {e}")
+            self.logger.error("Training failed: %s", e)
             raise
 
     def stop(self):
@@ -489,7 +489,7 @@ class ModelFinetuningDialog(QDialog):
             }
             self.logger.debug("Knowledge base initialized")
         except Exception as e:
-            self.logger.warning(f"Failed to initialize knowledge base: {e}")
+            self.logger.warning("Failed to initialize knowledge base: %s", e)
 
     def _setup_ui(self):
         """Setup the dialog user interface."""
@@ -877,7 +877,7 @@ class ModelFinetuningDialog(QDialog):
 
         if path:
             self.model_path_edit.setText(path)
-            self.logger.info(f"Selected model file: {path}")
+            self.logger.info("Selected model file: %s", path)
 
             # Auto-detect format based on extension
             ext = Path(path).suffix.lower()
@@ -912,7 +912,7 @@ class ModelFinetuningDialog(QDialog):
 
         if path:
             self.dataset_path_edit.setText(path)
-            self.logger.info(f"Selected dataset file: {path}")
+            self.logger.info("Selected dataset file: %s", path)
 
             # Auto-detect format
             ext = Path(path).suffix.lower()
@@ -974,7 +974,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.info("Training started")
 
         except Exception as e:
-            self.logger.error(f"Failed to start training: {e}")
+            self.logger.error("Failed to start training: %s", e)
             QMessageBox.critical(self, "Training Error", f"Failed to start training: {str(e)}")
             self._on_training_finished()
 
@@ -991,7 +991,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.info("Training stopped")
 
         except Exception as e:
-            self.logger.error(f"Error stopping training: {e}")
+            self.logger.error("Error stopping training: %s", e)
 
     def _update_training_progress(self, progress: Dict[str, Any]):
         """Update training progress display."""
@@ -1036,7 +1036,7 @@ class ModelFinetuningDialog(QDialog):
             )
 
         except Exception as e:
-            self.logger.error(f"Error updating training progress: {e}")
+            self.logger.error("Error updating training progress: %s", e)
 
     def _on_training_finished(self):
         """Handle training completion."""
@@ -1060,7 +1060,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.info("Training finished")
 
         except Exception as e:
-            self.logger.error(f"Error handling training completion: {e}")
+            self.logger.error("Error handling training completion: %s", e)
 
     def _save_model(self):
         """Save the fine-tuned model."""
@@ -1106,10 +1106,10 @@ class ModelFinetuningDialog(QDialog):
                 f"Fine-tuned model saved successfully to:\n{save_path}"
             )
 
-            self.logger.info(f"Model saved to: {save_path}")
+            self.logger.info("Model saved to: %s", save_path)
 
         except Exception as e:
-            self.logger.error(f"Failed to save model: {e}")
+            self.logger.error("Failed to save model: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save model: {str(e)}")
 
     def _load_dataset_preview(self):
@@ -1164,7 +1164,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.info(f"Loaded {len(samples)} dataset samples for preview")
 
         except Exception as e:
-            self.logger.error(f"Failed to load dataset preview: {e}")
+            self.logger.error("Failed to load dataset preview: %s", e)
             QMessageBox.warning(self, "Preview Error", f"Error loading dataset preview: {str(e)}")
 
     def _add_dataset_row(self, sample: Dict[str, Any]):
@@ -1247,7 +1247,7 @@ class ModelFinetuningDialog(QDialog):
             dialog.exec_()
 
         except Exception as e:
-            self.logger.error(f"Failed to create dataset: {e}")
+            self.logger.error("Failed to create dataset: %s", e)
             QMessageBox.critical(self, "Dataset Creation Error", str(e))
 
     def _get_sample_data(self, template: str) -> str:
@@ -1307,7 +1307,7 @@ class ModelFinetuningDialog(QDialog):
                 )
 
         except Exception as e:
-            self.logger.error(f"Failed to generate dataset: {e}")
+            self.logger.error("Failed to generate dataset: %s", e)
             QMessageBox.critical(dialog, "Generation Error", str(e))
 
     def _validate_dataset(self):
@@ -1354,7 +1354,7 @@ class ModelFinetuningDialog(QDialog):
                 )
 
         except Exception as e:
-            self.logger.error(f"Dataset validation failed: {e}")
+            self.logger.error("Dataset validation failed: %s", e)
             QMessageBox.critical(self, "Validation Error", str(e))
 
     def _export_dataset(self):
@@ -1403,7 +1403,7 @@ class ModelFinetuningDialog(QDialog):
                 )
 
         except Exception as e:
-            self.logger.error(f"Dataset export failed: {e}")
+            self.logger.error("Dataset export failed: %s", e)
             QMessageBox.critical(self, "Export Error", str(e))
 
     def _preview_augmentation(self):
@@ -1473,7 +1473,7 @@ class ModelFinetuningDialog(QDialog):
             preview_dialog.exec_()
 
         except Exception as e:
-            self.logger.error(f"Augmentation preview failed: {e}")
+            self.logger.error("Augmentation preview failed: %s", e)
             QMessageBox.critical(self, "Preview Error", str(e))
 
     def _apply_augmentation_technique(self, text: str, technique: str) -> str:
@@ -1607,7 +1607,7 @@ class ModelFinetuningDialog(QDialog):
             self.dataset_path_edit.setText(output_path)
 
         except Exception as e:
-            self.logger.error(f"Augmentation failed: {e}")
+            self.logger.error("Augmentation failed: %s", e)
             QMessageBox.critical(self, "Augmentation Error", str(e))
 
     def _update_visualization(self, history: List[Dict[str, Any]]):
@@ -1651,7 +1651,7 @@ class ModelFinetuningDialog(QDialog):
                 pass
 
         except Exception as e:
-            self.logger.error(f"Failed to update visualization: {e}")
+            self.logger.error("Failed to update visualization: %s", e)
 
     def _export_metrics(self):
         """Export training metrics to file."""
@@ -1693,7 +1693,7 @@ class ModelFinetuningDialog(QDialog):
                 )
 
         except Exception as e:
-            self.logger.error(f"Failed to export metrics: {e}")
+            self.logger.error("Failed to export metrics: %s", e)
             QMessageBox.critical(self, "Export Error", str(e))
 
     def _save_plot(self):
@@ -1746,7 +1746,7 @@ class ModelFinetuningDialog(QDialog):
                 )
 
         except Exception as e:
-            self.logger.error(f"Failed to save plot: {e}")
+            self.logger.error("Failed to save plot: %s", e)
             QMessageBox.critical(self, "Save Error", str(e))
 
     def _show_help(self):
@@ -1828,7 +1828,7 @@ class ModelFinetuningDialog(QDialog):
             event.accept()
 
         except Exception as e:
-            self.logger.error(f"Error closing dialog: {e}")
+            self.logger.error("Error closing dialog: %s", e)
             event.accept()
 
 

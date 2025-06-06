@@ -35,127 +35,127 @@ logger = logging.getLogger(__name__)
 try:
     from .binary_utils import *
 except ImportError as e:
-    logger.warning(f"Failed to import binary_utils: {e}")
+    logger.warning("Failed to import binary_utils: %s", e)
 
 try:
     from .logger import *
 except ImportError as e:
-    logger.warning(f"Failed to import logger: {e}")
+    logger.warning("Failed to import logger: %s", e)
 
 try:
     from .misc_utils import *
 except ImportError as e:
-    logger.warning(f"Failed to import misc_utils: {e}")
+    logger.warning("Failed to import misc_utils: %s", e)
 
 try:
     from .patch_utils import *
 except ImportError as e:
-    logger.warning(f"Failed to import patch_utils: {e}")
+    logger.warning("Failed to import patch_utils: %s", e)
 
 try:
     from .protection_utils import *
 except ImportError as e:
-    logger.warning(f"Failed to import protection_utils: {e}")
+    logger.warning("Failed to import protection_utils: %s", e)
 
 try:
     from .report_generator import *
 except ImportError as e:
-    logger.warning(f"Failed to import report_generator: {e}")
+    logger.warning("Failed to import report_generator: %s", e)
 
 try:
     from .system_utils import *
 except ImportError as e:
-    logger.warning(f"Failed to import system_utils: {e}")
+    logger.warning("Failed to import system_utils: %s", e)
 
 try:
     from .ui_utils import *
 except ImportError as e:
-    logger.warning(f"Failed to import ui_utils: {e}")
+    logger.warning("Failed to import ui_utils: %s", e)
 
 try:
     from .dependencies import *
 except ImportError as e:
-    logger.warning(f"Failed to import dependencies: {e}")
+    logger.warning("Failed to import dependencies: %s", e)
 
 try:
     from .tool_wrappers import *
 except ImportError as e:
-    logger.warning(f"Failed to import tool_wrappers: {e}")
+    logger.warning("Failed to import tool_wrappers: %s", e)
 
 try:
     from .runner_functions import *
 except ImportError as e:
-    logger.warning(f"Failed to import runner_functions: {e}")
+    logger.warning("Failed to import runner_functions: %s", e)
 
 try:
     from .exception_utils import *
 except ImportError as e:
-    logger.warning(f"Failed to import exception_utils: {e}")
+    logger.warning("Failed to import exception_utils: %s", e)
 
 try:
     from .protection_detection import *
 except ImportError as e:
-    logger.warning(f"Failed to import protection_detection: {e}")
+    logger.warning("Failed to import protection_detection: %s", e)
 
 try:
     from .process_utils import *
 except ImportError as e:
-    logger.warning(f"Failed to import process_utils: {e}")
+    logger.warning("Failed to import process_utils: %s", e)
 
 try:
     from .patch_verification import *
 except ImportError as e:
-    logger.warning(f"Failed to import patch_verification: {e}")
+    logger.warning("Failed to import patch_verification: %s", e)
 
 try:
     from .binary_analysis import *
 except ImportError as e:
-    logger.warning(f"Failed to import binary_analysis: {e}")
+    logger.warning("Failed to import binary_analysis: %s", e)
 
 try:
     from .security_analysis import *
 except ImportError as e:
-    logger.warning(f"Failed to import security_analysis: {e}")
+    logger.warning("Failed to import security_analysis: %s", e)
 
 try:
     from .exploitation import *
 except ImportError as e:
-    logger.warning(f"Failed to import exploitation: {e}")
+    logger.warning("Failed to import exploitation: %s", e)
 
 try:
     from .distributed_processing import *
 except ImportError as e:
-    logger.warning(f"Failed to import distributed_processing: {e}")
+    logger.warning("Failed to import distributed_processing: %s", e)
 
 try:
     from .additional_runners import *
 except ImportError as e:
-    logger.warning(f"Failed to import additional_runners: {e}")
+    logger.warning("Failed to import additional_runners: %s", e)
 
 try:
     from .core_utilities import *
 except ImportError as e:
-    logger.warning(f"Failed to import core_utilities: {e}")
+    logger.warning("Failed to import core_utilities: %s", e)
 
 try:
     from .final_utilities import *
 except ImportError as e:
-    logger.warning(f"Failed to import final_utilities: {e}")
+    logger.warning("Failed to import final_utilities: %s", e)
 
 try:
     from .internal_helpers import *
 except ImportError as e:
-    logger.warning(f"Failed to import internal_helpers: {e}")
+    logger.warning("Failed to import internal_helpers: %s", e)
 
 try:
     from .ui_setup_functions import *
 except ImportError as e:
-    logger.warning(f"Failed to import ui_setup_functions: {e}")
+    logger.warning("Failed to import ui_setup_functions: %s", e)
 
 try:
     from .pcapy_compat import *
 except ImportError as e:
-    logger.warning(f"Failed to import pcapy_compat: {e}")
+    logger.warning("Failed to import pcapy_compat: %s", e)
 
 try:
     from .internal_helpers import (
@@ -168,7 +168,7 @@ try:
         _run_report_generation_thread
     )
 except ImportError as e:
-    logger.warning(f"Failed to import internal_helpers functions: {e}")
+    logger.warning("Failed to import internal_helpers functions: %s", e)
 
 # Import path discovery functions
 try:
@@ -177,7 +177,7 @@ try:
         PathDiscovery, get_path_discovery
     )
 except ImportError as e:
-    logger.warning(f"Failed to import path_discovery functions: {e}")
+    logger.warning("Failed to import path_discovery functions: %s", e)
 
 # Define package exports
 __all__ = [

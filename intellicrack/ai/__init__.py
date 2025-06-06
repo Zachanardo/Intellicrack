@@ -37,7 +37,7 @@ try:
         get_ai_suggestions, explain_code
     )
 except ImportError as e:
-    logger.warning(f"Failed to import ai_tools: {e}")
+    logger.warning("Failed to import ai_tools: %s", e)
     AIAssistant = CodeAnalyzer = analyze_with_ai = None
     get_ai_suggestions = explain_code = None
 
@@ -47,7 +47,7 @@ try:
         predict_vulnerabilities, train_model, evaluate_model
     )
 except ImportError as e:
-    logger.warning(f"Failed to import ml_predictor: {e}")
+    logger.warning("Failed to import ml_predictor: %s", e)
     MLVulnerabilityPredictor = MLPredictor = VulnerabilityPredictor = None
     predict_vulnerabilities = train_model = evaluate_model = None
 
@@ -57,7 +57,7 @@ try:
         load_model, save_model, list_available_models, configure_ai_provider
     )
 except ImportError as e:
-    logger.warning(f"Failed to import model_manager_module: {e}")
+    logger.warning("Failed to import model_manager_module: %s", e)
     ModelManager = ModelBackend = PyTorchBackend = TensorFlowBackend = ONNXBackend = SklearnBackend = None
     load_model = save_model = list_available_models = configure_ai_provider = None
 
@@ -69,7 +69,7 @@ try:
         create_anthropic_config, create_gguf_config, create_ollama_config
     )
 except ImportError as e:
-    logger.warning(f"Failed to import llm_backends: {e}")
+    logger.warning("Failed to import llm_backends: %s", e)
     LLMManager = LLMBackend = LLMConfig = LLMProvider = None
     LLMMessage = LLMResponse = None
     get_llm_manager = shutdown_llm_manager = None
@@ -81,7 +81,7 @@ try:
         AITaskType, AnalysisComplexity, get_orchestrator, shutdown_orchestrator
     )
 except ImportError as e:
-    logger.warning(f"Failed to import orchestrator: {e}")
+    logger.warning("Failed to import orchestrator: %s", e)
     AIOrchestrator = AISharedContext = AIEventBus = AITask = AIResult = None
     AITaskType = AnalysisComplexity = get_orchestrator = shutdown_orchestrator = None
 
@@ -91,13 +91,13 @@ try:
         quick_vulnerability_scan, comprehensive_analysis
     )
 except ImportError as e:
-    logger.warning(f"Failed to import coordination_layer: {e}")
+    logger.warning("Failed to import coordination_layer: %s", e)
     CoordinatedResult = quick_vulnerability_scan = comprehensive_analysis = None
 
 try:
     from .ai_assistant_enhanced import IntellicrackAIAssistant, Tool, ToolCategory
 except ImportError as e:
-    logger.warning(f"Failed to import ai_assistant_enhanced: {e}")
+    logger.warning("Failed to import ai_assistant_enhanced: %s", e)
     IntellicrackAIAssistant = Tool = ToolCategory = None
 
 # Define package exports

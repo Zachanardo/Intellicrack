@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 try:
     from .pdf_generator import PDFReportGenerator, run_report_generation
 except ImportError as e:
-    logger.warning(f"Failed to import pdf_generator: {e}")
+    logger.warning("Failed to import pdf_generator: %s", e)
 
 # Define package exports
 __all__ = [

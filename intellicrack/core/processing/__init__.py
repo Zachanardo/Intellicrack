@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 try:
     from .distributed_manager import DistributedProcessingManager, create_distributed_manager
 except ImportError as e:
-    logger.warning(f"Failed to import distributed_manager: {e}")
+    logger.warning("Failed to import distributed_manager: %s", e)
 
 try:
     from .gpu_accelerator import (
@@ -38,27 +38,27 @@ try:
         is_gpu_acceleration_available,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import gpu_accelerator: {e}")
+    logger.warning("Failed to import gpu_accelerator: %s", e)
 
 try:
     from .memory_optimizer import MemoryOptimizer, create_memory_optimizer
 except ImportError as e:
-    logger.warning(f"Failed to import memory_optimizer: {e}")
+    logger.warning("Failed to import memory_optimizer: %s", e)
 
 try:
     from .memory_loader import MemoryOptimizedBinaryLoader, create_memory_loader
 except ImportError as e:
-    logger.warning(f"Failed to import memory_loader: {e}")
+    logger.warning("Failed to import memory_loader: %s", e)
 
 try:
     from .qiling_emulator import QilingEmulator, run_qiling_emulation, QILING_AVAILABLE
 except ImportError as e:
-    logger.warning(f"Failed to import qiling_emulator: {e}")
+    logger.warning("Failed to import qiling_emulator: %s", e)
 
 try:
     from .qemu_emulator import QEMUSystemEmulator, run_qemu_analysis
 except ImportError as e:
-    logger.warning(f"Failed to import qemu_emulator: {e}")
+    logger.warning("Failed to import qemu_emulator: %s", e)
 
 # Define package exports
 __all__ = [
