@@ -813,8 +813,11 @@ class ModelFineTuner:
         if not HAS_TORCH or torch is None or nn is None:
             return {"error": "PyTorch not available"}
             
-        import torch.optim as optim
-        from torch.utils.data import DataLoader, TensorDataset
+        try:
+            import torch.optim as optim
+            from torch.utils.data import DataLoader, TensorDataset
+        except ImportError:
+            return {"error": "PyTorch components not available"}
 
         # Set model to training mode
         model.train()

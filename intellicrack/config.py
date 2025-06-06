@@ -14,15 +14,16 @@ from typing import Any, Dict, Optional
 # Configure module logger
 logger = logging.getLogger(__name__)
 
-# Import path discovery
-try:
-    from .utils.path_discovery import find_tool, get_system_path
-except ImportError:
-    # Fallback if path_discovery not available yet
-    def find_tool(tool_name, required_executables=None):
-        return None
-    def get_system_path(path_type):
-        return None
+# Define fallback functions for path discovery
+# These will be used if the actual path_discovery module is not available
+def find_tool(tool_name, required_executables=None):
+    _ = tool_name  # Acknowledge unused argument
+    _ = required_executables  # Acknowledge unused argument
+    return None
+
+def get_system_path(path_type):
+    _ = path_type  # Acknowledge unused argument
+    return None
 
 # Default configuration structure
 DEFAULT_CONFIG = {
@@ -231,7 +232,6 @@ DEFAULT_CONFIG = {
         "ttl": 3600,  # 1 hour
         "max_size_mb": 100
     },
-    "download_directory": "models/downloads",
     "verify_checksums": True
 }
 
@@ -263,19 +263,19 @@ class ConfigManager:
             Dictionary containing configuration settings
         """
         logger.debug("Loading configuration...")
-        logger.info(f"Looking for config file at: {os.path.abspath(self.config_path)}")
+        logger.info("Looking for config file at: %s", os.path.abspath(self.config_path))
 
         if os.path.exists(self.config_path):
             logger.info("Config file exists, loading...")
             try:
                 with open(self.config_path, "r", encoding="utf-8") as f:
                     loaded_config = json.load(f)
-                    logger.info(f"Loaded config with keys: {', '.join(loaded_config.keys())}")
+                    logger.info("Loaded config with keys: %s", ', '.join(loaded_config.keys()))
 
                 # Check if Ghidra path exists
                 if "ghidra_path" in loaded_config:
                     ghidra_path = loaded_config["ghidra_path"]
-                    logger.info(f"Checking Ghidra path from config: {ghidra_path}")
+                    logger.info("Checking Ghidra path from config: %s", ghidra_path)
 
                     # Check if path exists (handle both Windows and WSL contexts)
                     path_exists = False
@@ -289,15 +289,15 @@ class ConfigManager:
                             loaded_config["ghidra_path"] = wsl_path  # Update to WSL path
 
                     if path_exists:
-                        logger.info(f"✓ Ghidra path exists at {ghidra_path}")
+                        logger.info("✓ Ghidra path exists at %s", ghidra_path)
                     else:
-                        logger.warning(f"✗ Ghidra path does not exist at {ghidra_path}")
+                        logger.warning("✗ Ghidra path does not exist at %s", ghidra_path)
 
                 # Update any missing keys with defaults
                 for key, value in DEFAULT_CONFIG.items():
                     if key not in loaded_config:
                         loaded_config[key] = value
-                        logger.info(f"Added missing key '{key}' with default value")
+                        logger.info("Added missing key '%s' with default value", key)
 
                 # Ensure selected_model_path is loaded, defaulting to None
                 loaded_config["selected_model_path"] = loaded_config.get("selected_model_path", None)
@@ -307,7 +307,7 @@ class ConfigManager:
                 return self.config
 
             except Exception as e:
-                logger.error(f"Error loading config: {e}")
+                logger.error("Error loading config: %s", e)
                 logger.debug("Using default configuration due to error")
                 self.config = DEFAULT_CONFIG.copy()
                 return self.config
@@ -327,10 +327,10 @@ class ConfigManager:
         try:
             with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2)
-                logger.info(f"Saved config to {os.path.abspath(self.config_path)}")
+                logger.info("Saved config to %s", os.path.abspath(self.config_path))
             return True
         except Exception as e:
-            logger.error(f"Error saving config: {e}")
+            logger.error("Error saving config: %s", e)
             return False
 
     def get(self, key: str, default: Any = None) -> Any:
@@ -355,7 +355,7 @@ class ConfigManager:
             value: Value to set
         """
         self.config[key] = value
-        logger.debug(f"Set config key '{key}' to '{value}'")
+        logger.debug("Set config key '%s' to '%s'", key, value)
 
     def update(self, updates: Dict[str, Any]) -> None:
         """
@@ -365,7 +365,7 @@ class ConfigManager:
             updates: Dictionary of key-value pairs to update
         """
         self.config.update(updates)
-        logger.debug(f"Updated config with {len(updates)} values")
+        logger.debug("Updated config with %d values", len(updates))
 
     def get_model_repositories(self) -> Dict[str, Any]:
         """
@@ -439,7 +439,7 @@ class ConfigManager:
                 self.save_config()
                 return discovered_path
         except ImportError:
-            logger.warning(f"Path discovery not available for {tool_name}")
+            logger.warning("Path discovery not available for %s", tool_name)
         
         return None
 
@@ -455,7 +455,7 @@ class ConfigManager:
             required_keys = ["log_dir", "plugin_directory", "model_repositories"]
             for key in required_keys:
                 if key not in self.config:
-                    logger.error(f"Missing required configuration key: {key}")
+                    logger.error("Missing required configuration key: %s", key)
                     return False
 
             # Validate model repositories structure
@@ -468,7 +468,7 @@ class ConfigManager:
             return True
 
         except Exception as e:
-            logger.error(f"Configuration validation error: {e}")
+            logger.error("Configuration validation error: %s", e)
             return False
 
 

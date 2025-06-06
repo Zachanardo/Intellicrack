@@ -34,7 +34,7 @@ def main() -> int:
         print("  pip install -r requirements.txt")
         return 1
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error launching Intellicrack: {e}")
         import traceback
         traceback.print_exc()

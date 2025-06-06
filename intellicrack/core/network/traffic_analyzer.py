@@ -211,7 +211,8 @@ class NetworkTrafficAnalyzer:
                         s.bind((host, 0))
 
                     # Enable promiscuous mode
-                    s.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
+                    if hasattr(socket, 'SIO_RCVALL') and hasattr(socket, 'RCVALL_ON'):
+                        s.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
                 else:  # Linux, macOS, etc.
                     if hasattr(socket, 'AF_PACKET'):
                         s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
@@ -311,7 +312,8 @@ class NetworkTrafficAnalyzer:
                 if os.name == "nt":
                     # Disable promiscuous mode on Windows
                     try:
-                        s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
+                        if hasattr(socket, 'SIO_RCVALL') and hasattr(socket, 'RCVALL_OFF'):
+                            s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
                     except:
                         pass
 

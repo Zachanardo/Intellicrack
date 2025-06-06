@@ -377,7 +377,11 @@ class OllamaBackend(LLMBackend):
     def initialize(self) -> bool:
         """Initialize Ollama connection."""
         try:
-            import requests
+            try:
+                import requests
+            except ImportError:
+                logger.error("requests library not available for Ollama backend")
+                return False
 
             # Test connection to Ollama
             response = requests.get(f"{self.base_url}/api/tags", timeout=5)
@@ -398,7 +402,15 @@ class OllamaBackend(LLMBackend):
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
-        import requests
+        try:
+            import requests
+        except ImportError:
+            return LLMResponse(
+                content="Ollama backend requires 'requests' library",
+                raw_response={},
+                tokens_used=0,
+                success=False
+            )
 
         # Convert messages to Ollama format
         ollama_messages = []

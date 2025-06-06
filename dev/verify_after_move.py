@@ -18,15 +18,27 @@ def verify_paths():
     
     # Expected new project root
     expected_root = r"C:\Intellicrack"
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)  # Go up from dev/ to project root
     
-    print(f"Current directory: {current_dir}")
+    print(f"Script directory: {script_dir}")
+    print(f"Project root: {project_root}")
     print(f"Expected root: {expected_root}")
     
-    if not current_dir.lower() == expected_root.lower():
+    # Handle both Windows and WSL paths
+    is_wsl = project_root.startswith('/mnt/')
+    if is_wsl:
+        # Convert WSL path to Windows path for comparison
+        wsl_path = project_root.replace('/mnt/c/', 'C:\\').replace('/', '\\')
+        print(f"WSL path converted: {wsl_path}")
+        path_match = wsl_path.lower() == expected_root.lower()
+    else:
+        path_match = project_root.lower() == expected_root.lower()
+    
+    if not path_match:
         print(f"\n⚠️  WARNING: Project not in expected location!")
         print(f"   Expected: {expected_root}")
-        print(f"   Actual: {current_dir}")
+        print(f"   Actual: {project_root}")
         print("\nPlease move the project to C:\\Intellicrack before continuing.")
         return False
     
@@ -34,7 +46,7 @@ def verify_paths():
     
     # Check config file
     print("\nChecking configuration file...")
-    config_path = os.path.join(current_dir, "intellicrack_config.json")
+    config_path = os.path.join(project_root, "intellicrack_config.json")
     
     if os.path.exists(config_path):
         with open(config_path, 'r') as f:
@@ -71,7 +83,7 @@ def verify_paths():
     ]
     
     for dir_name in important_dirs:
-        dir_path = os.path.join(current_dir, dir_name)
+        dir_path = os.path.join(project_root, dir_name)
         if os.path.exists(dir_path):
             print(f"✅ {dir_name}/ exists")
         else:
@@ -119,8 +131,10 @@ def verify_paths():
     return True
 
 if __name__ == '__main__':
-    # Add current directory to Python path
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    # Add project root to Python path
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)
+    sys.path.insert(0, project_root)
     
     success = verify_paths()
     sys.exit(0 if success else 1)
