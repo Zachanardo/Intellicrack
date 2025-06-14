@@ -23202,7 +23202,7 @@ def launch():
             
             if results.get("status") == "success":
                 self.update_output.emit(log_message("[Frida Plugin] Plugin executed successfully"))
-                self.update_analysis_results.emit(f"\n=== Frida Plugin Results ===\n")
+                self.update_analysis_results.emit("\n=== Frida Plugin Results ===\n")
                 self.update_analysis_results.emit(f"Plugin: {os.path.basename(plugin_path)}\n")
                 
                 output = results.get("output", "")
