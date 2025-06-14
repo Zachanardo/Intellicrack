@@ -273,13 +273,15 @@ class ROPChainGenerator:
                 import lief
                 
                 if binary_data[:2] == b'MZ':  # PE
-                    binary = lief.parse(list(binary_data))
-                    for section in binary.sections:
-                        if section.characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
-                            section_data = bytes(section.content)
-                            sections.append((section_data, section.virtual_address + binary.optional_header.imagebase))
+                    if hasattr(lief, 'parse'):
+                        binary = lief.parse(list(binary_data))
+                        for section in binary.sections:
+                            if section.characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
+                                section_data = bytes(section.content)
+                                sections.append((section_data, section.virtual_address + binary.optional_header.imagebase))
                 elif binary_data[:4] == b'\x7fELF':  # ELF
-                    binary = lief.parse(list(binary_data))
+                    if hasattr(lief, 'parse'):
+                        binary = lief.parse(list(binary_data))
                     for section in binary.sections:
                         if section.flags & 0x4:  # SHF_EXECINSTR
                             section_data = bytes(section.content)

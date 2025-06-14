@@ -27,6 +27,7 @@ import os
 import socket
 import socketserver
 import ssl
+import struct
 import threading
 import time
 import traceback
@@ -1035,6 +1036,232 @@ def run_network_license_emulator(app: Any) -> None:
         app.analyze_results.append("3. The emulator will automatically respond to license checks with valid responses")
     else:
         app.update_output.emit(log_message("[Network] Failed to start network license server emulator"))
+
+
+    def _handle_analyzed_traffic(self, analysis: AnalyzedTraffic):
+        """Handle analyzed traffic from the traffic interception engine"""
+        try:
+            if analysis.is_license_related:
+                self.logger.info(f"Detected {analysis.protocol_type} license traffic with confidence {analysis.confidence}")
+                
+                # Update protocol fingerprints based on learned patterns
+                if analysis.confidence > 0.8 and analysis.protocol_type not in self.protocol_fingerprints:
+                    # Learn new protocol patterns
+                    self._learn_protocol_pattern(analysis)
+                    
+                # Record traffic for analysis
+                if self.traffic_recorder:
+                    self.traffic_recorder.record(
+                        source=analysis.packet.source_ip,
+                        destination=f"{analysis.packet.dest_ip}:{analysis.packet.dest_port}",
+                        data=analysis.packet.data,
+                        protocol=analysis.protocol_type
+                    )
+                    
+        except Exception as e:
+            self.logger.error(f"Error handling analyzed traffic: {e}")
+            
+    def _learn_protocol_pattern(self, analysis: AnalyzedTraffic):
+        """Learn new protocol patterns from analyzed traffic"""
+        try:
+            protocol_type = analysis.protocol_type
+            
+            # Extract patterns from the traffic
+            patterns = []
+            data = analysis.packet.data
+            
+            # Look for common license-related keywords
+            if data:
+                text_data = data.decode('utf-8', errors='ignore').lower()
+                license_keywords = ['license', 'activation', 'checkout', 'verify', 'validate']
+                
+                for keyword in license_keywords:
+                    if keyword in text_data:
+                        patterns.append(keyword.encode())
+                        
+                # Look for binary patterns
+                if len(data) >= 4:
+                    header = data[:4]
+                    if header.isalnum():
+                        patterns.append(header)
+                        
+            # Add learned pattern to fingerprints
+            if patterns:
+                self.protocol_fingerprints[protocol_type] = {
+                    'patterns': patterns,
+                    'ports': [analysis.packet.dest_port],
+                    'learned': True,
+                    'confidence': analysis.confidence
+                }
+                
+                self.logger.info(f"Learned new protocol pattern for {protocol_type}")
+                
+        except Exception as e:
+            self.logger.error(f"Error learning protocol pattern: {e}")
+            
+    def setup_dns_redirection_for_hosts(self, hostnames: List[str]):
+        """Setup DNS redirection for specific license server hostnames"""
+        try:
+            if self.traffic_engine:
+                for hostname in hostnames:
+                    success = self.traffic_engine.set_dns_redirection(hostname, "127.0.0.1")
+                    if success:
+                        self.logger.info(f"DNS redirection setup for {hostname}")
+                    else:
+                        self.logger.warning(f"Failed to setup DNS redirection for {hostname}")
+        except Exception as e:
+            self.logger.error(f"Error setting up DNS redirection: {e}")
+            
+    def setup_transparent_proxy(self, target_host: str, target_port: int):
+        """Setup transparent proxy for license server traffic"""
+        try:
+            if self.traffic_engine:
+                success = self.traffic_engine.setup_transparent_proxy(target_host, target_port)
+                if success:
+                    self.logger.info(f"Transparent proxy setup for {target_host}:{target_port}")
+                    return True
+                else:
+                    self.logger.warning(f"Failed to setup transparent proxy for {target_host}:{target_port}")
+                    return False
+        except Exception as e:
+            self.logger.error(f"Error setting up transparent proxy: {e}")
+            return False
+            
+    def get_traffic_statistics(self) -> Dict[str, Any]:
+        """Get traffic interception statistics"""
+        stats = {}
+        
+        try:
+            if self.traffic_engine:
+                stats['interception'] = self.traffic_engine.get_statistics()
+                stats['active_connections'] = self.traffic_engine.get_active_connections()
+                
+            if self.response_generator:
+                stats['response_generation'] = self.response_generator.get_statistics()
+                
+            # Add legacy stats
+            stats['legacy'] = {
+                'running': self.running,
+                'ports': self.config['listen_ports'],
+                'active_servers': len(self.servers),
+                'protocols_supported': list(self.protocol_fingerprints.keys()),
+                'ssl_enabled': self.ssl_interceptor is not None,
+                'traffic_recording': self.traffic_recorder is not None
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error getting traffic statistics: {e}")
+            
+        return stats
+        
+    def analyze_captured_protocols(self) -> Dict[str, Any]:
+        """Analyze protocols detected in captured traffic"""
+        analysis = {
+            'detected_protocols': [],
+            'confidence_scores': {},
+            'traffic_patterns': {},
+            'recommendations': []
+        }
+        
+        try:
+            if self.traffic_engine:
+                stats = self.traffic_engine.get_statistics()
+                analysis['detected_protocols'] = list(stats.get('protocols_detected', []))
+                
+            # Analyze protocol fingerprints
+            for protocol, fingerprint in self.protocol_fingerprints.items():
+                if fingerprint.get('learned'):
+                    analysis['confidence_scores'][protocol] = fingerprint.get('confidence', 0.0)
+                    
+                # Analyze traffic patterns
+                if protocol in analysis['detected_protocols']:
+                    analysis['traffic_patterns'][protocol] = {
+                        'ports': fingerprint.get('ports', []),
+                        'patterns_count': len(fingerprint.get('patterns', [])),
+                        'learned': fingerprint.get('learned', False)
+                    }
+                    
+            # Generate recommendations
+            if analysis['detected_protocols']:
+                analysis['recommendations'].append("License traffic detected - emulator is working correctly")
+                
+                for protocol in analysis['detected_protocols']:
+                    if analysis['confidence_scores'].get(protocol, 0) > 0.8:
+                        analysis['recommendations'].append(f"High confidence {protocol} protocol detection - consider targeted bypass")
+                        
+            else:
+                analysis['recommendations'].append("No license traffic detected - check application configuration")
+                analysis['recommendations'].append("Ensure DNS redirection is setup for license server hostnames")
+                analysis['recommendations'].append("Consider using transparent proxy mode")
+                
+        except Exception as e:
+            self.logger.error(f"Error analyzing captured protocols: {e}")
+            
+        return analysis
+        
+    def export_learning_data(self) -> Dict[str, Any]:
+        """Export learning data for analysis and backup"""
+        export_data = {
+            'timestamp': time.time(),
+            'config': self.config.copy(),
+            'learned_protocols': {},
+            'response_data': {},
+            'traffic_data': {}
+        }
+        
+        try:
+            # Export learned protocol fingerprints
+            for protocol, fingerprint in self.protocol_fingerprints.items():
+                if fingerprint.get('learned'):
+                    export_data['learned_protocols'][protocol] = {
+                        'patterns': [p.hex() if isinstance(p, bytes) else str(p) for p in fingerprint.get('patterns', [])],
+                        'ports': fingerprint.get('ports', []),
+                        'confidence': fingerprint.get('confidence', 0.0)
+                    }
+                    
+            # Export response generation data
+            if self.response_generator:
+                export_data['response_data'] = self.response_generator.export_learning_data()
+                
+            # Export traffic statistics
+            if self.traffic_engine:
+                export_data['traffic_data'] = self.traffic_engine.get_statistics()
+                
+        except Exception as e:
+            self.logger.error(f"Error exporting learning data: {e}")
+            
+        return export_data
+        
+    def import_learning_data(self, data: Dict[str, Any]):
+        """Import learning data from previous sessions"""
+        try:
+            # Import learned protocols
+            if 'learned_protocols' in data:
+                for protocol, protocol_data in data['learned_protocols'].items():
+                    patterns = []
+                    for pattern_str in protocol_data.get('patterns', []):
+                        try:
+                            # Try to decode hex patterns
+                            patterns.append(bytes.fromhex(pattern_str))
+                        except ValueError:
+                            # Use as string pattern
+                            patterns.append(pattern_str.encode())
+                            
+                    self.protocol_fingerprints[protocol] = {
+                        'patterns': patterns,
+                        'ports': protocol_data.get('ports', []),
+                        'learned': True,
+                        'confidence': protocol_data.get('confidence', 0.0)
+                    }
+                    
+                self.logger.info(f"Imported {len(data['learned_protocols'])} learned protocols")
+                
+            # Import response generation data
+            if 'response_data' in data and self.response_generator:
+                self.response_generator.import_learning_data(data['response_data'])
+                
+        except Exception as e:
+            self.logger.error(f"Error importing learning data: {e}")
 
 
 __all__ = ['NetworkLicenseServerEmulator', 'run_network_license_emulator']

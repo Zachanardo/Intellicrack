@@ -94,6 +94,15 @@ class QEMUSystemEmulator:
         self.qemu_process: Optional[subprocess.Popen] = None
         self.monitor_socket: Optional[str] = None
         self.snapshots: Dict[str, Dict[str, Any]] = {}
+        
+        # SSH client for guest communication
+        self.ssh_client: Optional[Any] = None
+        
+        # Baseline snapshots for change detection
+        self._baseline_snapshot: Optional[Dict[str, Any]] = None
+        self._baseline_processes: Optional[Dict[str, Any]] = None
+        self._baseline_connections: Optional[Dict[str, Any]] = None
+        self._baseline_dns_queries: Optional[Dict[str, Any]] = None
 
         # Determine rootfs path
         self.rootfs_path = rootfs_path or self._get_default_rootfs(architecture)

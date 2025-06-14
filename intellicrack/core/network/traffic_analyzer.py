@@ -724,7 +724,7 @@ class NetworkTrafficAnalyzer:
                     
                 try:
                     # Check if it's a TCP packet with IP layer
-                    if scapy.IP in packet and scapy.TCP in packet:
+                    if hasattr(scapy, 'IP') and hasattr(scapy, 'TCP') and scapy.IP in packet and scapy.TCP in packet:
                         # Extract packet info
                         src_ip = packet[scapy.IP].src
                         dst_ip = packet[scapy.IP].dst
@@ -760,7 +760,7 @@ class NetworkTrafficAnalyzer:
                         
                         # Extract payload if available
                         payload = None
-                        if scapy.Raw in packet:
+                        if hasattr(scapy, 'Raw') and scapy.Raw in packet:
                             payload = bytes(packet[scapy.Raw])
                             
                             # Check for license patterns

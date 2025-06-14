@@ -1033,7 +1033,12 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                             'expiration_date': '2099-12-31T23:59:59Z',
                             'features': ['PHOTOSHOP_FULL', 'ILLUSTRATOR_FULL', 'PREMIERE_FULL']
                         },
-                        'license_check': self._get_common_license_response()
+                        'license_check': {
+                            'valid': True,
+                            'status': 'ACTIVE',
+                            'expires': '2099-12-31T23:59:59Z',
+                            'features_enabled': True
+                        }
                     },
                     'autodesk': {
                         'license_check': {
@@ -1193,7 +1198,7 @@ try:
 except ImportError as e:
     logger.warning("Failed to import runner functions: %s", e)
     # Define dummy functions
-    def run_rop_chain_generator(app, *args, **kwargs):
+    def run_rop_chain_generator_fallback(app, *args, **kwargs):
         """Fallback function for ROP chain generator."""
         try:
             if hasattr(app, 'update_output'):
@@ -1256,6 +1261,10 @@ except ImportError as e:
             if hasattr(app, 'update_output'):
                 app.update_output.emit(f"[ROP Generator] {error_msg}")
             return {'success': False, 'error': error_msg}
+    
+    # Assign fallback function to original name
+    run_rop_chain_generator = run_rop_chain_generator_fallback
+    
     def run_automated_patch_agent(app, *args, **kwargs):
         """Fallback function for automated patch agent."""
         from ..utils.exploitation import run_automated_patch_agent as exploit_agent
@@ -1703,7 +1712,7 @@ except ImportError as e:
             results.append(f"Error during monitoring: {str(e)}")
         
         return results
-    def run_ssl_tls_interceptor(app, *args, **kwargs):
+    def run_ssl_tls_interceptor_fallback(app, *args, **kwargs):
         """Fallback function for SSL/TLS interceptor."""
         try:
             if hasattr(app, 'update_output'):
@@ -1754,7 +1763,11 @@ except ImportError as e:
             if hasattr(app, 'update_output'):
                 app.update_output.emit(f"[SSL/TLS] {error_msg}")
             return {'success': False, 'error': error_msg}
-    def run_protocol_fingerprinter(app, *args, **kwargs):
+    
+    # Assign fallback function to original name  
+    run_ssl_tls_interceptor = run_ssl_tls_interceptor_fallback
+    
+    def run_protocol_fingerprinter_fallback(app, *args, **kwargs):
         """Fallback function for protocol fingerprinter."""
         try:
             if hasattr(app, 'update_output'):
@@ -1828,7 +1841,11 @@ except ImportError as e:
             if hasattr(app, 'update_output'):
                 app.update_output.emit(f"[Protocol] {error_msg}")
             return {'success': False, 'error': error_msg}
-    def run_cloud_license_hooker(app, *args, **kwargs):
+    
+    # Assign fallback function to original name
+    run_protocol_fingerprinter = run_protocol_fingerprinter_fallback
+    
+    def run_cloud_license_hooker_fallback(app, *args, **kwargs):
         """Fallback function for cloud license hooker."""
         try:
             if hasattr(app, 'update_output'):
@@ -1924,6 +1941,10 @@ except ImportError as e:
             if hasattr(app, 'update_output'):
                 app.update_output.emit(f"[Cloud License] {error_msg}")
             return {'success': False, 'error': error_msg}
+    
+    # Assign fallback function to original name
+    run_cloud_license_hooker = run_cloud_license_hooker_fallback
+    
     def run_cfg_explorer(app, *args, **kwargs):
         """Run CFG explorer for visual control flow analysis when explorer not available"""
         try:

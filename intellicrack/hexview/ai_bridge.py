@@ -1773,7 +1773,7 @@ class AIBinaryBridge:
                         "preview": pattern_name,
                         "explanation": f"Network protocol identifier: {pattern_name}",
                         "metadata": {
-                            "protocol": pattern_name.rstrip("://")
+                            "protocol": pattern_name.replace("://", "")
                         }
                     })
                     

@@ -29,7 +29,7 @@ import hashlib
 import json
 from typing import Dict, List, Optional, Tuple, Any, Callable
 from dataclasses import dataclass
-from ..utils.logger import get_logger
+from ...utils.logger import get_logger
 
 # Import protocol parsers
 try:

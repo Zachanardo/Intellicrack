@@ -91,6 +91,8 @@ class CloudLicenseResponseGenerator:
             'ssl': ['SSL_connect', 'SSL_read', 'SSL_write', 'SSL_CTX_new', 'SSL_new', 'SSL_free'],
             'http': ['HttpSendRequestA', 'HttpSendRequestW', 'WinHttpSendRequest', 'WinHttpReceiveResponse']
         }
+        self.api_call_log: List[Dict[str, Any]] = []
+        self._original_functions: Dict[str, Any] = {}
         self._load_response_templates()
 
         # Load request patterns
@@ -454,7 +456,7 @@ class CloudLicenseResponseGenerator:
                     user_id = body_json['user']
 
             except (json.JSONDecodeError, ValueError, KeyError) as e:
-                logger.debug("JSON parsing failed in license customization: %s", e)
+                self.logger.debug("JSON parsing failed in license customization: %s", e)
 
         # Extract from URL
         if not product_id:

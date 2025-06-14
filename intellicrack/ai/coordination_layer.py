@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import hashlib
+import logging
 import threading
 import time
 from dataclasses import dataclass
@@ -95,7 +96,8 @@ class AICoordinationLayer:
     def __init__(self, shared_context: Optional[AISharedContext] = None,
                  event_bus: Optional[AIEventBus] = None):
         """Initialize the coordination layer."""
-        logger.info("Initializing AI Coordination Layer...")
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Initializing AI Coordination Layer...")
 
         self.shared_context = shared_context or AISharedContext()
         self.event_bus = event_bus or AIEventBus()

@@ -849,7 +849,7 @@ class TrainingThread(QThread):
                         'timestamp': time.time()
                     }, f, indent=2)
                     
-            elif TORCH_AVAILABLE and isinstance(self.model, torch.nn.Module):
+            elif PYTORCH_AVAILABLE and isinstance(self.model, torch.nn.Module):
                 # Save PyTorch model
                 self.logger.info("Saving PyTorch model to: %s", save_path)
                 

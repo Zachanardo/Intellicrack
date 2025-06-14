@@ -27,7 +27,7 @@ import random
 import re
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
-from ..utils.logger import get_logger
+from ...utils.logger import get_logger
 
 # Import protocol parsers for response generation
 try:
