@@ -2373,12 +2373,12 @@ except ImportError as e:
                         b'\x83\xf9',  # cmp ecx, imm8
                         b'\x39\xc0',  # cmp eax, eax
                         b'\x85\xc0',  # test eax, eax
-                        b'\x74\x',    # je short
-                        b'\x75\x',    # jne short
+                        b'\x74',      # je short (incomplete - needs offset)
+                        b'\x75',      # jne short (incomplete - needs offset)
                     ]
                     
                     for pattern in x86_cmp_patterns:
-                        if len(pattern) == 2 and pattern[1:] == b'\x':
+                        if len(pattern) == 1:  # Single byte patterns
                             # Pattern with wildcard
                             base_pattern = pattern[:1]
                             for i in range(256):
@@ -23417,7 +23417,7 @@ def get_info():
             plugins = load_plugins()
             
             self.update_output.emit(log_message(f"[Plugins] Loaded {len(plugins)} plugins"))
-            self.update_analysis_results.emit(f"\n=== Available Plugins ===\n")
+            self.update_analysis_results.emit("\n=== Available Plugins ===\n")
             
             for plugin in plugins:
                 name = plugin.get("name", "Unknown")
@@ -23513,25 +23513,6 @@ def get_info():
                 
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(log_message(f"[AI Model] Error: {e}"))
-
-def launch():
-        """Log debugging information after event loop starts."""
-        logger.info("Event loop started successfully")
-        logger.info(f"Window still visible: {window.isVisible()}")
-        logger.info(f"Active modal widget: {app_instance.activeModalWidget()}")
-        logger.info(f"Active popup widget: {app_instance.activePopupWidget()}")
-        logger.info(f"Active window: {app_instance.activeWindow()}")
-        logger.info(f"Window flags: {window.windowFlags()}")
-        logger.info(f"Window opacity: {window.windowOpacity()}")
-        logger.info(f"Window minimized: {window.isMinimized()}")
-        logger.info(f"Window maximized: {window.isMaximized()}")
-
-        # Check all top level widgets for splash
-        for widget in app_instance.topLevelWidgets():
-            if 'SplashScreen' in str(widget):
-                logger.warning(f"Splash screen still in top level widgets: {widget}, visible: {widget.isVisible()}")
-
-    QTimer.singleShot(100, log_after_start)
 
     # Force show window after event loop starts
     def force_show_window():
