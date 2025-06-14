@@ -22553,8 +22553,8 @@ def launch():
 
             if results.get('status') == 'success':
                 matches = results.get('matches', [])
-                self.update_analysis_results.emit(f"Memory Keyword Scan Results\n")
-                self.update_analysis_results.emit(f"========================\n\n")
+                self.update_analysis_results.emit("Memory Keyword Scan Results\n")
+                self.update_analysis_results.emit("========================\n\n")
                 self.update_analysis_results.emit(f"Found {len(matches)} matches:\n\n")
 
                 if matches:
@@ -22587,11 +22587,11 @@ def launch():
                         
                     # Summary of keywords found
                     keywords_found = list(set(match['keyword'] for match in matches))
-                    self.update_analysis_results.emit(f"\nSummary:\n")
+                    self.update_analysis_results.emit("\nSummary:\n")
                     self.update_analysis_results.emit(f"Keywords found: {', '.join(keywords_found)}\n")
                     
                     # Add scanning recommendations
-                    self.update_analysis_results.emit(f"\nRecommendations:\n")
+                    self.update_analysis_results.emit("\nRecommendations:\n")
                     if any('license' in kw.lower() for kw in keywords_found):
                         self.update_analysis_results.emit("• License validation found - consider license bypass techniques\n")
                     if any('trial' in kw.lower() for kw in keywords_found):
@@ -22943,7 +22943,7 @@ def launch():
             if results.get("status") == "success":
                 self.update_output.emit(log_message("[Memory Optimized] Analysis completed successfully"))
                 file_info = results.get("file_info", {})
-                self.update_analysis_results.emit(f"\n=== Memory-Optimized Analysis Results ===\n")
+                self.update_analysis_results.emit("\n=== Memory-Optimized Analysis Results ===\n")
                 self.update_analysis_results.emit(f"File: {os.path.basename(self.binary_path)}\n")
                 self.update_analysis_results.emit(f"Size: {file_info.get('size', 0):,} bytes\n")
                 self.update_analysis_results.emit(f"Entropy: {results.get('entropy', 0):.3f}\n")
@@ -22975,7 +22975,9 @@ def launch():
             
             if results.get("status") == "success":
                 self.update_output.emit(log_message("[QEMU] Analysis completed successfully"))
-                self.update_analysis_results.emit(f"\n=== QEMU System Analysis Results ===\n")
+                self.update_analysis_results.emit(
+                    f"\n=== QEMU System Analysis Results ===\n"
+                )
                 self.update_analysis_results.emit(f"Architecture: {results.get('architecture', 'Unknown')}\n")
                 self.update_analysis_results.emit(f"Binary: {os.path.basename(self.binary_path)}\n\n")
                 
@@ -23078,7 +23080,7 @@ def launch():
             
             if results.get("status") == "success":
                 self.update_output.emit(log_message("[Dynamic] Instrumentation completed successfully"))
-                self.update_analysis_results.emit(f"\n=== Dynamic Instrumentation Results ===\n")
+                self.update_analysis_results.emit("\n=== Dynamic Instrumentation Results ===\n")
                 
                 # Runtime events
                 events = results.get("events", [])
@@ -26022,3 +26024,4 @@ def _generate_demo_gadgets(app):
     except Exception as e:
         if hasattr(app, 'update_output'):
             app.update_output.emit(log_message(f"[ROP Generator] Error generating demo gadgets: {e}"))
+
