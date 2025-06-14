@@ -535,7 +535,7 @@ class SymbolicExecutionEngine:
                 pass
         
         # UTF-16 strings (Windows)
-        utf16_pattern = re.compile(b'(?:[A-Za-z0-9!@#$%^&*()_+={}\[\]|\\:";\'<>?,./ ][\x00]){4,}')
+        utf16_pattern = re.compile(rb'(?:[A-Za-z0-9!@#$%^&*()_+={}\\[\]|\\:";\'<>?,./ ][\x00]){4,}')
         for match in utf16_pattern.finditer(binary_data):
             try:
                 string_value = match.group(0).decode('utf-16le').rstrip('\x00')

@@ -46,6 +46,11 @@ class LicenseProtocolHandler(ABC):
         - Thread-safe operation with daemon threads
         - Configurable protocol-specific settings
         - Comprehensive logging and error handling
+        
+    Security Note:
+        By default, the proxy binds to localhost (127.0.0.1) only for security.
+        To bind to all interfaces (0.0.0.0), explicitly set bind_host in config.
+        Binding to all interfaces poses security risks and should be avoided in production.
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -64,7 +69,8 @@ class LicenseProtocolHandler(ABC):
 
         # Initialize protocol-specific configuration
         self.port = self.config.get('port', 8080)
-        self.host = self.config.get('host', 'localhost')
+        self.host = self.config.get('host', 'localhost')  # Default to localhost for security
+        self.bind_host = self.config.get('bind_host', self.host)  # Allow separate bind host
         self.timeout = self.config.get('timeout', 30)
 
         self.logger.info("Initialized %s protocol handler", self.__class__.__name__)
@@ -309,7 +315,9 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
         try:
-            server_socket.bind(('127.0.0.1', port))
+            # Use configured host (defaults to localhost for security)
+            bind_host = self.config.get('bind_host', self.host)
+            server_socket.bind((bind_host, port))
             server_socket.listen(5)
             server_socket.settimeout(1.0)  # 1 second timeout for checking self.running
             
@@ -477,7 +485,9 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
         try:
-            server_socket.bind(('127.0.0.1', port))
+            # Use configured host (defaults to localhost for security)
+            bind_host = self.config.get('bind_host', self.host)
+            server_socket.bind((bind_host, port))
             server_socket.listen(5)
             server_socket.settimeout(1.0)
             

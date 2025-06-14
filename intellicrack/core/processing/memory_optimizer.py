@@ -23,7 +23,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import gc
 import logging
 import time
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:
     import psutil

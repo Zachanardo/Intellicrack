@@ -2166,7 +2166,7 @@ except ImportError as e:
             
             app.analyze_results.append("\n=== CONTROL FLOW GRAPH EXPLORER ===")
             app.analyze_results.append(f"Binary format: {getattr(app, 'cfg_binary_format', 'unknown')}")
-            app.analyze_results.append(f"Analysis tools available:")
+            app.analyze_results.append("Analysis tools available:")
             app.analyze_results.append(f"- NetworkX: {app.cfg_analysis_tools['networkx_available']}")
             app.analyze_results.append(f"- Radare2: {app.cfg_analysis_tools['radare2_available']}")
             app.analyze_results.append(f"- Matplotlib: {app.cfg_analysis_tools['matplotlib_available']}")
@@ -2187,7 +2187,7 @@ except ImportError as e:
                     app.analyze_results.append(f"- ... and {len(app.cfg_license_hits) - 3} more")
             
             if hasattr(app, 'cfg_graph_data') and app.cfg_graph_data['nodes']:
-                app.analyze_results.append(f"\nControl flow graph:")
+                app.analyze_results.append("\nControl flow graph:")
                 app.analyze_results.append(f"- Nodes: {len(app.cfg_graph_data['nodes'])}")
                 app.analyze_results.append(f"- Edges: {len(app.cfg_graph_data['edges'])}")
                 app.analyze_results.append(f"- Layout: {app.cfg_graph_data['current_layout']}")
@@ -2482,7 +2482,7 @@ except ImportError as e:
                 app.analyze_results.append(f"- {engine.capitalize()}: {status}")
             
             if hasattr(app, 'concolic_binary_info'):
-                app.analyze_results.append(f"\nBinary analysis:")
+                app.analyze_results.append("\nBinary analysis:")
                 app.analyze_results.append(f"- Format: {app.concolic_binary_info['format']}")
                 app.analyze_results.append(f"- Architecture: {app.concolic_binary_info['arch']}")
                 app.analyze_results.append(f"- Word size: {app.concolic_binary_info['bits']}-bit")
@@ -2498,7 +2498,7 @@ except ImportError as e:
                     app.analyze_results.append(f"- {target_type.replace('_', ' ').title()}: {count}")
             
             if hasattr(app, 'concolic_state') and app.concolic_state['explored_paths']:
-                app.analyze_results.append(f"\nExecution path analysis:")
+                app.analyze_results.append("\nExecution path analysis:")
                 app.analyze_results.append(f"- Explored paths: {len(app.concolic_state['explored_paths'])}")
                 app.analyze_results.append(f"- Discovered states: {app.concolic_state['discovered_states']}")
                 app.analyze_results.append(f"- Terminated states: {app.concolic_state['terminated_states']}")
@@ -3195,7 +3195,7 @@ except ImportError as e:
             
             if hasattr(app, 'traffic_analysis_results') and app.traffic_analysis_results['packet_summary']:
                 summary = app.traffic_analysis_results['packet_summary']
-                app.analyze_results.append(f"\nTraffic analysis summary:")
+                app.analyze_results.append("\nTraffic analysis summary:")
                 app.analyze_results.append(f"- Total packets: {summary['total_packets']}")
                 app.analyze_results.append(f"- Total bytes: {summary['total_bytes']:,}")
                 app.analyze_results.append(f"- License-related packets: {summary['license_packets']}")

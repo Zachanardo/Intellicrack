@@ -28,6 +28,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+from ..utils.logger import get_logger
+
 # Local imports
 try:
     from ..hexview.ai_bridge import AIBinaryBridge
