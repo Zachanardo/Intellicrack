@@ -752,54 +752,70 @@ def _analyze_imports(binary_path: str) -> List[Dict[str, Any]]:
     patches = []
     
     try:
-        # Try using pefile for PE files
-        try:
-            import pefile
-            pe = pefile.PE(binary_path)
-            
-            # Use common PE analysis utility
-            from .pe_analysis_common import analyze_pe_imports
-            target_apis = {
-                'system': ['GetSystemTime', 'GetLocalTime'],
-                'registry': ['RegOpenKey', 'RegQueryValue'],
-                'file': ['CreateFile', 'ReadFile'],
-                'network': ['InternetConnect', 'HttpSendRequest']
-            }
-            detected_apis = analyze_pe_imports(pe, target_apis)
-            
-            # Convert to patch format
-            if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-                for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = entry.dll.decode('utf-8', errors='ignore')
-                    
-                    for imp in entry.imports:
-                        if imp.name:
-                            func_name = imp.name.decode('utf-8', errors='ignore')
-                            
-                            # Check if this function was detected
-                            for category, funcs in detected_apis.items():
-                                if func_name in funcs:
-                                    patches.append({
-                                        'type': 'import_hook',
-                                        'description': f'Hook {dll_name}::{func_name} for bypassing checks',
-                                        'address': hex(imp.address) if imp.address else '0x0',
-                                        'file_offset': imp.address - pe.OPTIONAL_HEADER.ImageBase if imp.address else 0,
-                                        'function': func_name,
-                                        'dll': dll_name,
-                                        'patch_type': 'import_redirection',
-                                        'analysis_method': 'import_analysis'
-                                    })
-                                    break
-                    
-        except ImportError:
-            logger.debug("pefile not available for import analysis")
-        except Exception as e:
-            logger.warning(f"PE import analysis failed: {e}")
-            
+        patches = _try_pefile_import_analysis(binary_path)
     except Exception as e:
         logger.warning(f"Import analysis failed: {e}")
         
     return patches[:10]  # Limit import patches
+
+
+def _try_pefile_import_analysis(binary_path: str) -> List[Dict[str, Any]]:
+    """Try PE import analysis using pefile."""
+    patches = []
+    
+    try:
+        import pefile
+        pe = pefile.PE(binary_path)
+        
+        # Use common PE analysis utility
+        from .pe_analysis_common import analyze_pe_imports
+        target_apis = {
+            'system': ['GetSystemTime', 'GetLocalTime'],
+            'registry': ['RegOpenKey', 'RegQueryValue'],
+            'file': ['CreateFile', 'ReadFile'],
+            'network': ['InternetConnect', 'HttpSendRequest']
+        }
+        detected_apis = analyze_pe_imports(pe, target_apis)
+        
+        # Convert to patch format
+        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            patches = _extract_import_patches(pe, detected_apis)
+                
+    except ImportError:
+        logger.debug("pefile not available for import analysis")
+    except Exception as e:
+        logger.warning(f"PE import analysis failed: {e}")
+        
+    return patches
+
+
+def _extract_import_patches(pe, detected_apis) -> List[Dict[str, Any]]:
+    """Extract import patches from PE analysis."""
+    patches = []
+    
+    for entry in pe.DIRECTORY_ENTRY_IMPORT:
+        dll_name = entry.dll.decode('utf-8', errors='ignore')
+        
+        for imp in entry.imports:
+            if imp.name:
+                func_name = imp.name.decode('utf-8', errors='ignore')
+                
+                # Check if this function was detected
+                for category, funcs in detected_apis.items():
+                    if func_name in funcs:
+                        patches.append({
+                            'type': 'import_hook',
+                            'description': f'Hook {dll_name}::{func_name} for bypassing checks',
+                            'address': hex(imp.address) if imp.address else '0x0',
+                            'file_offset': imp.address - pe.OPTIONAL_HEADER.ImageBase if imp.address else 0,
+                            'function': func_name,
+                            'dll': dll_name,
+                            'patch_type': 'import_redirection',
+                            'analysis_method': 'import_analysis'
+                        })
+                        break
+    
+    return patches
 
 
 def _analyze_disassembly(binary_path: str) -> List[Dict[str, Any]]:
@@ -915,10 +931,9 @@ def _assess_patch_risk(patch: Dict[str, Any]) -> int:
     """Assess risk level (1=low, 2=medium, 3=high)."""
     if patch.get('type') in ['string_modification', 'conditional_bypass']:
         return 1  # Low risk
-    elif patch.get('type') in ['return_modification', 'test_bypass']:
+    if patch.get('type') in ['return_modification', 'test_bypass']:
         return 2  # Medium risk
-    else:
-        return 3  # High risk
+    return 3  # High risk
 
 
 def _assess_compatibility(patch: Dict[str, Any], binary_path: str) -> str:
@@ -1164,31 +1179,32 @@ def run_external_tool(args):
 
     try:
         # Run the command
-        process = subprocess.Popen(
+        with subprocess.Popen(
             args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             encoding="utf-8"
-        )
-        logger.info("Subprocess started: %s (PID: %s)", args, process.pid)
+        ) as process:
+            logger.info("Subprocess started: %s (PID: %s)", args, process.pid)
 
-        # Get output
-        stdout, stderr = process.communicate()
-        logger.info("Subprocess finished with exit code %s", process.returncode)
-        if stdout:
-            logger.info("Subprocess stdout:\n%s", stdout)
-        if stderr:
-            logger.warning("Subprocess stderr:\n%s", stderr)
+            # Get output
+            stdout, stderr = process.communicate()
+            logger.info("Subprocess finished with exit code %s", process.returncode)
+            
+            if stdout:
+                logger.info("Subprocess stdout:\n%s", stdout)
+            if stderr:
+                logger.warning("Subprocess stderr:\n%s", stderr)
 
-        # Format results
-        results += f"\nExit code: {process.returncode}\n"
+            # Format results
+            results += f"\nExit code: {process.returncode}\n"
 
-        if stdout:
-            results += f"\nOutput:\n{stdout}\n"
+            if stdout:
+                results += f"\nOutput:\n{stdout}\n"
 
-        if stderr:
-            results += f"\nErrors:\n{stderr}\n"
+            if stderr:
+                results += f"\nErrors:\n{stderr}\n"
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception(f"Error executing external tool: {e}")

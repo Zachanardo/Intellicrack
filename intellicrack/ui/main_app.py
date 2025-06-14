@@ -17868,18 +17868,17 @@ def register():
                                     orig_bytes = binascii.hexlify(section_data[i:i+5]).decode('utf-8').upper()
 
                                     # Example patching logic
-                                    patched_bytes = "9090909090"  # NOP out the call
-                                                    patched_bytes = "90" * len(orig_bytes)
+                                    patched_bytes = "90" * len(orig_bytes)  # NOP out the call
 
-                                                patterns.append({
-                                                    "offset": offset,
-                                                    "original_bytes": orig_bytes,
-                                                    "patched_bytes": patched_bytes,
-                                                    "description": f"Call to {func_name} in {dll_name}",
-                                                    "type": "api_license_check",
-                                                    "confidence": "high",
-                                                    "api_name": func_name
-                                                })
+                                patterns.append({
+                                    "offset": offset,
+                                    "original_bytes": orig_bytes,
+                                    "patched_bytes": patched_bytes,
+                                    "description": f"Call to {func_name} in {dll_name}",
+                                    "type": "api_license_check",
+                                    "confidence": "high",
+                                    "api_name": func_name
+                                })
 
                                 # Only process first few calls to avoid excessive patterns
                                 if calls_found > 0:
@@ -20051,7 +20050,6 @@ def register():
                 for category in network_apis.keys():
                     if category not in detected_apis:
                         detected_apis[category] = []
-                                        self.update_output.emit(log_message(f"[Network Analysis] Found {category} API: {func_name}"))
 
                 # Summarize static findings
                 self.analyze_results.append("\n=== NETWORK CAPABILITY ANALYSIS ===")

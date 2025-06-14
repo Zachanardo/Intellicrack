@@ -516,22 +516,28 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
         temp_dir = tempfile.mkdtemp(prefix="intellicrack_ghidra_")
         project_name = "temp_project"
 
-        # Build the command with cross-platform path handling
-        ghidra_dir = os.path.dirname(ghidra_path)
-        if os.name == 'nt':  # Windows
-            analyze_headless = os.path.join(ghidra_dir, "support", "analyzeHeadless.bat")
-        else:  # Unix-like systems
-            analyze_headless = os.path.join(ghidra_dir, "support", "analyzeHeadless")
+        # Build the command using common Ghidra utility
+        from .ghidra_utils import build_ghidra_command, get_ghidra_headless_path
+        
+        # Use dynamic path discovery or fallback
+        analyze_headless = get_ghidra_headless_path()
+        if not analyze_headless:
+            # Fallback to provided path
+            ghidra_dir = os.path.dirname(ghidra_path)
+            if os.name == 'nt':  # Windows
+                analyze_headless = os.path.join(ghidra_dir, "support", "analyzeHeadless.bat")
+            else:  # Unix-like systems
+                analyze_headless = os.path.join(ghidra_dir, "support", "analyzeHeadless")
 
-        cmd = [
+        cmd = build_ghidra_command(
             analyze_headless,
             temp_dir,
             project_name,
-            "-import", binary_path,
-            "-scriptPath", os.path.abspath("ghidra_scripts"),
-            "-postScript", "AdvancedAnalysis.java",
-            "-overwrite"
-        ]
+            binary_path,
+            os.path.abspath("ghidra_scripts"),
+            "AdvancedAnalysis.java",
+            overwrite=True
+        )
 
         if app_instance:
             app_instance.update_output.emit(log_message(

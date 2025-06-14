@@ -259,7 +259,6 @@ def export_report(report_data: Dict[str, Any], format: str = 'pdf') -> Optional[
         Optional[str]: Path to exported file
     """
     logger.warning("Export to %s format not yet implemented", format)
-    return None
 
 
 def format_findings(findings: List[Dict[str, Any]], include_remediation: bool = True) -> str:

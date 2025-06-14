@@ -32,6 +32,14 @@ import time
 import traceback
 from typing import Any, Dict, List, Optional, Tuple
 
+# Import new components
+try:
+    from .traffic_interception_engine import TrafficInterceptionEngine, InterceptedPacket, AnalyzedTraffic
+    from .dynamic_response_generator import DynamicResponseGenerator, ResponseContext, GeneratedResponse
+    HAS_NEW_COMPONENTS = True
+except ImportError:
+    HAS_NEW_COMPONENTS = False
+
 try:
     from PyQt5.QtWidgets import QInputDialog, QLineEdit
     QT_AVAILABLE = True
@@ -85,12 +93,39 @@ class NetworkLicenseServerEmulator:
         self.traffic_recorder: Optional[Any] = None
         self.response_templates: Dict[str, Dict[str, bytes]] = {}
         self.protocol_fingerprints: Dict[str, Dict[str, Any]] = {}
+        
+        # New enhanced components
+        self.traffic_engine: Optional[TrafficInterceptionEngine] = None
+        self.response_generator: Optional[DynamicResponseGenerator] = None
+        
+        # Initialize enhanced components if available
+        if HAS_NEW_COMPONENTS:
+            self._initialize_enhanced_components()
 
         # Load protocol fingerprints
         self._load_protocol_fingerprints()
 
         # Load response templates
         self._load_response_templates()
+        
+    def _initialize_enhanced_components(self):
+        """Initialize enhanced traffic interception and response generation"""
+        try:
+            # Initialize traffic interception engine
+            self.traffic_engine = TrafficInterceptionEngine(self.config['listen_ip'])
+            
+            # Initialize dynamic response generator
+            self.response_generator = DynamicResponseGenerator()
+            
+            # Set up analysis callback
+            self.traffic_engine.add_analysis_callback(self._handle_analyzed_traffic)
+            
+            self.logger.info("Enhanced license server components initialized")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to initialize enhanced components: {e}")
+            self.traffic_engine = None
+            self.response_generator = None
 
     def _load_protocol_fingerprints(self) -> None:
         """
@@ -212,6 +247,11 @@ class NetworkLicenseServerEmulator:
             if self.config['record_traffic']:
                 self._start_traffic_recorder()
 
+            # Start enhanced traffic interception if available
+            if self.traffic_engine and HAS_NEW_COMPONENTS:
+                self.traffic_engine.start_interception(self.config['listen_ports'])
+                self.logger.info("Enhanced traffic interception started")
+            
             # Start TCP servers on configured ports
             for _port in self.config['listen_ports']:
                 self._start_tcp_server(_port)
@@ -251,6 +291,10 @@ class NetworkLicenseServerEmulator:
             # Stop traffic recorder if running
             if self.traffic_recorder:
                 self.traffic_recorder.stop()
+                
+            # Stop enhanced components
+            if self.traffic_engine:
+                self.traffic_engine.stop_interception()
 
             self.logger.info("Network License Server Emulator stopped")
             return True
@@ -304,9 +348,29 @@ class NetworkLicenseServerEmulator:
                         # Identify protocol
                         protocol = emulator._identify_protocol(data, self.server.server_address[1])
 
-                        # Generate response
+                        # Generate response using enhanced generator if available
                         if emulator.config['auto_respond']:
-                            response = emulator._generate_response(protocol, data)
+                            if emulator.response_generator and HAS_NEW_COMPONENTS:
+                                # Use enhanced response generation
+                                context = ResponseContext(
+                                    source_ip=self.client_address[0],
+                                    source_port=self.client_address[1],
+                                    target_host=self.server.server_address[0],
+                                    target_port=self.server.server_address[1],
+                                    protocol_type=protocol,
+                                    request_data=data,
+                                    parsed_request=None,
+                                    client_fingerprint=f"{self.client_address[0]}:{self.client_address[1]}",
+                                    timestamp=time.time()
+                                )
+                                
+                                generated_response = emulator.response_generator.generate_response(context)
+                                response = generated_response.response_data
+                                
+                                emulator.logger.info(f"Generated {generated_response.response_type} response using {generated_response.generation_method}")
+                            else:
+                                # Use legacy response generation
+                                response = emulator._generate_response(protocol, data)
 
                             # Add delay if configured
                             if emulator.config['response_delay'] > 0:
