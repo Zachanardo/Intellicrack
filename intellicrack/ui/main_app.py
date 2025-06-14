@@ -24312,7 +24312,7 @@ def _setup_dns_redirection(app):
         try:
             dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             dns_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            dns_socket.bind(('', 53))
+            dns_socket.bind(('127.0.0.1', 53))
             dns_socket.settimeout(1.0)
             
             dns_server['socket'] = dns_socket

@@ -60,7 +60,7 @@ class NetworkLicenseServerEmulator:
 
         # Default configuration
         self.config = {
-            'listen_ip': '0.0.0.0',
+            'listen_ip': '127.0.0.1',  # Bind only to localhost for security
             'listen_ports': [1111, 1234, 1337, 8080, 8888, 27000, 27001],
             'dns_redirect': True,
             'ssl_intercept': True,
@@ -443,7 +443,8 @@ class NetworkLicenseServerEmulator:
             # Create UDP socket for DNS
             self.dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.dns_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.dns_socket.bind(('0.0.0.0', 53))
+            # Bind to localhost only for security - prevents external access
+            self.dns_socket.bind(('127.0.0.1', 53))
             self.dns_socket.settimeout(1.0)
             
             self.logger.info("DNS server started on port 53")

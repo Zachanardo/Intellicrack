@@ -309,7 +309,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
         try:
-            server_socket.bind(('0.0.0.0', port))
+            server_socket.bind(('127.0.0.1', port))
             server_socket.listen(5)
             server_socket.settimeout(1.0)  # 1 second timeout for checking self.running
             
@@ -477,7 +477,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         
         try:
-            server_socket.bind(('0.0.0.0', port))
+            server_socket.bind(('127.0.0.1', port))
             server_socket.listen(5)
             server_socket.settimeout(1.0)
             

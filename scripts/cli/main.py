@@ -1627,7 +1627,14 @@ def run_server_mode(args):
                 return jsonify(cli.results)
 
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            # Log the full exception details server-side for debugging
+            logger.error(f"Analysis endpoint error: {str(e)}", exc_info=True)
+            
+            # Return generic error message to user (don't expose stack trace)
+            return jsonify({
+                'error': 'An internal error occurred during analysis',
+                'status': 'failed'
+            }), 500
 
     @app.route('/health', methods=['GET'])
     def health():

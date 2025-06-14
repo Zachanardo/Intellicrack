@@ -2254,7 +2254,7 @@ def handle_client(client_socket, target_host, target_port):
 
 def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('0.0.0.0', LISTEN_PORT))
+    server.bind(('127.0.0.1', LISTEN_PORT))
     server.listen(5)
     print(f"MITM proxy listening on port {{LISTEN_PORT}}")
     print(f"Forwarding to {{TARGET_HOST}}:{{TARGET_PORT}}")
