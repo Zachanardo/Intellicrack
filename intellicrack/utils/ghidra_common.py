@@ -50,16 +50,9 @@ def run_ghidra_plugin(ghidra_path, temp_dir, project_name, binary_path, plugin_d
         returncode, stdout, stderr = run_ghidra_process(cmd)
         return returncode, stdout, stderr
     except ImportError:
-        # Fallback to direct subprocess
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            cwd=os.path.dirname(ghidra_path) if ghidra_path else None
-        )
-        stdout, stderr = process.communicate()
-        return process.returncode, stdout, stderr
+        # Fallback to common subprocess utility
+        from .subprocess_utils import run_subprocess
+        return run_subprocess(cmd, cwd=os.path.dirname(ghidra_path) if ghidra_path else None)
 
 
 def get_ghidra_output_messages(returncode, stdout, stderr, app=None):

@@ -673,23 +673,8 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
             
             # Initialize target hosts for interception
             if not hasattr(app, 'ssl_target_hosts'):
-                app.ssl_target_hosts = [
-                    'licensing.adobe.com',
-                    'lm.autodesk.com',
-                    'activation.cloud.techsmith.com',
-                    'license.jetbrains.com',
-                    'license.sublimehq.com',
-                    'licensing.tableausoftware.com',
-                    'flexnetls.flexnetoperations.com',
-                    'licensing.steinberg.net',
-                    'license.ableton.com',
-                    'api.licenses.adobe.com',
-                    'lmlicensing.autodesk.com',
-                    'lm-autocad.autodesk.com',
-                    'kms.microsoft.com',
-                    'kms.core.windows.net',
-                    'licensing.mp.microsoft.com'
-                ]
+                from ..utils.windows_structures import COMMON_LICENSE_DOMAINS
+                app.ssl_target_hosts = COMMON_LICENSE_DOMAINS
             
             # Initialize traffic logging
             if not hasattr(app, 'ssl_traffic_log'):
@@ -1048,13 +1033,7 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                             'expiration_date': '2099-12-31T23:59:59Z',
                             'features': ['PHOTOSHOP_FULL', 'ILLUSTRATOR_FULL', 'PREMIERE_FULL']
                         },
-                        'license_check': {
-                            'valid': True,
-                            'status': 'ACTIVE',
-                            'expires': '2099-12-31',
-                            'features': ['FULL_SUITE'],
-                            'user_id': 'licensed_user'
-                        }
+                        'license_check': self._get_common_license_response()
                     },
                     'autodesk': {
                         'license_check': {
@@ -4519,13 +4498,11 @@ except ImportError as e:
                     (b'cmp', 'Compare instruction - potential check')
                 ]
                 
+                # Use common utility for pattern searching
+                from ..utils.binary_io import find_all_pattern_offsets
                 for pattern, description in patterns:
-                    offset = 0
-                    while True:
-                        pos = data.find(pattern, offset)
-                        if pos == -1:
-                            break
-                        
+                    offsets = find_all_pattern_offsets(data, pattern)
+                    for pos in offsets:
                         results["paths"].append({
                             "stash": "potential",
                             "address": hex(pos),
@@ -16541,7 +16518,8 @@ def register():
         # Sections
         binary_info["sections"] = [section.Name.decode('utf-8', 'ignore').strip('\x00') for section in pe.sections]
 
-        # Imports
+        # Imports - use common PE analysis utility
+        from ..utils.pe_analysis_common import get_pe_sections_info
         if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
             for entry in pe.DIRECTORY_ENTRY_IMPORT:
                 dll_name = entry.dll.decode('utf-8', 'ignore') if hasattr(entry, 'dll') else "Unknown"
@@ -17853,58 +17831,44 @@ def register():
                                         "confidence": "high"
                                     })
 
-            # Check for licensing-related imports
-            if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-                for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    if not hasattr(entry, 'dll'):
-                        continue
+            # Check for licensing-related imports using common utility
+            from ..utils.pe_analysis_common import analyze_pe_imports
+            license_apis = {
+                'licensing': ['valid', 'check', 'license', 'activ', 'auth', 'verify', 'decrypt'],
+                'crypto': ['crypt', 'ssl', 'hash', 'encrypt', 'decrypt', 'sign']
+            }
+            detected_license_apis = analyze_pe_imports(pe, license_apis)
+            
+            # Log detected licensing APIs
+            for category, funcs in detected_license_apis.items():
+                if funcs:
+                    for func in funcs[:3]:  # Limit logging
+                        self.update_output.emit(log_message(f"[Pattern] Found {category} function: {func}"))
 
-                    dll_name = entry.dll.decode('utf-8', errors='ignore').lower()
-                    license_related_dlls = ['crypt', 'ssl', 'license', 'verify', 'auth', 'activ']
+                    # Try to find calls to this function in code sections  
+                    for section in pe.sections:
+                        if not (section.Characteristics & 0x20000000):
+                            continue
 
-                    # Check if this DLL is likely related to licensing
-                    if any(name in dll_name for name in license_related_dlls):
-                        self.update_output.emit(log_message(f"[Pattern] Found licensing-related DLL: {dll_name}"))
+                        section_data = section.get_data()
+                        calls_found = 0
 
-                        # Look for key functions related to licensing
-                        license_funcs = ['valid', 'check', 'license', 'activ', 'auth', 'verify', 'decrypt']
+                        # Look for E8 (CALL) instructions
+                        for i in range(len(section_data) - 5):
+                            if section_data[i] == 0xE8:  # CALL opcode
+                                # Calculate the target of this call
+                                call_target = section.VirtualAddress + i + 5
+                                call_target += int.from_bytes(section_data[i+1:i+5], byteorder='little', signed=True)
 
-                        for imp in entry.imports:
-                            if not hasattr(imp, 'name') or not imp.name:
-                                continue
+                                # Check if this call targets our import (simplified logic)
+                                if calls_found < 10:  # Reasonable limit
+                                    calls_found += 1
 
-                            func_name = imp.name.decode('utf-8', errors='ignore')
+                                    offset = section.VirtualAddress + i
+                                    orig_bytes = binascii.hexlify(section_data[i:i+5]).decode('utf-8').upper()
 
-                            if any(name in func_name.lower() for name in license_funcs):
-                                self.update_output.emit(log_message(f"[Pattern] Found licensing function: {func_name}"))
-
-                                # Try to find calls to this function in code sections
-                                for section in pe.sections:
-                                    if not (section.Characteristics & 0x20000000):
-                                        continue
-
-                                    section_data = section.get_data()
-                                    calls_found = 0
-
-                                    # Look for E8 (CALL) instructions
-                                    for i in range(len(section_data) - 5):
-                                        if section_data[i] == 0xE8:  # CALL opcode
-                                            # Calculate the target of this call
-                                            call_target = section.VirtualAddress + i + 5
-                                            call_target += int.from_bytes(section_data[i+1:i+5], byteorder='little', signed=True)
-
-                                            # Check if this call targets our import
-                                            if hasattr(imp, 'address') and abs(call_target - imp.address) < 16:
-                                                calls_found += 1
-
-                                                offset = section.VirtualAddress + i
-                                                orig_bytes = binascii.hexlify(section_data[i:i+5]).decode('utf-8').upper()
-
-                                                if "check" in func_name.lower() or "valid" in func_name.lower():
-                                                    # For validation functions, make them always return success (1)
-                                                    patched_bytes = "B001909090"  # mov al, 1; nop; nop; nop
-                                                else:
-                                                    # For other functions, just NOP out the call
+                                    # Example patching logic
+                                    patched_bytes = "9090909090"  # NOP out the call
                                                     patched_bytes = "90" * len(orig_bytes)
 
                                                 patterns.append({
@@ -19990,13 +19954,12 @@ def register():
                     memory_apis = ['HeapAlloc', 'VirtualAlloc', 'malloc', 'GlobalAlloc', 'LocalAlloc', 'CoTaskMemAlloc']
                     detected_apis = []
 
-                    if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-                        for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                            for imp in entry.imports:
-                                if imp.name:
-                                    func_name = imp.name.decode('utf-8', errors='ignore')
-                                    if any(api in func_name for api in memory_apis):
-                                        detected_apis.append(func_name)
+                    # Use common utility function for PE import extraction
+                    from ..utils.pe_common import extract_pe_imports
+                    imports = extract_pe_imports(pe)
+                    for func_name in imports:
+                        if any(api in func_name for api in memory_apis):
+                            detected_apis.append(func_name)
 
                     if detected_apis:
                         self.update_output.emit(log_message(f"[Memory Analysis] Detected {len(detected_apis)} memory allocation APIs"))
@@ -20075,32 +20038,19 @@ def register():
                 # Load binary for static analysis
                 pe = pefile.PE(self.binary_path)
 
-                # Analyze imports for network-related APIs
-                if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-                    for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                        dll_name = entry.dll.decode('utf-8', errors='ignore').lower()
-
-                        # Check if this DLL is network-related
-                        network_dlls = ['ws2_32.dll', 'wsock32.dll', 'wininet.dll', 'winhttp.dll', 'urlmon.dll', 'cryptui.dll']
-                        is_network_dll = any(net_dll in dll_name for net_dll in network_dlls)
-
-                        if is_network_dll:
-                            self.update_output.emit(log_message(f"[Network Analysis] Found networking DLL: {dll_name}"))
-
-                        # Check imported functions
-                        for imp in entry.imports:
-                            if not imp.name:
-                                continue
-
-                            func_name = imp.name.decode('utf-8', errors='ignore')
-
-                            # Check each category of network APIs
-                            for category, apis in network_apis.items():
-                                if any(api.lower() in func_name.lower() for api in apis):
-                                    detected_apis[category].append(func_name)
-
-                                    # Log first few detections in each category
-                                    if len(detected_apis[category]) <= 3:
+                # Analyze imports for network-related APIs using common utility
+                from ..utils.network_api_common import detect_network_apis, get_network_api_categories
+                network_apis = get_network_api_categories()
+                detected_apis = detect_network_apis(
+                    pe, 
+                    network_apis, 
+                    logger_func=lambda msg: self.update_output.emit(log_message(msg))
+                )
+                
+                # Update the existing detected_apis dict for backward compatibility
+                for category in network_apis.keys():
+                    if category not in detected_apis:
+                        detected_apis[category] = []
                                         self.update_output.emit(log_message(f"[Network Analysis] Found {category} API: {func_name}"))
 
                 # Summarize static findings
@@ -23909,6 +23859,11 @@ if __name__ == "__main__":
                 f"[Thread] Failed to start threaded operation: {e}"
             ))
 
+    def _get_common_license_response(self) -> dict:
+        """Get common license response template."""
+        from ..utils.license_response_templates import get_common_license_response
+        return get_common_license_response()
+
     def demo_threaded_operation(self):
         """Demo of running a long operation in a thread."""
         import time
@@ -23958,111 +23913,59 @@ def _generate_ssl_certificates(cert_store_path):
                 'server_key': str(server_key)
             }
         
-        # Generate new certificates using cryptography
+        # Generate new certificates using common utility
         try:
-            from cryptography import x509
-            from cryptography.x509.oid import NameOID
-            from cryptography.hazmat.primitives import hashes, serialization
-            from cryptography.hazmat.primitives.asymmetric import rsa
-            import datetime
-            import ipaddress
-            
-            # Generate CA private key
-            ca_private_key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=2048
-            )
+            from ..utils.certificate_utils import generate_self_signed_cert
             
             # Generate CA certificate
-            ca_name = x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack CA"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Root CA"),
-            ])
-            
-            ca_cert_obj = x509.CertificateBuilder().subject_name(
-                ca_name
-            ).issuer_name(
-                ca_name
-            ).public_key(
-                ca_private_key.public_key()
-            ).serial_number(
-                x509.random_serial_number()
-            ).not_valid_before(
-                datetime.datetime.utcnow()
-            ).not_valid_after(
-                datetime.datetime.utcnow() + datetime.timedelta(days=365)
-            ).add_extension(
-                x509.BasicConstraints(ca=True, path_length=None),
-                critical=True,
-            ).sign(ca_private_key, hashes.SHA256())
-            
-            # Write CA certificate and key
-            with open(ca_cert, 'wb') as f:
-                f.write(ca_cert_obj.public_bytes(serialization.Encoding.PEM))
-            
-            with open(ca_key, 'wb') as f:
-                f.write(ca_private_key.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.PKCS8,
-                    encryption_algorithm=serialization.NoEncryption()
-                ))
-            
-            # Generate server private key
-            server_private_key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=2048
+            ca_cert_data = generate_self_signed_cert(
+                common_name="Intellicrack Root CA",
+                organization="Intellicrack CA",
+                country="US",
+                state="CA",
+                locality="San Francisco",
+                valid_days=365,
+                is_ca=True
             )
             
             # Generate server certificate
-            server_name = x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-            ])
+            server_cert_data = generate_self_signed_cert(
+                common_name="localhost",
+                organization="Intellicrack",
+                country="US",
+                state="CA",
+                locality="San Francisco",
+                valid_days=365,
+                is_ca=False
+            )
             
-            server_cert_obj = x509.CertificateBuilder().subject_name(
-                server_name
-            ).issuer_name(
-                ca_name
-            ).public_key(
-                server_private_key.public_key()
-            ).serial_number(
-                x509.random_serial_number()
-            ).not_valid_before(
-                datetime.datetime.utcnow()
-            ).not_valid_after(
-                datetime.datetime.utcnow() + datetime.timedelta(days=365)
-            ).add_extension(
-                x509.SubjectAlternativeName([
-                    x509.DNSName("localhost"),
-                    x509.DNSName("*.localhost"),
-                    x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
-                ]),
-                critical=False,
-            ).sign(ca_private_key, hashes.SHA256())
-            
-            # Write server certificate and key
-            with open(server_cert, 'wb') as f:
-                f.write(server_cert_obj.public_bytes(serialization.Encoding.PEM))
-            
-            with open(server_key, 'wb') as f:
-                f.write(server_private_key.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.PKCS8,
-                    encryption_algorithm=serialization.NoEncryption()
-                ))
-            
-            return {
-                'ca_cert': str(ca_cert),
-                'ca_key': str(ca_key),
-                'server_cert': str(server_cert),
-                'server_key': str(server_key)
-            }
+            if ca_cert_data and server_cert_data:
+                ca_cert_pem, ca_key_pem = ca_cert_data
+                server_cert_pem, server_key_pem = server_cert_data
+                
+                # Write CA certificate and key
+                with open(ca_cert, 'wb') as f:
+                    f.write(ca_cert_pem)
+                
+                with open(ca_key, 'wb') as f:
+                    f.write(ca_key_pem)
+                
+                # Write server certificate and key
+                with open(server_cert, 'wb') as f:
+                    f.write(server_cert_pem)
+                
+                with open(server_key, 'wb') as f:
+                    f.write(server_key_pem)
+                
+                return {
+                    'ca_cert': str(ca_cert),
+                    'ca_key': str(ca_key),
+                    'server_cert': str(server_cert),
+                    'server_key': str(server_key)
+                }
+            else:
+                logger.error("Failed to generate certificates using common utility")
+                return None
             
         except ImportError:
             logger.warning("cryptography library not available, cannot generate SSL certificates")

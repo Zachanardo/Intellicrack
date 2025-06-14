@@ -59,26 +59,11 @@ class SSLTLSInterceptor:
         self.logger = logging.getLogger(__name__)
 
         # Default configuration
+        from ...utils.windows_structures import COMMON_LICENSE_DOMAINS
         self.config = {
             'listen_ip': '127.0.0.1',
             'listen_port': 8443,
-            'target_hosts': [
-                'licensing.adobe.com',
-                'lm.autodesk.com',
-                'activation.cloud.techsmith.com',
-                'license.jetbrains.com',
-                'license.sublimehq.com',
-                'licensing.tableausoftware.com',
-                'flexnetls.flexnetoperations.com',
-                'licensing.steinberg.net',
-                'license.ableton.com',
-                'api.licenses.adobe.com',
-                'lmlicensing.autodesk.com',
-                'lm-autocad.autodesk.com',
-                'kms.microsoft.com',
-                'kms.core.windows.net',
-                'licensing.mp.microsoft.com'
-            ],
+            'target_hosts': COMMON_LICENSE_DOMAINS,
             'ca_cert_path': os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'ssl_certificates', 'ca.crt'),
             'ca_key_path': os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'ssl_certificates', 'ca.key'),
             'record_traffic': True,

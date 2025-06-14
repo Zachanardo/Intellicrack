@@ -20,6 +20,17 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
+def get_common_license_response():
+    """Get a common license response template used across modules."""
+    return {
+        'valid': True,
+        'status': 'ACTIVE',
+        'expires': '2099-12-31',
+        'features': ['FULL_SUITE'],
+        'user_id': 'licensed_user'
+    }
+
+
 def get_adobe_response_templates():
     """Get Adobe Creative Cloud response templates with real validation logic."""
     import datetime

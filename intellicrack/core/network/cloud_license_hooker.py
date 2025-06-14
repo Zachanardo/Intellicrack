@@ -1286,6 +1286,11 @@ class CloudLicenseResponseGenerator:
         import string
         return ''.join(random.choices(string.ascii_letters + string.digits, k=64))
     
+    def _get_common_license_response(self) -> dict:
+        """Get common license response template."""
+        from ...utils.license_response_templates import get_common_license_response
+        return get_common_license_response()
+    
     def _dict_to_xml(self, data: dict, root_name: str = 'root') -> str:
         """Convert dictionary to XML format."""
         def dict_to_xml_recursive(d, root):
@@ -1512,13 +1517,7 @@ class CloudLicenseResponseGenerator:
             return {
                 'status_code': 200,
                 'headers': {'Content-Type': 'application/json'},
-                'body': json.dumps({
-                    'valid': True,
-                    'status': 'ACTIVE',
-                    'expires': '2099-12-31',
-                    'features': ['FULL_SUITE'],
-                    'user_id': 'licensed_user'
-                })
+                'body': json.dumps(self._get_common_license_response())
             }
         else:
             return self._generate_generic_license_response(url, request_data)

@@ -375,13 +375,10 @@ def run_distributed_pattern_search(binary_path: str, patterns: Optional[List[byt
         found_patterns = []
 
         for pattern in patterns:
-            # Find all occurrences
-            offset = 0
-            while True:
-                pos = data.find(pattern, offset)
-                if pos == -1:
-                    break
-
+            # Use common utility for pattern searching
+            from .binary_io import find_all_pattern_offsets
+            offsets = find_all_pattern_offsets(data, pattern)
+            for pos in offsets:
                 found_patterns.append({
                     "pattern": pattern.hex(),
                     "pattern_text": pattern.decode('utf-8', errors='ignore'),
@@ -389,8 +386,6 @@ def run_distributed_pattern_search(binary_path: str, patterns: Optional[List[byt
                     "context_before": data[max(0, pos-10):pos].hex(),
                     "context_after": data[pos+len(pattern):pos+len(pattern)+10].hex()
                 })
-
-                offset = pos + 1
 
         return {
             "patterns_found": len(found_patterns),

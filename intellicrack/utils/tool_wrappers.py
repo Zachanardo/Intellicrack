@@ -757,6 +757,17 @@ def _analyze_imports(binary_path: str) -> List[Dict[str, Any]]:
             import pefile
             pe = pefile.PE(binary_path)
             
+            # Use common PE analysis utility
+            from .pe_analysis_common import analyze_pe_imports
+            target_apis = {
+                'system': ['GetSystemTime', 'GetLocalTime'],
+                'registry': ['RegOpenKey', 'RegQueryValue'],
+                'file': ['CreateFile', 'ReadFile'],
+                'network': ['InternetConnect', 'HttpSendRequest']
+            }
+            detected_apis = analyze_pe_imports(pe, target_apis)
+            
+            # Convert to patch format
             if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
                     dll_name = entry.dll.decode('utf-8', errors='ignore')
@@ -765,23 +776,20 @@ def _analyze_imports(binary_path: str) -> List[Dict[str, Any]]:
                         if imp.name:
                             func_name = imp.name.decode('utf-8', errors='ignore')
                             
-                            # Look for interesting functions
-                            interesting_funcs = [
-                                'GetSystemTime', 'GetLocalTime', 'RegOpenKey', 'RegQueryValue',
-                                'CreateFile', 'ReadFile', 'InternetConnect', 'HttpSendRequest'
-                            ]
-                            
-                            if func_name in interesting_funcs:
-                                patches.append({
-                                    'type': 'import_hook',
-                                    'description': f'Hook {dll_name}::{func_name} for bypassing checks',
-                                    'address': hex(imp.address) if imp.address else '0x0',
-                                    'file_offset': imp.address - pe.OPTIONAL_HEADER.ImageBase if imp.address else 0,
-                                    'function': func_name,
-                                    'dll': dll_name,
-                                    'patch_type': 'import_redirection',
-                                    'analysis_method': 'import_analysis'
-                                })
+                            # Check if this function was detected
+                            for category, funcs in detected_apis.items():
+                                if func_name in funcs:
+                                    patches.append({
+                                        'type': 'import_hook',
+                                        'description': f'Hook {dll_name}::{func_name} for bypassing checks',
+                                        'address': hex(imp.address) if imp.address else '0x0',
+                                        'file_offset': imp.address - pe.OPTIONAL_HEADER.ImageBase if imp.address else 0,
+                                        'function': func_name,
+                                        'dll': dll_name,
+                                        'patch_type': 'import_redirection',
+                                        'analysis_method': 'import_analysis'
+                                    })
+                                    break
                     
         except ImportError:
             logger.debug("pefile not available for import analysis")

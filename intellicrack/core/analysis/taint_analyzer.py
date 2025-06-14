@@ -270,29 +270,16 @@ class TaintAnalysisEngine:
 
     def _parse_objdump_output(self, objdump_output: str) -> List[Dict[str, Any]]:
         """Parse objdump disassembly output into instruction list."""
+        from ...utils.windows_structures import parse_objdump_line
         instructions = []
         
         for line_num, line in enumerate(objdump_output.split('\n')):
-            line = line.strip()
-            if ':' in line and '\t' in line:
-                try:
-                    # Parse objdump format: "address: bytes \t mnemonic operands"
-                    addr_part, instr_part = line.split(':', 1)
-                    if '\t' in instr_part:
-                        _, instr_full = instr_part.split('\t', 1)
-                        parts = instr_full.strip().split(None, 1)
-                        mnemonic = parts[0] if parts else ''
-                        operands = parts[1] if len(parts) > 1 else ''
-                        
-                        instructions.append({
-                            'address': int(addr_part.strip(), 16),
-                            'mnemonic': mnemonic,
-                            'op_str': operands,
-                            'size': 1,  # Default size
-                            'index': line_num
-                        })
-                except (ValueError, IndexError):
-                    continue
+            parsed = parse_objdump_line(line)
+            if parsed:
+                # Add size and index fields for consistency
+                parsed['size'] = 1
+                parsed['index'] = line_num
+                instructions.append(parsed)
                     
         return instructions
 

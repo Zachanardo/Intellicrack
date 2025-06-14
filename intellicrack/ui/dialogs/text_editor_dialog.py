@@ -25,15 +25,13 @@ import os
 import re
 from typing import Optional
 
-# Optional imports with graceful fallbacks
+# Import common PyQt5 components
+from .common_imports import *
 try:
-    from PyQt5.QtCore import QFileSystemWatcher, Qt, QTimer, pyqtSignal
+    from PyQt5.QtCore import QFileSystemWatcher
     from PyQt5.QtGui import (
         QColor,
-        QFont,
-        QIcon,
         QKeySequence,
-        QPixmap,
         QSyntaxHighlighter,
         QTextCharFormat,
         QTextCursor,
@@ -41,32 +39,14 @@ try:
     )
     from PyQt5.QtWidgets import (
         QAction,
-        QCheckBox,
-        QComboBox,
-        QDialog,
-        QFileDialog,
         QFontComboBox,
-        QFormLayout,
         QFrame,
-        QGroupBox,
-        QHBoxLayout,
-        QLabel,
-        QLineEdit,
-        QMessageBox,
         QPlainTextEdit,
-        QPushButton,
-        QSlider,
-        QSpinBox,
-        QSplitter,
         QStatusBar,
-        QTabWidget,
-        QTextEdit,
         QToolBar,
-        QVBoxLayout,
     )
-    HAS_PYQT = True
 except ImportError:
-    HAS_PYQT = False
+    pass
 
 logger = logging.getLogger(__name__)
 

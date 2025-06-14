@@ -314,6 +314,41 @@ try:
 except ImportError as e:
     _init_logger.warning("Failed to import network_api_common functions: %s", e)
 
+# Import common utility modules
+try:
+    from .windows_common import (
+        is_windows_available,
+        get_windows_kernel32,
+        get_windows_ntdll,
+        WindowsConstants,
+        WINDOWS_AVAILABLE
+    )
+except ImportError as e:
+    _init_logger.warning("Failed to import windows_common functions: %s", e)
+
+try:
+    from .pe_analysis_common import (
+        analyze_pe_imports,
+        get_pe_sections_info
+    )
+except ImportError as e:
+    _init_logger.warning("Failed to import pe_analysis_common functions: %s", e)
+
+try:
+    from .process_common import (
+        run_subprocess_safely,
+        create_popen_safely
+    )
+except ImportError as e:
+    _init_logger.warning("Failed to import process_common functions: %s", e)
+
+try:
+    from .certificate_common import (
+        create_certificate_builder
+    )
+except ImportError as e:
+    _init_logger.warning("Failed to import certificate_common functions: %s", e)
+
 __all__ = [
     # From binary_utils
     'compute_file_hash', 'get_file_hash', 'read_binary', 
@@ -477,7 +512,25 @@ __all__ = [
     # From network_api_common
     'analyze_network_apis',
     'get_network_api_categories',
-    'summarize_network_capabilities'
+    'summarize_network_capabilities',
+    
+    # From windows_common
+    'is_windows_available',
+    'get_windows_kernel32',
+    'get_windows_ntdll',
+    'WindowsConstants',
+    'WINDOWS_AVAILABLE',
+    
+    # From pe_analysis_common
+    'analyze_pe_imports',
+    'get_pe_sections_info',
+    
+    # From process_common
+    'run_subprocess_safely',
+    'create_popen_safely',
+    
+    # From certificate_common
+    'create_certificate_builder'
 ]
 
 # Package metadata

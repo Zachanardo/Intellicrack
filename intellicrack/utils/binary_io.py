@@ -5,7 +5,29 @@ This module provides shared utilities for reading and analyzing binary files.
 """
 
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
+
+
+def find_all_pattern_offsets(data: bytes, pattern: bytes) -> List[int]:
+    """
+    Find all occurrences of a pattern in binary data.
+    
+    Args:
+        data: Binary data to search
+        pattern: Pattern to find
+        
+    Returns:
+        List of offsets where pattern was found
+    """
+    offsets = []
+    offset = 0
+    while True:
+        pos = data.find(pattern, offset)
+        if pos == -1:
+            break
+        offsets.append(pos)
+        offset = pos + 1
+    return offsets
 
 
 def analyze_binary_for_strings(binary_path: str, search_strings: list) -> Dict[str, Any]:

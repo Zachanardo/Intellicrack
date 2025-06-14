@@ -593,16 +593,14 @@ def check_for_memory_leaks(binary_path: str, process_pid: Optional[int] = None) 
         if PEFILE_AVAILABLE and binary_path.lower().endswith(('.exe', '.dll')):
             pe = pefile.PE(binary_path)
 
-            if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-                for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    for imp in entry.imports:
-                        if imp.name:
-                            func_name = imp.name.decode('utf-8', errors='ignore')
-
-                            if any(alloc in func_name.lower() for alloc in [f.lower() for f in allocation_funcs]):
-                                results["static_analysis"]["allocation_functions"].append(func_name)
-                            elif any(dealloc in func_name.lower() for dealloc in [f.lower() for f in deallocation_funcs]):
-                                results["static_analysis"]["deallocation_functions"].append(func_name)
+            # Use common utility function for PE import extraction
+            from .pe_common import extract_pe_imports
+            imports = extract_pe_imports(pe)
+            for func_name in imports:
+                if any(alloc in func_name.lower() for alloc in [f.lower() for f in allocation_funcs]):
+                    results["static_analysis"]["allocation_functions"].append(func_name)
+                elif any(dealloc in func_name.lower() for dealloc in [f.lower() for f in deallocation_funcs]):
+                    results["static_analysis"]["deallocation_functions"].append(func_name)
 
         # Check for imbalance
         alloc_count = len(results["static_analysis"]["allocation_functions"])

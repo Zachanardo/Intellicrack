@@ -20,25 +20,18 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import ctypes
-import sys
 import os
 import struct
 import tempfile
 from typing import Optional, Tuple
 
 from ...utils.logger import get_logger
+from ...utils.windows_common import is_windows_available, get_windows_kernel32
 
 logger = get_logger(__name__)
 
-# Only available on Windows
-if sys.platform == 'win32':
-    try:
-        import ctypes.wintypes
-        AVAILABLE = True
-    except ImportError:
-        AVAILABLE = False
-else:
-    AVAILABLE = False
+# Check Windows availability using common utility
+AVAILABLE = is_windows_available()
 
 class KernelInjector:
     """Kernel-level injection using Windows driver"""
@@ -54,8 +47,14 @@ class KernelInjector:
         
     def _setup_api(self):
         """Setup Windows API for driver operations"""
-        self.kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-        self.advapi32 = ctypes.WinDLL('advapi32', use_last_error=True)
+        self.kernel32 = get_windows_kernel32()
+        if not self.kernel32:
+            raise RuntimeError("Failed to load kernel32")
+        try:
+            self.advapi32 = ctypes.WinDLL('advapi32', use_last_error=True)
+        except Exception as e:
+            logger.error(f"Failed to load advapi32: {e}")
+            raise RuntimeError("Failed to load advapi32")
         
         # Service control constants
         self.SC_MANAGER_ALL_ACCESS = 0xF003F

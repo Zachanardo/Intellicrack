@@ -645,64 +645,33 @@ class NetworkLicenseServerEmulator:
                     return context
 
                 def _generate_self_signed_cert(self, cert_file: str, key_file: str) -> None:
-                    """Generate a self-signed certificate for _SSL interception"""
+                    """Generate a self-signed certificate for SSL interception using common utility"""
                     try:
-                        import datetime
-
-                        from cryptography import x509
-                        from cryptography.hazmat.primitives import hashes, serialization
-                        from cryptography.hazmat.primitives.asymmetric import rsa
-                        from cryptography.x509.oid import NameOID
-
-                        # Generate private key
-                        key = rsa.generate_private_key(
-                            public_exponent=65537,
-                            key_size=2048,
+                        from ....utils.certificate_utils import generate_self_signed_cert
+                        
+                        # Use common certificate generation utility
+                        cert_data = generate_self_signed_cert(
+                            common_name="localhost",
+                            organization="License Server",
+                            country="US",
+                            state="State",
+                            locality="City",
+                            valid_days=365
                         )
-
-                        # Generate certificate
-                        subject = issuer = x509.Name([
-                            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "State"),
-                            x509.NameAttribute(NameOID.LOCALITY_NAME, "City"),
-                            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "License Server"),
-                            x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-                        ])
-
-                        cert = x509.CertificateBuilder().subject_name(
-                            subject
-                        ).issuer_name(
-                            issuer
-                        ).public_key(
-                            key.public_key()
-                        ).serial_number(
-                            x509.random_serial_number()
-                        ).not_valid_before(
-                            datetime.datetime.utcnow()
-                        ).not_valid_after(
-                            datetime.datetime.utcnow() + datetime.timedelta(days=365)
-                        ).add_extension(
-                            x509.SubjectAlternativeName([
-                                x509.DNSName("localhost"),
-                                x509.DNSName("*.localhost"),
-                                x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
-                            ]),
-                            critical=False,
-                        ).sign(key, hashes.SHA256())
-
-                        # Write private key
-                        with open(key_file, 'wb') as f:
-                            f.write(key.private_bytes(
-                                encoding=serialization.Encoding.PEM,
-                                format=serialization.PrivateFormat.TraditionalOpenSSL,
-                                encryption_algorithm=serialization.NoEncryption()
-                            ))
-
-                        # Write certificate
-                        with open(cert_file, 'wb') as f:
-                            f.write(cert.public_bytes(serialization.Encoding.PEM))
-
-                        self.parent.logger.info("Generated self-signed certificate for _SSL interception")
+                        
+                        if cert_data:
+                            cert_pem, key_pem = cert_data
+                            
+                            # Write certificate and key
+                            with open(cert_file, 'wb') as f:
+                                f.write(cert_pem)
+                            
+                            with open(key_file, 'wb') as f:
+                                f.write(key_pem)
+                                
+                            self.parent.logger.info("Generated self-signed certificate for SSL interception")
+                        else:
+                            self.parent.logger.error("Failed to generate certificate using common utility")
 
                     except ImportError:
                         self.parent.logger.error("cryptography module not available, using basic SSL")

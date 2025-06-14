@@ -29,44 +29,13 @@ import time
 from datetime import datetime
 from typing import Any, Dict
 
-# Optional imports with graceful fallbacks
+# Import common PyQt5 components
+from .common_imports import *
 try:
-    from PyQt5.QtCore import QDateTime, Qt, QThread, QTimer, pyqtSignal
-    from PyQt5.QtGui import QFont, QIcon, QPixmap
-    from PyQt5.QtWidgets import (
-        QCheckBox,
-        QComboBox,
-        QDateTimeEdit,
-        QDialog,
-        QFileDialog,
-        QFormLayout,
-        QGroupBox,
-        QHBoxLayout,
-        QHeaderView,
-        QInputDialog,
-        QLabel,
-        QLineEdit,
-        QListWidget,
-        QListWidgetItem,
-        QMessageBox,
-        QProgressBar,
-        QPushButton,
-        QSlider,
-        QSpinBox,
-        QSplitter,
-        QTableWidget,
-        QTableWidgetItem,
-        QTabWidget,
-        QTextBrowser,
-        QTextEdit,
-        QTreeWidget,
-        QTreeWidgetItem,
-        QVBoxLayout,
-        QWidget,
-    )
-    HAS_PYQT = True
+    from PyQt5.QtCore import QDateTime
+    from PyQt5.QtWidgets import QDateTimeEdit, QTextBrowser
 except ImportError:
-    HAS_PYQT = False
+    pass
 
 logger = logging.getLogger(__name__)
 
