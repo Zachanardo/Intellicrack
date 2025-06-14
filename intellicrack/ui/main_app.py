@@ -23128,7 +23128,7 @@ def launch():
             
             if results.get("status") == "success":
                 self.update_output.emit(log_message("[Frida Script] Script executed successfully"))
-                self.update_analysis_results.emit(f"\n=== Frida Script Results ===\n")
+                self.update_analysis_results.emit("\n=== Frida Script Results ===\n")
                 
                 output = results.get("output", "")
                 if output:
