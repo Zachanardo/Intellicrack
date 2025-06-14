@@ -2145,21 +2145,14 @@ except ImportError as e:
                         'confidence': func.get('confidence', 0.5)
                     })
 
-                # Create sample edges between functions (simulated call graph)
-                for i in range(len(sample_nodes) - 1):
-                    if i % 2 == 0:  # Create some connections
-                        sample_edges.append({
-                            'source': f"func_{i}",
-                            'target': f"func_{i+1}",
-                            'type': 'call',
-                            'weight': 1.0
-                        })
-
+                # No edges can be determined without proper disassembly
+                # Real call graph requires disassembly engine
+                
                 app.cfg_graph_data['nodes'] = sample_nodes
-                app.cfg_graph_data['edges'] = sample_edges
+                app.cfg_graph_data['edges'] = []  # Empty edges - real analysis needed
 
                 if hasattr(app, 'update_output'):
-                    app.update_output.emit(log_message(f"[CFG Explorer] Created control flow graph with {len(sample_nodes)} nodes and {len(sample_edges)} edges"))
+                    app.update_output.emit(log_message(f"[CFG Explorer] Detected {len(sample_nodes)} functions - run CFG analysis for call graph"))
 
             # Set up analysis results
             if not hasattr(app, 'analyze_results'):
@@ -2410,33 +2403,18 @@ except ImportError as e:
                     if hasattr(app, 'update_output'):
                         app.update_output.emit(log_message(f"[Concolic] Found {len(app.concolic_targets)} potential exploration targets"))
 
-                    # Simulate symbolic execution results
+                    # Report symbolic execution engine availability
                     if execution_engines['manticore'] or execution_engines['angr'] or execution_engines['simconcolic']:
-                        # Create simulated execution paths
-                        simulated_paths = []
-
-                        for i, target in enumerate(app.concolic_targets[:5]):  # Simulate 5 paths
-                            path = {
-                                'path_id': i,
-                                'target_address': target['address'],
-                                'target_type': target['type'],
-                                'constraints': [
-                                    f"input_byte_{j} == 0x{j:02x}" for j in range(min(4, i+1))
-                                ],
-                                'concrete_inputs': [0x41 + i] * (i + 1),  # ASCII 'A' + offset
-                                'symbolic_inputs': [f"sym_input_{j}" for j in range(i + 1)],
-                                'execution_depth': 10 + i * 5,
-                                'branch_coverage': 0.6 + (i * 0.08),
-                                'termination_reason': 'target_reached' if i % 2 == 0 else 'constraint_solved'
-                            }
-                            simulated_paths.append(path)
-
-                        app.concolic_state['explored_paths'] = simulated_paths
-                        app.concolic_state['discovered_states'] = len(simulated_paths)
-                        app.concolic_state['terminated_states'] = len([p for p in simulated_paths if p['termination_reason'] == 'target_reached'])
+                        # Symbolic execution engines available - real analysis will be performed
+                        app.concolic_state['explored_paths'] = []
+                        app.concolic_state['discovered_states'] = 0
+                        app.concolic_state['terminated_states'] = 0
 
                         if hasattr(app, 'update_output'):
-                            app.update_output.emit(log_message(f"[Concolic] Simulated exploration of {len(simulated_paths)} execution paths"))
+                            app.update_output.emit(log_message(f"[Concolic] Symbolic execution engines available - starting real path exploration"))
+                        
+                        # Run actual concolic execution
+                        _perform_real_concolic_execution(app, execution_engines)
                     else:
                         if hasattr(app, 'update_output'):
                             app.update_output.emit(log_message("[Concolic] No symbolic execution engines available - using pattern-based analysis"))
@@ -2852,12 +2830,38 @@ except ImportError as e:
     def run_visual_network_traffic_analyzer(app, *args, **kwargs):
         """Run visual network traffic analyzer when analyzer not available"""
         try:
-            from ..core.network.traffic_analyzer import VisualTrafficAnalyzer
-            analyzer = VisualTrafficAnalyzer()
-            return analyzer.start_analysis()
+            from ..core.network.traffic_analyzer import NetworkTrafficAnalyzer
+            analyzer = NetworkTrafficAnalyzer()
+            
+            # Try to start capture and analysis
+            if hasattr(app, 'update_output'):
+                app.update_output.emit(log_message("[Traffic] Starting network traffic analyzer..."))
+            
+            # Start capture on available interface
+            interface = kwargs.get('interface', None)
+            if analyzer.start_capture(interface):
+                # Let it capture for a bit
+                import time
+                time.sleep(5)  # Capture for 5 seconds
+                analyzer.stop_capture()
+                
+                # Analyze captured traffic
+                results = analyzer.analyze_traffic()
+                if results:
+                    return results
+            
+            # If capture failed, return empty results
+            return {
+                'total_packets': 0,
+                'total_connections': 0,
+                'license_connections': 0,
+                'license_servers': [],
+                'license_conn_details': []
+            }
+            
         except ImportError:
             if hasattr(app, 'update_output'):
-                app.update_output.emit(log_message("[Traffic] Starting visual network traffic analyzer..."))
+                app.update_output.emit(log_message("[Traffic] Network traffic analyzer not available, using fallback..."))
 
             # Initialize traffic analyzer configuration
             if not hasattr(app, 'traffic_analyzer_config'):
@@ -2993,188 +2997,28 @@ except ImportError as e:
 
             app.available_interfaces = available_interfaces
 
-            # Simulate traffic analysis if capture libraries are available
-            if any(capture_libraries.values()):
-                # Create simulated network traffic data
-                simulated_traffic = {
-                    'packets': [],
-                    'connections': [],
-                    'protocols': {},
-                    'suspicious_patterns': []
-                }
-
-                # Generate sample packet data
-                import random
-                import time
-
-                current_time = time.time()
-
-                # Common license server domains and IPs for simulation
-                license_domains = [
-                    'licensing.adobe.com',
-                    'lm.autodesk.com',
-                    'activate.microsoft.com',
-                    'license.jetbrains.com',
-                    'flexnetls.flexnetoperations.com'
-                ]
-
-                # Generate simulated packets
-                for i in range(50):  # Generate 50 sample packets
-                    packet_time = current_time - (50 - i) * 2  # 2 seconds apart
-
-                    # Create different types of packets
-                    packet_type = random.choice(['HTTP', 'HTTPS', 'DNS', 'TCP', 'UDP'])
-
-                    if packet_type in ['HTTP', 'HTTPS']:
-                        # License-related HTTP traffic
-                        destination = random.choice(license_domains)
-                        packet = {
-                            'timestamp': packet_time,
-                            'protocol': packet_type,
-                            'src_ip': '192.168.1.100',
-                            'dst_ip': f'104.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}',
-                            'src_port': random.randint(50000, 65000),
-                            'dst_port': 443 if packet_type == 'HTTPS' else 80,
-                            'size': random.randint(200, 1500),
-                            'destination_domain': destination,
-                            'is_license_related': True,
-                            'direction': 'outbound'
-                        }
-                    elif packet_type == 'DNS':
-                        # DNS queries
-                        query_domain = random.choice(license_domains + ['google.com', 'cloudflare.com'])
-                        packet = {
-                            'timestamp': packet_time,
-                            'protocol': 'DNS',
-                            'src_ip': '192.168.1.100',
-                            'dst_ip': '8.8.8.8',
-                            'src_port': random.randint(50000, 65000),
-                            'dst_port': 53,
-                            'size': random.randint(50, 200),
-                            'dns_query': query_domain,
-                            'is_license_related': query_domain in license_domains,
-                            'direction': 'outbound'
-                        }
-                    else:
-                        # Generic TCP/UDP traffic
-                        packet = {
-                            'timestamp': packet_time,
-                            'protocol': packet_type,
-                            'src_ip': '192.168.1.100',
-                            'dst_ip': f'10.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}',
-                            'src_port': random.randint(50000, 65000),
-                            'dst_port': random.choice([80, 443, 22, 21, 25, 110, 143, 993, 995]),
-                            'size': random.randint(64, 1500),
-                            'is_license_related': False,
-                            'direction': 'outbound'
-                        }
-
-                    simulated_traffic['packets'].append(packet)
-
-                # Analyze protocol distribution
-                protocol_counts = {}
-                license_packet_count = 0
-                total_bytes = 0
-
-                for packet in simulated_traffic['packets']:
-                    protocol = packet['protocol']
-                    protocol_counts[protocol] = protocol_counts.get(protocol, 0) + 1
-                    total_bytes += packet['size']
-
-                    if packet.get('is_license_related', False):
-                        license_packet_count += 1
-
-                simulated_traffic['protocols'] = protocol_counts
-
-                # Create connection flows
-                connection_flows = []
-                grouped_connections = {}
-
-                for packet in simulated_traffic['packets']:
-                    flow_key = f"{packet['src_ip']}:{packet['src_port']}->{packet['dst_ip']}:{packet['dst_port']}"
-
-                    if flow_key not in grouped_connections:
-                        grouped_connections[flow_key] = {
-                            'flow_id': flow_key,
-                            'src_ip': packet['src_ip'],
-                            'dst_ip': packet['dst_ip'],
-                            'src_port': packet['src_port'],
-                            'dst_port': packet['dst_port'],
-                            'protocol': packet['protocol'],
-                            'start_time': packet['timestamp'],
-                            'end_time': packet['timestamp'],
-                            'packet_count': 0,
-                            'total_bytes': 0,
-                            'is_license_related': packet.get('is_license_related', False),
-                            'destination_domain': packet.get('destination_domain', ''),
-                            'dns_query': packet.get('dns_query', '')
-                        }
-
-                    flow = grouped_connections[flow_key]
-                    flow['end_time'] = max(flow['end_time'], packet['timestamp'])
-                    flow['packet_count'] += 1
-                    flow['total_bytes'] += packet['size']
-
-                connection_flows = list(grouped_connections.values())
-
-                # Identify suspicious activities
-                suspicious_activities = []
-
-                # Check for high-frequency connections to license servers
-                license_flows = [flow for flow in connection_flows if flow['is_license_related']]
-                if len(license_flows) > 3:
-                    suspicious_activities.append({
-                        'type': 'excessive_license_checks',
-                        'description': f'Detected {len(license_flows)} connections to license servers',
-                        'severity': 'medium',
-                        'flows': license_flows[:3],  # Show first 3
-                        'timestamp': current_time
-                    })
-
-                # Check for unusual ports
-                unusual_port_flows = [flow for flow in connection_flows
-                                    if flow['dst_port'] in app.traffic_analyzer_config['alert_thresholds']['unusual_ports']]
-                if unusual_port_flows:
-                    suspicious_activities.append({
-                        'type': 'unusual_port_activity',
-                        'description': 'Connections to unusual ports detected',
-                        'severity': 'high',
-                        'flows': unusual_port_flows,
-                        'timestamp': current_time
-                    })
-
-                # Check for large data transfers
-                large_flows = [flow for flow in connection_flows if flow['total_bytes'] > 50000]
-                if large_flows:
-                    suspicious_activities.append({
-                        'type': 'large_data_transfer',
-                        'description': 'Large data transfers detected',
-                        'severity': 'low',
-                        'flows': large_flows,
-                        'timestamp': current_time
-                    })
-
-                # Store analysis results
+            # Initialize empty traffic analysis results if no capture library available
+            if not any(capture_libraries.values()):
+                # No capture libraries available - inform user
+                if hasattr(app, 'update_output'):
+                    app.update_output.emit(log_message("[Traffic] No packet capture libraries available"))
+                    app.update_output.emit(log_message("[Traffic] Install scapy, pyshark, or run as administrator for raw sockets"))
+                
                 app.traffic_analysis_results = {
                     'packet_summary': {
-                        'total_packets': len(simulated_traffic['packets']),
-                        'total_bytes': total_bytes,
-                        'license_packets': license_packet_count,
-                        'capture_duration': 100  # 100 seconds of simulated capture
+                        'total_packets': 0,
+                        'total_bytes': 0,
+                        'license_packets': 0,
+                        'capture_duration': 0
                     },
-                    'protocol_distribution': protocol_counts,
-                    'connection_flows': connection_flows,
-                    'suspicious_activities': suspicious_activities,
-                    'license_traffic': license_flows,
-                    'dns_queries': [p for p in simulated_traffic['packets'] if p['protocol'] == 'DNS'],
-                    'http_requests': [p for p in simulated_traffic['packets'] if p['protocol'] in ['HTTP', 'HTTPS']],
-                    'encrypted_connections': [p for p in simulated_traffic['packets'] if p['protocol'] == 'HTTPS']
+                    'protocol_distribution': {},
+                    'connection_flows': [],
+                    'suspicious_activities': [],
+                    'license_traffic': [],
+                    'dns_queries': [],
+                    'http_requests': [],
+                    'encrypted_connections': []
                 }
-
-                if hasattr(app, 'update_output'):
-                    app.update_output.emit(log_message(f"[Traffic] Analyzed {len(simulated_traffic['packets'])} packets"))
-                    app.update_output.emit(log_message(f"[Traffic] Found {len(license_flows)} license-related connections"))
-                    app.update_output.emit(log_message(f"[Traffic] Detected {len(suspicious_activities)} suspicious activities"))
             else:
                 if hasattr(app, 'update_output'):
                     app.update_output.emit(log_message("[Traffic] No packet capture libraries available - limited analysis mode"))
@@ -3855,8 +3699,6 @@ except ImportError as e:
                     ]
 
                     # Simulate task distribution and execution
-                    import random
-
                     task_results = []
                     total_execution_time = 0
 
@@ -5020,6 +4862,7 @@ except ImportError as e:
             return {"success": False, "error": error_msg}
     def run_frida_analysis(app, *args, **kwargs):
         """Run Frida-based dynamic analysis."""
+        import os
         try:
             if hasattr(app, 'update_output'):
                 app.update_output.emit(log_message("[Frida] Starting Frida analysis..."))
@@ -7149,12 +6992,8 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             capture_filter = filter_text if filter_text else None
 
             # Start the actual capture
-            self.traffic_analyzer.start_capture(
-                interface=interface,
-                filter_expr=capture_filter,
-                packet_count=1000,  # Capture up to 1000 packets
-                timeout=300  # 5 minute timeout
-            )
+            # Note: The traffic analyzer only accepts interface parameter
+            self.traffic_analyzer.start_capture(interface=interface)
 
         except Exception as e:
             self.update_output.emit(f"[Network] Capture thread error: {str(e)}")
@@ -19045,6 +18884,10 @@ def register():
             from intellicrack.utils.protection_detection import detect_commercial_protections
 
             results = detect_commercial_protections(self.binary_path)
+            
+            # Ensure results is a dictionary (defensive programming for pylint)
+            if not isinstance(results, dict):
+                results = {"protections_found": [], "confidence_scores": {}, "indicators": []}
 
             self.update_output.emit(log_message(
                 "[Commercial Protection] Analysis completed."))
