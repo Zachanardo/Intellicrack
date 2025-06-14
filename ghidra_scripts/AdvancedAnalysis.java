@@ -248,7 +248,9 @@ public class AdvancedAnalysis extends GhidraScript {
             if (currentFunction != null) {
                 int complexity = 0;
                 // Example: More sophisticated complexity metrics
-                complexity += currentFunction.getBody().getNumAddresses();
+                // Safely cast long to int, capping at Integer.MAX_VALUE to prevent overflow
+                long numAddresses = currentFunction.getBody().getNumAddresses();
+                complexity += (numAddresses > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int)numAddresses;
                 complexity += currentFunction.getInstructionIterator().hasNext() ? 10 : 0; // Check if it has instructions
                 complexity += currentFunction.getBasicBlocks().size() * 5; // Number of basic blocks
                 complexity += currentFunction.getCallFixups().size() * 2; // Number of call fixups
