@@ -1,9 +1,24 @@
 """
-System utilities for the Intellicrack framework.
+System utilities for the Intellicrack framework. 
 
-This module provides system-level utilities including process management,
-dependency checking, platform detection, and system information retrieval.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import os
@@ -22,7 +37,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def get_target_process_pid(binary_path: str) -> Optional[int]:
+def get_targetprocess_pid(binary_path: str) -> Optional[int]:
     """
     Gets PID of target process, handling multiple instances and partial matches.
 
@@ -65,7 +80,7 @@ def get_target_process_pid(binary_path: str) -> Optional[int]:
                         'create_time': proc.info['create_time'],
                         'match': 'partial'
                     })
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error iterating processes: %s", e)
         return None
 
@@ -118,7 +133,7 @@ def get_system_info() -> Dict[str, Any]:
             info['memory_total'] = psutil.virtual_memory().total
             info['memory_available'] = psutil.virtual_memory().available
             info['memory_percent'] = psutil.virtual_memory().percent
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error getting psutil system info: %s", e)
 
     return info
@@ -180,7 +195,7 @@ def run_command(command: Union[str, List[str]], shell: bool = False,
             capture_output=capture_output,
             text=True,
             timeout=timeout
-        )
+        , check=False)
 
         if result.returncode != 0:
             logger.error("Command failed with return code %s", result.returncode)
@@ -191,7 +206,7 @@ def run_command(command: Union[str, List[str]], shell: bool = False,
     except subprocess.TimeoutExpired:
         logger.error("Command timed out after %s seconds: %s", timeout, command)
         raise
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Error running command '{command}': {e}")
         raise
 
@@ -224,12 +239,15 @@ def get_process_list() -> List[Dict[str, Any]]:
 
     processes = []
     try:
+        # Get comprehensive process info with error handling
         for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
             try:
+                # Collect process information
                 processes.append(proc.info)
             except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-    except Exception as e:
+                # Skip processes that terminated or are inaccessible
+                continue
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error getting process list: %s", e)
 
     return processes
@@ -266,7 +284,7 @@ def kill_process(pid: int, force: bool = False) -> bool:
     except psutil.AccessDenied:
         logger.error("Access denied when trying to kill process %s", pid)
         return False
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error killing process %s: %s", pid, e)
         return False
 
@@ -331,8 +349,8 @@ def check_admin_privileges() -> bool:
             return ctypes.windll.shell32.IsUserAnAdmin() != 0
         else:
             # Unix-like systems
-            return hasattr(os, 'geteuid') and os.geteuid() == 0
-    except Exception as e:
+            return hasattr(os, 'geteuid') and getattr(os, 'geteuid', lambda: -1)() == 0
+    except (OSError, ValueError, RuntimeError) as e:
         logger.warning("Could not check admin privileges: %s", e)
         return False
 
@@ -370,7 +388,7 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
                 ['powershell', '-Command', ps_command],
                 capture_output=True,
                 text=True
-            )
+            , check=False)
             return result.returncode == 0
         else:
             # On Unix-like systems, use sudo
@@ -378,10 +396,10 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
                 command = command.split()
 
             sudo_command = ['sudo'] + command
-            result = subprocess.run(sudo_command, capture_output=True, text=True)
+            result = subprocess.run(sudo_command, capture_output=True, text=True, check=False)
             return result.returncode == 0
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error running command as admin: %s", e)
         return False
 
@@ -452,7 +470,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
 
             except ImportError:
                 logger.warning("win32api not available, trying alternative method")
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Windows icon extraction failed: %s", e)
 
         # Cross-platform fallback: Try to extract from PE file
@@ -483,12 +501,12 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
                                     os.remove(ico_path)  # Clean up ICO file
                                     logger.info("Icon extracted to: %s", output_path)
                                     return output_path
-                                except Exception as e:
+                                except (OSError, ValueError, RuntimeError) as e:
                                     logger.error("Failed to convert ICO to PNG: %s", e)
 
         except ImportError:
             logger.error("pefile not available for icon extraction")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("PE icon extraction failed: %s", e)
 
         # If all methods fail, create a default icon
@@ -502,12 +520,18 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
             draw.text((20, 25), "EXE", fill=(255, 255, 255))
             img.save(output_path, 'PNG')
             return output_path
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to create default icon: %s", e)
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Icon extraction failed: %s", e)
         return None
+
+
+# Backward compatibility aliases
+getprocess_list = get_process_list
+killprocess = kill_process
+get_target_process_pid = get_targetprocess_pid
 
 
 def optimize_memory_usage() -> Dict[str, Any]:
@@ -553,13 +577,19 @@ def optimize_memory_usage() -> Dict[str, Any]:
         import functools
         if hasattr(functools, 'lru_cache'):
             # Clear all lru_cache instances (Python 3.9+)
+            cleared_count = 0
+            failed_count = 0
             for obj in gc.get_objects():
                 if hasattr(obj, 'cache_clear'):
                     try:
                         obj.cache_clear()
-                    except:
-                        pass
-    except Exception as e:
+                        cleared_count += 1
+                    except Exception as e:
+                        failed_count += 1
+                        logger.debug("Failed to clear cache for %s: %s", type(obj).__name__, e)
+            
+            logger.debug("Cache clearing: %d successful, %d failed", cleared_count, failed_count)
+    except (OSError, ValueError, RuntimeError) as e:
         logger.warning("Error clearing caches: %s", e)
 
     # Get final memory stats
@@ -581,7 +611,7 @@ def optimize_memory_usage() -> Dict[str, Any]:
 
 # Exported functions
 __all__ = [
-    'get_target_process_pid',
+    'get_targetprocess_pid',
     'get_system_info',
     'check_dependencies',
     'run_command',
@@ -599,4 +629,8 @@ __all__ = [
     'run_as_admin',
     'extract_executable_icon',
     'optimize_memory_usage',
+    # Backward compatibility aliases
+    'getprocess_list',
+    'killprocess',
+    'get_target_process_pid',
 ]

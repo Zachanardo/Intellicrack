@@ -1,10 +1,24 @@
 """
-Binary analysis utility functions.
+Binary analysis utility functions. 
 
-This module provides comprehensive binary analysis capabilities including
-format-specific analysis for PE, ELF, Mach-O binaries, pattern detection,
-and traffic analysis.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import os
@@ -23,9 +37,7 @@ except ImportError:
     PERFORMANCE_OPTIMIZER_AVAILABLE = False
 
 # Import binary analysis libraries from common imports
-from .common_imports import (
-    PEFILE_AVAILABLE, LIEF_AVAILABLE, PYELFTOOLS_AVAILABLE
-)
+from .common_imports import LIEF_AVAILABLE, PEFILE_AVAILABLE, PYELFTOOLS_AVAILABLE
 
 # Import the actual modules when available
 if PEFILE_AVAILABLE:
@@ -119,7 +131,7 @@ def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> Dic
 
         return results
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in performance-optimized analysis: %s", e)
         # Fallback to standard analysis
         return analyze_binary(binary_path, detailed)
@@ -138,6 +150,16 @@ def analyze_binary(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
     Returns:
         Dict containing analysis results
     """
+    # Validate input type and value
+    if not isinstance(binary_path, (str, bytes, os.PathLike)):
+        return {"error": f"Invalid path type: {type(binary_path).__name__}"}
+    
+    try:
+        # Convert to string if needed
+        binary_path = str(binary_path)
+    except (ValueError, TypeError, OverflowError) as e:
+        return {"error": f"Invalid path value: {str(e)}"}
+    
     if not os.path.exists(binary_path):
         return {"error": f"Binary not found: {binary_path}"}
 
@@ -203,7 +225,7 @@ def identify_binary_format(binary_path: str) -> str:
             if b'mscoree.dll' in data or b'.NET' in data:
                 return 'DOTNET'
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error identifying binary format: %s", e)
 
     return 'UNKNOWN'
@@ -308,7 +330,7 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
 
         return info
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error analyzing PE binary: %s", e)
         return {
             "format": "PE",
@@ -392,7 +414,7 @@ def analyze_elf_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
 
         return info
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error analyzing ELF with LIEF: %s", e)
         return {"format": "ELF", "error": str(e)}
 
@@ -425,7 +447,7 @@ def analyze_elf_with_pyelftools(binary_path: str, detailed: bool) -> Dict[str, A
 
             return info
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error analyzing ELF with pyelftools: %s", e)
         return {"format": "ELF", "error": str(e)}
 
@@ -499,7 +521,7 @@ def analyze_macho_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
 
         return info
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error analyzing Mach-O with LIEF: %s", e)
         return {"format": "MACHO", "error": str(e)}
 
@@ -528,7 +550,7 @@ def analyze_macho_with_macholib(binary_path: str, detailed: bool) -> Dict[str, A
 
         return info
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error analyzing Mach-O with macholib: %s", e)
         return {"format": "MACHO", "error": str(e)}
 
@@ -573,10 +595,11 @@ def analyze_patterns(binary_path: str, patterns: Optional[List[bytes]] = None) -
 
         for pattern in patterns:
             matches = []
-            offset = 0
+            search_offset = 0
 
+            # Search through data for pattern matches
             while True:
-                pos = data.find(pattern, offset)
+                pos = data.find(pattern, search_offset)
                 if pos == -1:
                     break
 
@@ -591,7 +614,7 @@ def analyze_patterns(binary_path: str, patterns: Optional[List[bytes]] = None) -
                     "context": context.hex()
                 })
 
-                offset = pos + 1
+                search_offset = pos + 1
 
             if matches:
                 results["matches"].append({
@@ -606,7 +629,7 @@ def analyze_patterns(binary_path: str, patterns: Optional[List[bytes]] = None) -
 
         return results
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error analyzing patterns: %s", e)
         return {"error": str(e)}
 
@@ -663,7 +686,7 @@ def get_basic_file_info(file_path: str) -> Dict[str, Any]:
             "modified": time.ctime(stat.st_mtime),
             "permissions": oct(stat.st_mode)
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return {"error": str(e)}
 
 
@@ -690,6 +713,7 @@ def analyze_pe_resources(pe) -> List[Dict[str, Any]]:
     resources = []
 
     def walk_resources(directory, level=0):
+        """Recursively walk resource directory tree."""
         for entry in directory.entries:
             if hasattr(entry, 'data'):
                 resource_info = {
@@ -729,7 +753,7 @@ def extract_binary_info(binary_path: str) -> Dict[str, Any]:
             info["md5"] = hashlib.sha256(data).hexdigest()  # Using sha256 instead of md5 for security
             info["sha1"] = hashlib.sha256(data).hexdigest()  # Using sha256 instead of sha1 for security
             info["sha256"] = hashlib.sha256(data).hexdigest()
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error calculating hashes: %s", e)
 
     return info
@@ -788,7 +812,7 @@ def extract_binary_features(binary_path: str) -> Dict[str, Any]:
             # Resources
             features["has_resources"] = hasattr(pe, 'DIRECTORY_ENTRY_RESOURCE')
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error extracting features: %s", e)
 
     return features
@@ -834,7 +858,7 @@ def extract_patterns_from_binary(binary_path: str, pattern_size: int = 16,
 
         return frequent_patterns[:100]  # Return top 100 patterns
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error extracting patterns: %s", e)
         return []
 
@@ -890,7 +914,7 @@ def scan_binary(binary_path: str, signatures: Optional[Dict[str, bytes]] = None)
 
         results["scan_time"] = time.time() - start_time
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error scanning binary: %s", e)
         results["error"] = str(e)
 
@@ -923,7 +947,7 @@ def _optimized_basic_analysis(data, chunk_info=None) -> Dict[str, Any]:
                 results["findings"].append("High entropy section detected (possible packing/encryption)")
 
         return results
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return {"status": "failed", "error": str(e)}
 
 
@@ -962,7 +986,7 @@ def _optimized_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
                 results["findings"].append(f"High string count: {results['strings_found']}")
 
         return results
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return {"status": "failed", "error": str(e)}
 
 
@@ -1003,7 +1027,7 @@ def _optimized_entropy_analysis(data, chunk_info=None) -> Dict[str, Any]:
                 results["findings"].append("Very high entropy - possibly packed/obfuscated")
 
         return results
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return {"status": "failed", "error": str(e)}
 
 
@@ -1036,7 +1060,7 @@ def _optimized_section_analysis(data, chunk_info=None) -> Dict[str, Any]:
                 results["sections_detected"] = 1
 
         return results
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return {"status": "failed", "error": str(e)}
 
 
@@ -1069,7 +1093,7 @@ def _optimized_import_analysis(data, chunk_info=None) -> Dict[str, Any]:
                 results["findings"].append(f"Found {len(results['suspicious_imports'])} potentially suspicious imports")
 
         return results
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return {"status": "failed", "error": str(e)}
 
 
@@ -1099,7 +1123,7 @@ def _optimized_pattern_analysis(data, chunk_info=None) -> Dict[str, Any]:
                     results["findings"].append(description)
 
         return results
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return {"status": "failed", "error": str(e)}
 
 

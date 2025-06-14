@@ -1,9 +1,24 @@
 """
-Compatibility module for pcapy functionality.
+Compatibility module for pcapy functionality. 
 
-Since pcapy is incompatible with Python 3.11+, this module provides
-a compatibility layer using pypcap as a replacement.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 try:
     import pcap as pypcap_module
@@ -40,7 +55,7 @@ def create_pcap_reader(interface="any"):
         # pypcap interface is slightly different from pcapy
         pc = pypcap_module.pcap(name=interface, promisc=True, immediate=True)
         return pc
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         print(f"Warning: Failed to create packet capture reader: {e}")
         return None
 

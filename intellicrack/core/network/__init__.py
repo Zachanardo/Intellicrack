@@ -1,20 +1,24 @@
 """
-Network analysis and protocol handling for Intellicrack.
+Network analysis and protocol handling for Intellicrack. 
 
-This package provides network-related analysis capabilities:
-- Network traffic capture and analysis
-- Protocol fingerprinting and identification
-- SSL/TLS interception and analysis
-- License server emulation
-- Cloud license verification interception
+Copyright (C) 2025 Zachary Flint
 
-Modules:
-    traffic_analyzer: Network traffic capture and analysis
-    ssl_interceptor: SSL/TLS interception and analysis
-    protocol_fingerprinter: Protocol identification and fingerprinting
-    license_server_emulator: License server emulation
-    cloud_license_hooker: Cloud license verification interception
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 try:
     from .traffic_analyzer import NetworkTrafficAnalyzer as TrafficAnalyzer

@@ -1,25 +1,24 @@
 """
-Enhanced Hex Viewer/Editor module for Intellicrack.
+Enhanced Hex Viewer/Editor module for Intellicrack. 
 
-This module provides a feature-rich hex viewer and editor that:
-- Can handle files of any size through memory mapping
-- Integrates with the AI model
-- Allows the AI to search/edit hex based on user input
-- Provides multiple visualization modes
+Copyright (C) 2025 Zachary Flint
 
-Usage:
-    # Simple usage - show hex viewer for a file
-    from Intellicrack.hexview import show_hex_viewer
-    show_hex_viewer(file_path)
+This file is part of Intellicrack.
 
-    # Integrate with Intellicrack
-    from Intellicrack.hexview import integrate_with_intellicrack
-    integrate_with_intellicrack(app_instance)
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    # Work with binary data
-    from Intellicrack.hexview import analyze_binary_data
-    results = analyze_binary_data(data)
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 # Core components
 from .ai_bridge import AIBinaryBridge, BinaryContextBuilder
@@ -57,11 +56,17 @@ from .hex_widget import HexViewerWidget
 try:
     from .large_file_handler import (
         LargeFileHandler as LargeFileHandler,
+    )
+    from .large_file_handler import (
         MemoryConfig as MemoryConfig,
+    )
+    from .large_file_handler import (
         MemoryStrategy as MemoryStrategy,
     )
     from .performance_monitor import (
         PerformanceMonitor as PerformanceMonitor,
+    )
+    from .performance_monitor import (
         PerformanceWidget as PerformanceWidget,
     )
     LARGE_FILE_SUPPORT = True
@@ -82,7 +87,7 @@ __all__ = [
     # Core components
     'AIBinaryBridge',
     'BinaryContextBuilder',
-    'ChunkManager', 
+    'ChunkManager',
     'VirtualFileAccess',
     'HexViewerDialog',
     'HexHighlighter',
@@ -91,7 +96,7 @@ __all__ = [
     'ViewMode',
     'parse_hex_view',
     'HexViewerWidget',
-    
+
     # API functions
     'add_hex_viewer_to_application',
     'analyze_binary_data',
@@ -108,18 +113,18 @@ __all__ = [
     'search_binary_pattern',
     'suggest_binary_edits',
     'write_hex_region',
-    
+
     # Integration functions
     'initialize_hex_viewer',
     'integrate_enhanced_hex_viewer',
     'register_hex_viewer_ai_tools',
     'restore_standard_hex_viewer',
     'show_enhanced_hex_viewer',
-    
+
     # Convenience aliases
     'show_hex_viewer',
     'integrate',
-    
+
     # Large file optimization (conditionally available)
     'LARGE_FILE_SUPPORT',
 ]
@@ -128,7 +133,7 @@ __all__ = [
 if LARGE_FILE_SUPPORT:
     __all__.extend([
         'LargeFileHandler',
-        'MemoryConfig', 
+        'MemoryConfig',
         'MemoryStrategy',
         'PerformanceMonitor',
         'PerformanceWidget',

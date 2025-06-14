@@ -1,11 +1,24 @@
 """
-LLM Configuration Dialog for Intellicrack
+LLM Configuration Dialog for Intellicrack 
 
-This dialog allows users to configure and load various LLM models including:
-- GGUF models via llama.cpp
-- API-based models (OpenAI, Anthropic, etc.)
-- Local model servers (Ollama)
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import os
@@ -112,7 +125,7 @@ class ModelTestThread(QThread):
             else:
                 self.test_complete.emit(False, "Failed to initialize model backend")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.test_complete.emit(False, f"Test failed: {str(e)}")
 
 
@@ -562,14 +575,14 @@ class LLMConfigDialog(QDialog):
         if self.llm_manager:
             active_llm = self.llm_manager.active_backend
 
-            for llm_id in self.llm_manager.get_available_llms():
-                item = QListWidgetItem(llm_id)
-                if llm_id == active_llm:
-                    item.setText(f"🟢 {llm_id} (Active)")
-                    item.setData(Qt.UserRole, llm_id)
+            for _llm_id in self.llm_manager.get_available_llms():
+                item = QListWidgetItem(_llm_id)
+                if _llm_id == active_llm:
+                    item.setText(f"🟢 {_llm_id} (Active)")
+                    item.setData(Qt.UserRole, _llm_id)
                 else:
-                    item.setText(f"⚪ {llm_id}")
-                    item.setData(Qt.UserRole, llm_id)
+                    item.setText(f"⚪ {_llm_id}")
+                    item.setData(Qt.UserRole, _llm_id)
 
                 self.models_list.addItem(item)
 

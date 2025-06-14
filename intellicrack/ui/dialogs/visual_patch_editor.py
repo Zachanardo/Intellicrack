@@ -1,9 +1,24 @@
 """
-Visual Patch Editor Dialog
+Visual Patch Editor Dialog 
 
-This module provides a visual interface for creating, editing, and managing
-binary patches with drag-and-drop functionality and real-time disassembly.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import os
 from typing import Any, Dict, List
@@ -328,10 +343,10 @@ class VisualPatchEditorDialog(QDialog):
 
             # Get section containing address
             section = None
-            for s in pe.sections:
-                if (s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase <
-                    s.VirtualAddress + s.Misc_VirtualSize):
-                    section = s
+            for _s in pe.sections:
+                if (_s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase <
+                    _s.VirtualAddress + _s.Misc_VirtualSize):
+                    section = _s
                     break
 
             if not section:
@@ -351,7 +366,7 @@ class VisualPatchEditorDialog(QDialog):
 
             disasm_text = f"Disassembly around 0x{address:X}:\n\n"
 
-            for i, insn in enumerate(md.disasm(code_data, max(0, address - 16))):
+            for _, insn in enumerate(md.disasm(code_data, max(0, address - 16))):
                 if insn.address == address:
                     disasm_text += f"=> 0x{insn.address:X}: {insn.mnemonic} {insn.op_str}\n"
                 else:
@@ -362,7 +377,7 @@ class VisualPatchEditorDialog(QDialog):
 
             self.disasm_view.setText(disasm_text)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.disasm_view.setText(f"Error disassembling: {e}")
 
     def update_byte_preview(self, address: int, new_bytes: bytes) -> None:
@@ -377,10 +392,10 @@ class VisualPatchEditorDialog(QDialog):
 
             # Get section containing address
             section = None
-            for s in pe.sections:
-                if (s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase <
-                    s.VirtualAddress + s.Misc_VirtualSize):
-                    section = s
+            for _s in pe.sections:
+                if (_s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase <
+                    _s.VirtualAddress + _s.Misc_VirtualSize):
+                    section = _s
                     break
 
             if not section:
@@ -397,17 +412,17 @@ class VisualPatchEditorDialog(QDialog):
                 original_bytes = f.read(max(1, len(new_bytes)))
 
             # Format original bytes
-            original_hex = " ".join(f"{b:02X}" for b in original_bytes)
+            original_hex = " ".join(f"{_b:02X}" for _b in original_bytes)
             self.original_bytes_view.setText(original_hex)
 
             # Format new bytes
             if isinstance(new_bytes, bytes):
-                new_hex = " ".join(f"{b:02X}" for b in new_bytes)
+                new_hex = " ".join(f"{_b:02X}" for _b in new_bytes)
                 self.patched_bytes_view.setText(new_hex)
             else:
                 self.patched_bytes_view.setText(str(new_bytes))
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.original_bytes_view.setText(f"Error: {e}")
             self.patched_bytes_view.setText(f"Error: {e}")
 

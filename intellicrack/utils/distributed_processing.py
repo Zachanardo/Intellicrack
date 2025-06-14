@@ -1,9 +1,24 @@
 """
-Distributed processing utility functions.
+Distributed processing utility functions. 
 
-This module provides distributed processing capabilities for handling
-large-scale binary analysis tasks across multiple cores or machines.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import logging
@@ -86,7 +101,7 @@ def process_binary_chunks(binary_path: str, chunk_size: int = 1024 * 1024,
                     chunk_result = future.result()
                     results["chunk_results"].append(chunk_result)
                     results["chunks_processed"] += 1
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.error(f"Error processing chunk {chunk['index']}: {e}")
                     results["chunk_results"].append({
                         "chunk": chunk,
@@ -98,7 +113,7 @@ def process_binary_chunks(binary_path: str, chunk_size: int = 1024 * 1024,
         # Aggregate results
         results["aggregated"] = _aggregate_chunk_results(results["chunk_results"])
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in binary chunk processing: %s", e)
         results["error"] = str(e)
 
@@ -132,7 +147,7 @@ def process_chunk(binary_path: str, chunk_info: Dict[str, Any],
             "success": True
         }
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return {
             "chunk": chunk_info,
             "error": str(e),
@@ -245,14 +260,14 @@ def run_distributed_analysis(binary_path: str, analysis_type: str = "comprehensi
                 task = future_to_task[future]
                 try:
                     results["analyses"][task] = future.result()
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error in %s analysis: %s", task, e)
                     results["analyses"][task] = {"error": str(e)}
 
         results["end_time"] = time.time()
         results["total_time"] = results["end_time"] - results["start_time"]
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in distributed analysis: %s", e)
         results["error"] = str(e)
 
@@ -356,7 +371,7 @@ def run_distributed_pattern_search(binary_path: str, patterns: Optional[List[byt
         config = {"chunk_size": 1024 * 1024, "num_workers": None}
 
     def pattern_processor(data: bytes, chunk_info: Dict[str, Any]) -> Dict[str, Any]:
-        """Search for patterns in a chunk."""
+        """Search for _patterns in a chunk."""
         found_patterns = []
 
         for pattern in patterns:
@@ -460,7 +475,7 @@ def extract_binary_info(binary_path: str) -> Dict[str, Any]:
         else:
             info["format"] = "Unknown"
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error extracting binary info: %s", e)
         info["error"] = str(e)
 
@@ -501,7 +516,7 @@ def extract_binary_features(binary_path: str) -> Dict[str, Any]:
         # Format-specific features would go here
         # (PE imports, sections, etc.)
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error extracting features: %s", e)
         features["error"] = str(e)
 
@@ -548,7 +563,7 @@ def run_gpu_accelerator(task_type: str, data: Any,
         else:
             results["error"] = f"Unsupported GPU task type: {task_type}"
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("GPU acceleration error: %s", e)
         results["error"] = str(e)
         results["cpu_result"] = _run_cpu_fallback(task_type, data)
@@ -595,7 +610,7 @@ def run_incremental_analysis(binary_path: str, cache_dir: Optional[str] = None,
     # Load cached results if available and not forcing full analysis
     if os.path.exists(cache_file) and not force_full:
         try:
-            with open(cache_file, 'r') as f:
+            with open(cache_file, 'r', encoding='utf-8') as f:
                 cached_data = json.load(f)
 
             # Verify file hasn't changed
@@ -603,7 +618,7 @@ def run_incremental_analysis(binary_path: str, cache_dir: Optional[str] = None,
                 results["cached_results"] = cached_data.get("analyses", {})
                 results["cache_hits"] = len(results["cached_results"])
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error loading cache: %s", e)
 
     # Determine what analyses need to be run
@@ -635,9 +650,9 @@ def run_incremental_analysis(binary_path: str, cache_dir: Optional[str] = None,
         }
 
         try:
-            with open(cache_file, 'w') as f:
+            with open(cache_file, 'w', encoding='utf-8') as f:
                 json.dump(cache_data, f, indent=2)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error saving cache: %s", e)
 
     # Combine all results
@@ -733,7 +748,7 @@ def run_pdf_report_generator(analysis_results: Dict[str, Any],
     except ImportError:
         results["status"] = "error"
         results["message"] = "PDF generation not available"
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error generating PDF report: %s", e)
         results["status"] = "error"
         results["message"] = str(e)
@@ -856,7 +871,7 @@ def _distributed_hash_calculation(binary_path: str,
             try:
                 algo, hash_value = future.result()
                 results["hashes"][algo] = hash_value
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 algo = future_to_algo[future]
                 logger.error("Error calculating %s: %s", algo, e)
 
@@ -880,7 +895,7 @@ def _check_gpu_backends() -> Dict[str, Any]:
             backends["devices"] = [f"cuda:{i}" for i in range(torch.cuda.device_count())]
             return backends
     except ImportError:
-        pass
+        logger.debug("CUDA backend not available: PyTorch not installed")
 
     # Check for OpenCL
     try:
@@ -894,7 +909,7 @@ def _check_gpu_backends() -> Dict[str, Any]:
                 backends["devices"].extend([d.name for d in devices])
             return backends
     except ImportError:
-        pass
+        logger.debug("OpenCL backend not available: pyopencl not installed")
 
     return backends
 
@@ -956,8 +971,8 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
         patterns = config.get('patterns', [])
         search_data = data.get('data', b'')
 
-        for pattern in patterns:
-            if pattern in search_data:
+        for _pattern in patterns:
+            if _pattern in search_data:
                 patterns_found += 1
 
         backend = 'cpu'
@@ -1061,7 +1076,7 @@ def _gpu_ml_inference(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
             predictions = [0.5]
             confidence = 0.0
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.debug("GPU ML inference fallback: %s", e)
         # Simple fallback prediction
         predictions = [0.5]  # Neutral prediction

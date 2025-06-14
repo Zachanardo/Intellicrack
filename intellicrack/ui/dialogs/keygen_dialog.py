@@ -1,10 +1,24 @@
 """
-Professional Keygen Dialog for Intellicrack.
+Professional Keygen Dialog for Intellicrack. 
 
-This module provides a comprehensive interface for license key generation
-with advanced algorithm detection, format customization, batch generation,
-and key validation capabilities.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import os
@@ -12,7 +26,35 @@ import platform
 import subprocess
 import time
 
-from ..common_imports import *
+from ..common_imports import (
+    QApplication,
+    QCheckBox,
+    QColor,
+    QComboBox,
+    QDialog,
+    QFileDialog,
+    QFont,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QSpinBox,
+    QTabWidget,
+    QTableWidget,
+    QTableWidgetItem,
+    QTextEdit,
+    QThread,
+    QTimer,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal
+)
+from .base_dialog import BinarySelectionDialog
 
 
 class KeygenWorker(QThread):
@@ -39,7 +81,7 @@ class KeygenWorker(QThread):
                 self._generate_batch_keys()
             elif self.operation == "analyze":
                 self._analyze_binary()
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.error_occurred.emit(str(e))
 
     def _generate_single_key(self):
@@ -61,7 +103,7 @@ class KeygenWorker(QThread):
         count = self.kwargs.get('count', 10)
         keys = []
 
-        for i in range(count):
+        for _i in range(count):
             if self.should_stop:
                 break
 
@@ -74,12 +116,12 @@ class KeygenWorker(QThread):
                     custom_length=self.kwargs.get('custom_length'),
                     validation_check=False  # Skip validation for batch to speed up
                 )
-                result['batch_id'] = i + 1
+                result['batch_id'] = _i + 1
                 keys.append(result)
-                self.batch_progress.emit(i + 1, count)
-            except Exception as e:
+                self.batch_progress.emit(_i + 1, count)
+            except (OSError, ValueError, RuntimeError) as e:
                 keys.append({
-                    'batch_id': i + 1,
+                    'batch_id': _i + 1,
                     'key': '',
                     'error': str(e),
                     'algorithm': self.kwargs.get('algorithm', 'auto'),
@@ -107,12 +149,11 @@ class KeygenWorker(QThread):
         self.should_stop = True
 
 
-class KeygenDialog(QDialog):
+class KeygenDialog(BinarySelectionDialog):
     """Professional Keygen Dialog with advanced features."""
 
     def __init__(self, parent=None, binary_path: str = ""):
-        super().__init__(parent)
-        self.binary_path = binary_path
+        super().__init__(parent, binary_path)
         self.worker = None
         self.generated_keys = []
         self.current_analysis = {}
@@ -145,25 +186,9 @@ class KeygenDialog(QDialog):
 
     def setup_header(self, layout):
         """Setup header with binary selection."""
-        header_group = QGroupBox("Target Binary")
-        header_layout = QHBoxLayout(header_group)
-
-        self.binary_path_edit = QLineEdit(self.binary_path)
-        self.binary_path_edit.setPlaceholderText("Select target binary file...")
-
-        self.browse_btn = QPushButton("Browse")
-        self.browse_btn.clicked.connect(self.browse_binary)
-
-        self.analyze_btn = QPushButton("Analyze Binary")
-        self.analyze_btn.clicked.connect(self.analyze_binary)
-        self.analyze_btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; font-weight: bold; }")
-
-        header_layout.addWidget(QLabel("Binary Path:"))
-        header_layout.addWidget(self.binary_path_edit)
-        header_layout.addWidget(self.browse_btn)
-        header_layout.addWidget(self.analyze_btn)
-
-        layout.addWidget(header_group)
+        # Use the base class method with analyze button
+        super().setup_header(layout, show_label=True, 
+                           extra_buttons=[("Analyze Binary", self.analyze_binary)])
 
     def setup_tabs(self, layout):
         """Setup main tab widget."""
@@ -399,10 +424,6 @@ class KeygenDialog(QDialog):
         from ..dialog_utils import connect_binary_signals
         connect_binary_signals(self)
 
-    def browse_binary(self):
-        """Browse for binary file."""
-        from ..dialog_utils import browse_binary_file
-        browse_binary_file(self)
 
     def on_binary_path_changed(self, text):
         """Handle binary path change."""
@@ -486,8 +507,8 @@ class KeygenDialog(QDialog):
 
             if analysis.get('detected_algorithms'):
                 text += "Detected Algorithms:\n"
-                for algo in analysis['detected_algorithms']:
-                    text += f"  • {algo}\n"
+                for _algo in analysis['detected_algorithms']:
+                    text += f"  • {_algo}\n"
                 text += "\n"
 
             if analysis.get('patterns_found'):
@@ -505,8 +526,8 @@ class KeygenDialog(QDialog):
 
             if analysis.get('string_analysis'):
                 text += "License-related Strings Found:\n"
-                for string_type in analysis['string_analysis']:
-                    text += f"  • {string_type}\n"
+                for _string_type in analysis['string_analysis']:
+                    text += f"  • {_string_type}\n"
                 text += "\n"
 
         return text
@@ -593,8 +614,8 @@ class KeygenDialog(QDialog):
 
             if validation.get('notes'):
                 text += "  Notes:\n"
-                for note in validation['notes']:
-                    text += f"    • {note}\n"
+                for _note in validation['notes']:
+                    text += f"    • {_note}\n"
             text += "\n"
 
         if 'analysis' in result:
@@ -617,7 +638,7 @@ class KeygenDialog(QDialog):
                 from PyQt5.QtWidgets import QApplication
                 QApplication.clipboard().setText(key)
                 self.status_label.setText("Key copied to clipboard")
-            except Exception:
+            except (OSError, ValueError, RuntimeError):
                 QMessageBox.information(self, "Copy", f"Key: {key}")
 
     def save_single_key(self):
@@ -667,8 +688,8 @@ class KeygenDialog(QDialog):
                 content += f"# Confidence: {validation['confidence']:.1%}\n"
                 content += f"# Method: {validation['method']}\n"
                 if validation.get('notes'):
-                    for note in validation['notes']:
-                        content += f"# Note: {note}\n"
+                    for _note in validation['notes']:
+                        content += f"# Note: {_note}\n"
 
             # Save the file
             with open(file_path, 'w', encoding='utf-8') as f:
@@ -687,15 +708,15 @@ class KeygenDialog(QDialog):
                 # Open the generated_keys folder
                 try:
                     if platform.system() == "Windows":
-                        subprocess.run(["explorer", save_dir])
+                        subprocess.run(["explorer", save_dir], check=False)
                     elif platform.system() == "Darwin":  # macOS
-                        subprocess.run(["open", save_dir])
+                        subprocess.run(["open", save_dir], check=False)
                     else:  # Linux
-                        subprocess.run(["xdg-open", save_dir])
-                except Exception:
+                        subprocess.run(["xdg-open", save_dir], check=False)
+                except (OSError, ValueError, RuntimeError):
                     QMessageBox.information(self, "Folder Location", f"Keys saved to: {save_dir}")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             QMessageBox.critical(self, "Save Error", f"Failed to save key: {str(e)}")
             self.status_label.setText("Error saving key")
 
@@ -842,32 +863,32 @@ class KeygenDialog(QDialog):
         if file_path:
             try:
                 if file_path.endswith('.json'):
-                    with open(file_path, 'w') as f:
+                    with open(file_path, 'w', encoding='utf-8') as f:
                         json.dump(self.generated_keys, f, indent=2)
                 elif file_path.endswith('.csv'):
                     import csv
-                    with open(file_path, 'w', newline='') as f:
+                    with open(file_path, 'w', newline='', encoding='utf-8') as f:
                         writer = csv.writer(f)
                         writer.writerow(['ID', 'Key', 'Algorithm', 'Format', 'Status'])
-                        for key_data in self.generated_keys:
+                        for _key_data in self.generated_keys:
                             writer.writerow([
-                                key_data.get('batch_id', ''),
-                                key_data.get('key', ''),
-                                key_data.get('algorithm', ''),
-                                key_data.get('format', ''),
-                                'Error' if 'error' in key_data else 'Generated'
+                                _key_data.get('batch_id', ''),
+                                _key_data.get('key', ''),
+                                _key_data.get('algorithm', ''),
+                                _key_data.get('format', ''),
+                                'Error' if 'error' in _key_data else 'Generated'
                             ])
                 else:  # txt
-                    with open(file_path, 'w') as f:
+                    with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(f"License Keys Generated from: {os.path.basename(self.binary_path)}\n")
                         f.write("=" * 60 + "\n\n")
-                        for key_data in self.generated_keys:
-                            if 'error' not in key_data:
-                                f.write(f"{key_data.get('key', '')}\n")
+                        for _key_data in self.generated_keys:
+                            if 'error' not in _key_data:
+                                f.write(f"{_key_data.get('key', '')}\n")
 
                 self.status_label.setText(f"Keys exported to {os.path.basename(file_path)}")
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 QMessageBox.critical(self, "Export Error", f"Failed to export keys: {str(e)}")
 
     def analyze_existing_keys(self):
@@ -877,7 +898,7 @@ class KeygenDialog(QDialog):
             QMessageBox.warning(self, "Warning", "Please enter some existing keys to analyze.")
             return
 
-        keys = [key.strip() for key in keys_text.split('\n') if key.strip()]
+        keys = [_key.strip() for _key in keys_text.split('\n') if _key.strip()]
 
         try:
             from ...utils.exploitation import analyze_existing_keys
@@ -912,7 +933,7 @@ class KeygenDialog(QDialog):
             # Switch to management tab
             self.tabs.setCurrentIndex(3)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             QMessageBox.critical(self, "Analysis Error", f"Failed to analyze keys: {str(e)}")
 
     def on_error(self, error_msg):

@@ -1,9 +1,24 @@
 """
-Distributed Processing Configuration Dialog
+Distributed Processing Configuration Dialog 
 
-This module provides a configuration dialog for setting up distributed processing
-parameters for binary analysis tasks.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import multiprocessing
 from typing import Any, Dict
@@ -120,7 +135,7 @@ class DistributedProcessingConfigDialog(QDialog):
         # Pattern search
         self.pattern_check = QCheckBox("Search for patterns")
         self.pattern_check.setChecked(True)
-        self.pattern_check.setToolTip("Search for patterns in the binary")
+        self.pattern_check.setToolTip("Search for _patterns in the binary")
         analysis_layout.addWidget(self.pattern_check)
 
         # Entropy analysis
@@ -188,7 +203,7 @@ class DistributedProcessingConfigDialog(QDialog):
         # Parse any custom patterns
         custom_patterns = []
         if self.custom_patterns_edit.text().strip():
-            custom_patterns = [p.strip() for p in self.custom_patterns_edit.text().split(',')]
+            custom_patterns = [_p.strip() for _p in self.custom_patterns_edit.text().split(',')]
 
         # Map backend selection to value
         backend_map = {

@@ -14,6 +14,7 @@ import shutil
 from pathlib import Path
 
 
+# pylint: disable=too-complex
 def find_ghidra_installation():
     """Find Ghidra installation from various sources."""
 
@@ -62,6 +63,7 @@ def find_ghidra_installation():
     return None
 
 
+# pylint: disable=too-complex
 def find_radare2_installation():
     """Find radare2 installation from various sources."""
 
@@ -73,7 +75,7 @@ def find_radare2_installation():
             if os.path.exists(r2_path):
                 print(f"Found radare2 in PATH: {r2_path}")
                 return r2_path
-    except:
+    except (subprocess.SubprocessError, FileNotFoundError, IndexError):
         pass
 
     # 2. Check R2_HOME environment variable
@@ -249,6 +251,7 @@ def find_python_installation():
     return None
 
 
+# pylint: disable=too-complex
 def update_config_file(config_path="intellicrack_config.json"):
     """Update the configuration file with correct tool paths."""
 

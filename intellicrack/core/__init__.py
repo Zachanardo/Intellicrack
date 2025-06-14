@@ -1,22 +1,24 @@
 """
-Core analysis and processing modules for Intellicrack.
+Core analysis and processing modules for Intellicrack. 
 
-This package contains the core functionality for binary analysis, including:
-- Static and dynamic analysis engines
-- Vulnerability detection and exploitation
-- Network traffic analysis
-- Patching and payload generation
-- Protection bypass techniques
-- Reporting and visualization
+Copyright (C) 2025 Zachary Flint
 
-Modules:
-    analysis: Advanced binary analysis engines
-    network: Network traffic analysis and protocol handling
-    patching: Automated patching and payload generation
-    processing: GPU acceleration and distributed computing
-    protection_bypass: Hardware and software protection bypass
-    reporting: Report generation and visualization
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 from . import analysis, network, patching, processing, protection_bypass, reporting
 

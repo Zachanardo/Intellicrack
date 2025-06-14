@@ -1,9 +1,24 @@
 """
-Miscellaneous utility functions for the Intellicrack framework.
+Miscellaneous utility functions for the Intellicrack framework. 
 
-This module provides general-purpose utility functions including string formatting,
-timestamp generation, path validation, and other common operations.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import datetime
 import logging
@@ -56,9 +71,9 @@ def format_bytes(size: int, precision: int = 2) -> str:
     Returns:
         str: Formatted size string (e.g., "1.23 MB")
     """
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for _unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size < 1024.0:
-            return f"{size:.{precision}f} {unit}"
+            return f"{size:.{precision}f} {_unit}"
         size /= 1024.0
     return f"{size:.{precision}f} PB"
 
@@ -89,7 +104,7 @@ def validate_path(path: Union[str, Path], must_exist: bool = True) -> bool:
 
         return True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error validating path %s: %s", path, e)
         return False
 
@@ -153,7 +168,7 @@ def safe_str(obj: Any, max_length: int = 100) -> str:
     try:
         result = str(obj)
         return truncate_string(result, max_length)
-    except Exception:
+    except (OSError, ValueError, RuntimeError):
         return '<str_conversion_failed>'
 
 
@@ -226,7 +241,7 @@ def ensure_directory_exists(directory: Union[str, Path]) -> bool:
         path = Path(directory)
         path.mkdir(parents=True, exist_ok=True)
         return True
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to create directory %s: %s", directory, e)
         return False
 
@@ -254,7 +269,7 @@ def is_valid_ip_address(ip: str) -> bool:
     if ipv4_pattern.match(ip):
         # Validate IPv4 octets
         octets = ip.split('.')
-        return all(0 <= int(octet) <= 255 for octet in octets)
+        return all(0 <= int(_octet) <= 255 for _octet in octets)
 
     return bool(ipv6_pattern.match(ip))
 

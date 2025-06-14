@@ -1,22 +1,24 @@
 """
-Intellicrack Core Processing Package
+Intellicrack Core Processing Package 
 
-This package provides high-performance processing capabilities for the Intellicrack framework.
-It includes distributed processing, GPU acceleration, and memory optimization features for
-handling large-scale binary analysis tasks efficiently.
+Copyright (C) 2025 Zachary Flint
 
-Modules:
-    - distributed_manager: Manage distributed processing across multiple nodes
-    - gpu_accelerator: GPU-accelerated processing for intensive computations
-    - memory_optimizer: Memory management and optimization utilities
+This file is part of Intellicrack.
 
-Key Features:
-    - Distributed task management
-    - GPU acceleration support
-    - Memory-efficient processing
-    - Multi-threaded analysis
-    - Resource optimization
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 
@@ -51,7 +53,7 @@ except ImportError as e:
     logger.warning("Failed to import memory_loader: %s", e)
 
 try:
-    from .qiling_emulator import QilingEmulator, run_qiling_emulation, QILING_AVAILABLE
+    from .qiling_emulator import QILING_AVAILABLE, QilingEmulator, run_qiling_emulation
 except ImportError as e:
     logger.warning("Failed to import qiling_emulator: %s", e)
 

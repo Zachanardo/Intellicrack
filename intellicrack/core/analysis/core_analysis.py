@@ -1,14 +1,27 @@
 """
-Core analysis functions for Intellicrack.
+Core analysis functions for Intellicrack. 
 
-This module contains the fundamental analysis functions that perform deep inspection
-of binary files, including structure analysis, packing detection, and entropy calculation.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+
 import logging
-import math
 import os
-from collections import Counter
 from typing import Any, Dict, List, Optional
 
 try:
@@ -164,58 +177,58 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
         suspicious_sections = []
 
         if pe and hasattr(pe, 'sections') and pe.sections:
-            for section in pe.sections:
-                name = getattr(section, "Name", b"").decode('utf-8', errors='ignore').rstrip('\0')
+            for _section in pe.sections:
+                name = getattr(_section, "Name", b"").decode('utf-8', errors='ignore').rstrip('\0')
                 results.append(f"  {name}:")
-                va = getattr(section, "VirtualAddress", None)
+                va = getattr(_section, "VirtualAddress", None)
                 if va is not None:
                     results.append(f"    Virtual Address: 0x{va:08X}")
-                vsz = getattr(section, "Misc_VirtualSize", None)
+                vsz = getattr(_section, "Misc_VirtualSize", None)
                 if vsz is not None:
                     results.append(f"    Virtual Size: 0x{vsz:08X} ({vsz:,} bytes)")
-                rdsz = getattr(section, "SizeOfRawData", None)
+                rdsz = getattr(_section, "SizeOfRawData", None)
                 if rdsz is not None:
                     results.append(f"    Raw Data Size: 0x{rdsz:08X} ({rdsz:,} bytes)")
 
                 # Calculate entropy for section
                 try:
-                    section_data = section.get_data()
+                    section_data = _section.get_data()
                     entropy = calculate_entropy(section_data)
                     results.append(f"    Entropy: {entropy:.2f}")
                     if entropy > 7.0:
                         results.append("    WARNING: High entropy, possible encryption/compression")
                         suspicious_sections.append(name)
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     results.append(f"    ERROR: Could not calculate entropy: {e}")
 
         # Import table analysis
         results.append("\nImports:")
         license_related_imports = []
         if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-            for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                dll_name = entry.dll.decode('utf-8', errors='ignore')
+            for _entry in pe.DIRECTORY_ENTRY_IMPORT:
+                dll_name = _entry.dll.decode('utf-8', errors='ignore')
                 results.append(f"  {dll_name}:")
 
-                for imp in entry.imports:
-                    if imp.name:
-                        func_name = imp.name.decode('utf-8', errors='ignore')
+                for _imp in _entry.imports:
+                    if _imp.name:
+                        func_name = _imp.name.decode('utf-8', errors='ignore')
                         # Check for license-related imports
                         license_keywords = ['license', 'activation', 'validate', 'verify', 'check', 'auth']
-                        if any(keyword in func_name.lower() for keyword in license_keywords):
+                        if any(_keyword in func_name.lower() for _keyword in license_keywords):
                             license_related_imports.append(f"{dll_name}::{func_name}")
                         results.append(f"    {func_name}")
 
         if license_related_imports:
             results.append("\nLicense-related imports detected:")
-            for imp in license_related_imports:
-                results.append(f"  {imp}")
+            for _imp in license_related_imports:
+                results.append(f"  {_imp}")
 
         # Export table analysis
         if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
             results.append("\nExports:")
-            for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                if exp.name:
-                    results.append(f"  {exp.name.decode('utf-8', errors='ignore')}")
+            for _exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+                if _exp.name:
+                    results.append(f"  {_exp.name.decode('utf-8', errors='ignore')}")
 
         # Summary
         results.append("\nAnalysis Summary:")
@@ -224,8 +237,8 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
 
         pe.close()
 
-    except Exception as e:
-        logger.exception(f"Error analyzing binary: {binary_path}")
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.exception("Error analyzing binary: %s", binary_path)
         results.append(f"ERROR: Failed to analyze binary - {str(e)}")
 
     return results
@@ -265,28 +278,28 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
 
         # Analyze imports for license-related functions
         if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-            for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                dll_name = entry.dll.decode('utf-8', errors='ignore').lower()
+            for _entry in pe.DIRECTORY_ENTRY_IMPORT:
+                dll_name = _entry.dll.decode('utf-8', errors='ignore').lower()
 
-                for imp in entry.imports:
-                    if imp.name:
-                        func_name = imp.name.decode('utf-8', errors='ignore').lower()
+                for _imp in _entry.imports:
+                    if _imp.name:
+                        func_name = _imp.name.decode('utf-8', errors='ignore').lower()
 
                         # Network-related functions
-                        if any(net in func_name for net in ['inet', 'socket', 'winhttp', 'urlmon']):
+                        if any(_net in func_name for _net in ['inet', 'socket', 'winhttp', 'urlmon']):
                             results["network_calls"].append(f"{dll_name}::{func_name}")
 
                         # Registry-related functions
-                        if any(reg in func_name for reg in ['reg', 'key', 'value']):
+                        if any(_reg in func_name for _reg in ['reg', 'key', 'value']):
                             results["registry_access"].append(f"{dll_name}::{func_name}")
 
                         # File operation functions
-                        if any(file_op in func_name for file_op in ['file', 'read', 'write', 'create']):
+                        if any(_file_op in func_name for _file_op in ['file', 'read', 'write', 'create']):
                             results["file_operations"].append(f"{dll_name}::{func_name}")
 
                         # License validation patterns
                         license_patterns = ['license', 'activation', 'validate', 'verify', 'check', 'auth', 'trial']
-                        if any(pattern in func_name for pattern in license_patterns):
+                        if any(_pattern in func_name for _pattern in license_patterns):
                             results["validation_routines"].append(f"{dll_name}::{func_name}")
 
         # Scan for strings (simplified version)
@@ -301,11 +314,11 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
                 b'authenticate', b'verify', b'validation'
             ]
 
-            for keyword in license_keywords:
-                if keyword in data:
-                    results["suspicious_strings"].append(keyword.decode('utf-8', errors='ignore'))
+            for _keyword in license_keywords:
+                if _keyword in data:
+                    results["suspicious_strings"].append(_keyword.decode('utf-8', errors='ignore'))
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Could not scan strings in %s: %s", binary_path, e)
 
         # Identify protection mechanisms
@@ -313,12 +326,12 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
 
         # Check for high-entropy sections (potential packing/encryption)
         if hasattr(pe, 'sections'):
-            for section in pe.sections:
+            for _section in pe.sections:
                 try:
-                    section_data = section.get_data()
+                    section_data = _section.get_data()
                     entropy = calculate_entropy(section_data)
                     if entropy > 7.0:
-                        section_name = section.Name.decode('utf-8', errors='ignore').rstrip('\0')
+                        section_name = _section.Name.decode('utf-8', errors='ignore').rstrip('\0')
                         protection_indicators.append(f"High entropy section: {section_name} ({entropy:.2f})")
                 except (UnicodeDecodeError, AttributeError, ValueError):
                     pass
@@ -327,8 +340,8 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
 
         pe.close()
 
-    except Exception as e:
-        logger.exception(f"Error in deep license analysis: {binary_path}")
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.exception("Error in deep license analysis: %s", binary_path)
         results["error"] = str(e)
 
     return results
@@ -371,11 +384,11 @@ def detect_packing(binary_path: str) -> Dict[str, Any]:
         entropy_scores = []
 
         if hasattr(pe, 'sections'):
-            for section in pe.sections:
+            for _section in pe.sections:
                 try:
-                    section_data = section.get_data()
+                    section_data = _section.get_data()
                     entropy = calculate_entropy(section_data)
-                    section_name = section.Name.decode('utf-8', errors='ignore').rstrip('\0')
+                    section_name = _section.Name.decode('utf-8', errors='ignore').rstrip('\0')
 
                     entropy_scores.append(entropy)
                     total_sections += 1
@@ -384,7 +397,7 @@ def detect_packing(binary_path: str) -> Dict[str, Any]:
                         high_entropy_sections += 1
                         results["indicators"].append(f"High entropy section: {section_name} ({entropy:.2f})")
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.warning("Could not analyze section entropy: %s", e)
 
         # Calculate average entropy
@@ -405,17 +418,17 @@ def detect_packing(binary_path: str) -> Dict[str, Any]:
             '.packed', '.wwpack', '.y0da'
         ]
 
-        for section in pe.sections:
-            section_name = section.Name.decode('utf-8', errors='ignore').rstrip('\0').lower()
-            if any(sus_name in section_name for sus_name in suspicious_section_names):
+        for _section in pe.sections:
+            section_name = _section.Name.decode('utf-8', errors='ignore').rstrip('\0').lower()
+            if any(_sus_name in section_name for _sus_name in suspicious_section_names):
                 results["indicators"].append(f"Suspicious section name: {section_name}")
                 results["section_analysis"][section_name] = "Suspicious packer signature"
 
         # Import analysis - packed files often have minimal imports
         import_count = 0
         if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-            for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                for imp in entry.imports:
+            for _entry in pe.DIRECTORY_ENTRY_IMPORT:
+                for _imp in _entry.imports:
                     import_count += 1
 
         results["import_analysis"]["import_count"] = import_count
@@ -444,7 +457,7 @@ def detect_packing(binary_path: str) -> Dict[str, Any]:
             confidence_factors.append(0.3)
 
         # Suspicious section names
-        if any("suspicious" in indicator.lower() for indicator in results["indicators"]):
+        if any("suspicious" in _indicator.lower() for _indicator in results["indicators"]):
             confidence_factors.append(0.3)
 
         # Calculate final confidence
@@ -453,8 +466,8 @@ def detect_packing(binary_path: str) -> Dict[str, Any]:
 
         pe.close()
 
-    except Exception as e:
-        logger.exception(f"Error in packing detection: {binary_path}")
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.exception("Error in packing detection: %s", binary_path)
         results["error"] = str(e)
 
     return results
@@ -506,8 +519,8 @@ def decrypt_embedded_script(binary_path):
                     b"def ",
                     b"print(",
                     b"console.log"]
-                for keyword in script_keywords:
-                    if keyword in script_content:
+                for _keyword in script_keywords:
+                    if _keyword in script_content:
                         is_script = True
                         break
 
@@ -522,7 +535,7 @@ def decrypt_embedded_script(binary_path):
                             # Limit to first 1000 chars to avoid huge outputs
                             "content": decoded_script[:1000]
                         })
-                    except Exception as e:
+                    except (OSError, ValueError, RuntimeError) as e:
                         results.append(f"Error decoding script: {e}")
 
                 start_pos = end_pos + len(end_marker)
@@ -533,10 +546,10 @@ def decrypt_embedded_script(binary_path):
             b"base64.b64decode", b"base64_decode", b"fromBase64"
         ]
 
-        for marker in obfuscation_markers:
+        for _marker in obfuscation_markers:
             start_pos = 0
             while True:
-                start_pos = binary_data.find(marker, start_pos)
+                start_pos = binary_data.find(_marker, start_pos)
                 if start_pos == -1:
                     break
 
@@ -544,33 +557,29 @@ def decrypt_embedded_script(binary_path):
                 context_start = max(0, start_pos - 100)
                 context_end = min(
                     len(binary_data),
-                    start_pos + len(marker) + 100)
+                    start_pos + len(_marker) + 100)
                 context = binary_data[context_start:context_end]
 
                 try:
                     decoded_context = context.decode('utf-8', errors='ignore')
                     found_scripts.append({
                         "offset": start_pos,
-                        "marker": "Obfuscated: " + marker.decode('utf-8', errors='ignore'),
+                        "marker": "Obfuscated: " + _marker.decode('utf-8', errors='ignore'),
                         "content": decoded_context
                     })
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     results.append(f"Error decoding obfuscated script: {e}")
 
-                start_pos += len(marker)
+                start_pos += len(_marker)
 
         # Report findings
         if found_scripts:
             results.append(
-                f"Found {
-                    len(found_scripts)} potential embedded scripts:")
+                f"Found {len(found_scripts)} potential embedded scripts:")
 
             for i, script in enumerate(found_scripts):
                 results.append(
-                    f"\nScript {
-                        i +
-                        1} at offset 0x{
-                        script['offset']:X}:")
+                    f"\nScript {i + 1} at offset 0x{script['offset']:X}:")
                 results.append(f"Marker: {script['marker']}")
                 results.append("Content preview:")
 
@@ -594,7 +603,7 @@ def decrypt_embedded_script(binary_path):
         else:
             results.append("No embedded scripts found.")
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         results.append(f"Error searching for embedded scripts: {e}")
         logger.error("Error in decrypt_embedded_script: %s", e)
 

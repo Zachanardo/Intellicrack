@@ -1,16 +1,49 @@
 """
-Data Inspector for Hex Viewer.
+Data Inspector for Hex Viewer. 
 
-This module provides a data inspector widget that interprets selected bytes
-as various data types including integers, floats, strings, timestamps, etc.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import datetime
 import logging
 import struct
 from enum import Enum
 
-from ..ui.common_imports import *
+from ..ui.common_imports import (
+    PYQT5_AVAILABLE,
+    QComboBox,
+    QFont,
+    QFormLayout,
+    QFrame,
+    QGroupBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QTabWidget,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal
+)
 
 logger = logging.getLogger(__name__)
 
@@ -258,10 +291,10 @@ class DataInterpreter:
                         return f"Invalid DOS datetime: {dos_date:04X} {dos_time:04X}"
 
             elif data_type == DataType.BINARY:
-                return ' '.join(f"{b:08b}" for b in data[:8])  # Limit to 8 bytes
+                return ' '.join(f"{_b:08b}" for _b in data[:8])  # Limit to 8 bytes
 
             elif data_type == DataType.HEX:
-                return ' '.join(f"{b:02X}" for b in data[:16])  # Limit to 16 bytes
+                return ' '.join(f"{_b:02X}" for _b in data[:16])  # Limit to 16 bytes
 
             elif data_type == DataType.GUID:
                 if len(data) >= 16:
@@ -269,7 +302,7 @@ class DataInterpreter:
                     guid_parts = struct.unpack('<IHH8B', data[:16])
                     return f"{guid_parts[0]:08X}-{guid_parts[1]:04X}-{guid_parts[2]:04X}-" + \
                            f"{guid_parts[3]:02X}{guid_parts[4]:02X}-" + \
-                           ''.join(f"{guid_parts[i]:02X}" for i in range(5, 11))
+                           ''.join(f"{guid_parts[_i]:02X}" for _i in range(5, 11))
 
             elif data_type == DataType.IPV4_ADDRESS:
                 if len(data) >= 4:
@@ -278,13 +311,13 @@ class DataInterpreter:
             elif data_type == DataType.IPV6_ADDRESS:
                 if len(data) >= 16:
                     parts = struct.unpack('>8H', data[:16])
-                    return ':'.join(f"{part:04x}" for part in parts)
+                    return ':'.join(f"{_part:04x}" for _part in parts)
 
             elif data_type == DataType.MAC_ADDRESS:
                 if len(data) >= 6:
-                    return ':'.join(f"{b:02X}" for b in data[:6])
+                    return ':'.join(f"{_b:02X}" for _b in data[:6])
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error interpreting data as %s: %s", data_type.value, e)
 
         return "Insufficient data"
@@ -333,7 +366,7 @@ class DataInspector(QWidget if PYQT5_AVAILABLE else object):
 
         layout.addWidget(info_frame)
 
-        # Create tab widget for different interpretation categories
+        # Create tab widget for _different interpretation categories
         self.tab_widget = QTabWidget()
         layout.addWidget(self.tab_widget)
 
@@ -377,7 +410,7 @@ class DataInspector(QWidget if PYQT5_AVAILABLE else object):
             ("64-bit signed", DataType.INT64_LE, DataType.INT64_BE)
         ]
 
-        for i, (type_name, le_type, be_type) in enumerate(integer_types):
+        for i, (type_name, _, be_type) in enumerate(integer_types):
             self.integer_table.setItem(i, 0, QTableWidgetItem(type_name))
             self.integer_table.setItem(i, 1, QTableWidgetItem("-"))
             self.integer_table.setItem(i, 2, QTableWidgetItem("-" if be_type else "N/A"))
@@ -721,6 +754,10 @@ class DataInspector(QWidget if PYQT5_AVAILABLE else object):
 
             elif input_type == "Decimal":
                 # Parse decimal input (assume single byte for now)
+                # Validate and sanitize user input
+                value_text = value_text.strip()
+                if not value_text.isdigit():
+                    raise ValueError("Decimal value must contain only digits")
                 value = int(value_text)
                 if 0 <= value <= 255:
                     new_data = bytes([value])
@@ -752,7 +789,7 @@ class DataInspector(QWidget if PYQT5_AVAILABLE else object):
             if self.data_modified:
                 self.data_modified.emit(new_data)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error parsing input value: %s", e)
 
     def clear_modification(self):

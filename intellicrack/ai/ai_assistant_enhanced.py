@@ -1,9 +1,24 @@
 """
-Enhanced AI Assistant for Intellicrack.
+Enhanced AI Assistant for Intellicrack. 
 
-This module provides an enhanced AI assistant that functions similar to Claude Code,
-with proper tool integration and workflow management.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import logging
@@ -268,18 +283,18 @@ Remember: Your goal is to help users understand binary protection mechanisms and
     def _format_tools_description(self) -> str:
         """Format tools description for the prompt."""
         categories = {}
-        for tool in self.tools.values():
-            if tool.category not in categories:
-                categories[tool.category] = []
-            categories[tool.category].append(tool)
+        for _tool in self.tools.values():
+            if _tool.category not in categories:
+                categories[_tool.category] = []
+            categories[_tool.category].append(_tool)
 
         description = ""
         for category, tools in categories.items():
             description += f"\n### {category.value.title()} Tools\n\n"
-            for tool in tools:
-                description += f"**{tool.name}** - {tool.description}\n"
-                if tool.example:
-                    description += f"   Example: `{tool.example}`\n"
+            for _tool in tools:
+                description += f"**{_tool.name}** - {_tool.description}\n"
+                if _tool.example:
+                    description += f"   Example: `{_tool.example}`\n"
                 description += "\n"
 
         return description
@@ -308,14 +323,14 @@ Remember: Your goal is to help users understand binary protection mechanisms and
         """Analyze user intent from the message."""
         message_lower = message.lower()
 
-        # Check for specific intents
-        if any(word in message_lower for word in ["analyze", "scan", "check", "examine"]):
+        # Check for _specific intents
+        if any(_word in message_lower for _word in ["analyze", "scan", "check", "examine"]):
             return {"type": "analysis", "focus": self._extract_focus(message)}
-        elif any(word in message_lower for word in ["patch", "bypass", "crack", "remove"]):
+        elif any(_word in message_lower for _word in ["patch", "bypass", "crack", "remove"]):
             return {"type": "patching", "target": self._extract_target(message)}
-        elif any(word in message_lower for word in ["help", "explain", "what", "how"]):
+        elif any(_word in message_lower for _word in ["help", "explain", "what", "how"]):
             return {"type": "explanation", "topic": self._extract_topic(message)}
-        elif any(word in message_lower for word in ["network", "protocol", "communication"]):
+        elif any(_word in message_lower for _word in ["network", "protocol", "communication"]):
             return {"type": "network", "aspect": self._extract_aspect(message)}
         else:
             return {"type": "general", "content": message}
@@ -342,12 +357,12 @@ Remember: Your goal is to help users understand binary protection mechanisms and
         else:
             return "auto"
 
-    def _extract_topic(self, _message: str) -> str:
+    def _extract_topic(self, message: str) -> str:  # pylint: disable=unused-argument
         """Extract help topic from message."""
         # Simple extraction logic
         return "general"
 
-    def _extract_aspect(self, _message: str) -> str:
+    def _extract_aspect(self, message: str) -> str:  # pylint: disable=unused-argument
         """Extract network aspect from message."""
         return "protocol"
 
@@ -398,7 +413,7 @@ Remember: Your goal is to help users understand binary protection mechanisms and
 
         return f"Based on my analysis, I can suggest patches for {target} mechanisms. However, I need your confirmation before applying any modifications.\n\nWould you like me to:\n1. Show suggested patches\n2. Explain how the patches work\n3. Create a backup before patching"
 
-    def _handle_explanation_intent(self, _intent: Dict[str, Any]) -> str:
+    def _handle_explanation_intent(self, intent: Dict[str, Any]) -> str:  # pylint: disable=unused-argument
         """Handle explanation intent."""
         return """I can help you understand:
 
@@ -409,7 +424,7 @@ Remember: Your goal is to help users understand binary protection mechanisms and
 
 What would you like to learn about?"""
 
-    def _handle_network_intent(self, _intent: Dict[str, Any]) -> str:
+    def _handle_network_intent(self, intent: Dict[str, Any]) -> str:  # pylint: disable=unused-argument
         """Handle network intent."""
         return "I can analyze network communications, including:\n- Protocol identification\n- License server communication\n- SSL/TLS traffic\n\nWould you like me to start network analysis?"
 
@@ -445,7 +460,7 @@ What would you like to learn about?"""
             )
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _suggest_patches(self, binary_path: str, _target: str = "auto") -> Dict[str, Any]:
+    def _suggest_patches(self, binary_path: str, target: str = "auto") -> Dict[str, Any]:  # pylint: disable=unused-argument
         """Suggest patches for the binary."""
         if self.cli_interface:
             return self.cli_interface.suggest_patches(binary_path)
@@ -500,7 +515,7 @@ What would you like to learn about?"""
             )
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _view_hex(self, _binary_path: str, address: str, size: int = 64) -> Dict[str, Any]:
+    def _view_hex(self, binary_path: str, address: str, size: int = 64) -> Dict[str, Any]:  # pylint: disable=unused-argument
         """View hex dump at specific address."""
         # This would integrate with the hex viewer
         return {
@@ -508,7 +523,7 @@ What would you like to learn about?"""
             "message": f"Hex view at {address} for {size} bytes would be displayed here"
         }
 
-    def _disassemble(self, _binary_path: str, address: str, count: int = 20) -> Dict[str, Any]:
+    def _disassemble(self, binary_path: str, address: str, count: int = 20) -> Dict[str, Any]:  # pylint: disable=unused-argument
         """Disassemble code at address."""
         # This would integrate with disassembly tools
         return {
@@ -532,7 +547,7 @@ What would you like to learn about?"""
                 self._log_tool_usage(f"File search failed: {result.get('message', 'Unknown error')}")
 
             return result
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in file search tool: %s", e)
             return {"status": "error", "message": str(e)}
 
@@ -551,7 +566,7 @@ What would you like to learn about?"""
                 self._log_tool_usage(f"File read failed: {result.get('message', 'Unknown error')}")
 
             return result
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in file read tool: %s", e)
             return {"status": "error", "message": str(e)}
 
@@ -572,7 +587,7 @@ What would you like to learn about?"""
                 self._log_tool_usage(f"Program directory analysis failed: {result.get('message', 'Unknown error')}")
 
             return result
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in program directory analysis: %s", e)
             return {"status": "error", "message": str(e)}
 
@@ -595,31 +610,31 @@ What would you like to learn about?"""
                 "findings": [],
                 "recommendations": []
             }
-            
+
             # Incorporate ML results if provided
             if ml_results:
                 analysis["ml_integration"] = {
                     "ml_confidence": ml_results.get("confidence", 0.0),
                     "ml_predictions": ml_results.get("predictions", [])
                 }
-                
+
             # Add complex analysis findings
             analysis["findings"].extend([
                 "Binary structure analysis completed",
                 "Cross-referenced with ML predictions",
                 "Applied AI reasoning patterns"
             ])
-            
+
             analysis["recommendations"].extend([
                 "Further static analysis recommended",
                 "Consider dynamic analysis for runtime behavior",
                 "Verify findings with manual review"
             ])
-            
+
             self._log_tool_usage(f"Complex binary analysis completed for {binary_path}")
             return analysis
-            
-        except Exception as e:
+
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in complex binary analysis: %s", e)
             return {
                 "error": str(e),
@@ -646,35 +661,35 @@ What would you like to learn about?"""
                 "license_type": "unknown",
                 "bypass_suggestions": []
             }
-            
+
             # Analyze patterns from input data
             patterns = input_data.get("patterns", [])
             strings = input_data.get("strings", [])
-            
+
             # Look for common license patterns
             license_keywords = ["license", "serial", "key", "activation", "trial", "demo", "expire"]
             found_patterns = []
-            
-            for pattern in patterns:
-                pattern_str = str(pattern).lower()
-                if any(keyword in pattern_str for keyword in license_keywords):
-                    found_patterns.append(pattern)
-                    
-            for string in strings:
-                string_str = str(string).lower()
-                if any(keyword in string_str for keyword in license_keywords):
-                    found_patterns.append(string)
-            
+
+            for _pattern in patterns:
+                pattern_str = str(_pattern).lower()
+                if any(_keyword in pattern_str for _keyword in license_keywords):
+                    found_patterns.append(_pattern)
+
+            for _string in strings:
+                string_str = str(_string).lower()
+                if any(_keyword in string_str for _keyword in license_keywords):
+                    found_patterns.append(_string)
+
             analysis["patterns_found"] = found_patterns[:10]  # Limit to 10 patterns
-            
+
             # Determine license type based on patterns
-            if any("trial" in str(p).lower() for p in found_patterns):
+            if any("trial" in str(_p).lower() for _p in found_patterns):
                 analysis["license_type"] = "trial_based"
-            elif any("serial" in str(p).lower() for p in found_patterns):
+            elif any("serial" in str(_p).lower() for _p in found_patterns):
                 analysis["license_type"] = "serial_based"
-            elif any("activation" in str(p).lower() for p in found_patterns):
+            elif any("activation" in str(_p).lower() for _p in found_patterns):
                 analysis["license_type"] = "activation_based"
-                
+
             # Add bypass suggestions
             if analysis["license_type"] != "unknown":
                 analysis["bypass_suggestions"] = [
@@ -682,11 +697,11 @@ What would you like to learn about?"""
                     "Consider runtime analysis of license checks",
                     "Look for license validation functions"
                 ]
-            
+
             self._log_tool_usage(f"License pattern analysis completed - found {len(found_patterns)} relevant patterns")
             return analysis
-            
-        except Exception as e:
+
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in license pattern analysis: %s", e)
             return {
                 "error": str(e),
@@ -713,7 +728,7 @@ What would you like to learn about?"""
                 "next_steps": [],
                 "evidence": []
             }
-            
+
             # Extract evidence from task data
             if "patterns" in task_data:
                 reasoning["evidence"].append(f"Found {len(task_data['patterns'])} patterns")
@@ -721,7 +736,7 @@ What would you like to learn about?"""
                 reasoning["evidence"].append("Binary information available")
             if "ml_results" in task_data:
                 reasoning["evidence"].append("ML analysis results available")
-                
+
             # Generate conclusions based on evidence
             if reasoning["evidence"]:
                 reasoning["conclusions"] = [
@@ -737,11 +752,11 @@ What would you like to learn about?"""
             else:
                 reasoning["conclusions"] = ["Insufficient data for comprehensive reasoning"]
                 reasoning["next_steps"] = ["Gather additional analysis data"]
-                
+
             self._log_tool_usage("AI reasoning completed")
             return reasoning
-            
-        except Exception as e:
+
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in AI reasoning: %s", e)
             return {
                 "error": str(e),
@@ -787,6 +802,13 @@ def create_ai_assistant_widget():
 
     # Connect signals
     def send_message():
+        """
+        Send a message to the AI assistant and display the response.
+        
+        Retrieves the text from the input area, sends it to the assistant,
+        displays both the user message and assistant response in the chat display,
+        then clears the input area for the next message.
+        """
         message = input_area.toPlainText()
         if message:
             chat_display.append(f"User: {message}")

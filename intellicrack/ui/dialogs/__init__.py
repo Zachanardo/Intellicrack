@@ -1,28 +1,24 @@
 """
-Intellicrack UI Dialogs Package
+Intellicrack UI Dialogs Package 
 
-This package provides specialized dialog windows for the Intellicrack user interface.
-It includes configuration dialogs, wizards, editors, and managers for various aspects
-of the application's functionality.
+Copyright (C) 2025 Zachary Flint
 
-Modules:
-    - distributed_config_dialog: Configuration for distributed processing
-    - guided_workflow_wizard: Step-by-step workflow guidance
-    - model_finetuning_dialog: AI model fine-tuning interface
-    - plugin_manager_dialog: Plugin management interface
-    - report_manager_dialog: Report generation and management
-    - similarity_search_dialog: Binary similarity search interface
-    - splash_screen: Application startup splash screen
-    - text_editor_dialog: Built-in text editor
-    - visual_patch_editor: Visual binary patching interface
+This file is part of Intellicrack.
 
-Key Features:
-    - Intuitive configuration interfaces
-    - Guided workflows for complex tasks
-    - Visual editing capabilities
-    - Plugin and model management
-    - Integrated reporting tools
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 
@@ -31,93 +27,95 @@ logger = logging.getLogger(__name__)
 
 # Import dialog modules with error handling
 try:
-    from .distributed_config_dialog import *
+    from .distributed_config_dialog import DistributedProcessingConfigDialog
 except ImportError as e:
     logger.warning("Failed to import distributed_config_dialog: %s", e)
+    DistributedProcessingConfigDialog = None
 
 try:
-    from .guided_workflow_wizard import *
+    from .guided_workflow_wizard import GuidedWorkflowWizard
 except ImportError as e:
     logger.warning("Failed to import guided_workflow_wizard: %s", e)
+    GuidedWorkflowWizard = None
 
 try:
-    from .model_finetuning_dialog import *
+    from .model_finetuning_dialog import ModelFinetuningDialog, TrainingConfig, AugmentationConfig, TrainingThread
 except ImportError as e:
     logger.warning("Failed to import model_finetuning_dialog: %s", e)
+    ModelFinetuningDialog = None
+    TrainingConfig = None
+    AugmentationConfig = None
+    TrainingThread = None
 
 try:
-    from .plugin_manager_dialog import *
+    from .plugin_manager_dialog import PluginManagerDialog
 except ImportError as e:
     logger.warning("Failed to import plugin_manager_dialog: %s", e)
+    PluginManagerDialog = None
 
 try:
-    from .report_manager_dialog import *
+    from .report_manager_dialog import ReportManagerDialog, ReportGenerationThread
 except ImportError as e:
     logger.warning("Failed to import report_manager_dialog: %s", e)
+    ReportManagerDialog = None
+    ReportGenerationThread = None
 
 try:
-    from .similarity_search_dialog import *
+    from .similarity_search_dialog import BinarySimilaritySearchDialog
 except ImportError as e:
     logger.warning("Failed to import similarity_search_dialog: %s", e)
+    BinarySimilaritySearchDialog = None
 
 try:
-    from .splash_screen import *
+    from .splash_screen import SplashScreen
 except ImportError as e:
     logger.warning("Failed to import splash_screen: %s", e)
+    SplashScreen = None
 
 try:
-    from .text_editor_dialog import *
+    from .text_editor_dialog import TextEditorDialog, PythonSyntaxHighlighter, FindReplaceDialog
 except ImportError as e:
     logger.warning("Failed to import text_editor_dialog: %s", e)
+    TextEditorDialog = None
+    PythonSyntaxHighlighter = None
+    FindReplaceDialog = None
 
 try:
-    from .visual_patch_editor import *
+    from .visual_patch_editor import VisualPatchEditorDialog
 except ImportError as e:
     logger.warning("Failed to import visual_patch_editor: %s", e)
+    VisualPatchEditorDialog = None
 
-# Define package exports
-__all__ = [
-    # From distributed_config_dialog
-    'DistributedProcessingConfigDialog',
-    'create_distributed_config_dialog',
+# Define package exports - only include successfully imported items
+__all__ = []
 
-    # From guided_workflow_wizard
-    'GuidedWorkflowWizard',
-    'create_guided_workflow_wizard',
+# Add successfully imported classes to __all__
+if DistributedProcessingConfigDialog is not None:
+    __all__.append('DistributedProcessingConfigDialog')
 
-    # From model_finetuning_dialog
-    'ModelFinetuningDialog',
-    'TrainingConfig',
-    'AugmentationConfig',
-    'TrainingThread',
-    'create_model_finetuning_dialog',
+if GuidedWorkflowWizard is not None:
+    __all__.append('GuidedWorkflowWizard')
 
-    # From plugin_manager_dialog
-    'PluginManagerDialog',
-    'PluginInstallThread',
+if ModelFinetuningDialog is not None:
+    __all__.extend(['ModelFinetuningDialog', 'TrainingConfig', 'AugmentationConfig', 'TrainingThread'])
 
-    # From report_manager_dialog
-    'ReportManagerDialog',
-    'ReportGenerationThread',
+if PluginManagerDialog is not None:
+    __all__.append('PluginManagerDialog')
 
-    # From similarity_search_dialog
-    'BinarySimilaritySearchDialog',
-    'create_similarity_search_dialog',
+if ReportManagerDialog is not None:
+    __all__.extend(['ReportManagerDialog', 'ReportGenerationThread'])
 
-    # From splash_screen
-    'SplashScreen',
-    'create_progress_splash_screen',
-    'IntellicrackApp',
+if BinarySimilaritySearchDialog is not None:
+    __all__.append('BinarySimilaritySearchDialog')
 
-    # From text_editor_dialog
-    'TextEditorDialog',
-    'PythonSyntaxHighlighter',
-    'FindReplaceDialog',
+if SplashScreen is not None:
+    __all__.append('SplashScreen')
 
-    # From visual_patch_editor
-    'VisualPatchEditorDialog',
-    'create_visual_patch_editor',
-]
+if TextEditorDialog is not None:
+    __all__.extend(['TextEditorDialog', 'PythonSyntaxHighlighter', 'FindReplaceDialog'])
+
+if VisualPatchEditorDialog is not None:
+    __all__.append('VisualPatchEditorDialog')
 
 # Package metadata
 __version__ = "0.1.0"

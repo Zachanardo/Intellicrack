@@ -1,9 +1,24 @@
 """
-Binary Similarity Search Dialog
+Binary Similarity Search Dialog 
 
-This module provides a dialog for searching and comparing binary files
-to find similar cracking patterns and techniques.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import logging
@@ -190,7 +205,7 @@ class BinarySimilaritySearchDialog(QDialog):
                     self.db_info_label.setText(f"Database: {binary_count} binaries")
             else:
                 self.db_info_label.setText("Database: Not found (will be created)")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.db_info_label.setText(f"Database Error: {e}")
 
     def update_threshold_label(self, value: int) -> None:
@@ -227,7 +242,7 @@ class BinarySimilaritySearchDialog(QDialog):
                 try:
                     results = self.search_engine.search_similar_binaries(self.binary_path, self.threshold)
                     self.result_signal.emit(results)
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logging.error("Binary similarity search failed: %s", e)
                     # Emit empty list on error
                     self.result_signal.emit([])
@@ -304,7 +319,7 @@ class BinarySimilaritySearchDialog(QDialog):
         # If multiple patterns, ask which one to apply
         pattern_to_apply = None
         if len(patterns) > 1:
-            pattern_items = [f"Pattern {i+1}" for i in range(len(patterns))]
+            pattern_items = [f"Pattern {_i+1}" for _i in range(len(patterns))]
             pattern_index, ok = QInputDialog.getItem(
                 self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False)
 
@@ -345,7 +360,7 @@ class BinarySimilaritySearchDialog(QDialog):
                         )
                         self.status_label.setText("Pattern displayed for manual application")
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     QMessageBox.critical(self, "Error", f"Error applying pattern: {e}")
 
     def add_to_database(self) -> None:
@@ -390,7 +405,7 @@ class BinarySimilaritySearchDialog(QDialog):
                     "Error",
                     "Failed to add binary to database"
                 )
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             QMessageBox.critical(
                 self,
                 "Error",

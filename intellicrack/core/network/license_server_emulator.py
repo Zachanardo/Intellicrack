@@ -1,19 +1,24 @@
 """
-Network License Server Emulator
+Network License Server Emulator 
 
-This module provides comprehensive network-based license server emulation capabilities.
-It can intercept and respond to license verification requests from various software vendors
-including FlexLM, HASP/Sentinel, Adobe, Autodesk, and Microsoft KMS protocols.
+Copyright (C) 2025 Zachary Flint
 
-The emulator supports:
-- Multi-protocol license server emulation
-- SSL/TLS interception and response generation
-- Traffic recording and analysis
-- DNS redirection capabilities
-- Automatic protocol detection and response generation
+This file is part of Intellicrack.
 
-Author: Intellicrack Development Team
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import ipaddress
 import json
@@ -208,13 +213,13 @@ class NetworkLicenseServerEmulator:
                 self._start_traffic_recorder()
 
             # Start TCP servers on configured ports
-            for port in self.config['listen_ports']:
-                self._start_tcp_server(port)
+            for _port in self.config['listen_ports']:
+                self._start_tcp_server(_port)
 
-            self.logger.info(f"Network License Server Emulator started on ports: {self.config['listen_ports']}")
+            self.logger.info("Network License Server Emulator started on ports: %s", self.config['listen_ports'])
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error starting Network License Server Emulator: %s", e)
             self.logger.error(traceback.format_exc())
             self.stop()
@@ -231,9 +236,9 @@ class NetworkLicenseServerEmulator:
             self.running = False
 
             # Stop all TCP servers
-            for server in self.servers:
-                server.shutdown()
-                server.server_close()
+            for _server in self.servers:
+                _server.shutdown()
+                _server.server_close()
 
             # Stop DNS server if running
             if self.dns_server:
@@ -250,7 +255,7 @@ class NetworkLicenseServerEmulator:
             self.logger.info("Network License Server Emulator stopped")
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error stopping Network License Server Emulator: %s", e)
             return False
 
@@ -322,7 +327,7 @@ class NetworkLicenseServerEmulator:
                                 protocol=protocol
                             )
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     emulator.logger.error("Error handling request: %s", e)
 
         # Create server
@@ -364,8 +369,8 @@ class NetworkLicenseServerEmulator:
                 probability = 0.0
 
             # Check for pattern matches
-            for pattern in fingerprint['patterns']:
-                if pattern in data:
+            for _pattern in fingerprint['patterns']:
+                if _pattern in data:
                     probability += 0.1
 
             if probability >= 0.5:
@@ -378,7 +383,7 @@ class NetworkLicenseServerEmulator:
         # Default to unknown protocol
         return 'unknown'
 
-    def _generate_response(self, protocol: str, request_data: bytes) -> bytes:
+    def _generate_response(self, protocol: str, request_data: bytes) -> bytes:  # pylint: disable=unused-argument
         """
         Generate a response for the identified protocol.
 
@@ -401,10 +406,201 @@ class NetworkLicenseServerEmulator:
     def _start_dns_server(self) -> None:
         """
         Start a DNS server for redirecting license server hostnames.
+        
+        This DNS server intercepts license server DNS queries and redirects them
+        to the local license server emulator, enabling license bypass.
         """
-        self.logger.info("DNS server functionality would be implemented here")
-        # This would require additional DNS libraries like dnslib
-        # For now, it's a placeholder for future implementation
+        import socket
+        import struct
+        import threading
+        
+        self.logger.info("Starting DNS server for license server redirection")
+        
+        # Common license server hostnames to intercept
+        self.license_hostnames = {
+            b'activate.adobe.com': '127.0.0.1',
+            b'practivate.adobe.com': '127.0.0.1', 
+            b'lm.licenses.adobe.com': '127.0.0.1',
+            b'na1r.services.adobe.com': '127.0.0.1',
+            b'hlrcv.stage.adobe.com': '127.0.0.1',
+            b'lcs-mobile-cops.adobe.com': '127.0.0.1',
+            b'autodesk.com': '127.0.0.1',
+            b'registeronce.adobe.com': '127.0.0.1',
+            b'3dns.adobe.com': '127.0.0.1',
+            b'3dns-1.adobe.com': '127.0.0.1',
+            b'3dns-2.adobe.com': '127.0.0.1',
+            b'3dns-3.adobe.com': '127.0.0.1',
+            b'3dns-4.adobe.com': '127.0.0.1',
+            b'adobe-dns.adobe.com': '127.0.0.1',
+            b'adobe-dns-1.adobe.com': '127.0.0.1',
+            b'adobe-dns-2.adobe.com': '127.0.0.1',
+            b'adobe-dns-3.adobe.com': '127.0.0.1',
+            b'adobe-dns-4.adobe.com': '127.0.0.1',
+            b'hl2rcv.adobe.com': '127.0.0.1',
+        }
+        
+        try:
+            # Create UDP socket for DNS
+            self.dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.dns_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.dns_socket.bind(('0.0.0.0', 53))
+            self.dns_socket.settimeout(1.0)
+            
+            self.logger.info("DNS server started on port 53")
+            
+            while self.running:
+                try:
+                    data, addr = self.dns_socket.recvfrom(512)
+                    # Handle DNS query in separate thread
+                    dns_thread = threading.Thread(
+                        target=self._handle_dns_query,
+                        args=(data, addr),
+                        daemon=True
+                    )
+                    dns_thread.start()
+                except socket.timeout:
+                    continue
+                except Exception as e:
+                    if self.running:
+                        self.logger.error("DNS server error: %s", e)
+                        
+        except PermissionError:
+            self.logger.warning("Cannot bind to port 53 (requires root/admin privileges)")
+            self.logger.info("DNS server functionality disabled")
+        except Exception as e:
+            self.logger.error("Failed to start DNS server: %s", e)
+        finally:
+            if hasattr(self, 'dns_socket'):
+                self.dns_socket.close()
+                
+    def _handle_dns_query(self, data: bytes, addr: tuple) -> None:
+        """
+        Handle individual DNS query.
+        
+        Args:
+            data: DNS query data
+            addr: Client address (ip, port)
+        """
+        try:
+            if len(data) < 12:  # Minimum DNS header size
+                return
+                
+            # Parse DNS header
+            transaction_id = struct.unpack('>H', data[0:2])[0]
+            flags = struct.unpack('>H', data[2:4])[0]
+            questions = struct.unpack('>H', data[4:6])[0]
+            
+            if questions != 1:  # Only handle single question queries
+                return
+                
+            # Parse question section (skip header)
+            query_offset = 12
+            query_name = b''
+            
+            # Parse domain name from DNS query
+            while query_offset < len(data):
+                length = data[query_offset]
+                if length == 0:
+                    query_offset += 1
+                    break
+                if length > 63:  # Invalid label length
+                    return
+                query_name += data[query_offset + 1:query_offset + 1 + length]
+                if query_offset + 1 + length < len(data) and data[query_offset + 1 + length] != 0:
+                    query_name += b'.'
+                query_offset += 1 + length
+                
+            # Check if we should redirect this hostname
+            redirect_ip = None
+            for hostname, ip in self.license_hostnames.items():
+                if hostname in query_name.lower():
+                    redirect_ip = ip
+                    break
+                    
+            if redirect_ip:
+                # Create DNS response redirecting to local server
+                response = self._create_dns_response(
+                    transaction_id, query_name, redirect_ip, data[12:query_offset+4]
+                )
+                self.dns_socket.sendto(response, addr)
+                self.logger.debug("Redirected %s to %s for %s", 
+                                query_name.decode('utf-8', errors='ignore'), 
+                                redirect_ip, addr[0])
+            else:
+                # Forward to real DNS server (8.8.8.8)
+                try:
+                    forward_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    forward_socket.settimeout(5.0)
+                    forward_socket.sendto(data, ('8.8.8.8', 53))
+                    response, _ = forward_socket.recvfrom(512)
+                    self.dns_socket.sendto(response, addr)
+                    forward_socket.close()
+                except Exception:
+                    # If forwarding fails, send NXDOMAIN response
+                    response = self._create_dns_error_response(transaction_id, data[12:query_offset+4])
+                    self.dns_socket.sendto(response, addr)
+                    
+        except Exception as e:
+            self.logger.debug("Error handling DNS query: %s", e)
+            
+    def _create_dns_response(self, transaction_id: int, query_name: bytes, 
+                           ip_address: str, question_section: bytes) -> bytes:
+        """
+        Create a DNS A record response.
+        
+        Args:
+            transaction_id: DNS transaction ID
+            query_name: Original query name
+            ip_address: IP address to return
+            question_section: Original question section
+            
+        Returns:
+            DNS response packet
+        """
+        # DNS header (response)
+        header = struct.pack('>HHHHHH',
+            transaction_id,  # Transaction ID
+            0x8180,         # Flags: response, authoritative
+            1,              # Questions
+            1,              # Answers
+            0,              # Authority RRs
+            0               # Additional RRs
+        )
+        
+        # Answer section (A record)
+        ip_parts = [int(part) for part in ip_address.split('.')]
+        answer = (
+            question_section[:-4] +  # Name (compressed pointer to question)
+            struct.pack('>HH', 0x0001, 0x0001) +  # Type A, Class IN
+            struct.pack('>I', 300) +  # TTL (5 minutes)
+            struct.pack('>H', 4) +    # Data length
+            struct.pack('BBBB', *ip_parts)  # IP address
+        )
+        
+        return header + question_section + answer
+        
+    def _create_dns_error_response(self, transaction_id: int, question_section: bytes) -> bytes:
+        """
+        Create a DNS NXDOMAIN error response.
+        
+        Args:
+            transaction_id: DNS transaction ID
+            question_section: Original question section
+            
+        Returns:
+            DNS error response packet
+        """
+        # DNS header (NXDOMAIN response)
+        header = struct.pack('>HHHHHH',
+            transaction_id,  # Transaction ID
+            0x8183,         # Flags: response, NXDOMAIN
+            1,              # Questions
+            0,              # Answers
+            0,              # Authority RRs
+            0               # Additional RRs
+        )
+        
+        return header + question_section
 
     def _start_ssl_interceptor(self) -> Optional[Any]:
         """
@@ -442,13 +638,13 @@ class NetworkLicenseServerEmulator:
                         context.load_cert_chain(certfile=cert_file, keyfile=key_file)
                         context.check_hostname = False
                         context.verify_mode = ssl.CERT_NONE
-                    except Exception as e:
+                    except (OSError, ValueError, RuntimeError) as e:
                         self.parent.logger.error("Failed to load SSL certificates: %s", e)
 
                     return context
 
                 def _generate_self_signed_cert(self, cert_file: str, key_file: str) -> None:
-                    """Generate a self-signed certificate for SSL interception"""
+                    """Generate a self-signed certificate for _SSL interception"""
                     try:
                         import datetime
 
@@ -505,13 +701,13 @@ class NetworkLicenseServerEmulator:
                         with open(cert_file, 'wb') as f:
                             f.write(cert.public_bytes(serialization.Encoding.PEM))
 
-                        self.parent.logger.info("Generated self-signed certificate for SSL interception")
+                        self.parent.logger.info("Generated self-signed certificate for _SSL interception")
 
                     except ImportError:
                         self.parent.logger.error("cryptography module not available, using basic SSL")
                         # Fallback to basic SSL without custom cert
                         pass
-                    except Exception as e:
+                    except (OSError, ValueError, RuntimeError) as e:
                         self.parent.logger.error("Error generating certificate: %s", e)
 
                 def intercept_connection(self, client_socket: socket.socket, server_address: Tuple[str, int]) -> None:
@@ -536,7 +732,7 @@ class NetworkLicenseServerEmulator:
                         ssl_socket.send(response)
                         ssl_socket.close()
 
-                    except Exception as e:
+                    except (OSError, ValueError, RuntimeError) as e:
                         self.parent.logger.error("SSL interception error: %s", e)
 
                 def stop(self) -> None:
@@ -548,20 +744,20 @@ class NetworkLicenseServerEmulator:
 
             # Start interceptor for HTTPS ports
             https_ports = [443, 8443]
-            for port in self.config['listen_ports']:
-                if port in https_ports:
+            for _port in self.config['listen_ports']:
+                if _port in https_ports:
                     # Start SSL server on this port
                     thread = threading.Thread(
                         target=self._run_ssl_server,
-                        args=(port,),
+                        args=(_port,),
                         daemon=True
                     )
                     thread.start()
-                    self.logger.info("SSL interceptor started on port %s", port)
+                    self.logger.info("SSL interceptor started on port %s", _port)
 
             return self.ssl_interceptor
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to start SSL interceptor: %s", e)
             return None
 
@@ -578,7 +774,7 @@ class NetworkLicenseServerEmulator:
             server_socket.bind((self.config['listen_ip'], port))
             server_socket.listen(5)
 
-            self.logger.info(f"SSL server listening on {self.config['listen_ip']}:{port}")
+            self.logger.info("SSL server listening on %s:%s", self.config['listen_ip'], port)
 
             while self.running:
                 try:
@@ -593,13 +789,13 @@ class NetworkLicenseServerEmulator:
                     )
                     thread.start()
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     if self.running:
                         self.logger.error("SSL server error: %s", e)
 
             server_socket.close()
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to start SSL server on port %s: %s", port, e)
 
     def _start_traffic_recorder(self) -> Optional[Any]:
@@ -651,33 +847,33 @@ class NetworkLicenseServerEmulator:
 
                         # Convert bytes to string for JSON serialization
                         serializable_log = []
-                        for entry in self.traffic_log:
-                            serializable_entry = entry.copy()
+                        for _entry in self.traffic_log:
+                            serializable_entry = _entry.copy()
                             if isinstance(serializable_entry['data'], bytes):
                                 serializable_entry['data'] = serializable_entry['data'].hex()
                             serializable_log.append(serializable_entry)
 
-                        with open(log_file, 'w') as f:
+                        with open(log_file, 'w', encoding='utf-8') as f:
                             json.dump(serializable_log, f, indent=2, default=str)
 
                         self.parent.logger.info("Saved traffic log to %s", log_file)
                         self.last_save = time.time()
 
-                    except Exception as e:
+                    except (OSError, ValueError, RuntimeError) as e:
                         self.parent.logger.error("Failed to save traffic log: %s", e)
 
                 def analyze_patterns(self) -> Dict[str, List[str]]:
                     """Analyze recorded traffic for patterns"""
                     patterns: Dict[str, List[str]] = {}
 
-                    for entry in self.traffic_log:
-                        protocol = entry['protocol']
+                    for _entry in self.traffic_log:
+                        protocol = _entry['protocol']
                         if protocol not in patterns:
                             patterns[protocol] = []
 
                         # Extract patterns from data
-                        if entry['data']:
-                            data_str = entry['data'][:100] if isinstance(entry['data'], bytes) else str(entry['data'])[:100]
+                        if _entry['data']:
+                            data_str = _entry['data'][:100] if isinstance(_entry['data'], bytes) else str(_entry['data'])[:100]
                             patterns[protocol].append(data_str)
 
                     return patterns
@@ -692,6 +888,12 @@ class NetworkLicenseServerEmulator:
 
             # Start auto-save thread
             def auto_save_thread() -> None:
+                """
+                Background thread to automatically save traffic logs at regular intervals.
+                
+                Runs continuously while the server is active, checking every save_interval
+                seconds whether traffic recording is enabled and saving logs if so.
+                """
                 while self.running:
                     time.sleep(self.traffic_recorder.save_interval)
                     if self.traffic_recorder.recording:
@@ -702,7 +904,7 @@ class NetworkLicenseServerEmulator:
 
             return self.traffic_recorder
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to start traffic recorder: %s", e)
             return None
 
@@ -735,6 +937,15 @@ def run_network_license_emulator(app: Any) -> None:
         from ...utils.ui_utils import log_message
     except ImportError:
         def log_message(msg):
+            """
+            Fallback log message function when ui_utils is not available.
+            
+            Args:
+                msg: Message to log
+                
+            Returns:
+                str: The input message unchanged
+            """
             return msg
 
     if not QT_AVAILABLE:
@@ -758,7 +969,7 @@ def run_network_license_emulator(app: Any) -> None:
     if ok:
         # Parse ports
         try:
-            ports = [int(port.strip()) for port in ports_str.split(',')]
+            ports = [int(_port.strip()) for _port in ports_str.split(',')]
             emulator.config['listen_ports'] = ports
         except ValueError:
             app.update_output.emit(log_message("[Network] Invalid port numbers, using defaults"))
@@ -781,8 +992,8 @@ def run_network_license_emulator(app: Any) -> None:
         app.analyze_results.append("\n=== NETWORK LICENSE SERVER EMULATOR ===")
         app.analyze_results.append(f"Listening on ports: {emulator.config['listen_ports']}")
         app.analyze_results.append("\nSupported protocols:")
-        for protocol in emulator.protocol_fingerprints.keys():
-            app.analyze_results.append(f"- {protocol.upper()}")
+        for _protocol in emulator.protocol_fingerprints.keys():
+            app.analyze_results.append(f"- {_protocol.upper()}")
 
         app.analyze_results.append("\nTo use the emulator:")
         app.analyze_results.append("1. Configure the application to use localhost as the license server")

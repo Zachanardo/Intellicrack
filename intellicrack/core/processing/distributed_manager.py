@@ -1,21 +1,24 @@
 """
-Distributed Processing Manager
+Distributed Processing Manager 
 
-This module provides distributed processing capabilities for analyzing large binary files
-across multiple cores or machines. It supports various backend options including Ray, Dask,
-and standard multiprocessing, with automatic backend selection and fallback mechanisms.
+Copyright (C) 2025 Zachary Flint
 
-The manager supports:
-- Multi-backend distributed computing (Ray, Dask, multiprocessing)
-- Task-based processing with queue management
-- Chunk-based binary file processing
-- Pattern search, entropy analysis, and symbolic execution
-- Performance monitoring and worker load balancing
-- HTML report generation with detailed results
-- Graceful error handling and recovery
+This file is part of Intellicrack.
 
-Author: Intellicrack Development Team
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import math
@@ -134,7 +137,7 @@ class DistributedProcessingManager:
             return 'ray'
         elif self.preferred_backend == 'dask' and self.dask_available:
             return 'dask'
-        elif self.preferred_backend == 'multiprocessing' or self.preferred_backend == 'auto':
+        elif self.preferred_backend in ('multiprocessing', 'auto'):
             # For auto, we prefer Ray > Dask > Multiprocessing
             if self.preferred_backend == 'auto':
                 if self.ray_available:
@@ -271,21 +274,21 @@ class DistributedProcessingManager:
 
             # Submit tasks
             tasks = []
-            for i in range(num_chunks):
-                tasks.append(process_chunk.remote(i, self.binary_path, self.chunk_size))
+            for _i in range(num_chunks):
+                tasks.append(process_chunk.remote(_i, self.binary_path, self.chunk_size))
 
             # Get results with progress tracking
             results = []
             completed = 0
-            for result in ray.get(tasks):
-                results.append(result)
+            for _result in ray.get(tasks):
+                results.append(_result)
                 completed += 1
                 if completed % max(1, num_chunks // 10) == 0:  # Report every 10%
                     self.logger.info(f"Progress: {completed}/{num_chunks} chunks processed ({completed/num_chunks*100:.1f}%)")
 
             return results
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in Ray processing: %s", e)
             self.logger.info("Falling back to multiprocessing")
             return self._process_with_multiprocessing(process_func, num_chunks)
@@ -333,8 +336,8 @@ class DistributedProcessingManager:
 
             # Create tasks
             futures = []
-            for i in range(num_chunks):
-                future = client.submit(read_and_process_chunk, i)
+            for _i in range(num_chunks):
+                future = client.submit(read_and_process_chunk, _i)
                 futures.append(future)
 
             # Show progress
@@ -348,7 +351,7 @@ class DistributedProcessingManager:
 
             return list(results)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in Dask processing: %s", e)
             self.logger.info("Falling back to multiprocessing")
             return self._process_with_multiprocessing(process_func, num_chunks)
@@ -381,7 +384,7 @@ class DistributedProcessingManager:
                     f.seek(offset)
                     chunk_data = f.read(self.chunk_size)
                 return process_func(chunk_data, offset)
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 return {"error": str(e), "offset": offset, "chunk_idx": chunk_idx}
 
         # Create pool
@@ -428,19 +431,19 @@ class DistributedProcessingManager:
             self.result_queue = multiprocessing.Queue()
 
             # Add tasks to queue
-            for task in self.tasks:
-                self.task_queue.put(task)
+            for _task in self.tasks:
+                self.task_queue.put(_task)
 
             # Add sentinel tasks to signal workers to exit
-            for _ in range(self.num_workers):
+            for __ in range(self.num_workers):
                 self.task_queue.put(None)
 
             # Start workers
             self.workers = []
-            for i in range(self.num_workers):
+            for _i in range(self.num_workers):
                 worker = multiprocessing.Process(
                     target=self._worker_process,
-                    args=(i, self.task_queue, self.result_queue, self.binary_path, self.chunk_size)
+                    args=(_i, self.task_queue, self.result_queue, self.binary_path, self.chunk_size)
                 )
                 worker.daemon = True
                 worker.start()
@@ -451,7 +454,7 @@ class DistributedProcessingManager:
 
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error starting processing: %s", e)
             self.stop_processing()
             return False
@@ -511,7 +514,7 @@ class DistributedProcessingManager:
                     # Put result in result queue
                     result_queue.put((worker_id, task, result))
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.error(f"Error processing task {task['id']}: {e}")
                     processing_time = time.time() - start_time
                     error_result = {
@@ -524,7 +527,7 @@ class DistributedProcessingManager:
                     }
                     result_queue.put((worker_id, task, error_result))
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Worker %s error: %s", worker_id, e)
 
     def _task_find_patterns(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:
@@ -547,17 +550,17 @@ class DistributedProcessingManager:
 
         # Search for patterns
         matches = []
-        for pattern in patterns:
+        for _pattern in patterns:
             try:
-                pattern_bytes = pattern.encode() if isinstance(pattern, str) else pattern
-                for match in re.finditer(re.escape(pattern_bytes), chunk_data):
+                pattern_bytes = _pattern.encode() if isinstance(_pattern, str) else _pattern
+                for _match in re.finditer(re.escape(pattern_bytes), chunk_data):
                     matches.append({
-                        'pattern': pattern,
-                        'position': chunk_start + match.start(),
-                        'match': match.group()
+                        'pattern': _pattern,
+                        'position': chunk_start + _match.start(),
+                        'match': _match.group()
                     })
-            except Exception as e:
-                logger.warning("Error processing pattern %s: %s", pattern, e)
+            except (OSError, ValueError, RuntimeError) as e:
+                logger.warning("Error processing pattern %s: %s", _pattern, e)
 
         logger.info(f"Found {len(matches)} pattern matches in chunk at offset {chunk_start}")
         return {'matches': matches, 'patterns_found': len(matches)}
@@ -582,18 +585,18 @@ class DistributedProcessingManager:
 
         # Calculate entropy for sliding windows
         window_results = []
-        for i in range(0, len(chunk_data) - window_size + 1, window_size // 2):  # 50% overlap
-            window_data = chunk_data[i:i+window_size]
+        for _i in range(0, len(chunk_data) - window_size + 1, window_size // 2):  # 50% overlap
+            window_data = chunk_data[_i:_i+window_size]
             window_entropy = self._calculate_entropy(window_data)
 
             window_results.append({
-                'offset': chunk_start + i,
+                'offset': chunk_start + _i,
                 'size': len(window_data),
                 'entropy': window_entropy
             })
 
         # Find high entropy regions
-        high_entropy_regions = [w for w in window_results if w['entropy'] > 7.0]  # High entropy threshold
+        high_entropy_regions = [_w for _w in window_results if _w['entropy'] > 7.0]  # High entropy threshold
 
         logger.info("Analyzed entropy in chunk at offset %s: %f", chunk_start, chunk_entropy)
         return {
@@ -612,10 +615,10 @@ class DistributedProcessingManager:
 
         counts = Counter(data)
         total = len(data)
-        entropy = -sum((count/total) * math.log2(count/total) for count in counts.values())
+        entropy = -sum((_count/total) * math.log2(_count/total) for _count in counts.values())
         return entropy
 
-    def _task_analyze_section(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:
+    def _task_analyze_section(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:  # pylint: disable=unused-argument
         """Process a section analysis task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         section_name = task['params'].get('section_name', None)
@@ -629,7 +632,7 @@ class DistributedProcessingManager:
         try:
             pe = pefile.PE(binary_path)
 
-            section = next((s for s in pe.sections if s.Name.decode().strip('\x00') == section_name), None)
+            section = next((_s for _s in pe.sections if _s.Name.decode().strip('\x00') == section_name), None)
             if not section:
                 return {'error': f"Section {section_name} not found"}
 
@@ -641,9 +644,9 @@ class DistributedProcessingManager:
             current_string = b""
             min_length = 4  # Minimum string length
 
-            for byte in section_data:
-                if 32 <= byte <= 126:  # Printable ASCII
-                    current_string += bytes([byte])
+            for _byte in section_data:
+                if 32 <= _byte <= 126:  # Printable ASCII
+                    current_string += bytes([_byte])
                 else:
                     if len(current_string) >= min_length:
                         strings.append(current_string.decode('ascii'))
@@ -667,11 +670,11 @@ class DistributedProcessingManager:
                 'size_of_raw_data': section.SizeOfRawData
             }
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error analyzing section %s: %s", section_name, e)
             return {'error': str(e), 'section_name': section_name}
 
-    def _task_symbolic_execution(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:
+    def _task_symbolic_execution(self, worker_id: int, task: Dict[str, Any], binary_path: str, chunk_size: int) -> Dict[str, Any]:  # pylint: disable=unused-argument
         """Process a symbolic execution task."""
         logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
         target_function = task['params'].get('target_function', None)
@@ -694,11 +697,11 @@ class DistributedProcessingManager:
             target_address = None
             try:
                 # Try to resolve function by name in symbols
-                for sym in proj.loader.main_object.symbols:
-                    if sym.name == target_function and sym.type == 'function':
-                        target_address = sym.rebased_addr
+                for _sym in proj.loader.main_object.symbols:
+                    if _sym.name == target_function and _sym.type == 'function':
+                        target_address = _sym.rebased_addr
                         break
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error(f"Error resolving function address: {str(e)}")
 
             if target_address is None:
@@ -738,7 +741,7 @@ class DistributedProcessingManager:
             logger.info(f"Symbolic execution completed: {result['paths_explored']} paths explored")
             return result
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during symbolic execution: {str(e)}"
             logger.error(error_msg)
             return {
@@ -804,7 +807,7 @@ class DistributedProcessingManager:
                     worker_id, task, result = self.result_queue.get(timeout=1.0)
                 except queue.Empty:
                     # Check if all workers are still alive
-                    if not any(worker.is_alive() for worker in self.workers):
+                    if not any(_worker.is_alive() for _worker in self.workers):
                         self.logger.error("All workers have died")
                         break
                     continue
@@ -836,15 +839,15 @@ class DistributedProcessingManager:
                 tasks_remaining -= 1
 
             # Wait for workers to finish
-            for worker in self.workers:
-                worker.join(timeout=1.0)
+            for _worker in self.workers:
+                _worker.join(timeout=1.0)
 
             self.running = False
             self.logger.info("Collected results")
 
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error collecting results: %s", e)
             return False
 
@@ -860,12 +863,12 @@ class DistributedProcessingManager:
 
         try:
             # Terminate workers
-            for worker in self.workers:
-                worker.terminate()
+            for _worker in self.workers:
+                _worker.terminate()
 
             # Wait for workers to terminate
-            for worker in self.workers:
-                worker.join(timeout=1.0)
+            for _worker in self.workers:
+                _worker.join(timeout=1.0)
 
             # Clear queues
             if self.task_queue:
@@ -887,7 +890,7 @@ class DistributedProcessingManager:
 
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error stopping processing: %s", e)
             return False
 
@@ -902,7 +905,7 @@ class DistributedProcessingManager:
 
     def run_distributed_pattern_search(self, patterns: List[Union[str, bytes]], chunk_size_mb: int = 10) -> List[Dict[str, Any]]:
         """
-        Search for patterns in a binary file using distributed processing.
+        Search for _patterns in a binary file using distributed processing.
 
         Args:
             patterns: List of patterns to search for (bytes or regex strings)
@@ -923,16 +926,16 @@ class DistributedProcessingManager:
 
         # Add tasks for each chunk
         self.tasks = []
-        for offset in range(0, file_size, chunk_size):
+        for _offset in range(0, file_size, chunk_size):
             task = {
                 'id': len(self.tasks),
                 'type': 'find_patterns',
                 'params': {
                     'patterns': patterns,
-                    'chunk_start': offset,
-                    'chunk_end': min(offset + chunk_size, file_size)
+                    'chunk_start': _offset,
+                    'chunk_end': min(_offset + chunk_size, file_size)
                 },
-                'description': f"Pattern search in chunk at offset {offset}"
+                'description': f"Pattern search in chunk at offset {_offset}"
             }
             self.tasks.append(task)
 
@@ -947,9 +950,9 @@ class DistributedProcessingManager:
         # Process and combine results
         all_matches = []
         if 'find_patterns' in self.results['task_results']:
-            for result in self.results['task_results']['find_patterns']:
-                if result.get('success', False) and 'matches' in result:
-                    all_matches.extend(result['matches'])
+            for _result in self.results['task_results']['find_patterns']:
+                if _result.get('success', False) and 'matches' in _result:
+                    all_matches.extend(_result['matches'])
 
         # Sort by position
         all_matches.sort(key=lambda x: x['position'])
@@ -980,16 +983,16 @@ class DistributedProcessingManager:
 
         # Add tasks for each chunk
         self.tasks = []
-        for offset in range(0, file_size, chunk_size):
+        for _offset in range(0, file_size, chunk_size):
             task = {
                 'id': len(self.tasks),
                 'type': 'analyze_entropy',
                 'params': {
                     'window_size': window_size,
-                    'chunk_start': offset,
-                    'chunk_end': min(offset + chunk_size, file_size)
+                    'chunk_start': _offset,
+                    'chunk_end': min(_offset + chunk_size, file_size)
                 },
-                'description': f"Entropy analysis of chunk at offset {offset}"
+                'description': f"Entropy analysis of chunk at offset {_offset}"
             }
             self.tasks.append(task)
 
@@ -1006,10 +1009,10 @@ class DistributedProcessingManager:
         chunk_entropies = []
 
         if 'analyze_entropy' in self.results['task_results']:
-            for result in self.results['task_results']['analyze_entropy']:
-                if result.get('success', False):
-                    chunk_entropies.append((result['chunk_entropy'], result['chunk_size']))
-                    all_windows.extend(result.get('windows', []))
+            for _result in self.results['task_results']['analyze_entropy']:
+                if _result.get('success', False):
+                    chunk_entropies.append((_result['chunk_entropy'], _result['chunk_size']))
+                    all_windows.extend(_result.get('windows', []))
 
         # Sort windows by offset
         all_windows.sort(key=lambda x: x['offset'])
@@ -1019,7 +1022,7 @@ class DistributedProcessingManager:
         overall_entropy = sum(entropy * size for entropy, size in chunk_entropies) / total_size if total_size > 0 else 0
 
         # Find high entropy regions
-        high_entropy_regions = [w for w in all_windows if w['entropy'] > 7.0]
+        high_entropy_regions = [_w for _w in all_windows if _w['entropy'] > 7.0]
 
         return {
             'overall_entropy': overall_entropy,
@@ -1087,11 +1090,11 @@ class DistributedProcessingManager:
         # Save to file if filename provided
         if filename:
             try:
-                with open(filename, 'w') as f:
+                with open(filename, 'w', encoding='utf-8') as f:
                     f.write(html)
                 self.logger.info("Report saved to %s", filename)
                 return filename
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.error("Error saving report: %s", e)
                 return None
         else:
@@ -1105,7 +1108,7 @@ class DistributedProcessingManager:
         if RAY_AVAILABLE and ray.is_initialized():
             try:
                 ray.shutdown()
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.error("Error shutting down Ray: %s", e)
 
 

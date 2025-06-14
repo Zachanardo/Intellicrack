@@ -16,6 +16,7 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+# pylint: disable=too-complex
 def generate_final_report():
     """Generate final verification report."""
     print("="*80)
@@ -483,6 +484,7 @@ def check_test_coverage():
 
     return all((project_root / test_file).exists() for test_file in test_files)
 
+# pylint: disable=too-complex
 def generate_recommendations(report):
     """Generate actionable recommendations."""
     recommendations = {

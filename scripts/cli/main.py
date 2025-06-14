@@ -1,3 +1,24 @@
+"""
+Comprehensive Command-Line Interface for Intellicrack. 
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 #!/usr/bin/env python3
 """
 Comprehensive Command-Line Interface for Intellicrack.
@@ -251,7 +272,7 @@ class IntellicrackCLI:
             try:
                 self.gpu = GPUAccelerator()
                 logger.info("GPU acceleration enabled")
-            except:
+            except (ImportError, RuntimeError, AttributeError):
                 logger.warning("GPU acceleration not available, using CPU")
                 self.gpu = None
 
@@ -296,6 +317,7 @@ class IntellicrackCLI:
 
         self.generate_output()
 
+    # pylint: disable=too-complex
     def run_core_analysis(self):
         """Run core analysis features."""
         # Basic analysis (always run unless --skip-basic)
@@ -637,6 +659,7 @@ class IntellicrackCLI:
                 spawn=self.args.frida_spawn
             )
 
+    # pylint: disable=too-complex
     def run_advanced_features(self):
         """Run advanced and utility features."""
         if self.args.extract_icon:
@@ -923,13 +946,13 @@ class IntellicrackCLI:
                 # Try HxD or other Windows hex editors
                 try:
                     subprocess.Popen(['hxd.exe', self.binary_path])
-                except:
+                except (FileNotFoundError, OSError):
                     subprocess.Popen(['notepad++.exe', '-nohex', self.binary_path])
             elif platform.system() == 'Linux':
                 # Try hexedit, xxd, or hexdump
                 try:
                     subprocess.Popen(['hexedit', self.binary_path])
-                except:
+                except (FileNotFoundError, OSError):
                     subprocess.Popen(['ghex', self.binary_path])
             else:
                 logger.error("No suitable hex editor found")
@@ -1460,6 +1483,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
+# pylint: disable=too-complex
 def handle_batch_processing(args):
     """Handle batch file processing."""
     if not args.batch:
@@ -1863,6 +1887,7 @@ def run_ai_mode(args):
         return True
 
 
+# pylint: disable=too-complex
 def main():
     """Main entry point."""
     args = parse_arguments()

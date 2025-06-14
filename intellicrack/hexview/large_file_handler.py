@@ -1,9 +1,24 @@
 """
-Large File Optimization for Hex Viewer.
+Large File Optimization for Hex Viewer. 
 
-This module provides enhanced file handling capabilities for very large files,
-including memory mapping strategies, streaming access, and progressive loading.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import mmap
@@ -15,13 +30,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-# Optional psutil for system monitoring
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    PSUTIL_AVAILABLE = False
-    psutil = None
+# Import from common import checks
+from ..utils.import_checks import PSUTIL_AVAILABLE, psutil
 
 try:
     from PyQt5.QtCore import QObject, QThread, QTimer, pyqtSignal
@@ -207,7 +217,7 @@ class MemoryMonitor:
                     # Get current memory usage
                     process = psutil.Process()
                     memory_info = process.memory_info()
-                    memory_mb = memory_info.rss / (1024 * 1024)
+                    _ = memory_info.rss / (1024 * 1024)  # Memory in MB not used in current implementation
 
                     # Get system memory
                     system_memory = psutil.virtual_memory()
@@ -221,7 +231,7 @@ class MemoryMonitor:
                     for callback in self.callbacks:
                         try:
                             callback(memory_percent)
-                        except Exception as e:
+                        except (OSError, ValueError, RuntimeError) as e:
                             logger.error("Memory monitor callback error: %s", e)
                 else:
                     # Fallback: use basic estimation
@@ -229,12 +239,12 @@ class MemoryMonitor:
                     for callback in self.callbacks:
                         try:
                             callback(memory_percent)
-                        except Exception as e:
+                        except (OSError, ValueError, RuntimeError) as e:
                             logger.error("Memory monitor callback error: %s", e)
 
                 time.sleep(1.0)  # Check every second
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Memory monitoring error: %s", e)
                 time.sleep(5.0)  # Wait longer on error
 
@@ -242,7 +252,7 @@ class MemoryMonitor:
 class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
     """Background thread for loading file data."""
 
-    # Signals for Qt integration
+    # Signals for _Qt integration
     progress_updated = pyqtSignal(int) if PYQT5_AVAILABLE else None
     region_loaded = pyqtSignal(object) if PYQT5_AVAILABLE else None
     error_occurred = pyqtSignal(str) if PYQT5_AVAILABLE else None
@@ -295,7 +305,7 @@ class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
 
                             logger.debug(f"Background loaded: offset=0x{offset:X}, size={len(data)}")
 
-                    except Exception as e:
+                    except (OSError, ValueError, RuntimeError) as e:
                         logger.error("Background load error: %s", e)
                         if self.error_occurred:
                             self.error_occurred.emit(str(e))
@@ -303,7 +313,7 @@ class BackgroundLoader(QThread if PYQT5_AVAILABLE else threading.Thread):
                     # Small delay to avoid overwhelming the system
                     time.sleep(0.01)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Background loader thread error: %s", e)
             if self.error_occurred:
                 self.error_occurred.emit(str(e))
@@ -379,7 +389,7 @@ class LargeFileHandler:
             self.memory_monitor.add_callback(self._on_memory_pressure)
             self.memory_monitor.start_monitoring()
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize large file handler: %s", e)
             raise
 
@@ -395,7 +405,7 @@ class LargeFileHandler:
 
             logger.debug(f"Direct loaded entire file: {len(data)} bytes")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Direct load failed: %s", e)
             # Fallback to streaming
             self.memory_strategy = MemoryStrategy.STREAMING
@@ -404,7 +414,7 @@ class LargeFileHandler:
     def _init_memory_map(self):
         """Initialize memory mapping strategy."""
         try:
-            self.file_handle = open(self.file_path, 'rb')
+            self.file_handle = open(self.file_path, 'rb')  # pylint: disable=consider-using-with
             self.mmap_file = mmap.mmap(
                 self.file_handle.fileno(),
                 length=0,
@@ -412,7 +422,7 @@ class LargeFileHandler:
             )
             logger.debug("Memory mapped file: %s bytes", self.file_size)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Memory mapping failed: %s", e)
             # Fallback to streaming
             self.memory_strategy = MemoryStrategy.STREAMING
@@ -473,7 +483,7 @@ class LargeFileHandler:
 
         try:
             return self.mmap_file[offset:offset + size]
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Memory map read error: %s", e)
             return self._read_streaming(offset, size)
 
@@ -521,7 +531,7 @@ class LargeFileHandler:
 
                 return data
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Streaming read error: %s", e)
 
         return b''
@@ -626,7 +636,7 @@ class LargeFileHandler:
 
             logger.debug("Large file handler closed")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error closing large file handler: %s", e)
 
     def __del__(self):

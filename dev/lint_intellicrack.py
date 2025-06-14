@@ -271,6 +271,7 @@ class IntellicrackLinter:
 
         print(f"✅ Report generated: {output_file}")
 
+    # pylint: disable=too-complex
     def _create_markdown_report(self) -> str:
         """Create a markdown report."""
         report = []
@@ -408,6 +409,7 @@ class ASTAnalyzer(ast.NodeVisitor):
         self.current_function = None
 
     def visit_Module(self, node: ast.Module) -> None:
+        """Visit module node to check for module docstring."""
         # Check for module docstring
         if (node.body and isinstance(node.body[0], ast.Expr) 
             and isinstance(node.body[0].value, ast.Str)):
@@ -416,6 +418,7 @@ class ASTAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        """Visit function definitions to check docstrings and complexity."""
         self.function_count += 1
         prev_function = self.current_function
         self.current_function = node.name
@@ -454,6 +457,7 @@ class ASTAnalyzer(ast.NodeVisitor):
         self.current_function = prev_function
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        """Visit class definitions to check for docstrings."""
         self.class_count += 1
         prev_class = self.current_class
         self.current_class = node.name
@@ -476,10 +480,12 @@ class ASTAnalyzer(ast.NodeVisitor):
         self.current_class = prev_class
 
     def visit_Import(self, node: ast.Import) -> None:
+        """Track import statements."""
         self.import_count += len(node.names)
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        """Track from-import statements and check for relative imports."""
         self.import_count += len(node.names)
 
         # Check for relative imports
@@ -490,6 +496,7 @@ class ASTAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_If(self, node: ast.If) -> None:
+        """Visit if statements to check for main guard."""
         # Check for main guard
         if (isinstance(node.test, ast.Compare) and
             isinstance(node.test.left, ast.Name) and
@@ -507,6 +514,7 @@ class ASTAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Try(self, node: ast.Try) -> None:
+        """Visit try statements to check for bare except clauses."""
         # Check for bare except clauses
         for handler in node.handlers:
             if handler.type is None:
@@ -528,22 +536,28 @@ class ASTAnalyzer(ast.NodeVisitor):
         complexity = 1  # Base complexity
 
         class ComplexityVisitor(ast.NodeVisitor):
+            """AST visitor to calculate cyclomatic complexity."""
+            
             def __init__(self):
                 self.complexity = 0
 
             def visit_If(self, node):
+                """Count if statements for complexity."""
                 self.complexity += 1
                 self.generic_visit(node)
 
             def visit_For(self, node):
+                """Count for loops for complexity."""
                 self.complexity += 1
                 self.generic_visit(node)
 
             def visit_While(self, node):
+                """Count while loops for complexity."""
                 self.complexity += 1
                 self.generic_visit(node)
 
             def visit_Try(self, node):
+                """Count try/except blocks for complexity."""
                 self.complexity += len(node.handlers)
                 self.generic_visit(node)
 

@@ -1,10 +1,24 @@
 """
-Help and Documentation Widget
+Help and Documentation Widget 
 
-This module provides a comprehensive help and documentation interface
-for Intellicrack, organizing all features, tutorials, and guides in
-an easily accessible format.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -165,8 +179,8 @@ class HelpDocumentationWidget(QWidget):
         layout.addWidget(self.tutorial_viewer)
 
         # Connect tutorial selection
-        for i in range(self.tutorial_tabs.count()):
-            list_widget = self.tutorial_tabs.widget(i)
+        for _i in range(self.tutorial_tabs.count()):
+            list_widget = self.tutorial_tabs.widget(_i)
             list_widget.itemClicked.connect(self.on_tutorial_selected)
 
         return widget
@@ -391,8 +405,8 @@ class HelpDocumentationWidget(QWidget):
             "7. Creating Your First Patch",
             "8. Using the AI Assistant"
         ]
-        for tutorial in tutorials:
-            list_widget.addItem(tutorial)
+        for _tutorial in tutorials:
+            list_widget.addItem(_tutorial)
 
     def populate_analysis_tutorials(self, list_widget: QListWidget):
         """Populate analysis tutorials."""
@@ -408,8 +422,8 @@ class HelpDocumentationWidget(QWidget):
             "9. Using Ghidra Integration",
             "10. Binary Similarity Search"
         ]
-        for tutorial in tutorials:
-            list_widget.addItem(tutorial)
+        for _tutorial in tutorials:
+            list_widget.addItem(_tutorial)
 
     def populate_patching_tutorials(self, list_widget: QListWidget):
         """Populate patching tutorials."""
@@ -425,8 +439,8 @@ class HelpDocumentationWidget(QWidget):
             "9. Creating Patch Scripts",
             "10. Verifying Patches"
         ]
-        for tutorial in tutorials:
-            list_widget.addItem(tutorial)
+        for _tutorial in tutorials:
+            list_widget.addItem(_tutorial)
 
     def populate_advanced_tutorials(self, list_widget: QListWidget):
         """Populate advanced tutorials."""
@@ -442,8 +456,8 @@ class HelpDocumentationWidget(QWidget):
             "9. Exploit Development",
             "10. Custom Report Templates"
         ]
-        for tutorial in tutorials:
-            list_widget.addItem(tutorial)
+        for _tutorial in tutorials:
+            list_widget.addItem(_tutorial)
 
     def populate_troubleshooting_tree(self):
         """Populate troubleshooting tree."""
@@ -773,8 +787,8 @@ class HelpDocumentationWidget(QWidget):
         self.hide_all_tree_items(tree)
 
         # Then show matching items
-        for i in range(tree.topLevelItemCount()):
-            item = tree.topLevelItem(i)
+        for _i in range(tree.topLevelItemCount()):
+            item = tree.topLevelItem(_i)
             if self.search_tree_item(item, search_text):
                 item.setHidden(False)
                 item.setExpanded(True)
@@ -783,17 +797,17 @@ class HelpDocumentationWidget(QWidget):
         """Recursively search tree items."""
         # Check if this item matches
         matches = False
-        for col in range(item.columnCount()):
-            if search_text in item.text(col).lower():
+        for _col in range(item.columnCount()):
+            if search_text in item.text(_col).lower():
                 matches = True
-                item.setBackground(col, Qt.yellow)
+                item.setBackground(_col, Qt.yellow)
             else:
-                item.setBackground(col, Qt.transparent)
+                item.setBackground(_col, Qt.transparent)
 
         # Check children
         child_matches = False
-        for i in range(item.childCount()):
-            child = item.child(i)
+        for _i in range(item.childCount()):
+            child = item.child(_i)
             if self.search_tree_item(child, search_text):
                 child_matches = True
                 child.setHidden(False)
@@ -810,24 +824,24 @@ class HelpDocumentationWidget(QWidget):
 
     def hide_all_tree_items(self, tree: QTreeWidget):
         """Hide all items in a tree."""
-        for i in range(tree.topLevelItemCount()):
-            self.hide_tree_item(tree.topLevelItem(i))
+        for _i in range(tree.topLevelItemCount()):
+            self.hide_tree_item(tree.topLevelItem(_i))
 
     def hide_tree_item(self, item: QTreeWidgetItem):
         """Recursively hide tree items."""
         item.setHidden(True)
-        for i in range(item.childCount()):
-            self.hide_tree_item(item.child(i))
+        for _i in range(item.childCount()):
+            self.hide_tree_item(item.child(_i))
 
     def show_all_tree_items(self, tree: QTreeWidget):
         """Show all items in a tree."""
-        for i in range(tree.topLevelItemCount()):
-            self.show_tree_item(tree.topLevelItem(i))
+        for _i in range(tree.topLevelItemCount()):
+            self.show_tree_item(tree.topLevelItem(_i))
 
     def show_tree_item(self, item: QTreeWidgetItem):
         """Recursively show tree items and clear highlights."""
         item.setHidden(False)
-        for col in range(item.columnCount()):
-            item.setBackground(col, Qt.transparent)
-        for i in range(item.childCount()):
-            self.show_tree_item(item.child(i))
+        for _col in range(item.columnCount()):
+            item.setBackground(_col, Qt.transparent)
+        for _i in range(item.childCount()):
+            self.show_tree_item(item.child(_i))

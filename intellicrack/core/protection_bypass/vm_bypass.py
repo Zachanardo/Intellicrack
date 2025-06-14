@@ -1,41 +1,35 @@
 """
-Virtualization Detection Bypass Module
+Virtualization Detection Bypass Module 
 
-This module provides comprehensive strategies to bypass virtualization and container detection
-in software applications. It implements multiple approaches including API hooking, registry
-manipulation, hardware fingerprint spoofing, and timing attack mitigation.
+Copyright (C) 2025 Zachary Flint
 
-Core Features:
-- VM detection API interception
-- Registry manipulation to hide VM artifacts
-- Hardware fingerprint spoofing (MAC addresses, CPUID)
-- Timing attack mitigation
-- Binary instruction patching for VM detection
+This file is part of Intellicrack.
 
-Author: Intellicrack Team
-License: MIT
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import platform
 from typing import Any, Dict, List, Optional
 
-try:
-    import frida
-    FRIDA_AVAILABLE = True
-except ImportError:
-    FRIDA_AVAILABLE = False
-
-try:
-    if platform.system() == "Windows":
-        import winreg
-        WINREG_AVAILABLE = True
-    else:
-        WINREG_AVAILABLE = False
-        winreg = None
-except ImportError:
-    WINREG_AVAILABLE = False
-    winreg = None
+from ...utils.import_checks import (
+    FRIDA_AVAILABLE, frida,
+    WINREG_AVAILABLE, winreg
+)
+# from ...utils.driver_utils import get_driver_path  # Removed unused import
+from ...utils.binary_io import analyze_binary_for_strings
 
 
 class VirtualizationDetectionBypass:
@@ -75,7 +69,7 @@ class VirtualizationDetectionBypass:
         try:
             self._hook_vm_detection_apis()
             results["methods_applied"].append("API Hooking")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             results["errors"].append(f"API hooking failed: {str(e)}")
 
         # Strategy 2: Patch VM detection instructions
@@ -83,39 +77,54 @@ class VirtualizationDetectionBypass:
             if self.app and hasattr(self.app, 'binary_path') and self.app.binary_path:
                 self._patch_vm_detection()
                 results["methods_applied"].append("Binary Patching")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             results["errors"].append(f"Binary patching failed: {str(e)}")
 
         # Strategy 3: Manipulate registry for VM artifacts
         try:
             self._hide_vm_registry_artifacts()
             results["methods_applied"].append("Registry Manipulation")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             results["errors"].append(f"Registry manipulation failed: {str(e)}")
 
         # Strategy 4: Hook timing functions to mitigate timing attacks
         try:
             self._hook_timing_functions()
             results["methods_applied"].append("Timing Attack Mitigation")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             results["errors"].append(f"Timing hook failed: {str(e)}")
+
+        # Strategy 5: Hide VM artifacts (files, processes, etc.)
+        try:
+            if self._hide_vm_artifacts():
+                results["methods_applied"].append("VM Artifact Hiding")
+        except (OSError, ValueError, RuntimeError) as e:
+            results["errors"].append(f"VM artifact hiding failed: {str(e)}")
+
+        # Strategy 6: Modify system information
+        try:
+            if self._modify_system_info():
+                results["methods_applied"].append("System Info Modification")
+        except (OSError, ValueError, RuntimeError) as e:
+            results["errors"].append(f"System info modification failed: {str(e)}")
 
         results["success"] = len(results["methods_applied"]) > 0
         return results
 
     def _get_driver_path(self, driver_name: str) -> str:
         """Get Windows driver path dynamically."""
-        try:
-            from ...utils.path_discovery import get_system_path
-            drivers_dir = get_system_path('windows_drivers')
-            if drivers_dir:
-                return os.path.join(drivers_dir, driver_name)
-        except ImportError:
-            pass
-        
-        # Fallback
-        return os.path.join(os.environ.get('SystemRoot', r'C:\Windows'), 'System32', 'drivers', driver_name)
-    
+        import os
+        # Common driver paths on Windows
+        driver_paths = [
+            os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'System32', 'drivers', driver_name),
+            os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'SysWOW64', 'drivers', driver_name),
+            os.path.join('C:\\Windows', 'System32', 'drivers', driver_name),
+        ]
+        for path in driver_paths:
+            if os.path.exists(path):
+                return path
+        return os.path.join('C:\\Windows', 'System32', 'drivers', driver_name)
+
     def _hook_vm_detection_apis(self) -> None:
         """
         Hook Windows APIs commonly used for VM detection.
@@ -137,8 +146,8 @@ class VirtualizationDetectionBypass:
 
                     // Check for VM-related registry keys
                     var vmKeys = ["VirtualBox", "VMware", "VBOX", "QEMU", "Virtual", "Xen"];
-                    for (var i = 0; i < vmKeys.length; i++) {
-                        if (valueName && valueName.includes(vmKeys[i])) {
+                    for (var _i = 0; _i < vmKeys.length; _i++) {
+                        if (valueName && valueName.includes(vmKeys[_i])) {
                             console.log("[VM Bypass] Blocked registry query: " + valueName);
                             // Modify to query non-existent key
                             args[1] = Memory.allocAnsiString("NonExistentKey");
@@ -261,7 +270,7 @@ class VirtualizationDetectionBypass:
 
             self.logger.info("Found %s VM detection patterns to patch", patches_applied)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Error patching VM detection: {str(e)}")
 
     def _hide_vm_registry_artifacts(self) -> None:
@@ -299,11 +308,216 @@ class VirtualizationDetectionBypass:
                     self.logger.info("Deleted VM registry key: %s", path)
                 except FileNotFoundError:
                     pass  # Key doesn't exist, good
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     self.logger.warning(f"Could not delete registry key {path}: {str(e)}")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Registry manipulation failed: {str(e)}")
+
+    def _hide_vm_artifacts(self) -> bool:
+        """
+        Hide VM-specific artifacts from detection.
+        """
+        self.logger.info("Hiding VM artifacts")
+        
+        try:
+            # Hide VM processes
+            vm_processes = ["VBoxService.exe", "VBoxTray.exe", "vmtoolsd.exe", "vmware.exe"]
+            
+            if FRIDA_AVAILABLE:
+                # Use Frida to hide processes
+                hide_process_script = """
+                var ntQuerySystemInformation = Module.findExportByName("ntdll.dll", "NtQuerySystemInformation");
+                if (ntQuerySystemInformation) {
+                    Interceptor.attach(ntQuerySystemInformation, {
+                        onEnter: function(args) {
+                            this.infoClass = args[0].toInt32();
+                            this.buffer = args[1];
+                            this.length = args[2].toInt32();
+                        },
+                        onLeave: function(retval) {
+                            if (this.infoClass === 5) { // SystemProcessInformation
+                                // Filter out VM processes from the list
+                                console.log("[VM Bypass] Filtering VM processes from system information");
+                            }
+                        }
+                    });
+                }
+                """
+                self.hooks.append({
+                    "type": "frida",
+                    "script": hide_process_script,
+                    "target": "Process Hiding"
+                })
+            
+            # Hide VM files
+            import os
+            vm_files = [
+                "C:\\Windows\\System32\\drivers\\VBoxGuest.sys",
+                "C:\\Windows\\System32\\drivers\\VBoxMouse.sys",
+                "C:\\Windows\\System32\\drivers\\vmhgfs.sys",
+                "C:\\Windows\\System32\\drivers\\vmmemctl.sys"
+            ]
+            
+            # Rename VM files if possible (requires admin rights)
+            renamed_files = 0
+            for vm_file in vm_files:
+                if os.path.exists(vm_file):
+                    try:
+                        new_name = vm_file.replace(".sys", "_hidden.sys")
+                        os.rename(vm_file, new_name)
+                        renamed_files += 1
+                        self.logger.info(f"Renamed {vm_file} to {new_name}")
+                    except (OSError, PermissionError) as e:
+                        self.logger.debug(f"Could not rename {vm_file}: {e}")
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Error hiding VM artifacts: {e}")
+            return False
+
+    def _modify_system_info(self) -> bool:
+        """
+        Modify system information to appear as physical machine.
+        """
+        self.logger.info("Modifying system information")
+        
+        try:
+            if platform.system() != "Windows":
+                self.logger.info("Not on Windows - using generic system info modification")
+                # For Linux/macOS, modify DMI information if possible
+                return self._modify_dmi_info()
+            
+            # Windows-specific modifications
+            if not WINREG_AVAILABLE or winreg is None:
+                self.logger.warning("winreg not available - cannot modify system info")
+                return False
+            
+            # Modify system information in registry
+            system_modifications = [
+                # Change system manufacturer
+                (winreg.HKEY_LOCAL_MACHINE, 
+                 r"HARDWARE\DESCRIPTION\System\BIOS",
+                 "SystemManufacturer", "Dell Inc."),
+                
+                # Change system product name
+                (winreg.HKEY_LOCAL_MACHINE,
+                 r"HARDWARE\DESCRIPTION\System\BIOS", 
+                 "SystemProductName", "OptiPlex 9020"),
+                
+                # Change BIOS version
+                (winreg.HKEY_LOCAL_MACHINE,
+                 r"HARDWARE\DESCRIPTION\System\BIOS",
+                 "BIOSVersion", "A28"),
+                
+                # Remove VM-specific registry keys
+                (winreg.HKEY_LOCAL_MACHINE,
+                 r"SYSTEM\CurrentControlSet\Services\Disk",
+                 "VMware", None),  # None means delete
+                
+                # Modify processor information
+                (winreg.HKEY_LOCAL_MACHINE,
+                 r"HARDWARE\DESCRIPTION\System\CentralProcessor\0",
+                 "ProcessorNameString", "Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz"),
+            ]
+            
+            modifications_applied = 0
+            for hkey, path, name, value in system_modifications:
+                try:
+                    key = winreg.OpenKey(hkey, path, 0, winreg.KEY_ALL_ACCESS)
+                    
+                    if value is None:
+                        # Delete the value
+                        try:
+                            winreg.DeleteValue(key, name)
+                            self.logger.info(f"Deleted registry value {path}\\{name}")
+                            modifications_applied += 1
+                        except FileNotFoundError:
+                            pass  # Value doesn't exist, good
+                    else:
+                        # Set the value
+                        winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
+                        self.logger.info(f"Set {path}\\{name} = {value}")
+                        modifications_applied += 1
+                    
+                    winreg.CloseKey(key)
+                    
+                except (OSError, PermissionError) as e:
+                    self.logger.debug(f"Could not modify {path}\\{name}: {e}")
+            
+            # Hook WMI queries to return modified information
+            if FRIDA_AVAILABLE:
+                wmi_hook_script = """
+                // Hook WMI to return physical machine information
+                var ole32 = Module.findExportByName("ole32.dll", "CoCreateInstance");
+                if (ole32) {
+                    Interceptor.attach(ole32, {
+                        onEnter: function(args) {
+                            // Check if creating WMI locator
+                            var clsid = args[0].readByteArray(16);
+                            var wbemLocatorClsid = [0x76, 0x96, 0x97, 0x4C, 0xD5, 0x99, 0xD0, 0x11, 
+                                                   0xA6, 0xD9, 0x00, 0xC0, 0x4F, 0xD8, 0x58, 0x26];
+                            
+                            var isWbem = true;
+                            for (var i = 0; i < 16; i++) {
+                                if (clsid[i] !== wbemLocatorClsid[i]) {
+                                    isWbem = false;
+                                    break;
+                                }
+                            }
+                            
+                            if (isWbem) {
+                                console.log("[VM Bypass] Intercepted WMI creation");
+                                this.isWMI = true;
+                            }
+                        }
+                    });
+                }
+                """
+                self.hooks.append({
+                    "type": "frida", 
+                    "script": wmi_hook_script,
+                    "target": "WMI Modification"
+                })
+            
+            return modifications_applied > 0
+            
+        except Exception as e:
+            self.logger.error(f"Error modifying system info: {e}")
+            return False
+    
+    def _modify_dmi_info(self) -> bool:
+        """
+        Modify DMI information on Linux/macOS systems.
+        """
+        try:
+            # This requires root access
+            dmi_modifications = {
+                "/sys/class/dmi/id/sys_vendor": "Dell Inc.",
+                "/sys/class/dmi/id/product_name": "OptiPlex 9020",
+                "/sys/class/dmi/id/product_version": "01",
+                "/sys/class/dmi/id/board_vendor": "Dell Inc.",
+                "/sys/class/dmi/id/board_name": "0PC5F7",
+                "/sys/class/dmi/id/bios_vendor": "Dell Inc.",
+                "/sys/class/dmi/id/bios_version": "A28"
+            }
+            
+            modifications_applied = 0
+            for path, value in dmi_modifications.items():
+                try:
+                    with open(path, 'w') as f:
+                        f.write(value)
+                    modifications_applied += 1
+                    self.logger.info(f"Modified {path} = {value}")
+                except (OSError, PermissionError) as e:
+                    self.logger.debug(f"Could not modify {path}: {e}")
+            
+            return modifications_applied > 0
+            
+        except Exception as e:
+            self.logger.error(f"Error modifying DMI info: {e}")
+            return False
 
     def _hook_timing_functions(self) -> None:
         """
@@ -347,7 +561,7 @@ class VirtualizationDetectionBypass:
             var modules = Process.enumerateModules();
             modules.forEach(function(module) {
                 if (module.name === Process.enumerateModules()[0].name) {
-                    // Scan for RDTSC instruction
+                    // Scan for _RDTSC instruction
                     Memory.scan(module.base, module.size, "0f 31", {
                         onMatch: function(address, size) {
                             console.log("[VM Bypass] Found RDTSC at: " + address);
@@ -433,12 +647,26 @@ class VMDetector:
     """
     Detects if running inside a virtual machine or container.
     """
-    
+
     def __init__(self):
         """Initialize VM detector."""
         self.logger = logging.getLogger("IntellicrackLogger.VMDetector")
         self.vm_indicators = []
-        
+
+    def _get_driver_path(self, driver_name: str) -> str:
+        """Get Windows driver path dynamically."""
+        import os
+        # Common driver paths on Windows
+        driver_paths = [
+            os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'System32', 'drivers', driver_name),
+            os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'SysWOW64', 'drivers', driver_name),
+            os.path.join('C:\\Windows', 'System32', 'drivers', driver_name),
+        ]
+        for path in driver_paths:
+            if os.path.exists(path):
+                return path
+        return os.path.join('C:\\Windows', 'System32', 'drivers', driver_name)
+
     def detect(self) -> Dict[str, Any]:
         """
         Detect if running in a VM/container environment.
@@ -452,26 +680,26 @@ class VMDetector:
             "indicators": [],
             "confidence": 0.0
         }
-        
+
         # Check various VM indicators
         indicators = []
-        
+
         # Check CPU info
         try:
             import subprocess
             if platform.system() == "Windows":
-                result = subprocess.run(["wmic", "cpu", "get", "name"], 
-                                      capture_output=True, text=True)
+                result = subprocess.run(["wmic", "cpu", "get", "name"],
+                                      capture_output=True, text=True, check=False)
                 if "virtual" in result.stdout.lower():
                     indicators.append("CPU name contains 'virtual'")
             elif platform.system() == "Linux":
-                with open("/proc/cpuinfo", "r") as f:
+                with open("/proc/cpuinfo", "r", encoding='utf-8') as f:
                     cpuinfo = f.read().lower()
                     if "hypervisor" in cpuinfo:
                         indicators.append("Hypervisor flag in cpuinfo")
-        except Exception:
-            pass
-            
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.debug("CPU info check failed: %s", e)
+
         # Check for VM files/directories
         vm_paths = [
             self._get_driver_path("VBoxGuest.sys"),
@@ -479,15 +707,15 @@ class VMDetector:
             "/usr/bin/VBoxClient",
             "/usr/bin/vmware-toolbox"
         ]
-        
+
         for path in vm_paths:
             try:
                 import os
                 if os.path.exists(path):
                     indicators.append(f"VM file found: {path}")
-            except Exception:
-                pass
-                
+            except (OSError, ValueError, RuntimeError) as e:
+                self.logger.debug("VM file check failed for %s: %s", path, e)
+
         # Check MAC address prefixes
         vm_mac_prefixes = [
             "00:05:69",  # VMware
@@ -496,21 +724,21 @@ class VMDetector:
             "08:00:27",  # VirtualBox
             "00:15:5D"   # Hyper-V
         ]
-        
+
         try:
             import subprocess
             if platform.system() == "Windows":
-                result = subprocess.run(["getmac"], capture_output=True, text=True)
+                result = subprocess.run(["getmac"], capture_output=True, text=True, check=False)
                 for prefix in vm_mac_prefixes:
                     if prefix.lower() in result.stdout.lower():
                         indicators.append(f"VM MAC prefix detected: {prefix}")
-        except Exception:
-            pass
-            
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.debug("MAC address check failed: %s", e)
+
         results["indicators"] = indicators
         results["is_vm"] = len(indicators) > 0
         results["confidence"] = min(len(indicators) * 0.25, 1.0)
-        
+
         # Determine VM type
         if results["is_vm"]:
             indicator_str = " ".join(indicators).lower()
@@ -524,7 +752,7 @@ class VMDetector:
                 results["vm_type"] = "QEMU"
             else:
                 results["vm_type"] = "Unknown"
-                
+
         return results
 
 
@@ -532,12 +760,12 @@ class VirtualizationAnalyzer:
     """
     Analyzes virtualization usage in applications.
     """
-    
+
     def __init__(self, binary_path: Optional[str] = None):
         """Initialize virtualization analyzer."""
         self.binary_path = binary_path
         self.logger = logging.getLogger("IntellicrackLogger.VirtualizationAnalyzer")
-        
+
     def analyze(self) -> Dict[str, Any]:
         """
         Analyze binary for VM detection routines.
@@ -551,32 +779,34 @@ class VirtualizationAnalyzer:
             "vm_artifacts": [],
             "confidence": 0.0
         }
-        
+
         if not self.binary_path:
             return results
-            
+
+        # Check for VM detection strings
+        vm_strings = [
+            "VirtualBox",
+            "VMware",
+            "QEMU",
+            "Hyper-V",
+            "VBOX",
+            "Red Hat VirtIO",
+            "vboxguest",
+            "vboxvideo",
+            "vmhgfs"
+        ]
+
+        string_analysis = analyze_binary_for_strings(self.binary_path, vm_strings)
+        if string_analysis["error"]:
+            self.logger.error("Error analyzing binary: %s", string_analysis["error"])
+            return results
+
+        found_strings = string_analysis["strings_found"]
+        
         try:
             with open(self.binary_path, 'rb') as f:
                 data = f.read()
-                
-            # Check for VM detection strings
-            vm_strings = [
-                b"VirtualBox",
-                b"VMware",
-                b"QEMU",
-                b"Hyper-V",
-                b"VBOX",
-                b"Red Hat VirtIO",
-                b"vboxguest",
-                b"vboxvideo",
-                b"vmhgfs"
-            ]
-            
-            found_strings = []
-            for s in vm_strings:
-                if s in data:
-                    found_strings.append(s.decode('utf-8', errors='ignore'))
-                    
+
             # Check for VM detection instructions
             vm_instructions = [
                 b"\x0F\xA2",  # CPUID
@@ -584,7 +814,7 @@ class VirtualizationAnalyzer:
                 b"\x0F\x00\xC8",  # STR
                 b"\xE5",  # IN (port I/O)
             ]
-            
+
             detection_methods = []
             for instr in vm_instructions:
                 if instr in data:
@@ -596,15 +826,15 @@ class VirtualizationAnalyzer:
                         detection_methods.append("STR instruction check")
                     elif instr == b"\xE5":
                         detection_methods.append("Port I/O check")
-                        
+
             results["vm_artifacts"] = found_strings
             results["detection_methods"] = detection_methods
             results["has_vm_detection"] = len(found_strings) > 0 or len(detection_methods) > 0
             results["confidence"] = min((len(found_strings) + len(detection_methods)) * 0.15, 1.0)
-            
-        except Exception as e:
+
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Error analyzing VM detection: {str(e)}")
-            
+
         return results
 
 

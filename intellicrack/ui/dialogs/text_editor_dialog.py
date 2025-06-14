@@ -1,8 +1,24 @@
-"""Text Editor Dialog for Intellicrack.
-
-This module provides a comprehensive text editor dialog for editing scripts,
-configuration files, and other text content within the Intellicrack application.
 """
+Text Editor Dialog for Intellicrack. 
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 
 import logging
 import os
@@ -80,8 +96,8 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
             'while', 'with', 'yield', 'True', 'False', 'None'
         ]
 
-        for keyword in keywords:
-            pattern = r'\b' + keyword + r'\b'
+        for _keyword in keywords:
+            pattern = r'\b' + _keyword + r'\b'
             self.highlighting_rules.append((re.compile(pattern), keyword_format))
 
         # String literals
@@ -112,11 +128,11 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
         if not HAS_PYQT:
             return
 
-        for pattern, format in self.highlighting_rules:
-            for match in pattern.finditer(text):
-                start = match.start()
-                length = match.end() - start
-                self.setFormat(start, length, format)
+        for pattern, text_format in self.highlighting_rules:
+            for _match in pattern.finditer(text):
+                start = _match.start()
+                length = _match.end() - start
+                self.setFormat(start, length, text_format)
 
 
 class FindReplaceDialog(QDialog):
@@ -497,7 +513,7 @@ class TextEditorDialog(QDialog):
                 self.file_watcher.removePaths(self.file_watcher.files())
                 self.file_watcher.addPath(file_path)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             QMessageBox.critical(self, "Error", f"Failed to load file: {str(e)}")
 
     def save_file(self):
@@ -521,7 +537,7 @@ class TextEditorDialog(QDialog):
 
             self.file_saved.emit(self.file_path)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             QMessageBox.critical(self, "Error", f"Failed to save file: {str(e)}")
 
     def save_file_as(self):

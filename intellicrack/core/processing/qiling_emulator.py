@@ -1,3 +1,24 @@
+"""
+Qiling Binary Emulation Framework Integration. 
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 #!/usr/bin/env python3
 """
 Qiling Binary Emulation Framework Integration.
@@ -108,7 +129,7 @@ class QilingEmulator:
 
     def _get_default_rootfs(self) -> str:
         """Get default rootfs path for the OS type."""
-        # Look for rootfs in common locations
+        # Look for _rootfs in common locations
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         rootfs_dirs = [
             os.path.join(os.path.dirname(__file__), "rootfs", self.ostype),
@@ -194,7 +215,7 @@ class QilingEmulator:
         # Log potential license check
         self.logger.info(f"Potential license API: {api_name} at {hex(address)}")
 
-    def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int):
+    def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int):  # pylint: disable=unused-argument
         """Hook for memory access monitoring."""
         access_type = "READ" if access == 1 else "WRITE"
 
@@ -212,7 +233,7 @@ class QilingEmulator:
         pass
 
     def run(self, timeout: Optional[int] = 60,
-            until_address: Optional[int] = None) -> Dict[str, Any]:
+            until_address: Optional[int] = None) -> Dict[str, Any]:  # pylint: disable=unused-argument
         """
         Run the binary emulation.
 
@@ -272,7 +293,7 @@ class QilingEmulator:
 
             return results
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Qiling emulation error: %s", e)
             self.logger.debug(traceback.format_exc())
 
@@ -365,9 +386,18 @@ class QilingEmulator:
         """
         # Apply patches during emulation
         def apply_patches(ql: Qiling):
-            for patch in patches:
-                addr = patch['address']
-                data = patch['bytes']
+            """
+            Apply memory patches to the emulated process.
+            
+            Args:
+                ql: Qiling instance to apply patches to
+                
+            Iterates through the patches list and writes the specified bytes
+            to the given memory addresses in the emulated process.
+            """
+            for _patch in patches:
+                addr = _patch['address']
+                data = _patch['bytes']
                 ql.mem.write(addr, data)
                 self.logger.info(f"Applied patch at {hex(addr)}: {data.hex()}")
 
@@ -437,7 +467,7 @@ def run_qiling_emulation(binary_path: str, options: Dict[str, Any] = None) -> Di
 
         return results
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logging.error("Qiling emulation failed: %s", e)
         return {
             'status': 'error',

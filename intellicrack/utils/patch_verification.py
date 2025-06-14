@@ -1,9 +1,24 @@
 """
-Patch verification and validation utilities for Intellicrack.
+Patch verification and validation utilities for Intellicrack. 
 
-This module provides functions for verifying, simulating, and validating
-binary patches before and after application.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import os
 import shutil
@@ -12,15 +27,11 @@ import time
 import traceback
 from typing import Any, Dict, List
 
-try:
-    import pefile
-except ImportError:
-    pefile = None
-
-try:
-    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
-except ImportError:
-    Cs = None
+# Import common patterns from centralized module
+from .import_patterns import (
+    pefile, PEFILE_AVAILABLE,
+    CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs, CAPSTONE_AVAILABLE
+)
 
 try:
     import keystone
@@ -73,7 +84,7 @@ def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any
                 rva = address - image_base
                 try:
                     offset = pe.get_offset_from_rva(rva)
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     error_msg = f"Error calculating offset for address 0x{address:X}: {e}"
                     app.update_output.emit(log_message(f"[Verify] {error_msg}"))
                     verification_results.append(error_msg)
@@ -102,7 +113,7 @@ def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any
                     app.update_output.emit(log_message(f"[Verify] WARNING: {mismatch_msg}"))
                     verification_results.append(mismatch_msg)
                     fail_count += 1
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 verification_results.append(
                     f"Error reading bytes at address 0x{address:X}: {e}")
                 fail_count += 1
@@ -113,7 +124,7 @@ def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any
 
         return verification_results
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return [f"Error during patch verification: {e}"]
 
 
@@ -172,7 +183,7 @@ def simulate_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -
                 patch_results.append(
                     (True,
                      f"Patch {i + 1}: Successfully applied at offset 0x{offset:X} ({description})"))
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 patch_results.append((False, f"Patch {i + 1}: Failed - {e}"))
 
         # Report patch results
@@ -188,7 +199,7 @@ def simulate_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -
             # Basic verification: check if the file loads and seems valid
             verification_pe = pefile.PE(temp_path)
             is_valid_pe = True
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             is_valid_pe = False
             results.append(
                 f"\nVerification failed: Invalid PE file after patching - {e}")
@@ -257,16 +268,16 @@ def simulate_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -
                             f"✗ Patch {i + 1} verification: Bytes mismatch at offset 0x{offset:X}")
                         results.append(f"  Expected: {new_bytes.hex().upper()}")
                         results.append(f"  Actual: {actual_bytes.hex().upper()}")
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     results.append(f"✗ Patch {i + 1} verification failed: {e}")
 
         try:
             shutil.rmtree(temp_dir)
             results.append("\nCleanup: Temporary files removed")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             results.append(f"\nCleanup failed: {e}")
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         results.append(f"Error during patch simulation: {e}")
         results.append(traceback.format_exc())
 
@@ -311,7 +322,7 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
         shutil.copy2(app.binary_path, backup_path)
         app.update_output.emit(log_message(
             f"[Patch] Created backup: {backup_path}"))
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         app.update_output.emit(log_message(
             f"[Patch] CRITICAL ERROR: Failed to create backup: {e}"))
         app.update_output.emit(log_message(
@@ -340,8 +351,13 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
             # Clean up the potentially corrupted patched file
             try:
                 os.remove(patched_path)
-            except Exception:
+            except FileNotFoundError:
+                # File already doesn't exist, which is fine
                 pass
+            except PermissionError as e:
+                app.update_output.emit(log_message(f"[Patch] Warning: Cannot remove corrupted file due to permissions: {e}"))
+            except OSError as e:
+                app.update_output.emit(log_message(f"[Patch] Warning: Failed to cleanup corrupted file: {e}"))
             return False
 
         applied_count = 0
@@ -462,13 +478,18 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
             # Clean up the copied file if no patches applied
             try:
                 os.remove(patched_path)
-            except Exception:
+            except FileNotFoundError:
+                # File already doesn't exist, which is acceptable
                 pass
+            except PermissionError as e:
+                app.update_output.emit(log_message(f"[Patch] Warning: Cannot remove unused patched file due to permissions: {e}"))
+            except OSError as e:
+                app.update_output.emit(log_message(f"[Patch] Warning: Failed to cleanup unused patched file: {e}"))
         else:  # Errors occurred during patching
             app.update_output.emit(log_message(
                 f"[Patch] Patching completed with {error_count} errors. Review logs for details."))
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         app.update_output.emit(log_message(
             f"[Patch] Error during patching process: {e}"))
         app.update_output.emit(log_message(traceback.format_exc()))

@@ -1,13 +1,24 @@
 """
-Advanced Payload Generation Module
+Advanced Payload Generation Module 
 
-This module provides sophisticated payload generation capabilities for exploit strategies,
-license bypass mechanisms, and binary patching operations. It includes advanced assembly
-generation, cryptographic bypass payloads, and memory manipulation techniques.
+Copyright (C) 2025 Zachary Flint
 
-Author: Intellicrack Team
-Version: 2.0.0
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import random
@@ -306,7 +317,7 @@ class AdvancedPayloadGenerator:
             self.logger.debug(f"Successfully assembled {count} instructions ({len(encoding)} bytes)")
             return bytes(encoding)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_trace = traceback.format_exc()
             self.logger.error("Assembly error: %s", e)
             self.logger.debug("Assembly error traceback:\n%s", error_trace)
@@ -314,7 +325,7 @@ class AdvancedPayloadGenerator:
 
 
 # Convenience functions
-def generate_payload(payload_type: str, **kwargs) -> Optional[bytes]:
+def generate_payload(payload_type: str, **kwargs) -> Optional[bytes]:  # pylint: disable=unused-argument
     """
     Generate a payload using the default generator.
 

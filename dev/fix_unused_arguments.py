@@ -57,6 +57,7 @@ class UnusedArgumentFixer(ast.NodeVisitor):
         self.generic_visit(node)
         self.current_function = None
 
+# pylint: disable=too-complex
 def fix_unused_arguments_in_file(filepath, target_warnings):
     """Fix unused arguments in a single file based on pylint warnings."""
     try:

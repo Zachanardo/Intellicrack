@@ -1,9 +1,30 @@
-"""Common process execution helper functions."""
+"""
+Common process execution helper functions.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 
 import subprocess
 from typing import List, Optional, Tuple
 
-def run_process_with_output(cmd: List[str], encoding: str = 'utf-8', 
+
+def run_process_with_output(cmd: List[str], encoding: str = 'utf-8',
                           timeout: Optional[int] = None) -> Tuple[int, str, str]:
     """Run a process and capture stdout/stderr.
     
@@ -16,6 +37,7 @@ def run_process_with_output(cmd: List[str], encoding: str = 'utf-8',
         tuple: (return_code, stdout, stderr)
     """
     try:
+        # Create process with standard output/error capture
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -24,15 +46,15 @@ def run_process_with_output(cmd: List[str], encoding: str = 'utf-8',
             encoding=encoding,
             errors='replace'
         )
-        
+
         stdout, stderr = process.communicate(timeout=timeout)
         return process.returncode, stdout, stderr
-        
+
     except subprocess.TimeoutExpired:
         process.kill()
         stdout, stderr = process.communicate()
         return -1, stdout, "Process timed out"
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return -1, "", str(e)
 
 def run_ghidra_process(cmd: List[str]) -> Tuple[int, str, str]:

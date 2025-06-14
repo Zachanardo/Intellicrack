@@ -1,10 +1,24 @@
 """
-SSL/TLS Interception System for Encrypted License Verification
+SSL/TLS Interception System for Encrypted License Verification 
 
-This module provides comprehensive SSL/TLS traffic interception capabilities using mitmproxy
-to analyze and modify encrypted communications between applications and license servers,
-enabling bypass of secure license verification mechanisms.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import datetime
 import logging
@@ -65,8 +79,8 @@ class SSLTLSInterceptor:
                 'kms.core.windows.net',
                 'licensing.mp.microsoft.com'
             ],
-            'ca_cert_path': 'ca.crt',
-            'ca_key_path': 'ca.key',
+            'ca_cert_path': os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'ssl_certificates', 'ca.crt'),
+            'ca_key_path': os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'ssl_certificates', 'ca.key'),
             'record_traffic': True,
             'auto_respond': True
         }
@@ -104,48 +118,24 @@ class SSLTLSInterceptor:
             return None, None
 
         try:
-            # Generate private key
-            private_key = rsa.generate_private_key(
-                public_exponent=65537,
-                key_size=2048
+            from ...utils.certificate_utils import generate_self_signed_cert
+            
+            cert_result = generate_self_signed_cert(
+                common_name="Intellicrack Root CA",
+                organization="Intellicrack CA",
+                state="California",
+                locality="San Francisco",
+                valid_days=3650,
+                is_ca=True
             )
+            
+            if cert_result:
+                return cert_result
+            else:
+                self.logger.error("Failed to generate CA certificate")
+                return None, None
 
-            # Create self-signed certificate
-            subject = issuer = x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack CA"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Root CA"),
-            ])
-
-            cert = x509.CertificateBuilder().subject_name(
-                subject
-            ).issuer_name(
-                issuer
-            ).public_key(
-                private_key.public_key()
-            ).serial_number(
-                x509.random_serial_number()
-            ).not_valid_before(
-                datetime.datetime.utcnow()
-            ).not_valid_after(
-                datetime.datetime.utcnow() + datetime.timedelta(days=3650)
-            ).add_extension(
-                x509.BasicConstraints(ca=True, path_length=None), critical=True
-            ).sign(private_key, hashes.SHA256())
-
-            # Serialize to PEM format
-            cert_pem = cert.public_bytes(Encoding.PEM)
-            key_pem = private_key.private_bytes(
-                Encoding.PEM,
-                PrivateFormat.PKCS8,
-                NoEncryption()
-            )
-
-            return cert_pem, key_pem
-
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error generating CA certificate: %s", e)
             self.logger.error(traceback.format_exc())
             return None, None
@@ -182,7 +172,7 @@ class SSLTLSInterceptor:
             if mitmdump_path:
                 # Create script for intercepting license verification
                 script_fd, script_path = tempfile.mkstemp(suffix='.py', prefix='intellicrack_mitm_')
-                with os.fdopen(script_fd, 'w') as f:
+                with os.fdopen(script_fd, 'w', encoding='utf-8') as f:
                     f.write(f"""
 import json
 from mitmproxy import http
@@ -192,11 +182,11 @@ LICENSE_ENDPOINTS = {self.config['target_hosts']}
 
 def request(flow: http.HTTPFlow) -> None:
     # Check if this is a license verification request
-    if any(endpoint in flow.request.pretty_host for endpoint in LICENSE_ENDPOINTS):
+    if any(endpoint in flow.request.pretty_host for _endpoint in LICENSE_ENDPOINTS):
         print(f"Intercepted license verification request to {{flow.request.pretty_host}}")
 
         # Log request details
-        with open('license_requests.log', 'a') as f:
+        with open('license_requests.log', 'a', encoding='utf-8') as f:
             f.write(f"\\n=== REQUEST to {{flow.request.pretty_host}} ===\\n")
             f.write(f"Method: {{flow.request.method}}\\n")
             f.write(f"Path: {{flow.request.path}}\\n")
@@ -205,11 +195,11 @@ def request(flow: http.HTTPFlow) -> None:
 
 def response(flow: http.HTTPFlow) -> None:
     # Check if this is a license verification response
-    if any(endpoint in flow.request.pretty_host for endpoint in LICENSE_ENDPOINTS):
+    if any(endpoint in flow.request.pretty_host for _endpoint in LICENSE_ENDPOINTS):
         print(f"Intercepted license verification response from {{flow.request.pretty_host}}")
 
         # Log response details
-        with open('license_responses.log', 'a') as f:
+        with open('license_responses.log', 'a', encoding='utf-8') as f:
             f.write(f"\\n=== RESPONSE from {{flow.request.pretty_host}} ===\\n")
             f.write(f"Status: {{flow.response.status_code}}\\n")
             f.write(f"Headers: {{flow.response.headers}}\\n")
@@ -245,7 +235,7 @@ def response(flow: http.HTTPFlow) -> None:
                 flow.response.content = json.dumps(data).encode('utf-8')
 
                 print(f"Modified license response: {{data}}")
-            except:
+            except Exception:
                 # Not valid JSON, leave as is
                 pass
         elif 'xml' in content_type:
@@ -274,21 +264,21 @@ def response(flow: http.HTTPFlow) -> None:
                     universal_newlines=True
                 )
 
-                self.logger.info(f"mitmproxy started with PID {self.proxy_process.pid}")
+                self.logger.info("mitmproxy started with PID %s", self.proxy_process.pid)
             else:
                 self.logger.warning("mitmproxy not found. SSL/TLS interception will be limited.")
                 # Implement a basic proxy server here if needed
 
-            self.logger.info(f"SSL/TLS interceptor started on {self.config['listen_ip']}:{self.config['listen_port']}")
+            self.logger.info("SSL/TLS interceptor started on %s:%s", self.config['listen_ip'], self.config['listen_port'])
 
             # Print instructions
             self.logger.info("To use the SSL/TLS interceptor:")
-            self.logger.info(f"1. Configure the application to use {self.config['listen_ip']}:{self.config['listen_port']} as proxy")
-            self.logger.info(f"2. Install the CA certificate ({self.config['ca_cert_path']}) in the system trust store")
+            self.logger.info("1. Configure the application to use %s:%s as proxy", self.config['listen_ip'], self.config['listen_port'])
+            self.logger.info("2. Install the CA certificate (%s) in the system trust store", self.config['ca_cert_path'])
 
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error starting SSL/TLS interceptor: %s", e)
             self.logger.error(traceback.format_exc())
             return False
@@ -309,13 +299,13 @@ def response(flow: http.HTTPFlow) -> None:
             self.logger.info("SSL/TLS interceptor stopped")
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error stopping SSL/TLS interceptor: %s", e)
             return False
 
     def _find_executable(self, executable: str) -> Optional[str]:
         """
-        Find the path to an executable in the system PATH.
+        Find the path to an executable using the path discovery system.
 
         Args:
             executable: Name of the executable
@@ -323,17 +313,16 @@ def response(flow: http.HTTPFlow) -> None:
         Returns:
             str: Path to the executable, or None if not found
         """
-        for path in os.environ['PATH'].split(os.pathsep):
-            exe_path = os.path.join(path, executable)
-            if os.path.isfile(exe_path) and os.access(exe_path, os.X_OK):
-                return exe_path
-
-            # Check for Windows executable
-            exe_path_win = os.path.join(path, executable + '.exe')
-            if os.path.isfile(exe_path_win) and os.access(exe_path_win, os.X_OK):
-                return exe_path_win
-
-        return None
+        from ...utils.path_discovery import find_tool
+        
+        # Try to find using path_discovery first
+        path = find_tool(executable)
+        if path:
+            return path
+            
+        # Fallback to simple PATH search for tools not in path_discovery specs
+        import shutil
+        return shutil.which(executable)
 
     def get_traffic_log(self) -> List[Dict[str, Any]]:
         """

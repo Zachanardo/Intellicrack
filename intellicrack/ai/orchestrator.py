@@ -1,10 +1,24 @@
 """
-AI Orchestrator for Intellicrack
+AI Orchestrator for Intellicrack 
 
-This module provides the central coordination system for all AI components,
-creating a truly agentic environment where fast ML models and intelligent
-LLM agents work together seamlessly.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import queue
@@ -16,7 +30,6 @@ from typing import Any, Callable, Dict, List, Optional
 
 # Local imports
 try:
-    from ..config import CONFIG
     from ..hexview.ai_bridge import AIBinaryBridge
     from ..utils.logger import get_logger
     from .ai_assistant_enhanced import IntellicrackAIAssistant
@@ -164,29 +177,38 @@ class AIEventBus:
             subscribers = self._subscribers.get(event_type, [])
 
         if subscribers:
-            logger.debug(f"Emitting {event_type} from {source_component} to {len(subscribers)} subscribers")
+            logger.debug("Emitting %s from %s to %d subscribers", event_type, source_component, len(subscribers))
 
-            for subscriber in subscribers:
+            for _subscriber in subscribers:
                 try:
                     # Call subscriber in a separate thread to avoid blocking
                     def call_subscriber(sub):
+                        """
+                        Call a subscriber's callback function with event data.
+                        
+                        Args:
+                            sub: Subscriber dictionary containing 'callback' and 'component' keys
+                            
+                        Executes the subscriber's callback with the event data and source component.
+                        Catches and logs any errors that occur during callback execution.
+                        """
                         try:
                             sub["callback"](data, source_component)
-                        except Exception as e:
-                            logger.error(f"Error in subscriber {sub['component']}: {e}")
+                        except (OSError, ValueError, RuntimeError) as e:
+                            logger.error("Error in subscriber %s: %s", sub['component'], e)
 
-                    threading.Thread(target=lambda: call_subscriber(subscriber), daemon=True).start()
+                    threading.Thread(target=lambda: call_subscriber(_subscriber), daemon=True).start()
 
-                except Exception as e:
-                    logger.error(f"Error calling subscriber {subscriber['component']}: {e}")
+                except (OSError, ValueError, RuntimeError) as e:
+                    logger.error("Error calling subscriber %s: %s", _subscriber['component'], e)
 
     def unsubscribe(self, event_type: str, component_name: str) -> None:
         """Unsubscribe a component from an event type."""
         with self._lock:
             if event_type in self._subscribers:
                 self._subscribers[event_type] = [
-                    sub for sub in self._subscribers[event_type]
-                    if sub["component"] != component_name
+                    _sub for _sub in self._subscribers[event_type]
+                    if _sub["component"] != component_name
                 ]
 
 
@@ -233,7 +255,7 @@ class AIOrchestrator:
             else:
                 self.ml_predictor = None
                 logger.warning("ML Vulnerability Predictor not available")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize ML Predictor: %s", e)
             self.ml_predictor = None
 
@@ -245,7 +267,7 @@ class AIOrchestrator:
             else:
                 self.model_manager = None
                 logger.warning("Model Manager not available")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize Model Manager: %s", e)
             self.model_manager = None
 
@@ -257,7 +279,7 @@ class AIOrchestrator:
             else:
                 self.llm_manager = None
                 logger.warning("LLM Manager not available")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize LLM Manager: %s", e)
             self.llm_manager = None
 
@@ -269,7 +291,7 @@ class AIOrchestrator:
             else:
                 self.ai_assistant = None
                 logger.warning("AI Assistant not available")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize AI Assistant: %s", e)
             self.ai_assistant = None
 
@@ -281,7 +303,7 @@ class AIOrchestrator:
             else:
                 self.hex_bridge = None
                 logger.warning("Hex AI Bridge not available")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize Hex Bridge: %s", e)
             self.hex_bridge = None
 
@@ -295,7 +317,7 @@ class AIOrchestrator:
 
     def _on_analysis_complete(self, data: Dict[str, Any], source: str):
         """Handle analysis completion events."""
-        logger.info(f"Analysis complete from {source}: {data.get('task_id', 'unknown')}")
+        logger.info("Analysis complete from %s: %s", source, data.get('task_id', 'unknown'))
 
         # Update shared context with results
         if "results" in data:
@@ -315,11 +337,11 @@ class AIOrchestrator:
 
     def _on_model_loaded(self, data: Dict[str, Any], source: str):
         """Handle model loading events."""
-        logger.info(f"Model loaded in {source}: {data.get('model_name', 'unknown')}")
+        logger.info("Model loaded in %s: %s", source, data.get('model_name', 'unknown'))
 
     def _on_error_occurred(self, data: Dict[str, Any], source: str):
         """Handle error events."""
-        logger.error(f"Error in {source}: {data.get('error', 'unknown error')}")
+        logger.error("Error in %s: %s", source, data.get('error', 'unknown error'))
 
     def _escalate_to_complex_analysis(self, ml_data: Dict[str, Any]):
         """Escalate low-confidence ML results to complex LLM analysis."""
@@ -359,14 +381,14 @@ class AIOrchestrator:
                 # Get next task (blocking with timeout)
                 try:
                     # Priority queue returns (priority, task)
-                    priority, task = self.task_queue.get(timeout=1.0)
+                    _, task = self.task_queue.get(timeout=1.0)
                 except queue.Empty:
                     continue
 
                 # Process the task
                 self._execute_task(task)
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in task processing loop: %s", e)
 
     def _execute_task(self, task: AITask) -> AIResult:
@@ -402,7 +424,7 @@ class AIOrchestrator:
                 errors.append(f"Unknown task type: {task.task_type}")
                 logger.warning("Unknown task type: %s", task.task_type)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             errors.append(str(e))
             logger.error("Error executing task %s: %s", task.task_id, e)
 
@@ -430,7 +452,7 @@ class AIOrchestrator:
         if task.callback:
             try:
                 task.callback(result)
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in task callback: %s", e)
 
         return result
@@ -466,7 +488,7 @@ class AIOrchestrator:
                     "confidence": confidence
                 }, "ml_predictor")
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("ML prediction failed: %s", e)
 
         # Escalate to LLM if complexity requires it or ML confidence is low
@@ -488,7 +510,7 @@ class AIOrchestrator:
                     # Combine confidences
                     confidence = max(confidence, llm_results.get("confidence", 0.0))
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.error("LLM analysis failed: %s", e)
 
         return result_data, components_used, confidence
@@ -512,7 +534,7 @@ class AIOrchestrator:
                 components_used.append("ai_assistant")
                 confidence = license_results.get("confidence", 0.8)  # License analysis is typically high confidence
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("License analysis failed: %s", e)
 
         return result_data, components_used, confidence
@@ -538,7 +560,7 @@ class AIOrchestrator:
                 components_used.append("hex_bridge")
                 confidence = hex_results.get("confidence", 0.7)
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Hex analysis failed: %s", e)
 
         # Add ML analysis if available
@@ -554,7 +576,7 @@ class AIOrchestrator:
                 components_used.append("ml_predictor")
                 confidence = max(confidence, ml_results.get("confidence", 0.0))
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("ML feature analysis failed: %s", e)
 
         return result_data, components_used, confidence
@@ -596,7 +618,7 @@ class AIOrchestrator:
                 else:
                     logger.warning("LLM returned empty response")
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("LLM reasoning failed: %s", e)
 
         # Fallback to AI assistant if LLM not available
@@ -612,7 +634,7 @@ class AIOrchestrator:
                 components_used.append("ai_assistant")
                 confidence = reasoning_results.get("confidence", 0.8)
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("AI Assistant reasoning failed: %s", e)
 
         return result_data, components_used, confidence
@@ -623,9 +645,9 @@ class AIOrchestrator:
 
         # Look for common recommendation patterns
         lines = content.split('\n')
-        for line in lines:
-            line = line.strip()
-            if any(keyword in line.lower() for keyword in ['recommend', 'suggest', 'should', 'consider']):
+        for _line in lines:
+            line = _line.strip()
+            if any(_keyword in line.lower() for _keyword in ['recommend', 'suggest', 'should', 'consider']):
                 if len(line) > 20 and len(line) < 200:  # Reasonable length
                     recommendations.append(line)
 
@@ -716,7 +738,7 @@ class AIOrchestrator:
         if self.llm_manager:
             try:
                 self.llm_manager.shutdown()
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error shutting down LLM manager: %s", e)
 
         self.shared_context.clear_session()
@@ -729,7 +751,7 @@ _orchestrator_instance = None
 
 def get_orchestrator() -> AIOrchestrator:
     """Get the global AI orchestrator instance."""
-    global _orchestrator_instance
+    global _orchestrator_instance  # pylint: disable=global-statement
     if _orchestrator_instance is None:
         _orchestrator_instance = AIOrchestrator()
     return _orchestrator_instance
@@ -737,7 +759,7 @@ def get_orchestrator() -> AIOrchestrator:
 
 def shutdown_orchestrator():
     """Shutdown the global orchestrator instance."""
-    global _orchestrator_instance
+    global _orchestrator_instance  # pylint: disable=global-statement
     if _orchestrator_instance:
         _orchestrator_instance.shutdown()
         _orchestrator_instance = None

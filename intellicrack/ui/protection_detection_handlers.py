@@ -1,9 +1,24 @@
 """
-Protection Detection Handlers for Intellicrack UI
+Protection Detection Handlers for Intellicrack UI 
 
-This module contains all the handler functions for protection detection features
-that are called from the main UI buttons.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 
@@ -27,11 +42,11 @@ logger = logging.getLogger(__name__)
 
 class ProtectionDetectionHandlers:
     """Mixin class providing protection detection handler methods for IntellicrackApp."""
-    
+
     def __init__(self):
         """Initialize protection detection handlers."""
         self.binary_path = None
-        
+
     def update_status(self, message):
         """Update status - should be overridden by parent class."""
         logger.info(message)
@@ -57,13 +72,13 @@ class ProtectionDetectionHandlers:
             else:
                 if results.get("protections_found"):
                     output += f"Found {len(results['protections_found'])} commercial protections:\n\n"
-                    for protection in results["protections_found"]:
-                        confidence = results.get("confidence_scores", {}).get(protection, 0.0)
-                        output += f"• {protection} (Confidence: {confidence:.1%})\n"
+                    for _protection in results["protections_found"]:
+                        confidence = results.get("confidence_scores", {}).get(_protection, 0.0)
+                        output += f"• {_protection} (Confidence: {confidence:.1%})\n"
 
                     output += "\nDetection Indicators:\n"
-                    for indicator in results.get("indicators", []):
-                        output += f"  - {indicator}\n"
+                    for _indicator in results.get("indicators", []):
+                        output += f"  - {_indicator}\n"
                 else:
                     output += "No commercial protections detected.\n"
 
@@ -74,7 +89,7 @@ class ProtectionDetectionHandlers:
             self.update_status("Commercial protection scan complete")
             logger.info(f"Commercial protection scan complete: {len(results.get('protections_found', []))} found")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during commercial protection scan: {str(e)}"
             logger.error(error_msg)
             self.update_status(error_msg)
@@ -91,8 +106,8 @@ class ProtectionDetectionHandlers:
 
             # Format output
             output = "=== Hardware Dongle Detection Results ===\n\n"
-            for result in results:
-                output += f"{result}\n"
+            for _result in results:
+                output += f"{_result}\n"
 
             # Update the protection results text area
             if hasattr(self, 'protection_results'):
@@ -101,7 +116,7 @@ class ProtectionDetectionHandlers:
             self.update_status("Hardware dongle detection complete")
             logger.info("Hardware dongle detection complete")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during hardware dongle detection: {str(e)}"
             logger.error(error_msg)
             self.update_status(error_msg)
@@ -130,8 +145,8 @@ class ProtectionDetectionHandlers:
 
                     if results.get("detection_methods"):
                         output += "\nDetection Methods:\n"
-                        for method in results["detection_methods"]:
-                            output += f"  - {method}\n"
+                        for _method in results["detection_methods"]:
+                            output += f"  - {_method}\n"
 
             # Update the protection results text area
             if hasattr(self, 'protection_results'):
@@ -140,7 +155,7 @@ class ProtectionDetectionHandlers:
             self.update_status("TPM detection complete")
             logger.info(f"TPM detection complete: Present={results['tpm_present']}")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during TPM detection: {str(e)}"
             logger.error(error_msg)
             self.update_status(error_msg)
@@ -170,13 +185,13 @@ class ProtectionDetectionHandlers:
 
                     if results.get("algorithms_found"):
                         output += "Hash Algorithms Found:\n"
-                        for algo in results["algorithms_found"]:
-                            output += f"  • {algo}\n"
+                        for _algo in results["algorithms_found"]:
+                            output += f"  • {_algo}\n"
 
                     if results.get("indicators"):
                         output += "\nDetection Indicators:\n"
-                        for indicator in results["indicators"]:
-                            output += f"  - {indicator}\n"
+                        for _indicator in results["indicators"]:
+                            output += f"  - {_indicator}\n"
                 else:
                     output += "No checksum/integrity verification detected.\n"
 
@@ -187,7 +202,7 @@ class ProtectionDetectionHandlers:
             self.update_status("Checksum detection complete")
             logger.info(f"Checksum detection complete: Detected={results['checksum_verification_detected']}")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during checksum detection: {str(e)}"
             logger.error(error_msg)
             self.update_status(error_msg)
@@ -217,13 +232,13 @@ class ProtectionDetectionHandlers:
 
                     if results.get("techniques"):
                         output += "Techniques Found:\n"
-                        for technique in results["techniques"]:
-                            output += f"  • {technique}\n"
+                        for _technique in results["techniques"]:
+                            output += f"  • {_technique}\n"
 
                     if results.get("indicators"):
                         output += "\nAPI Indicators:\n"
-                        for indicator in results["indicators"]:
-                            output += f"  - {indicator}\n"
+                        for _indicator in results["indicators"]:
+                            output += f"  - {_indicator}\n"
                 else:
                     output += "No self-healing code detected.\n"
 
@@ -234,7 +249,7 @@ class ProtectionDetectionHandlers:
             self.update_status("Self-healing code detection complete")
             logger.info(f"Self-healing code detection complete: Detected={results['self_healing_detected']}")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during self-healing code detection: {str(e)}"
             logger.error(error_msg)
             self.update_status(error_msg)
@@ -266,13 +281,13 @@ class ProtectionDetectionHandlers:
 
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
-                for method in results["methods_applied"]:
-                    output += f"  • {method}\n"
+                for _method in results["methods_applied"]:
+                    output += f"  • {_method}\n"
 
             if results.get("errors"):
                 output += "\nErrors Encountered:\n"
-                for error in results["errors"]:
-                    output += f"  - {error}\n"
+                for _error in results["errors"]:
+                    output += f"  - {_error}\n"
 
             # Update the protection results text area
             if hasattr(self, 'protection_results'):
@@ -281,7 +296,7 @@ class ProtectionDetectionHandlers:
             self.update_status("TPM bypass attempt complete")
             logger.info(f"TPM bypass complete: Success={results['success']}")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during TPM bypass: {str(e)}"
             logger.error(error_msg)
             self.update_status(error_msg)
@@ -313,13 +328,13 @@ class ProtectionDetectionHandlers:
 
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
-                for method in results["methods_applied"]:
-                    output += f"  • {method}\n"
+                for _method in results["methods_applied"]:
+                    output += f"  • {_method}\n"
 
             if results.get("errors"):
                 output += "\nErrors Encountered:\n"
-                for error in results["errors"]:
-                    output += f"  - {error}\n"
+                for _error in results["errors"]:
+                    output += f"  - {_error}\n"
 
             # Update the protection results text area
             if hasattr(self, 'protection_results'):
@@ -328,7 +343,7 @@ class ProtectionDetectionHandlers:
             self.update_status("VM detection bypass attempt complete")
             logger.info(f"VM detection bypass complete: Success={results['success']}")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during VM detection bypass: {str(e)}"
             logger.error(error_msg)
             self.update_status(error_msg)
@@ -356,20 +371,20 @@ class ProtectionDetectionHandlers:
 
             if results.get("emulated_dongles"):
                 output += "Emulated Dongle Types:\n"
-                for dongle in results["emulated_dongles"]:
-                    output += f"  • {dongle}\n"
+                for _dongle in results["emulated_dongles"]:
+                    output += f"  • {_dongle}\n"
                 output += "\n"
 
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
-                for method in results["methods_applied"]:
-                    output += f"  • {method}\n"
+                for _method in results["methods_applied"]:
+                    output += f"  • {_method}\n"
                 output += "\n"
 
             if results.get("errors"):
                 output += "Errors Encountered:\n"
-                for error in results["errors"]:
-                    output += f"  - {error}\n"
+                for _error in results["errors"]:
+                    output += f"  - {_error}\n"
 
             # Update the protection results text area
             if hasattr(self, 'protection_results'):
@@ -378,7 +393,7 @@ class ProtectionDetectionHandlers:
             self.update_status("Hardware dongle emulation complete")
             logger.info(f"Dongle emulation complete: Success={results['success']}")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during hardware dongle emulation: {str(e)}"
             logger.error(error_msg)
             self.update_status(error_msg)
@@ -401,8 +416,8 @@ class ProtectionDetectionHandlers:
             output = "=== Embedded/Encrypted Script Detection Results ===\n\n"
 
             if results:
-                for result in results:
-                    output += f"{result}\n"
+                for _result in results:
+                    output += f"{_result}\n"
             else:
                 output += "No results returned from script detection.\n"
 
@@ -413,7 +428,7 @@ class ProtectionDetectionHandlers:
             self.update_status("Embedded script detection complete")
             logger.info("Embedded script detection complete")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during embedded script detection: {str(e)}"
             logger.error(error_msg)
             self.update_status(error_msg)

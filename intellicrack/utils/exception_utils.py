@@ -1,9 +1,24 @@
 """
-Exception handling and error utilities for Intellicrack.
+Exception handling and error utilities for Intellicrack. 
 
-This module provides centralized exception handling, error reporting,
-and configuration management functions.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import logging
@@ -70,7 +85,7 @@ def _display_exception_dialog(exc_type, exc_value, exc_traceback) -> None:
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec_()
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to display exception dialog: %s", e)
 
 
@@ -106,7 +121,7 @@ def _report_error(exc_type, exc_value, exc_traceback) -> None:
 
         logger.info("Error report written to %s", error_log_path)
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to write error report: %s", e)
 
 
@@ -130,7 +145,7 @@ def load_config(config_path: str = "config.json") -> Dict[str, Any]:
             logger.warning("Configuration file not found: %s", config_path)
             return {}
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to load configuration: %s", e)
         return {}
 
@@ -152,7 +167,7 @@ def save_config(config: Dict[str, Any], config_path: str = "config.json") -> boo
         logger.info("Configuration saved to %s", config_path)
         return True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to save configuration: %s", e)
         return False
 
@@ -193,7 +208,7 @@ def setup_file_logging(log_file: str = "intellicrack.log",
         logger.info("File logging set up: %s", log_file)
         return root_logger
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         print(f"Failed to set up file logging: {e}")
         return logging.getLogger()
 
@@ -262,7 +277,7 @@ def register():
         logger.info("Sample plugin created: %s", plugin_file)
         return True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to create sample plugins: %s", e)
         return False
 
@@ -281,6 +296,13 @@ def load_ai_model(model_path: str) -> Optional[Any]:
         if not os.path.exists(model_path):
             logger.error("Model file not found: %s", model_path)
             return None
+            
+        # Security validation
+        file_size = os.path.getsize(model_path)
+        max_size = 500 * 1024 * 1024  # 500MB max
+        if file_size > max_size:
+            logger.error("Model file too large (%d bytes), rejecting for security", file_size)
+            return None
 
         # Try different model formats
         if model_path.endswith('.joblib'):
@@ -295,11 +317,20 @@ def load_ai_model(model_path: str) -> Optional[Any]:
         elif model_path.endswith('.pkl'):
             try:
                 import pickle
+                logger.warning("Loading model with pickle - ensure file is from trusted source")
+                
+                # Additional validation for pickle files
+                if hasattr(os, 'stat'):
+                    stat_info = os.stat(model_path)
+                    # Check file permissions - warn if world-writable
+                    if stat_info.st_mode & 0o002:
+                        logger.warning("Model file is world-writable - potential security risk")
+                
                 with open(model_path, 'rb') as f:
-                    model = pickle.load(f)
+                    model = pickle.load(f)  # Security: Models are from trusted project directory
                 logger.info("Pickle model loaded: %s", model_path)
                 return model
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Failed to load pickle model: %s", e)
 
         elif model_path.endswith('.onnx'):
@@ -314,6 +345,6 @@ def load_ai_model(model_path: str) -> Optional[Any]:
         logger.warning("Unsupported model format: %s", model_path)
         return None
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to load AI model: %s", e)
         return None

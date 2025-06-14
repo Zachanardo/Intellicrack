@@ -1,12 +1,24 @@
 """
-Hex data rendering module for the hex viewer/editor.
+Hex data rendering module for the hex viewer/editor. 
 
-This module provides classes for rendering binary data in various formats:
-- Traditional hex view (offset | hex bytes | ASCII)
-- Decimal view
-- Binary view
-- Structure-based view
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import re
 import struct
@@ -32,7 +44,7 @@ class HexViewRenderer:
     Handles rendering of binary data in various formats.
 
     This class is responsible for converting raw binary data into formatted
-    text for display in the hex viewer.
+    text for _display in the hex viewer.
     """
 
     def __init__(self, bytes_per_row: int = 16, group_size: int = 1,
@@ -89,7 +101,7 @@ class HexViewRenderer:
                 self.bytes_per_row = self.group_size
 
     def render_hex_view(self, data: bytes, offset: int = 0,
-                        highlight_ranges: Optional[List[Tuple[int, int, str]]] = None) -> str:
+                        highlight_ranges: Optional[List[Tuple[int, int, str]]] = None) -> str:  # pylint: disable=unused-argument
         """
         Render data in traditional hex view format.
 
@@ -235,10 +247,10 @@ class HexViewRenderer:
         # For binary view, we might want fewer bytes per row due to display width
         bytes_per_binary_row = min(self.bytes_per_row, 8)
 
-        for i in range(0, len(data), bytes_per_binary_row):
+        for _i in range(0, len(data), bytes_per_binary_row):
             # Extract the chunk for this row
-            chunk = data[i:i + bytes_per_binary_row]
-            line_offset = offset + i
+            chunk = data[_i:_i + bytes_per_binary_row]
+            line_offset = offset + _i
 
             # Start with the address/offset
             if self.show_address:
@@ -331,7 +343,7 @@ class HexViewRenderer:
                             return f'"{data[:null_pos].decode("ascii", errors="replace")}"'
                         else:
                             return f'"{data.decode("ascii", errors="replace")}"'
-                    except:
+                    except Exception:
                         return " ".join(f"{b:02X}" for b in data)
 
                 # Other array types
@@ -380,11 +392,11 @@ class HexViewRenderer:
             else:
                 # Default to hex representation
                 return " ".join(f"{b:02X}" for b in data)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             return f"<error: {str(e)}>"
 
 
-def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 16) -> Tuple[int, bytes]:
+def parse_hex_view(hex_view: str, bytes_per_row: int = 16, offset_radix: int = 16) -> Tuple[int, bytes]:  # pylint: disable=unused-argument
     """
     Parse a hex view string back to binary data.
 

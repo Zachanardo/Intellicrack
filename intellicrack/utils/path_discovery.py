@@ -1,25 +1,37 @@
 """
-Dynamic Path Discovery System
+Dynamic Path Discovery System 
 
-This module provides automatic discovery of tool paths, system directories,
-and other resources without hardcoding paths.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+
+import logging
 import os
-import sys
 import shutil
 import subprocess
-import json
-import logging
-from pathlib import Path
-from typing import Optional, List, Dict, Union, Callable
-import platform
+import sys
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 class PathDiscovery:
     """Dynamic path discovery system for tools and resources."""
-    
+
     def __init__(self, config_manager=None):
         """
         Initialize path discovery system.
@@ -33,7 +45,7 @@ class PathDiscovery:
         self.is_windows = self.platform.startswith('win')
         self.is_linux = self.platform.startswith('linux')
         self.is_mac = self.platform.startswith('darwin')
-        
+
         # Define tool specifications
         self.tool_specs = {
             'ghidra': {
@@ -65,7 +77,7 @@ class PathDiscovery:
                 'env_vars': ['GHIDRA_HOME', 'GHIDRA_PATH', 'GHIDRA_INSTALL_DIR'],
                 'validation': self._validate_ghidra
             },
-            
+
             'radare2': {
                 'executables': {
                     'win32': ['radare2.exe', 'r2.exe'],
@@ -77,7 +89,7 @@ class PathDiscovery:
                         r'C:\Program Files\radare2',
                         r'C:\radare2',
                         r'C:\Tools\radare2',
-                        os.path.join(os.path.dirname(__file__), '..', '..', 'radare2', 'radare2-5.9.8-w64', 'bin'),
+                        os.path.join(os.path.dirname(__file__ or os.getcwd()), '..', '..', 'radare2', 'radare2-5.9.8-w64', 'bin') if __file__ else os.path.join(os.getcwd(), 'radare2', 'radare2-5.9.8-w64', 'bin'),
                     ],
                     'linux': [
                         '/usr/bin',
@@ -93,7 +105,7 @@ class PathDiscovery:
                 'env_vars': ['RADARE2_HOME', 'RADARE2_PATH'],
                 'validation': self._validate_radare2
             },
-            
+
             'frida': {
                 'executables': {
                     'win32': ['frida.exe', 'frida-server.exe'],
@@ -120,7 +132,7 @@ class PathDiscovery:
                 'env_vars': ['FRIDA_PATH'],
                 'validation': self._validate_frida
             },
-            
+
             'python': {
                 'executables': {
                     'win32': ['python.exe', 'python3.exe', 'python311.exe', 'python310.exe', 'python39.exe'],
@@ -152,7 +164,7 @@ class PathDiscovery:
                 'env_vars': ['PYTHON_HOME', 'PYTHON_PATH'],
                 'validation': self._validate_python
             },
-            
+
             'docker': {
                 'executables': {
                     'win32': ['docker.exe', 'Docker Desktop.exe'],
@@ -176,7 +188,7 @@ class PathDiscovery:
                 'env_vars': ['DOCKER_PATH'],
                 'validation': self._validate_docker
             },
-            
+
             'wireshark': {
                 'executables': {
                     'win32': ['Wireshark.exe', 'tshark.exe'],
@@ -200,7 +212,7 @@ class PathDiscovery:
                 'env_vars': ['WIRESHARK_PATH'],
                 'validation': self._validate_wireshark
             },
-            
+
             'qemu': {
                 'executables': {
                     'win32': ['qemu-system-x86_64.exe', 'qemu-system-i386.exe'],
@@ -225,7 +237,7 @@ class PathDiscovery:
                 'env_vars': ['QEMU_PATH', 'QEMU_HOME'],
                 'validation': None
             },
-            
+
             'git': {
                 'executables': {
                     'win32': ['git.exe'],
@@ -251,7 +263,7 @@ class PathDiscovery:
                 'env_vars': ['GIT_PATH'],
                 'validation': None
             },
-            
+
             'wkhtmltopdf': {
                 'executables': {
                     'win32': ['wkhtmltopdf.exe'],
@@ -277,7 +289,7 @@ class PathDiscovery:
                 'validation': None
             }
         }
-        
+
         # System paths
         self.system_paths = {
             'windows_system': self._get_windows_system_dir,
@@ -292,7 +304,7 @@ class PathDiscovery:
             'temp': self._get_temp_dir,
             'startup': self._get_startup_dir,
         }
-    
+
     def find_tool(self, tool_name: str, required_executables: Optional[List[str]] = None) -> Optional[str]:
         """
         Find a tool using multiple discovery strategies.
@@ -313,20 +325,20 @@ class PathDiscovery:
             else:
                 # Cache is stale
                 del self.cache[cache_key]
-        
+
         # Check config first
         if self.config_manager:
             config_path = self.config_manager.get(f"{tool_name}_path")
             if config_path and os.path.exists(config_path):
                 self.cache[cache_key] = config_path
                 return config_path
-        
+
         # Get tool specification
         spec = self.tool_specs.get(tool_name.lower())
         if not spec:
             # Generic tool search
             return self._generic_tool_search(tool_name, required_executables)
-        
+
         # Try discovery strategies
         strategies = [
             (self._search_env_vars, spec.get('env_vars', [])),
@@ -334,43 +346,43 @@ class PathDiscovery:
             (self._search_common_locations, spec),
             (self._search_registry, tool_name) if self.is_windows else (None, None),
         ]
-        
+
         for strategy, args in strategies:
             if strategy is None:
                 continue
-                
+
             if isinstance(args, (list, tuple)) and len(args) > 0:
                 path = strategy(args) if not isinstance(args, dict) else strategy(args)
             else:
                 path = strategy(args)
-                
+
             if path:
                 # Validate if validator exists
                 validator = spec.get('validation')
                 if validator and not validator(path):
                     continue
-                    
+
                 # Cache and return
                 self.cache[cache_key] = path
                 if self.config_manager:
                     self.config_manager.set(f"{tool_name}_path", path)
                 return path
-        
+
         return None
-    
+
     def _generic_tool_search(self, tool_name: str, executables: Optional[List[str]] = None) -> Optional[str]:
         """Generic search for tools not in specification."""
         if not executables:
             executables = [tool_name]
             if self.is_windows:
                 executables.extend([f"{tool_name}.exe", f"{tool_name}.bat", f"{tool_name}.cmd"])
-        
+
         # Search in PATH
         for exe in executables:
             path = shutil.which(exe)
             if path:
                 return path
-        
+
         # Search common locations
         search_dirs = []
         if self.is_windows:
@@ -387,21 +399,21 @@ class PathDiscovery:
                 os.path.expanduser(f"~/.{tool_name}"),
                 os.path.expanduser(f"~/{tool_name}"),
             ])
-        
+
         for directory in search_dirs:
             if os.path.exists(directory):
                 for exe in executables:
                     exe_path = os.path.join(directory, exe)
                     if os.path.isfile(exe_path):
                         return exe_path
-                    
+
                     # Check bin subdirectory
                     bin_path = os.path.join(directory, 'bin', exe)
                     if os.path.isfile(bin_path):
                         return bin_path
-        
+
         return None
-    
+
     def _search_env_vars(self, env_vars: List[str]) -> Optional[str]:
         """Search using environment variables."""
         for var in env_vars:
@@ -415,7 +427,7 @@ class PathDiscovery:
                         if os.path.isfile(os.path.join(path, file)) and os.access(os.path.join(path, file), os.X_OK):
                             return os.path.join(path, file)
         return None
-    
+
     def _search_path(self, executables: List[str]) -> Optional[str]:
         """Search in system PATH."""
         for exe in executables:
@@ -423,12 +435,12 @@ class PathDiscovery:
             if path:
                 return path
         return None
-    
+
     def _search_common_locations(self, spec: Dict) -> Optional[str]:
         """Search in common installation locations."""
         search_paths = spec.get('search_paths', {}).get(self.platform, [])
         executables = spec.get('executables', {}).get(self.platform, [])
-        
+
         for directory in search_paths:
             directory = os.path.expanduser(directory)
             if os.path.exists(directory):
@@ -436,29 +448,29 @@ class PathDiscovery:
                     exe_path = os.path.join(directory, exe)
                     if os.path.isfile(exe_path):
                         return exe_path
-                    
+
                     # Check subdirectories
                     for subdir in ['bin', 'scripts', 'Scripts']:
                         sub_path = os.path.join(directory, subdir, exe)
                         if os.path.isfile(sub_path):
                             return sub_path
-        
+
         return None
-    
+
     def _search_registry(self, tool_name: str) -> Optional[str]:
         """Search Windows registry for installed software."""
         if not self.is_windows:
             return None
-            
+
         try:
             import winreg
-            
+
             registry_paths = [
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
                 (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
             ]
-            
+
             for hkey, path in registry_paths:
                 try:
                     with winreg.OpenKey(hkey, path) as key:
@@ -474,12 +486,12 @@ class PathDiscovery:
                                                 # Look for executable
                                                 spec = self.tool_specs.get(tool_name.lower(), {})
                                                 executables = spec.get('executables', {}).get('win32', [tool_name + '.exe'])
-                                                
+
                                                 for exe in executables:
                                                     exe_path = os.path.join(install_location, exe)
                                                     if os.path.isfile(exe_path):
                                                         return exe_path
-                                                    
+
                                                     # Check bin subdirectory
                                                     bin_path = os.path.join(install_location, 'bin', exe)
                                                     if os.path.isfile(bin_path):
@@ -492,9 +504,9 @@ class PathDiscovery:
                     pass
         except ImportError:
             logger.warning("winreg module not available")
-        
+
         return None
-    
+
     def get_system_path(self, path_type: str) -> Optional[str]:
         """
         Get system paths dynamically.
@@ -509,66 +521,66 @@ class PathDiscovery:
         if handler:
             return handler()
         return None
-    
+
     def _get_windows_system_dir(self) -> Optional[str]:
         """Get Windows system directory."""
         if not self.is_windows:
             return None
         return os.environ.get('SystemRoot', r'C:\Windows')
-    
+
     def _get_windows_system32_dir(self) -> Optional[str]:
         """Get Windows System32 directory."""
         if not self.is_windows:
             return None
         system_root = self._get_windows_system_dir()
         return os.path.join(system_root, 'System32') if system_root else None
-    
+
     def _get_windows_drivers_dir(self) -> Optional[str]:
         """Get Windows drivers directory."""
         if not self.is_windows:
             return None
         system32 = self._get_windows_system32_dir()
         return os.path.join(system32, 'drivers') if system32 else None
-    
+
     def _get_program_files_dir(self) -> Optional[str]:
         """Get Program Files directory."""
         if not self.is_windows:
             return None
         return os.environ.get('ProgramFiles', r'C:\Program Files')
-    
+
     def _get_program_files_x86_dir(self) -> Optional[str]:
         """Get Program Files (x86) directory."""
         if not self.is_windows:
             return None
         return os.environ.get('ProgramFiles(x86)', r'C:\Program Files (x86)')
-    
+
     def _get_appdata_dir(self) -> Optional[str]:
         """Get AppData directory."""
         if not self.is_windows:
             return None
         return os.environ.get('APPDATA')
-    
+
     def _get_localappdata_dir(self) -> Optional[str]:
         """Get LocalAppData directory."""
         if not self.is_windows:
             return None
         return os.environ.get('LOCALAPPDATA')
-    
+
     def _get_programdata_dir(self) -> Optional[str]:
         """Get ProgramData directory."""
         if not self.is_windows:
             return None
         return os.environ.get('PROGRAMDATA', r'C:\ProgramData')
-    
+
     def _get_user_home(self) -> str:
         """Get user home directory."""
         return os.path.expanduser('~')
-    
+
     def _get_temp_dir(self) -> str:
         """Get temporary directory."""
         import tempfile
         return tempfile.gettempdir()
-    
+
     def _get_startup_dir(self) -> Optional[str]:
         """Get startup directory."""
         if self.is_windows:
@@ -576,7 +588,7 @@ class PathDiscovery:
             if appdata:
                 return os.path.join(appdata, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
         return None
-    
+
     # Validation methods
     def _validate_ghidra(self, path: str) -> bool:
         """Validate Ghidra installation."""
@@ -584,7 +596,7 @@ class PathDiscovery:
             ghidra_dir = os.path.dirname(path)
         else:
             ghidra_dir = path
-            
+
         # Check for Ghidra-specific directories
         required_dirs = ['support', 'Ghidra']
         for req_dir in required_dirs:
@@ -593,46 +605,46 @@ class PathDiscovery:
                 parent_dir = os.path.dirname(ghidra_dir)
                 if not os.path.exists(os.path.join(parent_dir, req_dir)):
                     return False
-        
+
         return True
-    
+
     def _validate_radare2(self, path: str) -> bool:
         """Validate radare2 installation."""
         try:
-            result = subprocess.run([path, '-v'], capture_output=True, text=True, timeout=5)
+            result = subprocess.run([path, '-v'], capture_output=True, text=True, timeout=5, check=False)
             return 'radare2' in result.stdout.lower()
-        except:
+        except Exception:
             return False
-    
+
     def _validate_frida(self, path: str) -> bool:
         """Validate Frida installation."""
         try:
-            result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5)
+            result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5, check=False)
             return 'frida' in result.stdout.lower() or result.returncode == 0
-        except:
+        except Exception:
             return False
-    
+
     def _validate_python(self, path: str) -> bool:
         """Validate Python installation."""
         try:
-            result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5)
+            result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5, check=False)
             return 'python' in result.stdout.lower() or 'python' in result.stderr.lower()
-        except:
+        except Exception:
             return False
-    
+
     def _validate_docker(self, path: str) -> bool:
         """Validate Docker installation."""
         try:
-            result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5)
+            result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5, check=False)
             return 'docker' in result.stdout.lower()
-        except:
+        except Exception:
             return False
-    
+
     def _validate_wireshark(self, path: str) -> bool:
         """Validate Wireshark installation."""
         # For GUI executables, just check if file exists
         return os.path.isfile(path)
-    
+
     def get_cuda_path(self) -> Optional[str]:
         """Find CUDA installation path."""
         if not self.is_windows:
@@ -653,19 +665,19 @@ class PathDiscovery:
                 for item in os.listdir(cuda_base):
                     if item.startswith('v') and os.path.isdir(os.path.join(cuda_base, item)):
                         versions.append(item)
-                
+
                 if versions:
                     # Sort versions and get latest
                     versions.sort(reverse=True)
                     return os.path.join(cuda_base, versions[0])
-        
+
         # Check environment variable
         cuda_path = os.environ.get('CUDA_PATH') or os.environ.get('CUDA_HOME')
         if cuda_path and os.path.exists(cuda_path):
             return cuda_path
-        
+
         return None
-    
+
     def ensure_tool_available(self, tool_name: str, parent_widget=None) -> Optional[str]:
         """
         Ensure a tool is available, prompting user if needed.
@@ -678,17 +690,17 @@ class PathDiscovery:
             Path to tool or None
         """
         path = self.find_tool(tool_name)
-        
+
         if not path:
             if parent_widget:
                 try:
-                    from PyQt5.QtWidgets import QMessageBox, QFileDialog
-                    
+                    from PyQt5.QtWidgets import QFileDialog, QMessageBox
+
                     msg = QMessageBox()
                     msg.setWindowTitle(f"{tool_name} Not Found")
                     msg.setText(f"Could not find {tool_name}. Would you like to browse for it?")
                     msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-                    
+
                     if msg.exec_() == QMessageBox.Yes:
                         file_filter = "Executable files (*.exe *.bat);;All files (*.*)" if self.is_windows else "All files (*)"
                         path, _ = QFileDialog.getOpenFileName(
@@ -697,7 +709,7 @@ class PathDiscovery:
                             "",
                             file_filter
                         )
-                        
+
                         if path:
                             self.cache[tool_name] = path
                             if self.config_manager:
@@ -708,13 +720,31 @@ class PathDiscovery:
             else:
                 # CLI mode
                 print(f"{tool_name} not found. Please enter the path (or press Enter to skip):")
-                path = input().strip()
-                if path and os.path.exists(path):
-                    self.cache[tool_name] = path
-                    if self.config_manager:
-                        self.config_manager.set(f"{tool_name}_path", path)
-                    return path
-        
+                try:
+                    user_input = input().strip()
+                    if not user_input:
+                        return None
+                    # Validate and sanitize path input
+                    # Remove potentially dangerous characters
+                    path = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
+                    # Normalize path
+                    path = os.path.normpath(path)
+                    # Validate path exists and is safe
+                    if os.path.exists(path) and os.path.isfile(path):
+                        # Additional validation: ensure it's an executable or expected file type
+                        if os.access(path, os.X_OK) or path.endswith(('.exe', '.bat', '.sh', '.py')):
+                            self.cache[tool_name] = path
+                            if self.config_manager:
+                                self.config_manager.set(f"{tool_name}_path", path)
+                            return path
+                        else:
+                            logger.warning(f"Path {path} is not an executable file")
+                    else:
+                        logger.warning(f"Path {path} does not exist or is not a file")
+                except (KeyboardInterrupt, EOFError):
+                    pass
+                return None
+
         return path
 
 
@@ -723,7 +753,7 @@ _path_discovery = None
 
 def get_path_discovery(config_manager=None) -> PathDiscovery:
     """Get global PathDiscovery instance."""
-    global _path_discovery
+    global _path_discovery  # pylint: disable=global-statement
     if _path_discovery is None:
         _path_discovery = PathDiscovery(config_manager)
     return _path_discovery

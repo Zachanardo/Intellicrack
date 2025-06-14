@@ -1,9 +1,24 @@
 """
-Guided Workflow Wizard
+Guided Workflow Wizard 
 
-This module provides a step-by-step wizard for new users to get started
-with binary analysis and patching using Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import datetime
 import os
@@ -874,10 +889,10 @@ class GuidedWorkflowWizard(QWizard):
                         timestamp = getattr(pe.FILE_HEADER, 'TimeDateStamp', 0)
                         compile_time = datetime.datetime.fromtimestamp(timestamp)
                         info_text += f"<b>Compiled:</b> {compile_time.strftime('%Y-%m-%d %H:%M:%S')}<br>"
-                    except Exception:
+                    except (OSError, ValueError, RuntimeError):
                         pass
 
-                except Exception:
+                except (OSError, ValueError, RuntimeError):
                     # If pefile fails, try a simpler approach
                     if os.name == "nt":  # Windows
                         if "64" in file_path.lower() or "x64" in file_path.lower():
@@ -887,7 +902,7 @@ class GuidedWorkflowWizard(QWizard):
 
             self.file_info_label.setText(info_text)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.file_info_label.setText(f"Error getting file info: {str(e)}")
 
     def format_size(self, size_bytes: int) -> str:

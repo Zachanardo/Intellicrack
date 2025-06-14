@@ -1,3 +1,24 @@
+"""
+Pipeline Support for Intellicrack CLI Enables Unix-style command chaining and data flow between operations
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 #!/usr/bin/env python3
 """
 Pipeline Support for Intellicrack CLI
@@ -60,8 +81,59 @@ class PipelineStage(ABC):
         """Process input data and return output data"""
         pass
     
+    # pylint: disable=too-complex
     def validate_input(self, input_data: PipelineData) -> bool:
         """Validate input data format"""
+        # Check if input_data is valid
+        if not isinstance(input_data, PipelineData):
+            return False
+            
+        # Validate content based on format
+        if input_data.format == "json":
+            # For JSON format, content should be serializable
+            if input_data.content is None:
+                return False
+            try:
+                # Test if content can be serialized to JSON
+                json.dumps(input_data.content)
+            except (TypeError, ValueError):
+                return False
+                
+        elif input_data.format == "binary":
+            # For binary format, content should be bytes or have a path
+            if not isinstance(input_data.content, (bytes, bytearray)):
+                # Check if it's a valid file path
+                if isinstance(input_data.content, (str, Path)):
+                    path = Path(input_data.content)
+                    if not path.exists() or not path.is_file():
+                        return False
+                else:
+                    return False
+                    
+        elif input_data.format == "text":
+            # For text format, content should be string-like
+            if not isinstance(input_data.content, (str, bytes)):
+                return False
+                
+        elif input_data.format == "csv":
+            # For CSV format, content should be list of dicts or similar
+            if not isinstance(input_data.content, (list, dict, str)):
+                return False
+                
+        # Validate metadata
+        if not isinstance(input_data.metadata, dict):
+            return False
+            
+        # Additional security checks
+        # Prevent path traversal in file paths
+        if isinstance(input_data.content, (str, Path)):
+            try:
+                path_str = str(input_data.content)
+                if '..' in path_str or path_str.startswith('/etc/') or path_str.startswith('/root/'):
+                    return False
+            except (AttributeError, TypeError):
+                pass
+                
         return True
 
 
@@ -72,6 +144,7 @@ class AnalysisStage(PipelineStage):
         super().__init__("analysis")
     
     def process(self, input_data: PipelineData) -> PipelineData:
+        """Process binary analysis stage."""
         from intellicrack.utils.binary_analysis import analyze_binary
         
         # Extract binary path
@@ -115,6 +188,7 @@ class FilterStage(PipelineStage):
         self.filter_expr = filter_expr
     
     def process(self, input_data: PipelineData) -> PipelineData:
+        """Process filter stage."""
         if input_data.format != "json":
             return input_data
         
@@ -171,6 +245,7 @@ class TransformStage(PipelineStage):
         self.output_format = output_format
     
     def process(self, input_data: PipelineData) -> PipelineData:
+        """Process transform stage."""
         content = input_data.content
         
         if self.output_format == "csv":
@@ -288,6 +363,7 @@ class OutputStage(PipelineStage):
         self.output_path = output_path
     
     def process(self, input_data: PipelineData) -> PipelineData:
+        """Process output stage."""
         if self.output_path:
             # Write to file
             with open(self.output_path, 'w') as f:
@@ -359,12 +435,32 @@ class Pipeline:
         return data
 
 
+# pylint: disable=too-complex
 def parse_pipeline_command(command: str) -> Pipeline:
     """Parse a pipeline command string"""
+    # Validate command string
+    if not command or not isinstance(command, str):
+        raise ValueError("Invalid pipeline command")
+    
+    # Security check - limit command length
+    if len(command) > 1000:
+        raise ValueError("Pipeline command too long")
+    
+    # Check for suspicious patterns
+    suspicious_patterns = ['exec', 'eval', '__import__', 'compile', 'globals', 'locals']
+    command_lower = command.lower()
+    for pattern in suspicious_patterns:
+        if pattern in command_lower:
+            raise ValueError(f"Suspicious pattern '{pattern}' detected in command")
+    
     pipeline = Pipeline()
     
     # Split by pipe character
     stages = command.split("|")
+    
+    # Limit number of stages
+    if len(stages) > 10:
+        raise ValueError("Too many pipeline stages (max: 10)")
     
     for stage_str in stages:
         stage_str = stage_str.strip()
@@ -376,25 +472,52 @@ def parse_pipeline_command(command: str) -> Pipeline:
         cmd = parts[0]
         args = parts[1:] if len(parts) > 1 else []
         
+        # Validate command name
+        allowed_commands = ["analyze", "filter", "transform", "output"]
+        if cmd not in allowed_commands:
+            raise ValueError(f"Unknown command: {cmd}")
+        
         # Create appropriate stage
         if cmd == "analyze":
             pipeline.add_stage(AnalysisStage())
         
         elif cmd == "filter":
             filter_expr = " ".join(args)
+            # Validate filter expression
+            if len(filter_expr) > 200:
+                raise ValueError("Filter expression too long")
             pipeline.add_stage(FilterStage(filter_expr))
         
         elif cmd == "transform":
             if args:
+                # Validate transform type
+                allowed_transforms = ["json", "table", "summary", "csv", "xml"]
+                if args[0] not in allowed_transforms:
+                    raise ValueError(f"Invalid transform type: {args[0]}")
                 pipeline.add_stage(TransformStage(args[0]))
         
         elif cmd == "output":
-            output_path = args[0] if args else None
-            pipeline.add_stage(OutputStage(output_path))
+            if args:
+                output_path = args[0]
+                # Validate output path
+                try:
+                    path = Path(output_path).resolve()
+                    # Prevent writing to sensitive locations
+                    sensitive_dirs = ['/etc', '/root', '/bin', '/sbin', '/usr/bin', '/usr/sbin']
+                    path_str = str(path)
+                    for sensitive_dir in sensitive_dirs:
+                        if path_str.startswith(sensitive_dir):
+                            raise ValueError(f"Cannot write to sensitive directory: {sensitive_dir}")
+                except Exception as e:
+                    raise ValueError(f"Invalid output path: {e}")
+                pipeline.add_stage(OutputStage(output_path))
+            else:
+                pipeline.add_stage(OutputStage(None))
     
     return pipeline
 
 
+# pylint: disable=too-complex
 def main():
     """CLI entry point for pipeline operations"""
     parser = argparse.ArgumentParser(
@@ -424,15 +547,55 @@ Examples:
     
     console = Console()
     
-    # Parse pipeline
-    pipeline = parse_pipeline_command(args.pipeline)
+    # Parse pipeline with validation
+    try:
+        pipeline = parse_pipeline_command(args.pipeline)
+    except ValueError as e:
+        console.print(f"[red]Invalid pipeline command: {e}[/red]")
+        return
+    except Exception as e:
+        console.print(f"[red]Error parsing pipeline: {e}[/red]")
+        return
     
     # Determine input
     if args.input:
-        initial_input = args.input
+        # Validate input file path
+        try:
+            input_path = Path(args.input).resolve()
+            # Check if path exists and is accessible
+            if not input_path.exists():
+                console.print(f"[red]Input file not found: {args.input}[/red]")
+                return
+            if not input_path.is_file():
+                console.print(f"[red]Input path is not a file: {args.input}[/red]")
+                return
+            # Check file size to prevent memory issues
+            if input_path.stat().st_size > 100 * 1024 * 1024:  # 100MB limit
+                console.print("[red]Input file too large (max 100MB)[/red]")
+                return
+            initial_input = str(input_path)
+        except Exception as e:
+            console.print(f"[red]Invalid input path: {e}[/red]")
+            return
     elif not sys.stdin.isatty():
-        # Read from stdin
-        initial_input = sys.stdin.read()
+        # Read from stdin with size limit
+        try:
+            max_stdin_size = 10 * 1024 * 1024  # 10MB limit for stdin
+            initial_input = ""
+            bytes_read = 0
+            
+            while True:
+                chunk = sys.stdin.read(1024)  # Read in chunks
+                if not chunk:
+                    break
+                bytes_read += len(chunk.encode('utf-8'))
+                if bytes_read > max_stdin_size:
+                    console.print("[red]Stdin input too large (max 10MB)[/red]")
+                    return
+                initial_input += chunk
+        except Exception as e:
+            console.print(f"[red]Error reading from stdin: {e}[/red]")
+            return
     else:
         console.print("[red]No input provided. Use -i flag or pipe data to stdin.[/red]")
         return

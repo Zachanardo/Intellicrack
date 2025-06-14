@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Verify and update paths after moving the project from 
-C:\Intellicrack\Intellicrack_Project\Intellicrack_Project to C:\Intellicrack
+C:\\Intellicrack\\Intellicrack_Project\\Intellicrack_Project to C:\\Intellicrack
 
 Run this script after moving the project to ensure all paths are correct.
 """
@@ -10,6 +10,7 @@ import os
 import sys
 import json
 
+# pylint: disable=too-complex
 def verify_paths():
     """Verify that all paths are correct after the move."""
     

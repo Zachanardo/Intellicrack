@@ -1,9 +1,24 @@
 """
-Dialog for the Hex Viewer/Editor.
+Dialog for the Hex Viewer/Editor. 
 
-This module provides a dialog window that integrates the hex viewer widget
-with controls for navigation, search, and view options.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import os
@@ -299,7 +314,7 @@ class HexViewerDialog(QDialog):
             try:
                 file_size = os.path.getsize(file_path)
                 logger.debug("File size: %s bytes", file_size)
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Could not get file size: %s", e)
 
             # Attempt to load the file
@@ -328,7 +343,7 @@ class HexViewerDialog(QDialog):
                 self.status_bar.showMessage(error_msg)
 
             return result
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error loading file: {str(e)}"
             logger.error(error_msg, exc_info=True)
             self.status_bar.showMessage(error_msg)
@@ -438,7 +453,7 @@ class HexViewerDialog(QDialog):
             if selection_size <= 8:
                 data = self.hex_viewer.get_selected_data()
                 if data:
-                    hex_str = " ".join(f"{b:02X}" for b in data)
+                    _hex_str = " ".join(f"{b:02X}" for b in data)
 
                     # Try to interpret as various types based on size
                     if selection_size == 1:
@@ -463,7 +478,7 @@ class HexViewerDialog(QDialog):
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/4 bytes>"
                                 logger.debug(f"Can't show 32-bit value - got {len(data)} bytes, need 4")
-                        except Exception as e:
+                        except (OSError, ValueError, RuntimeError) as e:
                             value_str = " | Value: <error>"
                             logger.error("Error unpacking 32-bit value: %s", e)
                     elif selection_size == 8:
@@ -479,7 +494,7 @@ class HexViewerDialog(QDialog):
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/8 bytes>"
                                 logger.debug(f"Can't show 64-bit value - got {len(data)} bytes, need 8")
-                        except Exception as e:
+                        except (OSError, ValueError, RuntimeError) as e:
                             value_str = " | Value: <error>"
                             logger.error("Error unpacking 64-bit value: %s", e)
 

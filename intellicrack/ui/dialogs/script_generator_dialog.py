@@ -1,14 +1,55 @@
 """
-Script Generation Dialog for Intellicrack.
+Script Generation Dialog for Intellicrack. 
 
-This module provides a comprehensive interface for generating various types of scripts
-including bypass scripts, exploit strategies, and automation scripts.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import os
 import time
 
-from ..common_imports import *
+from ..common_imports import (
+    QApplication,
+    QCheckBox,
+    QColor,
+    QComboBox,
+    QDialog,
+    QFileDialog,
+    QFont,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPlainTextEdit,
+    QPushButton,
+    QSplitter,
+    QTabWidget,
+    QTextEdit,
+    QThread,
+    QVBoxLayout,
+    QWidget,
+    Qt,
+    pyqtSignal
+)
+from .base_dialog import BinarySelectionDialog
+
 try:
     from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat
     from PyQt5.QtWidgets import QPlainTextEdit, QTreeWidget, QTreeWidgetItem
@@ -31,8 +72,8 @@ class PythonHighlighter(QSyntaxHighlighter):
             'def', 'class', 'if', 'else', 'elif', 'while', 'for',
             'try', 'except', 'import', 'from', 'return', 'with'
         ]
-        for keyword in keywords:
-            pattern = f'\\b{keyword}\\b'
+        for _keyword in keywords:
+            pattern = f'\\b{_keyword}\\b'
             self.highlighting_rules.append((pattern, keyword_format))
 
         # Strings
@@ -49,10 +90,10 @@ class PythonHighlighter(QSyntaxHighlighter):
     def highlightBlock(self, text):
         """Highlight a block of text."""
         import re
-        for pattern, format in self.highlighting_rules:
-            for match in re.finditer(pattern, text):
-                start, end = match.span()
-                self.setFormat(start, end - start, format)
+        for pattern, text_format in self.highlighting_rules:
+            for _match in re.finditer(pattern, text):
+                start, end = _match.span()
+                self.setFormat(start, end - start, text_format)
 
 
 class ScriptGeneratorWorker(QThread):
@@ -76,7 +117,7 @@ class ScriptGeneratorWorker(QThread):
                 self._generate_exploit_script()
             elif self.script_type == "strategy":
                 self._generate_exploit_strategy()
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.error_occurred.emit(str(e))
 
     def _generate_bypass_script(self):
@@ -112,12 +153,11 @@ class ScriptGeneratorWorker(QThread):
         self.script_generated.emit(result)
 
 
-class ScriptGeneratorDialog(QDialog):
+class ScriptGeneratorDialog(BinarySelectionDialog):
     """Script Generation Dialog with multiple script types."""
 
     def __init__(self, parent=None, binary_path: str = ""):
-        super().__init__(parent)
-        self.binary_path = binary_path
+        super().__init__(parent, binary_path)
         self.worker = None
         self.generated_scripts = {}
 
@@ -143,20 +183,8 @@ class ScriptGeneratorDialog(QDialog):
 
     def setup_header(self, layout):
         """Setup header with binary selection."""
-        header_group = QGroupBox("Target Binary")
-        header_layout = QHBoxLayout(header_group)
-
-        self.binary_path_edit = QLineEdit(self.binary_path)
-        self.binary_path_edit.setPlaceholderText("Select target binary file...")
-
-        self.browse_btn = QPushButton("Browse")
-        self.browse_btn.clicked.connect(self.browse_binary)
-
-        header_layout.addWidget(QLabel("Binary Path:"))
-        header_layout.addWidget(self.binary_path_edit)
-        header_layout.addWidget(self.browse_btn)
-
-        layout.addWidget(header_group)
+        # Use the base class method
+        super().setup_header(layout, show_label=True)
 
     def setup_main_content(self, layout):
         """Setup main content area."""
@@ -405,15 +433,6 @@ class ScriptGeneratorDialog(QDialog):
         """Connect internal signals."""
         self.binary_path_edit.textChanged.connect(self.on_binary_path_changed)
 
-    def browse_binary(self):
-        """Browse for binary file."""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Target Binary", "",
-            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)"
-        )
-        if file_path:
-            self.binary_path_edit.setText(file_path)
-            self.binary_path = file_path
 
     def on_binary_path_changed(self, text):
         """Handle binary path change."""
@@ -532,7 +551,7 @@ class ScriptGeneratorDialog(QDialog):
                 from PyQt5.QtWidgets import QApplication
                 QApplication.clipboard().setText(script_content)
                 self.status_label.setText("Script copied to clipboard")
-            except Exception:
+            except (OSError, ValueError, RuntimeError):
                 QMessageBox.information(self, "Copy", "Script copied to clipboard (fallback)")
 
     def save_script(self):
@@ -568,7 +587,7 @@ class ScriptGeneratorDialog(QDialog):
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(script_content)
                 self.status_label.setText(f"Script saved to {os.path.basename(file_path)}")
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 QMessageBox.critical(self, "Save Error", f"Failed to save script: {str(e)}")
 
     def test_script(self):

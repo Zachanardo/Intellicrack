@@ -1,9 +1,24 @@
 """
-Core utility functions for Intellicrack.
+Core utility functions for Intellicrack. 
 
-This module provides core utility functions including the main entry point,
-tool dispatching, and other essential utilities.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import logging
@@ -102,7 +117,7 @@ def main(args: Optional[List[str]] = None):
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
         return 1
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Fatal error: %s", e)
         logger.error(traceback.format_exc())
         return 1
@@ -136,7 +151,7 @@ def run_gui_mode(args) -> int:
         logger.error("GUI dependencies not available: %s", e)
         logger.info("Please install PyQt5 to use GUI mode")
         return 1
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error launching GUI: %s", e)
         return 1
 
@@ -187,13 +202,13 @@ def run_cli_mode(args) -> int:
         # Save results if output specified
         if args.output and results:
             output_file = f"{args.output}/intellicrack_results.json"
-            with open(output_file, 'w') as f:
+            with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(results, f, indent=2, default=str)
             print(f"\nResults saved to: {output_file}")
 
         return 0
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in CLI mode: %s", e)
         logger.error(traceback.format_exc())
         return 1
@@ -258,7 +273,7 @@ def dispatch_tool(app_instance, tool_name: str, parameters: Dict[str, Any]) -> D
 
         return result
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         error_trace = traceback.format_exc()
         error_msg = f"Error executing tool '{tool_name}': {str(e)}"
 
@@ -296,7 +311,7 @@ def register_tool(name: str, func: Callable, category: str = "general") -> bool:
         TOOL_REGISTRY[name] = func
         logger.info("Registered tool: %s (category: %s)", name, category)
         return True
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error registering tool %s: %s", name, e)
         return False
 
@@ -356,7 +371,7 @@ def register_default_tools():
         logger.info(f"Registered {len(tools)} default tools")
         return True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error registering default tools: %s", e)
         return False
 
@@ -425,7 +440,7 @@ def register(plugin_info: Dict[str, Any]) -> bool:
         logger.info("Plugin %s registered successfully", plugin_name)
         return True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error registering plugin: %s", e)
         return False
 
@@ -520,7 +535,7 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: Optional[Dic
             "config": monitoring_config
         }
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in deep runtime monitoring: %s", e)
         return {
             "status": "error",
@@ -532,7 +547,7 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: Optional[Dic
 # Initialize default tools when module is imported
 try:
     register_default_tools()
-except Exception as e:
+except (OSError, ValueError, RuntimeError) as e:
     logger.warning("Could not register default tools: %s", e)
 
 

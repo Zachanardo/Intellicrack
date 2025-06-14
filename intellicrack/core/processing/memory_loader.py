@@ -1,10 +1,24 @@
 """
-Memory-Optimized Binary Loader
+Memory-Optimized Binary Loader 
 
-This module provides memory-efficient loading and analysis of large binary files,
-using techniques like memory mapping, partial loading, and on-demand section loading
-to reduce memory footprint.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import math
@@ -65,8 +79,8 @@ class MemoryOptimizedBinaryLoader:
             # Close previous file if open
             self.close()
 
-            # Open file
-            self.current_file = open(file_path, 'rb')
+            # Open file (closed in self.close() method)
+            self.current_file = open(file_path, 'rb')  # pylint: disable=consider-using-with
             self.file_size = os.path.getsize(file_path)
 
             # Memory map the file
@@ -79,7 +93,7 @@ class MemoryOptimizedBinaryLoader:
             self.logger.info(f"Loaded file: {file_path} ({self._format_size(self.file_size)})")
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error loading file: %s", e)
             self.close()
             return False
@@ -93,7 +107,7 @@ class MemoryOptimizedBinaryLoader:
         if self.mapped_file:
             try:
                 self.mapped_file.close()
-            except Exception:
+            except (OSError, ValueError, RuntimeError):
                 pass
             self.mapped_file = None
 
@@ -101,7 +115,7 @@ class MemoryOptimizedBinaryLoader:
         if self.current_file:
             try:
                 self.current_file.close()
-            except Exception:
+            except (OSError, ValueError, RuntimeError):
                 pass
             self.current_file = None
 
@@ -133,7 +147,7 @@ class MemoryOptimizedBinaryLoader:
         try:
             self.mapped_file.seek(offset)
             return self.mapped_file.read(size)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error reading chunk: %s", e)
             return None
 
@@ -205,7 +219,7 @@ class MemoryOptimizedBinaryLoader:
         try:
             process = psutil.Process(os.getpid())
             return process.memory_info().rss
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error getting memory usage: %s", e)
             return 0
 
@@ -246,7 +260,7 @@ class MemoryOptimizedBinaryLoader:
             byte_counts = [0] * 256
             total_bytes = 0
 
-            for offset, chunk in self.iterate_file():
+            for _offset, chunk in self.iterate_file():
                 for byte_val in chunk:
                     byte_counts[byte_val] += 1
                     total_bytes += 1

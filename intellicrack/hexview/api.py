@@ -1,9 +1,24 @@
 """
-API for the enhanced hex viewer/editor.
+API for the enhanced hex viewer/editor. 
 
-This module provides a convenient API for using the hex viewer functionality
-from the main Intellicrack application or from other modules.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import os
@@ -44,7 +59,7 @@ def open_hex_file(file_path: str, read_only: bool = True) -> Optional[VirtualFil
         file_handler = VirtualFileAccess(file_path, read_only)
         logger.info("Opened file %s for hex viewing/editing", file_path)
         return file_handler
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error opening file: %s", e)
         return None
 
@@ -68,7 +83,7 @@ def read_hex_region(file_path: str, offset: int, size: int) -> Optional[bytes]:
 
         data = file_handler.read(offset, size)
         return data
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error reading hex region: %s", e)
         return None
 
@@ -95,7 +110,7 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
             file_handler.apply_edits()
 
         return result
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error writing hex region: %s", e)
         return False
 
@@ -119,7 +134,7 @@ def analyze_binary_data(data: bytes, query: Optional[str] = None,
         ai_bridge = AIBinaryBridge(model_manager)
         result = ai_bridge.analyze_binary_region(data, 0, len(data), query)
         return result
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error analyzing binary data: %s", e)
         return {"error": str(e)}
 
@@ -141,7 +156,7 @@ def search_binary_pattern(data: bytes, pattern_desc: str,
         ai_bridge = AIBinaryBridge(model_manager)
         results = ai_bridge.search_binary_semantic(data, pattern_desc)
         return results
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error searching binary pattern: %s", e)
         return []
 
@@ -163,7 +178,7 @@ def suggest_binary_edits(data: bytes, edit_intent: str,
         ai_bridge = AIBinaryBridge(model_manager)
         result = ai_bridge.suggest_edits(data, 0, len(data), edit_intent)
         return result
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error suggesting binary edits: %s", e)
         return {"error": str(e)}
 
@@ -254,7 +269,7 @@ def add_hex_viewer_to_application(app_instance) -> bool:
 
         logger.info("Enhanced hex viewer added to application")
         return True
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error adding hex viewer to application: %s", e)
         return False
 
@@ -272,7 +287,7 @@ def register_ai_tools(app_instance) -> bool:
     try:
         register_hex_viewer_ai_tools(app_instance)
         return True
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error registering AI tools: %s", e)
         return False
 

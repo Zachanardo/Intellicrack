@@ -1,9 +1,24 @@
 """
-Process and system utilities for Intellicrack.
+Process and system utilities for Intellicrack. 
 
-This module provides functions for process management, hardware detection,
-and system-level operations.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import hashlib
 import logging
@@ -58,7 +73,7 @@ def get_target_process_pid(process_name: str) -> Optional[int]:
         logger.warning("Process %s not found", process_name)
         return None
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error finding process %s: %s", process_name, e)
         return None
 
@@ -89,7 +104,7 @@ def compute_file_hash(file_path: str, algorithm: str = 'sha256') -> Optional[str
         logger.info("Computed %s hash for %s: %s", algorithm, file_path, hash_value)
         return hash_value
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error computing hash for %s: %s", file_path, e)
         return None
 
@@ -165,7 +180,7 @@ def detect_hardware_dongles(app=None) -> List[str]:
                         logger.info("Found %s service process: %s", dongle, process)
                         results.append(f"Found {dongle} service process: {process}")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error checking dongle processes: %s", e)
             results.append(f"Error checking processes: {e}")
     else:
@@ -195,7 +210,7 @@ def detect_hardware_dongles(app=None) -> List[str]:
                     winreg.CloseKey(key)
                 except FileNotFoundError:
                     pass  # Key doesn't exist
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.debug("Error accessing registry key %s: %s", key_path, e)
 
         except ImportError:
@@ -231,7 +246,7 @@ def detect_tpm_protection() -> Dict[str, Any]:
         # Check for TPM device on Windows
         if sys.platform == 'win32':
             try:
-                # Check WMI for TPM info
+                # Check WMI for _TPM info
                 import wmi
                 c = wmi.WMI()
 
@@ -240,17 +255,17 @@ def detect_tpm_protection() -> Dict[str, Any]:
                     results["tpm_present"] = True
                     results["detection_methods"].append("WMI Win32_Tpm")
 
-                    for tpm in tpm_instances:
-                        if hasattr(tpm, 'IsEnabled_InitialValue'):
-                            results["tpm_enabled"] = bool(tpm.IsEnabled_InitialValue)
-                        if hasattr(tpm, 'IsOwned_InitialValue'):
-                            results["tpm_owned"] = bool(tpm.IsOwned_InitialValue)
-                        if hasattr(tpm, 'SpecVersion'):
-                            results["tpm_version"] = tpm.SpecVersion
+                    for tmp in tpm_instances:
+                        if hasattr(tmp, 'IsEnabled_InitialValue'):
+                            results["tpm_enabled"] = bool(tmp.IsEnabled_InitialValue)
+                        if hasattr(tmp, 'IsOwned_InitialValue'):
+                            results["tpm_owned"] = bool(tmp.IsOwned_InitialValue)
+                        if hasattr(tmp, 'SpecVersion'):
+                            results["tpm_version"] = tmp.SpecVersion
 
             except ImportError:
                 logger.debug("WMI not available for TPM detection")
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("WMI TPM detection failed: %s", e)
 
         # Check TPM device files on Linux
@@ -266,25 +281,25 @@ def detect_tpm_protection() -> Dict[str, Any]:
         if psutil:
             tpm_processes = ['tpm2-abrmd', 'tcsd', 'trousers']
             for proc in psutil.process_iter(['name']):
-                if proc.info['name'] and any(tpm_proc in proc.info['name'].lower() for tpm_proc in tpm_processes):
+                if proc.info['name'] and any(tmp_proc_name in proc.info['name'].lower() for tmp_proc_name in tpm_processes):
                     results["detection_methods"].append(f"TPM process: {proc.info['name']}")
 
         # Check for TPM kernel modules on Linux
         if sys.platform.startswith('linux'):
             try:
-                with open('/proc/modules', 'r') as f:
+                with open('/proc/modules', 'r', encoding='utf-8') as f:
                     modules = f.read()
                     tpm_modules = ['tpm', 'tpm_tis', 'tpm_crb', 'tpm2']
                     for module in tpm_modules:
                         if module in modules:
                             results["detection_methods"].append(f"Kernel module: {module}")
                             results["tpm_present"] = True
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.debug("Could not check kernel modules: %s", e)
 
         logger.info("TPM detection completed: %s", results)
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in TPM detection: %s", e)
         results["error"] = str(e)
 
@@ -316,7 +331,7 @@ def get_system_processes() -> List[Dict[str, Any]]:
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass  # Process may have terminated or access denied
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error getting process list: %s", e)
 
     return processes
@@ -350,7 +365,7 @@ def run_command(command: str, timeout: int = 30) -> Dict[str, Any]:
             capture_output=True,
             text=True,
             timeout=timeout
-        )
+        , check=False)
 
         result["success"] = process.returncode == 0
         result["stdout"] = process.stdout
@@ -362,7 +377,7 @@ def run_command(command: str, timeout: int = 30) -> Dict[str, Any]:
     except subprocess.TimeoutExpired:
         result["error"] = f"Command timed out after {timeout} seconds"
         logger.error(result["error"])
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         result["error"] = str(e)
         logger.error("Error running command: %s", e)
 

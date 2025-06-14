@@ -1,25 +1,24 @@
 """
-Intellicrack Models Package
+Intellicrack Models Package 
 
-This package provides data models and structures used throughout the Intellicrack framework.
-It includes models for binary analysis results, vulnerability data, protection mechanisms,
-and AI/ML model representations.
+Copyright (C) 2025 Zachary Flint
 
-Key Features:
-    - Data model definitions
-    - Analysis result structures
-    - Vulnerability representations
-    - Protection mechanism models
-    - Configuration models
-    - Serialization support
+This file is part of Intellicrack.
 
-Model Categories:
-    - Binary models for file analysis
-    - Vulnerability models for security findings
-    - Protection models for security mechanisms
-    - Analysis models for results storage
-    - Configuration models for settings
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 from dataclasses import dataclass
@@ -132,7 +131,7 @@ class Patch:
 
 @dataclass
 class LicenseInfo:
-    """Model for license information."""
+    """Model for _license information."""
     type: LicenseType
     algorithm: Optional[str] = None
     key_locations: Optional[List[int]] = None
@@ -193,7 +192,7 @@ class AIModelConfig:
 
 @dataclass
 class PluginInfo:
-    """Model for plugin information."""
+    """Model for _plugin information."""
     name: str
     version: str
     author: str

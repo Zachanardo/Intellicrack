@@ -1,3 +1,24 @@
+"""
+PDF Report Generator for comprehensive analysis findings. 
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 #!/usr/bin/env python3
 """
 PDF Report Generator for comprehensive analysis findings.
@@ -45,11 +66,8 @@ try:
 except ImportError:
     PDFKIT_AVAILABLE = False
 
-try:
-    import pefile
-    PEFILE_AVAILABLE = True
-except ImportError:
-    PEFILE_AVAILABLE = False
+# Import common patterns from centralized module
+from ...utils.import_patterns import pefile, PEFILE_AVAILABLE
 
 try:
     from PyQt5.QtWidgets import QInputDialog, QMessageBox
@@ -395,7 +413,7 @@ class PDFReportGenerator:
             self.logger.info("Generated comprehensive PDF report: %s", output_path)
             return output_path
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error generating comprehensive PDF report: %s", e)
             self.logger.error(traceback.format_exc())
             return None
@@ -452,8 +470,8 @@ class PDFReportGenerator:
         try:
             from reportlab.graphics.charts.barcharts import VerticalBarChart
             from reportlab.graphics.shapes import Drawing
-            from reportlab.lib.units import inch
-            from reportlab.platypus import Spacer
+            from reportlab.lib.units import inch  # pylint: disable=redefined-outer-name
+            from reportlab.platypus import Spacer  # pylint: disable=redefined-outer-name
 
             # Initialize data structures
             section_names = []
@@ -481,7 +499,7 @@ class PDFReportGenerator:
                 else:
                     raise ImportError("pefile not available")
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.warning("Detailed PE analysis failed: %s, using fallback", e)
                 # Fallback to basic section names if detailed analysis fails
                 if hasattr(self.app, "binary_info") and "sections" in self.app.binary_info:
@@ -547,13 +565,13 @@ class PDFReportGenerator:
             self.logger.warning("Could not create PE section chart: %s", e)
             elements.append(Paragraph("PE Section visualization requires reportlab charts", styles.get("Italic", styles["Normal"])))
             return False
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in PE section analysis: %s", e)
             self.logger.error(traceback.format_exc())
             return False
 
     def generate_html_report(self, binary_path: str, analysis_results: Dict[str, Any],
-                           report_type: str = "comprehensive") -> Optional[str]:
+                           report_type: str = "comprehensive") -> Optional[str]:  # pylint: disable=unused-argument
         """
         Generate an HTML report for the analysis results.
 
@@ -572,8 +590,8 @@ class PDFReportGenerator:
             report_filename = f"report_{binary_name}_{timestamp}.html"
             report_path = os.path.join(self.output_dir, report_filename)
 
-            from ...utils.html_templates import get_report_html_template, close_html
-            
+            from ...utils.html_templates import close_html, get_report_html_template
+
             # Start building HTML content using common template
             html_content = get_report_html_template(binary_name) + f"""
                 <h1>Intellicrack Analysis Report</h1>
@@ -634,19 +652,19 @@ class PDFReportGenerator:
             # Convert to PDF if PDFKit is available
             if self.pdfkit_available:
                 try:
-                    import pdfkit
+                    # pdfkit already imported at module level with fallback
                     pdf_path = report_path.replace('.html', '.pdf')
                     pdfkit.from_file(report_path, pdf_path)
 
                     self.logger.info("Converted HTML report to PDF: %s", pdf_path)
                     return pdf_path
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     self.logger.error("Error converting HTML to PDF: %s", e)
                     return report_path
 
             return report_path
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error generating HTML report: %s", e)
             self.logger.error(traceback.format_exc())
             return None
@@ -773,14 +791,14 @@ def run_report_generation(app: Any) -> None:
         if open_report:
             try:
                 if platform.system() == 'Windows':
-                    os.startfile(report_path)
+                    os.startfile(report_path)  # pylint: disable=no-member
                 elif platform.system() == 'Darwin':  # macOS
                     subprocess.call(['open', report_path])
                 else:  # Linux
                     subprocess.call(['xdg-open', report_path])
 
                 app.update_output.emit(f"[Report] Opened report: {report_path}")
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 app.update_output.emit(f"[Report] Error opening report: {e}")
     else:
         app.update_output.emit("[Report] Failed to generate report")

@@ -1,3 +1,24 @@
+"""
+Docker Container Management for Distributed Analysis. 
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 #!/usr/bin/env python3
 """
 Docker Container Management for Distributed Analysis.
@@ -64,11 +85,11 @@ class DockerContainer:
             RuntimeError: If Docker is not available or accessible
         """
         try:
-            result = subprocess.run(
+            from ...utils.subprocess_utils import run_subprocess_check
+            result = run_subprocess_check(
                 ["docker", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                timeout=10,
+                check=False
             )
 
             if result.returncode != 0:
@@ -82,7 +103,7 @@ class DockerContainer:
                 capture_output=True,
                 text=True,
                 timeout=10
-            )
+            , check=False)
 
             if result.returncode != 0:
                 raise RuntimeError("Docker daemon not running")
@@ -91,7 +112,7 @@ class DockerContainer:
             raise RuntimeError("Docker command timed out - daemon may not be running")
         except FileNotFoundError:
             raise RuntimeError("Docker command not found - Docker is not installed")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Docker initialization error: {str(e)}")
             raise RuntimeError(f"Docker initialization failed: {str(e)}")
 
@@ -114,7 +135,7 @@ class DockerContainer:
                 capture_output=True,
                 text=True,
                 timeout=300  # 5 minute timeout for image pulls
-            )
+            , check=False)
 
             if result.returncode != 0:
                 self.logger.warning("Failed to pull image (may already exist): %s", result.stderr)
@@ -149,7 +170,7 @@ class DockerContainer:
                 capture_output=True,
                 text=True,
                 timeout=60
-            )
+            , check=False)
 
             if result.returncode != 0:
                 self.logger.error("Failed to start container: %s", result.stderr)
@@ -168,7 +189,7 @@ class DockerContainer:
         except subprocess.TimeoutExpired:
             self.logger.error("Container start operation timed out")
             return False
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Error starting Docker container: {str(e)}")
             return False
 
@@ -196,7 +217,7 @@ class DockerContainer:
             stop_cmd.append(self.container_id)
 
             self.logger.info("Stopping container %s", self.container_id)
-            result = subprocess.run(stop_cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(stop_cmd, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode != 0:
                 self.logger.warning("Failed to stop container gracefully: %s", result.stderr)
@@ -211,7 +232,7 @@ class DockerContainer:
                 capture_output=True,
                 text=True,
                 timeout=30
-            )
+            , check=False)
 
             if result.returncode != 0:
                 self.logger.warning("Failed to remove container: %s", result.stderr)
@@ -224,7 +245,7 @@ class DockerContainer:
         except subprocess.TimeoutExpired:
             self.logger.error("Container stop operation timed out")
             return False
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Error stopping Docker container: {str(e)}")
             return False
 
@@ -244,11 +265,11 @@ class DockerContainer:
                 capture_output=True,
                 text=True,
                 timeout=10
-            )
+            , check=False)
 
             return result.returncode == 0 and result.stdout.strip() == "true"
 
-        except Exception:
+        except (OSError, ValueError, RuntimeError):
             return False
 
     def execute_command(self, command: str, timeout: int = 60, working_dir: Optional[str] = None) -> str:
@@ -284,7 +305,7 @@ class DockerContainer:
                 capture_output=True,
                 text=True,
                 timeout=timeout
-            )
+            , check=False)
 
             if result.returncode != 0:
                 self.logger.warning("Command exited with status %s", result.returncode)
@@ -297,7 +318,7 @@ class DockerContainer:
             error_msg = f"Command timed out after {timeout} seconds"
             self.logger.error(error_msg)
             return f"ERROR: {error_msg}"
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error executing command: {str(e)}"
             self.logger.error(error_msg)
             return f"ERROR: {error_msg}"
@@ -337,7 +358,7 @@ class DockerContainer:
                 capture_output=True,
                 text=True,
                 timeout=60
-            )
+            , check=False)
 
             if result.returncode != 0:
                 self.logger.error("Failed to copy file: %s", result.stderr)
@@ -355,7 +376,7 @@ class DockerContainer:
         except subprocess.TimeoutExpired:
             self.logger.error("File copy operation timed out")
             return False
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Error copying file to container: {str(e)}")
             return False
 
@@ -410,7 +431,7 @@ class DockerContainer:
             self.logger.info(f"Snapshot '{name}' created successfully")
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Error creating container snapshot: {str(e)}")
             return False
 
@@ -456,13 +477,13 @@ class DockerContainer:
             proc1 = set()
             proc2 = set()
 
-            for p in processes1:
-                parts = p.split()
+            for _p in processes1:
+                parts = _p.split()
                 if len(parts) > 10:
                     proc1.add(' '.join(parts[10:]))
 
-            for p in processes2:
-                parts = p.split()
+            for _p in processes2:
+                parts = _p.split()
                 if len(parts) > 10:
                     proc2.add(' '.join(parts[10:]))
 
@@ -505,7 +526,7 @@ class DockerContainer:
             self.logger.info(f"Snapshot comparison complete: {result['total_changes']} total changes")
             return result
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error comparing snapshots: {str(e)}"
             self.logger.error(error_msg)
             return {"error": error_msg}
@@ -568,7 +589,7 @@ class DockerContainer:
             self.logger.info("Analysis artifacts collected successfully")
             return artifacts
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error collecting analysis artifacts: {str(e)}"
             self.logger.error(error_msg)
             return {"error": error_msg}
@@ -598,7 +619,7 @@ class DockerContainer:
                     capture_output=True,
                     text=True,
                     timeout=10
-                )
+                , check=False)
 
                 if inspect_result.returncode == 0:
                     import json
@@ -610,7 +631,7 @@ class DockerContainer:
                         "privileged": container_info["HostConfig"]["Privileged"]
                     })
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.warning("Failed to get detailed container status: %s", e)
 
         return status

@@ -1,3 +1,24 @@
+"""
+Test script to verify modular import structure works correctly. 
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 #!/usr/bin/env python3
 """
 Test script to verify modular import structure works correctly.
@@ -12,7 +33,8 @@ import traceback
 def test_import(module_name, description):
     """Test importing a specific module."""
     try:
-        exec(f"import {module_name}")
+        import importlib
+        importlib.import_module(module_name)
         print(f"✓ {description}")
         return True
     except ImportError as e:

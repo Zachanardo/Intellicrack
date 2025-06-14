@@ -28,4 +28,5 @@ class DemoPlugin:
 
 # Function to register this plugin with Intellicrack
 def register():
+    """Register this plugin with Intellicrack."""
     return DemoPlugin()

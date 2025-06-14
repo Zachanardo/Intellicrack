@@ -1,9 +1,24 @@
 """
-Advanced Search and Replace functionality for Hex Viewer.
+Advanced Search and Replace functionality for Hex Viewer. 
 
-This module provides comprehensive search capabilities including regex support,
-find all, replace functionality, and search history.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import logging
@@ -12,9 +27,37 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from ..ui.common_imports import *
-from PyQt5.QtCore import QThread, QTimer
-from PyQt5.QtGui import QKeySequence
+from PyQt5.QtCore import QThread
+
+from ..ui.common_imports import (
+    PYQT5_AVAILABLE,
+    QButtonGroup,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QRadioButton,
+    QSpinBox,
+    QTabWidget,
+    QTableWidget,
+    QTableWidgetItem,
+    QThread,
+    QVBoxLayout,
+    QWidget,
+    Qt,
+    pyqtSignal
+)
 
 logger = logging.getLogger(__name__)
 
@@ -106,10 +149,10 @@ class SearchHistory:
         """Load history from file."""
         try:
             if self.history_file.exists():
-                with open(self.history_file, 'r') as f:
+                with open(self.history_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     self.entries = data.get('searches', [])
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Could not load search history: %s", e)
             self.entries = []
 
@@ -117,9 +160,9 @@ class SearchHistory:
         """Save history to file."""
         try:
             self.history_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.history_file, 'w') as f:
+            with open(self.history_file, 'w', encoding='utf-8') as f:
                 json.dump({'searches': self.entries}, f, indent=2)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Could not save search history: %s", e)
 
 
@@ -284,7 +327,7 @@ class SearchEngine:
                 flags = 0 if case_sensitive else re.IGNORECASE
                 return re.compile(escaped, flags)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error compiling pattern: %s", e)
 
         return None
@@ -348,6 +391,7 @@ class SearchEngine:
                              search_type: SearchType, whole_words: bool) -> List[SearchResult]:
         """Find all matches in a chunk of data."""
         matches = []
+        _search_type = search_type  # Store for potential future use
 
         try:
             if isinstance(compiled_pattern, bytes):
@@ -401,7 +445,7 @@ class SearchEngine:
                         )
                         matches.append(result)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error finding matches in chunk: %s", e)
 
         return matches
@@ -464,7 +508,7 @@ class SearchThread(QThread if PYQT5_AVAILABLE else object):
                 )
                 if result and self.result_found:
                     self.result_found.emit(result)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Search thread error: %s", e)
 
     def stop(self):
@@ -778,7 +822,7 @@ class AdvancedSearchDialog(QDialog if PYQT5_AVAILABLE else object):
                 else:
                     self.search_status_label.setText("Pattern not found")
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.search_status_label.setText(f"Search error: {e}")
 
     def find_previous(self):
@@ -806,7 +850,7 @@ class AdvancedSearchDialog(QDialog if PYQT5_AVAILABLE else object):
                 else:
                     self.search_status_label.setText("Pattern not found")
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.search_status_label.setText(f"Search error: {e}")
 
     def replace_current(self):
@@ -834,7 +878,7 @@ class AdvancedSearchDialog(QDialog if PYQT5_AVAILABLE else object):
 
                 self.replace_status_label.setText(f"Replaced {len(replaced_ranges)} occurrences")
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.replace_status_label.setText(f"Replace error: {e}")
 
     def find_all(self):
@@ -928,7 +972,7 @@ class AdvancedSearchDialog(QDialog if PYQT5_AVAILABLE else object):
 
 class FindAllDialog(QDialog):
     """Dialog for displaying find all results."""
-    
+
     def __init__(self, parent=None, results=None):
         """Initialize find all dialog."""
         super().__init__(parent)
@@ -936,21 +980,21 @@ class FindAllDialog(QDialog):
         self.setWindowTitle("Find All Results")
         self.setMinimumSize(800, 600)
         self.setup_ui()
-        
+
     def setup_ui(self):
         """Setup the dialog UI."""
         layout = QVBoxLayout(self)
-        
+
         # Results info
         info_label = QLabel(f"Found {len(self.results)} matches")
         layout.addWidget(info_label)
-        
+
         # Results table
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(4)
         self.results_table.setHorizontalHeaderLabels(["Offset", "Hex", "ASCII", "Context"])
         self.results_table.horizontalHeader().setStretchLastSection(True)
-        
+
         # Populate results
         self.results_table.setRowCount(len(self.results))
         for i, result in enumerate(self.results):
@@ -959,9 +1003,9 @@ class FindAllDialog(QDialog):
             ascii_text = ''.join(chr(b) if 32 <= b < 127 else '.' for b in result.data) if result.data else ""
             self.results_table.setItem(i, 2, QTableWidgetItem(ascii_text))
             self.results_table.setItem(i, 3, QTableWidgetItem(str(result.context_before) + " [MATCH] " + str(result.context_after)))
-            
+
         layout.addWidget(self.results_table)
-        
+
         # Buttons
         button_box = QDialogButtonBox(QDialogButtonBox.Close)
         button_box.rejected.connect(self.accept)
@@ -970,52 +1014,52 @@ class FindAllDialog(QDialog):
 
 class ReplaceDialog(QDialog):
     """Dialog for replace operations."""
-    
+
     def __init__(self, parent=None):
         """Initialize replace dialog."""
         super().__init__(parent)
         self.setWindowTitle("Replace")
         self.setMinimumSize(500, 300)
         self.setup_ui()
-        
+
     def setup_ui(self):
         """Setup the dialog UI."""
         layout = QVBoxLayout(self)
-        
+
         # Find pattern
         find_group = QGroupBox("Find")
         find_layout = QFormLayout(find_group)
-        
+
         self.find_pattern = QLineEdit()
         find_layout.addRow("Pattern:", self.find_pattern)
-        
+
         self.find_type = QComboBox()
         self.find_type.addItems(["Hex", "Text"])
         find_layout.addRow("Type:", self.find_type)
-        
+
         layout.addWidget(find_group)
-        
+
         # Replace pattern
         replace_group = QGroupBox("Replace")
         replace_layout = QFormLayout(replace_group)
-        
+
         self.replace_pattern = QLineEdit()
         replace_layout.addRow("Pattern:", self.replace_pattern)
-        
+
         layout.addWidget(replace_group)
-        
+
         # Options
         options_group = QGroupBox("Options")
         options_layout = QVBoxLayout(options_group)
-        
+
         self.case_sensitive = QCheckBox("Case sensitive")
         options_layout.addWidget(self.case_sensitive)
-        
+
         self.replace_all = QCheckBox("Replace all occurrences")
         options_layout.addWidget(self.replace_all)
-        
+
         layout.addWidget(options_group)
-        
+
         # Buttons
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.accept)

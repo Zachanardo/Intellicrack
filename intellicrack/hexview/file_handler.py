@@ -1,9 +1,24 @@
 """
-Memory-efficient file handling for the hex viewer/editor.
+Memory-efficient file handling for the hex viewer/editor. 
 
-This module provides classes for handling arbitrarily large files
-through memory mapping and chunk-based access.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import mmap
@@ -78,7 +93,7 @@ class ChunkManager:
         self.file_path = file_path
         self.file_size = os.path.getsize(file_path)
         self.chunk_size = chunk_size
-        self.file = open(file_path, 'rb')
+        self.file = open(file_path, 'rb')  # pylint: disable=consider-using-with
 
         # Create LRU cache for active chunks
         self.active_chunks = LRUCache(max_size=cache_size)
@@ -97,7 +112,7 @@ class ChunkManager:
                 self.file.close()
 
             logger.debug("ChunkManager resources for %s released", self.file_path)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error closing ChunkManager resources: %s", e)
 
     def get_chunk(self, offset: int):
@@ -131,7 +146,7 @@ class ChunkManager:
             # Store in cache
             self.active_chunks[chunk_index] = chunk_data
             return chunk_data
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error creating memory map for chunk at offset %s: %s", chunk_offset, e)
             # Fallback: return the raw data without memory mapping
             self.file.seek(chunk_offset)
@@ -193,7 +208,7 @@ class ChunkManager:
                     # Move to next chunk
                     current_offset += local_size
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error reading from chunk at offset %s: %s", current_offset, e)
                     break
 
@@ -206,7 +221,7 @@ class ChunkManager:
 
             return result
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Exception in ChunkManager.read_data: %s", e)
             return b''
 
@@ -244,7 +259,7 @@ class VirtualFileAccess:
             self.file_size = os.path.getsize(file_path)
 
             # Test if we can open the file directly
-            with open(file_path, 'rb') as test_file:
+            with open(file_path, 'rb'):
                 pass
 
             # Initialize chunk manager for reading
@@ -254,7 +269,7 @@ class VirtualFileAccess:
             self.write_file = None
             if not read_only:
                 # Open in read+write mode for potential edits
-                self.write_file = open(file_path, 'r+b')
+                self.write_file = open(file_path, 'r+b')  # pylint: disable=consider-using-with
 
         except PermissionError:
             # Handle permission errors - create a temp copy
@@ -327,7 +342,7 @@ class VirtualFileAccess:
                         logger.warning("Could not clean up temp file: %s", cleanup_error)
 
                 raise ValueError(f"Could not create temporary copy of {file_path}: {copy_error}")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error loading file: %s", e)
             raise
 
@@ -360,7 +375,7 @@ class VirtualFileAccess:
                 )
                 logger.info(f"Large file optimization enabled for {self.file_size / (1024*1024):.1f}MB file")
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Large file optimization failed, using fallback: %s", e)
                 self.large_file_handler = None
 
@@ -385,11 +400,11 @@ class VirtualFileAccess:
                     try:
                         os.remove(self.temp_file_path)
                         logger.debug("Removed temporary file: %s", self.temp_file_path)
-                    except Exception as e:
+                    except (OSError, ValueError, RuntimeError) as e:
                         logger.warning("Failed to remove temporary file %s: %s", self.temp_file_path, e)
 
             logger.debug("VirtualFileAccess resources for %s released", self.file_path)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error closing VirtualFileAccess resources: %s", e)
 
     def get_file_size(self) -> int:
@@ -470,7 +485,7 @@ class VirtualFileAccess:
                 logger.warning("Empty result from read operation that expected %s bytes", size)
 
             return result
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error(f"Exception in file_handler.read: {e}", exc_info=True)
             # Return empty data on error
             return b''
@@ -540,7 +555,7 @@ class VirtualFileAccess:
 
             logger.info(f"Applied {len(self.applied_edits)} edits to {self.file_path}")
             return True
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error applying edits to file: %s", e)
             return False
 
@@ -570,7 +585,7 @@ class VirtualFileAccess:
 
             logger.info(f"Undid edit at offset {offset}, size {len(original_data)}")
             return True
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error undoing edit: %s", e)
             return False
 
@@ -640,7 +655,7 @@ class VirtualFileAccess:
             logger.info(f"Inserted {len(data)} bytes at offset {offset}, new file size: {self.file_size}")
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error inserting data at offset %s: %s", offset, e)
             return False
 
@@ -712,7 +727,7 @@ class VirtualFileAccess:
             logger.info("Deleted %s bytes at offset %s, new file size: %s", length, offset, self.file_size)
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error deleting data at offset %s: %s", offset, e)
             return False
 
@@ -728,7 +743,7 @@ class VirtualFileAccess:
                 return os.path.getmtime(self.temp_file_path)
             else:
                 return os.path.getmtime(self.file_path)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Could not get modification time: %s", e)
             return 0.0
 
@@ -768,7 +783,7 @@ class VirtualFileAccess:
             logger.info("Saved file to %s (%s bytes)", new_path, self.file_size)
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error saving file to %s: %s", new_path, e)
             return False
 

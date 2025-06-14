@@ -1,9 +1,24 @@
 """
-Binary file utilities for the Intellicrack framework.
+Binary file utilities for the Intellicrack framework. 
 
-This module provides utilities for binary file operations including reading, writing,
-hashing, format detection, and analysis.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import hashlib
 import logging
@@ -23,7 +38,7 @@ def compute_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256',
 
     Calculates the cryptographic hash of the specified file using the given algorithm, reading it
     in chunks to handle large files efficiently. Can provide progress updates
-    through a signal mechanism for UI integration.
+    through a signal mechanism for _UI integration.
 
     Args:
         file_path: Path to the file to hash
@@ -54,7 +69,7 @@ def compute_file_hash(file_path: Union[str, Path], algorithm: str = 'sha256',
                         progress_signal(progress_percent)
 
         return hasher.hexdigest()
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         error_message = f"Error computing hash for {file_path} with algorithm {algorithm}: {e}"
         error_type = type(e).__name__
 
@@ -120,7 +135,7 @@ def read_binary(file_path: Union[str, Path], chunk_size: int = 8192) -> bytes:
                     break
                 chunks.append(chunk)
             return b''.join(chunks)
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error reading binary file %s: %s", file_path, e)
         raise
 
@@ -154,7 +169,7 @@ def write_binary(file_path: Union[str, Path], data: bytes, create_backup: bool =
         logger.info(f"Successfully wrote {len(data)} bytes to {file_path}")
         return True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error writing binary file %s: %s", file_path, e)
         return False
 
@@ -218,7 +233,7 @@ def analyze_binary_format(file_path: Union[str, Path]) -> Dict[str, Any]:
 
         return format_info
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error analyzing binary format for %s: %s", file_path, e)
         return {"error": str(e)}
 
@@ -238,7 +253,7 @@ def is_binary_file(file_path: Union[str, Path], sample_size: int = 8192) -> bool
         with open(file_path, 'rb') as f:
             chunk = f.read(sample_size)
             return b'\x00' in chunk
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error checking if file is binary: %s", e)
         return False
 
@@ -279,9 +294,60 @@ def get_file_entropy(file_path: Union[str, Path], block_size: int = 256) -> floa
 
         return entropy
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error calculating file entropy: %s", e)
         return 0.0
+
+
+def check_suspicious_pe_sections(pe_obj) -> list:
+    """
+    Check for suspicious PE sections that are both writable and executable.
+    
+    Args:
+        pe_obj: A pefile PE object
+        
+    Returns:
+        list: List of suspicious section names
+    """
+    suspicious_sections = []
+    try:
+        if hasattr(pe_obj, 'sections'):
+            for section in pe_obj.sections:
+                section_name = section.Name.decode('utf-8', errors='ignore').strip('\x00')
+                
+                # Check if section is both writable and executable (security risk)
+                if (section.Characteristics & 0x20000000) and (section.Characteristics & 0x80000000):
+                    suspicious_sections.append(section_name)
+    except (AttributeError, ValueError) as e:
+        logger.debug("Error checking PE sections: %s", e)
+        
+    return suspicious_sections
+
+
+def validate_binary_path(binary_path: str, logger_instance=None) -> bool:
+    """
+    Validate that a binary path exists and log appropriate error.
+    
+    This is the common pattern extracted from duplicate code in analysis modules.
+    
+    Args:
+        binary_path: Path to binary file to validate
+        logger_instance: Logger instance to use (optional)
+        
+    Returns:
+        bool: True if binary exists, False otherwise
+    """
+    use_logger = logger_instance or logger
+    
+    if not binary_path:
+        use_logger.error("Binary path is empty")
+        return False
+        
+    if not os.path.exists(binary_path):
+        use_logger.error("Binary not found: %s", binary_path)
+        return False
+        
+    return True
 
 
 # Exported functions
@@ -293,4 +359,6 @@ __all__ = [
     'analyze_binary_format',
     'is_binary_file',
     'get_file_entropy',
+    'check_suspicious_pe_sections',
+    'validate_binary_path',
 ]

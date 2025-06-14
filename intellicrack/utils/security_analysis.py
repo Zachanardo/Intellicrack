@@ -1,9 +1,24 @@
 """
-Security analysis utility functions.
+Security analysis utility functions. 
 
-This module provides security analysis capabilities including buffer overflow
-detection, memory leak detection, and various security checks.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import re
@@ -11,24 +26,12 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Try to import optional dependencies
-try:
-    import pefile
-    PEFILE_AVAILABLE = True
-except ImportError:
-    PEFILE_AVAILABLE = False
-
-try:
-    import capstone
-    CAPSTONE_AVAILABLE = True
-except ImportError:
-    CAPSTONE_AVAILABLE = False
-
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    PSUTIL_AVAILABLE = False
+# Import availability checks from common module
+from .import_checks import (
+    PEFILE_AVAILABLE, pefile,
+    CAPSTONE_AVAILABLE, capstone,
+    PSUTIL_AVAILABLE, psutil
+)
 
 
 def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = None) -> Dict[str, Any]:
@@ -71,20 +74,25 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
                 results["dep_enabled"] = bool(dll_chars & 0x0100)  # IMAGE_DLLCHARACTERISTICS_NX_COMPAT
                 results["aslr_enabled"] = bool(dll_chars & 0x0040)  # IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
 
-            # Check imports
+            # Check imports for vulnerable functions
+            from .pe_common import extract_pe_imports
+            imports = extract_pe_imports(pe)
+            
+            # Also need DLL names for detailed analysis
             if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                    dll_name = entry.dll.decode('utf-8', errors='ignore')
                     for imp in entry.imports:
                         if imp.name:
                             func_name = imp.name.decode('utf-8', errors='ignore')
                             if func_name.lower() in [f.lower() for f in unsafe_functions]:
                                 results["vulnerable_functions"].append({
                                     "function": func_name,
-                                    "dll": entry.dll.decode('utf-8', errors='ignore'),
+                                    "dll": dll_name,
                                     "risk": "high" if func_name.lower() in ["gets", "strcpy", "sprintf"] else "medium"
                                 })
 
-        # Check for patterns in binary
+        # Check for _patterns in binary
         with open(binary_path, 'rb') as f:
             data = f.read()
 
@@ -98,10 +106,32 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
                 "risk": "medium"
             })
 
-        # Look for stack-based buffer patterns
+        # Look for stack-based buffer patterns and vulnerability indicators
         if CAPSTONE_AVAILABLE:
-            # This would require disassembly analysis
-            pass
+            stack_analysis = _analyze_stack_patterns(binary_path, data)
+            results.update(stack_analysis)
+        else:
+            # Fallback analysis without disassembly
+            fallback_analysis = _analyze_patterns_without_disassembly(data)
+            results["unsafe_patterns"].extend(fallback_analysis.get("patterns", []))
+            results["stack_canaries"] = fallback_analysis.get("stack_canaries", False)
+        
+        # Additional vulnerability pattern detection
+        vuln_patterns = _detect_vulnerability_patterns(data)
+        results["unsafe_patterns"].extend(vuln_patterns)
+        
+        # Check for ROP/JOP gadgets that could be exploited
+        gadget_analysis = _analyze_rop_gadgets(data)
+        if gadget_analysis["gadget_count"] > 10:
+            results["unsafe_patterns"].append({
+                "pattern": "ROP gadgets",
+                "count": gadget_analysis["gadget_count"],
+                "risk": "high"
+            })
+        
+        # Analyze string operations for potential buffer overflows
+        string_analysis = _analyze_string_operations(data)
+        results["unsafe_patterns"].extend(string_analysis)
 
         # Calculate risk level
         risk_score = 0
@@ -117,11 +147,411 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
         else:
             results["risk_level"] = "low"
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error checking buffer overflow: %s", e)
         results["error"] = str(e)
 
     return results
+
+
+def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
+    """
+    Analyze stack-based patterns using Capstone disassembly.
+    
+    Args:
+        binary_path: Path to the binary file
+        data: Binary data
+        
+    Returns:
+        dict: Stack analysis results including patterns and canary detection
+    """
+    results = {
+        "patterns": [],
+        "stack_canaries": False,
+        "stack_operations": []
+    }
+    
+    try:
+        if not CAPSTONE_AVAILABLE:
+            logger.warning("Capstone not available for stack pattern analysis")
+            return results
+            
+        # Determine architecture
+        is_64bit = b'PE\x00\x00d\x86' in data[:1024] or b'\x7fELF\x02' in data[:10]
+        
+        # Initialize Capstone disassembler
+        if is_64bit:
+            md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+        else:
+            md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+            
+        # Look for stack-related patterns
+        stack_patterns = {
+            # Stack buffer allocations
+            b'\x48\x83\xec': 'Large stack allocation (64-bit)',
+            b'\x83\xec': 'Stack allocation (32-bit)',
+            b'\x48\x81\xec': 'Very large stack allocation (64-bit)',
+            b'\x81\xec': 'Very large stack allocation (32-bit)',
+            # Stack canary checks
+            b'\x64\x48\x8b\x04\x25\x28\x00\x00\x00': 'Stack canary check (64-bit)',
+            b'\x64\xa1\x14\x00\x00\x00': 'Stack canary check (32-bit)',
+            # Buffer operations
+            b'\x48\x8d': 'LEA instruction (potential buffer reference)',
+            b'\x8d': 'LEA instruction (potential buffer reference)'
+        }
+        
+        for pattern, description in stack_patterns.items():
+            occurrences = data.count(pattern)
+            if occurrences > 0:
+                results["patterns"].append({
+                    "pattern": description,
+                    "count": occurrences,
+                    "risk": "medium" if "canary" in description else "low"
+                })
+                if "canary" in description:
+                    results["stack_canaries"] = True
+                    
+        # Disassemble and analyze instructions
+        code_sections = []
+        if PEFILE_AVAILABLE and binary_path.lower().endswith(('.exe', '.dll')):
+            try:
+                pe = pefile.PE(binary_path)
+                for section in pe.sections:
+                    if section.Characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
+                        code_sections.append((section.VirtualAddress, section.get_data()))
+            except:
+                code_sections = [(0, data)]
+        else:
+            code_sections = [(0, data)]
+            
+        # Analyze instructions for stack operations
+        dangerous_stack_ops = 0
+        for base_addr, code_data in code_sections[:1]:  # Limit analysis to first code section
+            for i in md.disasm(code_data[:10000], base_addr):  # Analyze first 10KB
+                if i.mnemonic in ['sub', 'add'] and i.op_str.startswith('esp,') or i.op_str.startswith('rsp,'):
+                    try:
+                        # Check for large stack allocations
+                        size = int(i.op_str.split(',')[1].strip(), 16)
+                        if size > 0x1000:  # 4KB threshold
+                            results["stack_operations"].append({
+                                "address": hex(i.address),
+                                "operation": f"{i.mnemonic} {i.op_str}",
+                                "size": size,
+                                "risk": "high" if size > 0x10000 else "medium"
+                            })
+                            dangerous_stack_ops += 1
+                    except:
+                        pass
+                        
+        if dangerous_stack_ops > 0:
+            results["patterns"].append({
+                "pattern": "Large stack allocations",
+                "count": dangerous_stack_ops,
+                "risk": "high"
+            })
+            
+    except Exception as e:
+        logger.error("Error in stack pattern analysis: %s", e)
+        
+    return results
+
+
+def _analyze_patterns_without_disassembly(data: bytes) -> Dict[str, Any]:
+    """
+    Fallback analysis without disassembly when Capstone is not available.
+    
+    Args:
+        data: Binary data
+        
+    Returns:
+        dict: Analysis results with patterns and stack canary detection
+    """
+    results = {
+        "patterns": [],
+        "stack_canaries": False
+    }
+    
+    try:
+        # Look for common patterns indicating stack protection
+        canary_patterns = [
+            b'__stack_chk_fail',
+            b'__stack_chk_guard',
+            b'___stack_chk_fail',
+            b'___stack_chk_guard',
+            b'__security_cookie',
+            b'__security_check_cookie'
+        ]
+        
+        for pattern in canary_patterns:
+            if pattern in data:
+                results["stack_canaries"] = True
+                results["patterns"].append({
+                    "pattern": f"Stack protection: {pattern.decode('utf-8', errors='ignore')}",
+                    "count": 1,
+                    "risk": "low"
+                })
+                break
+                
+        # Look for unsafe function references
+        unsafe_refs = {
+            b'strcpy': 'strcpy (no bounds checking)',
+            b'strcat': 'strcat (no bounds checking)', 
+            b'gets': 'gets (extremely unsafe)',
+            b'sprintf': 'sprintf (no bounds checking)',
+            b'vsprintf': 'vsprintf (no bounds checking)',
+            b'scanf': 'scanf (unsafe input)',
+            b'memcpy': 'memcpy (no bounds checking)'
+        }
+        
+        for func, desc in unsafe_refs.items():
+            count = data.count(func + b'\x00')  # Look for null-terminated strings
+            if count > 0:
+                results["patterns"].append({
+                    "pattern": desc,
+                    "count": count,
+                    "risk": "high" if func in [b'gets', b'strcpy'] else "medium"
+                })
+                
+    except Exception as e:
+        logger.error("Error in pattern analysis without disassembly: %s", e)
+        
+    return results
+
+
+def _detect_vulnerability_patterns(data: bytes) -> List[Dict[str, Any]]:
+    """
+    Detect specific vulnerability patterns in binary data.
+    
+    Args:
+        data: Binary data
+        
+    Returns:
+        list: Detected vulnerability patterns
+    """
+    patterns = []
+    
+    try:
+        # Look for common vulnerability indicators
+        vuln_indicators = {
+            # Command injection patterns
+            b'system(': {'desc': 'system() call', 'risk': 'high'},
+            b'exec': {'desc': 'exec family functions', 'risk': 'high'},
+            b'popen': {'desc': 'popen() call', 'risk': 'high'},
+            # Path traversal
+            b'..\\': {'desc': 'Path traversal pattern (Windows)', 'risk': 'medium'},
+            b'../': {'desc': 'Path traversal pattern (Unix)', 'risk': 'medium'},
+            # SQL injection indicators
+            b'SELECT * FROM': {'desc': 'SQL query pattern', 'risk': 'medium'},
+            b'DROP TABLE': {'desc': 'Dangerous SQL pattern', 'risk': 'high'},
+            # Buffer operation patterns
+            b'alloca': {'desc': 'Stack allocation', 'risk': 'medium'},
+            b'_alloca': {'desc': 'Stack allocation', 'risk': 'medium'}
+        }
+        
+        for pattern, info in vuln_indicators.items():
+            count = data.count(pattern)
+            if count > 0:
+                patterns.append({
+                    "pattern": info['desc'],
+                    "count": count,
+                    "risk": info['risk']
+                })
+                
+        # Look for integer overflow patterns in x86 assembly
+        overflow_patterns = [
+            b'\xf7\xe0',  # mul eax
+            b'\xf7\xe1',  # mul ecx
+            b'\x0f\xaf',  # imul
+            b'\x69',      # imul with immediate
+            b'\x6b'       # imul with immediate (byte)
+        ]
+        
+        overflow_count = sum(data.count(p) for p in overflow_patterns)
+        if overflow_count > 10:
+            patterns.append({
+                "pattern": "Integer multiplication operations",
+                "count": overflow_count,
+                "risk": "medium"
+            })
+            
+    except Exception as e:
+        logger.error("Error detecting vulnerability patterns: %s", e)
+        
+    return patterns
+
+
+def _analyze_rop_gadgets(data: bytes) -> Dict[str, Any]:
+    """
+    Analyze ROP (Return Oriented Programming) gadgets.
+    
+    Args:
+        data: Binary data
+        
+    Returns:
+        dict: ROP gadget analysis results
+    """
+    results = {
+        "gadget_count": 0,
+        "gadget_types": {},
+        "exploitability": "low"
+    }
+    
+    try:
+        # Common ROP gadget patterns (x86/x64)
+        gadget_patterns = {
+            b'\xc3': 'ret',
+            b'\xc2': 'ret n',
+            b'\xcb': 'retf',
+            b'\xca': 'retf n',
+            b'\x5d\xc3': 'pop ebp; ret',
+            b'\x58\xc3': 'pop eax; ret',
+            b'\x59\xc3': 'pop ecx; ret',
+            b'\x5a\xc3': 'pop edx; ret',
+            b'\x5b\xc3': 'pop ebx; ret',
+            b'\x5e\xc3': 'pop esi; ret',
+            b'\x5f\xc3': 'pop edi; ret',
+            b'\x94\xc3': 'xchg eax, esp; ret',
+            b'\xff\xe0': 'jmp eax',
+            b'\xff\xe4': 'jmp esp',
+            b'\xff\xd0': 'call eax',
+            b'\xff\xd4': 'call esp'
+        }
+        
+        # Count gadgets
+        for pattern, gadget_type in gadget_patterns.items():
+            count = data.count(pattern)
+            if count > 0:
+                results["gadget_count"] += count
+                if gadget_type not in results["gadget_types"]:
+                    results["gadget_types"][gadget_type] = 0
+                results["gadget_types"][gadget_type] += count
+                
+        # Assess exploitability based on gadget diversity and count
+        unique_gadget_types = len(results["gadget_types"])
+        total_gadgets = results["gadget_count"]
+        
+        if total_gadgets > 100 and unique_gadget_types > 5:
+            results["exploitability"] = "high"
+        elif total_gadgets > 50 and unique_gadget_types > 3:
+            results["exploitability"] = "medium"
+        else:
+            results["exploitability"] = "low"
+            
+        # Look for specific useful gadget chains
+        useful_chains = {
+            b'\x58\x5b\xc3': 'pop eax; pop ebx; ret',
+            b'\x59\x5a\xc3': 'pop ecx; pop edx; ret',
+            b'\x83\xc4\x04\xc3': 'add esp, 4; ret',
+            b'\x83\xc4\x08\xc3': 'add esp, 8; ret'
+        }
+        
+        for chain, desc in useful_chains.items():
+            if chain in data:
+                results["gadget_types"][desc] = data.count(chain)
+                results["gadget_count"] += data.count(chain)
+                
+    except Exception as e:
+        logger.error("Error analyzing ROP gadgets: %s", e)
+        
+    return results
+
+
+def _analyze_string_operations(data: bytes) -> List[Dict[str, Any]]:
+    """
+    Analyze string operations for potential buffer overflows.
+    
+    Args:
+        data: Binary data
+        
+    Returns:
+        list: Unsafe string operation patterns
+    """
+    patterns = []
+    
+    try:
+        # String operation patterns that might indicate unsafe usage
+        string_ops = {
+            # Unsafe C string functions
+            b'strcpy@@': 'strcpy (unbounded copy)',
+            b'strcat@@': 'strcat (unbounded concatenation)',
+            b'gets@@': 'gets (never safe)',
+            b'sprintf@@': 'sprintf (unbounded format)',
+            b'vsprintf@@': 'vsprintf (unbounded format)',
+            # Potentially unsafe if misused
+            b'strncpy@@': 'strncpy (may not null-terminate)',
+            b'strncat@@': 'strncat (size calculation errors)',
+            b'snprintf@@': 'snprintf (truncation issues)',
+            b'memcpy@@': 'memcpy (no bounds checking)',
+            b'memmove@@': 'memmove (no bounds checking)',
+            # Windows specific
+            b'lstrcpy': 'lstrcpy (unbounded copy)',
+            b'lstrcat': 'lstrcat (unbounded concatenation)',
+            b'wsprintf': 'wsprintf (unbounded format)',
+            b'StrCpy': 'StrCpy (unbounded copy)',
+            b'StrCat': 'StrCat (unbounded concatenation)'
+        }
+        
+        for pattern, desc in string_ops.items():
+            # Look for both the pattern and variations
+            count = 0
+            count += data.count(pattern)
+            # Also check without @@ suffix
+            count += data.count(pattern.replace(b'@@', b''))
+            
+            if count > 0:
+                risk = "high"
+                if b'strn' in pattern or b'snprintf' in pattern:
+                    risk = "medium"
+                elif b'gets' in pattern or b'strcpy' in pattern:
+                    risk = "critical"
+                    
+                patterns.append({
+                    "pattern": f"String operation: {desc}",
+                    "count": count,
+                    "risk": risk
+                })
+                
+        # Look for string length checks (good practice)
+        safety_patterns = {
+            b'strlen': 'String length checks',
+            b'strnlen': 'Safe string length checks',
+            b'wcslen': 'Wide string length checks',
+            b'StringCchLength': 'Safe string length (Windows)',
+            b'StringCbLength': 'Safe string byte length (Windows)'
+        }
+        
+        safety_count = 0
+        for pattern, desc in safety_patterns.items():
+            safety_count += data.count(pattern)
+            
+        if safety_count > 0:
+            patterns.append({
+                "pattern": "String safety checks present",
+                "count": safety_count,
+                "risk": "low"
+            })
+            
+        # Look for bounds checking patterns
+        bounds_patterns = [
+            b'boundary check',
+            b'bounds check',
+            b'buffer size',
+            b'max length',
+            b'sizeof'
+        ]
+        
+        bounds_count = sum(data.count(p) for p in bounds_patterns)
+        if bounds_count > 0:
+            patterns.append({
+                "pattern": "Bounds checking indicators",
+                "count": bounds_count,
+                "risk": "low"
+            })
+            
+    except Exception as e:
+        logger.error("Error analyzing string operations: %s", e)
+        
+    return patterns
 
 
 def check_for_memory_leaks(binary_path: str, process_pid: Optional[int] = None) -> Dict[str, Any]:
@@ -196,7 +626,7 @@ def check_for_memory_leaks(binary_path: str, process_pid: Optional[int] = None) 
 
                 # Sample memory usage
                 samples = []
-                for _ in range(5):
+                for __ in range(5):
                     mem_info = process.memory_info()
                     samples.append({
                         "rss": mem_info.rss,
@@ -223,7 +653,7 @@ def check_for_memory_leaks(binary_path: str, process_pid: Optional[int] = None) 
                             "severity": "high"
                         })
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in dynamic memory analysis: %s", e)
 
         # Calculate risk level
@@ -237,7 +667,7 @@ def check_for_memory_leaks(binary_path: str, process_pid: Optional[int] = None) 
         else:
             results["risk_level"] = "low"
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error checking for memory leaks: %s", e)
         results["error"] = str(e)
 
@@ -301,7 +731,7 @@ def check_memory_usage(process_pid: int) -> Dict[str, Any]:
 
             results["memory_categories"] = categories
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.debug("Could not get memory maps: %s", e)
 
         # Check for high memory usage
@@ -314,7 +744,7 @@ def check_memory_usage(process_pid: int) -> Dict[str, Any]:
 
     except psutil.NoSuchProcess:
         return {"error": f"Process {process_pid} not found"}
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error checking memory usage: %s", e)
         return {"error": str(e)}
 
@@ -357,7 +787,7 @@ def bypass_tpm_checks(binary_path: str) -> Dict[str, Any]:
                     dll_name = entry.dll.decode('utf-8', errors='ignore').lower()
 
                     # Check for TPM-related DLLs
-                    if any(tpm_dll in dll_name for tpm_dll in ['tbs.dll', 'ncrypt.dll', 'bcrypt.dll']):
+                    if any(tmp_dll in dll_name for tmp_dll in ['tbs.dll', 'ncrypt.dll', 'bcrypt.dll']):
                         for imp in entry.imports:
                             if imp.name:
                                 func_name = imp.name.decode('utf-8', errors='ignore')
@@ -398,7 +828,7 @@ def bypass_tpm_checks(binary_path: str) -> Dict[str, Any]:
             }
         ]
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error analyzing TPM checks: %s", e)
         results["error"] = str(e)
 
@@ -515,7 +945,7 @@ def scan_protectors(binary_path: str) -> Dict[str, Any]:
                 })
                 results["protections_found"].append(f"Checksum: {description}")
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error scanning protectors: %s", e)
         results["error"] = str(e)
 
@@ -587,7 +1017,7 @@ def run_vm_bypass(binary_path: str, output_path: Optional[str] = None) -> Dict[s
         else:
             results["status"] = "analysis_only"
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in VM bypass: %s", e)
         results["error"] = str(e)
 
@@ -602,5 +1032,10 @@ __all__ = [
     'bypass_tpm_checks',
     'scan_protectors',
     'run_tpm_bypass',
-    'run_vm_bypass'
+    'run_vm_bypass',
+    '_analyze_stack_patterns',
+    '_analyze_patterns_without_disassembly',
+    '_detect_vulnerability_patterns',
+    '_analyze_rop_gadgets',
+    '_analyze_string_operations'
 ]

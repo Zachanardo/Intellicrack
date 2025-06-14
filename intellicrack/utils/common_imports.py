@@ -1,4 +1,24 @@
-"""Common import checks and availability flags."""
+"""
+Common import checks and availability flags.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 
 # ML/AI Libraries
 try:
@@ -20,36 +40,14 @@ except ImportError:
     HAS_TENSORFLOW = False
 
 # Binary Analysis Libraries
-try:
-    import pefile
-    PEFILE_AVAILABLE = True
-except ImportError:
-    PEFILE_AVAILABLE = False
-
-try:
-    import lief
-    LIEF_AVAILABLE = True
-except ImportError:
-    LIEF_AVAILABLE = False
-
-try:
-    import capstone
-    CAPSTONE_AVAILABLE = True
-except ImportError:
-    CAPSTONE_AVAILABLE = False
-
-try:
-    from elftools.elf.elffile import ELFFile
-    PYELFTOOLS_AVAILABLE = True
-except ImportError:
-    PYELFTOOLS_AVAILABLE = False
-
-# System Libraries
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    PSUTIL_AVAILABLE = False
+# Import common patterns from centralized module
+from .import_patterns import (
+    pefile, PEFILE_AVAILABLE,
+    lief, LIEF_AVAILABLE,
+    ELFFile, PYELFTOOLS_AVAILABLE,
+    psutil, PSUTIL_AVAILABLE,
+    CAPSTONE_AVAILABLE
+)
 
 try:
     import frida

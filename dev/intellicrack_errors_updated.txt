@@ -1,0 +1,24 @@
+[96m[03:09:08] Starting Intellicrack Comprehensive Error Detection...[0m
+[96m[03:09:08] 
+=== PYLINT ANALYSIS ===[0m
+[93m[03:09:08] Pylint not installed, skipping pylint analysis[0m
+[96m[03:09:08] 
+=== AST PATTERN ANALYSIS ===[0m
+[92m[03:09:10] Analyzed 204 files for AST patterns[0m
+[96m[03:09:10] 
+=== IMPORT ANALYSIS ===[0m
+[92m[03:09:11] Found 0 import cycles[0m
+[96m[03:09:11] 
+=== RUNTIME SAFETY TESTING ===[0m
+[92m[03:09:12] Runtime safety testing completed[0m
+[96m[03:09:12] 
+=== SECURITY ANALYSIS ===[0m
+[93m[03:09:13] Found 4 potential security issues[0m
+[96m[03:09:13] 
+=== CODE QUALITY ANALYSIS ===[0m
+[92m[03:09:15] Code quality analysis completed[0m
+[96m[03:09:15] 
+============================================================[0m
+[96m[03:09:15] ANALYSIS COMPLETE: 801 total issues found[0m
+[94m[03:09:15] Errors: 0 | Warnings: 12 | Security: 4 | Quality: 771[0m
+[92m[03:09:15] Full report: /mnt/c/Intellicrack/dev/intellicrack_errors.txt[0m

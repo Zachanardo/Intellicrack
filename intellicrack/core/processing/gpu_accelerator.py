@@ -1,13 +1,24 @@
 """
-GPU Acceleration Module
+GPU Acceleration Module 
 
-This module provides GPU acceleration capabilities for computationally intensive
-analysis tasks. It supports multiple GPU backends including OpenCL, CUDA,
-Intel Extension for PyTorch, and other GPU compute frameworks.
+Copyright (C) 2025 Zachary Flint
 
-Author: Intellicrack Team
-Version: 2.0.0
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 from typing import Any, Dict, List, Optional
 
@@ -37,12 +48,7 @@ except ImportError:
     torch = None
     ipex = None
 
-try:
-    import tensorflow as tf
-    TENSORFLOW_AVAILABLE = True
-except ImportError:
-    TENSORFLOW_AVAILABLE = False
-    tf = None
+from ...utils.import_checks import TENSORFLOW_AVAILABLE, tf
 
 from ...utils.logger import get_logger
 
@@ -99,7 +105,7 @@ class GPUAccelerationManager:
                     self.gpu_type = f'OpenCL ({best_platform.name}, {best_device.name})'
                     self.logger.info("PyOpenCL GPU acceleration available: %s", self.gpu_type)
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.debug("PyOpenCL initialization failed: %s", e)
         else:
             self.logger.info("PyOpenCL not available - install with: pip install pyopencl")
@@ -109,14 +115,14 @@ class GPUAccelerationManager:
             try:
                 # Verify it actually works
                 test_array = cp.array([1, 2, 3])
-                test_result = cp.sum(test_array)
+                _test_result = cp.sum(test_array)
 
                 self.cupy = cp
                 self.gpu_backend = 'cupy'
                 self.gpu_available = True
                 self.gpu_type = 'CUDA (CuPy)'
                 self.logger.info("CuPy GPU acceleration available")
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.debug("CuPy initialization failed: %s", e)
 
         # Only try Intel Extension for PyTorch if explicitly requested
@@ -129,7 +135,7 @@ class GPUAccelerationManager:
                     self.gpu_available = True
                     self.gpu_type = f'Intel XPU ({torch.xpu.get_device_name(0)})'
                     self.logger.info("Intel PyTorch GPU acceleration available: %s", self.gpu_type)
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.debug("Intel PyTorch initialization failed: %s", e)
 
         if not self.gpu_available:
@@ -170,17 +176,17 @@ class GPUAccelerationManager:
             else:
                 self.logger.warning("Pattern matching not implemented for backend: %s", self.gpu_backend)
                 return self._cpu_pattern_matching(data, patterns)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("GPU pattern matching failed: %s", e)
             return self._cpu_pattern_matching(data, patterns)
 
     def _cpu_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
         """Fallback CPU pattern matching."""
         matches = []
-        for pattern in patterns:
+        for _pattern in patterns:
             pos = 0
             while True:
-                pos = data.find(pattern, pos)
+                pos = data.find(_pattern, pos)
                 if pos == -1:
                     break
                 matches.append(pos)
@@ -194,19 +200,19 @@ class GPUAccelerationManager:
 
         # Simple implementation - for production use would need more sophisticated OpenCL kernels
         matches = []
-        for pattern in patterns:
+        for _pattern in patterns:
             # Convert to numpy arrays for OpenCL processing
             import numpy as np
             data_array = np.frombuffer(data, dtype=np.uint8)
-            pattern_array = np.frombuffer(pattern, dtype=np.uint8)
+            _pattern_array = np.frombuffer(_pattern, dtype=np.uint8)
 
             # Create OpenCL buffers
-            data_buffer = cl.Buffer(self.context, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=data_array)
+            _data_buffer = cl.Buffer(self.context, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=data_array)
 
             # For now, fall back to CPU - implementing full OpenCL kernel is complex
             pos = 0
             while True:
-                pos = data.find(pattern, pos)
+                pos = data.find(_pattern, pos)
                 if pos == -1:
                     break
                 matches.append(pos)
@@ -221,10 +227,10 @@ class GPUAccelerationManager:
 
         # Simple implementation - for production would use custom CUDA kernels
         matches = []
-        for pattern in patterns:
+        for _pattern in patterns:
             pos = 0
             while True:
-                pos = data.find(pattern, pos)
+                pos = data.find(_pattern, pos)
                 if pos == -1:
                     break
                 matches.append(pos)
@@ -235,7 +241,7 @@ class GPUAccelerationManager:
 
 class GPUAccelerator:
     """
-    GPU acceleration system for computationally intensive analysis tasks.
+    GPU acceleration system for _computationally intensive analysis tasks.
 
     This system leverages GPU computing capabilities to accelerate specific
     analysis tasks such as pattern matching, entropy calculation, and
@@ -290,7 +296,7 @@ class GPUAccelerator:
         # Run initial benchmarks
         try:
             self._run_initial_benchmarks()
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.warning("Initial benchmark failed: %s", e)
             # Don't let benchmark failure prevent GPU usage
 
@@ -303,7 +309,7 @@ class GPUAccelerator:
             try:
                 # Test basic CuPy functionality
                 test_array = cp.array([1, 2, 3])
-                test_result = cp.sum(test_array)
+                _test_result = cp.sum(test_array)
                 self.cuda_available = True
                 self.logger.info("CUDA acceleration available via CuPy")
 
@@ -320,10 +326,10 @@ class GPUAccelerator:
                             'multiprocessors': device_props['multiProcessorCount'],
                             'max_threads_per_block': device_props['maxThreadsPerBlock']
                         })
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     self.logger.debug("Error getting CUDA device properties: %s", e)
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.debug("CUDA initialization failed: %s", e)
 
         # Check for OpenCL
@@ -347,10 +353,10 @@ class GPUAccelerator:
                                     'compute_units': device.max_compute_units,
                                     'max_work_group_size': device.max_work_group_size
                                 })
-                        except Exception as e:
+                        except (OSError, ValueError, RuntimeError) as e:
                             self.logger.debug("Error getting OpenCL devices for platform %s: %s", platform.name, e)
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.debug("OpenCL initialization failed: %s", e)
 
         # Check for TensorFlow GPU
@@ -366,7 +372,7 @@ class GPUAccelerator:
                             'name': gpu.name,
                             'device_type': gpu.device_type
                         })
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.debug("TensorFlow GPU check failed: %s", e)
 
         # Check for PyTorch CUDA
@@ -385,7 +391,7 @@ class GPUAccelerator:
                             'compute_capability': f"{props.major}.{props.minor}",
                             'multiprocessors': props.multi_processor_count
                         })
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.debug("PyTorch CUDA check failed: %s", e)
 
     def _select_preferred_backend(self):
@@ -413,7 +419,7 @@ class GPUAccelerator:
                     self.opencl_context = cl.create_some_context()
                     self.opencl_queue = cl.CommandQueue(self.opencl_context)
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.error("Failed to initialize OpenCL context: %s", e)
                 self.blacklisted_backends.add('opencl')
                 self.selected_backend = None
@@ -465,7 +471,7 @@ class GPUAccelerator:
 
             self.logger.info(f"Benchmark completed: {benchmark_time:.3f}s for {len(benchmark_data)} operations")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Benchmark failed: %s", e)
             self.error_counts[self.selected_backend] += 1
 
@@ -481,7 +487,7 @@ class GPUAccelerator:
 
         # Create OpenCL buffer
         data_buffer = cl.Buffer(self.opencl_context, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=np_data)
-        result_buffer = cl.Buffer(self.opencl_context, cl.mem_flags.WRITE_ONLY, np_data.nbytes)
+        _result_buffer = cl.Buffer(self.opencl_context, cl.mem_flags.WRITE_ONLY, np_data.nbytes)
 
         # Simple kernel to double values
         kernel_source = """
@@ -495,7 +501,7 @@ class GPUAccelerator:
         kernel = program.double_values
 
         # Execute kernel
-        kernel(self.opencl_queue, (len(data),), None, data_buffer, result_buffer)
+        kernel(self.opencl_queue, (len(data),), None, data_buffer, _result_buffer)
         self.opencl_queue.finish()
 
     def _benchmark_cuda(self, data):
@@ -505,7 +511,7 @@ class GPUAccelerator:
 
         # Convert to CuPy array and perform operation
         gpu_data = cp.array(data, dtype=cp.float32)
-        result = gpu_data * 2.0
+        _result = gpu_data * 2.0
         cp.cuda.Stream.null.synchronize()
 
     def _benchmark_tensorflow(self, data):
@@ -515,7 +521,7 @@ class GPUAccelerator:
 
         with tf.device('/GPU:0'):
             tensor_data = tf.constant(data, dtype=tf.float32)
-            result = tf.multiply(tensor_data, 2.0)
+            _result = tf.multiply(tensor_data, 2.0)
 
     def _benchmark_pytorch(self, data):
         """Run PyTorch benchmark."""
@@ -524,7 +530,7 @@ class GPUAccelerator:
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         tensor_data = torch.tensor(data, dtype=torch.float32, device=device)
-        result = tensor_data * 2.0
+        _result = tensor_data * 2.0
         if torch.cuda.is_available():
             torch.cuda.synchronize()
 
@@ -549,7 +555,7 @@ class GPUAccelerator:
                 return self._cuda_pattern_matching(data, patterns)
             else:
                 return self._cpu_pattern_matching(data, patterns)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("GPU pattern matching failed: %s", e)
             self.error_counts[self.selected_backend] += 1
             return self._cpu_pattern_matching(data, patterns)
@@ -557,10 +563,10 @@ class GPUAccelerator:
     def _cpu_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
         """CPU fallback for pattern matching."""
         matches = []
-        for pattern in patterns:
+        for _pattern in patterns:
             pos = 0
             while True:
-                pos = data.find(pattern, pos)
+                pos = data.find(_pattern, pos)
                 if pos == -1:
                     break
                 matches.append(pos)
@@ -595,7 +601,7 @@ class GPUAccelerator:
                 return self._cuda_entropy_calculation(data)
             else:
                 return self._cpu_entropy_calculation(data)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("GPU entropy calculation failed: %s", e)
             return self._cpu_entropy_calculation(data)
 
@@ -606,16 +612,16 @@ class GPUAccelerator:
 
         # Count byte frequencies
         frequencies = [0] * 256
-        for byte in data:
-            frequencies[byte] += 1
+        for _byte in data:
+            frequencies[_byte] += 1
 
         # Calculate entropy
         entropy = 0.0
         data_len = len(data)
 
-        for freq in frequencies:
-            if freq > 0:
-                prob = freq / data_len
+        for _freq in frequencies:
+            if _freq > 0:
+                prob = _freq / data_len
                 import math
                 entropy -= prob * math.log2(prob)
 
@@ -682,7 +688,7 @@ class GPUAccelerator:
                 # Clear GPU memory
                 cp.get_default_memory_pool().free_all_blocks()
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("GPU cleanup error: %s", e)
 
 

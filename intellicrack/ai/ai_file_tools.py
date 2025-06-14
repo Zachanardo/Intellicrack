@@ -1,9 +1,24 @@
 """
-AI File System Tools
+AI File System Tools 
 
-This module provides AI-accessible file system tools with user approval mechanisms.
-These tools allow the AI to search for licensing-related files and read them for analysis.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import fnmatch
 import logging
@@ -129,18 +144,18 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
             for root, dirs, files in os.walk(search_root):
                 results["directories_scanned"] += 1
 
-                for file in files:
+                for _file in files:
                     results["total_files_checked"] += 1
-                    file_path = Path(root) / file
+                    file_path = Path(root) / _file
 
                     # Check against patterns
-                    for pattern in patterns:
-                        if fnmatch.fnmatch(file.lower(), pattern.lower()):
+                    for _pattern in patterns:
+                        if fnmatch.fnmatch(_file.lower(), _pattern.lower()):
                             file_info = {
                                 "path": str(file_path),
-                                "name": file,
+                                "name": _file,
                                 "size": file_path.stat().st_size if file_path.exists() else 0,
-                                "matched_pattern": pattern,
+                                "matched_pattern": _pattern,
                                 "directory": str(Path(root))
                             }
                             results["files_found"].append(file_info)
@@ -158,7 +173,7 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
 
             return results
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in file search: %s", e)
             return {"status": "error", "message": str(e)}
 
@@ -233,11 +248,11 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
                     content = f.read()
             except UnicodeDecodeError:
                 # Try common encodings
-                for enc in ['latin-1', 'cp1252', 'ascii']:
+                for _enc in ['latin-1', 'cp1252', 'ascii']:
                     try:
-                        with open(file_path, 'r', encoding=enc) as f:
+                        with open(file_path, 'r', encoding=_enc) as f:
                             content = f.read()
-                            encoding = enc
+                            encoding = _enc
                             break
                     except UnicodeDecodeError:
                         continue
@@ -266,7 +281,7 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
 
             return result
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error reading file %s: %s", file_path, e)
             return {"status": "error", "message": str(e)}
 
@@ -285,8 +300,8 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
         total_size = 0
         valid_paths = []
 
-        for path in file_paths:
-            file_path = Path(path)
+        for _path in file_paths:
+            file_path = Path(_path)
             if file_path.exists():
                 size = file_path.stat().st_size
                 if size <= self.max_file_size:
@@ -299,7 +314,7 @@ Total size: {total_size:,} bytes
 Purpose: {purpose}
 
 Files:
-{chr(10).join([f"- {p.name} ({p.stat().st_size:,} bytes)" for p in valid_paths[:10]])}
+{chr(10).join([f"- {_p.name} ({_p.stat().st_size:,} bytes)" for _p in valid_paths[:10]])}
 {f"... and {len(valid_paths) - 10} more" if len(valid_paths) > 10 else ""}"""
 
         if not create_approval_dialog("Read Multiple", details, self.app_instance):
@@ -312,7 +327,7 @@ Files:
             "total_size": total_size
         }
 
-        for file_path in valid_paths:
+        for _file_path in valid_paths:
             file_result = self.read_file_content(str(file_path), f"{purpose} (batch)")
             if file_result["status"] == "success":
                 results["files_read"].append(file_result)
@@ -370,7 +385,7 @@ class AIFileTools:
 
         # If we found potential license files, offer to read them
         if license_scan["files_found"]:
-            file_paths = [f["path"] for f in license_scan["files_found"][:5]]  # Limit to first 5
+            file_paths = [_f["path"] for _f in license_scan["files_found"][:5]]  # Limit to first 5
 
             read_results = self.read_multiple_files(
                 file_paths,
@@ -378,8 +393,8 @@ class AIFileTools:
             )
 
             if read_results["status"] == "success":
-                for file_data in read_results["files_read"]:
-                    analysis["file_contents"][file_data["file_path"]] = file_data["content"]
+                for _file_data in read_results["files_read"]:
+                    analysis["file_contents"][_file_data["file_path"]] = _file_data["content"]
 
         # Generate analysis summary
         analysis["analysis_summary"] = {

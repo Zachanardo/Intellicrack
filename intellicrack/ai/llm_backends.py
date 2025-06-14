@@ -1,12 +1,24 @@
 """
-LLM Backend Support for Intellicrack Agentic AI
+LLM Backend Support for Intellicrack Agentic AI 
 
-This module provides support for Large Language Models including:
-- GGUF models via llama.cpp
-- API-based models (OpenAI, Anthropic, etc.)
-- Local model serving
-- Tool-calling capabilities for agentic workflows
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import hashlib
 import json
@@ -75,19 +87,28 @@ class LLMBackend:
 
     def initialize(self) -> bool:
         """Initialize the backend."""
-        raise NotImplementedError
+        logger.warning("Base LLMBackend.initialize() called - subclasses should override this method")
+        self.is_initialized = False
+        return False
 
     def chat(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> LLMResponse:
         """Send chat messages and get response."""
-        raise NotImplementedError
+        logger.error("Base LLMBackend.chat() called - this method must be implemented by subclasses")
+        return LLMResponse(
+            content="Error: LLM backend not properly initialized. Please use a concrete backend implementation.",
+            finish_reason="error",
+            model="base_backend_fallback"
+        )
 
     def register_tools(self, tools: List[Dict]):
         """Register tools for function calling."""
         self.tools = tools
 
     def shutdown(self):
-        """Shutdown the backend."""
-        pass
+        """Shutdown the backend and clean up resources."""
+        self.is_initialized = False
+        self.tools.clear()
+        logger.debug("Backend shutdown: %s", self.__class__.__name__)
 
 
 class OpenAIBackend(LLMBackend):
@@ -119,13 +140,13 @@ class OpenAIBackend(LLMBackend):
             # Test connection
             self.client.models.list()
             self.is_initialized = True
-            logger.info(f"OpenAI backend initialized with model: {self.config.model_name}")
+            logger.info("OpenAI backend initialized with model: %s", self.config.model_name)
             return True
 
         except ImportError:
             logger.error("OpenAI package not installed. Install with: pip install openai")
             return False
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize OpenAI backend: %s", e)
             return False
 
@@ -136,12 +157,12 @@ class OpenAIBackend(LLMBackend):
 
         # Convert messages to OpenAI format
         openai_messages = []
-        for msg in messages:
-            openai_msg = {"role": msg.role, "content": msg.content}
-            if msg.tool_calls:
-                openai_msg["tool_calls"] = msg.tool_calls
-            if msg.tool_call_id:
-                openai_msg["tool_call_id"] = msg.tool_call_id
+        for _msg in messages:
+            openai_msg = {"role": _msg.role, "content": _msg.content}
+            if _msg.tool_calls:
+                openai_msg["tool_calls"] = _msg.tool_calls
+            if _msg.tool_call_id:
+                openai_msg["tool_call_id"] = _msg.tool_call_id
             openai_messages.append(openai_msg)
 
         # Prepare request parameters
@@ -154,7 +175,7 @@ class OpenAIBackend(LLMBackend):
 
         # Add tools if provided and enabled
         if tools and self.config.tools_enabled:
-            request_params["tools"] = [{"type": "function", "function": tool} for tool in tools]
+            request_params["tools"] = [{"type": "function", "function": _tool} for _tool in tools]
             request_params["tool_choice"] = "auto"
 
         try:
@@ -169,9 +190,14 @@ class OpenAIBackend(LLMBackend):
                 model=response.model
             )
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("OpenAI API error: %s", e)
             raise
+
+    def shutdown(self):
+        """Shutdown OpenAI backend."""
+        super().shutdown()
+        self.client = None
 
 
 class AnthropicBackend(LLMBackend):
@@ -196,13 +222,13 @@ class AnthropicBackend(LLMBackend):
 
             self.client = anthropic.Anthropic(api_key=api_key)
             self.is_initialized = True
-            logger.info(f"Anthropic backend initialized with model: {self.config.model_name}")
+            logger.info("Anthropic backend initialized with model: %s", self.config.model_name)
             return True
 
         except ImportError:
             logger.error("Anthropic package not installed. Install with: pip install anthropic")
             return False
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize Anthropic backend: %s", e)
             return False
 
@@ -215,11 +241,11 @@ class AnthropicBackend(LLMBackend):
         system_message = ""
         anthropic_messages = []
 
-        for msg in messages:
-            if msg.role == "system":
-                system_message = msg.content
+        for _msg in messages:
+            if _msg.role == "system":
+                system_message = _msg.content
             else:
-                anthropic_messages.append({"role": msg.role, "content": msg.content})
+                anthropic_messages.append({"role": _msg.role, "content": _msg.content})
 
         request_params = {
             "model": self.config.model_name,
@@ -244,9 +270,14 @@ class AnthropicBackend(LLMBackend):
                 model=response.model
             )
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Anthropic API error: %s", e)
             raise
+
+    def shutdown(self):
+        """Shutdown Anthropic backend."""
+        super().shutdown()
+        self.client = None
 
 
 class LlamaCppBackend(LLMBackend):
@@ -262,7 +293,7 @@ class LlamaCppBackend(LLMBackend):
             from llama_cpp import Llama
 
             if not self.config.model_path or not os.path.exists(self.config.model_path):
-                logger.error(f"GGUF model file not found: {self.config.model_path}")
+                logger.error("GGUF model file not found: %s", self.config.model_path)
                 return False
 
             # Initialize llama.cpp with GGUF model
@@ -274,13 +305,13 @@ class LlamaCppBackend(LLMBackend):
             )
 
             self.is_initialized = True
-            logger.info(f"llama.cpp backend initialized with GGUF model: {self.config.model_path}")
+            logger.info("llama.cpp backend initialized with GGUF model: %s", self.config.model_path)
             return True
 
         except ImportError:
             logger.error("llama-cpp-python not installed. Install with: pip install llama-cpp-python")
             return False
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize llama.cpp backend: %s", e)
             return False
 
@@ -316,7 +347,7 @@ class LlamaCppBackend(LLMBackend):
                 model=self.config.model_name
             )
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("llama.cpp generation error: %s", e)
             raise
 
@@ -324,13 +355,13 @@ class LlamaCppBackend(LLMBackend):
         """Convert messages to prompt format."""
         prompt_parts = []
 
-        for msg in messages:
-            if msg.role == "system":
-                prompt_parts.append(f"<|im_start|>system\n{msg.content}<|im_end|>")
-            elif msg.role == "user":
-                prompt_parts.append(f"<|im_start|>user\n{msg.content}<|im_end|>")
-            elif msg.role == "assistant":
-                prompt_parts.append(f"<|im_start|>assistant\n{msg.content}<|im_end|>")
+        for _msg in messages:
+            if _msg.role == "system":
+                prompt_parts.append(f"<|im_start|>system\n{_msg.content}<|im_end|>")
+            elif _msg.role == "user":
+                prompt_parts.append(f"<|im_start|>user\n{_msg.content}<|im_end|>")
+            elif _msg.role == "assistant":
+                prompt_parts.append(f"<|im_start|>assistant\n{_msg.content}<|im_end|>")
 
         prompt_parts.append("<|im_start|>assistant\n")
         return "\n".join(prompt_parts)
@@ -342,19 +373,19 @@ class LlamaCppBackend(LLMBackend):
         tool_calls = []
 
         # Look for function call patterns
-        for tool in tools:
-            tool_name = tool['name']
+        for _tool in tools:
+            tool_name = _tool['name']
             pattern = rf'{tool_name}\((.*?)\)'
             matches = re.finditer(pattern, content, re.DOTALL)
 
-            for match in matches:
+            for _match in matches:
                 try:
-                    args_str = match.group(1).strip()
+                    args_str = _match.group(1).strip()
                     # Try to parse as JSON
                     args = json.loads(args_str) if args_str else {}
 
                     tool_calls.append({
-                        "id": f"call_{hashlib.sha256(match.group(0).encode()).hexdigest()[:8]}",
+                        "id": f"call_{hashlib.sha256(_match.group(0).encode()).hexdigest()[:8]}",
                         "type": "function",
                         "function": {
                             "name": tool_name,
@@ -365,6 +396,14 @@ class LlamaCppBackend(LLMBackend):
                     continue
 
         return tool_calls if tool_calls else None
+
+    def shutdown(self):
+        """Shutdown llama.cpp backend."""
+        super().shutdown()
+        if self.llama is not None:
+            # Clean up llama.cpp model
+            del self.llama
+            self.llama = None
 
 
 class OllamaBackend(LLMBackend):
@@ -387,13 +426,13 @@ class OllamaBackend(LLMBackend):
             response = requests.get(f"{self.base_url}/api/tags", timeout=5)
             if response.status_code == 200:
                 self.is_initialized = True
-                logger.info(f"Ollama backend initialized with model: {self.config.model_name}")
+                logger.info("Ollama backend initialized with model: %s", self.config.model_name)
                 return True
             else:
                 logger.error("Ollama not accessible at %s", self.base_url)
                 return False
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize Ollama backend: %s", e)
             return False
 
@@ -407,15 +446,13 @@ class OllamaBackend(LLMBackend):
         except ImportError:
             return LLMResponse(
                 content="Ollama backend requires 'requests' library",
-                raw_response={},
-                tokens_used=0,
-                success=False
+                finish_reason="error"
             )
 
         # Convert messages to Ollama format
         ollama_messages = []
-        for msg in messages:
-            ollama_messages.append({"role": msg.role, "content": msg.content})
+        for _msg in messages:
+            ollama_messages.append({"role": _msg.role, "content": _msg.content})
 
         request_data = {
             "model": self.config.model_name,
@@ -443,9 +480,14 @@ class OllamaBackend(LLMBackend):
                 model=self.config.model_name
             )
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Ollama API error: %s", e)
             raise
+
+    def shutdown(self):
+        """Shutdown Ollama backend."""
+        super().shutdown()
+        # No specific cleanup needed for HTTP client
 
 
 class LLMManager:
@@ -487,10 +529,10 @@ class LLMManager:
                 if not self.active_backend:
                     self.active_backend = llm_id
 
-                logger.info(f"Registered LLM: {llm_id} ({config.provider.value})")
+                logger.info("Registered LLM: %s (%s)", llm_id, config.provider.value)
                 return True
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Failed to register LLM %s: %s", llm_id, e)
                 return False
 
@@ -519,10 +561,10 @@ class LLMManager:
 
             try:
                 response = backend.chat(messages, tools)
-                logger.debug(f"LLM response from {backend_id}: {len(response.content)} chars")
+                logger.debug("LLM response from %s: %d chars", backend_id, len(response.content))
                 return response
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("LLM chat error: %s", e)
                 return None
 
@@ -551,14 +593,14 @@ class LLMManager:
         """Register tools for a specific LLM."""
         if llm_id in self.backends:
             self.backends[llm_id].register_tools(tools)
-            logger.info(f"Registered {len(tools)} tools for LLM: {llm_id}")
+            logger.info("Registered %d tools for LLM: %s", len(tools), llm_id)
 
     def shutdown(self):
         """Shutdown all LLM backends."""
         with self.lock:
-            for backend in self.backends.values():
+            for _backend in self.backends.values():
                 try:
-                    backend.shutdown()
+                    _backend.shutdown()
                 except (AttributeError, Exception) as e:
                     logger.warning("Error shutting down backend: %s", e)
 
@@ -619,7 +661,7 @@ _llm_manager = None
 
 def get_llm_manager() -> LLMManager:
     """Get the global LLM manager instance."""
-    global _llm_manager
+    global _llm_manager  # pylint: disable=global-statement
     if _llm_manager is None:
         _llm_manager = LLMManager()
     return _llm_manager
@@ -627,7 +669,7 @@ def get_llm_manager() -> LLMManager:
 
 def shutdown_llm_manager():
     """Shutdown the global LLM manager."""
-    global _llm_manager
+    global _llm_manager  # pylint: disable=global-statement
     if _llm_manager:
         _llm_manager.shutdown()
         _llm_manager = None

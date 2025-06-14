@@ -1,10 +1,24 @@
 """
-Network Traffic Analyzer for License Communications
+Network Traffic Analyzer for License Communications 
 
-This module provides comprehensive network traffic capture and analysis capabilities
-specifically designed for detecting and analyzing license verification communications.
-Supports multiple capture backends including pyshark, scapy, and raw sockets.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import datetime
 import glob
@@ -88,6 +102,9 @@ class NetworkTrafficAnalyzer:
             b'FEATURE', b'INCREMENT', b'VENDOR', b'SERVER',
             b'HASP', b'Sentinel', b'FLEXLM', b'LCSAP'
         ]
+        
+        # Capture control flag
+        self.capturing = False
 
         # Common license server ports
         self.license_ports = [1111, 1234, 2222, 27000, 27001, 27002, 27003, 27004, 27005,
@@ -113,6 +130,8 @@ class NetworkTrafficAnalyzer:
             bool: True if capture started successfully, False otherwise
         """
         try:
+            # Set capturing flag
+            self.capturing = True
             # Define capture thread function
             def capture_thread():
                 """
@@ -245,84 +264,91 @@ class NetworkTrafficAnalyzer:
                 'capture_time': 0
             }
 
-            # Prepare output file if specified
-            out_file = None
+            # Inner function to handle the main capture logic
+            def perform_capture(out_file):
+                """Perform the actual packet capture."""
+                nonlocal packets_captured
+                
+                # Capture loop
+                try:
+                    while self.capturing:
+                        # Break if we've captured enough packets
+                        if packet_count and packets_captured >= packet_count:
+                            break
+
+                        # Check if overall timeout has elapsed before waiting for more packets
+                        current_time = time.time()
+                        if timeout and (current_time - start_time) > timeout:
+                            self.logger.info(f"Capture timeout reached after {current_time - start_time:.2f} seconds")
+                            break
+
+                        # Wait for packets with timeout
+                        ready, _, _ = select.select([s], [], [], 0.1)  # Short timeout for responsiveness
+
+                        if not ready:
+                            continue
+
+                        # Receive packet
+                        packet = s.recv(65535)
+                        packets_captured += 1
+
+                        # Apply very basic filtering if requested (exact string match only)
+                        if capture_filter and capture_filter.encode() not in packet:
+                            continue
+
+                        # Write to output file if specified
+                        if out_file:
+                            timestamp = time.time()
+                            # Write timestamp + packet size + packet data
+                            header = struct.pack("!dI", timestamp, len(packet))
+                            out_file.write(header)
+                            out_file.write(packet)
+
+                        # Display basic packet info (simplified)
+                        if packets_captured % 10 == 0:  # Don't flood the logs
+                            self.logger.info("Captured %s packets", packets_captured)
+
+                        # Process the packet (simplified)
+                        self._process_captured_packet(packet)
+
+                except KeyboardInterrupt:
+                    self.logger.info("Packet capture interrupted by user")
+                except socket.timeout:
+                    self.logger.info("Packet capture timeout reached")
+                except Exception as e:
+                    self.logger.error(f"Error during packet capture: {str(e)}")
+                finally:
+                    # Clean up
+                    capture_stats['packets_total'] = packets_captured
+                    capture_stats['capture_time'] = time.time() - start_time
+
+                    if os.name == "nt":
+                        # Disable promiscuous mode on Windows
+                        try:
+                            if hasattr(socket, 'SIO_RCVALL') and hasattr(socket, 'RCVALL_OFF'):
+                                s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
+                        except (OSError, AttributeError):
+                            pass
+
+                    s.close()
+
+                    self.logger.info(f"Socket-based packet capture completed: {packets_captured} packets in {capture_stats['capture_time']:.2f} seconds")
+
+            # Main execution with optional file context
             if output_file:
                 try:
-                    out_file = open(output_file, 'wb')
-                    # Write a simple header (not pcap format, just timestamped raw packets)
-                    out_file.write(f"# Intellicrack socket capture started at {datetime.datetime.now()}\n".encode('utf-8'))
+                    with open(output_file, 'wb') as out_file:
+                        # Write a simple header (not pcap format, just timestamped raw packets)
+                        out_file.write(f"# Intellicrack socket capture started at {datetime.datetime.now()}\n".encode('utf-8'))
+                        perform_capture(out_file)
                 except Exception as e:
                     self.logger.error(f"Failed to open output file: {str(e)}")
-                    out_file = None
-
-            # Capture loop
-            try:
-                while True:
-                    # Break if we've captured enough packets
-                    if packet_count and packets_captured >= packet_count:
-                        break
-
-                    # Check if overall timeout has elapsed before waiting for more packets
-                    current_time = time.time()
-                    if timeout and (current_time - start_time) > timeout:
-                        self.logger.info(f"Capture timeout reached after {current_time - start_time:.2f} seconds")
-                        break
-
-                    # Wait for packets with timeout
-                    ready, _, _ = select.select([s], [], [], 0.1)  # Short timeout for responsiveness
-
-                    if not ready:
-                        continue
-
-                    # Receive packet
-                    packet = s.recv(65535)
-                    packets_captured += 1
-
-                    # Apply very basic filtering if requested (exact string match only)
-                    if capture_filter and capture_filter.encode() not in packet:
-                        continue
-
-                    # Write to output file if specified
-                    if out_file:
-                        timestamp = time.time()
-                        # Write timestamp + packet size + packet data
-                        header = struct.pack("!dI", timestamp, len(packet))
-                        out_file.write(header)
-                        out_file.write(packet)
-
-                    # Display basic packet info (simplified)
-                    if packets_captured % 10 == 0:  # Don't flood the logs
-                        self.logger.info("Captured %s packets", packets_captured)
-
-                    # Process the packet (simplified)
-                    self._process_captured_packet(packet)
-
-            except KeyboardInterrupt:
-                self.logger.info("Packet capture interrupted by user")
-            except socket.timeout:
-                self.logger.info("Packet capture timeout reached")
-            except Exception as e:
-                self.logger.error(f"Error during packet capture: {str(e)}")
-            finally:
-                # Clean up
-                capture_stats['packets_total'] = packets_captured
-                capture_stats['capture_time'] = time.time() - start_time
-
-                if os.name == "nt":
-                    # Disable promiscuous mode on Windows
-                    try:
-                        if hasattr(socket, 'SIO_RCVALL') and hasattr(socket, 'RCVALL_OFF'):
-                            s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
-                    except:
-                        pass
-
-                s.close()
-
-                if out_file:
-                    out_file.close()
-
-                self.logger.info(f"Socket-based packet capture completed: {packets_captured} packets in {capture_stats['capture_time']:.2f} seconds")
+                    # Continue capture without output file
+                    perform_capture(None)
+            else:
+                # No output file specified
+                perform_capture(None)
+                
             return capture_stats
 
         except Exception as e:
@@ -461,6 +487,11 @@ class NetworkTrafficAnalyzer:
 
             # Process packets
             for packet in capture.sniff_continuously():
+                # Check if capture should stop
+                if not self.capturing:
+                    self.logger.info("Capture stopped by user")
+                    break
+                    
                 # Check for timeout
                 if timeout and time.time() - capture_start_time > timeout:
                     self.logger.info("Capture timeout reached (%ss), stopping...", timeout)
@@ -662,7 +693,7 @@ class NetworkTrafficAnalyzer:
 
     def _capture_with_scapy(self, interface: Optional[str] = None):
         """
-        Capture packets using scapy (placeholder for future implementation).
+        Capture packets using scapy.
 
         Args:
             interface: Network interface to capture on (optional)
@@ -671,8 +702,132 @@ class NetworkTrafficAnalyzer:
             self.logger.error("scapy not available - please install scapy")
             return
 
-        self.logger.info("Scapy capture not yet implemented, falling back to socket capture")
-        self._capture_with_socket(interface)
+        self.logger.info("Starting packet capture using Scapy...")
+        
+        try:
+            # Build filter for license-related traffic
+            bpf_filter = (
+                "tcp and ("
+                "port 27000 or port 27001 or port 27002 or port 27003 or "  # FlexLM
+                "port 1947 or port 6001 or "  # HASP/Sentinel
+                "port 22350 or port 22351 or "  # CodeMeter
+                "port 2080 or port 8224 or port 5093 or "  # Other license ports
+                "port 80 or port 443"  # Web-based licensing
+                ")"
+            )
+            
+            # Packet handler function
+            def packet_handler(packet):
+                """Process each captured packet."""
+                if not self.capturing:
+                    return
+                    
+                try:
+                    # Check if it's a TCP packet with IP layer
+                    if scapy.IP in packet and scapy.TCP in packet:
+                        # Extract packet info
+                        src_ip = packet[scapy.IP].src
+                        dst_ip = packet[scapy.IP].dst
+                        src_port = packet[scapy.TCP].sport
+                        dst_port = packet[scapy.TCP].dport
+                        
+                        # Create connection key
+                        conn_key = f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
+                        
+                        # Check if this is a new connection
+                        if conn_key not in self.connections:
+                            self.connections[conn_key] = {
+                                'first_seen': time.time(),
+                                'last_seen': time.time(),
+                                'packets': [],
+                                'bytes_sent': 0,
+                                'bytes_received': 0,
+                                'start_time': time.time(),
+                                'last_time': time.time(),
+                                'is_license': False,
+                                'src_ip': src_ip,
+                                'src_port': src_port,
+                                'dst_ip': dst_ip,
+                                'dst_port': dst_port,
+                                'protocol': 'TCP'
+                            }
+                            
+                            # Check if it's license-related
+                            if dst_port in self.license_ports or src_port in self.license_ports:
+                                self.connections[conn_key]['is_license'] = True
+                                self.license_connections.append(conn_key)
+                                self.logger.info("Potential license traffic: %s", conn_key)
+                        
+                        # Extract payload if available
+                        payload = None
+                        if scapy.Raw in packet:
+                            payload = bytes(packet[scapy.Raw])
+                            
+                            # Check for license patterns
+                            if payload:
+                                for pattern in self.license_patterns:
+                                    if pattern in payload:
+                                        self.connections[conn_key]['is_license'] = True
+                                        if dst_port > 1024:
+                                            self.license_servers.add(dst_ip)
+                                        else:
+                                            self.license_servers.add(src_ip)
+                                        break
+                        
+                        # Create packet info
+                        packet_info = {
+                            'timestamp': time.time(),
+                            'src_ip': src_ip,
+                            'dst_ip': dst_ip,
+                            'src_port': src_port,
+                            'dst_port': dst_port,
+                            'payload': payload,
+                            'size': len(packet),
+                            'connection_id': conn_key
+                        }
+                        
+                        # Update connection stats
+                        conn = self.connections[conn_key]
+                        conn['packets'].append(packet_info)
+                        conn['last_time'] = time.time()
+                        
+                        if src_ip == conn['src_ip']:
+                            conn['bytes_sent'] += len(packet)
+                        else:
+                            conn['bytes_received'] += len(packet)
+                        
+                        # Add to packets list
+                        self.packets.append(packet_info)
+                        
+                        # Auto-analyze if enabled
+                        if self.config['auto_analyze'] and len(self.packets) % 100 == 0:
+                            self.analyze_traffic()
+                            
+                except Exception as e:
+                    self.logger.error("Error processing packet: %s", e)
+            
+            # Start sniffing
+            self.logger.info("Starting Scapy sniffer with filter: %s", bpf_filter)
+            
+            # Use sniff with a stop filter
+            def stop_filter(packet):
+                return not self.capturing
+            
+            # Start capture
+            scapy.sniff(
+                iface=interface,
+                filter=bpf_filter,
+                prn=packet_handler,
+                stop_filter=stop_filter,
+                store=0  # Don't store packets in memory
+            )
+            
+            self.logger.info("Scapy capture completed")
+            
+        except Exception as e:
+            self.logger.error("Scapy capture failed: %s", e)
+            self.logger.info("Falling back to socket capture")
+            self._capture_with_socket(interface)
 
     def analyze_traffic(self) -> Optional[Dict[str, Any]]:
         """
@@ -822,6 +977,42 @@ class NetworkTrafficAnalyzer:
         except Exception as e:
             self.logger.error("Error generating visualizations: %s", e)
 
+    def stop_capture(self) -> bool:
+        """
+        Stop the packet capture process.
+        
+        Returns:
+            bool: True if capture was stopped successfully, False otherwise
+        """
+        try:
+            # Set flag to stop capture threads
+            self.capturing = False
+            
+            self.logger.info("Stopping packet capture...")
+            
+            # Give capture threads time to finish gracefully
+            time.sleep(0.5)
+            
+            # Log final statistics
+            total_packets = len(self.packets)
+            total_connections = len(self.connections)
+            license_connections = sum(1 for conn in self.connections.values() if conn.get('is_license', False))
+            
+            self.logger.info(
+                "Packet capture stopped. Total packets: %d, Total connections: %d, License connections: %d",
+                total_packets, total_connections, license_connections
+            )
+            
+            # Auto-analyze if configured
+            if self.config.get('auto_analyze', True) and total_packets > 0:
+                self.analyze_traffic()
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error("Error stopping capture: %s", e)
+            return False
+
     def generate_report(self, filename: Optional[str] = None) -> bool:
         """
         Generate an HTML report of license traffic analysis.
@@ -920,7 +1111,7 @@ class NetworkTrafficAnalyzer:
             html += close_html()
 
             # Write HTML file
-            with open(filename, 'w') as f:
+            with open(filename, 'w', encoding='utf-8') as f:
                 f.write(html)
 
             self.logger.info("Generated HTML report: %s", filename)

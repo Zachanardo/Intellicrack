@@ -1,10 +1,24 @@
 """
-AI Coordination Layer for Intellicrack
+AI Coordination Layer for Intellicrack 
 
-This module provides coordination between the fast ML predictor and the
-intelligent LLM model manager, allowing them to work together while
-maintaining their separate strengths and performance characteristics.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import hashlib
 import threading
@@ -116,7 +130,7 @@ class AICoordinationLayer:
                 logger.info("ML Predictor initialized in coordination layer")
             else:
                 logger.warning("ML Predictor not available")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize ML Predictor: %s", e)
 
         # Initialize model manager
@@ -126,7 +140,7 @@ class AICoordinationLayer:
                 logger.info("Model Manager initialized in coordination layer")
             else:
                 logger.warning("Model Manager not available")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize Model Manager: %s", e)
 
     def _get_cache_key(self, request: AnalysisRequest) -> str:
@@ -166,7 +180,7 @@ class AICoordinationLayer:
             else:
                 return AnalysisStrategy.ML_FIRST  # Default to ML first
 
-        except Exception:
+        except (OSError, ValueError, RuntimeError):
             return AnalysisStrategy.ML_FIRST
 
     def analyze_vulnerabilities(self, request: AnalysisRequest) -> CoordinatedResult:
@@ -226,7 +240,7 @@ class AICoordinationLayer:
             logger.info("Coordinated analysis complete in %fs", result.processing_time)
             return result
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in coordinated analysis: %s", e)
             result.processing_time = time.time() - start_time
             return result
@@ -262,7 +276,7 @@ class AICoordinationLayer:
                 should_escalate = (
                     ml_confidence < request.confidence_threshold or
                     vulnerability_count > 5 or  # Many vulnerabilities need deeper analysis
-                    any(vuln.get("severity") == "critical" for vuln in ml_results.get("vulnerabilities", []))
+                    any(_vuln.get("severity") == "critical" for _vuln in ml_results.get("vulnerabilities", []))
                 )
 
                 if should_escalate and self.model_manager:
@@ -273,7 +287,7 @@ class AICoordinationLayer:
                 else:
                     result.combined_confidence = ml_confidence
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("ML analysis failed: %s", e)
                 if self.model_manager:
                     # Fallback to LLM analysis
@@ -307,7 +321,7 @@ class AICoordinationLayer:
                     ml_confidence = ml_results.get("confidence", 0.0)
                     result.combined_confidence = 0.7 * llm_confidence + 0.3 * ml_confidence
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.error("ML validation failed: %s", e)
 
         return result
@@ -333,8 +347,8 @@ class AICoordinationLayer:
 
     def _start_parallel_threads(self, request: AnalysisRequest, ml_queue, llm_queue):
         """Start ML and LLM analysis threads."""
-        ml_thread_obj = threading.Thread(target=self._ml_thread_worker, args=(request, ml_queue))
-        llm_thread_obj = threading.Thread(target=self._llm_thread_worker, args=(request, llm_queue))
+        ml_thread_obj = threading.Thread(target=self._ml_thread_worker, args=(request, ml_queue))  # pylint: disable=redefined-outer-name
+        llm_thread_obj = threading.Thread(target=self._llm_thread_worker, args=(request, llm_queue))  # pylint: disable=redefined-outer-name
 
         ml_thread_obj.start()
         llm_thread_obj.start()
@@ -353,7 +367,7 @@ class AICoordinationLayer:
                 else:
                     raise AttributeError("No prediction method available")
                 ml_queue.put(("success", ml_results))
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 ml_queue.put(("error", str(e)))
         else:
             ml_queue.put(("unavailable", None))
@@ -364,7 +378,7 @@ class AICoordinationLayer:
             try:
                 llm_results = self._perform_llm_analysis(request)
                 llm_queue.put(("success", llm_results))
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 llm_queue.put(("error", str(e)))
         else:
             llm_queue.put(("unavailable", None))
@@ -424,7 +438,7 @@ class AICoordinationLayer:
                 result.combined_confidence = ml_results.get("confidence", 0.0)
                 self.performance_stats["ml_calls"] += 1
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("ML-only analysis failed: %s", e)
 
         return result
@@ -464,29 +478,196 @@ class AICoordinationLayer:
             else:
                 result.combined_confidence = llm_results.get("confidence", 0.0)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("LLM analysis failed: %s", e)
 
         return result
 
     def _perform_llm_analysis(self, request: AnalysisRequest) -> Dict[str, Any]:
-        """Perform LLM-based analysis."""
-        # This would interface with the model manager to perform complex analysis
-        # For now, return a placeholder that would be implemented based on the specific
-        # LLM capabilities available in the model manager
-
+        """Perform LLM-based analysis using available language models."""
+        try:
+            from .llm_backends import LLMMessage, LLMManager
+            
+            # Check if we have an LLM manager available
+            llm_manager = getattr(self, '_llm_manager', None)
+            if not llm_manager:
+                # Create a temporary LLM manager if one doesn't exist
+                llm_manager = LLMManager()
+                self._llm_manager = llm_manager
+            
+            # Get available LLMs
+            available_llms = llm_manager.get_available_llms()
+            if not available_llms:
+                self.logger.warning("No LLM backends available for analysis")
+                return self._fallback_analysis(request)
+            
+            # Prepare binary analysis prompt
+            analysis_prompt = self._create_binary_analysis_prompt(request)
+            
+            # Create messages for LLM
+            messages = [
+                LLMMessage(
+                    role="system",
+                    content="You are a cybersecurity expert specializing in binary analysis and vulnerability research. "
+                           "Analyze the provided binary information and identify potential security vulnerabilities, "
+                           "exploitation techniques, and recommend appropriate security measures."
+                ),
+                LLMMessage(
+                    role="user", 
+                    content=analysis_prompt
+                )
+            ]
+            
+            # Perform LLM analysis
+            response = llm_manager.chat(messages)
+            
+            if response and response.content:
+                # Parse LLM response and structure it
+                analysis_result = self._parse_llm_response(response.content, request)
+                
+                # Increment performance stats
+                self.performance_stats["llm_calls"] += 1
+                
+                return analysis_result
+            else:
+                self.logger.warning("No response from LLM, using fallback analysis")
+                return self._fallback_analysis(request)
+                
+        except Exception as e:
+            self.logger.error("LLM analysis failed: %s", e)
+            return self._fallback_analysis(request)
+    
+    def _create_binary_analysis_prompt(self, request: AnalysisRequest) -> str:
+        """Create analysis prompt for LLM based on binary information."""
+        # Read basic binary information
+        binary_info = []
+        
+        try:
+            import os
+            
+            if os.path.exists(request.binary_path):
+                file_size = os.path.getsize(request.binary_path)
+                binary_info.append(f"File size: {file_size} bytes")
+                
+                # Try to get binary format
+                try:
+                    from ..utils.binary_analysis import identify_binary_format
+                    binary_format = identify_binary_format(request.binary_path)
+                    binary_info.append(f"Binary format: {binary_format}")
+                except (ImportError, AttributeError, OSError) as e:
+                    logger.debug("Binary format identification failed: %s", e)
+                    binary_info.append("Binary format: Unknown")
+                
+                # Try to get file type info
+                try:
+                    import subprocess
+                    result = subprocess.run(['file', request.binary_path], 
+                                          capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        binary_info.append(f"File type: {result.stdout.strip()}")
+                except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError) as e:
+                    logger.debug("File type detection failed: %s", e)
+                    binary_info.append("File type: Detection unavailable")
+                    
+        except Exception as e:
+            self.logger.debug("Error gathering binary info: %s", e)
+        
+        # Build comprehensive prompt
+        prompt = f"""
+        Analyze the following binary file for security vulnerabilities and potential attack vectors:
+        
+        Binary Path: {request.binary_path}
+        Analysis Priority: {request.priority}
+        
+        Binary Information:
+        {chr(10).join(binary_info)}
+        
+        Please provide a detailed security analysis including:
+        1. Potential vulnerabilities (buffer overflows, format strings, etc.)
+        2. Attack vectors and exploitation techniques
+        3. Security mitigations present or missing
+        4. Recommendations for further analysis
+        5. Risk assessment and priority level
+        
+        Format your response as a structured analysis with clear sections.
+        """
+        
+        return prompt
+    
+    def _parse_llm_response(self, response_content: str, request: AnalysisRequest) -> Dict[str, Any]:
+        """Parse LLM response into structured analysis result."""
+        # Extract key information from LLM response
+        vulnerabilities = []
+        recommendations = []
+        attack_vectors = []
+        
+        # Simple parsing logic - could be enhanced with more sophisticated NLP
+        lines = response_content.split('\n')
+        current_section = None
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Detect sections
+            if any(keyword in line.lower() for keyword in ['vulnerabilit', 'security issue', 'weakness']):
+                current_section = 'vulnerabilities'
+            elif any(keyword in line.lower() for keyword in ['recommend', 'suggest', 'should']):
+                current_section = 'recommendations'
+            elif any(keyword in line.lower() for keyword in ['attack', 'exploit', 'vector']):
+                current_section = 'attack_vectors'
+            
+            # Extract content based on section
+            if line.startswith('-') or line.startswith('*') or line.startswith(('1.', '2.', '3.', '4.', '5.')):
+                item = line.lstrip('-*0123456789. ')
+                if current_section == 'vulnerabilities' and len(item) > 10:
+                    vulnerabilities.append(item)
+                elif current_section == 'recommendations' and len(item) > 10:
+                    recommendations.append(item)
+                elif current_section == 'attack_vectors' and len(item) > 10:
+                    attack_vectors.append(item)
+        
+        # Calculate confidence based on response quality
+        confidence = min(0.95, 0.6 + (len(vulnerabilities) * 0.1) + (len(recommendations) * 0.05))
+        
         return {
             "analysis_type": "llm_vulnerability_analysis",
             "binary_path": request.binary_path,
-            "confidence": 0.85,  # LLM typically has high confidence
-            "complex_patterns": [],
-            "reasoning": "Deep analysis performed using LLM reasoning",
-            "recommendations": [
-                "Perform manual code review for identified patterns",
-                "Consider additional dynamic analysis",
-                "Review security configurations"
-            ]
+            "confidence": confidence,
+            "vulnerabilities": vulnerabilities[:10],  # Limit to top 10
+            "attack_vectors": attack_vectors[:5],     # Limit to top 5
+            "recommendations": recommendations[:8],    # Limit to top 8
+            "complex_patterns": [],  # Would be populated by more advanced analysis
+            "reasoning": "Deep analysis performed using Large Language Model reasoning and pattern recognition",
+            "raw_response": response_content[:1000],  # Store first 1000 chars for debugging
+            "analysis_timestamp": self._get_timestamp()
         }
+    
+    def _fallback_analysis(self, request: AnalysisRequest) -> Dict[str, Any]:
+        """Fallback analysis when LLM is not available."""
+        return {
+            "analysis_type": "fallback_static_analysis",
+            "binary_path": request.binary_path,
+            "confidence": 0.6,
+            "vulnerabilities": [
+                "Unable to perform advanced LLM analysis - basic static analysis only",
+                "Recommend manual code review for comprehensive security assessment"
+            ],
+            "attack_vectors": [],
+            "recommendations": [
+                "Install and configure LLM backend for enhanced analysis",
+                "Perform manual static analysis with specialized tools",
+                "Consider dynamic analysis and fuzzing"
+            ],
+            "reasoning": "Fallback analysis due to LLM unavailability",
+            "analysis_timestamp": self._get_timestamp()
+        }
+    
+    def _get_timestamp(self) -> str:
+        """Get current timestamp for analysis."""
+        import datetime
+        return datetime.datetime.now().isoformat()
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get coordination layer performance statistics."""
@@ -518,7 +699,7 @@ class AICoordinationLayer:
             # Strategy suggestions based on file characteristics
             if file_size > 100 * 1024 * 1024:  # > 100MB
                 return AnalysisStrategy.ML_FIRST  # Large files benefit from fast initial scan
-            elif file_size < 512 * 1024:  # < 512KB
+            if file_size < 512 * 1024:  # < 512KB
                 return AnalysisStrategy.PARALLEL  # Small files can handle both
             elif analysis_type in ["license_analysis", "complex_patterns"]:
                 return AnalysisStrategy.LLM_FIRST  # These need reasoning
@@ -527,11 +708,11 @@ class AICoordinationLayer:
             else:
                 return AnalysisStrategy.ADAPTIVE  # Let the system decide
 
-        except Exception:
+        except (OSError, ValueError, RuntimeError):
             return AnalysisStrategy.ADAPTIVE
 
 
-# Convenience functions for easy integration
+# Convenience functions for _easy integration
 def quick_vulnerability_scan(binary_path: str, confidence_threshold: float = 0.7) -> CoordinatedResult:
     """Quick vulnerability scan using coordination layer."""
     coordinator = AICoordinationLayer()

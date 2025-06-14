@@ -1,9 +1,24 @@
 """
-Logging utilities for the Intellicrack framework.
+Logging utilities for the Intellicrack framework. 
 
-This module provides comprehensive logging functionality including function call logging,
-class method logging, and application-wide logging initialization.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import functools
 import inspect
@@ -57,6 +72,7 @@ def log_function_call(func: F) -> F:
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        """Wrapper function for debug logging."""
         # Check if we're already in a logging call to prevent recursion
         if hasattr(_local, 'in_logger') and _local.in_logger:
             # Just call the function without logging to avoid recursion
@@ -65,7 +81,7 @@ def log_function_call(func: F) -> F:
         func_name = func.__qualname__
 
         # Skip logging for certain problematic functions
-        if any(skip in func_name for skip in ['__str__', '__repr__', 'as_posix', 'getline', 'getlines']):
+        if any(_skip in func_name for _skip in ['__str__', '__repr__', 'as_posix', 'getline', 'getlines']):
             return func(*args, **kwargs)
 
         try:
@@ -76,6 +92,7 @@ def log_function_call(func: F) -> F:
 
             # Safely represent arguments to avoid issues with large objects
             def safe_repr(obj, max_len=100):
+                """Safely represent an object as a string."""
                 try:
                     r = repr(obj)
                     if len(r) > max_len:
@@ -92,7 +109,7 @@ def log_function_call(func: F) -> F:
             result = func(*args, **kwargs)
             logger.debug(f"Exiting {func_name} with result: {safe_repr(result)}")
             return result
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             # Don't use logger.exception to avoid recursion - just log the error
             try:
                 logger.error(f"Exception in {func_name}: {e}", exc_info=False)
@@ -113,7 +130,7 @@ def log_function_call(func: F) -> F:
             func_name = func.__qualname__
 
             # Skip logging for certain problematic functions
-            if any(skip in func_name for skip in ['__str__', '__repr__', 'as_posix', 'getline', 'getlines']):
+            if any(_skip in func_name for _skip in ['__str__', '__repr__', 'as_posix', 'getline', 'getlines']):
                 return await func(*args, **kwargs)
 
             try:
@@ -123,6 +140,7 @@ def log_function_call(func: F) -> F:
 
                 # Use the same safe_repr function for async too
                 def safe_repr(obj, max_len=100):
+                    """Safely represent an object as a string."""
                     try:
                         r = repr(obj)
                         if len(r) > max_len:
@@ -139,7 +157,7 @@ def log_function_call(func: F) -> F:
                 result = await func(*args, **kwargs)
                 logger.debug(f"Exiting async {func_name} with result: {safe_repr(result)}")
                 return result
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 # Don't use logger.exception to avoid recursion
                 try:
                     logger.error(f"Exception in async {func_name}: {e}", exc_info=False)

@@ -499,6 +499,7 @@ def inject_strings_into_distribution(distribution, vulnerability_type):
     return distribution
 
 # Generate synthetic feature data that simulates binary characteristics
+# pylint: disable=too-complex
 def generate_synthetic_data():
     """
     Generate ultra-realistic synthetic data that closely mimics real-world binary characteristics

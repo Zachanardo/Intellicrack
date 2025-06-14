@@ -1,9 +1,24 @@
 """
-Patching utilities for the Intellicrack framework.
+Patching utilities for the Intellicrack framework. 
 
-This module provides utilities for binary patching including parsing patch instructions,
-applying patches, creating backups, and validating patches.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import re
@@ -89,7 +104,7 @@ def parse_patch_instructions(text: str) -> List[Dict[str, Any]]:
                 f"Skipped line {lines_processed}: Error parsing hex values: "
                 f"Address='{address_hex}', Bytes='{new_bytes_hex_raw}'. Error: {e}"
             )
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Unexpected error parsing line %s: %s", lines_processed, e)
 
     # Log summary
@@ -175,7 +190,7 @@ def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
         try:
             shutil.copy2(file_path, backup_path)
             logger.info("Created backup: %s", backup_path)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to create backup: %s", e)
             return False, None
 
@@ -207,7 +222,7 @@ def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
                         f"Applied patch {i+1}: {len(new_bytes)} bytes "
                         f"at 0x{address:X} - {description}"
                     )
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.error(f"Failed to apply patch {i+1}: {e}")
 
         if applied_count > 0:
@@ -219,7 +234,7 @@ def apply_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]],
             patched_path.unlink(missing_ok=True)
             return False, None
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error during patching: %s", e)
         # Clean up on error
         if patched_path.exists():
@@ -265,7 +280,7 @@ def validate_patch(file_path: Union[str, Path], patches: List[Dict[str, Any]]) -
         logger.info("All patches validated successfully")
         return True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error during patch validation: %s", e)
         return False
 
@@ -290,7 +305,7 @@ def convert_rva_to_offset(file_path: Union[str, Path], rva: int) -> Optional[int
         offset = pe.get_offset_from_rva(rva)
         pe.close()
         return offset
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error converting RVA to offset: %s", e)
         return None
 
@@ -327,7 +342,7 @@ def get_section_info(file_path: Union[str, Path]) -> List[Dict[str, Any]]:
 
         pe.close()
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error reading section info: %s", e)
 
     return sections

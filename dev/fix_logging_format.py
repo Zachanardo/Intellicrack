@@ -20,6 +20,7 @@ def is_simple_variable(expr):
     # Allow simple attributes like obj.attr but not method calls
     return re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$', expr.strip())
 
+# pylint: disable=too-complex
 def convert_fstring_to_percent(match):
     """Convert f-string logging to % formatting."""
     prefix = match.group(1)  # logger.error

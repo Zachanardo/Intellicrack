@@ -40,6 +40,7 @@ def check_logging_format(filepath):
     return issues
 
 def main():
+    """Verify logging fixes across the codebase."""
     all_issues = []
     file_count = 0
     

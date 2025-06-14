@@ -1,9 +1,24 @@
 """
-System Utilities Dialog for Intellicrack.
+System Utilities Dialog for Intellicrack. 
 
-This module provides access to various system utilities including
-icon extraction, system information, dependency checking, and process management.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import os
@@ -42,8 +57,23 @@ try:
 except ImportError:
     # Fallback for environments without PyQt5
     class QDialog:
+        """
+        Stub class for QDialog when PyQt5 is not available.
+        
+        Provides a placeholder to prevent import errors in non-GUI environments.
+        """
         pass
     def pyqtSignal(*args, **kwargs):
+        """
+        Stub function for pyqtSignal when PyQt5 is not available.
+        
+        Args:
+            *args: Signal type arguments (ignored)
+            **kwargs: Signal keyword arguments (ignored)
+            
+        Returns:
+            lambda: A no-op function
+        """
         return lambda: None
     Qt = None
 
@@ -74,7 +104,7 @@ class SystemUtilitiesWorker(QThread):
                 self._get_process_list()
             elif self.operation == "optimize_memory":
                 self._optimize_memory()
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.error_occurred.emit(str(e))
 
     def _extract_icon(self):
@@ -92,7 +122,7 @@ class SystemUtilitiesWorker(QThread):
             self.progress_updated.emit(100, "Icon extraction completed")
             self.operation_completed.emit(result)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.error_occurred.emit(f"Icon extraction failed: {str(e)}")
 
     def _get_system_info(self):
@@ -107,7 +137,7 @@ class SystemUtilitiesWorker(QThread):
             self.progress_updated.emit(100, "System information collected")
             self.operation_completed.emit(result)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.error_occurred.emit(f"System info collection failed: {str(e)}")
 
     def _check_dependencies(self):
@@ -128,7 +158,7 @@ class SystemUtilitiesWorker(QThread):
             self.progress_updated.emit(100, "Dependency check completed")
             self.operation_completed.emit(result)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.error_occurred.emit(f"Dependency check failed: {str(e)}")
 
     def _get_process_list(self):
@@ -143,7 +173,7 @@ class SystemUtilitiesWorker(QThread):
             self.progress_updated.emit(100, "Process enumeration completed")
             self.operation_completed.emit({'processes': result})
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.error_occurred.emit(f"Process enumeration failed: {str(e)}")
 
     def _optimize_memory(self):
@@ -158,7 +188,7 @@ class SystemUtilitiesWorker(QThread):
             self.progress_updated.emit(100, "Memory optimization completed")
             self.operation_completed.emit(result)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.error_occurred.emit(f"Memory optimization failed: {str(e)}")
 
     def stop(self):
@@ -536,7 +566,7 @@ class SystemUtilitiesDialog(QDialog):
                     self.icon_preview.setPixmap(scaled_pixmap)
                 else:
                     self.icon_preview.setText("Could not load extracted icon")
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.icon_preview.setText(f"Preview error: {str(e)}")
         else:
             self.icon_preview.setText("Icon extracted successfully")
@@ -623,14 +653,14 @@ class SystemUtilitiesDialog(QDialog):
         if file_path:
             try:
                 if file_path.endswith('.json'):
-                    with open(file_path, 'w') as f:
+                    with open(file_path, 'w', encoding='utf-8') as f:
                         json.dump(self.current_results['system_info'], f, indent=2)
                 else:
-                    with open(file_path, 'w') as f:
+                    with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(self.sysinfo_display.toPlainText())
 
                 self.status_label.setText(f"System info exported to {os.path.basename(file_path)}")
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 QMessageBox.critical(self, "Export Error", f"Failed to export: {str(e)}")
 
     def check_dependencies(self):
@@ -724,11 +754,11 @@ class SystemUtilitiesDialog(QDialog):
 
     def filter_processes(self, filter_text):
         """Filter process table by name."""
-        for i in range(self.process_table.rowCount()):
-            name_item = self.process_table.item(i, 1)
+        for _i in range(self.process_table.rowCount()):
+            name_item = self.process_table.item(_i, 1)
             if name_item:
                 show_row = filter_text.lower() in name_item.text().lower()
-                self.process_table.setRowHidden(i, not show_row)
+                self.process_table.setRowHidden(_i, not show_row)
 
     def on_process_selection_changed(self):
         """Handle process selection change."""
@@ -738,8 +768,8 @@ class SystemUtilitiesDialog(QDialog):
     def kill_selected_process(self):
         """Kill the selected process."""
         selected_rows = set()
-        for item in self.process_table.selectedItems():
-            selected_rows.add(item.row())
+        for _item in self.process_table.selectedItems():
+            selected_rows.add(_item.row())
 
         if not selected_rows:
             return
@@ -771,7 +801,7 @@ class SystemUtilitiesDialog(QDialog):
                     else:
                         QMessageBox.warning(self, "Failed", f"Failed to kill process {name}")
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     QMessageBox.critical(self, "Error", f"Failed to kill process: {str(e)}")
 
     def optimize_memory(self):

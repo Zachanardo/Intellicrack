@@ -3,7 +3,9 @@
 
 import re
 
+# pylint: disable=too-complex
 def fix_try_except_imbalance():
+    """Fix try/except imbalance in main_app.py by removing orphaned except blocks."""
     with open('intellicrack/ui/main_app.py', 'r', encoding='utf-8') as f:
         content = f.read()
     

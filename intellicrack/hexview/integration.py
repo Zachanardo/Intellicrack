@@ -1,9 +1,24 @@
 """
-Integration between enhanced hex viewer/editor and Intellicrack.
+Integration between enhanced hex viewer/editor and Intellicrack. 
 
-This module provides functions for integrating the enhanced hex viewer with
-the main Intellicrack application, including UI hooks and tool registration.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import os
@@ -25,10 +40,31 @@ try:
 except ImportError:
     # Provide dummy functions if AI bridge is not available
     def wrapper_ai_binary_analyze(*args, **kwargs):
+        """
+        Fallback function for AI binary analysis when AI bridge is not available.
+        
+        Returns:
+            dict: Error message indicating AI bridge is not available
+        """
+        _args, _kwargs = args, kwargs  # Store for potential future use
         return {"error": "AI bridge not available"}
     def wrapper_ai_binary_pattern_search(*args, **kwargs):
+        """
+        Fallback function for AI pattern search when AI bridge is not available.
+        
+        Returns:
+            dict: Error message indicating AI bridge is not available
+        """
+        _args, _kwargs = args, kwargs  # Store for potential future use
         return {"error": "AI bridge not available"}
     def wrapper_ai_binary_edit_suggest(*args, **kwargs):
+        """
+        Fallback function for AI edit suggestions when AI bridge is not available.
+        
+        Returns:
+            dict: Error message indicating AI bridge is not available
+        """
+        _args, _kwargs = args, kwargs  # Store for potential future use
         return {"error": "AI bridge not available"}
 
 logger = logging.getLogger('Intellicrack.HexView')
@@ -100,7 +136,7 @@ def show_enhanced_hex_viewer(app_instance, file_path: Optional[str] = None, read
                     f"The file is empty: {file_path}"
                 )
                 # Continue anyway - we'll show an empty hex view
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Could not get file size: %s", e)
 
         # Create the dialog
@@ -117,7 +153,7 @@ def show_enhanced_hex_viewer(app_instance, file_path: Optional[str] = None, read
 
         logger.info("Opened enhanced hex viewer for %s", file_path)
         return dialog
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error(f"Error showing enhanced hex viewer: {e}", exc_info=True)
         QMessageBox.critical(
             app_instance,
@@ -301,7 +337,7 @@ def integrate_enhanced_hex_viewer(app_instance):
 
         logger.info("Hex viewer integration completed successfully")
         return True
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error integrating enhanced hex viewer: %s", e)
         return False
 
@@ -321,12 +357,22 @@ def hex_viewer_ai_tool(func):
         Decorated function
     """
     def wrapper(app_instance, parameters):
+        """
+        Wrapper function that adds error handling and logging to hex viewer AI tools.
+        
+        Args:
+            app_instance: The application instance
+            parameters: Parameters to pass to the wrapped function
+            
+        Returns:
+            Result from the wrapped function or error dictionary on failure
+        """
         try:
             logger.debug("Calling hex viewer AI tool: %s", func.__name__)
             result = func(app_instance, parameters)
             logger.debug("Hex viewer AI tool %s completed successfully", func.__name__)
             return result
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in hex viewer AI tool %s: %s", func.__name__, e)
             return {"error": str(e)}
 

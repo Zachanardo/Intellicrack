@@ -1,3 +1,24 @@
+"""
+Incremental Analysis Manager for avoiding reprocessing unchanged code. 
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 #!/usr/bin/env python3
 """
 Incremental Analysis Manager for avoiding reprocessing unchanged code.
@@ -71,8 +92,35 @@ class IncrementalAnalysisManager:
 
         # Load cache index
         self._load_cache_index()
-
-        self.logger.info("Incremental analysis manager initialized")
+        
+    def _validate_cache_file(self, file_path: str) -> bool:
+        """
+        Validate cache file before loading.
+        
+        Args:
+            file_path: Path to the cache file
+            
+        Returns:
+            bool: True if file is safe to load
+        """
+        if not os.path.exists(file_path):
+            return False
+            
+        # Check file size
+        file_size = os.path.getsize(file_path)
+        if file_size > self.cache_max_size:
+            self.logger.warning("Cache file too large (%d bytes), rejecting", file_size)
+            return False
+            
+        # Check file ownership and permissions (Unix-like systems)
+        if hasattr(os, 'stat'):
+            stat_info = os.stat(file_path)
+            # Ensure file is owned by current user
+            if hasattr(os, 'getuid') and stat_info.st_uid != os.getuid():  # pylint: disable=no-member
+                self.logger.warning("Cache file not owned by current user, rejecting")
+                return False
+                
+        return True
 
     def _load_cache_index(self) -> None:
         """
@@ -91,7 +139,7 @@ class IncrementalAnalysisManager:
                 with open(index_path, 'r', encoding='utf-8') as f:
                     self.cache = json.load(f)
 
-                self.logger.info(f"Loaded cache index with {len(self.cache)} entries")
+                self.logger.info("Loaded cache index with %d entries", len(self.cache))
 
                 # Clean up invalid cache entries
                 self._cleanup_invalid_entries()
@@ -253,15 +301,30 @@ class IncrementalAnalysisManager:
             self.logger.warning("Cache file not found: %s", cache_file)
             return None
 
+        # Validate cache file before loading
+        if not self._validate_cache_file(cache_file):
+            self.logger.error("Cache file validation failed: %s", cache_file)
+            return None
+            
         try:
+            self.logger.warning("Loading cache with pickle - ensure cache is from trusted source")
             with open(cache_file, 'rb') as f:
-                result = pickle.load(f)
+                result = pickle.load(f)  # Security: Cache files are internally generated and trusted
 
             self.logger.info("Loaded cached analysis: %s", analysis_type)
             return result
 
         except (pickle.PickleError, IOError) as e:
             self.logger.error("Error loading cache file: %s", e)
+            # Remove corrupted cache file
+            try:
+                os.remove(cache_file)
+                self.logger.info("Removed corrupted cache file: %s", cache_file)
+            except OSError:
+                pass
+            return None
+        except Exception as e:
+            self.logger.error("Unexpected error loading cache: %s", e)
             return None
 
     def cache_analysis(self, analysis_type: str, results: Any) -> bool:

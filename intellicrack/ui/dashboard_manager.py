@@ -1,3 +1,24 @@
+"""
+Dashboard Manager for Intellicrack application. 
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 #!/usr/bin/env python3
 """
 Dashboard Manager for Intellicrack application.
@@ -10,6 +31,8 @@ import datetime
 import logging
 import os
 from typing import Any, Dict, List, Union
+
+from ..utils.string_utils import format_bytes
 
 
 class DashboardManager:
@@ -100,12 +123,12 @@ class DashboardManager:
         """
         if hasattr(self.app, "patches") and self.app.patches:
             patch_count = len(self.app.patches)
-            applied_count = sum(1 for p in self.app.patches if p.get("applied", False))
+            applied_count = sum(1 for _p in self.app.patches if _p.get("applied", False))
             patch_types: Dict[str, int] = {}
 
             # Count patch types
-            for patch in self.app.patches:
-                patch_type = patch.get("type", "unknown")
+            for _patch in self.app.patches:
+                patch_type = _patch.get("type", "unknown")
                 patch_types[patch_type] = patch_types.get(patch_type, 0) + 1
 
             self.stats["patches"] = {
@@ -193,7 +216,7 @@ class DashboardManager:
         }
 
         # Count active features
-        active_count = sum(1 for available in advanced_features.values() if available)
+        active_count = sum(1 for _available in advanced_features.values() if _available)
 
         self.stats["advanced_analysis"] = {
             **advanced_features,
@@ -307,14 +330,7 @@ class DashboardManager:
         Returns:
             Human-readable size string
         """
-        if size_bytes < 1024:
-            return f"{size_bytes} B"
-        elif size_bytes < 1024 * 1024:
-            return f"{size_bytes / 1024:.2f} KB"
-        elif size_bytes < 1024 * 1024 * 1024:
-            return f"{size_bytes / (1024 * 1024):.2f} MB"
-        else:
-            return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+        return format_bytes(size_bytes)
 
     def export_stats(self, filepath: str) -> bool:
         """
@@ -341,7 +357,7 @@ class DashboardManager:
             self.logger.info("Statistics exported to %s", filepath)
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to export statistics: %s", e)
             return False
 

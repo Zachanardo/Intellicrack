@@ -1,16 +1,48 @@
 """
-Performance Monitor for Hex Viewer Large File Operations.
+Performance Monitor for Hex Viewer Large File Operations. 
 
-This module provides a widget to monitor and display performance statistics
-for large file operations in the hex viewer.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import time
 from typing import Any, Dict, Optional
 
-from ..ui.common_imports import *
 from PyQt5.QtCore import QTimer
+
+from ..ui.common_imports import (
+    PYQT5_AVAILABLE,
+    QFont,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QTabWidget,
+    QTableWidget,
+    QTimer,
+    QVBoxLayout,
+    QWidget,
+    Qt
+)
 
 logger = logging.getLogger(__name__)
 
@@ -288,7 +320,7 @@ class PerformanceWidget(QWidget if PYQT5_AVAILABLE else object):
             # Update patterns tab
             self.update_patterns_tab(stats)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error updating performance display: %s", e)
 
     def update_overview_tab(self, stats: Dict[str, Any]):
@@ -391,7 +423,7 @@ class PerformanceWidget(QWidget if PYQT5_AVAILABLE else object):
 
             self.optimization_status.setStyleSheet("color: blue; font-weight: bold;")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Auto-optimization failed: %s", e)
 
     def clear_stats(self):

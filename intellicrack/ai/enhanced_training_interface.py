@@ -1,9 +1,24 @@
 """
-Enhanced AI Model Training Interface
+Enhanced AI Model Training Interface 
 
-This module provides a comprehensive training interface with advanced features
-for AI model development, training, and optimization in Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import logging
@@ -144,7 +159,7 @@ class TrainingThread(QThread):
             self.log_message.emit("Starting model training...")
 
             # Simulate training process (replace with actual ML training)
-            for epoch in range(self.config.epochs):
+            for _epoch in range(self.config.epochs):
                 if self.should_stop:
                     break
 
@@ -157,28 +172,28 @@ class TrainingThread(QThread):
                 time.sleep(0.1)  # Simulate processing time
 
                 # Generate simulated metrics
-                progress = int((epoch + 1) / self.config.epochs * 100)
+                progress = int((_epoch + 1) / self.config.epochs * 100)
 
                 # Simulated improvement over time
-                base_accuracy = 0.5 + (epoch / self.config.epochs) * 0.4
+                base_accuracy = 0.5 + (_epoch / self.config.epochs) * 0.4
                 noise = np.random.normal(0, 0.02) if 'numpy' in globals() else 0
                 accuracy = min(0.99, base_accuracy + noise)
 
                 metrics = {
-                    "epoch": epoch + 1,
+                    "epoch": _epoch + 1,
                     "accuracy": accuracy,
-                    "loss": max(0.01, 2.0 - (epoch / self.config.epochs) * 1.8),
+                    "loss": max(0.01, 2.0 - (_epoch / self.config.epochs) * 1.8),
                     "val_accuracy": accuracy * 0.95,
-                    "val_loss": max(0.01, 2.2 - (epoch / self.config.epochs) * 1.8),
+                    "val_loss": max(0.01, 2.2 - (_epoch / self.config.epochs) * 1.8),
                     "learning_rate": self.config.learning_rate
                 }
 
                 self.progress_updated.emit(progress)
                 self.metrics_updated.emit(metrics)
-                self.log_message.emit(f"Epoch {epoch + 1}/{self.config.epochs} - Accuracy: {accuracy:.4f}")
+                self.log_message.emit(f"Epoch {_epoch + 1}/{self.config.epochs} - Accuracy: {accuracy:.4f}")
 
                 # Simulate early stopping
-                if self.config.use_early_stopping and epoch > 20:
+                if self.config.use_early_stopping and _epoch > 20:
                     if metrics["val_loss"] > metrics["loss"] * 1.5:
                         self.log_message.emit("Early stopping triggered")
                         break
@@ -189,7 +204,7 @@ class TrainingThread(QThread):
             else:
                 self.log_message.emit("Training stopped by user")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.error_occurred.emit(str(e))
 
     def stop_training(self):
@@ -254,11 +269,11 @@ class TrainingVisualizationWidget(QWidget):
         if not self.metrics_history:
             return
 
-        epochs = [m["epoch"] for m in self.metrics_history]
-        accuracies = [m["accuracy"] for m in self.metrics_history]
-        val_accuracies = [m["val_accuracy"] for m in self.metrics_history]
-        losses = [m["loss"] for m in self.metrics_history]
-        val_losses = [m["val_loss"] for m in self.metrics_history]
+        epochs = [_m["epoch"] for _m in self.metrics_history]
+        accuracies = [_m["accuracy"] for _m in self.metrics_history]
+        val_accuracies = [_m["val_accuracy"] for _m in self.metrics_history]
+        losses = [_m["loss"] for _m in self.metrics_history]
+        val_losses = [_m["val_loss"] for _m in self.metrics_history]
 
         # Clear previous plots
         self.ax1.clear()
@@ -286,7 +301,7 @@ class TrainingVisualizationWidget(QWidget):
 
         # Learning rate plot
         if len(epochs) > 1:
-            lr_values = [m.get("learning_rate", 0.001) for m in self.metrics_history]
+            lr_values = [_m.get("learning_rate", 0.001) for _m in self.metrics_history]
             self.ax3.plot(epochs, lr_values, 'g-', linewidth=2)
             self.ax3.set_title('Learning Rate')
             self.ax3.set_xlabel('Epoch')
@@ -440,7 +455,7 @@ Recommendations:
 
             self.analysis_text.setText(analysis_text)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             QMessageBox.warning(self, "Analysis Error", f"Error analyzing dataset: {e}")
 
     def analyze_quality(self):
@@ -472,7 +487,7 @@ Recommendations:
         )
 
         if file_path:
-            with open(file_path, 'w') as f:
+            with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(self.analysis_text.toPlainText())
             QMessageBox.information(self, "Report Saved", f"Report saved to {file_path}")
 
@@ -781,6 +796,16 @@ class EnhancedTrainingInterface(QDialog):
         """Apply icons to buttons using colored pixmaps."""
         # Create simple colored pixmaps as placeholders for icons
         def create_colored_pixmap(color, size=16):
+            """
+            Create a solid-colored pixmap for use as a button icon.
+            
+            Args:
+                color: Qt color to fill the pixmap with
+                size: Size of the square pixmap in pixels (default: 16)
+                
+            Returns:
+                QPixmap: A square pixmap filled with the specified color
+            """
             pixmap = QPixmap(size, size)
             pixmap.fill(color)
             return pixmap
@@ -1040,10 +1065,10 @@ class EnhancedTrainingInterface(QDialog):
         if file_path:
             self.update_config_from_ui()
             try:
-                with open(file_path, 'w') as f:
+                with open(file_path, 'w', encoding='utf-8') as f:
                     json.dump(asdict(self.config), f, indent=2)
                 QMessageBox.information(self, "Configuration Saved", f"Configuration saved to {file_path}")
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 QMessageBox.critical(self, "Save Error", f"Error saving configuration: {e}")
 
     def load_configuration(self):
@@ -1055,7 +1080,7 @@ class EnhancedTrainingInterface(QDialog):
 
         if file_path:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, 'r', encoding='utf-8') as f:
                     config_dict = json.load(f)
 
                 # Update configuration
@@ -1067,7 +1092,7 @@ class EnhancedTrainingInterface(QDialog):
                 self.update_ui_from_config()
 
                 QMessageBox.information(self, "Configuration Loaded", f"Configuration loaded from {file_path}")
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 QMessageBox.critical(self, "Load Error", f"Error loading configuration: {e}")
 
     def update_ui_from_config(self):

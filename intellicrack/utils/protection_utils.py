@@ -1,9 +1,24 @@
 """
-Protection detection utilities for the Intellicrack framework.
+Protection detection utilities for the Intellicrack framework. 
 
-This module provides utilities for detecting various software protection mechanisms
-including packing, obfuscation, anti-debugging techniques, and licensing systems.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import math
@@ -39,8 +54,8 @@ def calculate_entropy(data: bytes) -> float:
     counter = Counter(bytearray(data))
     data_len = len(data)
 
-    for count in counter.values():
-        probability = count / data_len
+    for count_value in counter.values():
+        probability = count_value / data_len
         entropy -= probability * math.log2(probability)
 
     return entropy
@@ -92,7 +107,7 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
         # Check imports - packed files often have few imports
         if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
             import_entries = getattr(pe, 'DIRECTORY_ENTRY_IMPORT', [])
-            import_count = sum(len(entry.imports) for entry in import_entries)
+            import_count = sum(len(import_entry.imports) for import_entry in import_entries)
             results.append("\nImport analysis:")
             results.append(f"  Total imports: {import_count}")
 
@@ -110,17 +125,17 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
             ]
             found_suspicious = []
 
-            for entry in import_entries:
-                for imp in entry.imports:
-                    if imp.name:
-                        name = imp.name.decode('utf-8', 'ignore')
-                        if any(susp in name for susp in suspicious_imports):
+            for import_entry in import_entries:
+                for import_item in import_entry.imports:
+                    if import_item.name:
+                        name = import_item.name.decode('utf-8', 'ignore')
+                        if any(suspicious_item in name for suspicious_item in suspicious_imports):
                             found_suspicious.append(name)
 
             if found_suspicious:
                 results.append("  ⚠️ Found suspicious imports used by packers/protectors:")
-                for imp in found_suspicious:
-                    results.append(f"    - {imp}")
+                for import_name in found_suspicious:
+                    results.append(f"    - {import_name}")
         else:
             results.append("\nNo import directory found - strong indication of packing!")
 
@@ -131,7 +146,7 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
         suspicious_sections = [".ndata", "UPX", ".packed", ".nsp", ".enigma"]
         for section in pe.sections:
             name = section.Name.decode('utf-8', 'ignore').strip('\x00')
-            if any(susp.lower() in name.lower() for susp in suspicious_sections):
+            if any(suspicious_name.lower() in name.lower() for suspicious_name in suspicious_sections):
                 results.append(f"  ⚠️ Suspicious section name: {name}")
 
         # Executable & writable sections (often used by self-modifying packers)
@@ -149,20 +164,20 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
         # Summarize findings
         results.append("\nPacking analysis summary:")
 
-        if any("Very high entropy" in line for line in results):
+        if any("Very high entropy" in result_line for result_line in results):
             results.append("  ⚠️ PACKED/ENCRYPTED - Very high entropy sections detected")
-        elif any("High entropy" in line for line in results):
+        elif any("High entropy" in result_line for result_line in results):
             results.append("  ⚠️ PROBABLE PACKING - High entropy sections detected")
-        elif any(("Very few imports" in line or "No import directory" in line) for line in results):
+        elif any(("Very few imports" in result_line or "No import directory" in result_line) for result_line in results):
             results.append("  ⚠️ PROBABLE PACKING - Abnormal import structure")
-        elif any("both executable and writable" in line for line in results):
+        elif any("both executable and writable" in result_line for result_line in results):
             results.append("  ⚠️ POSSIBLE PACKING - Self-modifying code structure detected")
         else:
             results.append("  ✓ No strong indicators of packing detected")
 
         pe.close()
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         results.append(f"Error analyzing for packing: {e}")
 
     return results
@@ -190,7 +205,7 @@ def detect_protection(binary_path: Union[str, Path]) -> Dict[str, Any]:
 
     # Run packing detection
     packing_results = detect_packing(binary_path)
-    if any("PACKED" in line or "PROBABLE PACKING" in line for line in packing_results):
+    if any("PACKED" in result_line or "PROBABLE PACKING" in result_line for result_line in packing_results):
         results['packing'] = True
         results['details'].extend(packing_results)
 
@@ -278,9 +293,9 @@ def check_anti_debug_tricks(binary_path: Union[str, Path]) -> List[Dict[str, Any
 
         # Check for IsDebuggerPresent
         if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-            for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                for imp in entry.imports:
-                    if imp.name and b'IsDebuggerPresent' in imp.name:
+            for import_entry in pe.DIRECTORY_ENTRY_IMPORT:
+                for import_item in import_entry.imports:
+                    if import_item.name and b'IsDebuggerPresent' in import_item.name:
                         tricks.append({
                             'name': 'IsDebuggerPresent',
                             'description': 'Checks for attached debugger via API',
@@ -289,7 +304,7 @@ def check_anti_debug_tricks(binary_path: Union[str, Path]) -> List[Dict[str, Any
 
         pe.close()
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error checking anti-debug tricks: %s", e)
 
     return tricks
@@ -320,11 +335,11 @@ def identify_protection_vendor(binary_path: Union[str, Path]) -> Optional[str]:
             data = f.read(1024 * 1024)
 
         for vendor, sigs in signatures.items():
-            for sig in sigs:
-                if sig in data:
+            for signature in sigs:
+                if signature in data:
                     return vendor
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error identifying protection vendor: %s", e)
 
     return None
@@ -402,7 +417,7 @@ def inject_comprehensive_api_hooks(app, script: str = None) -> None:
         """
 
     try:
-        # Try to use Frida for real injection if available
+        # Try to use Frida for _real injection if available
         import frida
 
         # Check if we have a binary path

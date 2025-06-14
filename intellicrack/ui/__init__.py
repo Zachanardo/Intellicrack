@@ -1,23 +1,24 @@
 """
-Intellicrack User Interface Package
+Intellicrack User Interface Package 
 
-This package provides the graphical user interface components for the Intellicrack framework.
-It includes the main application window, dialogs, widgets, and a dashboard manager for
-creating a comprehensive and user-friendly interface for binary analysis tasks.
+Copyright (C) 2025 Zachary Flint
 
-Modules:
-    - main_window: Main application window and interface
-    - dashboard_manager: Dashboard management and layout system
-    - dialogs: Collection of specialized dialog windows
-    - widgets: Custom UI widgets and components
+This file is part of Intellicrack.
 
-Key Features:
-    - Modern Qt-based interface
-    - Customizable layouts and themes
-    - Interactive visualizations
-    - Real-time analysis feedback
-    - Plugin integration support
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 

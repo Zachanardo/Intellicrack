@@ -1,9 +1,24 @@
 """
-Hex viewer widget for displaying and editing binary data.
+Hex viewer widget for displaying and editing binary data. 
 
-This module provides the main hex viewer widget for Intellicrack,
-combining file access, rendering, and highlighting into a cohesive UI.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import os
@@ -181,7 +196,7 @@ class HexViewerWidget(QAbstractScrollArea):
             try:
                 self.file_handler = VirtualFileAccess(file_path, read_only)
                 self.file_path = file_path
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error(f"Failed to create VirtualFileAccess: {e}", exc_info=True)
                 return False
 
@@ -196,7 +211,7 @@ class HexViewerWidget(QAbstractScrollArea):
                     logger.error("File appears to be unreadable - read test returned empty data for %s", file_path)
                 else:
                     logger.debug(f"Read test successful: got {len(test_data)} bytes")
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error(f"Error reading file data: {e}", exc_info=True)
                 return False
 
@@ -236,7 +251,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
             logger.info("Loaded file: %s (%s bytes)", file_path, file_size)
             return True
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error loading file: %s", e)
             if hasattr(self, 'file_handler') and self.file_handler:
                 del self.file_handler
@@ -291,7 +306,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
             logger.info(f"Loaded data buffer: {name} ({len(data)} bytes), success={result}")
             return result
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error(f"Error loading data: {e}", exc_info=True)
             return False
 
@@ -472,7 +487,7 @@ class HexViewerWidget(QAbstractScrollArea):
             data_debug = f"Read: {len(data)} bytes | First bytes: {data[:8].hex(' ')}"
             painter.setPen(Qt.green)
             painter.drawText(10, 60, data_debug)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error(f"Exception reading data: {e}", exc_info=True)
             painter.setPen(Qt.red)
             painter.drawText(20, 90, f"Error reading data: {str(e)}")
@@ -496,7 +511,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
             # Adjust for horizontal scroll
             painter.translate(-h_scroll, 0)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in header rendering: %s", e)
             return
 
@@ -533,14 +548,14 @@ class HexViewerWidget(QAbstractScrollArea):
                         self.draw_decimal_row(painter, row_data, row_offset, y)
                     elif self.view_mode == ViewMode.BINARY:
                         self.draw_binary_row(painter, row_data, row_offset, y)
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error rendering row at offset %s: %s", row_offset, e)
                     # Draw error indicator
                     painter.setPen(Qt.red)
                     painter.drawText(10, y, f"Error: {str(e)[:30]}...")
 
                 y += self.char_height
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in row rendering loop: %s", e)
             # Draw a final error indicator at the top
             painter.setPen(Qt.red)
@@ -668,7 +683,7 @@ class HexViewerWidget(QAbstractScrollArea):
             # Get highlights for this row
             row_end = offset + len(data)
             highlights = self.highlighter.get_highlights_for_region(offset, row_end)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Exception in draw_hex_row setup: %s", e)
             painter.setPen(Qt.red)
             painter.drawText(10, y, f"Error in hex row: {str(e)[:30]}...")
@@ -1556,7 +1571,7 @@ class HexViewerWidget(QAbstractScrollArea):
         if dialog.exec_() == QDialog.Accepted:
             # Parse the edited text
             edited_text = text_edit.toPlainText()
-            start_offset, edited_data = parse_hex_view(edited_text)
+            _, edited_data = parse_hex_view(edited_text)
 
             # Check if the data size matches the selection
             if len(edited_data) != len(data):
@@ -1609,7 +1624,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # For other keys, fall back to parent implementation
         super().keyPressEvent(event)
 
-    def handle_navigation_key(self, key: int, modifiers: Qt.KeyboardModifiers):
+    def handle_navigation_key(self, key: int, modifiers: Qt.KeyboardModifiers):  # pylint: disable=unused-argument
         """Handle navigation key events."""
         file_size = self.file_handler.get_file_size()
 
@@ -1812,7 +1827,13 @@ class HexViewerWidget(QAbstractScrollArea):
     def show_performance_dialog(self):
         """Show a dialog with performance statistics."""
         try:
-            from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QTextEdit, QVBoxLayout
+            from PyQt5.QtWidgets import (  # pylint: disable=redefined-outer-name
+                QDialog,
+                QLabel,
+                QPushButton,
+                QTextEdit,
+                QVBoxLayout,
+            )
 
             dialog = QDialog(self)
             dialog.setWindowTitle("Hex Viewer Performance Statistics")
@@ -1850,7 +1871,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
             dialog.exec_()
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error showing performance dialog: %s", e)
 
     def optimize_for_large_files(self):

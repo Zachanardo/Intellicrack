@@ -1,25 +1,24 @@
 """
-Intellicrack Core Patching Package
+Intellicrack Core Patching Package 
 
-This package provides binary patching and modification capabilities for the Intellicrack framework.
-It includes tools for generating patches, applying binary modifications, and creating custom payloads.
+Copyright (C) 2025 Zachary Flint
 
-Modules:
-    - payload_generator: Generate custom payloads for binary patching
-    - adobe_injector: Adobe Creative Suite license bypass functionality  
-    - windows_activator: Windows activation and license management
-    - memory_patcher: Memory patching and launcher generation for protected binaries
+This file is part of Intellicrack.
 
-Key Features:
-    - Binary patch generation
-    - Payload creation and injection
-    - Pattern-based patching
-    - Multi-architecture support
-    - Adobe license bypass with Frida injection
-    - Windows activation using MAS scripts
-    - Memory patching for heavily protected binaries
-    - Launcher script generation for runtime patching
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 
@@ -32,8 +31,8 @@ try:
         PayloadGenerator,
         apply_patch,
         create_nop_sled,
-        inject_shellcode,
         generate_complete_api_hooking_script,
+        inject_shellcode,
     )
 except ImportError as e:
     logger.warning("Failed to import payload_generator: %s", e)

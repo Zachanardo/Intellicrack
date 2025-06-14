@@ -1,9 +1,24 @@
 """
-Remote Plugin Executor
+Remote Plugin Executor 
 
-This module provides functionality to execute plugins on remote systems,
-enabling distributed plugin execution and analysis across multiple machines.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import base64
 import json
@@ -14,7 +29,9 @@ import socket
 import sys
 import tempfile
 import threading
-from typing import Any, List, Optional
+import hashlib
+import hmac
+from typing import Any, List, Optional, Union
 
 __all__ = ['RemotePluginExecutor']
 
@@ -38,6 +55,55 @@ class RemotePluginExecutor:
         self.remote_host = remote_host or "localhost"
         self.remote_port = remote_port or 8765
         self.logger = logging.getLogger(__name__)
+        
+        # Security: Shared secret for HMAC validation (should be configured securely)
+        self.shared_secret = os.environ.get('INTELLICRACK_REMOTE_SECRET', 'default-insecure-secret').encode()
+        if self.shared_secret == b'default-insecure-secret':
+            self.logger.warning("Using default remote execution secret - configure INTELLICRACK_REMOTE_SECRET for security")
+
+    def _serialize_safe(self, data: Any) -> str:
+        """
+        Safely serialize data to JSON, with fallback to pickle for complex objects.
+        
+        Args:
+            data: Data to serialize
+            
+        Returns:
+            Base64-encoded serialized data
+        """
+        try:
+            # Try JSON first (safe)
+            json_str = json.dumps(data)
+            return base64.b64encode(json_str.encode('utf-8')).decode('ascii')
+        except (TypeError, ValueError):
+            # For complex objects, use pickle with warning
+            self.logger.warning("Using pickle for complex object serialization - ensure trusted environment")
+            pickle_data = pickle.dumps(data, protocol=2)
+            return base64.b64encode(pickle_data).decode('ascii')
+            
+    def _deserialize_safe(self, encoded_data: str, expected_type: str = 'json') -> Any:
+        """
+        Safely deserialize data with validation.
+        
+        Args:
+            encoded_data: Base64-encoded data
+            expected_type: Expected serialization type ('json' or 'pickle')
+            
+        Returns:
+            Deserialized data
+        """
+        decoded = base64.b64decode(encoded_data)
+        
+        if expected_type == 'json':
+            try:
+                return json.loads(decoded.decode('utf-8'))
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                self.logger.error("Failed to deserialize as JSON")
+                raise ValueError("Invalid JSON data")
+        else:
+            # Pickle deserialization - use with extreme caution
+            self.logger.warning("Deserializing pickle data - ensure source is trusted")
+            return pickle.loads(decoded)  # Security: Only used for internal plugin communication
 
     def execute_plugin(self, plugin_path: str, method_name: str, *args, **kwargs) -> List[str]:
         """
@@ -59,16 +125,22 @@ class RemotePluginExecutor:
 
             # Encode plugin code and arguments
             encoded_plugin = base64.b64encode(plugin_code).decode('utf-8')
-            encoded_args = base64.b64encode(pickle.dumps(args)).decode('utf-8')
-            encoded_kwargs = base64.b64encode(pickle.dumps(kwargs)).decode('utf-8')
+            encoded_args = self._serialize_safe(args)
+            encoded_kwargs = self._serialize_safe(kwargs)
 
-            # Create request
+            # Create request with signature
             request = {
                 "plugin_code": encoded_plugin,
                 "method_name": method_name,
                 "args": encoded_args,
-                "kwargs": encoded_kwargs
+                "kwargs": encoded_kwargs,
+                "serialization": "json"  # Indicate serialization method
             }
+            
+            # Add HMAC signature for authentication
+            request_json = json.dumps(request, sort_keys=True)
+            signature = hmac.new(self.shared_secret, request_json.encode('utf-8'), hashlib.sha256).hexdigest()
+            request["signature"] = signature
 
             # Connect to remote server
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -96,10 +168,16 @@ class RemotePluginExecutor:
             response_data = json.loads(response.decode('utf-8'))
 
             if response_data.get("status") == "success":
-                # Decode results
+                # Decode results safely
                 encoded_results = response_data.get("results", "")
-                results = pickle.loads(base64.b64decode(encoded_results))
-                return results
+                serialization_type = response_data.get("serialization", "json")
+                
+                try:
+                    results = self._deserialize_safe(encoded_results, expected_type=serialization_type)
+                    return results
+                except Exception as e:
+                    self.logger.error("Failed to deserialize results: %s", e)
+                    return [f"Deserialization error: {e}"]
             else:
                 error = response_data.get("error", "Unknown error")
                 self.logger.error("Remote execution error: %s", error)
@@ -113,7 +191,7 @@ class RemotePluginExecutor:
             error_msg = "Connection timeout"
             self.logger.error(error_msg)
             return [error_msg]
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error executing remote plugin: {e}"
             self.logger.error(error_msg)
             return [error_msg]
@@ -154,12 +232,38 @@ class RemotePluginExecutor:
 
                 # Parse request
                 request = json.loads(request_data.decode('utf-8'))
+                
+                # Verify HMAC signature (if present)
+                signature = request.pop("signature", None)
+                if signature:
+                    # Get shared secret
+                    shared_secret = os.environ.get('INTELLICRACK_REMOTE_SECRET', 'default-insecure-secret').encode()
+                    
+                    # Verify signature
+                    request_json = json.dumps(request, sort_keys=True)
+                    expected_sig = hmac.new(shared_secret, request_json.encode('utf-8'), hashlib.sha256).hexdigest()
+                    
+                    if not hmac.compare_digest(signature, expected_sig):
+                        logger.error("Invalid HMAC signature in request")
+                        response = {"status": "error", "error": "Authentication failed"}
+                        client_socket.sendall(json.dumps(response).encode('utf-8') + b'\n')
+                        return
 
                 # Extract plugin code and arguments
                 plugin_code = base64.b64decode(request.get("plugin_code", ""))
                 method_name = request.get("method_name", "")
-                args = pickle.loads(base64.b64decode(request.get("args", "")))
-                kwargs = pickle.loads(base64.b64decode(request.get("kwargs", "")))
+                serialization_type = request.get("serialization", "pickle")
+                
+                # Deserialize arguments based on type
+                executor = RemotePluginExecutor()
+                try:
+                    args = executor._deserialize_safe(request.get("args", ""), expected_type=serialization_type)
+                    kwargs = executor._deserialize_safe(request.get("kwargs", ""), expected_type=serialization_type)
+                except Exception as e:
+                    logger.error("Failed to deserialize arguments: %s", e)
+                    response = {"status": "error", "error": f"Deserialization failed: {e}"}
+                    client_socket.sendall(json.dumps(response).encode('utf-8') + b'\n')
+                    return
 
                 # Write plugin code to temporary file
                 with tempfile.NamedTemporaryFile(suffix='.py', delete=False) as f:
@@ -189,16 +293,17 @@ class RemotePluginExecutor:
                     # Execute plugin method with sandbox protection
                     results = _run_plugin_in_sandbox(plugin_instance, method_name, *args, **kwargs)
 
-                    # Encode results
-                    encoded_results = base64.b64encode(pickle.dumps(results)).decode('utf-8')
+                    # Encode results using safe serialization
+                    encoded_results = executor._serialize_safe(results)
 
                     # Create response
                     response = {
                         "status": "success",
-                        "results": encoded_results
+                        "results": encoded_results,
+                        "serialization": "json"  # Indicate serialization type
                     }
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     # Create error response
                     logger.error("Plugin execution error: %s", e)
                     response = {
@@ -222,7 +327,7 @@ class RemotePluginExecutor:
                 response_data = json.dumps(response).encode('utf-8') + b'\n'
                 client_socket.sendall(response_data)
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error handling client: %s", e)
 
                 # Send error response
@@ -233,13 +338,13 @@ class RemotePluginExecutor:
                     }
                     response_data = json.dumps(response).encode('utf-8') + b'\n'
                     client_socket.sendall(response_data)
-                except Exception:
+                except (OSError, ValueError, RuntimeError):
                     pass  # Client may have disconnected
 
             finally:
                 try:
                     client_socket.close()
-                except Exception:
+                except (OSError, ValueError, RuntimeError):
                     pass
 
         # Create server socket
@@ -270,15 +375,15 @@ class RemotePluginExecutor:
                 except KeyboardInterrupt:
                     logger.info("Server shutting down")
                     break
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error accepting connection: %s", e)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Server error: %s", e)
         finally:
             try:
                 server_socket.close()
-            except Exception:
+            except (OSError, ValueError, RuntimeError):
                 pass
 
     def test_connection(self) -> bool:
@@ -293,7 +398,7 @@ class RemotePluginExecutor:
                 s.settimeout(5)
                 s.connect((self.remote_host, self.remote_port))
                 return True
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Connection test failed: %s", e)
             return False
 
@@ -333,7 +438,7 @@ def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwar
         else:
             return [f"'{method_name}' is not callable"]
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         return [f"Plugin execution error: {e}"]
 
 

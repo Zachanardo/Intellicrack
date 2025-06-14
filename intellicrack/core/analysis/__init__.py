@@ -1,29 +1,24 @@
 """
-Advanced binary analysis engines for Intellicrack.
+Advanced binary analysis engines for Intellicrack. 
 
-This package provides sophisticated analysis capabilities including:
-- Core analysis functions (entropy, packing detection, deep analysis)
-- Static vulnerability detection
-- Dynamic runtime analysis
-- Control flow graph exploration
-- Symbolic and concolic execution
-- Multi-format binary analysis
-- Taint analysis and data flow tracking
-- ROP chain generation
-- Binary similarity search
+Copyright (C) 2025 Zachary Flint
 
-Modules:
-    core_analysis: Core analysis functions (entropy, packing, deep analysis)
-    vulnerability_engine: Core vulnerability detection engine
-    dynamic_analyzer: Runtime analysis and instrumentation
-    symbolic_executor: Symbolic execution for path exploration
-    concolic_executor: Concolic execution combining concrete and symbolic
-    taint_analyzer: Data flow and taint analysis
-    rop_generator: ROP chain generation and analysis
-    multi_format_analyzer: Multi-format binary parsing and analysis
-    cfg_explorer: Control flow graph generation and exploration
-    similarity_searcher: Binary similarity detection and search
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 # Import core analysis functions
 try:

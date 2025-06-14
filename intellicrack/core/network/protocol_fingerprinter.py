@@ -1,21 +1,33 @@
 """
-Protocol Fingerprinting for Proprietary License Protocols
+Protocol Fingerprinting for Proprietary License Protocols 
 
-This module provides comprehensive protocol analysis and fingerprinting capabilities
-for identifying and understanding proprietary license verification protocols including
-FlexLM, HASP/Sentinel, Adobe, Autodesk, and Microsoft KMS protocols.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import logging
-import math
 import os
 import re
 import time
 import traceback
 from collections import Counter
 from typing import Any, Dict, List, Optional, Union
-
 
 # Import shared entropy calculation
 from ...utils.protection_utils import calculate_entropy
@@ -65,7 +77,7 @@ class ProtocolFingerprinter:
         """
         try:
             if os.path.exists(self.config['signature_db_path']):
-                with open(self.config['signature_db_path'], 'r') as f:
+                with open(self.config['signature_db_path'], 'r', encoding='utf-8') as f:
                     self.signatures = json.load(f)
 
                 self.logger.info(f"Loaded {len(self.signatures)} protocol signatures")
@@ -74,7 +86,7 @@ class ProtocolFingerprinter:
                 self._initialize_signatures()
                 self._save_signatures()
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error loading signatures: %s", e)
             self._initialize_signatures()
 
@@ -87,12 +99,12 @@ class ProtocolFingerprinter:
             os.makedirs(os.path.dirname(os.path.abspath(self.config['signature_db_path'])), exist_ok=True)
 
             # Save signatures
-            with open(self.config['signature_db_path'], 'w') as f:
+            with open(self.config['signature_db_path'], 'w', encoding='utf-8') as f:
                 json.dump(self.signatures, f, indent=2)
 
-            self.logger.info(f"Saved {len(self.signatures)} protocol signatures")
+            self.logger.info("Saved %d protocol signatures", len(self.signatures))
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error saving signatures: %s", e)
 
     def _initialize_signatures(self):
@@ -214,7 +226,7 @@ class ProtocolFingerprinter:
         Returns:
             dict: Mapping of byte values to their frequency (0.0 to 1.0)
         """
-        length = len(data)
+        length = len(data)  # pylint: disable=redefined-outer-name
         if length == 0:
             return {}
 
@@ -288,34 +300,34 @@ class ProtocolFingerprinter:
                 # Check patterns
                 # First check for binary pattern matching
                 if 'patterns' in signature:
-                    for pattern in signature['patterns']:
-                        if 'offset' in pattern and 'bytes' in pattern:
-                            offset = pattern['offset']
+                    for _pattern in signature['patterns']:
+                        if 'offset' in _pattern and 'bytes' in _pattern:
+                            offset = _pattern['offset']
 
-                            if offset + len(pattern['bytes']) <= len(packet_data):
-                                if pattern.get('mask') is None:
+                            if offset + len(_pattern['bytes']) <= len(packet_data):
+                                if _pattern.get('mask') is None:
                                     # Simple pattern match
-                                    if packet_data[offset:offset+len(pattern['bytes'])] == pattern['bytes']:
-                                        confidence += pattern.get('weight', 0.2)
+                                    if packet_data[offset:offset+len(_pattern['bytes'])] == _pattern['bytes']:
+                                        confidence += _pattern.get('weight', 0.2)
                                 else:
                                     # Masked pattern match
                                     match = True
-                                    for i in range(len(pattern['bytes'])):
-                                        if (pattern['mask'][i] & packet_data[offset+i]) != (pattern['mask'][i] & pattern['bytes'][i]):
+                                    for _i in range(len(_pattern['bytes'])):
+                                        if (_pattern['mask'][_i] & packet_data[offset+_i]) != (_pattern['mask'][_i] & _pattern['bytes'][_i]):
                                             match = False
                                             break
 
                                     if match:
-                                        confidence += pattern.get('weight', 0.2)
+                                        confidence += _pattern.get('weight', 0.2)
 
                 # Also check for regex pattern matching
                 if 'patterns' in signature:
                     pattern_matches = 0
-                    regex_patterns = [p for p in signature['patterns'] if isinstance(p, str)]
+                    regex_patterns = [_p for _p in signature['patterns'] if isinstance(_p, str)]
 
                     if regex_patterns:
-                        for pattern in regex_patterns:
-                            if re.search(pattern.encode('utf-8') if isinstance(packet_data, bytes) else pattern, packet_data):
+                        for _pattern in regex_patterns:
+                            if re.search(_pattern.encode('utf-8') if isinstance(packet_data, bytes) else _pattern, packet_data):
                                 pattern_matches += 1
 
                         # Calculate match percentage for regex patterns
@@ -340,7 +352,7 @@ class ProtocolFingerprinter:
             results.sort(key=lambda x: x['confidence'], reverse=True)
 
             if results:
-                self.logger.info(f"Identified protocol: {results[0]['name']} (confidence: {results[0]['confidence']:.2f})")
+                self.logger.info("Identified protocol: %s (confidence: %.2f)", results[0]['name'], results[0]['confidence'])
                 return results[0]
 
             # If no match, try to learn new signature
@@ -349,7 +361,7 @@ class ProtocolFingerprinter:
 
             return None
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error analyzing traffic: %s", e)
             self.logger.error(traceback.format_exc())
             return None
@@ -375,10 +387,10 @@ class ProtocolFingerprinter:
             result = {}
             offset = 0
 
-            for field in header_format:
-                field_name = field['name']
-                field_type = field['type']
-                field_length = field['length']
+            for _field in header_format:
+                field_name = _field['name']
+                field_type = _field['type']
+                field_length = _field['length']
 
                 if offset + field_length > len(packet_data):
                     return None
@@ -402,7 +414,7 @@ class ProtocolFingerprinter:
 
             return result
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error parsing packet: %s", e)
             return None
 
@@ -462,7 +474,7 @@ class ProtocolFingerprinter:
 
             return bytes(response)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error generating response: %s", e)
             return None
 
@@ -485,11 +497,11 @@ class ProtocolFingerprinter:
             # Find similar packets
             similar_packets = []
 
-            for sample in self.traffic_samples:
-                if sample['data'] != packet_data:  # Skip self
-                    similarity = self._calculate_similarity(packet_data, sample['data'])
+            for _sample in self.traffic_samples:
+                if _sample['data'] != packet_data:  # Skip self
+                    similarity = self._calculate_similarity(packet_data, _sample['data'])
                     if similarity > 0.7:
-                        similar_packets.append(sample)
+                        similar_packets.append(_sample)
 
             if len(similar_packets) < 3:
                 return False
@@ -529,7 +541,7 @@ class ProtocolFingerprinter:
             self.logger.info("Learned new protocol signature: %s", signature_id)
             return True
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error learning new signature: %s", e)
             return False
 
@@ -552,8 +564,8 @@ class ProtocolFingerprinter:
             return 0.0
 
         common_bytes = 0
-        for i in range(min_len):
-            if data1[i] == data2[i]:
+        for _i in range(min_len):
+            if data1[_i] == data2[_i]:
                 common_bytes += 1
 
         return common_bytes / max_len
@@ -569,15 +581,15 @@ class ProtocolFingerprinter:
             list: List of pattern dictionaries
         """
         # Extract common prefix
-        min_len = min(len(sample['data']) for sample in samples)
+        min_len = min(len(_sample['data']) for _sample in samples)
 
         if min_len < 4:
             return []
 
         # Find longest common prefix
         prefix_len = 0
-        for i in range(min_len):
-            byte_values = set(sample['data'][i] for sample in samples)
+        for _i in range(min_len):
+            byte_values = set(_sample['data'][_i] for _sample in samples)
             if len(byte_values) == 1:
                 prefix_len += 1
             else:

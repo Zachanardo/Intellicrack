@@ -1,9 +1,24 @@
 """
-Dependency checking utilities for Intellicrack.
+Dependency checking utilities for Intellicrack. 
 
-This module provides functions to check for optional dependencies
-and provide graceful fallbacks when they are not available.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import os
@@ -68,7 +83,7 @@ def check_weasyprint_dependencies() -> List[str]:
                 logger.warning("✗ GTK runtime libraries not found")
                 missing_deps.append("gtk-runtime")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error checking GTK dependencies: %s", e)
             missing_deps.append("gtk-runtime")
 
@@ -137,7 +152,7 @@ def install_dependencies(deps: List[str]) -> bool:
             logger.info("Installing %s...", dep)
             result = subprocess.run([
                 sys.executable, "-m", "pip", "install", dep
-            ], capture_output=True, text=True)
+            ], capture_output=True, text=True, check=False)
 
             if result.returncode == 0:
                 logger.info("✓ Successfully installed %s", dep)
@@ -147,7 +162,7 @@ def install_dependencies(deps: List[str]) -> bool:
 
         return True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error installing dependencies: %s", e)
         return False
 

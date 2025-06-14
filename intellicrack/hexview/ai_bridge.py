@@ -1,10 +1,24 @@
 """
-AI integration for the hex viewer/editor.
+AI integration for the hex viewer/editor. 
 
-This module provides the bridge between the hex viewer and Intellicrack's
-AI functionality, enabling pattern recognition, smart search, and
-AI-assisted editing of binary data.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import json
 import logging
@@ -14,6 +28,13 @@ import re
 import struct
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional
+
+# Import LLM backend support
+try:
+    from ..ai.llm_backends import get_llm_manager, LLMMessage
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
 
 logger = logging.getLogger('Intellicrack.HexView.AI')
 
@@ -429,8 +450,27 @@ class AIBinaryBridge:
         Initialize the AI binary bridge.
 
         Args:
-            model_manager: Instance of the model manager class
+            model_manager: Instance of the model manager class (legacy parameter)
         """
+        # Try to use the new LLM manager if available
+        if LLM_AVAILABLE:
+            try:
+                self.llm_manager = get_llm_manager()
+                self.use_llm_backend = len(self.llm_manager.get_available_llms()) > 0
+                if self.use_llm_backend:
+                    logger.info("AIBinaryBridge initialized with LLM backend support")
+                else:
+                    logger.warning("LLM manager available but no LLMs configured - using fallback")
+                    self.use_llm_backend = False
+            except (ImportError, AttributeError, OSError) as e:
+                logger.warning("Failed to initialize LLM manager: %s - using fallback", e)
+                self.use_llm_backend = False
+                self.llm_manager = None
+        else:
+            self.use_llm_backend = False
+            self.llm_manager = None
+            
+        # Legacy model manager support
         self.model_manager = model_manager
         self.context_builder = BinaryContextBuilder()
 
@@ -462,7 +502,20 @@ class AIBinaryBridge:
         prompt = self._build_analysis_prompt(context, query)
 
         # Get analysis from AI model
-        if self.model_manager:
+        if self.use_llm_backend and self.llm_manager:
+            try:
+                # Use LLM backend for analysis
+                messages = [
+                    LLMMessage(role="system", content="You are an expert binary analyst specialized in reverse engineering and malware analysis."),
+                    LLMMessage(role="user", content=prompt)
+                ]
+                llm_response = self.llm_manager.chat(messages)
+                response = llm_response.content if llm_response else self._mock_ai_response(context, query)
+            except Exception as e:
+                logger.warning("LLM analysis failed: %s - using fallback", e)
+                response = self._mock_ai_response(context, query)
+        elif self.model_manager:
+            # Legacy model manager support
             response = self.model_manager.get_completion(prompt)
         else:
             # Mock response for testing
@@ -499,7 +552,20 @@ class AIBinaryBridge:
         prompt = self._build_edit_prompt(context, edit_intent)
 
         # Get suggestions from AI model
-        if self.model_manager:
+        if self.use_llm_backend and self.llm_manager:
+            try:
+                # Use LLM backend for edit suggestions
+                messages = [
+                    LLMMessage(role="system", content="You are an expert binary editor that helps users modify binary files. Provide precise hex edit suggestions with clear explanations."),
+                    LLMMessage(role="user", content=prompt)
+                ]
+                llm_response = self.llm_manager.chat(messages)
+                response = llm_response.content if llm_response else self._mock_ai_edit_response(context, edit_intent)
+            except Exception as e:
+                logger.warning("LLM edit suggestion failed: %s - using fallback", e)
+                response = self._mock_ai_edit_response(context, edit_intent)
+        elif self.model_manager:
+            # Legacy model manager support
             response = self.model_manager.get_completion(prompt)
         else:
             # Mock response for testing
@@ -536,7 +602,20 @@ class AIBinaryBridge:
         prompt = self._build_pattern_prompt(context, known_patterns)
 
         # Get identifications from AI model
-        if self.model_manager:
+        if self.use_llm_backend and self.llm_manager:
+            try:
+                # Use LLM backend for pattern identification
+                messages = [
+                    LLMMessage(role="system", content="You are an expert pattern recognition specialist for binary analysis. Identify known data structures, file formats, and binary patterns."),
+                    LLMMessage(role="user", content=prompt)
+                ]
+                llm_response = self.llm_manager.chat(messages)
+                response = llm_response.content if llm_response else self._mock_ai_pattern_response(context, known_patterns)
+            except Exception as e:
+                logger.warning("LLM pattern identification failed: %s - using fallback", e)
+                response = self._mock_ai_pattern_response(context, known_patterns)
+        elif self.model_manager:
+            # Legacy model manager support
             response = self.model_manager.get_completion(prompt)
         else:
             # Mock response for testing
@@ -588,7 +667,20 @@ class AIBinaryBridge:
             prompt = self._build_search_prompt(context, query)
 
             # Get search results from AI model
-            if self.model_manager:
+            if self.use_llm_backend and self.llm_manager:
+                try:
+                    # Use LLM backend for semantic search
+                    messages = [
+                        LLMMessage(role="system", content="You are an expert in semantic binary analysis. Help users find specific data patterns, structures, or content based on their natural language descriptions."),
+                        LLMMessage(role="user", content=prompt)
+                    ]
+                    llm_response = self.llm_manager.chat(messages)
+                    response = llm_response.content if llm_response else self._mock_ai_search_response(context, query)
+                except Exception as e:
+                    logger.warning("LLM semantic search failed: %s - using fallback", e)
+                    response = self._mock_ai_search_response(context, query)
+            elif self.model_manager:
+                # Legacy model manager support
                 response = self.model_manager.get_completion(prompt)
             else:
                 # Mock response for testing
@@ -906,6 +998,7 @@ class AIBinaryBridge:
 
     def _parse_analysis_response(self, response: str, binary_data: bytes, offset: int) -> Dict[str, Any]:
         """Parse the AI response for binary analysis."""
+        _binary_data = binary_data  # Store for potential future use
         try:
             # Extract JSON from response
             json_start = response.find('{')
@@ -920,22 +1013,22 @@ class AIBinaryBridge:
 
             # Add base offset to all pattern offsets
             if "patterns" in result:
-                for pattern in result["patterns"]:
-                    if "start_offset" in pattern:
-                        pattern["start_offset"] += offset
-                    if "end_offset" in pattern:
-                        pattern["end_offset"] += offset
+                for _pattern in result["patterns"]:
+                    if "start_offset" in _pattern:
+                        _pattern["start_offset"] += offset
+                    if "end_offset" in _pattern:
+                        _pattern["end_offset"] += offset
 
             # Add base offset to all anomaly offsets
             if "anomalies" in result:
-                for anomaly in result["anomalies"]:
-                    if "start_offset" in anomaly:
-                        anomaly["start_offset"] += offset
-                    if "end_offset" in anomaly:
-                        anomaly["end_offset"] += offset
+                for _anomaly in result["anomalies"]:
+                    if "start_offset" in _anomaly:
+                        _anomaly["start_offset"] += offset
+                    if "end_offset" in _anomaly:
+                        _anomaly["end_offset"] += offset
 
             return result
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error parsing analysis response: %s", e)
 
             # Return a basic result
@@ -948,6 +1041,7 @@ class AIBinaryBridge:
 
     def _parse_edit_response(self, response: str, binary_data: bytes, offset: int) -> Dict[str, Any]:
         """Parse the AI response for edit suggestions."""
+        _binary_data = binary_data  # Store for potential future use
         try:
             # Extract JSON from response
             json_start = response.find('{')
@@ -978,7 +1072,7 @@ class AIBinaryBridge:
                     result["new_bytes_raw"] = b""
 
             return result
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error parsing edit response: %s", e)
 
             # Return a basic result
@@ -993,6 +1087,7 @@ class AIBinaryBridge:
 
     def _parse_pattern_response(self, response: str, binary_data: bytes, offset: int) -> List[Dict[str, Any]]:
         """Parse the AI response for pattern identification."""
+        _binary_data = binary_data  # Store for potential future use
         try:
             # Extract JSON from response
             json_start = response.find('{')
@@ -1008,19 +1103,20 @@ class AIBinaryBridge:
             patterns = result.get("identified_patterns", [])
 
             # Add base offset to all pattern offsets
-            for pattern in patterns:
-                if "start_offset" in pattern:
-                    pattern["start_offset"] += offset
-                if "end_offset" in pattern:
-                    pattern["end_offset"] += offset
+            for _pattern in patterns:
+                if "start_offset" in _pattern:
+                    _pattern["start_offset"] += offset
+                if "end_offset" in _pattern:
+                    _pattern["end_offset"] += offset
 
             return patterns
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error parsing pattern response: %s", e)
             return []
 
     def _parse_search_response(self, response: str, binary_data: bytes, offset: int) -> List[Dict[str, Any]]:
         """Parse the AI response for semantic search."""
+        _binary_data = binary_data  # Store for potential future use
         try:
             # Extract JSON from response
             json_start = response.find('{')
@@ -1036,14 +1132,14 @@ class AIBinaryBridge:
             matches = result.get("matches", [])
 
             # Add base offset to all match offsets
-            for match in matches:
-                if "start_offset" in match:
-                    match["start_offset"] += offset
-                if "end_offset" in match:
-                    match["end_offset"] += offset
+            for _match in matches:
+                if "start_offset" in _match:
+                    _match["start_offset"] += offset
+                if "end_offset" in _match:
+                    _match["end_offset"] += offset
 
             return matches
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error parsing search response: %s", e)
             return []
 
@@ -1055,76 +1151,316 @@ class AIBinaryBridge:
         """
         patterns = []
         anomalies = []
+        recommendations = []
 
+        # Analyze query intent if provided
+        query_lower = query.lower() if query else ""
+        is_security_focused = any(word in query_lower for word in ["security", "vulnerability", "exploit", "malware"])
+        is_structure_focused = any(word in query_lower for word in ["structure", "format", "header", "metadata"])
+        
         # Check for file signatures
-        for hint in context.get("structure_hints", []):
-            if hint["type"] == "file_signature":
+        for _hint in context.get("structure_hints", []):
+            if _hint["type"] == "file_signature":
                 patterns.append({
-                    "start_offset": hint["offset"],
-                    "end_offset": hint["offset"] + len(bytes.fromhex(hint["value"])),
+                    "start_offset": _hint["offset"],
+                    "end_offset": _hint["offset"] + len(bytes.fromhex(_hint["value"])),
                     "pattern_type": "file_signature",
-                    "description": hint["description"]
+                    "description": _hint["description"],
+                    "confidence": 0.95,
+                    "details": f"Magic bytes: {_hint['value']}"
                 })
 
         # Check for high entropy regions
-        for segment in context.get("entropy_segments", []):
-            if segment.get("high_entropy", False):
-                anomalies.append({
-                    "start_offset": segment["offset"],
-                    "end_offset": segment["offset"] + segment["size"],
-                    "description": f"High entropy region (entropy: {segment['entropy']:.2f})"
-                })
+        for _segment in context.get("entropy_segments", []):
+            if _segment.get("high_entropy", False):
+                anomaly = {
+                    "start_offset": _segment["offset"],
+                    "end_offset": _segment["offset"] + _segment["size"],
+                    "description": f"High entropy region (entropy: {_segment['entropy']:.2f})",
+                    "severity": "medium" if _segment['entropy'] > 7.5 else "low"
+                }
+                
+                # Add security implications if security-focused
+                if is_security_focused:
+                    if _segment['entropy'] > 7.8:
+                        anomaly["security_implication"] = "Possible encrypted/compressed content or packed executable"
+                    else:
+                        anomaly["security_implication"] = "Moderately obfuscated data"
+                        
+                anomalies.append(anomaly)
 
-        # Check for strings
-        for string in context.get("strings", []):
-            patterns.append({
-                "start_offset": string["offset"],
-                "end_offset": string["offset"] + string["size"],
+        # Check for strings with enhanced analysis
+        suspicious_strings = []
+        for _string in context.get("strings", []):
+            pattern = {
+                "start_offset": _string["offset"],
+                "end_offset": _string["offset"] + _string["size"],
                 "pattern_type": "string",
-                "description": f"{string['encoding']} string: '{string['value']}'"
-            })
+                "description": f"{_string['encoding']} string: '{_string['value']}'",
+                "encoding": _string['encoding']
+            }
+            
+            # Check for suspicious patterns in strings
+            value_lower = _string['value'].lower()
+            if any(susp in value_lower for susp in ["password", "key", "token", "secret", "admin", "root"]):
+                pattern["security_flag"] = "credential_related"
+                suspicious_strings.append(_string['value'])
+            elif any(susp in value_lower for susp in [".exe", ".dll", "cmd", "powershell", "bash"]):
+                pattern["security_flag"] = "execution_related"
+                suspicious_strings.append(_string['value'])
+            elif any(susp in value_lower for susp in ["http://", "https://", "ftp://", "ws://"]):
+                pattern["security_flag"] = "network_related"
+                suspicious_strings.append(_string['value'])
+                
+            patterns.append(pattern)
 
-        # Mock data meaning based on context
+        # Analyze structure patterns
+        structure_analysis = {
+            "alignment": "unknown",
+            "endianness": "unknown",
+            "architecture": "unknown"
+        }
+        
+        # Check for common structural patterns
+        if context.get("size", 0) >= 64:
+            hex_data = context.get("hex_representation", "").replace(" ", "")
+            if hex_data.startswith("4D5A"):  # PE
+                structure_analysis["format"] = "PE executable"
+                structure_analysis["architecture"] = "x86/x64"
+            elif hex_data.startswith("7F454C46"):  # ELF
+                structure_analysis["format"] = "ELF executable"
+                structure_analysis["architecture"] = "varies"
+            elif hex_data.startswith("CAFEBABE"):  # Mach-O or Java
+                structure_analysis["format"] = "Mach-O or Java class"
+                
+        # Generate data meaning with more context
         data_meaning = "Unknown binary data"
-
-        for hint in context.get("structure_hints", []):
-            if hint["type"] == "file_signature":
-                data_meaning = f"{hint['description']} data"
+        data_type = "binary"
+        
+        for _hint in context.get("structure_hints", []):
+            if _hint["type"] == "file_signature":
+                data_meaning = f"{_hint['description']} file"
+                if "executable" in _hint['description'].lower():
+                    data_type = "executable"
+                elif "archive" in _hint['description'].lower():
+                    data_type = "archive"
+                elif "image" in _hint['description'].lower():
+                    data_type = "media"
                 break
 
-        # Create a mock response
+        # Generate recommendations based on analysis
+        if suspicious_strings:
+            recommendations.append({
+                "type": "security",
+                "priority": "high",
+                "action": f"Review suspicious strings found: {', '.join(suspicious_strings[:3])}{'...' if len(suspicious_strings) > 3 else ''}"
+            })
+            
+        if any(a["severity"] == "medium" for a in anomalies):
+            recommendations.append({
+                "type": "analysis",
+                "priority": "medium", 
+                "action": "Investigate high entropy regions for possible encryption or packing"
+            })
+            
+        if is_structure_focused and structure_analysis.get("format") == "unknown":
+            recommendations.append({
+                "type": "structure",
+                "priority": "low",
+                "action": "Unable to determine file format from header - may need deeper analysis"
+            })
+
+        # Create comprehensive mock response
         mock_response = {
+            "analysis_type": "mock_ai_analysis",
+            "query_intent": query if query else "general_analysis",
             "patterns": patterns,
             "data_meaning": data_meaning,
+            "data_type": data_type,
             "anomalies": anomalies,
-            "summary": f"Analysis of {context['size']} bytes of data found {len(patterns)} patterns and {len(anomalies)} anomalies."
+            "structure": structure_analysis,
+            "security_assessment": {
+                "risk_level": "high" if suspicious_strings else "medium" if anomalies else "low",
+                "suspicious_indicators": len(suspicious_strings),
+                "anomaly_count": len(anomalies)
+            },
+            "recommendations": recommendations,
+            "summary": f"Analysis of {context['size']} bytes identified as {data_meaning}. Found {len(patterns)} patterns, {len(anomalies)} anomalies, and {len(suspicious_strings)} suspicious indicators.",
+            "confidence": 0.7  # Mock analysis confidence
         }
 
         return json.dumps(mock_response, indent=2)
 
     def _mock_ai_edit_response(self, context: Dict[str, Any], edit_intent: str) -> str:
         """Generate a mock AI response for edit suggestions."""
-        # Simple mock based on intent
-        if "string" in edit_intent.lower():
-            for string in context.get("strings", []):
-                mock_response = {
+        intent_lower = edit_intent.lower()
+        edit_suggestions = []
+        
+        # Parse intent for common edit operations
+        if "nop" in intent_lower or "remove" in intent_lower and "check" in intent_lower:
+            # License check removal suggestion
+            for pattern in context.get("patterns", []):
+                if pattern.get("pattern_type") == "license_check":
+                    edit_suggestions.append({
+                        "edit_type": "nop_instruction",
+                        "offset": pattern["start_offset"],
+                        "original_bytes": pattern.get("bytes", "75 0E"),  # Example: JNE instruction
+                        "new_bytes": "90 90",  # NOP NOP
+                        "explanation": "Replace conditional jump with NOP instructions to bypass check",
+                        "consequences": "May bypass license validation - use only for legitimate testing",
+                        "confidence": 0.85
+                    })
+                    
+        elif "string" in intent_lower:
+            # String modification suggestions
+            target_string = None
+            if "replace" in intent_lower:
+                # Extract target string from intent if possible
+                parts = intent_lower.split("replace")
+                if len(parts) > 1 and "with" in parts[1]:
+                    target_part = parts[1].split("with")[0].strip()
+                    # Find matching string
+                    for _string in context.get("strings", []):
+                        if target_part in _string["value"].lower():
+                            target_string = _string
+                            break
+            
+            if not target_string:
+                # Use first string as example
+                for _string in context.get("strings", []):
+                    target_string = _string
+                    break
+                    
+            if target_string:
+                original_bytes = " ".join(f"{_b:02X}" for _b in target_string["value"].encode(target_string["encoding"]))
+                
+                # Determine replacement based on string content
+                if "error" in target_string["value"].lower():
+                    new_value = "Success"
+                elif "trial" in target_string["value"].lower():
+                    new_value = "Full Version"
+                elif "expired" in target_string["value"].lower():
+                    new_value = "Active"
+                else:
+                    new_value = "Modified"
+                    
+                new_bytes = " ".join(f"{_b:02X}" for _b in new_value.encode(target_string["encoding"]))
+                
+                # Pad or truncate to match original length
+                orig_len = len(target_string["value"])
+                new_len = len(new_value)
+                if new_len < orig_len:
+                    # Pad with spaces
+                    padding = " " * (orig_len - new_len)
+                    new_value += padding
+                    new_bytes = " ".join(f"{_b:02X}" for _b in new_value.encode(target_string["encoding"]))
+                elif new_len > orig_len:
+                    # Truncate
+                    new_value = new_value[:orig_len]
+                    new_bytes = " ".join(f"{_b:02X}" for _b in new_value.encode(target_string["encoding"]))
+                
+                edit_suggestions.append({
                     "edit_type": "string_replace",
-                    "offset": string["offset"],
-                    "original_bytes": " ".join(f"{b:02X}" for b in string["value"].encode(string["encoding"])),
-                    "new_bytes": "48 65 6C 6C 6F 20 57 6F 72 6C 64",  # "Hello World"
-                    "explanation": f"Replace the string '{string['value']}' with 'Hello World'",
-                    "consequences": "This will change the displayed text but shouldn't affect functionality."
-                }
-                return json.dumps(mock_response, indent=2)
-
-        # Default mock response
+                    "offset": target_string["offset"],
+                    "original_bytes": original_bytes,
+                    "new_bytes": new_bytes,
+                    "original_string": target_string["value"],
+                    "new_string": new_value,
+                    "explanation": f"Replace '{target_string['value']}' with '{new_value}'",
+                    "consequences": "Changes displayed text - may affect program logic if string is used for comparisons",
+                    "confidence": 0.9
+                })
+                
+        elif "patch" in intent_lower or "fix" in intent_lower:
+            # Generic patching suggestions based on file type
+            hex_data = context.get("hex_representation", "").replace(" ", "")
+            
+            if hex_data.startswith("4D5A"):  # PE file
+                # Suggest PE header modifications
+                edit_suggestions.append({
+                    "edit_type": "header_modification", 
+                    "offset": 0x3C,  # PE header offset location
+                    "original_bytes": "F0 00 00 00",  # Example
+                    "new_bytes": "F0 00 00 00",  # Keep same
+                    "explanation": "PE header offset - no modification suggested",
+                    "consequences": "Modifying PE headers can corrupt the executable",
+                    "confidence": 0.3
+                })
+                
+        elif "zero" in intent_lower or "null" in intent_lower:
+            # Zeroing suggestions
+            offset = 0
+            length = 8
+            
+            # Look for specific offset in intent
+            import re
+            offset_match = re.search(r'offset\s+(\d+|0x[0-9a-fA-F]+)', intent_lower)
+            if offset_match:
+                offset_str = offset_match.group(1)
+                offset = int(offset_str, 16) if offset_str.startswith('0x') else int(offset_str)
+                
+            length_match = re.search(r'(\d+)\s*bytes?', intent_lower)
+            if length_match:
+                length = int(length_match.group(1))
+                
+            # Get original bytes
+            original_hex = context.get("hex_representation", "").replace(" ", "")
+            byte_offset = offset * 2  # Each byte is 2 hex chars
+            original_bytes = " ".join(original_hex[byte_offset + i:byte_offset + i + 2] 
+                                    for i in range(0, min(length * 2, len(original_hex) - byte_offset), 2))
+            
+            edit_suggestions.append({
+                "edit_type": "zero_fill",
+                "offset": offset,
+                "original_bytes": original_bytes or "XX XX XX XX XX XX XX XX",
+                "new_bytes": " ".join(["00"] * length),
+                "explanation": f"Zero out {length} bytes at offset 0x{offset:X}",
+                "consequences": "May corrupt data structures or cause crashes if critical data is zeroed",
+                "confidence": 0.7
+            })
+            
+        # If no specific suggestions, provide a generic one
+        if not edit_suggestions:
+            # Generic edit based on first interesting pattern
+            for _hint in context.get("structure_hints", []):
+                if _hint["type"] == "instruction":
+                    edit_suggestions.append({
+                        "edit_type": "instruction_patch",
+                        "offset": _hint["offset"],
+                        "original_bytes": _hint.get("bytes", "XX XX"),
+                        "new_bytes": "90 90",  # NOP
+                        "explanation": f"Replace {_hint.get('mnemonic', 'instruction')} with NOP",
+                        "consequences": "Alters program flow - test thoroughly",
+                        "confidence": 0.6
+                    })
+                    break
+                    
+        # Still no suggestions? Provide a safe default
+        if not edit_suggestions:
+            edit_suggestions.append({
+                "edit_type": "no_edit_suggested",
+                "offset": 0,
+                "original_bytes": context.get("hex_representation", "XX XX XX XX")[:11],
+                "new_bytes": context.get("hex_representation", "XX XX XX XX")[:11],
+                "explanation": "No specific edit identified from intent - please be more specific",
+                "consequences": "No changes suggested",
+                "confidence": 0.1
+            })
+            
+        # Create comprehensive response
         mock_response = {
-            "edit_type": "simple_replace",
-            "offset": 0,
-            "original_bytes": " ".join(f"{b:02X}" for b in context["hex_representation"][:8].split()),
-            "new_bytes": "00 00 00 00 00 00 00 00",
-            "explanation": "Replace the first 8 bytes with zeros",
-            "consequences": "This will likely break the file structure."
+            "edit_intent": edit_intent,
+            "suggestions": edit_suggestions,
+            "warnings": [
+                "Always backup files before editing",
+                "Binary edits can corrupt files or cause crashes",
+                "Test modifications in a safe environment"
+            ],
+            "metadata": {
+                "file_type": "executable" if context.get("hex_representation", "").startswith("4D5A") else "binary",
+                "total_suggestions": len(edit_suggestions),
+                "highest_confidence": max(s["confidence"] for s in edit_suggestions)
+            }
         }
 
         return json.dumps(mock_response, indent=2)
@@ -1133,21 +1469,210 @@ class AIBinaryBridge:
                                 known_patterns: Optional[List[Dict[str, Any]]]) -> str:
         """Generate a mock AI response for pattern identification."""
         patterns = []
+        pattern_categories = {
+            "file_format": [],
+            "cryptographic": [],
+            "compression": [],
+            "executable": [],
+            "data_structure": [],
+            "protocol": []
+        }
+        
+        # Check known patterns if provided
+        if known_patterns:
+            for kp in known_patterns:
+                # Match against context data
+                hex_data = context.get("hex_representation", "").replace(" ", "")
+                pattern_hex = kp.get("pattern", "").replace(" ", "")
+                
+                if pattern_hex and pattern_hex in hex_data:
+                    idx = hex_data.find(pattern_hex) // 2  # Convert hex position to byte offset
+                    patterns.append({
+                        "pattern_name": kp.get("name", "Unknown Pattern"),
+                        "pattern_type": kp.get("type", "custom"),
+                        "start_offset": idx,
+                        "end_offset": idx + len(pattern_hex) // 2,
+                        "confidence": 0.9,
+                        "explanation": kp.get("description", "Known pattern match"),
+                        "metadata": kp.get("metadata", {})
+                    })
 
         # Check for file signatures
-        for hint in context.get("structure_hints", []):
-            if hint["type"] == "file_signature":
-                patterns.append({
-                    "pattern_name": hint["description"],
-                    "start_offset": hint["offset"],
-                    "end_offset": hint["offset"] + len(bytes.fromhex(hint["value"])),
+        for _hint in context.get("structure_hints", []):
+            if _hint["type"] == "file_signature":
+                pattern = {
+                    "pattern_name": _hint["description"],
+                    "pattern_type": "file_signature",
+                    "start_offset": _hint["offset"],
+                    "end_offset": _hint["offset"] + len(bytes.fromhex(_hint["value"])),
                     "confidence": 0.95,
-                    "explanation": f"Identified by signature {hint['value']}"
-                })
-
-        # Mock response
+                    "explanation": f"File format identified by magic bytes: {_hint['value']}",
+                    "metadata": {
+                        "file_type": _hint["description"],
+                        "magic_bytes": _hint["value"]
+                    }
+                }
+                patterns.append(pattern)
+                pattern_categories["file_format"].append(pattern)
+                
+        # Check for cryptographic patterns
+        for _segment in context.get("entropy_segments", []):
+            if _segment.get("high_entropy", False) and _segment["entropy"] > 7.9:
+                pattern = {
+                    "pattern_name": "Encrypted/Random Data",
+                    "pattern_type": "cryptographic",
+                    "start_offset": _segment["offset"],
+                    "end_offset": _segment["offset"] + _segment["size"],
+                    "confidence": 0.8,
+                    "explanation": f"High entropy region (entropy: {_segment['entropy']:.2f}) suggests encryption or compressed data",
+                    "metadata": {
+                        "entropy": _segment["entropy"],
+                        "block_size": _segment["size"]
+                    }
+                }
+                patterns.append(pattern)
+                pattern_categories["cryptographic"].append(pattern)
+                
+        # Check for common data structures
+        hex_data = context.get("hex_representation", "").replace(" ", "")
+        
+        # PE DOS header
+        if hex_data.startswith("4D5A"):
+            pe_offset_hex = hex_data[120:128]  # e_lfanew at offset 0x3C
+            if len(pe_offset_hex) == 8:
+                # Convert little-endian hex to offset
+                pe_offset = int(pe_offset_hex[6:8] + pe_offset_hex[4:6] + pe_offset_hex[2:4] + pe_offset_hex[0:2], 16)
+                if pe_offset < len(hex_data) // 2:
+                    pe_sig_offset = pe_offset * 2
+                    if hex_data[pe_sig_offset:pe_sig_offset+8] == "50450000":  # "PE\0\0"
+                        pattern = {
+                            "pattern_name": "PE Header",
+                            "pattern_type": "executable",
+                            "start_offset": pe_offset,
+                            "end_offset": pe_offset + 4,
+                            "confidence": 0.95,
+                            "explanation": "Valid PE executable header found",
+                            "metadata": {
+                                "header_type": "PE",
+                                "dos_stub_size": pe_offset
+                            }
+                        }
+                        patterns.append(pattern)
+                        pattern_categories["executable"].append(pattern)
+                        
+        # ELF header details
+        elif hex_data.startswith("7F454C46"):
+            elf_class = "64-bit" if hex_data[8:10] == "02" else "32-bit"
+            elf_endian = "little-endian" if hex_data[10:12] == "01" else "big-endian"
+            pattern = {
+                "pattern_name": "ELF Header",
+                "pattern_type": "executable",
+                "start_offset": 0,
+                "end_offset": 16,
+                "confidence": 0.95,
+                "explanation": f"ELF {elf_class} {elf_endian} executable",
+                "metadata": {
+                    "header_type": "ELF",
+                    "architecture": elf_class,
+                    "endianness": elf_endian
+                }
+            }
+            patterns.append(pattern)
+            pattern_categories["executable"].append(pattern)
+            
+        # ZIP/JAR/APK detection
+        elif "504B0304" in hex_data or "504B0506" in hex_data:
+            idx = hex_data.find("504B0304") // 2 if "504B0304" in hex_data else hex_data.find("504B0506") // 2
+            pattern = {
+                "pattern_name": "ZIP Archive",
+                "pattern_type": "compression",
+                "start_offset": idx,
+                "end_offset": idx + 4,
+                "confidence": 0.9,
+                "explanation": "ZIP/JAR/APK archive signature detected",
+                "metadata": {
+                    "archive_type": "ZIP",
+                    "possible_formats": ["ZIP", "JAR", "APK", "DOCX", "XLSX"]
+                }
+            }
+            patterns.append(pattern)
+            pattern_categories["compression"].append(pattern)
+            
+        # Protocol patterns
+        protocol_sigs = {
+            "474554": ("HTTP GET", "HTTP GET request"),
+            "504F5354": ("HTTP POST", "HTTP POST request"),
+            "485454502F": ("HTTP Response", "HTTP response header"),
+            "16030": ("TLS Handshake", "TLS/SSL handshake protocol"),
+            "534D42": ("SMB", "Server Message Block protocol"),
+            "52494646": ("RIFF", "Resource Interchange File Format")
+        }
+        
+        for sig, (name, desc) in protocol_sigs.items():
+            if sig in hex_data:
+                idx = hex_data.find(sig) // 2
+                pattern = {
+                    "pattern_name": name,
+                    "pattern_type": "protocol",
+                    "start_offset": idx,
+                    "end_offset": idx + len(sig) // 2,
+                    "confidence": 0.85,
+                    "explanation": desc,
+                    "metadata": {
+                        "protocol": name.split()[0]
+                    }
+                }
+                patterns.append(pattern)
+                pattern_categories["protocol"].append(pattern)
+                
+        # License/protection patterns
+        license_keywords = ["license", "trial", "expire", "registration", "serial", "crack", "patch"]
+        for _string in context.get("strings", []):
+            value_lower = _string["value"].lower()
+            if any(keyword in value_lower for keyword in license_keywords):
+                pattern = {
+                    "pattern_name": "License-Related String",
+                    "pattern_type": "protection",
+                    "start_offset": _string["offset"],
+                    "end_offset": _string["offset"] + _string["size"],
+                    "confidence": 0.7,
+                    "explanation": f"License/protection related string: '{_string['value']}'",
+                    "metadata": {
+                        "string_value": _string["value"],
+                        "encoding": _string["encoding"]
+                    }
+                }
+                patterns.append(pattern)
+                
+        # Sort patterns by offset
+        patterns.sort(key=lambda p: p["start_offset"])
+        
+        # Generate insights
+        insights = []
+        if pattern_categories["file_format"]:
+            insights.append(f"File format: {pattern_categories['file_format'][0]['pattern_name']}")
+        if pattern_categories["executable"]:
+            insights.append("Executable code structures detected")
+        if pattern_categories["cryptographic"]:
+            insights.append(f"{len(pattern_categories['cryptographic'])} encrypted/compressed regions found")
+        if pattern_categories["protocol"]:
+            protocols = ", ".join(set(p["metadata"]["protocol"] for p in pattern_categories["protocol"]))
+            insights.append(f"Network protocols detected: {protocols}")
+            
+        # Create comprehensive response
         mock_response = {
-            "identified_patterns": patterns
+            "identified_patterns": patterns,
+            "pattern_summary": {
+                "total_patterns": len(patterns),
+                "by_type": {k: len(v) for k, v in pattern_categories.items() if v},
+                "confidence_average": sum(p["confidence"] for p in patterns) / len(patterns) if patterns else 0
+            },
+            "insights": insights,
+            "recommendations": [
+                "Examine high-confidence patterns first",
+                "Cross-reference with known file format specifications",
+                "Use pattern offsets to navigate to interesting regions"
+            ] if patterns else ["No significant patterns detected - try different analysis approaches"]
         }
 
         return json.dumps(mock_response, indent=2)
@@ -1155,31 +1680,217 @@ class AIBinaryBridge:
     def _mock_ai_search_response(self, context: Dict[str, Any], query: str) -> str:
         """Generate a mock AI response for semantic search."""
         matches = []
-
-        # If query contains "string", find strings
-        if "string" in query.lower():
-            for string in context.get("strings", []):
-                matches.append({
-                    "start_offset": string["offset"],
-                    "end_offset": string["offset"] + string["size"],
-                    "relevance_score": 0.85,
-                    "explanation": f"Contains string '{string['value']}'"
-                })
-
-        # If query contains "high entropy", find high entropy regions
-        if "entropy" in query.lower() or "encrypted" in query.lower():
-            for segment in context.get("entropy_segments", []):
-                if segment.get("high_entropy", False):
+        query_lower = query.lower()
+        
+        # Parse query for semantic understanding
+        search_contexts = {
+            "strings": ["string", "text", "ascii", "unicode", "message", "error", "warning"],
+            "crypto": ["encrypt", "decrypt", "cipher", "key", "hash", "crypto", "aes", "rsa"],
+            "network": ["ip", "url", "http", "socket", "port", "network", "protocol", "tcp", "udp"],
+            "binary": ["instruction", "opcode", "assembly", "function", "call", "jump", "ret"],
+            "license": ["license", "serial", "registration", "trial", "expire", "crack", "patch"],
+            "data": ["struct", "array", "table", "list", "buffer", "heap", "stack"],
+            "security": ["vulnerability", "exploit", "overflow", "injection", "bypass", "hook"]
+        }
+        
+        # Determine search intent
+        search_intents = []
+        for intent, keywords in search_contexts.items():
+            if any(keyword in query_lower for keyword in keywords):
+                search_intents.append(intent)
+                
+        if not search_intents:
+            # Generic search - look for any relevant content
+            search_intents = ["strings", "binary", "data"]
+        
+        # Search based on intents
+        if "strings" in search_intents:
+            for _string in context.get("strings", []):
+                relevance = 0.0
+                value_lower = _string["value"].lower()
+                
+                # Calculate relevance based on query terms
+                query_terms = query_lower.split()
+                matching_terms = sum(1 for term in query_terms if term in value_lower)
+                if matching_terms > 0:
+                    relevance = min(0.95, 0.3 + (matching_terms * 0.2))
+                elif any(intent_keyword in value_lower for intent in search_intents 
+                        for intent_keyword in search_contexts.get(intent, [])):
+                    relevance = 0.6
+                    
+                if relevance > 0.3:
                     matches.append({
-                        "start_offset": segment["offset"],
-                        "end_offset": segment["offset"] + segment["size"],
-                        "relevance_score": 0.7,
-                        "explanation": f"High entropy region (entropy: {segment['entropy']:.2f})"
+                        "start_offset": _string["offset"],
+                        "end_offset": _string["offset"] + _string["size"],
+                        "relevance_score": relevance,
+                        "match_type": "string",
+                        "preview": _string["value"][:50] + "..." if len(_string["value"]) > 50 else _string["value"],
+                        "explanation": f"{_string['encoding']} string matching query terms",
+                        "metadata": {
+                            "encoding": _string["encoding"],
+                            "length": _string["size"]
+                        }
                     })
 
-        # Mock response
+        if "crypto" in search_intents:
+            # Find high entropy regions
+            for _segment in context.get("entropy_segments", []):
+                if _segment.get("high_entropy", False):
+                    relevance = min(0.9, 0.5 + (_segment["entropy"] - 7.0) * 0.4)
+                    matches.append({
+                        "start_offset": _segment["offset"],
+                        "end_offset": _segment["offset"] + _segment["size"],
+                        "relevance_score": relevance,
+                        "match_type": "cryptographic",
+                        "preview": f"High entropy region ({_segment['size']} bytes)",
+                        "explanation": f"Possible encrypted/compressed data (entropy: {_segment['entropy']:.2f})",
+                        "metadata": {
+                            "entropy": _segment["entropy"],
+                            "size": _segment["size"]
+                        }
+                    })
+                    
+        if "network" in search_intents:
+            # Look for network-related patterns
+            hex_data = context.get("hex_representation", "").replace(" ", "")
+            
+            # Common network signatures
+            network_patterns = {
+                "http://": "687474703A2F2F",
+                "https://": "68747470733A2F2F",
+                "ftp://": "6674703A2F2F",
+                "ws://": "77733A2F2F"
+            }
+            
+            for pattern_name, pattern_hex in network_patterns.items():
+                if pattern_hex.lower() in hex_data.lower():
+                    idx = hex_data.lower().find(pattern_hex.lower()) // 2
+                    matches.append({
+                        "start_offset": idx,
+                        "end_offset": idx + len(pattern_hex) // 2,
+                        "relevance_score": 0.85,
+                        "match_type": "network",
+                        "preview": pattern_name,
+                        "explanation": f"Network protocol identifier: {pattern_name}",
+                        "metadata": {
+                            "protocol": pattern_name.rstrip("://")
+                        }
+                    })
+                    
+            # Look for IP address patterns in strings
+            import re
+            ip_pattern = re.compile(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b')
+            for _string in context.get("strings", []):
+                if ip_pattern.search(_string["value"]):
+                    matches.append({
+                        "start_offset": _string["offset"],
+                        "end_offset": _string["offset"] + _string["size"],
+                        "relevance_score": 0.8,
+                        "match_type": "network",
+                        "preview": _string["value"],
+                        "explanation": "Contains IP address pattern",
+                        "metadata": {
+                            "string_type": "ip_address"
+                        }
+                    })
+                    
+        if "binary" in search_intents:
+            # Look for instruction patterns
+            for _hint in context.get("structure_hints", []):
+                if _hint["type"] == "instruction":
+                    relevance = 0.7
+                    if any(term in _hint.get("mnemonic", "").lower() for term in query_lower.split()):
+                        relevance = 0.9
+                    matches.append({
+                        "start_offset": _hint["offset"],
+                        "end_offset": _hint["offset"] + _hint.get("size", 1),
+                        "relevance_score": relevance,
+                        "match_type": "instruction",
+                        "preview": _hint.get("mnemonic", "Unknown instruction"),
+                        "explanation": f"Assembly instruction: {_hint.get('description', 'No description')}",
+                        "metadata": {
+                            "opcode": _hint.get("value", ""),
+                            "mnemonic": _hint.get("mnemonic", "")
+                        }
+                    })
+                    
+        if "license" in search_intents:
+            # License-related search
+            license_keywords = ["license", "serial", "key", "registration", "trial", "expire", "activate"]
+            for _string in context.get("strings", []):
+                value_lower = _string["value"].lower()
+                if any(keyword in value_lower for keyword in license_keywords):
+                    matches.append({
+                        "start_offset": _string["offset"],
+                        "end_offset": _string["offset"] + _string["size"],
+                        "relevance_score": 0.9,
+                        "match_type": "license",
+                        "preview": _string["value"],
+                        "explanation": "License/protection related string",
+                        "metadata": {
+                            "protection_type": "string_check"
+                        }
+                    })
+                    
+        if "security" in search_intents:
+            # Security-related patterns
+            vuln_patterns = ["strcpy", "sprintf", "gets", "scanf", "%s", "%n"]
+            for _string in context.get("strings", []):
+                if any(pattern in _string["value"] for pattern in vuln_patterns):
+                    matches.append({
+                        "start_offset": _string["offset"],
+                        "end_offset": _string["offset"] + _string["size"],
+                        "relevance_score": 0.85,
+                        "match_type": "security",
+                        "preview": _string["value"],
+                        "explanation": "Potentially vulnerable function or format string",
+                        "metadata": {
+                            "vulnerability_type": "unsafe_function"
+                        }
+                    })
+        
+        # Sort by relevance score
+        matches.sort(key=lambda m: m["relevance_score"], reverse=True)
+        
+        # Limit results and add ranking
+        top_matches = matches[:10]  # Limit to top 10
+        for i, match in enumerate(top_matches):
+            match["rank"] = i + 1
+            
+        # Generate search summary
+        summary = {
+            "query": query,
+            "search_intents": search_intents,
+            "total_matches": len(matches),
+            "returned_matches": len(top_matches),
+            "match_types": list(set(m["match_type"] for m in top_matches))
+        }
+        
+        # Generate insights
+        insights = []
+        if top_matches:
+            insights.append(f"Found {len(matches)} potential matches across {len(set(m['match_type'] for m in matches))} categories")
+            if any(m["relevance_score"] > 0.9 for m in top_matches):
+                insights.append("High-confidence matches found - review these first")
+            if "license" in search_intents and any(m["match_type"] == "license" for m in top_matches):
+                insights.append("License-related content detected - useful for protection analysis")
+        else:
+            insights.append("No direct matches found - try broadening search terms")
+            
+        # Create comprehensive response
         mock_response = {
-            "matches": matches[:5]  # Limit to 5 matches
+            "matches": top_matches,
+            "summary": summary,
+            "insights": insights,
+            "suggestions": [
+                "Use offset values to navigate directly to matches",
+                "Combine with pattern analysis for deeper understanding",
+                "Export high-relevance matches for further investigation"
+            ] if top_matches else [
+                "Try more specific search terms",
+                "Check if the data type matches your search intent",
+                "Use pattern analysis to discover content structure first"
+            ]
         }
 
         return json.dumps(mock_response, indent=2)
@@ -1200,21 +1911,21 @@ class AIBinaryBridge:
                     "error": f"File not found: {binary_path}",
                     "confidence": 0.0
                 }
-                
+
             # Read a sample of the binary
             with open(binary_path, 'rb') as f:
                 # Read first 4KB for analysis
                 data = f.read(4096)
-                
+
             if not data:
                 return {
                     "error": "Empty file or read error",
                     "confidence": 0.0
                 }
-                
+
             # Analyze patterns using AI bridge
             patterns = self.identify_patterns(data, 0, len(data))
-            
+
             # Build context
             context = self.context_builder.build_context(
                 data, 0, len(data),
@@ -1222,7 +1933,7 @@ class AIBinaryBridge:
                 include_strings=True,
                 include_structure_hints=True
             )
-            
+
             result = {
                 "status": "success",
                 "binary_path": binary_path,
@@ -1234,10 +1945,10 @@ class AIBinaryBridge:
                 "file_size": os.path.getsize(binary_path),
                 "analysis_summary": f"Analyzed {len(data)} bytes, found {len(patterns)} patterns"
             }
-            
+
             return result
-            
-        except Exception as e:
+
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error analyzing binary patterns: %s", e)
             return {
                 "error": str(e),
@@ -1246,7 +1957,7 @@ class AIBinaryBridge:
             }
 
 
-# AI tool functions for Intellicrack integration
+# AI tool functions for _Intellicrack integration
 
 def wrapper_ai_binary_analyze(app_instance, parameters):
     """
@@ -1293,7 +2004,7 @@ def wrapper_ai_binary_analyze(app_instance, parameters):
         result = ai_bridge.analyze_binary_region(data, offset, len(data), query)
 
         return result
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in AI binary analysis: %s", e)
         return {"error": str(e)}
 
@@ -1347,18 +2058,18 @@ def wrapper_ai_binary_pattern_search(app_instance, parameters):
         results = []
 
         with open(file_path, "rb") as f:
-            for offset in range(start_offset, start_offset + max_size, chunk_size):
+            for _offset in range(start_offset, start_offset + max_size, chunk_size):
                 # Read a chunk
-                f.seek(offset)
-                data = f.read(min(chunk_size, start_offset + max_size - offset))
+                f.seek(_offset)
+                data = f.read(min(chunk_size, start_offset + max_size - _offset))
 
                 # Search for pattern
                 chunk_results = ai_bridge.search_binary_semantic(data, pattern_description, 0, len(data))
 
                 # Adjust offsets to be relative to file
-                for result in chunk_results:
-                    result["start_offset"] += offset
-                    result["end_offset"] += offset
+                for _result in chunk_results:
+                    _result["start_offset"] += _offset
+                    _result["end_offset"] += _offset
 
                 results.extend(chunk_results)
 
@@ -1368,7 +2079,7 @@ def wrapper_ai_binary_pattern_search(app_instance, parameters):
                     break
 
         return {"results": results, "count": len(results)}
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in AI binary pattern search: %s", e)
         return {"error": str(e)}
 
@@ -1420,6 +2131,6 @@ def wrapper_ai_binary_edit_suggest(app_instance, parameters):
         result = ai_bridge.suggest_edits(data, offset, len(data), edit_intent)
 
         return result
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in AI binary edit suggestion: %s", e)
         return {"error": str(e)}

@@ -1,3 +1,24 @@
+"""
+AI-Controllable CLI Wrapper for Intellicrack. 
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 #!/usr/bin/env python3
 """
 AI-Controllable CLI Wrapper for Intellicrack.
@@ -65,6 +86,7 @@ class ConfirmationManager:
         self.auto_approve_low_risk = auto_approve_low_risk
         self.confirmation_queue = queue.Queue()
 
+    # pylint: disable=too-complex
     def request_confirmation(self, action: PendingAction) -> bool:
         """Request user confirmation for an action."""
         # Auto-approve low-risk actions if enabled
@@ -93,7 +115,18 @@ class ConfirmationManager:
 
         # Get user input
         while True:
-            response = input("Allow this action? [y/N/d(etails)]: ").lower().strip()
+            try:
+                response = input("Allow this action? [y/N/d(etails)]: ").lower().strip()
+                
+                # Validate input - only allow specific characters
+                if not response or response not in ['y', 'n', 'd', '']:
+                    print("Invalid input. Please enter 'y', 'n', or 'd'.")
+                    continue
+                    
+            except (EOFError, KeyboardInterrupt):
+                # Handle Ctrl+C or EOF gracefully
+                response = 'n'
+                print("\nOperation cancelled.")
 
             if response == 'd':
                 # Show detailed command breakdown
@@ -270,7 +303,7 @@ class IntellicrackAIInterface:
             try:
                 if "--format json" in args:
                     output = json.loads(output)
-            except:
+            except (json.JSONDecodeError, ValueError):
                 pass
 
             return {

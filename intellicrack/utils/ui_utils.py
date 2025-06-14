@@ -1,9 +1,24 @@
 """
-User Interface utilities for the Intellicrack framework.
+User Interface utilities for the Intellicrack framework. 
 
-This module provides utilities for UI operations including message display,
-progress updates, user input handling, and dialog management.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 from enum import Enum
@@ -113,11 +128,19 @@ def get_user_input(prompt: str, default: str = "",
     # In a real UI implementation, this would show an input dialog
     # For now, we use console input
     try:
-        if default:
-            user_input = input(f"{prompt} [{default}]: ").strip()
-            return user_input if user_input else default
+        # Sanitize prompt to prevent injection
+        safe_prompt = prompt.replace('\n', ' ').replace('\r', ' ')
+        safe_default = default.replace('\n', ' ').replace('\r', ' ') if default else ""
+        
+        if safe_default:
+            user_input = input(f"{safe_prompt} [{safe_default}]: ").strip()  # User input is sanitized below
+            # Sanitize user input - remove null bytes and newlines
+            sanitized = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
+            return sanitized if sanitized else safe_default
         else:
-            return input(f"{prompt}: ").strip()
+            user_input = input(f"{safe_prompt}: ").strip()  # User input is sanitized below
+            # Sanitize user input - remove null bytes and newlines
+            return user_input.replace('\0', '').replace('\n', '').replace('\r', '')
     except (KeyboardInterrupt, EOFError):
         return None
 
@@ -158,7 +181,11 @@ def confirm_action(message: str, title: str = "Confirm Action",
     # In a real UI implementation, this would show a confirmation dialog
     # For now, we use console input
     try:
-        response = input(f"{title}: {message} (y/n): ").strip().lower()
+        # Sanitize title and message to prevent injection
+        safe_title = title.replace('\n', ' ').replace('\r', ' ')
+        safe_message = message.replace('\n', ' ').replace('\r', ' ')
+        response = input(f"{safe_title}: {safe_message} (y/n): ").strip().lower()  # Input validated below
+        # Validate response - only accept specific values (y/yes)
         return response in ('y', 'yes')
     except (KeyboardInterrupt, EOFError):
         return False
@@ -190,21 +217,32 @@ def select_from_list(items: List[str], prompt: str = "Select an item",
 
     try:
         if allow_multiple:
-            selections = input("Enter numbers separated by commas (or 'all'): ").strip()
+            user_input = input("Enter numbers separated by commas (or 'all'): ").strip()
+            # Sanitize input
+            selections = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
+            
             if selections.lower() == 'all':
                 return items
 
             selected = []
             for s in selections.split(','):
                 try:
-                    idx = int(s.strip()) - 1
+                    # Validate that input is a number
+                    s_clean = s.strip()
+                    if not s_clean.isdigit():
+                        continue
+                    idx = int(s_clean) - 1
                     if 0 <= idx < len(items):
                         selected.append(items[idx])
                 except ValueError:
                     continue
             return selected if selected else None
         else:
-            selection = input("Enter number: ").strip()
+            user_input = input("Enter number: ").strip()
+            # Sanitize and validate input
+            selection = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
+            if not selection.isdigit():
+                return None
             idx = int(selection) - 1
             if 0 <= idx < len(items):
                 return [items[idx]]

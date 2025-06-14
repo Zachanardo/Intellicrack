@@ -1,41 +1,33 @@
 """
-Hardware Dongle Emulation Module
+Hardware Dongle Emulation Module 
 
-This module provides comprehensive hardware dongle emulation capabilities for bypassing
-hardware-based software protection mechanisms. It supports emulation of major dongle types
-including SafeNet, HASP, CodeMeter, and other common hardware tokens.
+Copyright (C) 2025 Zachary Flint
 
-Core Features:
-- SafeNet Sentinel dongle emulation
-- HASP (Hardware Against Software Piracy) emulation  
-- CodeMeter/WibuKey emulation
-- Generic dongle API hooking and response spoofing
-- Dynamic library interception and patching
+This file is part of Intellicrack.
 
-Author: Intellicrack Team
-License: MIT
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import platform
 from typing import Any, Dict, List, Optional
 
-try:
-    import frida
-    FRIDA_AVAILABLE = True
-except ImportError:
-    FRIDA_AVAILABLE = False
-
-try:
-    if platform.system() == "Windows":
-        import winreg
-        WINREG_AVAILABLE = True
-    else:
-        WINREG_AVAILABLE = False
-        winreg = None
-except ImportError:
-    WINREG_AVAILABLE = False
-    winreg = None
+from ...utils.import_checks import (
+    FRIDA_AVAILABLE, frida,
+    WINREG_AVAILABLE, winreg
+)
 
 
 class HardwareDongleEmulator:
@@ -83,14 +75,14 @@ class HardwareDongleEmulator:
         try:
             self._hook_dongle_apis(dongle_types)
             results["methods_applied"].append("API Hooking")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             results["errors"].append(f"API hooking failed: {str(e)}")
 
         # Strategy 2: Create virtual dongle responses
         try:
             self._create_virtual_dongles(dongle_types)
             results["methods_applied"].append("Virtual Dongle Creation")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             results["errors"].append(f"Virtual dongle creation failed: {str(e)}")
 
         # Strategy 3: Patch dongle check instructions
@@ -98,14 +90,14 @@ class HardwareDongleEmulator:
             if self.app and hasattr(self.app, 'binary_path') and self.app.binary_path:
                 self._patch_dongle_checks()
                 results["methods_applied"].append("Binary Patching")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             results["errors"].append(f"Binary patching failed: {str(e)}")
 
         # Strategy 4: Install registry spoofing
         try:
             self._spoof_dongle_registry()
             results["methods_applied"].append("Registry Spoofing")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             results["errors"].append(f"Registry spoofing failed: {str(e)}")
 
         results["emulated_dongles"] = list(self.virtual_dongles.keys())
@@ -353,7 +345,7 @@ class HardwareDongleEmulator:
 
             self.logger.info("Found %s dongle check patterns to patch", patches_applied)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Error patching dongle checks: {str(e)}")
 
     def _spoof_dongle_registry(self) -> None:
@@ -394,10 +386,10 @@ class HardwareDongleEmulator:
                         winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
                     winreg.CloseKey(key)
                     self.logger.info("Set registry entry %s\\%s = %s", path, name, value)
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     self.logger.warning(f"Could not set registry entry {path}\\{name}: {str(e)}")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Registry spoofing failed: {str(e)}")
 
     def generate_emulation_script(self, dongle_types: List[str]) -> str:

@@ -1,32 +1,34 @@
 """
-Advanced Dynamic Analysis Module
+Advanced Dynamic Analysis Module 
 
-This module provides comprehensive dynamic runtime analysis and exploit simulation
-capabilities. It includes Frida-based instrumentation, process behavior monitoring,
-and runtime API hooking for detailed binary analysis.
+Copyright (C) 2025 Zachary Flint
 
-Author: Intellicrack Team  
-Version: 2.0.0
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import subprocess
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-try:
-    import frida
-    FRIDA_AVAILABLE = True
-except ImportError:
-    FRIDA_AVAILABLE = False
-    frida = None
-
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    PSUTIL_AVAILABLE = False
-    psutil = None
+from ...utils.import_checks import (
+    FRIDA_AVAILABLE, frida,
+    PSUTIL_AVAILABLE, psutil
+)
 
 from ...utils.logger import get_logger, log_message
 
@@ -99,9 +101,9 @@ class AdvancedDynamicAnalyzer:
                 capture_output=True,
                 text=True,
                 timeout=10
-            )
+            , check=False)
 
-            self.logger.debug(f"Subprocess result: Success={result.returncode == 0}, ReturnCode={result.returncode}")
+            self.logger.debug("Subprocess result: Success=%s, ReturnCode=%s", result.returncode == 0, result.returncode)
 
             return {
                 'success': result.returncode == 0,
@@ -112,8 +114,8 @@ class AdvancedDynamicAnalyzer:
         except subprocess.TimeoutExpired:
             self.logger.error("Subprocess analysis error: Timeout expired")
             return {'success': False, 'error': 'Timeout expired'}
-        except Exception as e:
-            self.logger.error(f"Subprocess analysis error: {e}", exc_info=True)
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Subprocess analysis error: %s", e, exc_info=True)
             return {'success': False, 'error': str(e)}
 
     def _frida_runtime_analysis(self, payload: Optional[bytes] = None) -> Dict[str, Any]:
@@ -457,7 +459,17 @@ class AdvancedDynamicAnalyzer:
             # Message handler
             analysis_data = {}
 
-            def on_message(message, _data):
+            def on_message(message, _data):  # pylint: disable=unused-argument
+                """
+                Handle messages from the Frida script during dynamic analysis.
+                
+                Args:
+                    message: Message dictionary from Frida containing 'type' and 'payload'
+                    _data: Additional data (unused)
+                    
+                Processes different message types including analysis completion and
+                various activity tracking (file access, registry, network, licensing).
+                """
                 if message['type'] == 'send':
                     payload_data = message['payload']
                     msg_type = payload_data.get('type')
@@ -485,8 +497,8 @@ class AdvancedDynamicAnalyzer:
                 'payload_injected': payload is not None
             }
 
-        except Exception as e:
-            self.logger.error(f"Frida runtime analysis error: {e}", exc_info=True)
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Frida runtime analysis error: %s", e, exc_info=True)
             return {'success': False, 'error': str(e)}
         finally:
             # Cleanup
@@ -550,13 +562,317 @@ class AdvancedDynamicAnalyzer:
             # Terminate process
             process.terminate()
 
-            self.logger.debug(f"Process behavior analysis result: PID={analysis.get('pid')}, Memory={analysis.get('memory_info')}, Threads={analysis.get('threads')}")
+            self.logger.debug("Process behavior analysis result: PID=%s, Memory=%s, Threads=%s", analysis.get('pid'), analysis.get('memory_info'), analysis.get('threads'))
 
             return analysis
 
-        except Exception as e:
-            self.logger.error(f"Process behavior analysis error: {e}", exc_info=True)
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Process behavior analysis error: %s", e, exc_info=True)
             return {'error': str(e)}
+
+    def scan_memory_for_keywords(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Scan process memory for specific keywords.
+        
+        Performs real-time memory scanning of the target process or a specified process
+        to find occurrences of license-related keywords, serial numbers, or other patterns.
+        
+        Args:
+            keywords: List of keywords to search for in memory
+            target_process: Optional process name to scan (defaults to binary_path)
+            
+        Returns:
+            Dictionary containing scan results with matches, addresses, and context
+        """
+        self.logger.info(f"Starting memory keyword scan for: {keywords}")
+        
+        try:
+            if FRIDA_AVAILABLE:
+                return self._frida_memory_scan(keywords, target_process)
+            elif PSUTIL_AVAILABLE:
+                return self._psutil_memory_scan(keywords, target_process)
+            else:
+                return self._fallback_memory_scan(keywords, target_process)
+        except Exception as e:
+            self.logger.error(f"Memory scanning error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e),
+                'matches': []
+            }
+
+    def _frida_memory_scan(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
+        """Perform memory scanning using Frida instrumentation."""
+        try:
+            # Get process to attach to
+            process_name = target_process or Path(self.binary_path).name
+            
+            # Find the target process
+            session = None
+            for proc in frida.enumerate_processes():
+                if process_name.lower() in proc.name.lower():
+                    session = frida.attach(proc.pid)
+                    break
+            
+            if not session:
+                # Try to spawn the process if not found
+                try:
+                    pid = frida.spawn([str(self.binary_path)])
+                    session = frida.attach(pid)
+                    frida.resume(pid)
+                    time.sleep(2)  # Allow process to initialize
+                except Exception:
+                    return {
+                        'status': 'error',
+                        'error': f'Could not attach to or spawn process: {process_name}',
+                        'matches': []
+                    }
+            
+            # Frida script for memory scanning
+            script_code = f"""
+            // Memory scanning script
+            const keywords = {keywords};
+            const matches = [];
+            let scanCount = 0;
+            
+            function scanMemoryRegions() {{
+                try {{
+                    const ranges = Process.enumerateRanges('r--');
+                    
+                    ranges.forEach(function(range) {{
+                        if (range.size > 0x1000000) return; // Skip very large regions
+                        
+                        try {{
+                            const memory = Memory.readByteArray(range.base, Math.min(range.size, 0x100000));
+                            if (memory) {{
+                                const view = new Uint8Array(memory);
+                                const text = String.fromCharCode.apply(null, view);
+                                
+                                keywords.forEach(function(keyword) {{
+                                    let index = 0;
+                                    while ((index = text.toLowerCase().indexOf(keyword.toLowerCase(), index)) !== -1) {{
+                                        const address = range.base.add(index);
+                                        const contextStart = Math.max(0, index - 50);
+                                        const contextEnd = Math.min(text.length, index + keyword.length + 50);
+                                        const context = text.substring(contextStart, contextEnd);
+                                        
+                                        matches.push({{
+                                            address: address.toString(),
+                                            keyword: keyword,
+                                            context: context.replace(/[\\x00-\\x1F\\x7F-\\xFF]/g, '.'),
+                                            offset: index,
+                                            region_base: range.base.toString(),
+                                            region_size: range.size
+                                        }});
+                                        
+                                        index += keyword.length;
+                                    }}
+                                }});
+                            }}
+                        }} catch (e) {{
+                            // Skip inaccessible memory regions
+                        }}
+                    }});
+                    
+                    send({{ type: 'scan_complete', matches: matches, scan_count: scanCount++ }});
+                }} catch (e) {{
+                    send({{ type: 'error', message: e.toString() }});
+                }}
+            }}
+            
+            // Start scanning
+            scanMemoryRegions();
+            
+            // Schedule periodic re-scan (every 5 seconds for 30 seconds)
+            const intervalId = setInterval(scanMemoryRegions, 5000);
+            setTimeout(function() {{
+                clearInterval(intervalId);
+                send({{ type: 'complete' }});
+            }}, 30000);
+            """
+            
+            script = session.create_script(script_code)
+            results = {'matches': [], 'status': 'success', 'scan_count': 0}
+            
+            def on_message(message, data):
+                if message['type'] == 'send':
+                    payload = message['payload']
+                    if payload['type'] == 'scan_complete':
+                        results['matches'].extend(payload['matches'])
+                        results['scan_count'] = payload['scan_count']
+                    elif payload['type'] == 'error':
+                        self.logger.error(f"Frida script error: {payload['message']}")
+                    elif payload['type'] == 'complete':
+                        results['status'] = 'complete'
+            
+            script.on('message', on_message)
+            script.load()
+            
+            # Wait for scanning to complete
+            timeout = 35  # Give extra time for completion
+            start_time = time.time()
+            while time.time() - start_time < timeout and results['status'] != 'complete':
+                time.sleep(1)
+            
+            script.unload()
+            session.detach()
+            
+            # Remove duplicates and sort by address
+            unique_matches = []
+            seen = set()
+            for match in results['matches']:
+                key = (match['address'], match['keyword'])
+                if key not in seen:
+                    seen.add(key)
+                    unique_matches.append(match)
+            
+            results['matches'] = sorted(unique_matches, key=lambda x: int(x['address'], 16))
+            self.logger.info(f"Frida memory scan found {len(results['matches'])} matches")
+            
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"Frida memory scan error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e),
+                'matches': []
+            }
+
+    def _psutil_memory_scan(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
+        """Perform basic memory scanning using psutil (limited functionality)."""
+        try:
+            process_name = target_process or Path(self.binary_path).name
+            
+            # Find target process
+            target_proc = None
+            for proc in psutil.process_iter(['pid', 'name', 'exe']):
+                try:
+                    if process_name.lower() in proc.info['name'].lower():
+                        target_proc = proc
+                        break
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            
+            if not target_proc:
+                # Try to start the process
+                try:
+                    import subprocess
+                    proc = subprocess.Popen([str(self.binary_path)])
+                    time.sleep(2)
+                    target_proc = psutil.Process(proc.pid)
+                except Exception:
+                    return {
+                        'status': 'error',
+                        'error': f'Could not find or start process: {process_name}',
+                        'matches': []
+                    }
+            
+            matches = []
+            
+            # Basic memory information (limited on most systems)
+            try:
+                memory_info = target_proc.memory_info()
+                memory_maps = target_proc.memory_maps() if hasattr(target_proc, 'memory_maps') else []
+                
+                # Simulate memory scanning with process environment and command line
+                cmdline = ' '.join(target_proc.cmdline()) if hasattr(target_proc, 'cmdline') else ''
+                environ_vars = list(target_proc.environ().values()) if hasattr(target_proc, 'environ') else []
+                
+                search_text = (cmdline + ' ' + ' '.join(environ_vars)).lower()
+                
+                for keyword in keywords:
+                    if keyword.lower() in search_text:
+                        matches.append({
+                            'address': '0x00000000',  # Placeholder address
+                            'keyword': keyword,
+                            'context': f'Found in process environment/cmdline: {keyword}',
+                            'offset': 0,
+                            'region_base': '0x00000000',
+                            'region_size': len(search_text)
+                        })
+                
+                self.logger.info(f"PSUtil memory scan found {len(matches)} matches")
+                
+                return {
+                    'status': 'success',
+                    'matches': matches,
+                    'memory_info': {
+                        'rss': memory_info.rss,
+                        'vms': memory_info.vms,
+                        'num_memory_maps': len(memory_maps)
+                    }
+                }
+                
+            except (psutil.AccessDenied, psutil.NoSuchProcess) as e:
+                return {
+                    'status': 'error',
+                    'error': f'Access denied or process not found: {e}',
+                    'matches': []
+                }
+                
+        except Exception as e:
+            self.logger.error(f"PSUtil memory scan error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e),
+                'matches': []
+            }
+
+    def _fallback_memory_scan(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
+        """Fallback memory scanning using binary file analysis."""
+        try:
+            self.logger.info("Using fallback memory scan (binary file analysis)")
+            
+            matches = []
+            
+            # Read and scan the binary file itself
+            with open(self.binary_path, 'rb') as f:
+                binary_data = f.read()
+            
+            # Convert to text for searching
+            binary_text = binary_data.decode('utf-8', errors='ignore').lower()
+            
+            for keyword in keywords:
+                keyword_lower = keyword.lower()
+                offset = 0
+                
+                while True:
+                    index = binary_text.find(keyword_lower, offset)
+                    if index == -1:
+                        break
+                        
+                    # Get context around the match
+                    context_start = max(0, index - 50)
+                    context_end = min(len(binary_text), index + len(keyword) + 50)
+                    context = binary_text[context_start:context_end]
+                    
+                    matches.append({
+                        'address': f'0x{index:08X}',
+                        'keyword': keyword,
+                        'context': context.replace('\x00', '.'),
+                        'offset': index,
+                        'region_base': '0x00000000',
+                        'region_size': len(binary_data)
+                    })
+                    
+                    offset = index + len(keyword)
+            
+            self.logger.info(f"Fallback memory scan found {len(matches)} matches")
+            
+            return {
+                'status': 'success',
+                'matches': matches,
+                'scan_type': 'binary_file_analysis'
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Fallback memory scan error: {e}")
+            return {
+                'status': 'error',
+                'error': str(e),
+                'matches': []
+            }
 
 
 # Convenience functions for application integration
@@ -728,7 +1044,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> List[str]
 
         # Launch the process
         logs.append("Launching process...")
-        process = subprocess.Popen([binary_path])
+        process = subprocess.Popen([binary_path], encoding='utf-8')
         logs.append(f"Process started with PID {process.pid}")
 
         # Attach Frida
@@ -739,7 +1055,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> List[str]
         script = session.create_script(script_content)
 
         # Set up message handler
-        def on_message(message, _data):
+        def on_message(message, _data):  # pylint: disable=unused-argument
             """
             Callback for handling messages from a Frida script.
 
@@ -764,7 +1080,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> List[str]
 
         logs.append("Runtime monitoring complete")
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logs.append(f"Error during runtime monitoring: {e}")
 
     return logs

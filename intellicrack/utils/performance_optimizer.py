@@ -1,9 +1,24 @@
 """
-Performance Optimizer for Large Binary Analysis
+Performance Optimizer for Large Binary Analysis 
 
-This module provides optimization strategies for analyzing large binaries efficiently,
-including memory management, chunked processing, and adaptive analysis techniques.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import gc
 import hashlib
@@ -137,7 +152,7 @@ class BinaryChunker:
             with open(chunk_info["file_path"], 'rb') as f:
                 f.seek(chunk_info["offset"])
                 return f.read(chunk_info["size"])
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error(f"Error reading chunk {chunk_info['id']}: {e}")
             return b""
 
@@ -159,8 +174,8 @@ class BinaryChunker:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all chunks for analysis
             future_to_chunk = {
-                executor.submit(analysis_func, chunk): chunk
-                for chunk in chunks
+                executor.submit(analysis_func, _chunk): _chunk
+                for _chunk in chunks
             }
 
             # Collect results as they complete
@@ -176,7 +191,7 @@ class BinaryChunker:
                         logger.warning("Memory usage high, cleaning up...")
                         self.memory_manager.cleanup_memory()
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.error(f"Error analyzing chunk {chunk['id']}: {e}")
                     results.append({
                         "chunk_id": chunk["id"],
@@ -231,7 +246,7 @@ class CacheManager:
         if cache_file.exists():
             try:
                 import json
-                with open(cache_file, 'r') as f:
+                with open(cache_file, 'r', encoding='utf-8') as f:
                     result = json.load(f)
 
                 # Add to memory cache
@@ -239,7 +254,7 @@ class CacheManager:
                     self.memory_cache[cache_key] = result
 
                 return result
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Error reading cache file %s: %s", cache_file, e)
 
         return None
@@ -256,9 +271,9 @@ class CacheManager:
         cache_file = self.cache_dir / f"{cache_key}.json"
         try:
             import json
-            with open(cache_file, 'w') as f:
+            with open(cache_file, 'w', encoding='utf-8') as f:
                 json.dump(result, f, indent=2, default=str)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error writing cache file %s: %s", cache_file, e)
 
     def clear_cache(self):
@@ -270,7 +285,7 @@ class CacheManager:
         for cache_file in self.cache_dir.glob("*.json"):
             try:
                 cache_file.unlink()
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Error removing cache file %s: %s", cache_file, e)
 
 
@@ -372,7 +387,7 @@ class AdaptiveAnalyzer:
                             })
                             break
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error identifying priority sections: %s", e)
 
         return priority_sections
@@ -445,7 +460,7 @@ class PerformanceOptimizer:
                 # Cache the result
                 self.cache_manager.cache_result(file_path, func_name, result)
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in %s: %s", func_name, e)
                 results["analysis_results"][func_name] = {
                     "error": str(e),
@@ -488,6 +503,7 @@ class PerformanceOptimizer:
 
         # Define chunk analysis wrapper
         def analyze_chunk(chunk_info):
+            """Analyze a single chunk of binary data."""
             chunk_data = self.binary_chunker.read_chunk(chunk_info)
             if chunk_data:
                 return analysis_func(chunk_data, chunk_info)
@@ -514,7 +530,7 @@ class PerformanceOptimizer:
             with open(file_path, 'rb') as f:
                 with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
                     return analysis_func(mm)
-        except Exception:
+        except (OSError, ValueError, RuntimeError):
             # Fallback to regular file reading
             with open(file_path, 'rb') as f:
                 data = f.read()
@@ -560,8 +576,8 @@ def example_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
     if isinstance(data, mmap.mmap):
         # For memory-mapped files, read in chunks
         strings = []
-        for i in range(0, len(data), 1024*1024):
-            chunk = data[i:i+1024*1024]
+        for _i in range(0, len(data), 1024*1024):
+            chunk = data[_i:_i+1024*1024]
             # Simple string extraction
             current_string = ""
             for byte in chunk:
@@ -601,9 +617,9 @@ def example_entropy_analysis(data, chunk_info=None) -> Dict[str, Any]:
         byte_counts[byte] += 1
 
     entropy = 0
-    for count in byte_counts:
-        if count > 0:
-            p = count / len(sample_data)
+    for _count in byte_counts:
+        if _count > 0:
+            p = _count / len(sample_data)
             entropy -= p * (p.bit_length() - 1)
 
     return {

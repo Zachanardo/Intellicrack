@@ -1,9 +1,24 @@
 """
-Main Application Window
+Main Application Window 
 
-This module contains the primary user interface for Intellicrack, providing
-a comprehensive GUI for binary analysis, security research, and reverse engineering.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import os
 from typing import Any, Dict, List, Optional
@@ -393,7 +408,7 @@ class IntellicrackMainWindow(QMainWindow):
             self.update_progress.emit(100)
             self.update_status.emit("Analysis completed")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(f"Analysis error: {str(e)}")
             self.update_status.emit("Analysis failed")
             self.logger.error(f"Analysis error: {str(e)}")
@@ -420,15 +435,15 @@ class IntellicrackMainWindow(QMainWindow):
 
             if vulnerabilities:
                 self.update_output.emit(f"Found {len(vulnerabilities)} vulnerabilities:")
-                for vuln in vulnerabilities:
-                    self.update_output.emit(f"  - {vuln.get('type', 'Unknown')}: {vuln.get('risk', 'Unknown risk')}")
+                for _vuln in vulnerabilities:
+                    self.update_output.emit(f"  - {_vuln.get('type', 'Unknown')}: {_vuln.get('risk', 'Unknown risk')}")
             else:
                 self.update_output.emit("No vulnerabilities detected.")
 
             self.update_progress.emit(100)
             self.update_status.emit("Vulnerability scan completed")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(f"Vulnerability scan error: {str(e)}")
             self.update_status.emit("Vulnerability scan failed")
             self.logger.error(f"Vulnerability scan error: {str(e)}")
@@ -456,13 +471,13 @@ class IntellicrackMainWindow(QMainWindow):
 
         if 'sections' in results:
             result_text += f"\\nSections ({len(results['sections'])}):\\n"
-            for section in results['sections'][:10]:  # Limit to first 10
-                result_text += f"  {section.get('name', 'Unknown')}: {section.get('virtual_size', 'N/A')} bytes\\n"
+            for _section in results['sections'][:10]:  # Limit to first 10
+                result_text += f"  {_section.get('name', 'Unknown')}: {_section.get('virtual_size', 'N/A')} bytes\\n"
 
         if 'imports' in results:
             result_text += f"\\nImports ({len(results['imports'])}):\\n"
-            for imp in results['imports'][:5]:  # Limit to first 5
-                result_text += f"  {imp.get('dll', 'Unknown')}: {len(imp.get('functions', []))} functions\\n"
+            for _imp in results['imports'][:5]:  # Limit to first 5
+                result_text += f"  {_imp.get('dll', 'Unknown')}: {len(_imp.get('functions', []))} functions\\n"
 
         self.results_display.setPlainText(result_text)
 
@@ -497,7 +512,7 @@ class IntellicrackMainWindow(QMainWindow):
                 QMessageBox.information(self, "Success", f"Results exported to {file_path}")
                 self.update_status.emit(f"Results exported to {os.path.basename(file_path)}")
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 QMessageBox.critical(self, "Error", f"Failed to export results: {str(e)}")
                 self.logger.error(f"Export error: {str(e)}")
 

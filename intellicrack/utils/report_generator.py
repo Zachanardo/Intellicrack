@@ -1,9 +1,24 @@
 """
-Report generation utilities for the Intellicrack framework.
+Report generation utilities for the Intellicrack framework. 
 
-This module provides utilities for generating analysis reports in various formats
-including PDF, HTML, and text reports with support for charts and visualizations.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import datetime
 import json
@@ -131,18 +146,18 @@ def generate_text_report(results: Dict[str, Any]) -> str:
     if 'vulnerabilities' in results:
         lines.append("VULNERABILITIES")
         lines.append("-" * 40)
-        for vuln in results['vulnerabilities']:
-            lines.append(f"  [{vuln.get('severity', 'UNKNOWN')}] {vuln.get('name', 'Unknown')}")
-            if 'description' in vuln:
-                lines.append(f"    {vuln['description']}")
+        for vulnerability in results['vulnerabilities']:
+            lines.append(f"  [{vulnerability.get('severity', 'UNKNOWN')}] {vulnerability.get('name', 'Unknown')}")
+            if 'description' in vulnerability:
+                lines.append(f"    {vulnerability['description']}")
         lines.append("")
 
     # Protection mechanisms
     if 'protections' in results:
         lines.append("PROTECTION MECHANISMS")
         lines.append("-" * 40)
-        for protection in results['protections']:
-            lines.append(f"  - {protection}")
+        for protection_item in results['protections']:
+            lines.append(f"  - {protection_item}")
         lines.append("")
 
     # Analysis summary
@@ -213,12 +228,12 @@ def generate_html_report(results: Dict[str, Any]) -> str:
     <div class="section">
         <h2>Vulnerabilities</h2>
 """)
-        for vuln in results['vulnerabilities']:
-            severity = vuln.get('severity', 'info').lower()
+        for vulnerability in results['vulnerabilities']:
+            severity = vulnerability.get('severity', 'info').lower()
             html_parts.append(f'        <div class="vulnerability {severity}">')
-            html_parts.append(f'            <strong>[{vuln.get("severity", "UNKNOWN")}]</strong> {vuln.get("name", "Unknown")}')
-            if 'description' in vuln:
-                html_parts.append(f'            <p>{vuln["description"]}</p>')
+            html_parts.append(f'            <strong>[{vulnerability.get("severity", "UNKNOWN")}]</strong> {vulnerability.get("name", "Unknown")}')
+            if 'description' in vulnerability:
+                html_parts.append(f'            <p>{vulnerability["description"]}</p>')
             html_parts.append('        </div>')
         html_parts.append("    </div>")
 
@@ -232,7 +247,7 @@ def generate_html_report(results: Dict[str, Any]) -> str:
     return '\n'.join(html_parts)
 
 
-def export_report(report_data: Dict[str, Any], format: str = 'pdf') -> Optional[str]:
+def export_report(report_data: Dict[str, Any], format: str = 'pdf') -> Optional[str]:  # pylint: disable=redefined-builtin
     """
     Export report in various formats.
 
@@ -249,7 +264,7 @@ def export_report(report_data: Dict[str, Any], format: str = 'pdf') -> Optional[
 
 def format_findings(findings: List[Dict[str, Any]], include_remediation: bool = True) -> str:
     """
-    Format analysis findings for report inclusion.
+    Format analysis findings for _report inclusion.
 
     Args:
         findings: List of finding dictionaries

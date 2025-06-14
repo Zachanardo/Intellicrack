@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@anthropic-ai/claude-code": "^1.0.17",
     "@e2b/mcp-server": "^0.2.0",
     "@modelcontextprotocol/server-brave-search": "^0.6.2",
     "@modelcontextprotocol/server-filesystem": "^2025.3.28",

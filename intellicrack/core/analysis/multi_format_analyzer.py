@@ -1,39 +1,37 @@
 """
-Multi-format binary analyzer for various executable formats.
+Multi-format binary analyzer for various executable formats. 
 
-This module provides comprehensive analysis capabilities for different binary
-formats including PE, ELF, Mach-O, .NET assemblies, and Java class files.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-# Optional imports for binary analysis
-try:
-    import lief
-    LIEF_AVAILABLE = True
-except ImportError:
-    LIEF_AVAILABLE = False
-
-try:
-    import pefile
-    PEFILE_AVAILABLE = True
-except ImportError:
-    PEFILE_AVAILABLE = False
-
-try:
-    from elftools.elf.elffile import ELFFile
-    PYELFTOOLS_AVAILABLE = True
-except ImportError:
-    PYELFTOOLS_AVAILABLE = False
-
-try:
-    from macholib.MachO import MachO
-    MACHOLIB_AVAILABLE = True
-except ImportError:
-    MACHOLIB_AVAILABLE = False
+# Import common patterns from centralized module
+from ...utils.import_patterns import (
+    lief, LIEF_AVAILABLE,
+    pefile, PEFILE_AVAILABLE,
+    ELFFile, PYELFTOOLS_AVAILABLE,
+    MachO, MACHOLIB_AVAILABLE
+)
 
 from ...utils.protection_utils import calculate_entropy
 
@@ -124,7 +122,7 @@ class MultiFormatBinaryAnalyzer:
 
                 return 'UNKNOWN'
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error identifying binary format: %s", e)
             return 'UNKNOWN'
 
@@ -190,27 +188,27 @@ class MultiFormatBinaryAnalyzer:
             }
 
             # Section information
-            for section in pe.sections:
-                section_name = section.Name.decode('utf-8', 'ignore').strip('\x00')
+            for _section in pe.sections:
+                section_name = _section.Name.decode('utf-8', 'ignore').strip('\x00')
                 section_info = {
                     'name': section_name,
-                    'virtual_address': hex(section.VirtualAddress),
-                    'virtual_size': section.Misc_VirtualSize,
-                    'raw_size': section.SizeOfRawData,
-                    'characteristics': hex(section.Characteristics),
-                    'entropy': calculate_entropy(section.get_data())
+                    'virtual_address': hex(_section.VirtualAddress),
+                    'virtual_size': _section.Misc_VirtualSize,
+                    'raw_size': _section.SizeOfRawData,
+                    'characteristics': hex(_section.Characteristics),
+                    'entropy': calculate_entropy(_section.get_data())
                 }
                 info['sections'].append(section_info)
 
             # Import information
             if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-                for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = entry.dll.decode('utf-8', 'ignore')
+                for _entry in pe.DIRECTORY_ENTRY_IMPORT:
+                    dll_name = _entry.dll.decode('utf-8', 'ignore')
                     imports = []
 
-                    for imp in entry.imports:
-                        if imp.name:
-                            import_name = imp.name.decode('utf-8', 'ignore')
+                    for _imp in _entry.imports:
+                        if _imp.name:
+                            import_name = _imp.name.decode('utf-8', 'ignore')
                             imports.append(import_name)
 
                     info['imports'].append({
@@ -220,17 +218,17 @@ class MultiFormatBinaryAnalyzer:
 
             # Export information
             if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
-                for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                    if exp.name:
-                        export_name = exp.name.decode('utf-8', 'ignore')
+                for _exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+                    if _exp.name:
+                        export_name = _exp.name.decode('utf-8', 'ignore')
                         info['exports'].append({
                             'name': export_name,
-                            'address': hex(exp.address)
+                            'address': hex(_exp.address)
                         })
 
             return info
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error analyzing PE binary: %s", e)
             return {
                 'format': 'PE',
@@ -271,28 +269,28 @@ class MultiFormatBinaryAnalyzer:
                 }
 
                 # Section information
-                for section in binary.sections:
+                for _section in binary.sections:
                     section_info = {
-                        'name': section.name,
-                        'type': section.type.name if hasattr(section.type, 'name') else str(section.type),
-                        'address': hex(section.virtual_address),
-                        'size': section.size
+                        'name': _section.name,
+                        'type': _section.type.name if hasattr(_section.type, 'name') else str(_section.type),
+                        'address': hex(_section.virtual_address),
+                        'size': _section.size
                     }
 
                     # Calculate entropy if section has content
-                    if section.content and section.size > 0:
-                        section_info['entropy'] = calculate_entropy(bytes(section.content))
+                    if _section.content and _section.size > 0:
+                        section_info['entropy'] = calculate_entropy(bytes(_section.content))
 
                     info['sections'].append(section_info)
 
                 # Symbol information
-                for symbol in binary.symbols:
-                    if symbol.name:
+                for _symbol in binary.symbols:
+                    if _symbol.name:
                         symbol_info = {
-                            'name': symbol.name,
-                            'type': symbol.type.name if hasattr(symbol.type, 'name') else str(symbol.type),
-                            'value': hex(symbol.value),
-                            'size': symbol.size
+                            'name': _symbol.name,
+                            'type': _symbol.type.name if hasattr(_symbol.type, 'name') else str(_symbol.type),
+                            'value': hex(_symbol.value),
+                            'size': _symbol.size
                         }
                         info['symbols'].append(symbol_info)
 
@@ -315,19 +313,19 @@ class MultiFormatBinaryAnalyzer:
                     }
 
                     # Section information
-                    for section in elf.iter_sections():
+                    for _section in elf.iter_sections():
                         section_info = {
-                            'name': section.name,
-                            'type': section['sh_type'],
-                            'address': hex(section['sh_addr']),
-                            'size': section['sh_size']
+                            'name': _section.name,
+                            'type': _section['sh_type'],
+                            'address': hex(_section['sh_addr']),
+                            'size': _section['sh_size']
                         }
 
                         info['sections'].append(section_info)
 
                     return info
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error analyzing ELF binary: %s", e)
             return {
                 'format': 'ELF',
@@ -373,20 +371,20 @@ class MultiFormatBinaryAnalyzer:
                 info['headers'].append(header_info)
 
                 # Segment information
-                for segment in binary.segments:
+                for _segment in binary.segments:
                     segment_info = {
-                        'name': segment.name,
-                        'address': hex(segment.virtual_address),
-                        'size': segment.virtual_size,
+                        'name': _segment.name,
+                        'address': hex(_segment.virtual_address),
+                        'size': _segment.virtual_size,
                         'sections': []
                     }
 
                     # Section information
-                    for section in segment.sections:
+                    for _section in _segment.sections:
                         section_info = {
-                            'name': section.name,
-                            'address': hex(section.virtual_address),
-                            'size': section.size
+                            'name': _section.name,
+                            'address': hex(_section.virtual_address),
+                            'size': _section.size
                         }
 
                         segment_info['sections'].append(section_info)
@@ -408,18 +406,18 @@ class MultiFormatBinaryAnalyzer:
                 }
 
                 # Process each header
-                for header in macho.headers:
+                for _header in macho.headers:
                     header_info = {
-                        'magic': hex(header.MH_MAGIC),
-                        'cpu_type': header.header.cputype,
-                        'cpu_subtype': header.header.cpusubtype,
-                        'filetype': header.header.filetype
+                        'magic': hex(_header.MH_MAGIC),
+                        'cpu_type': _header.header.cputype,
+                        'cpu_subtype': _header.header.cpusubtype,
+                        'filetype': _header.header.filetype
                     }
                     info['headers'].append(header_info)
 
                 return info
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error analyzing Mach-O binary: %s", e)
             return {
                 'format': 'MACHO',
@@ -442,7 +440,7 @@ class MultiFormatBinaryAnalyzer:
             result['note'] = 'This is a .NET assembly. Consider using specialized .NET analysis tools.'
         return result
 
-    def analyze_java(self, _binary_path: Union[str, Path]) -> Dict[str, Any]:
+    def analyze_java(self, _binary_path: Union[str, Path]) -> Dict[str, Any]:  # pylint: disable=unused-argument
         """
         Analyze a Java class file.
 
@@ -493,7 +491,7 @@ class MultiFormatBinaryAnalyzer:
         """Convert PE timestamp to readable date string."""
         try:
             return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
-        except:
+        except Exception:
             return f"Invalid timestamp ({timestamp})"
 
     def _get_characteristics(self, characteristics: int) -> List[str]:
@@ -577,17 +575,17 @@ def run_multi_format_analysis(app, binary_path: Optional[Union[str, Path]] = Non
         app.analyze_results.append(f"Characteristics: {results['characteristics']}")
 
         app.analyze_results.append("\nSections:")
-        for section in results['sections']:
-            entropy_str = f", Entropy: {section['entropy']:.2f}" if 'entropy' in section else ""
-            app.analyze_results.append(f"  {section['name']} - VA: {section['virtual_address']}, Size: {section['virtual_size']}{entropy_str}")
+        for _section in results['sections']:
+            entropy_str = f", Entropy: {_section['entropy']:.2f}" if 'entropy' in _section else ""
+            app.analyze_results.append(f"  {_section['name']} - VA: {_section['virtual_address']}, Size: {_section['virtual_size']}{entropy_str}")
 
         app.analyze_results.append("\nImports:")
-        for imp in results['imports']:
-            app.analyze_results.append(f"  {imp['dll']} - {len(imp['functions'])} functions")
+        for _imp in results['imports']:
+            app.analyze_results.append(f"  {_imp['dll']} - {len(_imp['functions'])} functions")
 
         app.analyze_results.append("\nExports:")
-        for exp in results['exports'][:10]:  # Limit to first 10
-            app.analyze_results.append(f"  {exp['name']} - {exp['address']}")
+        for _exp in results['exports'][:10]:  # Limit to first 10
+            app.analyze_results.append(f"  {_exp['name']} - {_exp['address']}")
 
     elif binary_format == 'ELF':
         app.analyze_results.append(f"Machine: {results['machine']}")
@@ -596,25 +594,25 @@ def run_multi_format_analysis(app, binary_path: Optional[Union[str, Path]] = Non
         app.analyze_results.append(f"Entry Point: {results['entry_point']}")
 
         app.analyze_results.append("\nSections:")
-        for section in results['sections']:
-            entropy_str = f", Entropy: {section['entropy']:.2f}" if 'entropy' in section else ""
-            app.analyze_results.append(f"  {section['name']} - Addr: {section['address']}, Size: {section['size']}{entropy_str}")
+        for _section in results['sections']:
+            entropy_str = f", Entropy: {_section['entropy']:.2f}" if 'entropy' in _section else ""
+            app.analyze_results.append(f"  {_section['name']} - Addr: {_section['address']}, Size: {_section['size']}{entropy_str}")
 
         app.analyze_results.append("\nSymbols:")
-        for symbol in results['symbols'][:10]:  # Limit to first 10
-            app.analyze_results.append(f"  {symbol['name']} - {symbol['value']}")
+        for _symbol in results['symbols'][:10]:  # Limit to first 10
+            app.analyze_results.append(f"  {_symbol['name']} - {_symbol['value']}")
 
     elif binary_format == 'MACHO':
         app.analyze_results.append(f"CPU Type: {results['headers'][0]['cpu_type']}")
         app.analyze_results.append(f"File Type: {results['headers'][0]['file_type']}")
 
         app.analyze_results.append("\nSegments:")
-        for segment in results['segments']:
-            app.analyze_results.append(f"  {segment['name']} - Addr: {segment['address']}, Size: {segment['size']}")
+        for _segment in results['segments']:
+            app.analyze_results.append(f"  {_segment['name']} - Addr: {_segment['address']}, Size: {_segment['size']}")
 
             app.analyze_results.append("  Sections:")
-            for section in segment['sections']:
-                app.analyze_results.append(f"    {section['name']} - Addr: {section['address']}, Size: {section['size']}")
+            for _section in _segment['sections']:
+                app.analyze_results.append(f"    {_section['name']} - Addr: {_section['address']}, Size: {_section['size']}")
 
     # Add recommendations based on format
     app.analyze_results.append("\nRecommendations:")
@@ -622,10 +620,10 @@ def run_multi_format_analysis(app, binary_path: Optional[Union[str, Path]] = Non
         app.analyze_results.append("- Use standard Windows PE analysis techniques")
         app.analyze_results.append("- Check for high-entropy sections that may indicate packing or encryption")
     elif binary_format == 'ELF':
-        app.analyze_results.append("- Use specialized ELF analysis tools for deeper inspection")
+        app.analyze_results.append("- Use specialized ELF analysis tools for _deeper inspection")
         app.analyze_results.append("- Consider using dynamic analysis with Linux-specific tools")
     elif binary_format == 'MACHO':
-        app.analyze_results.append("- Use macOS-specific analysis tools for deeper inspection")
+        app.analyze_results.append("- Use macOS-specific analysis tools for _deeper inspection")
         app.analyze_results.append("- Check for code signing and entitlements")
 
     return results

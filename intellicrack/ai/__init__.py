@@ -1,29 +1,24 @@
 """
-Intellicrack AI Package
+Intellicrack AI Package 
 
-This package provides artificial intelligence and machine learning capabilities for the
-Intellicrack framework. It includes tools for AI-assisted analysis, ML-based predictions,
-model management, and a sophisticated coordination system that creates a truly agentic environment.
+Copyright (C) 2025 Zachary Flint
 
-Modules:
-    - ai_tools: General AI tools and utilities for analysis assistance
-    - ml_predictor: Machine learning prediction models for vulnerability detection
-    - model_manager_module: Management and deployment of AI/ML models
-    - orchestrator: Central AI coordination system for agentic workflows
-    - coordination_layer: Intelligent coordination between fast ML and smart LLMs
+This file is part of Intellicrack.
 
-Key Features:
-    - AI-powered code analysis with agentic coordination
-    - Fast ML vulnerability prediction with intelligent escalation
-    - Comprehensive model management for multiple AI backends
-    - Event-driven communication between AI components
-    - Shared context and memory across AI workflows
-    - Adaptive analysis strategies (ML-first, LLM-first, parallel)
-    - Pattern recognition capabilities
-    - Model fine-tuning and management
-    - Integration with multiple AI providers
-    - Automated analysis suggestions
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 
@@ -33,8 +28,11 @@ logger = logging.getLogger(__name__)
 # Import AI modules with error handling - explicit imports to avoid F403/F405
 try:
     from .ai_tools import (
-        AIAssistant, CodeAnalyzer, analyze_with_ai, 
-        get_ai_suggestions, explain_code
+        AIAssistant,
+        CodeAnalyzer,
+        analyze_with_ai,
+        explain_code,
+        get_ai_suggestions,
     )
 except ImportError as e:
     logger.warning("Failed to import ai_tools: %s", e)
@@ -43,8 +41,12 @@ except ImportError as e:
 
 try:
     from .ml_predictor import (
-        MLVulnerabilityPredictor, MLPredictor, VulnerabilityPredictor,
-        predict_vulnerabilities, train_model, evaluate_model
+        MLPredictor,
+        MLVulnerabilityPredictor,
+        VulnerabilityPredictor,
+        evaluate_model,
+        predict_vulnerabilities,
+        train_model,
     )
 except ImportError as e:
     logger.warning("Failed to import ml_predictor: %s", e)
@@ -53,8 +55,16 @@ except ImportError as e:
 
 try:
     from .model_manager_module import (
-        ModelManager, ModelBackend, ONNXBackend, PyTorchBackend, SklearnBackend, TensorFlowBackend,
-        load_model, save_model, list_available_models, configure_ai_provider
+        ModelBackend,
+        ModelManager,
+        ONNXBackend,
+        PyTorchBackend,
+        SklearnBackend,
+        TensorFlowBackend,
+        configure_ai_provider,
+        list_available_models,
+        load_model,
+        save_model,
     )
 except ImportError as e:
     logger.warning("Failed to import model_manager_module: %s", e)
@@ -64,9 +74,18 @@ except ImportError as e:
 
 try:
     from .llm_backends import (
-        LLMBackend, LLMConfig, LLMManager, LLMProvider, LLMMessage, LLMResponse,
-        get_llm_manager, shutdown_llm_manager, create_openai_config, 
-        create_anthropic_config, create_gguf_config, create_ollama_config
+        LLMBackend,
+        LLMConfig,
+        LLMManager,
+        LLMMessage,
+        LLMProvider,
+        LLMResponse,
+        create_anthropic_config,
+        create_gguf_config,
+        create_ollama_config,
+        create_openai_config,
+        get_llm_manager,
+        shutdown_llm_manager,
     )
 except ImportError as e:
     logger.warning("Failed to import llm_backends: %s", e)
@@ -77,8 +96,15 @@ except ImportError as e:
 
 try:
     from .orchestrator import (
-        AIOrchestrator, AISharedContext, AIEventBus, AITask, AIResult, 
-        AITaskType, AnalysisComplexity, get_orchestrator, shutdown_orchestrator
+        AIEventBus,
+        AIOrchestrator,
+        AIResult,
+        AISharedContext,
+        AITask,
+        AITaskType,
+        AnalysisComplexity,
+        get_orchestrator,
+        shutdown_orchestrator,
     )
 except ImportError as e:
     logger.warning("Failed to import orchestrator: %s", e)
@@ -87,8 +113,12 @@ except ImportError as e:
 
 try:
     from .coordination_layer import (
-        AICoordinationLayer, AnalysisRequest, AnalysisStrategy, CoordinatedResult,
-        quick_vulnerability_scan, comprehensive_analysis
+        AICoordinationLayer,
+        AnalysisRequest,
+        AnalysisStrategy,
+        CoordinatedResult,
+        comprehensive_analysis,
+        quick_vulnerability_scan,
     )
 except ImportError as e:
     logger.warning("Failed to import coordination_layer: %s", e)
@@ -120,7 +150,7 @@ __all__ = [
     # From model_manager_module
     'ModelManager',
     'ModelBackend',
-    'ONNXBackend', 
+    'ONNXBackend',
     'PyTorchBackend',
     'SklearnBackend',
     'TensorFlowBackend',

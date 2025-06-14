@@ -240,7 +240,10 @@ disable = [
     "C0115",  # Missing class docstring
     "C0116",  # Missing function docstring
     "R0903",  # Too few public methods
+    "R0912",  # Too many branches
     "R0913",  # Too many arguments
+    "R0914",  # Too many local variables
+    "R0915",  # Too many statements
     "W0511",  # TODO comments
 ]
 

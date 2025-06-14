@@ -1,9 +1,24 @@
 """
-Command system for hex editor operations with undo/redo support.
+Command system for hex editor operations with undo/redo support. 
 
-This module provides a command pattern implementation for all hex editor
-operations, enabling comprehensive undo/redo functionality.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 from abc import ABC, abstractmethod
@@ -85,6 +100,7 @@ class HexCommand(ABC):
         Returns:
             True if commands can be merged
         """
+        _other = other  # Store for potential future use
         return False
 
     def merge_with(self, other: 'HexCommand') -> 'HexCommand':
@@ -96,8 +112,13 @@ class HexCommand(ABC):
 
         Returns:
             New merged command
+
+        Raises:
+            ValueError: If commands cannot be merged
         """
-        raise NotImplementedError("Command merging not implemented")
+        # Default implementation for commands that don't support merging
+        # Subclasses should override this method if they support merging
+        raise ValueError(f"Command type {self.__class__.__name__} does not support merging with {other.__class__.__name__}")
 
 
 class ReplaceCommand(HexCommand):
@@ -122,7 +143,7 @@ class ReplaceCommand(HexCommand):
                 self.executed = True
                 logger.debug(f"Replaced {len(self.new_data)} bytes at offset 0x{self.offset:X}")
             return success
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error executing replace command: %s", e)
             return False
 
@@ -137,7 +158,7 @@ class ReplaceCommand(HexCommand):
                 self.executed = False
                 logger.debug(f"Undid replace of {len(self.old_data)} bytes at offset 0x{self.offset:X}")
             return success
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error undoing replace command: %s", e)
             return False
 
@@ -182,7 +203,7 @@ class InsertCommand(HexCommand):
                 self.executed = True
                 logger.debug(f"Inserted {len(self.data)} bytes at offset 0x{self.offset:X}")
             return success
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error executing insert command: %s", e)
             return False
 
@@ -197,7 +218,7 @@ class InsertCommand(HexCommand):
                 self.executed = False
                 logger.debug(f"Undid insert of {len(self.data)} bytes at offset 0x{self.offset:X}")
             return success
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error undoing insert command: %s", e)
             return False
 
@@ -227,7 +248,7 @@ class DeleteCommand(HexCommand):
                 self.executed = True
                 logger.debug("Deleted %s bytes at offset 0x%s", self.length, self.offset)
             return success
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error executing delete command: %s", e)
             return False
 
@@ -242,7 +263,7 @@ class DeleteCommand(HexCommand):
                 self.executed = False
                 logger.debug("Undid delete of %s bytes at offset 0x%s", self.length, self.offset)
             return success
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error undoing delete command: %s", e)
             return False
 
@@ -276,7 +297,7 @@ class FillCommand(HexCommand):
                 self.executed = True
                 logger.debug("Filled %s bytes at offset 0x%s with 0x%s", self.length, self.offset, self.fill_value)
             return success
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error executing fill command: %s", e)
             return False
 
@@ -291,7 +312,7 @@ class FillCommand(HexCommand):
                 self.executed = False
                 logger.debug("Undid fill of %s bytes at offset 0x%s", self.length, self.offset)
             return success
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error undoing fill command: %s", e)
             return False
 
@@ -328,7 +349,7 @@ class PasteCommand(HexCommand):
                 mode_str = "inserted" if self.insert_mode else "overwrote"
                 logger.debug(f"Pasted {len(self.data)} bytes at offset 0x{self.offset:X} ({mode_str})")
             return success
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error executing paste command: %s", e)
             return False
 
@@ -352,7 +373,7 @@ class PasteCommand(HexCommand):
                 mode_str = "insert" if self.insert_mode else "overwrite"
                 logger.debug(f"Undid paste ({mode_str}) of {len(self.data)} bytes at offset 0x{self.offset:X}")
             return success
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error undoing paste command: %s", e)
             return False
 
@@ -412,7 +433,7 @@ class CommandManager:
                     else:
                         # If merge fails, re-execute the last command and continue with normal execution
                         last_command.execute(self.file_handler)
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.warning("Command merge failed: %s", e)
                     # Continue with normal execution
 

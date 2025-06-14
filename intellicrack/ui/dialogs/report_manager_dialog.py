@@ -1,8 +1,24 @@
-"""Report Manager Dialog for Intellicrack.
-
-This module provides a comprehensive report management interface for creating,
-viewing, exporting, and managing analysis reports in the Intellicrack application.
 """
+Report Manager Dialog for Intellicrack. 
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 
 import logging
 import os
@@ -95,7 +111,7 @@ class ReportGenerationThread(QThread):
             self.status_updated.emit("Report generation complete")
             self.generation_finished.emit(True, "Report generated successfully", self.output_path)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.generation_finished.emit(False, f"Report generation failed: {str(e)}", "")
 
     def generate_report_content(self) -> str:
@@ -402,8 +418,8 @@ class ReportManagerDialog(QDialog):
             "Technical Deep Dive Report"
         ]
 
-        for template in templates:
-            self.template_list.addItem(template)
+        for _template in templates:
+            self.template_list.addItem(_template)
 
         template_layout.addWidget(self.template_list)
         template_group.setLayout(template_layout)
@@ -453,8 +469,8 @@ class ReportManagerDialog(QDialog):
             os.makedirs(self.reports_dir, exist_ok=True)
             return
 
-        for item in os.listdir(self.reports_dir):
-            item_path = os.path.join(self.reports_dir, item)
+        for _item in os.listdir(self.reports_dir):
+            item_path = os.path.join(self.reports_dir, _item)
 
             if os.path.isfile(item_path):
                 # Get file info
@@ -462,15 +478,15 @@ class ReportManagerDialog(QDialog):
 
                 # Determine report type from filename or content
                 report_type = "Unknown"
-                if "vulnerability" in item.lower():
+                if "vulnerability" in _item.lower():
                     report_type = "Vulnerability"
-                elif "license" in item.lower():
+                elif "license" in _item.lower():
                     report_type = "License"
-                elif "performance" in item.lower():
+                elif "performance" in _item.lower():
                     report_type = "Performance"
 
-                self.reports[item] = {
-                    'name': item,
+                self.reports[_item] = {
+                    'name': _item,
                     'path': item_path,
                     'type': report_type,
                     'created': datetime.fromtimestamp(stat.st_ctime),
@@ -568,7 +584,7 @@ class ReportManagerDialog(QDialog):
 
             self.report_preview.setPlainText(preview)
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             self.report_preview.setPlainText(f"Error loading preview: {str(e)}")
 
     def filter_reports(self):
@@ -589,10 +605,10 @@ class ReportManagerDialog(QDialog):
             if sys.platform == "win32":
                 os.startfile(report_path)
             elif sys.platform == "darwin":
-                subprocess.run(["open", report_path])
+                subprocess.run(["open", report_path], check=False)
             else:
-                subprocess.run(["xdg-open", report_path])
-        except Exception as e:
+                subprocess.run(["xdg-open", report_path], check=False)
+        except (OSError, ValueError, RuntimeError) as e:
             if HAS_PYQT:
                 QMessageBox.warning(self, "Warning", f"Could not open report: {str(e)}")
 
@@ -622,7 +638,7 @@ class ReportManagerDialog(QDialog):
             if HAS_PYQT:
                 QMessageBox.information(self, "Success", f"Report duplicated as: {new_name}")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             if HAS_PYQT:
                 QMessageBox.critical(self, "Error", f"Failed to duplicate report: {str(e)}")
 
@@ -654,7 +670,7 @@ class ReportManagerDialog(QDialog):
 
                 QMessageBox.information(self, "Success", "Report deleted successfully")
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 QMessageBox.critical(self, "Error", f"Failed to delete report: {str(e)}")
 
     def browse_binary(self):
@@ -751,10 +767,10 @@ class ReportManagerDialog(QDialog):
                     if sys.platform == "win32":
                         os.startfile(output_path)
                     elif sys.platform == "darwin":
-                        subprocess.run(["open", output_path])
+                        subprocess.run(["open", output_path], check=False)
                     else:
-                        subprocess.run(["xdg-open", output_path])
-                except:
+                        subprocess.run(["xdg-open", output_path], check=False)
+                except Exception:
                     pass
         else:
             QMessageBox.critical(self, "Error", message)
@@ -783,7 +799,7 @@ class ReportManagerDialog(QDialog):
 
                 QMessageBox.information(self, "Success", f"Report exported to: {file_path}")
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 QMessageBox.critical(self, "Error", f"Failed to export report: {str(e)}")
 
     def on_template_selected(self):

@@ -1,4 +1,24 @@
-"""Common string and formatting utilities."""
+"""
+Common string and formatting utilities.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 
 from typing import List, Union
 
@@ -28,7 +48,7 @@ def extract_ascii_strings(data: Union[bytes, bytearray], min_length: int = 4) ->
     """
     strings = []
     current_string = ""
-    
+
     for byte in data:
         if 32 <= byte <= 126:  # Printable ASCII
             current_string += chr(byte)
@@ -36,9 +56,9 @@ def extract_ascii_strings(data: Union[bytes, bytearray], min_length: int = 4) ->
             if len(current_string) >= min_length:
                 strings.append(current_string)
             current_string = ""
-    
+
     # Add final string if valid
     if len(current_string) >= min_length:
         strings.append(current_string)
-    
+
     return strings

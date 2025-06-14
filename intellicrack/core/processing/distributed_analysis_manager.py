@@ -1,10 +1,24 @@
 """
-Distributed Analysis Manager
+Distributed Analysis Manager 
 
-This module provides distributed analysis capabilities across multiple VMs and containers,
-enabling parallel analysis of binaries in different environments for comprehensive
-security assessment.
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 
 import logging
 import os
@@ -76,7 +90,7 @@ class DistributedAnalysisManager:
                 })
                 self.logger.info("Added QEMU VM (ID: %s, Arch: %s)", vm_id, arch)
                 return vm_id
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.error("Failed to create QEMU VM: %s", e)
                 return -1
         else:
@@ -112,7 +126,7 @@ class DistributedAnalysisManager:
                 })
                 self.logger.info("Added Docker container (ID: %s, Image: %s)", container_id, image)
                 return container_id
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 self.logger.error("Failed to create Docker container: %s", e)
                 return -1
         else:
@@ -129,37 +143,37 @@ class DistributedAnalysisManager:
         success = True
 
         # Start VMs
-        for vm in self.vms:
-            if vm["status"] == "created":
-                self.logger.info(f"Starting VM {vm['id']}...")
+        for _vm in self.vms:
+            if _vm["status"] == "created":
+                self.logger.info(f"Starting VM {_vm['id']}...")
                 try:
-                    if vm["instance"].start_system(memory_mb=vm["memory_mb"]):
-                        vm["status"] = "running"
-                        self.logger.info(f"VM {vm['id']} started successfully")
+                    if _vm["instance"].start_system(memory_mb=_vm["memory_mb"]):
+                        _vm["status"] = "running"
+                        self.logger.info(f"VM {_vm['id']} started successfully")
                     else:
-                        vm["status"] = "failed"
-                        self.logger.error(f"Failed to start VM {vm['id']}")
+                        _vm["status"] = "failed"
+                        self.logger.error(f"Failed to start VM {_vm['id']}")
                         success = False
-                except Exception as e:
-                    vm["status"] = "failed"
-                    self.logger.error(f"Exception starting VM {vm['id']}: {e}")
+                except (OSError, ValueError, RuntimeError) as e:
+                    _vm["status"] = "failed"
+                    self.logger.error(f"Exception starting VM {_vm['id']}: {e}")
                     success = False
 
         # Start containers
-        for container in self.containers:
-            if container["status"] == "created":
-                self.logger.info(f"Starting container {container['id']}...")
+        for _container in self.containers:
+            if _container["status"] == "created":
+                self.logger.info(f"Starting container {_container['id']}...")
                 try:
-                    if container["instance"].start_container():
-                        container["status"] = "running"
-                        self.logger.info(f"Container {container['id']} started successfully")
+                    if _container["instance"].start_container():
+                        _container["status"] = "running"
+                        self.logger.info(f"Container {_container['id']} started successfully")
                     else:
-                        container["status"] = "failed"
-                        self.logger.error(f"Failed to start container {container['id']}")
+                        _container["status"] = "failed"
+                        self.logger.error(f"Failed to start container {_container['id']}")
                         success = False
-                except Exception as e:
-                    container["status"] = "failed"
-                    self.logger.error(f"Exception starting container {container['id']}: {e}")
+                except (OSError, ValueError, RuntimeError) as e:
+                    _container["status"] = "failed"
+                    self.logger.error(f"Exception starting container {_container['id']}: {e}")
                     success = False
 
         return success
@@ -181,66 +195,66 @@ class DistributedAnalysisManager:
         }
 
         # Run analysis on VMs
-        for vm in self.vms:
-            if vm["status"] == "running":
-                self.logger.info(f"Running {analysis_type} analysis on VM {vm['id']}...")
+        for _vm in self.vms:
+            if _vm["status"] == "running":
+                self.logger.info(f"Running {analysis_type} analysis on VM {_vm['id']}...")
 
                 try:
                     # Create pre-analysis snapshot
-                    vm["instance"].create_snapshot("pre_analysis")
+                    _vm["instance"].create_snapshot("pre_analysis")
 
                     # Run the binary
                     if self.binary_path:
                         binary_name = os.path.basename(self.binary_path)
-                        output = vm["instance"].execute_command(
+                        output = _vm["instance"].execute_command(
                             f"cd /mnt/host && chmod +x {binary_name} && ./{binary_name}"
                         )
                     else:
                         output = "No binary path specified"
 
                     # Create post-analysis snapshot
-                    vm["instance"].create_snapshot("post_analysis")
+                    _vm["instance"].create_snapshot("post_analysis")
 
                     # Compare snapshots
-                    diff = vm["instance"].compare_snapshots("pre_analysis", "post_analysis")
+                    diff = _vm["instance"].compare_snapshots("pre_analysis", "post_analysis")
 
                     results["vms"].append({
-                        "vm_id": vm["id"],
-                        "arch": vm["arch"],
+                        "vm_id": _vm["id"],
+                        "arch": _vm["arch"],
                         "output": output,
                         "diff": diff,
                         "status": "completed"
                     })
 
-                except Exception as e:
-                    self.logger.error(f"Error analyzing VM {vm['id']}: {e}")
+                except (OSError, ValueError, RuntimeError) as e:
+                    self.logger.error(f"Error analyzing VM {_vm['id']}: {e}")
                     results["vms"].append({
-                        "vm_id": vm["id"],
-                        "arch": vm["arch"],
+                        "vm_id": _vm["id"],
+                        "arch": _vm["arch"],
                         "output": f"Error: {e}",
                         "diff": {},
                         "status": "error"
                     })
 
         # Run analysis on containers
-        for container in self.containers:
-            if container["status"] == "running":
-                self.logger.info(f"Running {analysis_type} analysis on container {container['id']}...")
+        for _container in self.containers:
+            if _container["status"] == "running":
+                self.logger.info(f"Running {analysis_type} analysis on container {_container['id']}...")
 
                 try:
                     # Create pre-analysis snapshot
-                    container["instance"].create_snapshot("pre_analysis")
+                    _container["instance"].create_snapshot("pre_analysis")
 
                     # Copy binary to container if needed
                     if self.binary_path:
                         binary_name = os.path.basename(self.binary_path)
-                        copy_result = container["instance"].copy_file_to_container(
+                        copy_result = _container["instance"].copy_file_to_container(
                             self.binary_path, f"/tmp/{binary_name}"
                         )
 
                         if copy_result:
                             # Run the binary in container
-                            output = container["instance"].execute_command(
+                            output = _container["instance"].execute_command(
                                 f"chmod +x /tmp/{binary_name} && /tmp/{binary_name}"
                             )
                         else:
@@ -249,26 +263,26 @@ class DistributedAnalysisManager:
                         output = "No binary path specified"
 
                     # Create post-analysis snapshot
-                    container["instance"].create_snapshot("post_analysis")
+                    _container["instance"].create_snapshot("post_analysis")
 
                     # Compare snapshots and collect artifacts
-                    diff = container["instance"].compare_snapshots("pre_analysis", "post_analysis")
-                    artifacts = container["instance"].collect_analysis_artifacts()
+                    diff = _container["instance"].compare_snapshots("pre_analysis", "post_analysis")
+                    artifacts = _container["instance"].collect_analysis_artifacts()
 
                     results["containers"].append({
-                        "container_id": container["id"],
-                        "image": container["image"],
+                        "container_id": _container["id"],
+                        "image": _container["image"],
                         "output": output,
                         "diff": diff,
                         "artifacts": artifacts,
                         "status": "completed"
                     })
 
-                except Exception as e:
-                    self.logger.error(f"Error analyzing container {container['id']}: {e}")
+                except (OSError, ValueError, RuntimeError) as e:
+                    self.logger.error(f"Error analyzing container {_container['id']}: {e}")
                     results["containers"].append({
-                        "container_id": container["id"],
-                        "image": container["image"],
+                        "container_id": _container["id"],
+                        "image": _container["image"],
                         "output": f"Error: {e}",
                         "diff": {},
                         "artifacts": [],
@@ -276,15 +290,15 @@ class DistributedAnalysisManager:
                     })
 
         # Generate summary
-        running_vms = [vm for vm in self.vms if vm["status"] == "running"]
-        running_containers = [c for c in self.containers if c["status"] == "running"]
+        running_vms = [_vm for _vm in self.vms if _vm["status"] == "running"]
+        running_containers = [_c for _c in self.containers if _c["status"] == "running"]
 
         results["summary"] = {
             "vms_analyzed": len(running_vms),
             "containers_analyzed": len(running_containers),
             "total_nodes": len(self.vms) + len(self.containers),
-            "successful_vm_analyses": len([r for r in results["vms"] if r["status"] == "completed"]),
-            "successful_container_analyses": len([r for r in results["containers"] if r["status"] == "completed"]),
+            "successful_vm_analyses": len([_r for _r in results["vms"] if _r["status"] == "completed"]),
+            "successful_container_analyses": len([_r for _r in results["containers"] if _r["status"] == "completed"]),
             "analysis_type": analysis_type
         }
 
@@ -300,37 +314,37 @@ class DistributedAnalysisManager:
         success = True
 
         # Stop VMs
-        for vm in self.vms:
-            if vm["status"] == "running":
-                self.logger.info(f"Stopping VM {vm['id']}...")
+        for _vm in self.vms:
+            if _vm["status"] == "running":
+                self.logger.info(f"Stopping VM {_vm['id']}...")
                 try:
-                    if vm["instance"].stop_system():
-                        vm["status"] = "stopped"
-                        self.logger.info(f"VM {vm['id']} stopped successfully")
+                    if _vm["instance"].stop_system():
+                        _vm["status"] = "stopped"
+                        self.logger.info(f"VM {_vm['id']} stopped successfully")
                     else:
-                        vm["status"] = "error"
-                        self.logger.error(f"Failed to stop VM {vm['id']}")
+                        _vm["status"] = "error"
+                        self.logger.error(f"Failed to stop VM {_vm['id']}")
                         success = False
-                except Exception as e:
-                    vm["status"] = "error"
-                    self.logger.error(f"Exception stopping VM {vm['id']}: {e}")
+                except (OSError, ValueError, RuntimeError) as e:
+                    _vm["status"] = "error"
+                    self.logger.error(f"Exception stopping VM {_vm['id']}: {e}")
                     success = False
 
         # Stop containers
-        for container in self.containers:
-            if container["status"] == "running":
-                self.logger.info(f"Stopping container {container['id']}...")
+        for _container in self.containers:
+            if _container["status"] == "running":
+                self.logger.info(f"Stopping container {_container['id']}...")
                 try:
-                    if container["instance"].stop_container():
-                        container["status"] = "stopped"
-                        self.logger.info(f"Container {container['id']} stopped successfully")
+                    if _container["instance"].stop_container():
+                        _container["status"] = "stopped"
+                        self.logger.info(f"Container {_container['id']} stopped successfully")
                     else:
-                        container["status"] = "error"
-                        self.logger.error(f"Failed to stop container {container['id']}")
+                        _container["status"] = "error"
+                        self.logger.error(f"Failed to stop container {_container['id']}")
                         success = False
-                except Exception as e:
-                    container["status"] = "error"
-                    self.logger.error(f"Exception stopping container {container['id']}: {e}")
+                except (OSError, ValueError, RuntimeError) as e:
+                    _container["status"] = "error"
+                    self.logger.error(f"Exception stopping container {_container['id']}: {e}")
                     success = False
 
         return success
@@ -347,20 +361,20 @@ class DistributedAnalysisManager:
             True if task assigned successfully
         """
         # Find the node in VMs
-        for vm in self.vms:
-            if vm["id"] == node_id:
-                if "tasks" not in vm:
-                    vm["tasks"] = []
-                vm["tasks"].append(task)
+        for _vm in self.vms:
+            if _vm["id"] == node_id:
+                if "tasks" not in _vm:
+                    _vm["tasks"] = []
+                _vm["tasks"].append(task)
                 self.logger.info(f"Assigned task '{task}' to VM {node_id}")
                 return True
 
         # Find the node in containers
-        for container in self.containers:
-            if container["id"] == node_id:
-                if "tasks" not in container:
-                    container["tasks"] = []
-                container["tasks"].append(task)
+        for _container in self.containers:
+            if _container["id"] == node_id:
+                if "tasks" not in _container:
+                    _container["tasks"] = []
+                _container["tasks"].append(task)
                 self.logger.info(f"Assigned task '{task}' to container {node_id}")
                 return True
 
@@ -383,8 +397,7 @@ class DistributedAnalysisManager:
                     "status": vm["status"],
                     "tasks": vm.get("tasks", [])
                 }
-                for vm in self.vms
-            ],
+                for vm in self.vms],
             "containers": [
                 {
                     "id": container["id"],
@@ -393,8 +406,7 @@ class DistributedAnalysisManager:
                     "status": container["status"],
                     "tasks": container.get("tasks", [])
                 }
-                for container in self.containers
-            ]
+                for container in self.containers]
         }
 
     def cleanup(self) -> None:
@@ -402,20 +414,20 @@ class DistributedAnalysisManager:
         self.stop_all()
 
         # Clean up VM instances
-        for vm in self.vms:
+        for _vm in self.vms:
             try:
-                if hasattr(vm["instance"], "cleanup"):
-                    vm["instance"].cleanup()
-            except Exception as e:
-                self.logger.error(f"Error cleaning up VM {vm['id']}: {e}")
+                if hasattr(_vm["instance"], "cleanup"):
+                    _vm["instance"].cleanup()
+            except (OSError, ValueError, RuntimeError) as e:
+                self.logger.error(f"Error cleaning up VM {_vm['id']}: {e}")
 
         # Clean up container instances
-        for container in self.containers:
+        for _container in self.containers:
             try:
-                if hasattr(container["instance"], "cleanup"):
-                    container["instance"].cleanup()
-            except Exception as e:
-                self.logger.error(f"Error cleaning up container {container['id']}: {e}")
+                if hasattr(_container["instance"], "cleanup"):
+                    _container["instance"].cleanup()
+            except (OSError, ValueError, RuntimeError) as e:
+                self.logger.error(f"Error cleaning up container {_container['id']}: {e}")
 
         self.vms.clear()
         self.containers.clear()
