@@ -150,23 +150,45 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
         # Open file button
         self.open_btn = QPushButton("Open File")
         self.open_btn.clicked.connect(self.open_file_dialog)
+        self.open_btn.setToolTip(
+            "Open a binary file for hexadecimal viewing and editing\n"
+            "Supports large files with memory-efficient loading\n"
+            "Shortcuts: Ctrl+O"
+        )
         layout.addWidget(self.open_btn)
 
         # Save button
         self.save_btn = QPushButton("Save")
         self.save_btn.clicked.connect(self.save_file)
         self.save_btn.setEnabled(False)
+        self.save_btn.setToolTip(
+            "Save current modifications to the file\n"
+            "Only enabled when changes have been made\n"
+            "Creates backup before overwriting\n"
+            "Shortcuts: Ctrl+S"
+        )
         layout.addWidget(self.save_btn)
 
         # Search button
         self.search_btn = QPushButton("Search")
         self.search_btn.clicked.connect(self.open_search)
+        self.search_btn.setToolTip(
+            "Search for patterns in the binary data\n"
+            "Supports hex, text, and regex patterns\n"
+            "Features: Find/Replace, Wildcards, Case sensitivity\n"
+            "Shortcuts: Ctrl+F"
+        )
         layout.addWidget(self.search_btn)
 
         # Performance button (if available)
         if HEX_COMPONENTS_AVAILABLE:
             self.perf_btn = QPushButton("Performance")
             self.perf_btn.clicked.connect(self.show_performance)
+            self.perf_btn.setToolTip(
+                "View real-time performance statistics\n"
+                "Shows memory usage, load times, and optimization info\n"
+                "Helpful for analyzing large file handling efficiency"
+            )
             layout.addWidget(self.perf_btn)
 
         layout.addStretch()
@@ -386,71 +408,122 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
             return
 
         try:
-            from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
-                                       QLabel, QLineEdit, QPushButton, QRadioButton,
-                                       QCheckBox, QButtonGroup, QMessageBox)
-            
+            from PyQt5.QtWidgets import (
+                QButtonGroup,
+                QCheckBox,
+                QDialog,
+                QHBoxLayout,
+                QLabel,
+                QLineEdit,
+                QMessageBox,
+                QPushButton,
+                QRadioButton,
+                QVBoxLayout,
+            )
+
             dialog = QDialog(self)
             dialog.setWindowTitle("Search")
             dialog.setModal(True)
             dialog.resize(400, 200)
-            
+
             layout = QVBoxLayout(dialog)
-            
+
             # Search input
             input_layout = QHBoxLayout()
             input_layout.addWidget(QLabel("Search for:"))
             search_input = QLineEdit()
+            search_input.setToolTip(
+                "Enter your search pattern here\n"
+                "For hex: Use format like '4D 5A' or '4D5A'\n"
+                "For text: Enter any text string\n"
+                "Press Enter to search forward"
+            )
             input_layout.addWidget(search_input)
             layout.addLayout(input_layout)
-            
+
             # Search type selection
             type_group = QButtonGroup(dialog)
-            
+
             hex_radio = QRadioButton("Hex (e.g., 4D 5A)")
+            hex_radio.setToolTip(
+                "Search for hexadecimal byte patterns\n"
+                "Format: Space-separated hex bytes (e.g., 4D 5A 90 00)\n"
+                "Or continuous hex string (e.g., 4D5A9000)\n"
+                "Case insensitive, supports both formats"
+            )
+            
             text_radio = QRadioButton("Text/ASCII")
-            
+            text_radio.setToolTip(
+                "Search for text strings in the binary data\n"
+                "Automatically converts to UTF-8 encoding\n"
+                "Supports case-sensitive and case-insensitive matching"
+            )
+
             hex_radio.setChecked(True)
-            
+
             type_group.addButton(hex_radio)
             type_group.addButton(text_radio)
-            
+
             type_layout = QHBoxLayout()
             type_layout.addWidget(QLabel("Search type:"))
             type_layout.addWidget(hex_radio)
             type_layout.addWidget(text_radio)
             layout.addLayout(type_layout)
-            
+
             # Options
             case_sensitive = QCheckBox("Case sensitive")
-            whole_words = QCheckBox("Whole words only")
+            case_sensitive.setToolTip(
+                "Enable case-sensitive text matching\n"
+                "Only applies to text/ASCII search mode\n"
+                "When disabled, 'Hello' will match 'hello', 'HELLO', etc."
+            )
             
+            whole_words = QCheckBox("Whole words only")
+            whole_words.setToolTip(
+                "Match only complete words, not partial matches\n"
+                "Uses word boundaries to ensure full word matching\n"
+                "Useful for finding specific identifiers or keywords"
+            )
+
             options_layout = QHBoxLayout()
             options_layout.addWidget(case_sensitive)
             options_layout.addWidget(whole_words)
             layout.addLayout(options_layout)
-            
+
             # Buttons
             button_layout = QHBoxLayout()
-            
+
             find_next_btn = QPushButton("Find Next")
-            find_prev_btn = QPushButton("Find Previous") 
-            close_btn = QPushButton("Close")
+            find_next_btn.setToolTip(
+                "Search for the next occurrence of the pattern\n"
+                "Automatically wraps to beginning of file when end is reached\n"
+                "Keyboard shortcut: F3"
+            )
             
+            find_prev_btn = QPushButton("Find Previous")
+            find_prev_btn.setToolTip(
+                "Search for the previous occurrence of the pattern\n"
+                "Automatically wraps to end of file when beginning is reached\n"
+                "Keyboard shortcut: Shift+F3"
+            )
+            
+            close_btn = QPushButton("Close")
+            close_btn.setToolTip("Close the search dialog\nKeyboard shortcut: Escape")
+
             button_layout.addWidget(find_next_btn)
             button_layout.addWidget(find_prev_btn)
             button_layout.addWidget(close_btn)
             layout.addLayout(button_layout)
-            
+
             # Search state
             search_state = {'last_pos': 0, 'pattern': None, 'search_type': 'hex'}
-            
+
             def perform_search(direction=1):
                 """Perform search in specified direction (1=forward, -1=backward)."""
                 query = search_input.text().strip()
                 if not query:
                     return
-                    
+
                 try:
                     if hex_radio.isChecked():
                         # Parse hex input
@@ -468,17 +541,17 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                         if not case_sensitive.isChecked():
                             # For case-insensitive, we'll search in lowercase
                             pattern = pattern.lower()
-                    
+
                     # Update search state
                     if search_state['pattern'] != pattern:
                         search_state['pattern'] = pattern
                         search_state['last_pos'] = 0
-                    
+
                     # Prepare search data
                     search_data = self.data
                     if text_radio.isChecked() and not case_sensitive.isChecked():
                         search_data = self.data.lower()
-                    
+
                     # Perform search
                     start_pos = search_state['last_pos']
                     if direction == 1:  # Forward
@@ -493,32 +566,32 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                         else:
                             # Wrap around from end
                             result_pos = search_data.rfind(pattern)
-                    
+
                     if result_pos != -1:
                         # Found - update position and select in viewer
                         search_state['last_pos'] = result_pos + (1 if direction == 1 else 0)
-                        
+
                         # Highlight the found text in hex display
                         self._highlight_search_result(result_pos, len(pattern))
-                        
+
                         self.status_label.setText(f"Found at offset 0x{result_pos:08X}")
                     else:
                         QMessageBox.information(dialog, "Search", "No more matches found")
                         search_state['last_pos'] = 0
-                        
+
                 except Exception as e:
                     QMessageBox.warning(dialog, "Search Error", f"Search failed: {str(e)}")
-            
+
             # Connect buttons
             find_next_btn.clicked.connect(lambda: perform_search(1))
             find_prev_btn.clicked.connect(lambda: perform_search(-1))
             close_btn.clicked.connect(dialog.close)
-            
+
             # Allow Enter to search
             search_input.returnPressed.connect(lambda: perform_search(1))
-            
+
             dialog.exec_()
-            
+
         except ImportError:
             self.status_label.setText("Search dialog requires PyQt5")
         except Exception as e:
@@ -533,19 +606,19 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                 # Calculate which part of data to show (center the result)
                 bytes_per_line = 16
                 context_lines = 5
-                
+
                 start_line = max(0, (offset // bytes_per_line) - context_lines)
                 end_line = min(len(self.data) // bytes_per_line, start_line + (context_lines * 2) + 1)
-                
+
                 start_offset = start_line * bytes_per_line
                 end_offset = min(len(self.data), end_line * bytes_per_line)
-                
+
                 # Generate hex display with highlighting
                 hex_lines = []
                 for line_offset in range(start_offset, end_offset, bytes_per_line):
                     line_end = min(line_offset + bytes_per_line, len(self.data))
                     line_data = self.data[line_offset:line_end]
-                    
+
                     # Format hex bytes
                     hex_bytes = []
                     for i, byte in enumerate(line_data):
@@ -554,7 +627,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                             hex_bytes.append(f"[{byte:02X}]")  # Highlight found bytes
                         else:
                             hex_bytes.append(f"{byte:02X}")
-                    
+
                     # Format ASCII
                     ascii_chars = []
                     for i, byte in enumerate(line_data):
@@ -564,14 +637,14 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                             ascii_chars.append(f"[{char}]")  # Highlight found chars
                         else:
                             ascii_chars.append(char)
-                    
+
                     hex_str = ' '.join(hex_bytes).ljust(48)
                     ascii_str = ''.join(ascii_chars)
                     hex_lines.append(f"{line_offset:08X}: {hex_str} |{ascii_str}|")
-                
+
                 # Update the display
                 self.hex_display.setPlainText('\n'.join(hex_lines))
-                
+
                 # Scroll to show the highlighted area
                 cursor = self.hex_display.textCursor()
                 target_line = (offset - start_offset) // bytes_per_line
@@ -580,7 +653,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                     cursor.movePosition(cursor.Down)
                 self.hex_display.setTextCursor(cursor)
                 self.hex_display.ensureCursorVisible()
-                
+
         except Exception as e:
             logger.debug(f"Failed to highlight search result: {e}")
 

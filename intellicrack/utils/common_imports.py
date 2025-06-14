@@ -40,14 +40,29 @@ except ImportError:
     HAS_TENSORFLOW = False
 
 # Binary Analysis Libraries
-# Import common patterns from centralized module
-from .import_patterns import (
-    pefile, PEFILE_AVAILABLE,
-    lief, LIEF_AVAILABLE,
-    ELFFile, PYELFTOOLS_AVAILABLE,
-    psutil, PSUTIL_AVAILABLE,
-    CAPSTONE_AVAILABLE
-)
+try:
+    import lief
+    LIEF_AVAILABLE = True
+except ImportError:
+    LIEF_AVAILABLE = False
+
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+
+try:
+    import pefile
+    PEFILE_AVAILABLE = True
+except ImportError:
+    PEFILE_AVAILABLE = False
+
+try:
+    import elftools
+    PYELFTOOLS_AVAILABLE = True
+except ImportError:
+    PYELFTOOLS_AVAILABLE = False
 
 try:
     import frida

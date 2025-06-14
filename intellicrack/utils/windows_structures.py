@@ -23,7 +23,7 @@ import ctypes
 import ctypes.wintypes
 import logging
 import sys
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -41,17 +41,17 @@ else:
 
 class WindowsContext:
     """Windows CONTEXT structure for both 32-bit and 64-bit architectures."""
-    
+
     def __init__(self):
         self.kernel32 = None
         if STRUCTURES_AVAILABLE:
             self.kernel32 = ctypes.windll.kernel32
-            
+
     def create_context_structure(self):
         """Create appropriate CONTEXT structure based on architecture."""
         if not STRUCTURES_AVAILABLE:
             return None, None
-            
+
         try:
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
                 class CONTEXT(ctypes.Structure):
@@ -125,9 +125,9 @@ class WindowsContext:
                         ("SegSs", ctypes.wintypes.DWORD),
                     ]
                 CONTEXT_FULL = 0x10007
-                
+
             return CONTEXT, CONTEXT_FULL
-            
+
         except Exception as e:
             logger.error(f"Failed to create CONTEXT structure: {e}")
             return None, None
@@ -136,12 +136,12 @@ class WindowsContext:
         """Get thread context using shared implementation."""
         if not STRUCTURES_AVAILABLE or not self.kernel32:
             return None
-            
+
         try:
             CONTEXT, CONTEXT_FULL = self.create_context_structure()
             if not CONTEXT:
                 return None
-                
+
             context = CONTEXT()
             context.ContextFlags = CONTEXT_FULL
 
@@ -161,7 +161,7 @@ class WindowsContext:
         """Set thread context using shared implementation."""
         if not STRUCTURES_AVAILABLE or not self.kernel32:
             return False
-            
+
         try:
             success = self.kernel32.SetThreadContext(thread_handle, ctypes.byref(context))
             if not success:
@@ -187,13 +187,13 @@ class WindowsContext:
 
 class WindowsProcessStructures:
     """Common Windows process creation structures."""
-    
+
     @staticmethod
     def create_startup_info():
         """Create STARTUPINFO structure."""
         if not STRUCTURES_AVAILABLE:
             return None
-            
+
         class STARTUPINFO(ctypes.Structure):
             _fields_ = [
                 ("cb", ctypes.wintypes.DWORD),
@@ -222,7 +222,7 @@ class WindowsProcessStructures:
         """Create PROCESS_INFORMATION structure."""
         if not STRUCTURES_AVAILABLE:
             return None
-            
+
         class PROCESS_INFORMATION(ctypes.Structure):
             _fields_ = [
                 ("hProcess", ctypes.wintypes.HANDLE),
@@ -236,11 +236,11 @@ class WindowsProcessStructures:
         """Create a process in suspended state using shared implementation."""
         if not STRUCTURES_AVAILABLE:
             return None
-            
+
         try:
             STARTUPINFO = self.create_startup_info()
             PROCESS_INFORMATION = self.create_process_information()
-            
+
             if not STARTUPINFO or not PROCESS_INFORMATION:
                 return None
 
@@ -329,11 +329,12 @@ def parse_objdump_line(line: str) -> Optional[Dict[str, Any]]:
 def create_ssl_certificate_builder():
     """Create SSL certificate builder configuration - shared between license server and UI."""
     try:
-        from cryptography import x509
-        from cryptography.x509.oid import NameOID
         import datetime
         import ipaddress
-        
+
+        from cryptography import x509
+        from cryptography.x509.oid import NameOID
+
         return (
             x509.CertificateBuilder()
             .subject_name(x509.Name([

@@ -4,9 +4,8 @@ Common Windows utilities and checks.
 This module consolidates Windows-specific functionality to reduce code duplication.
 """
 
-import sys
 import logging
-from typing import Optional
+import sys
 
 logger = logging.getLogger(__name__)
 

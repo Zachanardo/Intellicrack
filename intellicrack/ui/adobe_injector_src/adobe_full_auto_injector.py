@@ -31,6 +31,7 @@ except ImportError:
     frida = None
 
 import psutil
+
 from ...utils.constants import ADOBE_PROCESSES
 
 FRIDA_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "adobe_bypass.js")
@@ -51,7 +52,7 @@ def inject(target_name):
     """
     if not HAS_FRIDA:
         return  # Frida not available, skip injection
-    
+
     try:
         session = frida.attach(target_name)
         with open(FRIDA_SCRIPT_PATH, "r", encoding="utf-8") as f:

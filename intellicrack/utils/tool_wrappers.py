@@ -23,6 +23,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 import os
+import time
 import traceback
 from typing import Any, Dict, List
 
@@ -31,7 +32,6 @@ logger = logging.getLogger(__name__)
 
 def log_message(message: str) -> str:
     """Helper function to format log messages with timestamp."""
-    import time
     return f"[{time.strftime('%H:%M:%S')}] {message}"
 
 
@@ -574,28 +574,28 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
         # Comprehensive patch proposal generation using multiple analysis techniques
         patches = []
         analysis_methods = []
-        
+
         try:
             # Method 1: Static analysis for common patterns
             static_patches = _analyze_static_patterns(app_instance.binary_path)
             patches.extend(static_patches)
             analysis_methods.append('static_pattern_analysis')
-            
+
             # Method 2: String analysis for license-related functions
             string_patches = _analyze_license_strings(app_instance.binary_path)
             patches.extend(string_patches)
             analysis_methods.append('string_analysis')
-            
+
             # Method 3: Import table analysis
             import_patches = _analyze_imports(app_instance.binary_path)
             patches.extend(import_patches)
             analysis_methods.append('import_analysis')
-            
+
             # Method 4: Disassembly-based analysis
             disasm_patches = _analyze_disassembly(app_instance.binary_path)
             patches.extend(disasm_patches)
             analysis_methods.append('disassembly_analysis')
-            
+
             # Method 5: Machine learning predictions (if available)
             try:
                 from ..ai.ai_tools import analyze_binary
@@ -606,20 +606,20 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                     analysis_methods.append('ml_analysis')
             except Exception as e:
                 logger.debug(f"ML analysis not available: {e}")
-            
+
             # Remove duplicates and rank patches
             unique_patches = _deduplicate_and_rank_patches(patches)
-            
+
             # Add confidence scores and risk assessments
             for i, patch in enumerate(unique_patches):
                 patch['id'] = i + 1
                 patch['confidence'] = _calculate_patch_confidence(patch)
                 patch['risk_level'] = _assess_patch_risk(patch)
                 patch['compatibility'] = _assess_compatibility(patch, app_instance.binary_path)
-            
+
             # Sort by confidence and risk
             unique_patches.sort(key=lambda p: (p['confidence'], -p['risk_level']), reverse=True)
-            
+
             return {
                 "status": "success",
                 "patches": unique_patches[:20],  # Limit to top 20
@@ -629,7 +629,7 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                 "generation_time": time.time(),
                 "message": f"Generated {len(unique_patches)} patch proposals using {len(analysis_methods)} analysis methods"
             }
-            
+
         except Exception as e:
             logger.error(f"Patch generation error: {e}")
             # Fallback to basic patches if advanced analysis fails
@@ -643,13 +643,13 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
 def _analyze_static_patterns(binary_path: str) -> List[Dict[str, Any]]:
     """Analyze binary for common crackable patterns."""
     patches = []
-    
+
     try:
         with open(binary_path, 'rb') as f:
             data = f.read()
-        
+
         import re
-        
+
         # Pattern 1: Conditional jumps after comparisons (license checks)
         je_jne_pattern = b'\x74.'  # je followed by any byte
         for i, match in enumerate(re.finditer(je_jne_pattern, data)):
@@ -658,7 +658,7 @@ def _analyze_static_patterns(binary_path: str) -> List[Dict[str, Any]]:
             offset = match.start()
             patches.append({
                 'type': 'conditional_bypass',
-                'description': f'Convert conditional jump to unconditional (je -> jmp)',
+                'description': 'Convert conditional jump to unconditional (je -> jmp)',
                 'address': hex(0x400000 + offset),
                 'file_offset': offset,
                 'original_bytes': data[offset:offset+2].hex(),
@@ -666,7 +666,7 @@ def _analyze_static_patterns(binary_path: str) -> List[Dict[str, Any]]:
                 'pattern': 'je_to_jmp',
                 'analysis_method': 'static_pattern'
             })
-        
+
         # Pattern 2: Test and jump patterns
         test_pattern = b'\x85\xc0\x74'  # test eax, eax; je
         for match in re.finditer(test_pattern, data):
@@ -681,7 +681,7 @@ def _analyze_static_patterns(binary_path: str) -> List[Dict[str, Any]]:
                 'pattern': 'test_bypass',
                 'analysis_method': 'static_pattern'
             })
-        
+
         # Pattern 3: Return value modification
         xor_ret_pattern = b'\x31\xc0\xc3'  # xor eax, eax; ret (return 0)
         for match in re.finditer(xor_ret_pattern, data):
@@ -696,31 +696,31 @@ def _analyze_static_patterns(binary_path: str) -> List[Dict[str, Any]]:
                 'pattern': 'return_true',
                 'analysis_method': 'static_pattern'
             })
-            
+
     except Exception as e:
         logger.warning(f"Static pattern analysis failed: {e}")
-        
+
     return patches
 
 
 def _analyze_license_strings(binary_path: str) -> List[Dict[str, Any]]:
     """Analyze strings for license-related patches."""
     patches = []
-    
+
     try:
         # Extract strings from binary
         with open(binary_path, 'rb') as f:
             data = f.read()
-        
+
         # Find ASCII strings
         import re
         strings = re.findall(b'[\x20-\x7e]{4,}', data)
-        
+
         license_keywords = [
             b'license', b'trial', b'expired', b'activation', b'invalid',
             b'demo', b'evaluation', b'register', b'serial', b'key'
         ]
-        
+
         for string in strings:
             string_lower = string.lower()
             for keyword in license_keywords:
@@ -740,33 +740,33 @@ def _analyze_license_strings(binary_path: str) -> List[Dict[str, Any]]:
                             'string_content': string.decode('utf-8', errors='ignore')[:100]
                         })
                     break
-                    
+
     except Exception as e:
         logger.warning(f"String analysis failed: {e}")
-        
+
     return patches[:5]  # Limit string patches
 
 
 def _analyze_imports(binary_path: str) -> List[Dict[str, Any]]:
     """Analyze import table for hookable functions."""
     patches = []
-    
+
     try:
         patches = _try_pefile_import_analysis(binary_path)
     except Exception as e:
         logger.warning(f"Import analysis failed: {e}")
-        
+
     return patches[:10]  # Limit import patches
 
 
 def _try_pefile_import_analysis(binary_path: str) -> List[Dict[str, Any]]:
     """Try PE import analysis using pefile."""
     patches = []
-    
+
     try:
         import pefile
         pe = pefile.PE(binary_path)
-        
+
         # Use common PE analysis utility
         from .pe_analysis_common import analyze_pe_imports
         target_apis = {
@@ -776,30 +776,30 @@ def _try_pefile_import_analysis(binary_path: str) -> List[Dict[str, Any]]:
             'network': ['InternetConnect', 'HttpSendRequest']
         }
         detected_apis = analyze_pe_imports(pe, target_apis)
-        
+
         # Convert to patch format
         if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
             patches = _extract_import_patches(pe, detected_apis)
-                
+
     except ImportError:
         logger.debug("pefile not available for import analysis")
     except Exception as e:
         logger.warning(f"PE import analysis failed: {e}")
-        
+
     return patches
 
 
 def _extract_import_patches(pe, detected_apis) -> List[Dict[str, Any]]:
     """Extract import patches from PE analysis."""
     patches = []
-    
+
     for entry in pe.DIRECTORY_ENTRY_IMPORT:
         dll_name = entry.dll.decode('utf-8', errors='ignore')
-        
+
         for imp in entry.imports:
             if imp.name:
                 func_name = imp.name.decode('utf-8', errors='ignore')
-                
+
                 # Check if this function was detected
                 for category, funcs in detected_apis.items():
                     if func_name in funcs:
@@ -814,31 +814,31 @@ def _extract_import_patches(pe, detected_apis) -> List[Dict[str, Any]]:
                             'analysis_method': 'import_analysis'
                         })
                         break
-    
+
     return patches
 
 
 def _analyze_disassembly(binary_path: str) -> List[Dict[str, Any]]:
     """Analyze disassembly for patchable instructions."""
     patches = []
-    
+
     try:
-        from ..utils.import_patterns import CS_ARCH_X86, CS_MODE_64, Cs, CAPSTONE_AVAILABLE
-        
+        from ..utils.import_patterns import CAPSTONE_AVAILABLE, CS_ARCH_X86, CS_MODE_64, Cs
+
         if CAPSTONE_AVAILABLE:
             with open(binary_path, 'rb') as f:
                 data = f.read()
-            
+
             md = Cs(CS_ARCH_X86, CS_MODE_64)
             md.detail = True
-            
+
             # Analyze first 1000 instructions
             count = 0
             for insn in md.disasm(data[:10000], 0x400000):
                 if count >= 1000:
                     break
                 count += 1
-                
+
                 # Look for interesting patterns
                 if insn.mnemonic == 'cmp' and 'eax' in insn.op_str:
                     # Comparison that might be part of license check
@@ -852,7 +852,7 @@ def _analyze_disassembly(binary_path: str) -> List[Dict[str, Any]]:
                         'instruction': f'{insn.mnemonic} {insn.op_str}',
                         'analysis_method': 'disassembly_analysis'
                     })
-                
+
                 elif insn.mnemonic == 'call':
                     # Function calls that might be license checks
                     patches.append({
@@ -865,17 +865,17 @@ def _analyze_disassembly(binary_path: str) -> List[Dict[str, Any]]:
                         'instruction': f'{insn.mnemonic} {insn.op_str}',
                         'analysis_method': 'disassembly_analysis'
                     })
-                    
+
     except Exception as e:
         logger.warning(f"Disassembly analysis failed: {e}")
-        
+
     return patches[:15]  # Limit disassembly patches
 
 
 def _convert_vulnerabilities_to_patches(vulnerabilities: List[Dict]) -> List[Dict[str, Any]]:
     """Convert vulnerability findings to patch proposals."""
     patches = []
-    
+
     for vuln in vulnerabilities[:5]:  # Limit to 5 vulnerabilities
         patches.append({
             'type': 'vulnerability_fix',
@@ -886,7 +886,7 @@ def _convert_vulnerabilities_to_patches(vulnerabilities: List[Dict]) -> List[Dic
             'analysis_method': 'ml_analysis',
             'recommendation': vuln.get('description', 'Fix identified vulnerability')
         })
-        
+
     return patches
 
 
@@ -895,20 +895,20 @@ def _deduplicate_and_rank_patches(patches: List[Dict[str, Any]]) -> List[Dict[st
     # Simple deduplication by address
     seen_addresses = set()
     unique_patches = []
-    
+
     for patch in patches:
         addr = patch.get('address', '')
         if addr not in seen_addresses:
             seen_addresses.add(addr)
             unique_patches.append(patch)
-            
+
     return unique_patches
 
 
 def _calculate_patch_confidence(patch: Dict[str, Any]) -> float:
     """Calculate confidence score for a patch."""
     confidence = 0.5  # Base confidence
-    
+
     # Boost confidence based on analysis method
     method_boost = {
         'static_pattern': 0.3,
@@ -917,13 +917,13 @@ def _calculate_patch_confidence(patch: Dict[str, Any]) -> float:
         'disassembly_analysis': 0.3,
         'ml_analysis': 0.4
     }
-    
+
     confidence += method_boost.get(patch.get('analysis_method', ''), 0)
-    
+
     # Boost for known good patch types
     if patch.get('type') in ['conditional_bypass', 'return_modification']:
         confidence += 0.2
-        
+
     return min(confidence, 1.0)
 
 
@@ -952,10 +952,10 @@ def _get_binary_info(binary_path: str) -> Dict[str, Any]:
     try:
         import os
         stat = os.stat(binary_path)
-        
+
         with open(binary_path, 'rb') as f:
             header = f.read(64)
-        
+
         return {
             'size': stat.st_size,
             'format': 'PE' if header[:2] == b'MZ' else 'ELF' if header[:4] == b'\x7fELF' else 'Unknown',
@@ -1007,7 +1007,7 @@ def _generate_fallback_patches(binary_path: str) -> Dict[str, Any]:
             "analysis_method": "fallback"
         }
     ]
-    
+
     return {
         "status": "success",
         "patches": patches,
@@ -1191,7 +1191,7 @@ def run_external_tool(args):
             # Get output
             stdout, stderr = process.communicate()
             logger.info("Subprocess finished with exit code %s", process.returncode)
-            
+
             if stdout:
                 logger.info("Subprocess stdout:\n%s", stdout)
             if stderr:

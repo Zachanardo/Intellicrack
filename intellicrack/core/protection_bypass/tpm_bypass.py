@@ -24,11 +24,8 @@ import logging
 import platform
 from typing import Any, Dict, List, Optional, Union
 
-from ...utils.import_checks import (
-    FRIDA_AVAILABLE, frida,
-    WINREG_AVAILABLE, winreg
-)
 from ...utils.binary_io import analyze_binary_for_strings
+from ...utils.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
 
 class TPMProtectionBypass:
@@ -201,15 +198,15 @@ class TPMProtectionBypass:
         Simulate TPM command responses with realistic data.
         """
         self.logger.info("Simulating TPM command response")
-        
+
         # TPM 2.0 command structure: tag (2) + size (4) + command (4) + parameters
         if len(command_data) < 10:
             return b'\x00\x00\x00\x00'  # Invalid command
-        
+
         tag = int.from_bytes(command_data[0:2], 'big')
         size = int.from_bytes(command_data[2:6], 'big')
         command = int.from_bytes(command_data[6:10], 'big')
-        
+
         # Common TPM 2.0 commands and responses
         tpm_responses = {
             0x00000144: self._tpm_get_capability,      # TPM2_GetCapability
@@ -222,21 +219,21 @@ class TPMProtectionBypass:
             0x00000177: self._tpm_pcr_read,           # TPM2_PCR_Read
             0x00000182: self._tpm_pcr_extend,         # TPM2_PCR_Extend
         }
-        
+
         # Get response handler for command
         handler = tpm_responses.get(command, self._tpm_default_response)
-        
+
         # Generate response
         response = handler(command_data[10:] if len(command_data) > 10 else b'')
-        
+
         # Build TPM response structure: tag + size + response_code + response_data
         response_tag = b'\x80\x01'  # TPM_ST_NO_SESSIONS
         response_code = b'\x00\x00\x00\x00'  # TPM_RC_SUCCESS
         response_data = response_code + response
         response_size = (10 + len(response)).to_bytes(4, 'big')
-        
+
         return response_tag + response_size + response_data
-    
+
     def _tpm_get_capability(self, params: bytes) -> bytes:
         """Generate TPM2_GetCapability response."""
         # Return TPM properties indicating TPM 2.0 with full capabilities
@@ -255,12 +252,12 @@ class TPMProtectionBypass:
         # TPM_PT_FIRMWARE_VERSION
         capabilities += b'\x00\x00\x01\x0B' + b'\x00\x02\x00\x00'
         return capabilities
-    
+
     def _tpm_startup(self, params: bytes) -> bytes:
         """Generate TPM2_Startup response."""
         # TPM already initialized
         return b''  # Empty response for success
-    
+
     def _tpm_get_random(self, params: bytes) -> bytes:
         """Generate TPM2_GetRandom response."""
         import os
@@ -270,11 +267,11 @@ class TPMProtectionBypass:
             count = min(count, 32)  # Limit to 32 bytes
         else:
             count = 16
-        
+
         # Generate random bytes
         random_bytes = os.urandom(count)
         return count.to_bytes(2, 'big') + random_bytes
-    
+
     def _tpm_create_primary(self, params: bytes) -> bytes:
         """Generate TPM2_CreatePrimary response."""
         # Return a fake primary key handle
@@ -288,28 +285,28 @@ class TPMProtectionBypass:
         public_key += b'\x00\x00'  # Parameters
         public_key += b'\x00\x80'  # Key bits (2048)
         public_key += b'\x00\x00\x00\x00'  # Exponent
-        
+
         return handle + public_key + b'\x00\x00'  # Creation data size (0)
-    
+
     def _tpm_create(self, params: bytes) -> bytes:
         """Generate TPM2_Create response."""
         # Return creation data for a key
         private_data = b'\x00\x10' + b'\x00' * 16  # Dummy private data
         public_data = b'\x00\x20' + b'\x00' * 32   # Dummy public data
         return private_data + public_data + b'\x00\x00'  # Creation data size
-    
+
     def _tpm_load(self, params: bytes) -> bytes:
         """Generate TPM2_Load response."""
         # Return a loaded object handle
         return b'\x80\x00\x00\x02'  # Loaded object handle
-    
+
     def _tpm_sign(self, params: bytes) -> bytes:
         """Generate TPM2_Sign response."""
         # Return a dummy signature
         signature = b'\x00\x40'  # Signature size
         signature += b'\x00' * 64  # Dummy RSA signature
         return signature
-    
+
     def _tpm_pcr_read(self, params: bytes) -> bytes:
         """Generate TPM2_PCR_Read response."""
         # Return PCR values (all zeros for clean state)
@@ -318,21 +315,21 @@ class TPMProtectionBypass:
         pcr_selection += b'\x00\x0B'  # SHA256
         pcr_selection += b'\x03'  # Size
         pcr_selection += b'\xFF\xFF\xFF'  # All PCRs selected
-        
+
         # PCR values (24 PCRs x 32 bytes each)
         pcr_count = b'\x00\x00\x00\x18'  # 24 PCRs
         pcr_values = b''
         for i in range(24):
             pcr_values += b'\x00\x20'  # Digest size
             pcr_values += b'\x00' * 32  # Zero digest (clean state)
-        
+
         return pcr_update_counter + pcr_selection + pcr_count + pcr_values
-    
+
     def _tpm_pcr_extend(self, params: bytes) -> bytes:
         """Generate TPM2_PCR_Extend response."""
         # Return empty response for success
         return b''
-    
+
     def _tpm_default_response(self, params: bytes) -> bytes:
         """Generate default success response for unknown commands."""
         return b''  # Empty response with success code
@@ -342,11 +339,11 @@ class TPMProtectionBypass:
         Advanced patching of TPM-related function calls in binary.
         """
         self.logger.info(f"Patching TPM calls in {binary_path}")
-        
+
         try:
             with open(binary_path, 'rb') as f:
                 binary_data = f.read()
-            
+
             # Extended TPM check patterns with context
             tpm_patterns = [
                 # TPM API call patterns
@@ -377,16 +374,16 @@ class TPMProtectionBypass:
                     "patch": b'\x48\x31\xD2\x90\x90\x90\x90'  # XOR RDX, RDX; NOP
                 }
             ]
-            
+
             patches_applied = 0
             modified_data = bytearray(binary_data)
-            
+
             for pattern_info in tpm_patterns:
                 pattern = pattern_info["pattern"]
                 context = pattern_info["context"]
                 patch = pattern_info["patch"]
                 name = pattern_info["name"]
-                
+
                 # Search for pattern
                 offset = 0
                 while offset < len(binary_data) - len(pattern):
@@ -396,26 +393,26 @@ class TPMProtectionBypass:
                         if byte != ord('.') and binary_data[offset + i] != byte:
                             match = False
                             break
-                    
+
                     if match:
                         # Verify context if specified
                         if context:
                             # Check if context string is nearby (within 1KB)
                             context_found = False
-                            for ctx_offset in range(max(0, offset - 512), 
+                            for ctx_offset in range(max(0, offset - 512),
                                                   min(len(binary_data), offset + 512)):
                                 if binary_data[ctx_offset:ctx_offset + len(context)] == context:
                                     context_found = True
                                     break
-                            
+
                             if not context_found:
                                 offset += 1
                                 continue
-                        
+
                         # Apply patch
                         for i, byte in enumerate(patch):
                             modified_data[offset + i] = byte
-                        
+
                         self.patches.append({
                             "offset": offset,
                             "original": pattern,
@@ -424,9 +421,9 @@ class TPMProtectionBypass:
                         })
                         patches_applied += 1
                         self.logger.info(f"Applied patch '{name}' at offset 0x{offset:X}")
-                    
+
                     offset += 1
-            
+
             if patches_applied > 0:
                 # Save patched binary
                 patched_path = binary_path + ".tpm_patched"
@@ -438,7 +435,7 @@ class TPMProtectionBypass:
             else:
                 self.logger.info("No TPM patterns found to patch")
                 return False
-                
+
         except Exception as e:
             self.logger.error(f"Error patching TPM calls: {str(e)}")
             return False
@@ -723,12 +720,12 @@ class TPMAnalyzer:
         results["tpm_apis"] = found_strings
         results["uses_tpm"] = len(found_strings) > 0
         results["confidence"] = string_analysis["confidence"] / 100.0
-        
+
         # Detect TPM version with separate check
         try:
             with open(self.binary_path, 'rb') as f:
                 data = f.read()
-                
+
             if b"TPM 2.0" in data or b"TPM2" in data:
                 results["tpm_version"] = "2.0"
             elif b"TPM 1.2" in data:

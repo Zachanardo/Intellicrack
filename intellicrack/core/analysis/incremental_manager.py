@@ -92,7 +92,7 @@ class IncrementalAnalysisManager:
 
         # Load cache index
         self._load_cache_index()
-        
+
     def _validate_cache_file(self, file_path: str) -> bool:
         """
         Validate cache file before loading.
@@ -105,13 +105,13 @@ class IncrementalAnalysisManager:
         """
         if not os.path.exists(file_path):
             return False
-            
+
         # Check file size
         file_size = os.path.getsize(file_path)
         if file_size > self.cache_max_size:
             self.logger.warning("Cache file too large (%d bytes), rejecting", file_size)
             return False
-            
+
         # Check file ownership and permissions (Unix-like systems)
         if hasattr(os, 'stat'):
             stat_info = os.stat(file_path)
@@ -119,7 +119,7 @@ class IncrementalAnalysisManager:
             if hasattr(os, 'getuid') and stat_info.st_uid != os.getuid():  # pylint: disable=no-member
                 self.logger.warning("Cache file not owned by current user, rejecting")
                 return False
-                
+
         return True
 
     def _load_cache_index(self) -> None:
@@ -305,7 +305,7 @@ class IncrementalAnalysisManager:
         if not self._validate_cache_file(cache_file):
             self.logger.error("Cache file validation failed: %s", cache_file)
             return None
-            
+
         try:
             self.logger.warning("Loading cache with pickle - ensure cache is from trusted source")
             with open(cache_file, 'rb') as f:
@@ -503,6 +503,191 @@ class IncrementalAnalysisManager:
             self.logger.info("Cleaned up %s old cache entries", cleaned_count)
 
         return cleaned_count
+
+    def analyze_incremental(self, binary_path: str, analysis_types: Optional[list] = None) -> Dict[str, Any]:
+        """
+        Perform incremental analysis on a binary file.
+
+        Args:
+            binary_path: Path to the binary file to analyze
+            analysis_types: List of analysis types to perform (optional)
+
+        Returns:
+            Dictionary containing analysis results and cache information
+        """
+        results = {
+            'binary_path': binary_path,
+            'cache_used': False,
+            'analysis_results': {},
+            'performance_metrics': {},
+            'errors': []
+        }
+
+        try:
+            import time
+            start_time = time.time()
+
+            # Set the binary for cache management
+            if not self.set_binary(binary_path):
+                error_msg = f"Failed to set binary for analysis: {binary_path}"
+                self.logger.error(error_msg)
+                results['errors'].append(error_msg)
+                return results
+
+            # Default analysis types if none specified
+            if analysis_types is None:
+                analysis_types = ['basic', 'entropy', 'strings', 'headers']
+
+            self.logger.info("Starting incremental analysis for: %s", binary_path)
+
+            # Check cache for each analysis type
+            for analysis_type in analysis_types:
+                cached_result = self.get_cached_analysis(analysis_type)
+                
+                if cached_result is not None:
+                    self.logger.info("Using cached results for %s analysis", analysis_type)
+                    results['analysis_results'][analysis_type] = cached_result
+                    results['cache_used'] = True
+                else:
+                    # Perform fresh analysis
+                    self.logger.info("Performing fresh %s analysis", analysis_type)
+                    fresh_result = self._perform_analysis(binary_path, analysis_type)
+                    
+                    if fresh_result is not None:
+                        results['analysis_results'][analysis_type] = fresh_result
+                        # Cache the fresh results
+                        if self.cache_analysis(analysis_type, fresh_result):
+                            self.logger.debug("Cached fresh results for %s", analysis_type)
+                    else:
+                        error_msg = f"Failed to perform {analysis_type} analysis"
+                        self.logger.error(error_msg)
+                        results['errors'].append(error_msg)
+
+            # Performance metrics
+            end_time = time.time()
+            results['performance_metrics'] = {
+                'total_time': end_time - start_time,
+                'cache_hits': sum(1 for result in results['analysis_results'].values() if result),
+                'cache_stats': self.get_cache_stats()
+            }
+
+            self.logger.info("Incremental analysis completed in %.3f seconds", end_time - start_time)
+
+        except (OSError, ValueError, RuntimeError) as e:
+            error_msg = f"Incremental analysis failed: {e}"
+            self.logger.error(error_msg)
+            results['errors'].append(error_msg)
+
+        return results
+
+    def _perform_analysis(self, binary_path: str, analysis_type: str) -> Optional[Dict[str, Any]]:
+        """
+        Perform specific type of analysis on binary.
+
+        Args:
+            binary_path: Path to binary file
+            analysis_type: Type of analysis to perform
+
+        Returns:
+            Analysis results or None if failed
+        """
+        try:
+            if analysis_type == 'basic':
+                return self._basic_analysis(binary_path)
+            elif analysis_type == 'entropy':
+                return self._entropy_analysis(binary_path)
+            elif analysis_type == 'strings':
+                return self._strings_analysis(binary_path)
+            elif analysis_type == 'headers':
+                return self._headers_analysis(binary_path)
+            else:
+                self.logger.warning("Unknown analysis type: %s", analysis_type)
+                return None
+
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Analysis %s failed: %s", analysis_type, e)
+            return None
+
+    def _basic_analysis(self, binary_path: str) -> Dict[str, Any]:
+        """Basic file analysis."""
+        stat_info = os.stat(binary_path)
+        return {
+            'file_size': stat_info.st_size,
+            'modification_time': stat_info.st_mtime,
+            'file_hash': self._calculate_file_hash(binary_path),
+            'analysis_type': 'basic'
+        }
+
+    def _entropy_analysis(self, binary_path: str) -> Dict[str, Any]:
+        """Entropy analysis of binary."""
+        try:
+            with open(binary_path, 'rb') as f:
+                data = f.read(8192)  # Sample first 8KB
+            
+            # Calculate entropy
+            if data:
+                frequencies = [0] * 256
+                for byte in data:
+                    frequencies[byte] += 1
+                
+                entropy = 0.0
+                data_len = len(data)
+                for freq in frequencies:
+                    if freq > 0:
+                        prob = freq / data_len
+                        import math
+                        entropy -= prob * math.log2(prob)
+            else:
+                entropy = 0.0
+
+            return {
+                'entropy': entropy,
+                'sample_size': len(data),
+                'analysis_type': 'entropy'
+            }
+        except (OSError, ValueError, RuntimeError):
+            return {'entropy': 0.0, 'analysis_type': 'entropy', 'error': 'Failed to read file'}
+
+    def _strings_analysis(self, binary_path: str) -> Dict[str, Any]:
+        """String extraction analysis."""
+        try:
+            import re
+            with open(binary_path, 'rb') as f:
+                data = f.read(16384)  # Sample first 16KB
+            
+            # Extract printable strings (4+ characters)
+            strings = re.findall(rb'[ -~]{4,}', data)
+            string_list = [s.decode('ascii', errors='ignore') for s in strings[:50]]  # Limit to 50 strings
+            
+            return {
+                'strings_count': len(string_list),
+                'strings_sample': string_list,
+                'analysis_type': 'strings'
+            }
+        except (OSError, ValueError, RuntimeError):
+            return {'strings_count': 0, 'analysis_type': 'strings', 'error': 'Failed to read file'}
+
+    def _headers_analysis(self, binary_path: str) -> Dict[str, Any]:
+        """Basic headers analysis."""
+        try:
+            with open(binary_path, 'rb') as f:
+                header = f.read(64)  # Read first 64 bytes
+            
+            file_type = 'unknown'
+            if header.startswith(b'MZ'):
+                file_type = 'PE'
+            elif header.startswith(b'\x7fELF'):
+                file_type = 'ELF'
+            elif header.startswith(b'\xfe\xed\xfa'):
+                file_type = 'Mach-O'
+            
+            return {
+                'file_type': file_type,
+                'header_bytes': header[:16].hex(),
+                'analysis_type': 'headers'
+            }
+        except (OSError, ValueError, RuntimeError):
+            return {'file_type': 'unknown', 'analysis_type': 'headers', 'error': 'Failed to read file'}
 
 
 def run_analysis_manager(app: Any) -> None:

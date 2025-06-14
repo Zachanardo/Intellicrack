@@ -49,14 +49,14 @@ from ..ui.common_imports import (
     QPushButton,
     QRadioButton,
     QSpinBox,
-    QTabWidget,
+    Qt,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
     QThread,
     QVBoxLayout,
     QWidget,
-    Qt,
-    pyqtSignal
+    pyqtSignal,
 )
 
 logger = logging.getLogger(__name__)

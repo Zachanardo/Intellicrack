@@ -131,7 +131,7 @@ def get_user_input(prompt: str, default: str = "",
         # Sanitize prompt to prevent injection
         safe_prompt = prompt.replace('\n', ' ').replace('\r', ' ')
         safe_default = default.replace('\n', ' ').replace('\r', ' ') if default else ""
-        
+
         if safe_default:
             user_input = input(f"{safe_prompt} [{safe_default}]: ").strip()  # User input is sanitized below
             # Sanitize user input - remove null bytes and newlines
@@ -220,7 +220,7 @@ def select_from_list(items: List[str], prompt: str = "Select an item",
             user_input = input("Enter numbers separated by commas (or 'all'): ").strip()
             # Sanitize input
             selections = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
-            
+
             if selections.lower() == 'all':
                 return items
 

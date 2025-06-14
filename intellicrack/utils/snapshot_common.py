@@ -21,13 +21,13 @@ def validate_snapshots(snapshots_dict, snapshot1, snapshot2, logger=None):
         if logger:
             logger.error(error_msg)
         return False, error_msg
-    
+
     if snapshot2 not in snapshots_dict:
         error_msg = f"Snapshot '{snapshot2}' not found"
         if logger:
             logger.error(error_msg)
         return False, error_msg
-    
+
     return True, None
 
 
@@ -72,11 +72,11 @@ def compare_file_lists(files1_data, files2_data, limit=100):
     """
     files1 = set(files1_data.splitlines() if files1_data else [])
     files2 = set(files2_data.splitlines() if files2_data else [])
-    
+
     new_files = list(files2 - files1)[:limit]
     deleted_files = list(files1 - files2)[:limit]
     modified_files = list(files1 & files2)[:limit]  # Files present in both
-    
+
     return {
         "new_files": new_files,
         "deleted_files": deleted_files,

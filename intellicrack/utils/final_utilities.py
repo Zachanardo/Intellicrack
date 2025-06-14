@@ -24,6 +24,7 @@ import hashlib
 import json
 import os
 import platform
+import socket
 import subprocess
 import threading
 import time
@@ -332,37 +333,37 @@ def get_captured_requests(limit: int = 100) -> List[Dict[str, Any]]:
         List of captured request dictionaries with comprehensive metadata
     """
     captured_requests = []
-    
+
     try:
         # 1. Get requests from active protocol handlers
         protocol_requests = _get_protocol_handler_requests(limit // 3)
         captured_requests.extend(protocol_requests)
-        
+
         # 2. Get requests from network interceptors
         interceptor_requests = _get_network_interceptor_requests(limit // 3)
         captured_requests.extend(interceptor_requests)
-        
+
         # 3. Get requests from cached capture files
         cached_requests = _get_cached_capture_requests(limit // 3)
         captured_requests.extend(cached_requests)
-        
+
         # 4. Get requests from system network monitoring
         system_requests = _get_system_network_requests(limit // 4)
         captured_requests.extend(system_requests)
-        
+
         # 5. Sort by timestamp (most recent first) and apply limit
         captured_requests.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
         captured_requests = captured_requests[:limit]
-        
+
         # 6. Enhance requests with additional analysis
         for request in captured_requests:
             _enhance_request_metadata(request)
-        
-        logger.info("Retrieved %d captured network requests from %d sources", 
+
+        logger.info("Retrieved %d captured network requests from %d sources",
                    len(captured_requests), 4)
-        
+
         return captured_requests
-        
+
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error retrieving captured requests: %s", e)
         return []
@@ -371,22 +372,22 @@ def get_captured_requests(limit: int = 100) -> List[Dict[str, Any]]:
 def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
     """Get requests from active license protocol handlers."""
     requests = []
-    
+
     try:
         # Check if protocol handlers are active and have captured data
         protocol_modules = [
             'license_protocol_handler',
-            'cloud_license_hooker', 
+            'cloud_license_hooker',
             'ssl_interceptor',
             'traffic_analyzer'
         ]
-        
+
         for module_name in protocol_modules:
             try:
                 # Try to get captured requests from protocol handlers
                 # In a real implementation, these would be singleton instances
                 # that maintain request histories
-                
+
                 # Simulate getting requests from active handlers
                 if module_name == 'license_protocol_handler':
                     # FlexLM requests
@@ -412,7 +413,7 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
                     requests.extend([
                         {
                             "timestamp": time.time() - (i * 45),
-                            "source": "Cloud_License_Hooker", 
+                            "source": "Cloud_License_Hooker",
                             "type": "api_call",
                             "protocol": "HTTPS",
                             "src_ip": "192.168.1.100",
@@ -426,37 +427,35 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
                             "bytes_received": 89 + i
                         } for i in range(min(2, limit // 4))
                     ])
-                    
+
             except ImportError:
                 continue
-                
+
     except Exception as e:
         logger.debug("Error getting protocol handler requests: %s", e)
-        
+
     return requests[:limit]
 
 
 def _get_network_interceptor_requests(limit: int) -> List[Dict[str, Any]]:
-    """Get requests from network traffic interceptors.""" 
+    """Get requests from network traffic interceptors."""
     requests = []
-    
+
     try:
         # Check for captured traffic from network monitors
-        import socket
-        import struct
-        
+
         # Generate realistic intercepted network requests
         intercepted_types = [
             ("HTTP_License_Check", "http", 80),
-            ("HTTPS_Activation", "https", 443), 
+            ("HTTPS_Activation", "https", 443),
             ("Custom_Protocol", "tcp", 12345),
             ("UDP_Heartbeat", "udp", 9999)
         ]
-        
+
         for i, (req_type, protocol, port) in enumerate(intercepted_types):
             if i >= limit:
                 break
-                
+
             requests.append({
                 "timestamp": time.time() - (i * 60),
                 "source": "Network_Interceptor",
@@ -466,24 +465,24 @@ def _get_network_interceptor_requests(limit: int) -> List[Dict[str, Any]]:
                 "dst_ip": f"server{i}.example.com",
                 "dst_port": port,
                 "request_data": _generate_realistic_request_data(req_type, protocol),
-                "response_data": _generate_realistic_response_data(req_type, protocol), 
+                "response_data": _generate_realistic_response_data(req_type, protocol),
                 "status": "intercepted",
                 "traffic_type": req_type,
                 "bytes_sent": 200 + (i * 50),
                 "bytes_received": 150 + (i * 30),
                 "connection_id": f"conn_{hash(f'{req_type}_{i}') % 10000}"
             })
-            
+
     except Exception as e:
         logger.debug("Error getting network interceptor requests: %s", e)
-        
+
     return requests
 
 
 def _get_cached_capture_requests(limit: int) -> List[Dict[str, Any]]:
     """Get requests from cached capture files."""
     requests = []
-    
+
     try:
         # Check multiple cache locations
         cache_locations = [
@@ -491,47 +490,47 @@ def _get_cached_capture_requests(limit: int) -> List[Dict[str, Any]]:
             os.path.join(os.getcwd(), "captures", "network_log.json"),
             os.path.join("/tmp", "intellicrack_network.json")
         ]
-        
+
         for cache_file in cache_locations:
             if os.path.exists(cache_file):
                 try:
                     with open(cache_file, 'r', encoding='utf-8') as f:
                         cached_data = json.load(f)
-                        
+
                     # Validate and process cached requests
                     for item in cached_data:
                         if isinstance(item, dict) and 'timestamp' in item:
                             # Add source information
                             item['source'] = f"Cache_File_{os.path.basename(cache_file)}"
                             requests.append(item)
-                            
+
                     if len(requests) >= limit:
                         break
-                        
+
                 except (json.JSONDecodeError, OSError) as e:
                     logger.debug("Could not read cache file %s: %s", cache_file, e)
                     continue
-                    
+
         # If no cached data found, create some realistic examples
         if not requests:
             requests = _generate_example_cached_requests(limit)
-            
+
     except Exception as e:
         logger.debug("Error getting cached requests: %s", e)
-        
+
     return requests[:limit]
 
 
 def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
     """Get requests from system-level network monitoring."""
     requests = []
-    
+
     try:
         # Use system tools to capture recent network activity
         if hasattr(psutil, 'net_connections'):
             try:
                 connections = psutil.net_connections(kind='inet')
-                
+
                 for i, conn in enumerate(connections[:limit]):
                     if conn.status == 'ESTABLISHED' and conn.raddr:
                         requests.append({
@@ -541,16 +540,16 @@ def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
                             "protocol": "TCP" if conn.type == socket.SOCK_STREAM else "UDP",
                             "src_ip": conn.laddr.ip if conn.laddr else "unknown",
                             "src_port": conn.laddr.port if conn.laddr else 0,
-                            "dst_ip": conn.raddr.ip if conn.raddr else "unknown", 
+                            "dst_ip": conn.raddr.ip if conn.raddr else "unknown",
                             "dst_port": conn.raddr.port if conn.raddr else 0,
                             "status": conn.status,
                             "pid": conn.pid,
                             "connection_type": "system_monitored"
                         })
-                        
+
             except (AttributeError, OSError):
                 pass
-                
+
         # Add process-specific network activity
         if hasattr(psutil, 'Process'):
             try:
@@ -574,13 +573,13 @@ def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
                                 })
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         continue
-                        
+
             except (AttributeError, OSError):
                 pass
-                
+
     except Exception as e:
         logger.debug("Error getting system network requests: %s", e)
-        
+
     return requests[:limit]
 
 
@@ -614,7 +613,7 @@ def _generate_example_cached_requests(limit: int) -> List[Dict[str, Any]]:
         {
             "timestamp": time.time() - (i * 120),
             "source": "Example_Cache",
-            "type": "license_validation", 
+            "type": "license_validation",
             "protocol": "HTTPS",
             "src_ip": "192.168.1.100",
             "dst_ip": f"license{i}.example.com",
@@ -634,17 +633,17 @@ def _enhance_request_metadata(request: Dict[str, Any]) -> None:
         dst_ip = request.get('dst_ip', '')
         if dst_ip and dst_ip != 'unknown':
             request['geolocation'] = _get_ip_geolocation(dst_ip)
-            
+
         # Add protocol analysis
         protocol = request.get('protocol', '').lower()
         request['protocol_analysis'] = _analyze_protocol(protocol, request)
-        
+
         # Add security assessment
         request['security_flags'] = _assess_request_security(request)
-        
+
         # Add timing analysis
         request['timing_analysis'] = _analyze_request_timing(request)
-        
+
         # Add size analysis
         bytes_sent = request.get('bytes_sent', 0)
         bytes_received = request.get('bytes_received', 0)
@@ -653,14 +652,14 @@ def _enhance_request_metadata(request: Dict[str, Any]) -> None:
             'ratio': bytes_received / bytes_sent if bytes_sent > 0 else 0,
             'size_category': _categorize_data_size(bytes_sent + bytes_received)
         }
-        
+
     except Exception as e:
         logger.debug("Error enhancing request metadata: %s", e)
 
 
 def _get_ip_geolocation(ip: str) -> Dict[str, Any]:
     """Get basic geolocation info for IP address."""
-    # Simple heuristic-based geolocation 
+    # Simple heuristic-based geolocation
     if ip.startswith('192.168.') or ip.startswith('10.') or ip.startswith('172.'):
         return {'type': 'private', 'location': 'local_network'}
     elif ip.startswith('127.'):
@@ -679,7 +678,7 @@ def _get_ip_geolocation(ip: str) -> Dict[str, Any]:
 def _analyze_protocol(protocol: str, request: Dict[str, Any]) -> Dict[str, Any]:
     """Analyze protocol-specific characteristics."""
     analysis = {'protocol': protocol}
-    
+
     if protocol in ['http', 'https']:
         analysis['web_protocol'] = True
         analysis['encrypted'] = protocol == 'https'
@@ -693,37 +692,37 @@ def _analyze_protocol(protocol: str, request: Dict[str, Any]) -> Dict[str, Any]:
     elif protocol == 'udp':
         analysis['connectionless'] = True
         analysis['unreliable'] = True
-        
+
     return analysis
 
 
 def _assess_request_security(request: Dict[str, Any]) -> List[str]:
     """Assess security characteristics of the request."""
     flags = []
-    
+
     # Check for encrypted protocols
     protocol = request.get('protocol', '').lower()
     if protocol in ['https', 'ssl', 'tls']:
         flags.append('encrypted')
     elif protocol in ['http', 'ftp', 'telnet']:
         flags.append('unencrypted')
-        
+
     # Check for license-related activity
     request_data = request.get('request_data', '').lower()
     response_data = request.get('response_data', '').lower()
-    
+
     if any(term in request_data + response_data for term in ['license', 'key', 'activate', 'validate']):
         flags.append('license_related')
-        
+
     # Check for suspicious patterns
     if 'crack' in request_data + response_data:
         flags.append('suspicious_content')
-        
+
     # Check for large data transfers
     total_bytes = request.get('bytes_sent', 0) + request.get('bytes_received', 0)
     if total_bytes > 10000:
         flags.append('large_transfer')
-        
+
     return flags
 
 
@@ -731,7 +730,7 @@ def _analyze_request_timing(request: Dict[str, Any]) -> Dict[str, Any]:
     """Analyze timing characteristics of the request."""
     timestamp = request.get('timestamp', time.time())
     age_seconds = time.time() - timestamp
-    
+
     return {
         'age_seconds': age_seconds,
         'age_category': _categorize_age(age_seconds),
@@ -979,11 +978,11 @@ def submit_report(report_data: Dict[str, Any],
         validated_report = _validate_and_enhance_report(report_data)
         if not validated_report:
             return {"status": "error", "error": "Report validation failed"}
-        
+
         # 2. Generate unique report ID and metadata
         report_id = _generate_report_id(validated_report)
         submission_metadata = _create_submission_metadata(report_id, endpoint)
-        
+
         # 3. Process submission based on endpoint type
         if endpoint:
             # Remote endpoint submission
@@ -991,15 +990,15 @@ def submit_report(report_data: Dict[str, Any],
         else:
             # Local storage submission
             submission_result = _submit_to_local_storage(validated_report, report_id)
-        
+
         # 4. Handle additional delivery methods if configured
         additional_results = _handle_additional_delivery_methods(validated_report, report_id)
         if additional_results:
             submission_result['additional_deliveries'] = additional_results
-        
+
         # 5. Create audit trail and logging
         _create_submission_audit_trail(submission_result, submission_metadata)
-        
+
         # 6. Return comprehensive submission result
         final_result = {
             **submission_result,
@@ -1007,12 +1006,12 @@ def submit_report(report_data: Dict[str, Any],
             "submission_timestamp": time.time(),
             "metadata": submission_metadata
         }
-        
-        logger.info("Report submission completed: %s (ID: %s)", 
+
+        logger.info("Report submission completed: %s (ID: %s)",
                    submission_result.get('status', 'unknown'), report_id)
-        
+
         return final_result
-        
+
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error during report submission: %s", e)
         return {"status": "error", "error": str(e), "timestamp": time.time()}
@@ -1024,7 +1023,7 @@ def _validate_and_enhance_report(report_data: Dict[str, Any]) -> Optional[Dict[s
         if not isinstance(report_data, dict):
             logger.error("Report data must be a dictionary")
             return None
-        
+
         # Create enhanced report with required fields
         enhanced_report = {
             "report_metadata": {
@@ -1036,7 +1035,7 @@ def _validate_and_enhance_report(report_data: Dict[str, Any]) -> Optional[Dict[s
             },
             "content": report_data.copy()
         }
-        
+
         # Add system information
         enhanced_report["system_info"] = {
             "platform": platform.system(),
@@ -1044,23 +1043,23 @@ def _validate_and_enhance_report(report_data: Dict[str, Any]) -> Optional[Dict[s
             "python_version": platform.python_version(),
             "hostname": platform.node()
         }
-        
+
         # Add analysis summary if not present
         if "summary" not in enhanced_report["content"]:
             enhanced_report["content"]["summary"] = _generate_report_summary(report_data)
-        
+
         # Validate required fields
         required_fields = ["content"]
         for field in required_fields:
             if field not in enhanced_report:
                 logger.error("Missing required field: %s", field)
                 return None
-        
+
         # Sanitize sensitive data
         enhanced_report = _sanitize_report_data(enhanced_report)
-        
+
         return enhanced_report
-        
+
     except Exception as e:
         logger.error("Error validating report: %s", e)
         return None
@@ -1069,17 +1068,17 @@ def _validate_and_enhance_report(report_data: Dict[str, Any]) -> Optional[Dict[s
 def _generate_report_id(report_data: Dict[str, Any]) -> str:
     """Generate unique report ID based on content and timestamp."""
     import hashlib
-    
+
     # Create deterministic hash from report content
     content_str = json.dumps(report_data.get("content", {}), sort_keys=True)
     content_hash = hashlib.sha256(content_str.encode()).hexdigest()[:16]
-    
+
     # Add timestamp component
     timestamp_str = str(int(time.time()))
-    
+
     # Combine for unique ID
     report_id = f"RPT-{timestamp_str[-6:]}-{content_hash[:8].upper()}"
-    
+
     return report_id
 
 
@@ -1103,7 +1102,7 @@ def _submit_to_remote_endpoint(report_data: Dict[str, Any], endpoint: str, repor
         # Parse endpoint URL
         if not endpoint.startswith(('http://', 'https://')):
             endpoint = f"https://{endpoint}"
-        
+
         # Prepare submission data
         submission_payload = {
             "report_id": report_id,
@@ -1112,17 +1111,17 @@ def _submit_to_remote_endpoint(report_data: Dict[str, Any], endpoint: str, repor
             "format": "json",
             "version": "1.0"
         }
-        
+
         # Try HTTP submission (simulated for security)
         # In a real implementation, this would use requests library
         try:
             # Simulate HTTP POST request
             logger.info("Submitting report to endpoint: %s", endpoint)
-            
+
             # Simulate network delay
             import random
             time.sleep(random.uniform(0.1, 0.5))
-            
+
             # Simulate successful submission
             if "test" in endpoint.lower() or "localhost" in endpoint.lower():
                 # Test endpoints always succeed
@@ -1144,7 +1143,7 @@ def _submit_to_remote_endpoint(report_data: Dict[str, Any], endpoint: str, repor
                     "tracking_id": report_id,
                     "delivery_method": "simulated_http"
                 }
-                
+
         except Exception as e:
             logger.error("HTTP submission failed: %s", e)
             return {
@@ -1154,7 +1153,7 @@ def _submit_to_remote_endpoint(report_data: Dict[str, Any], endpoint: str, repor
                 "retry_recommended": True,
                 "delivery_method": "http_post"
             }
-            
+
     except Exception as e:
         logger.error("Remote submission error: %s", e)
         return {"status": "error", "error": str(e)}
@@ -1166,10 +1165,10 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
         # Create reports directory if it doesn't exist
         reports_dir = os.path.join(os.getcwd(), "reports")
         os.makedirs(reports_dir, exist_ok=True)
-        
+
         # Generate multiple output formats
         formats_saved = []
-        
+
         # 1. JSON format (primary)
         json_path = os.path.join(reports_dir, f"{report_id}.json")
         try:
@@ -1178,7 +1177,7 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
             formats_saved.append({"format": "json", "path": json_path, "size": os.path.getsize(json_path)})
         except (OSError, ValueError) as e:
             logger.error("Failed to save JSON report: %s", e)
-        
+
         # 2. Human-readable text format
         txt_path = os.path.join(reports_dir, f"{report_id}.txt")
         try:
@@ -1187,7 +1186,7 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
             formats_saved.append({"format": "text", "path": txt_path, "size": os.path.getsize(txt_path)})
         except (OSError, ValueError) as e:
             logger.error("Failed to save text report: %s", e)
-        
+
         # 3. CSV format for tabular data
         csv_path = os.path.join(reports_dir, f"{report_id}.csv")
         try:
@@ -1195,7 +1194,7 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
                 formats_saved.append({"format": "csv", "path": csv_path, "size": os.path.getsize(csv_path)})
         except Exception as e:
             logger.debug("Could not save CSV format: %s", e)
-        
+
         # 4. Compressed archive
         archive_path = os.path.join(reports_dir, f"{report_id}.tar.gz")
         try:
@@ -1203,7 +1202,7 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
                 formats_saved.append({"format": "archive", "path": archive_path, "size": os.path.getsize(archive_path)})
         except Exception as e:
             logger.debug("Could not create archive: %s", e)
-        
+
         if formats_saved:
             return {
                 "status": "saved",
@@ -1219,7 +1218,7 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
                 "error": "No formats could be saved",
                 "delivery_method": "local_storage"
             }
-            
+
     except Exception as e:
         logger.error("Local storage submission error: %s", e)
         return {"status": "error", "error": str(e)}
@@ -1228,26 +1227,26 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
 def _handle_additional_delivery_methods(report_data: Dict[str, Any], report_id: str) -> List[Dict[str, Any]]:
     """Handle additional delivery methods like email, cloud storage, etc."""
     additional_deliveries = []
-    
+
     try:
         # 1. Email delivery (if configured)
         email_result = _attempt_email_delivery(report_data, report_id)
         if email_result:
             additional_deliveries.append(email_result)
-        
+
         # 2. Cloud storage (if configured)
         cloud_result = _attempt_cloud_storage(report_data, report_id)
         if cloud_result:
             additional_deliveries.append(cloud_result)
-        
+
         # 3. Database storage (if configured)
         db_result = _attempt_database_storage(report_data, report_id)
         if db_result:
             additional_deliveries.append(db_result)
-        
+
     except Exception as e:
         logger.debug("Error in additional delivery methods: %s", e)
-    
+
     return additional_deliveries
 
 
@@ -1257,7 +1256,7 @@ def _attempt_email_delivery(report_data: Dict[str, Any], report_id: str) -> Opti
     email_config = os.environ.get('INTELLICRACK_EMAIL_CONFIG')
     if not email_config:
         return None
-    
+
     # Simulate email delivery
     return {
         "method": "email",
@@ -1274,11 +1273,11 @@ def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optio
     cloud_config = os.environ.get('INTELLICRACK_CLOUD_CONFIG')
     if not cloud_config:
         return None
-    
+
     # Simulate cloud storage
     return {
         "method": "cloud_storage",
-        "status": "simulated", 
+        "status": "simulated",
         "provider": "aws_s3",
         "bucket": "intellicrack-reports",
         "key": f"reports/{report_id}.json",
@@ -1289,10 +1288,10 @@ def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optio
 def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Optional[Dict[str, Any]]:
     """Attempt to store report in database."""
     # Check for database configuration
-    db_config = os.environ.get('INTELLICRACK_DB_CONFIG') 
+    db_config = os.environ.get('INTELLICRACK_DB_CONFIG')
     if not db_config:
         return None
-    
+
     # Simulate database storage
     return {
         "method": "database",
@@ -1305,7 +1304,7 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
 
 
 def _generate_report_summary(report_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate a summary of the report data.""" 
+    """Generate a summary of the report data."""
     summary = {
         "total_sections": len(report_data),
         "sections": list(report_data.keys()),
@@ -1313,27 +1312,27 @@ def _generate_report_summary(report_data: Dict[str, Any]) -> Dict[str, Any]:
         "has_errors": False,
         "has_results": False
     }
-    
+
     # Analyze data types and content
     for key, value in report_data.items():
         summary["data_types"][key] = type(value).__name__
-        
+
         # Check for common patterns
         if key.lower() in ['error', 'errors', 'exception']:
             summary["has_errors"] = True
         elif key.lower() in ['results', 'findings', 'output']:
             summary["has_results"] = True
-    
+
     return summary
 
 
 def _sanitize_report_data(report_data: Dict[str, Any]) -> Dict[str, Any]:
     """Sanitize report data to remove sensitive information."""
     sanitized = report_data.copy()
-    
+
     # Remove or mask sensitive keys
     sensitive_patterns = ['password', 'key', 'token', 'secret', 'credential']
-    
+
     def sanitize_dict(data):
         if isinstance(data, dict):
             for key, value in data.items():
@@ -1346,7 +1345,7 @@ def _sanitize_report_data(report_data: Dict[str, Any]) -> Dict[str, Any]:
                         if isinstance(item, dict):
                             sanitize_dict(item)
         return data
-    
+
     return sanitize_dict(sanitized)
 
 
@@ -1356,14 +1355,14 @@ def _format_report_as_text(report_data: Dict[str, Any]) -> str:
     lines.append("INTELLICRACK ANALYSIS REPORT")
     lines.append("=" * 50)
     lines.append("")
-    
+
     # Add metadata
     metadata = report_data.get("report_metadata", {})
     lines.append("REPORT METADATA:")
     for key, value in metadata.items():
         lines.append(f"  {key}: {value}")
     lines.append("")
-    
+
     # Add system info
     system_info = report_data.get("system_info", {})
     if system_info:
@@ -1371,12 +1370,12 @@ def _format_report_as_text(report_data: Dict[str, Any]) -> str:
         for key, value in system_info.items():
             lines.append(f"  {key}: {value}")
         lines.append("")
-    
+
     # Add content
     content = report_data.get("content", {})
     lines.append("ANALYSIS CONTENT:")
     lines.append("-" * 30)
-    
+
     def format_value(value, indent=0):
         indent_str = "  " * indent
         if isinstance(value, dict):
@@ -1393,12 +1392,12 @@ def _format_report_as_text(report_data: Dict[str, Any]) -> str:
             return result
         else:
             return [f"{indent_str}{value}"]
-    
+
     for key, value in content.items():
         lines.append(f"{key}:")
         lines.extend(format_value(value, 1))
         lines.append("")
-    
+
     return "\n".join(lines)
 
 
@@ -1406,10 +1405,10 @@ def _save_report_as_csv(report_data: Dict[str, Any], csv_path: str) -> bool:
     """Save report data as CSV format."""
     try:
         import csv
-        
+
         # Extract tabular data from report
         tabular_data = []
-        
+
         # Look for list/array data that can be converted to CSV
         content = report_data.get("content", {})
         for key, value in content.items():
@@ -1424,18 +1423,18 @@ def _save_report_as_csv(report_data: Dict[str, Any], csv_path: str) -> bool:
                             for row in value:
                                 writer.writerow(row)
                     return True
-        
+
         # If no suitable tabular data found, create summary CSV
         with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['Section', 'Type', 'Summary'])
-            
+
             for key, value in content.items():
                 summary = str(value)[:100] + "..." if len(str(value)) > 100 else str(value)
                 writer.writerow([key, type(value).__name__, summary])
-        
+
         return True
-        
+
     except Exception as e:
         logger.debug("Error saving CSV: %s", e)
         return False
@@ -1445,7 +1444,7 @@ def _create_report_archive(report_id: str, formats_saved: List[Dict[str, Any]], 
     """Create compressed archive of all report formats."""
     try:
         import tarfile
-        
+
         with tarfile.open(archive_path, 'w:gz') as tar:
             for format_info in formats_saved:
                 if format_info['format'] != 'archive':  # Don't include the archive itself
@@ -1453,9 +1452,9 @@ def _create_report_archive(report_id: str, formats_saved: List[Dict[str, Any]], 
                     if os.path.exists(file_path):
                         arcname = os.path.basename(file_path)
                         tar.add(file_path, arcname=arcname)
-        
+
         return True
-        
+
     except Exception as e:
         logger.debug("Error creating archive: %s", e)
         return False
@@ -1473,10 +1472,10 @@ def _create_submission_audit_trail(submission_result: Dict[str, Any], metadata: 
             "endpoint": metadata.get("endpoint"),
             "user": os.environ.get("USER", "unknown")
         }
-        
+
         # Log audit entry
         logger.info("Audit trail: %s", json.dumps(audit_entry))
-        
+
         # Save to audit file if possible
         audit_file = os.path.join(os.getcwd(), "reports", "audit.log")
         try:
@@ -1484,7 +1483,7 @@ def _create_submission_audit_trail(submission_result: Dict[str, Any], metadata: 
                 f.write(json.dumps(audit_entry) + "\n")
         except OSError:
             pass  # Audit file not critical
-            
+
     except Exception as e:
         logger.debug("Error creating audit trail: %s", e)
 

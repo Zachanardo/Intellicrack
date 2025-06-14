@@ -266,10 +266,10 @@ class TrainingThread(QThread):
                 hidden_size = getattr(self.config, 'hidden_size', 512)
                 num_layers = getattr(self.config, 'num_layers', 6)
                 num_heads = getattr(self.config, 'num_attention_heads', 8)
-                
-                self.logger.info("Creating %s model with %d parameters", model_type, 
+
+                self.logger.info("Creating %s model with %d parameters", model_type,
                                self._estimate_parameter_count(hidden_size, num_layers, vocab_size))
-                
+
                 if model_type == 'gpt':
                     self.model = self._create_gpt_model(vocab_size, hidden_size, num_layers, num_heads)
                 elif model_type == 'bert':
@@ -281,30 +281,30 @@ class TrainingThread(QThread):
                 else:
                     # Default transformer model with enhanced features
                     self.model = self._create_enhanced_transformer_model(vocab_size, hidden_size, num_layers, num_heads)
-                
+
                 # Create tokenizer
                 self.tokenizer = self._create_tokenizer(vocab_size)
-                
+
                 # Initialize model weights properly
                 self._initialize_model_weights()
-                
+
                 # Add model metadata
                 self._add_model_metadata(model_type, vocab_size, hidden_size, num_layers)
-                
-                self.logger.info("Successfully created %s model with %d parameters", 
+
+                self.logger.info("Successfully created %s model with %d parameters",
                                model_type, sum(p.numel() for p in self.model.parameters()))
-                
+
             else:
                 self.logger.warning("PyTorch not available, creating minimal model placeholder")
                 self.model = self._create_fallback_model()
                 self.tokenizer = None
-                
+
         except Exception as e:
             self.logger.error("Error creating model: %s", e)
             self.model = None
             self.tokenizer = None
             raise
-    
+
     def _create_gpt_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
         """Create a GPT-style autoregressive transformer model."""
         class GPTModel(nn.Module):
@@ -319,23 +319,23 @@ class TrainingThread(QThread):
                 self.hidden_size = hidden_size
                 self.num_layers = num_layers
                 self.max_position_embeddings = 2048
-                
+
                 # Token and position embeddings
                 self.token_embedding = nn.Embedding(vocab_size, hidden_size)
                 self.position_embedding = nn.Embedding(self.max_position_embeddings, hidden_size)
-                
+
                 # Transformer blocks
                 self.transformer_blocks = nn.ModuleList([
                     self._create_gpt_block(hidden_size, num_heads) for _ in range(num_layers)
                 ])
-                
+
                 # Final layer norm and output projection
                 self.final_layer_norm = nn.LayerNorm(hidden_size)
                 self.lm_head = nn.Linear(hidden_size, vocab_size, bias=False)
-                
+
                 # Dropout
                 self.dropout = nn.Dropout(0.1)
-                
+
             def _create_gpt_block(self, hidden_size, num_heads):
                 """Create a single GPT transformer block."""
                 class GPTBlock(nn.Module):
@@ -352,49 +352,49 @@ class TrainingThread(QThread):
                         )
                         self.ln1 = nn.LayerNorm(hidden_size)
                         self.ln2 = nn.LayerNorm(hidden_size)
-                        
+
                     def forward(self, x, attention_mask=None):
                         # Pre-norm attention
                         normed_x = self.ln1(x)
-                        attn_out, _ = self.attention(normed_x, normed_x, normed_x, 
+                        attn_out, _ = self.attention(normed_x, normed_x, normed_x,
                                                    attn_mask=attention_mask, is_causal=True)
                         x = x + attn_out
-                        
+
                         # Pre-norm feed forward
                         normed_x = self.ln2(x)
                         ff_out = self.feed_forward(normed_x)
                         x = x + ff_out
-                        
+
                         return x
-                
+
                 return GPTBlock(hidden_size, num_heads)
-                
+
             def forward(self, input_ids, attention_mask=None):
                 seq_len = input_ids.size(1)
                 position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
-                
+
                 # Embeddings
                 token_embeds = self.token_embedding(input_ids)
                 position_embeds = self.position_embedding(position_ids)
                 x = self.dropout(token_embeds + position_embeds)
-                
+
                 # Create causal attention mask
                 if attention_mask is None:
                     attention_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
                     attention_mask = attention_mask.to(input_ids.device)
-                
+
                 # Transformer blocks
                 for block in self.transformer_blocks:
                     x = block(x, attention_mask)
-                
+
                 # Final processing
                 x = self.final_layer_norm(x)
                 logits = self.lm_head(x)
-                
+
                 return logits
-        
+
         return GPTModel(vocab_size, hidden_size, num_layers, num_heads)
-    
+
     def _create_bert_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
         """Create a BERT-style bidirectional transformer model."""
         class BERTModel(nn.Module):
@@ -408,12 +408,12 @@ class TrainingThread(QThread):
                 super().__init__()
                 self.hidden_size = hidden_size
                 self.max_position_embeddings = 512
-                
+
                 # Embeddings
                 self.token_embedding = nn.Embedding(vocab_size, hidden_size, padding_idx=0)
                 self.position_embedding = nn.Embedding(self.max_position_embeddings, hidden_size)
                 self.token_type_embedding = nn.Embedding(2, hidden_size)  # For sentence pairs
-                
+
                 # Transformer encoder
                 encoder_layer = nn.TransformerEncoderLayer(
                     d_model=hidden_size,
@@ -424,7 +424,7 @@ class TrainingThread(QThread):
                     batch_first=True
                 )
                 self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
-                
+
                 # MLM head
                 self.mlm_head = nn.Sequential(
                     nn.Linear(hidden_size, hidden_size),
@@ -432,45 +432,45 @@ class TrainingThread(QThread):
                     nn.LayerNorm(hidden_size),
                     nn.Linear(hidden_size, vocab_size)
                 )
-                
+
                 # Pooler for classification tasks
                 self.pooler = nn.Linear(hidden_size, hidden_size)
-                
+
             def forward(self, input_ids, token_type_ids=None, attention_mask=None):
                 seq_len = input_ids.size(1)
                 position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
-                
+
                 # Embeddings
                 token_embeds = self.token_embedding(input_ids)
                 position_embeds = self.position_embedding(position_ids)
-                
+
                 if token_type_ids is not None:
                     token_type_embeds = self.token_type_embedding(token_type_ids)
                 else:
                     token_type_embeds = torch.zeros_like(token_embeds)
-                
+
                 embeddings = token_embeds + position_embeds + token_type_embeds
-                
+
                 # Transformer
                 if attention_mask is not None:
                     attention_mask = attention_mask.bool()
-                
+
                 hidden_states = self.transformer(embeddings, src_key_padding_mask=attention_mask)
-                
+
                 # MLM prediction
                 mlm_logits = self.mlm_head(hidden_states)
-                
+
                 # Pooled output for classification
                 pooled_output = torch.tanh(self.pooler(hidden_states[:, 0]))
-                
+
                 return {
                     'logits': mlm_logits,
                     'pooled_output': pooled_output,
                     'hidden_states': hidden_states
                 }
-        
+
         return BERTModel(vocab_size, hidden_size, num_layers, num_heads)
-    
+
     def _create_roberta_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
         """Create a RoBERTa-style model (BERT without token type embeddings)."""
         # RoBERTa is similar to BERT but without token type embeddings and different training
@@ -478,7 +478,7 @@ class TrainingThread(QThread):
         # Remove token type embeddings
         model.token_type_embedding = nn.Embedding(1, hidden_size)  # Dummy embedding
         return model
-    
+
     def _create_llama_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
         """Create a LLaMA-style model with RMSNorm and SwiGLU."""
         class LlamaModel(nn.Module):
@@ -492,19 +492,19 @@ class TrainingThread(QThread):
                 super().__init__()
                 self.hidden_size = hidden_size
                 self.num_heads = num_heads
-                
+
                 # Token embedding
                 self.token_embedding = nn.Embedding(vocab_size, hidden_size)
-                
+
                 # Transformer layers
                 self.layers = nn.ModuleList([
                     self._create_llama_layer(hidden_size, num_heads) for _ in range(num_layers)
                 ])
-                
+
                 # Final norm and output
                 self.final_norm = self._create_rms_norm(hidden_size)
                 self.lm_head = nn.Linear(hidden_size, vocab_size, bias=False)
-                
+
             def _create_rms_norm(self, hidden_size):
                 """Create RMSNorm layer."""
                 class RMSNorm(nn.Module):
@@ -512,14 +512,14 @@ class TrainingThread(QThread):
                         super().__init__()
                         self.weight = nn.Parameter(torch.ones(hidden_size))
                         self.eps = eps
-                        
+
                     def forward(self, x):
                         variance = x.pow(2).mean(-1, keepdim=True)
                         x = x * torch.rsqrt(variance + self.eps)
                         return self.weight * x
-                
+
                 return RMSNorm(hidden_size)
-            
+
             def _create_llama_layer(self, hidden_size, num_heads):
                 """Create a single LLaMA transformer layer."""
                 class LlamaLayer(nn.Module):
@@ -529,53 +529,53 @@ class TrainingThread(QThread):
                         self.attention = nn.MultiheadAttention(
                             hidden_size, num_heads, dropout=0.0, batch_first=True
                         )
-                        
+
                         self.ffn_norm = parent._create_rms_norm(hidden_size)
                         # SwiGLU implementation
                         self.gate_proj = nn.Linear(hidden_size, hidden_size * 4, bias=False)
                         self.up_proj = nn.Linear(hidden_size, hidden_size * 4, bias=False)
                         self.down_proj = nn.Linear(hidden_size * 4, hidden_size, bias=False)
-                        
+
                     def forward(self, x, attention_mask=None):
                         # Attention with residual
                         normed_x = self.attention_norm(x)
-                        attn_out, _ = self.attention(normed_x, normed_x, normed_x, 
+                        attn_out, _ = self.attention(normed_x, normed_x, normed_x,
                                                    attn_mask=attention_mask, is_causal=True)
                         x = x + attn_out
-                        
+
                         # SwiGLU FFN with residual
                         normed_x = self.ffn_norm(x)
                         gate = torch.nn.functional.silu(self.gate_proj(normed_x))
                         up = self.up_proj(normed_x)
                         ffn_out = self.down_proj(gate * up)
                         x = x + ffn_out
-                        
+
                         return x
-                
+
                 parent = self
                 return LlamaLayer(hidden_size, num_heads)
-                
+
             def forward(self, input_ids, attention_mask=None):
                 x = self.token_embedding(input_ids)
-                
+
                 # Create causal mask
                 seq_len = input_ids.size(1)
                 if attention_mask is None:
                     attention_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
                     attention_mask = attention_mask.to(input_ids.device)
-                
+
                 # Apply layers
                 for layer in self.layers:
                     x = layer(x, attention_mask)
-                
+
                 # Final processing
                 x = self.final_norm(x)
                 logits = self.lm_head(x)
-                
+
                 return logits
-        
+
         return LlamaModel(vocab_size, hidden_size, num_layers, num_heads)
-    
+
     def _create_enhanced_transformer_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
         """Create an enhanced transformer model with modern improvements."""
         class EnhancedTransformerModel(nn.Module):
@@ -590,23 +590,23 @@ class TrainingThread(QThread):
                 self.hidden_size = hidden_size
                 self.num_heads = num_heads
                 self.max_seq_len = 2048
-                
+
                 # Embeddings with improved initialization
                 self.token_embedding = nn.Embedding(vocab_size, hidden_size)
                 self.position_embedding = nn.Embedding(self.max_seq_len, hidden_size)
-                
+
                 # Transformer layers with pre-norm and improvements
                 self.layers = nn.ModuleList([
                     self._create_enhanced_layer(hidden_size, num_heads) for _ in range(num_layers)
                 ])
-                
+
                 # Output processing
                 self.final_norm = nn.LayerNorm(hidden_size)
                 self.output_projection = nn.Linear(hidden_size, vocab_size, bias=False)
-                
+
                 # Dropout
                 self.embedding_dropout = nn.Dropout(0.1)
-                
+
             def _create_enhanced_layer(self, hidden_size, num_heads):
                 """Create enhanced transformer layer with modern improvements."""
                 class EnhancedTransformerLayer(nn.Module):
@@ -618,7 +618,7 @@ class TrainingThread(QThread):
                             hidden_size, num_heads, dropout=0.1, batch_first=True
                         )
                         self.attention_dropout = nn.Dropout(0.1)
-                        
+
                         # Pre-norm feed forward
                         self.ffn_norm = nn.LayerNorm(hidden_size)
                         self.feed_forward = nn.Sequential(
@@ -628,55 +628,55 @@ class TrainingThread(QThread):
                             nn.Linear(hidden_size * 4, hidden_size),
                             nn.Dropout(0.1)
                         )
-                        
+
                     def forward(self, x, attention_mask=None):
                         # Pre-norm attention with residual
                         normed_x = self.attention_norm(x)
                         attn_out, attn_weights = self.attention(
-                            normed_x, normed_x, normed_x, 
+                            normed_x, normed_x, normed_x,
                             attn_mask=attention_mask, is_causal=True
                         )
                         attn_out = self.attention_dropout(attn_out)
                         x = x + attn_out
-                        
+
                         # Pre-norm feed forward with residual
                         normed_x = self.ffn_norm(x)
                         ffn_out = self.feed_forward(normed_x)
                         x = x + ffn_out
-                        
+
                         return x
-                
+
                 return EnhancedTransformerLayer(hidden_size, num_heads)
-                
+
             def forward(self, input_ids, attention_mask=None, return_attention=False):
                 batch_size, seq_len = input_ids.shape
-                
+
                 # Embeddings
                 positions = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
                 token_embeds = self.token_embedding(input_ids)
                 pos_embeds = self.position_embedding(positions)
                 x = self.embedding_dropout(token_embeds + pos_embeds)
-                
+
                 # Create causal attention mask
                 if attention_mask is None:
                     attention_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
                     attention_mask = attention_mask.to(input_ids.device)
-                
+
                 # Apply transformer layers
                 attention_weights = [] if return_attention else None
                 for layer in self.layers:
                     x = layer(x, attention_mask)
-                
+
                 # Final processing
                 x = self.final_norm(x)
                 logits = self.output_projection(x)
-                
+
                 if return_attention:
                     return logits, attention_weights
                 return logits
-        
+
         return EnhancedTransformerModel(vocab_size, hidden_size, num_layers, num_heads)
-    
+
     def _create_tokenizer(self, vocab_size: int):
         """Create a functional tokenizer for the model."""
         class DummyTokenizer:
@@ -692,27 +692,27 @@ class TrainingThread(QThread):
                 self.vocab = self._create_vocabulary(vocab_size)
                 self.token_to_id = {token: idx for idx, token in enumerate(self.vocab)}
                 self.id_to_token = {idx: token for idx, token in enumerate(self.vocab)}
-                
+
                 # Special tokens
                 self.pad_token = "[PAD]"
                 self.unk_token = "[UNK]"
                 self.bos_token = "[BOS]"
                 self.eos_token = "[EOS]"
                 self.mask_token = "[MASK]"
-                
+
                 self.pad_token_id = self.token_to_id.get(self.pad_token, 0)
                 self.unk_token_id = self.token_to_id.get(self.unk_token, 1)
                 self.bos_token_id = self.token_to_id.get(self.bos_token, 2)
                 self.eos_token_id = self.token_to_id.get(self.eos_token, 3)
                 self.mask_token_id = self.token_to_id.get(self.mask_token, 4)
-                
+
             def _create_vocabulary(self, vocab_size):
                 """Create a basic vocabulary with common tokens."""
                 vocab = [
                     "[PAD]", "[UNK]", "[BOS]", "[EOS]", "[MASK]",
                     "[CLS]", "[SEP]", "[NEWLINE]", "[TAB]", "[SPACE]"
                 ]
-                
+
                 # Add common English words
                 common_words = [
                     "the", "and", "of", "to", "a", "in", "is", "it", "you", "that",
@@ -721,93 +721,93 @@ class TrainingThread(QThread):
                     "but", "not", "what", "all", "were", "we", "when", "your", "can", "said"
                 ]
                 vocab.extend(common_words)
-                
+
                 # Add single characters
                 for i in range(26):
                     vocab.append(chr(ord('a') + i))
                     vocab.append(chr(ord('A') + i))
-                
+
                 # Add digits
                 for i in range(10):
                     vocab.append(str(i))
-                
+
                 # Add common punctuation
                 punct = [".", ",", "!", "?", ";", ":", "'", '"', "-", "(", ")", "[", "]", "{", "}"]
                 vocab.extend(punct)
-                
+
                 # Fill remaining slots with generated tokens
                 while len(vocab) < vocab_size:
                     vocab.append(f"token_{len(vocab)}")
-                
+
                 return vocab[:vocab_size]
-            
+
             def encode(self, text, add_special_tokens=True, max_length=None, padding=False):
                 """Encode text to token IDs."""
                 if isinstance(text, str):
                     texts = [text]
                 else:
                     texts = text
-                
+
                 encoded_sequences = []
                 for single_text in texts:
                     # Simple word-based tokenization
                     tokens = single_text.lower().split()
                     token_ids = []
-                    
+
                     if add_special_tokens:
                         token_ids.append(self.bos_token_id)
-                    
+
                     for token in tokens:
                         token_id = self.token_to_id.get(token, self.unk_token_id)
                         token_ids.append(token_id)
-                    
+
                     if add_special_tokens:
                         token_ids.append(self.eos_token_id)
-                    
+
                     # Apply max_length truncation
                     if max_length and len(token_ids) > max_length:
                         token_ids = token_ids[:max_length-1] + [self.eos_token_id]
-                    
+
                     encoded_sequences.append(token_ids)
-                
+
                 # Apply padding
                 if padding and len(encoded_sequences) > 1:
                     max_len = max(len(seq) for seq in encoded_sequences)
                     if max_length:
                         max_len = min(max_len, max_length)
-                    
+
                     for seq in encoded_sequences:
                         while len(seq) < max_len:
                             seq.append(self.pad_token_id)
-                
+
                 return encoded_sequences[0] if isinstance(text, str) else encoded_sequences
-            
+
             def decode(self, token_ids, skip_special_tokens=True):
                 """Decode token IDs to text."""
                 if torch_available and torch.is_tensor(token_ids):
                     token_ids = token_ids.tolist()
-                
+
                 tokens = []
                 for token_id in token_ids:
                     token = self.id_to_token.get(token_id, self.unk_token)
-                    
+
                     if skip_special_tokens and token in [self.pad_token, self.bos_token, self.eos_token]:
                         continue
-                    
+
                     tokens.append(token)
-                
+
                 return " ".join(tokens)
-            
+
             def __len__(self):
                 return self.vocab_size
-        
+
         return DummyTokenizer(vocab_size)
-    
+
     def _initialize_model_weights(self):
         """Initialize model weights with proper initialization strategies."""
         if self.model is None:
             return
-        
+
         def init_weights(module):
             if isinstance(module, nn.Linear):
                 # Xavier uniform initialization for linear layers
@@ -827,15 +827,15 @@ class TrainingThread(QThread):
                     torch.nn.init.xavier_uniform_(module.in_proj_weight)
                 if hasattr(module, 'out_proj') and module.out_proj.weight is not None:
                     torch.nn.init.xavier_uniform_(module.out_proj.weight)
-        
+
         self.model.apply(init_weights)
         self.logger.info("Model weights initialized with Xavier/normal initialization")
-    
+
     def _add_model_metadata(self, model_type: str, vocab_size: int, hidden_size: int, num_layers: int):
         """Add comprehensive metadata to the model."""
         if not hasattr(self.model, 'config'):
             self.model.config = {}
-        
+
         self.model.config.update({
             'model_type': model_type,
             'vocab_size': vocab_size,
@@ -847,7 +847,7 @@ class TrainingThread(QThread):
             'framework': 'pytorch',
             'version': '1.0.0'
         })
-        
+
         # Add training configuration
         self.model.training_config = {
             'learning_rate': getattr(self.config, 'learning_rate', 1e-4),
@@ -856,7 +856,7 @@ class TrainingThread(QThread):
             'warmup_steps': getattr(self.config, 'warmup_steps', 1000),
             'weight_decay': getattr(self.config, 'weight_decay', 0.01)
         }
-    
+
     def _estimate_parameter_count(self, hidden_size: int, num_layers: int, vocab_size: int) -> int:
         """Estimate the number of parameters in the model."""
         # Rough estimation for transformer models
@@ -867,9 +867,9 @@ class TrainingThread(QThread):
             hidden_size * 4  # Layer norms and biases
         )
         output_params = hidden_size * vocab_size  # Output projection
-        
+
         return embedding_params + layer_params + output_params
-    
+
     def _create_fallback_model(self):
         """Create a minimal fallback model when PyTorch is not available."""
         class FallbackModel:
@@ -882,20 +882,22 @@ class TrainingThread(QThread):
                     'num_layers': 6,
                     'status': 'fallback_mode'
                 }
-            
+
             def forward(self, *args, **kwargs):
+                import logging
+                logger = logging.getLogger(__name__)
                 logger.warning("PyTorch not available - cannot perform forward pass")
                 return {"error": "PyTorch not available", "status": "fallback_mode"}
-            
+
             def parameters(self):
                 return []
-            
+
             def train(self):
                 pass
-            
+
             def eval(self):
                 pass
-        
+
         return FallbackModel()
 
     def _load_dataset(self):

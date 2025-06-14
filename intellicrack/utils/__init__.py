@@ -28,212 +28,353 @@ _init_logger = logging.getLogger(__name__)
 # Import utility modules with error handling
 try:
     from .binary_utils import (
-        compute_file_hash, get_file_hash, read_binary, 
-        write_binary, analyze_binary_format, is_binary_file, 
-        get_file_entropy, check_suspicious_pe_sections, validate_binary_path
+        analyze_binary_format,
+        check_suspicious_pe_sections,
+        compute_file_hash,
+        get_file_entropy,
+        get_file_hash,
+        is_binary_file,
+        read_binary,
+        validate_binary_path,
+        write_binary,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import binary_utils: %s", e)
 
 try:
-    from .logger import get_logger, setup_logging, logger
+    from .logger import get_logger, logger, setup_logging
 except ImportError as e:
     _init_logger.warning("Failed to import logger: %s", e)
 
 try:
     from .misc_utils import (
-        log_message, get_timestamp, format_bytes, validate_path,
-        sanitize_filename, truncate_string, safe_str, parse_size_string,
-        get_file_extension, ensure_directory_exists
+        ensure_directory_exists,
+        format_bytes,
+        get_file_extension,
+        get_timestamp,
+        log_message,
+        parse_size_string,
+        safe_str,
+        sanitize_filename,
+        truncate_string,
+        validate_path,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import misc_utils: %s", e)
 
 try:
     from .patch_utils import (
-        parse_patch_instructions, create_patch, apply_patch,
-        validate_patch, convert_rva_to_offset, get_section_info,
-        create_nop_patch
+        apply_patch,
+        convert_rva_to_offset,
+        create_nop_patch,
+        create_patch,
+        get_section_info,
+        parse_patch_instructions,
+        validate_patch,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import patch_utils: %s", e)
 
 try:
     from .protection_utils import (
-        detect_packing, inject_comprehensive_api_hooks,
-        detect_protection, analyze_protection, bypass_protection
+        analyze_protection,
+        bypass_protection,
+        detect_packing,
+        detect_protection,
+        inject_comprehensive_api_hooks,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import protection_utils: %s", e)
 
 try:
-    from .report_generator import (
-        ReportGenerator, generate_report, export_report
-    )
+    from .report_generator import ReportGenerator, export_report, generate_report
 except ImportError as e:
     _init_logger.warning("Failed to import report_generator: %s", e)
 
 try:
     from .system_utils import (
-        get_system_info, check_admin_privileges, get_process_list,
-        extract_executable_icon, get_target_process_pid
+        check_admin_privileges,
+        extract_executable_icon,
+        get_process_list,
+        get_system_info,
+        get_target_process_pid,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import system_utils: %s", e)
 
 try:
     from .ui_utils import (
-        format_table_data, select_from_list, show_message,
-        get_user_input, update_progress
+        format_table_data,
+        get_user_input,
+        select_from_list,
+        show_message,
+        update_progress,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import ui_utils: %s", e)
 
 try:
     from .dependencies import (
-        check_and_install_dependencies, install_dependencies,
-        setup_required_environment, check_weasyprint_dependencies
+        check_and_install_dependencies,
+        check_weasyprint_dependencies,
+        install_dependencies,
+        setup_required_environment,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import dependencies: %s", e)
 
 try:
+    from .tool_wrappers import log_message as tool_log_message
     from .tool_wrappers import (
-        log_message as tool_log_message, wrapper_find_file, wrapper_load_binary,
-        wrapper_list_relevant_files, wrapper_read_file_chunk, wrapper_get_file_metadata,
-        wrapper_run_static_analysis, wrapper_deep_license_analysis, wrapper_detect_protections,
-        wrapper_disassemble_address, run_ghidra_headless
+        run_ghidra_headless,
+        wrapper_deep_license_analysis,
+        wrapper_detect_protections,
+        wrapper_disassemble_address,
+        wrapper_find_file,
+        wrapper_get_file_metadata,
+        wrapper_list_relevant_files,
+        wrapper_load_binary,
+        wrapper_read_file_chunk,
+        wrapper_run_static_analysis,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import tool_wrappers: %s", e)
 
 try:
     from .runner_functions import (
-        run_network_license_server, run_ssl_tls_interceptor, run_protocol_fingerprinter,
-        run_cloud_license_hooker, run_cfg_explorer, run_concolic_execution,
-        run_enhanced_protection_scan, run_visual_network_traffic_analyzer,
-        run_multi_format_analysis, run_distributed_processing, run_gpu_accelerated_analysis,
-        run_ai_guided_patching, run_advanced_ghidra_analysis, run_ghidra_plugin_from_file,
-        process_ghidra_analysis_results, run_symbolic_execution, run_incremental_analysis,
-        run_memory_optimized_analysis, run_taint_analysis, run_rop_chain_generator,
-        run_qemu_analysis, run_qiling_emulation, run_selected_analysis,
-        run_selected_patching, run_memory_analysis, run_network_analysis,
-        run_deep_license_analysis, run_frida_analysis, run_dynamic_instrumentation,
-        run_frida_script, run_comprehensive_analysis, run_ghidra_analysis,
-        run_radare2_analysis, run_autonomous_patching, run_ghidra_analysis_gui
+        process_ghidra_analysis_results,
+        run_advanced_ghidra_analysis,
+        run_ai_guided_patching,
+        run_autonomous_patching,
+        run_cfg_explorer,
+        run_cloud_license_hooker,
+        run_comprehensive_analysis,
+        run_concolic_execution,
+        run_deep_license_analysis,
+        run_distributed_processing,
+        run_dynamic_instrumentation,
+        run_enhanced_protection_scan,
+        run_frida_analysis,
+        run_frida_script,
+        run_ghidra_analysis,
+        run_ghidra_analysis_gui,
+        run_ghidra_plugin_from_file,
+        run_gpu_accelerated_analysis,
+        run_incremental_analysis,
+        run_memory_analysis,
+        run_memory_optimized_analysis,
+        run_multi_format_analysis,
+        run_network_analysis,
+        run_network_license_server,
+        run_protocol_fingerprinter,
+        run_qemu_analysis,
+        run_qiling_emulation,
+        run_radare2_analysis,
+        run_rop_chain_generator,
+        run_selected_analysis,
+        run_selected_patching,
+        run_ssl_tls_interceptor,
+        run_symbolic_execution,
+        run_taint_analysis,
+        run_visual_network_traffic_analyzer,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import runner_functions: %s", e)
 
 try:
     from .exception_utils import (
-        handle_exception, load_config, save_config,
-        setup_file_logging, create_sample_plugins, load_ai_model
+        create_sample_plugins,
+        handle_exception,
+        load_ai_model,
+        load_config,
+        save_config,
+        setup_file_logging,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import exception_utils: %s", e)
 
 try:
     from .protection_detection import (
-        detect_anti_debugging_techniques, detect_commercial_protections,
-        detect_virtualization_protection, scan_for_bytecode_protectors
+        detect_anti_debugging_techniques,
+        detect_commercial_protections,
+        detect_virtualization_protection,
+        scan_for_bytecode_protectors,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import protection_detection: %s", e)
 
 try:
     from .process_utils import (
-        get_target_process_pid, compute_file_hash, detect_hardware_dongles,
-        detect_tpm_protection, get_system_processes, run_command
+        compute_file_hash,
+        detect_hardware_dongles,
+        detect_tpm_protection,
+        get_system_processes,
+        get_target_process_pid,
+        run_command,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import process_utils: %s", e)
 
 try:
     from .patch_verification import (
-        verify_patches, simulate_patch_and_verify, 
         apply_parsed_patch_instructions_with_validation,
-        rewrite_license_functions_with_parsing
+        rewrite_license_functions_with_parsing,
+        simulate_patch_and_verify,
+        verify_patches,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import patch_verification: %s", e)
 
 try:
     from .binary_analysis import (
-        analyze_binary, analyze_binary_optimized, identify_binary_format,
-        analyze_pe, analyze_elf, analyze_macho, analyze_patterns,
-        analyze_traffic, scan_binary, extract_patterns_from_binary,
-        extract_binary_features
+        analyze_binary,
+        analyze_binary_optimized,
+        analyze_elf,
+        analyze_macho,
+        analyze_patterns,
+        analyze_pe,
+        analyze_traffic,
+        extract_binary_features,
+        extract_patterns_from_binary,
+        identify_binary_format,
+        scan_binary,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import binary_analysis: %s", e)
 
 try:
     from .security_analysis import (
-        scan_protectors, bypass_tpm_checks, check_memory_usage,
-        check_for_memory_leaks, check_buffer_overflow, run_tpm_bypass,
-        run_vm_bypass
+        bypass_tpm_checks,
+        check_buffer_overflow,
+        check_for_memory_leaks,
+        check_memory_usage,
+        run_tpm_bypass,
+        run_vm_bypass,
+        scan_protectors,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import security_analysis: %s", e)
 
 try:
     from .exploitation import (
-        generate_bypass_script, generate_exploit, generate_exploit_strategy,
-        generate_license_bypass_payload, generate_ca_certificate, generate_key,
-        generate_chains, generate_response, patch_selected, run_automated_patch_agent,
-        run_simulate_patch
+        generate_bypass_script,
+        generate_ca_certificate,
+        generate_chains,
+        generate_exploit,
+        generate_exploit_strategy,
+        generate_key,
+        generate_license_bypass_payload,
+        generate_response,
+        patch_selected,
+        run_automated_patch_agent,
+        run_simulate_patch,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import exploitation: %s", e)
 
 try:
     from .distributed_processing import (
-        process_binary_chunks, process_chunk, process_distributed_results,
-        run_distributed_analysis, run_distributed_entropy_analysis,
-        run_distributed_pattern_search, extract_binary_info,
-        run_gpu_accelerator, run_incremental_analysis, run_memory_optimized_analysis,
-        run_pdf_report_generator
+        extract_binary_info,
+        process_binary_chunks,
+        process_chunk,
+        process_distributed_results,
+        run_distributed_analysis,
+        run_distributed_entropy_analysis,
+        run_distributed_pattern_search,
+        run_gpu_accelerator,
+        run_incremental_analysis,
+        run_memory_optimized_analysis,
+        run_pdf_report_generator,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import distributed_processing: %s", e)
 
 try:
     from .additional_runners import (
-        run_comprehensive_analysis, run_deep_license_analysis, run_detect_packing,
-        run_analysis, run_autonomous_crack, run_full_autonomous_mode,
-        run_ghidra_analysis_gui, run_incremental_analysis_ui, run_deep_cfg_analysis,
-        run_external_tool, run_windows_activator, check_adobe_licensex_status,
-        run_adobe_licensex_manually, validate_dataset, verify_hash,
-        run_external_command, compute_file_hash, create_sample_plugins,
-        load_ai_model, get_target_process_pid
+        check_adobe_licensex_status,
+        compute_file_hash,
+        create_sample_plugins,
+        get_target_process_pid,
+        load_ai_model,
+        run_adobe_licensex_manually,
+        run_analysis,
+        run_autonomous_crack,
+        run_comprehensive_analysis,
+        run_deep_cfg_analysis,
+        run_deep_license_analysis,
+        run_detect_packing,
+        run_external_command,
+        run_external_tool,
+        run_full_autonomous_mode,
+        run_ghidra_analysis_gui,
+        run_incremental_analysis_ui,
+        run_windows_activator,
+        validate_dataset,
+        verify_hash,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import additional_runners: %s", e)
 
 try:
     from .core_utilities import (
-        main, dispatch_tool, register_tool, register_default_tools,
-        on_message, register, retrieve_few_shot_examples, deep_runtime_monitoring,
-        run_gui_mode, run_cli_mode, TOOL_REGISTRY
+        TOOL_REGISTRY,
+        deep_runtime_monitoring,
+        dispatch_tool,
+        main,
+        on_message,
+        register,
+        register_default_tools,
+        register_tool,
+        retrieve_few_shot_examples,
+        run_cli_mode,
+        run_gui_mode,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import core_utilities: %s", e)
 
 try:
     from .final_utilities import (
-        add_table, browse_dataset, browse_model, show_simulation_results,
-        update_training_progress, update_visualization, center_on_screen,
-        copy_to_clipboard, showEvent, monitor_memory, predict_vulnerabilities,
-        accelerate_hash_calculation, compute_binary_hash, compute_section_hashes,
-        identify_changed_sections, get_file_icon, get_resource_type,
-        cache_analysis_results, get_captured_requests, force_memory_cleanup,
-        initialize_memory_optimizer, sandbox_process, select_backend_for_workload,
-        truncate_text, async_wrapper, hash_func, export_metrics, submit_report,
-        start_training, stop_training, on_training_finished, create_dataset,
-        augment_dataset, load_dataset_preview, create_full_feature_model,
-        add_code_snippet, add_dataset_row, add_image, add_recommendations,
-        patches_reordered, do_GET
+        accelerate_hash_calculation,
+        add_code_snippet,
+        add_dataset_row,
+        add_image,
+        add_recommendations,
+        add_table,
+        async_wrapper,
+        augment_dataset,
+        browse_dataset,
+        browse_model,
+        cache_analysis_results,
+        center_on_screen,
+        compute_binary_hash,
+        compute_section_hashes,
+        copy_to_clipboard,
+        create_dataset,
+        create_full_feature_model,
+        do_GET,
+        export_metrics,
+        force_memory_cleanup,
+        get_captured_requests,
+        get_file_icon,
+        get_resource_type,
+        hash_func,
+        identify_changed_sections,
+        initialize_memory_optimizer,
+        load_dataset_preview,
+        monitor_memory,
+        on_training_finished,
+        patches_reordered,
+        predict_vulnerabilities,
+        sandbox_process,
+        select_backend_for_workload,
+        show_simulation_results,
+        showEvent,
+        start_training,
+        stop_training,
+        submit_report,
+        truncate_text,
+        update_training_progress,
+        update_visualization,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import final_utilities: %s", e)
@@ -241,16 +382,12 @@ except ImportError as e:
 # internal_helpers imports are already included earlier in the file
 
 try:
-    from .ui_setup_functions import (
-        setup_dataset_tab, setup_memory_monitor, setup_training_tab
-    )
+    from .ui_setup_functions import setup_dataset_tab, setup_memory_monitor, setup_training_tab
 except ImportError as e:
     _init_logger.warning("Failed to import ui_setup_functions: %s", e)
 
 try:
-    from .pcapy_compat import (
-        get_packet_capture_interface, create_pcap_reader, PCAP_AVAILABLE
-    )
+    from .pcapy_compat import PCAP_AVAILABLE, create_pcap_reader, get_packet_capture_interface
 except ImportError as e:
     _init_logger.warning("Failed to import pcapy_compat: %s", e)
 
@@ -288,19 +425,16 @@ except ImportError as e:
 # Import exploit common functions
 try:
     from .exploit_common import (
-        handle_exploit_strategy_generation,
+        create_analysis_button,
         handle_exploit_payload_generation,
-        create_analysis_button
+        handle_exploit_strategy_generation,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import exploit_common functions: %s", e)
 
 # Import UI button common functions
 try:
-    from .ui_button_common import (
-        add_extra_buttons,
-        get_button_style
-    )
+    from .ui_button_common import add_extra_buttons, get_button_style
 except ImportError as e:
     _init_logger.warning("Failed to import ui_button_common functions: %s", e)
 
@@ -309,7 +443,7 @@ try:
     from .network_api_common import (
         analyze_network_apis,
         get_network_api_categories,
-        summarize_network_capabilities
+        summarize_network_capabilities,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import network_api_common functions: %s", e)
@@ -317,82 +451,74 @@ except ImportError as e:
 # Import common utility modules
 try:
     from .windows_common import (
-        is_windows_available,
+        WINDOWS_AVAILABLE,
+        WindowsConstants,
         get_windows_kernel32,
         get_windows_ntdll,
-        WindowsConstants,
-        WINDOWS_AVAILABLE
+        is_windows_available,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import windows_common functions: %s", e)
 
 try:
-    from .pe_analysis_common import (
-        analyze_pe_imports,
-        get_pe_sections_info
-    )
+    from .pe_analysis_common import analyze_pe_imports, get_pe_sections_info
 except ImportError as e:
     _init_logger.warning("Failed to import pe_analysis_common functions: %s", e)
 
 try:
-    from .process_common import (
-        run_subprocess_safely,
-        create_popen_safely
-    )
+    from .process_common import create_popen_safely, run_subprocess_safely
 except ImportError as e:
     _init_logger.warning("Failed to import process_common functions: %s", e)
 
 try:
-    from .certificate_common import (
-        create_certificate_builder
-    )
+    from .certificate_common import create_certificate_builder
 except ImportError as e:
     _init_logger.warning("Failed to import certificate_common functions: %s", e)
 
 __all__ = [
     # From binary_utils
-    'compute_file_hash', 'get_file_hash', 'read_binary', 
-    'write_binary', 'analyze_binary_format', 'is_binary_file', 
+    'compute_file_hash', 'get_file_hash', 'read_binary',
+    'write_binary', 'analyze_binary_format', 'is_binary_file',
     'get_file_entropy', 'check_suspicious_pe_sections', 'validate_binary_path',
-    
+
     # From logger
     'get_logger', 'setup_logging', 'logger',
-    
+
     # From misc_utils
     'log_message', 'get_timestamp', 'format_bytes', 'validate_path',
     'sanitize_filename', 'truncate_string', 'safe_str', 'parse_size_string',
     'get_file_extension', 'ensure_directory_exists',
-    
+
     # From patch_utils
     'parse_patch_instructions', 'create_patch', 'apply_patch',
     'validate_patch', 'convert_rva_to_offset', 'get_section_info',
     'create_nop_patch',
-    
+
     # From protection_utils
     'detect_packing', 'inject_comprehensive_api_hooks',
     'detect_protection', 'analyze_protection', 'bypass_protection',
-    
+
     # From report_generator
     'ReportGenerator', 'generate_report', 'export_report',
-    
+
     # From system_utils
     'get_system_info', 'check_admin_privileges', 'get_process_list',
     'extract_executable_icon', 'get_target_process_pid',
-    
+
     # From ui_utils
     'format_table_data', 'select_from_list', 'show_message',
     'get_user_input', 'update_progress',
-    
+
     # From dependencies
     'check_and_install_dependencies', 'install_dependencies',
     'setup_required_environment', 'check_weasyprint_dependencies',
-    
+
     # From tool_wrappers
     'tool_log_message', 'wrapper_find_file', 'wrapper_load_binary',
     'wrapper_list_relevant_files', 'wrapper_read_file_chunk', 'wrapper_get_file_metadata',
     'wrapper_run_static_analysis', 'wrapper_deep_license_analysis', 'wrapper_detect_protections',
     'wrapper_disassemble_address', 'run_ghidra_headless',
-    
+
     # From runner_functions
     'run_network_license_server', 'run_ssl_tls_interceptor', 'run_protocol_fingerprinter',
     'run_cloud_license_hooker', 'run_cfg_explorer', 'run_concolic_execution',
@@ -406,48 +532,48 @@ __all__ = [
     'run_frida_analysis', 'run_dynamic_instrumentation',
     'run_frida_script', 'run_comprehensive_analysis', 'run_ghidra_analysis',
     'run_radare2_analysis', 'run_autonomous_patching', 'run_ghidra_analysis_gui',
-    
+
     # From exception_utils
     'handle_exception', 'load_config', 'save_config',
     'setup_file_logging', 'create_sample_plugins', 'load_ai_model',
-    
+
     # From protection_detection
     'detect_anti_debugging_techniques', 'detect_commercial_protections',
     'detect_virtualization_protection', 'scan_for_bytecode_protectors',
-    
+
     # From process_utils
     'detect_hardware_dongles',
     'detect_tpm_protection', 'get_system_processes', 'run_command',
-    
+
     # From patch_verification
-    'verify_patches', 'simulate_patch_and_verify', 
+    'verify_patches', 'simulate_patch_and_verify',
     'apply_parsed_patch_instructions_with_validation',
     'rewrite_license_functions_with_parsing',
-    
+
     # From binary_analysis
     'analyze_binary', 'analyze_binary_optimized', 'identify_binary_format',
     'analyze_pe', 'analyze_elf', 'analyze_macho', 'analyze_patterns',
     'analyze_traffic', 'scan_binary', 'extract_patterns_from_binary',
     'extract_binary_features',
-    
+
     # From security_analysis
     'scan_protectors', 'bypass_tpm_checks', 'check_memory_usage',
     'check_for_memory_leaks', 'check_buffer_overflow', 'run_tpm_bypass',
     'run_vm_bypass',
-    
+
     # From exploitation
     'generate_bypass_script', 'generate_exploit', 'generate_exploit_strategy',
     'generate_license_bypass_payload', 'generate_ca_certificate', 'generate_key',
     'generate_chains', 'generate_response', 'patch_selected', 'run_automated_patch_agent',
     'run_simulate_patch',
-    
+
     # From distributed_processing
     'process_binary_chunks', 'process_chunk', 'process_distributed_results',
     'run_distributed_analysis', 'run_distributed_entropy_analysis',
     'run_distributed_pattern_search', 'extract_binary_info',
     'run_gpu_accelerator',
     'run_pdf_report_generator',
-    
+
     # From additional_runners
     'run_detect_packing',
     'run_analysis', 'run_autonomous_crack', 'run_full_autonomous_mode',
@@ -455,12 +581,12 @@ __all__ = [
     'run_external_tool', 'run_windows_activator', 'check_adobe_licensex_status',
     'run_adobe_licensex_manually', 'validate_dataset', 'verify_hash',
     'run_external_command',
-    
+
     # From core_utilities
     'main', 'dispatch_tool', 'register_tool', 'register_default_tools',
     'on_message', 'register', 'retrieve_few_shot_examples', 'deep_runtime_monitoring',
     'run_gui_mode', 'run_cli_mode', 'TOOL_REGISTRY',
-    
+
     # From final_utilities
     'add_table', 'browse_dataset', 'browse_model',
     'show_simulation_results', 'update_training_progress',
@@ -477,13 +603,13 @@ __all__ = [
     'create_dataset', 'augment_dataset', 'load_dataset_preview',
     'create_full_feature_model', 'add_code_snippet', 'add_dataset_row',
     'add_image', 'add_recommendations', 'patches_reordered', 'do_GET',
-    
+
     # From ui_setup_functions
     'setup_dataset_tab', 'setup_memory_monitor', 'setup_training_tab',
-    
+
     # From pcapy_compat
     'get_packet_capture_interface', 'create_pcap_reader', 'PCAP_AVAILABLE',
-    
+
     # From internal_helpers
     '_add_protocol_fingerprinter_results', '_analyze_requests',
     '_analyze_snapshot_differences', '_handle_request',
@@ -492,43 +618,43 @@ __all__ = [
     '_generate_mitm_script', '_perform_augmentation',
     '_run_autonomous_patching_thread', '_run_ghidra_thread',
     '_run_report_generation_thread',
-    
+
     # From path_discovery
     'find_tool',
     'get_system_path',
     'ensure_tool_available',
     'PathDiscovery',
     'get_path_discovery',
-    
+
     # From exploit_common
     'handle_exploit_strategy_generation',
     'handle_exploit_payload_generation',
     'create_analysis_button',
-    
+
     # From ui_button_common
     'add_extra_buttons',
     'get_button_style',
-    
+
     # From network_api_common
     'analyze_network_apis',
     'get_network_api_categories',
     'summarize_network_capabilities',
-    
+
     # From windows_common
     'is_windows_available',
     'get_windows_kernel32',
     'get_windows_ntdll',
     'WindowsConstants',
     'WINDOWS_AVAILABLE',
-    
+
     # From pe_analysis_common
     'analyze_pe_imports',
     'get_pe_sections_info',
-    
+
     # From process_common
     'run_subprocess_safely',
     'create_popen_safely',
-    
+
     # From certificate_common
     'create_certificate_builder'
 ]

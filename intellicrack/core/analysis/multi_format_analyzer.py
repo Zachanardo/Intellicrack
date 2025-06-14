@@ -27,12 +27,15 @@ from typing import Any, Dict, List, Optional, Union
 
 # Import common patterns from centralized module
 from ...utils.import_patterns import (
-    lief, LIEF_AVAILABLE,
-    pefile, PEFILE_AVAILABLE,
-    ELFFile, PYELFTOOLS_AVAILABLE,
-    MachO, MACHOLIB_AVAILABLE
+    LIEF_AVAILABLE,
+    MACHOLIB_AVAILABLE,
+    PEFILE_AVAILABLE,
+    PYELFTOOLS_AVAILABLE,
+    ELFFile,
+    MachO,
+    lief,
+    pefile,
 )
-
 from ...utils.protection_utils import calculate_entropy
 
 

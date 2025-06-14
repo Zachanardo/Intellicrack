@@ -102,7 +102,7 @@ class NetworkTrafficAnalyzer:
             b'FEATURE', b'INCREMENT', b'VENDOR', b'SERVER',
             b'HASP', b'Sentinel', b'FLEXLM', b'LCSAP'
         ]
-        
+
         # Capture control flag
         self.capturing = False
 
@@ -268,7 +268,7 @@ class NetworkTrafficAnalyzer:
             def perform_capture(out_file):
                 """Perform the actual packet capture."""
                 nonlocal packets_captured
-                
+
                 # Capture loop
                 try:
                     while self.capturing:
@@ -348,7 +348,7 @@ class NetworkTrafficAnalyzer:
             else:
                 # No output file specified
                 perform_capture(None)
-                
+
             return capture_stats
 
         except Exception as e:
@@ -491,7 +491,7 @@ class NetworkTrafficAnalyzer:
                 if not self.capturing:
                     self.logger.info("Capture stopped by user")
                     break
-                    
+
                 # Check for timeout
                 if timeout and time.time() - capture_start_time > timeout:
                     self.logger.info("Capture timeout reached (%ss), stopping...", timeout)
@@ -703,7 +703,7 @@ class NetworkTrafficAnalyzer:
             return
 
         self.logger.info("Starting packet capture using Scapy...")
-        
+
         try:
             # Build filter for license-related traffic
             bpf_filter = (
@@ -715,13 +715,13 @@ class NetworkTrafficAnalyzer:
                 "port 80 or port 443"  # Web-based licensing
                 ")"
             )
-            
+
             # Packet handler function
             def packet_handler(packet):
                 """Process each captured packet."""
                 if not self.capturing:
                     return
-                    
+
                 try:
                     # Check if it's a TCP packet with IP layer
                     if hasattr(scapy, 'IP') and hasattr(scapy, 'TCP') and scapy.IP in packet and scapy.TCP in packet:
@@ -730,10 +730,10 @@ class NetworkTrafficAnalyzer:
                         dst_ip = packet[scapy.IP].dst
                         src_port = packet[scapy.TCP].sport
                         dst_port = packet[scapy.TCP].dport
-                        
+
                         # Create connection key
                         conn_key = f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
-                        
+
                         # Check if this is a new connection
                         if conn_key not in self.connections:
                             self.connections[conn_key] = {
@@ -751,18 +751,18 @@ class NetworkTrafficAnalyzer:
                                 'dst_port': dst_port,
                                 'protocol': 'TCP'
                             }
-                            
+
                             # Check if it's license-related
                             if dst_port in self.license_ports or src_port in self.license_ports:
                                 self.connections[conn_key]['is_license'] = True
                                 self.license_connections.append(conn_key)
                                 self.logger.info("Potential license traffic: %s", conn_key)
-                        
+
                         # Extract payload if available
                         payload = None
                         if hasattr(scapy, 'Raw') and scapy.Raw in packet:
                             payload = bytes(packet[scapy.Raw])
-                            
+
                             # Check for license patterns
                             if payload:
                                 for pattern in self.license_patterns:
@@ -773,7 +773,7 @@ class NetworkTrafficAnalyzer:
                                         else:
                                             self.license_servers.add(src_ip)
                                         break
-                        
+
                         # Create packet info
                         packet_info = {
                             'timestamp': time.time(),
@@ -785,34 +785,34 @@ class NetworkTrafficAnalyzer:
                             'size': len(packet),
                             'connection_id': conn_key
                         }
-                        
+
                         # Update connection stats
                         conn = self.connections[conn_key]
                         conn['packets'].append(packet_info)
                         conn['last_time'] = time.time()
-                        
+
                         if src_ip == conn['src_ip']:
                             conn['bytes_sent'] += len(packet)
                         else:
                             conn['bytes_received'] += len(packet)
-                        
+
                         # Add to packets list
                         self.packets.append(packet_info)
-                        
+
                         # Auto-analyze if enabled
                         if self.config['auto_analyze'] and len(self.packets) % 100 == 0:
                             self.analyze_traffic()
-                            
+
                 except Exception as e:
                     self.logger.error("Error processing packet: %s", e)
-            
+
             # Start sniffing
             self.logger.info("Starting Scapy sniffer with filter: %s", bpf_filter)
-            
+
             # Use sniff with a stop filter
             def stop_filter(packet):
                 return not self.capturing
-            
+
             # Start capture
             scapy.sniff(
                 iface=interface,
@@ -821,9 +821,9 @@ class NetworkTrafficAnalyzer:
                 stop_filter=stop_filter,
                 store=0  # Don't store packets in memory
             )
-            
+
             self.logger.info("Scapy capture completed")
-            
+
         except Exception as e:
             self.logger.error("Scapy capture failed: %s", e)
             self.logger.info("Falling back to socket capture")
@@ -987,28 +987,28 @@ class NetworkTrafficAnalyzer:
         try:
             # Set flag to stop capture threads
             self.capturing = False
-            
+
             self.logger.info("Stopping packet capture...")
-            
+
             # Give capture threads time to finish gracefully
             time.sleep(0.5)
-            
+
             # Log final statistics
             total_packets = len(self.packets)
             total_connections = len(self.connections)
             license_connections = sum(1 for conn in self.connections.values() if conn.get('is_license', False))
-            
+
             self.logger.info(
                 "Packet capture stopped. Total packets: %d, Total connections: %d, License connections: %d",
                 total_packets, total_connections, license_connections
             )
-            
+
             # Auto-analyze if configured
             if self.config.get('auto_analyze', True) and total_packets > 0:
                 self.analyze_traffic()
-            
+
             return True
-            
+
         except Exception as e:
             self.logger.error("Error stopping capture: %s", e)
             return False
@@ -1036,8 +1036,8 @@ class NetworkTrafficAnalyzer:
                 timestamp = time.strftime('%Y%m%d_%H%M%S')
                 filename = f"{self.config['visualization_dir']}/license_report_{timestamp}.html"
 
-            from ...utils.html_templates import get_traffic_html_template, close_html
-            
+            from ...utils.html_templates import close_html, get_traffic_html_template
+
             # Create HTML report using common template
             html = get_traffic_html_template() + f"""
                 <h1>License Traffic Analysis Report</h1>

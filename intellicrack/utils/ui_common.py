@@ -6,12 +6,18 @@ This module consolidates repeated UI patterns to avoid code duplication.
 
 import os
 import webbrowser
-from typing import Optional, Any, Callable, List, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 try:
     from PyQt5.QtWidgets import (
-        QMessageBox, QFileDialog, QApplication,
-        QGroupBox, QHBoxLayout, QLineEdit, QPushButton, QLabel
+        QApplication,
+        QFileDialog,
+        QGroupBox,
+        QHBoxLayout,
+        QLabel,
+        QLineEdit,
+        QMessageBox,
+        QPushButton,
     )
     HAS_PYQT = True
 except ImportError:
@@ -39,7 +45,7 @@ def ask_open_report(parent: Any, report_path: str) -> bool:
     """
     if not HAS_PYQT:
         return False
-        
+
     try:
         open_report = QMessageBox.question(
             parent,
@@ -55,11 +61,11 @@ def ask_open_report(parent: Any, report_path: str) -> bool:
         # Log the error for debugging UI or file opening issues
         print(f"Error opening report dialog or file: {e}")
         return False
-    
+
     return False
 
 
-def get_save_filename(parent: Any, caption: str = "Save File", 
+def get_save_filename(parent: Any, caption: str = "Save File",
                      filter_str: str = "HTML Files (*.html);;All Files (*.*)",
                      default_suffix: str = ".html") -> Optional[str]:
     """
@@ -76,16 +82,16 @@ def get_save_filename(parent: Any, caption: str = "Save File",
     """
     if not HAS_PYQT:
         return None
-        
+
     try:
         filename, _ = QFileDialog.getSaveFileName(
             parent, caption, "", filter_str
         )
-        
+
         if filename and default_suffix:
             if not filename.endswith(default_suffix):
                 filename += default_suffix
-                
+
         return filename
     except Exception as e:
         # Log the error for debugging Qt dialog issues
@@ -93,7 +99,7 @@ def get_save_filename(parent: Any, caption: str = "Save File",
         return None
 
 
-def create_binary_selection_header(parent_layout: Any, 
+def create_binary_selection_header(parent_layout: Any,
                                  binary_path: str = "",
                                  show_label: bool = True,
                                  extra_buttons: Optional[List[Tuple[str, Callable]]] = None) -> dict:
@@ -116,31 +122,31 @@ def create_binary_selection_header(parent_layout: Any,
     """
     if not HAS_PYQT:
         return {}
-        
+
     widgets = {'extra_buttons': {}}
-    
+
     header_group = QGroupBox("Target Binary")
     header_layout = QHBoxLayout(header_group)
     widgets['group'] = header_group
-    
+
     if show_label:
         header_layout.addWidget(QLabel("Binary Path:"))
-    
+
     path_edit = QLineEdit(binary_path)
     path_edit.setPlaceholderText("Select target binary file...")
     widgets['path_edit'] = path_edit
-    
+
     browse_btn = QPushButton("Browse")
     widgets['browse_btn'] = browse_btn
-    
+
     header_layout.addWidget(path_edit)
     header_layout.addWidget(browse_btn)
-    
+
     # Add any extra buttons
     if extra_buttons:
         from .ui_button_common import add_extra_buttons
         buttons = add_extra_buttons(header_layout, extra_buttons, widgets)
         widgets['extra_buttons'].update(buttons)
-    
+
     parent_layout.addWidget(header_group)
     return widgets

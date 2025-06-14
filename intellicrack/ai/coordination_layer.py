@@ -105,6 +105,7 @@ class AICoordinationLayer:
         # Initialize components
         self.ml_predictor = None
         self.model_manager = None
+        self._llm_manager = None
         self._initialize_components()
 
         # Performance tracking
@@ -488,24 +489,24 @@ class AICoordinationLayer:
     def _perform_llm_analysis(self, request: AnalysisRequest) -> Dict[str, Any]:
         """Perform LLM-based analysis using available language models."""
         try:
-            from .llm_backends import LLMMessage, LLMManager
-            
+            from .llm_backends import LLMManager, LLMMessage
+
             # Check if we have an LLM manager available
             llm_manager = getattr(self, '_llm_manager', None)
             if not llm_manager:
                 # Create a temporary LLM manager if one doesn't exist
                 llm_manager = LLMManager()
                 self._llm_manager = llm_manager
-            
+
             # Get available LLMs
             available_llms = llm_manager.get_available_llms()
             if not available_llms:
                 self.logger.warning("No LLM backends available for analysis")
                 return self._fallback_analysis(request)
-            
+
             # Prepare binary analysis prompt
             analysis_prompt = self._create_binary_analysis_prompt(request)
-            
+
             # Create messages for LLM
             messages = [
                 LLMMessage(
@@ -515,42 +516,42 @@ class AICoordinationLayer:
                            "exploitation techniques, and recommend appropriate security measures."
                 ),
                 LLMMessage(
-                    role="user", 
+                    role="user",
                     content=analysis_prompt
                 )
             ]
-            
+
             # Perform LLM analysis
             response = llm_manager.chat(messages)
-            
+
             if response and response.content:
                 # Parse LLM response and structure it
                 analysis_result = self._parse_llm_response(response.content, request)
-                
+
                 # Increment performance stats
                 self.performance_stats["llm_calls"] += 1
-                
+
                 return analysis_result
             else:
                 self.logger.warning("No response from LLM, using fallback analysis")
                 return self._fallback_analysis(request)
-                
+
         except Exception as e:
             self.logger.error("LLM analysis failed: %s", e)
             return self._fallback_analysis(request)
-    
+
     def _create_binary_analysis_prompt(self, request: AnalysisRequest) -> str:
         """Create analysis prompt for LLM based on binary information."""
         # Read basic binary information
         binary_info = []
-        
+
         try:
             import os
-            
+
             if os.path.exists(request.binary_path):
                 file_size = os.path.getsize(request.binary_path)
                 binary_info.append(f"File size: {file_size} bytes")
-                
+
                 # Try to get binary format
                 try:
                     from ..utils.binary_analysis import identify_binary_format
@@ -559,21 +560,21 @@ class AICoordinationLayer:
                 except (ImportError, AttributeError, OSError) as e:
                     logger.debug("Binary format identification failed: %s", e)
                     binary_info.append("Binary format: Unknown")
-                
+
                 # Try to get file type info
                 try:
                     import subprocess
-                    result = subprocess.run(['file', request.binary_path], 
-                                          capture_output=True, text=True, timeout=5)
+                    result = subprocess.run(['file', request.binary_path],
+                                          capture_output=True, text=True, timeout=5, check=False)
                     if result.returncode == 0:
                         binary_info.append(f"File type: {result.stdout.strip()}")
                 except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError) as e:
                     logger.debug("File type detection failed: %s", e)
                     binary_info.append("File type: Detection unavailable")
-                    
+
         except Exception as e:
             self.logger.debug("Error gathering binary info: %s", e)
-        
+
         # Build comprehensive prompt
         prompt = f"""
         Analyze the following binary file for security vulnerabilities and potential attack vectors:
@@ -593,25 +594,25 @@ class AICoordinationLayer:
         
         Format your response as a structured analysis with clear sections.
         """
-        
+
         return prompt
-    
+
     def _parse_llm_response(self, response_content: str, request: AnalysisRequest) -> Dict[str, Any]:
         """Parse LLM response into structured analysis result."""
         # Extract key information from LLM response
         vulnerabilities = []
         recommendations = []
         attack_vectors = []
-        
+
         # Simple parsing logic - could be enhanced with more sophisticated NLP
         lines = response_content.split('\n')
         current_section = None
-        
+
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-                
+
             # Detect sections
             if any(keyword in line.lower() for keyword in ['vulnerabilit', 'security issue', 'weakness']):
                 current_section = 'vulnerabilities'
@@ -619,7 +620,7 @@ class AICoordinationLayer:
                 current_section = 'recommendations'
             elif any(keyword in line.lower() for keyword in ['attack', 'exploit', 'vector']):
                 current_section = 'attack_vectors'
-            
+
             # Extract content based on section
             if line.startswith('-') or line.startswith('*') or line.startswith(('1.', '2.', '3.', '4.', '5.')):
                 item = line.lstrip('-*0123456789. ')
@@ -629,10 +630,10 @@ class AICoordinationLayer:
                     recommendations.append(item)
                 elif current_section == 'attack_vectors' and len(item) > 10:
                     attack_vectors.append(item)
-        
+
         # Calculate confidence based on response quality
         confidence = min(0.95, 0.6 + (len(vulnerabilities) * 0.1) + (len(recommendations) * 0.05))
-        
+
         return {
             "analysis_type": "llm_vulnerability_analysis",
             "binary_path": request.binary_path,
@@ -645,7 +646,7 @@ class AICoordinationLayer:
             "raw_response": response_content[:1000],  # Store first 1000 chars for debugging
             "analysis_timestamp": self._get_timestamp()
         }
-    
+
     def _fallback_analysis(self, request: AnalysisRequest) -> Dict[str, Any]:
         """Fallback analysis when LLM is not available."""
         return {
@@ -665,11 +666,10 @@ class AICoordinationLayer:
             "reasoning": "Fallback analysis due to LLM unavailability",
             "analysis_timestamp": self._get_timestamp()
         }
-    
+
     def _get_timestamp(self) -> str:
         """Get current timestamp for analysis."""
-        import datetime
-        return datetime.datetime.now().isoformat()
+        return datetime.now().isoformat()
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get coordination layer performance statistics."""

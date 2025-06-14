@@ -20,11 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-from .common_imports import (
-    QDialog, QVBoxLayout, QHBoxLayout, QPushButton,
-    QLabel, QLineEdit, QTextEdit, QMessageBox,
-    Qt, QDialogButtonBox, QGroupBox, QFileDialog
-)
+from .common_imports import QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton
 
 
 def setup_footer(dialog, layout):

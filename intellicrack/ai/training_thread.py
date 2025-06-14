@@ -821,20 +821,20 @@ class TrainingThread(QThread):
             if not hasattr(self, 'model') or self.model is None:
                 self.logger.error("No model available to save")
                 return False
-                
+
             # Create directory if it doesn't exist
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            
+
             # Save based on framework
             if TRANSFORMERS_AVAILABLE and hasattr(self.model, 'save_pretrained'):
                 # Save Hugging Face model
                 self.logger.info("Saving Hugging Face model to: %s", save_path)
                 self.model.save_pretrained(save_path)
-                
+
                 # Save tokenizer if available
                 if hasattr(self, 'tokenizer') and self.tokenizer is not None:
                     self.tokenizer.save_pretrained(save_path)
-                    
+
                 # Save training config
                 config_path = os.path.join(save_path, 'training_config.json')
                 with open(config_path, 'w') as f:
@@ -848,11 +848,11 @@ class TrainingThread(QThread):
                         'final_loss': self.training_history[-1]['loss'] if self.training_history else None,
                         'timestamp': time.time()
                     }, f, indent=2)
-                    
+
             elif PYTORCH_AVAILABLE and isinstance(self.model, torch.nn.Module):
                 # Save PyTorch model
                 self.logger.info("Saving PyTorch model to: %s", save_path)
-                
+
                 # Save model state dict
                 model_file = os.path.join(save_path, 'model.pth')
                 torch.save({
@@ -862,12 +862,12 @@ class TrainingThread(QThread):
                     'epoch': self.current_epoch,
                     'training_history': self.training_history
                 }, model_file)
-                
+
             elif TENSORFLOW_AVAILABLE and hasattr(self.model, 'save'):
                 # Save TensorFlow/Keras model
                 self.logger.info("Saving TensorFlow model to: %s", save_path)
                 self.model.save(save_path)
-                
+
                 # Save additional metadata
                 metadata_path = os.path.join(save_path, 'metadata.json')
                 with open(metadata_path, 'w') as f:
@@ -877,13 +877,13 @@ class TrainingThread(QThread):
                         'epoch': self.current_epoch,
                         'training_history': self.training_history
                     }, f, indent=2)
-                    
+
             else:
                 # Fallback - try to pickle the model
                 import pickle
                 model_file = os.path.join(save_path, 'model.pkl')
                 self.logger.info("Saving model using pickle to: %s", model_file)
-                
+
                 with open(model_file, 'wb') as f:
                     pickle.dump({
                         'model': self.model,
@@ -891,15 +891,15 @@ class TrainingThread(QThread):
                         'epoch': self.current_epoch,
                         'history': self.training_history
                     }, f)
-                    
+
             # Save training history separately
             history_file = os.path.join(save_path, 'training_history.json')
             with open(history_file, 'w') as f:
                 json.dump(self.training_history, f, indent=2)
-                
+
             self.logger.info("Model and training history saved successfully to: %s", save_path)
             return True
-            
+
         except Exception as e:
             self.logger.error("Failed to save model: %s", e)
             self.logger.error(traceback.format_exc())

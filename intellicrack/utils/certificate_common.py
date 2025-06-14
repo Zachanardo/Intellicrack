@@ -6,7 +6,6 @@ This module consolidates certificate creation patterns.
 
 import datetime
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +18,9 @@ def create_certificate_builder():
     """
     try:
         from cryptography import x509
-        from cryptography.x509.oid import NameOID
         from cryptography.hazmat.primitives import hashes
-        
+        from cryptography.x509.oid import NameOID
+
         return x509.CertificateBuilder().subject_name(
             x509.Name([
                 x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),

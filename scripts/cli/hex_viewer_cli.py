@@ -97,15 +97,14 @@ class TerminalHexViewer:
                 self.data = self.mmap_file
             else:
                 # Fallback to reading entire file
-                self.data = self.file_handle.read()
-                self.file_handle.close()
+                with self.file_handle:
+                    self.data = self.file_handle.read()
                 self.file_handle = None
         except IOError as e:
             # Try read-only mode
             try:
-                self.file_handle = open(self.filepath, 'rb')
-                self.data = self.file_handle.read()
-                self.file_handle.close()
+                with open(self.filepath, 'rb') as f:
+                    self.data = f.read()
                 self.file_handle = None
             except IOError:
                 raise IOError(f"Cannot open file: {e}")

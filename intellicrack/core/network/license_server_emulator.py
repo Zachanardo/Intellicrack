@@ -20,7 +20,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import ipaddress
 import json
 import logging
 import os
@@ -35,8 +34,16 @@ from typing import Any, Dict, List, Optional, Tuple
 
 # Import new components
 try:
-    from .traffic_interception_engine import TrafficInterceptionEngine, InterceptedPacket, AnalyzedTraffic
-    from .dynamic_response_generator import DynamicResponseGenerator, ResponseContext, GeneratedResponse
+    from .dynamic_response_generator import (
+        DynamicResponseGenerator,
+        GeneratedResponse,
+        ResponseContext,
+    )
+    from .traffic_interception_engine import (
+        AnalyzedTraffic,
+        InterceptedPacket,
+        TrafficInterceptionEngine,
+    )
     HAS_NEW_COMPONENTS = True
 except ImportError:
     HAS_NEW_COMPONENTS = False
@@ -94,11 +101,11 @@ class NetworkLicenseServerEmulator:
         self.traffic_recorder: Optional[Any] = None
         self.response_templates: Dict[str, Dict[str, bytes]] = {}
         self.protocol_fingerprints: Dict[str, Dict[str, Any]] = {}
-        
+
         # New enhanced components
         self.traffic_engine: Optional[TrafficInterceptionEngine] = None
         self.response_generator: Optional[DynamicResponseGenerator] = None
-        
+
         # Initialize enhanced components if available
         if HAS_NEW_COMPONENTS:
             self._initialize_enhanced_components()
@@ -108,21 +115,21 @@ class NetworkLicenseServerEmulator:
 
         # Load response templates
         self._load_response_templates()
-        
+
     def _initialize_enhanced_components(self):
         """Initialize enhanced traffic interception and response generation"""
         try:
             # Initialize traffic interception engine
             self.traffic_engine = TrafficInterceptionEngine(self.config['listen_ip'])
-            
+
             # Initialize dynamic response generator
             self.response_generator = DynamicResponseGenerator()
-            
+
             # Set up analysis callback
             self.traffic_engine.add_analysis_callback(self._handle_analyzed_traffic)
-            
+
             self.logger.info("Enhanced license server components initialized")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to initialize enhanced components: {e}")
             self.traffic_engine = None
@@ -252,7 +259,7 @@ class NetworkLicenseServerEmulator:
             if self.traffic_engine and HAS_NEW_COMPONENTS:
                 self.traffic_engine.start_interception(self.config['listen_ports'])
                 self.logger.info("Enhanced traffic interception started")
-            
+
             # Start TCP servers on configured ports
             for _port in self.config['listen_ports']:
                 self._start_tcp_server(_port)
@@ -292,7 +299,7 @@ class NetworkLicenseServerEmulator:
             # Stop traffic recorder if running
             if self.traffic_recorder:
                 self.traffic_recorder.stop()
-                
+
             # Stop enhanced components
             if self.traffic_engine:
                 self.traffic_engine.stop_interception()
@@ -364,10 +371,10 @@ class NetworkLicenseServerEmulator:
                                     client_fingerprint=f"{self.client_address[0]}:{self.client_address[1]}",
                                     timestamp=time.time()
                                 )
-                                
+
                                 generated_response = emulator.response_generator.generate_response(context)
                                 response = generated_response.response_data
-                                
+
                                 emulator.logger.info(f"Generated {generated_response.response_type} response using {generated_response.generation_method}")
                             else:
                                 # Use legacy response generation
@@ -476,15 +483,14 @@ class NetworkLicenseServerEmulator:
         to the local license server emulator, enabling license bypass.
         """
         import socket
-        import struct
         import threading
-        
+
         self.logger.info("Starting DNS server for license server redirection")
-        
+
         # Common license server hostnames to intercept
         self.license_hostnames = {
             b'activate.adobe.com': '127.0.0.1',
-            b'practivate.adobe.com': '127.0.0.1', 
+            b'practivate.adobe.com': '127.0.0.1',
             b'lm.licenses.adobe.com': '127.0.0.1',
             b'na1r.services.adobe.com': '127.0.0.1',
             b'hlrcv.stage.adobe.com': '127.0.0.1',
@@ -503,7 +509,7 @@ class NetworkLicenseServerEmulator:
             b'adobe-dns-4.adobe.com': '127.0.0.1',
             b'hl2rcv.adobe.com': '127.0.0.1',
         }
-        
+
         try:
             # Create UDP socket for DNS
             self.dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -511,9 +517,9 @@ class NetworkLicenseServerEmulator:
             # Bind to localhost only for security - prevents external access
             self.dns_socket.bind(('127.0.0.1', 53))
             self.dns_socket.settimeout(1.0)
-            
+
             self.logger.info("DNS server started on port 53")
-            
+
             while self.running:
                 try:
                     data, addr = self.dns_socket.recvfrom(512)
@@ -529,7 +535,7 @@ class NetworkLicenseServerEmulator:
                 except Exception as e:
                     if self.running:
                         self.logger.error("DNS server error: %s", e)
-                        
+
         except PermissionError:
             self.logger.warning("Cannot bind to port 53 (requires root/admin privileges)")
             self.logger.info("DNS server functionality disabled")
@@ -538,7 +544,7 @@ class NetworkLicenseServerEmulator:
         finally:
             if hasattr(self, 'dns_socket'):
                 self.dns_socket.close()
-                
+
     def _handle_dns_query(self, data: bytes, addr: tuple) -> None:
         """
         Handle individual DNS query.
@@ -550,19 +556,19 @@ class NetworkLicenseServerEmulator:
         try:
             if len(data) < 12:  # Minimum DNS header size
                 return
-                
+
             # Parse DNS header
             transaction_id = struct.unpack('>H', data[0:2])[0]
             flags = struct.unpack('>H', data[2:4])[0]
             questions = struct.unpack('>H', data[4:6])[0]
-            
+
             if questions != 1:  # Only handle single question queries
                 return
-                
+
             # Parse question section (skip header)
             query_offset = 12
             query_name = b''
-            
+
             # Parse domain name from DNS query
             while query_offset < len(data):
                 length = data[query_offset]
@@ -575,22 +581,22 @@ class NetworkLicenseServerEmulator:
                 if query_offset + 1 + length < len(data) and data[query_offset + 1 + length] != 0:
                     query_name += b'.'
                 query_offset += 1 + length
-                
+
             # Check if we should redirect this hostname
             redirect_ip = None
             for hostname, ip in self.license_hostnames.items():
                 if hostname in query_name.lower():
                     redirect_ip = ip
                     break
-                    
+
             if redirect_ip:
                 # Create DNS response redirecting to local server
                 response = self._create_dns_response(
                     transaction_id, query_name, redirect_ip, data[12:query_offset+4]
                 )
                 self.dns_socket.sendto(response, addr)
-                self.logger.debug("Redirected %s to %s for %s", 
-                                query_name.decode('utf-8', errors='ignore'), 
+                self.logger.debug("Redirected %s to %s for %s",
+                                query_name.decode('utf-8', errors='ignore'),
                                 redirect_ip, addr[0])
             else:
                 # Forward to real DNS server (8.8.8.8)
@@ -605,11 +611,11 @@ class NetworkLicenseServerEmulator:
                     # If forwarding fails, send NXDOMAIN response
                     response = self._create_dns_error_response(transaction_id, data[12:query_offset+4])
                     self.dns_socket.sendto(response, addr)
-                    
+
         except Exception as e:
             self.logger.debug("Error handling DNS query: %s", e)
-            
-    def _create_dns_response(self, transaction_id: int, query_name: bytes, 
+
+    def _create_dns_response(self, transaction_id: int, query_name: bytes,
                            ip_address: str, question_section: bytes) -> bytes:
         """
         Create a DNS A record response.
@@ -632,7 +638,7 @@ class NetworkLicenseServerEmulator:
             0,              # Authority RRs
             0               # Additional RRs
         )
-        
+
         # Answer section (A record)
         ip_parts = [int(part) for part in ip_address.split('.')]
         answer = (
@@ -642,9 +648,9 @@ class NetworkLicenseServerEmulator:
             struct.pack('>H', 4) +    # Data length
             struct.pack('BBBB', *ip_parts)  # IP address
         )
-        
+
         return header + question_section + answer
-        
+
     def _create_dns_error_response(self, transaction_id: int, question_section: bytes) -> bytes:
         """
         Create a DNS NXDOMAIN error response.
@@ -665,7 +671,7 @@ class NetworkLicenseServerEmulator:
             0,              # Authority RRs
             0               # Additional RRs
         )
-        
+
         return header + question_section
 
     def _start_ssl_interceptor(self) -> Optional[Any]:
@@ -713,7 +719,7 @@ class NetworkLicenseServerEmulator:
                     """Generate a self-signed certificate for SSL interception using common utility"""
                     try:
                         from ....utils.certificate_utils import generate_self_signed_cert
-                        
+
                         # Use common certificate generation utility
                         cert_data = generate_self_signed_cert(
                             common_name="localhost",
@@ -723,17 +729,17 @@ class NetworkLicenseServerEmulator:
                             locality="City",
                             valid_days=365
                         )
-                        
+
                         if cert_data:
                             cert_pem, key_pem = cert_data
-                            
+
                             # Write certificate and key
                             with open(cert_file, 'wb') as f:
                                 f.write(cert_pem)
-                            
+
                             with open(key_file, 'wb') as f:
                                 f.write(key_pem)
-                                
+
                             self.parent.logger.info("Generated self-signed certificate for SSL interception")
                         else:
                             self.parent.logger.error("Failed to generate certificate using common utility")
@@ -1043,12 +1049,12 @@ def run_network_license_emulator(app: Any) -> None:
         try:
             if analysis.is_license_related:
                 self.logger.info(f"Detected {analysis.protocol_type} license traffic with confidence {analysis.confidence}")
-                
+
                 # Update protocol fingerprints based on learned patterns
                 if analysis.confidence > 0.8 and analysis.protocol_type not in self.protocol_fingerprints:
                     # Learn new protocol patterns
                     self._learn_protocol_pattern(analysis)
-                    
+
                 # Record traffic for analysis
                 if self.traffic_recorder:
                     self.traffic_recorder.record(
@@ -1057,34 +1063,34 @@ def run_network_license_emulator(app: Any) -> None:
                         data=analysis.packet.data,
                         protocol=analysis.protocol_type
                     )
-                    
+
         except Exception as e:
             self.logger.error(f"Error handling analyzed traffic: {e}")
-            
+
     def _learn_protocol_pattern(self, analysis: AnalyzedTraffic):
         """Learn new protocol patterns from analyzed traffic"""
         try:
             protocol_type = analysis.protocol_type
-            
+
             # Extract patterns from the traffic
             patterns = []
             data = analysis.packet.data
-            
+
             # Look for common license-related keywords
             if data:
                 text_data = data.decode('utf-8', errors='ignore').lower()
                 license_keywords = ['license', 'activation', 'checkout', 'verify', 'validate']
-                
+
                 for keyword in license_keywords:
                     if keyword in text_data:
                         patterns.append(keyword.encode())
-                        
+
                 # Look for binary patterns
                 if len(data) >= 4:
                     header = data[:4]
                     if header.isalnum():
                         patterns.append(header)
-                        
+
             # Add learned pattern to fingerprints
             if patterns:
                 self.protocol_fingerprints[protocol_type] = {
@@ -1093,12 +1099,12 @@ def run_network_license_emulator(app: Any) -> None:
                     'learned': True,
                     'confidence': analysis.confidence
                 }
-                
+
                 self.logger.info(f"Learned new protocol pattern for {protocol_type}")
-                
+
         except Exception as e:
             self.logger.error(f"Error learning protocol pattern: {e}")
-            
+
     def setup_dns_redirection_for_hosts(self, hostnames: List[str]):
         """Setup DNS redirection for specific license server hostnames"""
         try:
@@ -1111,7 +1117,7 @@ def run_network_license_emulator(app: Any) -> None:
                         self.logger.warning(f"Failed to setup DNS redirection for {hostname}")
         except Exception as e:
             self.logger.error(f"Error setting up DNS redirection: {e}")
-            
+
     def setup_transparent_proxy(self, target_host: str, target_port: int):
         """Setup transparent proxy for license server traffic"""
         try:
@@ -1126,19 +1132,19 @@ def run_network_license_emulator(app: Any) -> None:
         except Exception as e:
             self.logger.error(f"Error setting up transparent proxy: {e}")
             return False
-            
+
     def get_traffic_statistics(self) -> Dict[str, Any]:
         """Get traffic interception statistics"""
         stats = {}
-        
+
         try:
             if self.traffic_engine:
                 stats['interception'] = self.traffic_engine.get_statistics()
                 stats['active_connections'] = self.traffic_engine.get_active_connections()
-                
+
             if self.response_generator:
                 stats['response_generation'] = self.response_generator.get_statistics()
-                
+
             # Add legacy stats
             stats['legacy'] = {
                 'running': self.running,
@@ -1148,12 +1154,12 @@ def run_network_license_emulator(app: Any) -> None:
                 'ssl_enabled': self.ssl_interceptor is not None,
                 'traffic_recording': self.traffic_recorder is not None
             }
-            
+
         except Exception as e:
             self.logger.error(f"Error getting traffic statistics: {e}")
-            
+
         return stats
-        
+
     def analyze_captured_protocols(self) -> Dict[str, Any]:
         """Analyze protocols detected in captured traffic"""
         analysis = {
@@ -1162,17 +1168,17 @@ def run_network_license_emulator(app: Any) -> None:
             'traffic_patterns': {},
             'recommendations': []
         }
-        
+
         try:
             if self.traffic_engine:
                 stats = self.traffic_engine.get_statistics()
                 analysis['detected_protocols'] = list(stats.get('protocols_detected', []))
-                
+
             # Analyze protocol fingerprints
             for protocol, fingerprint in self.protocol_fingerprints.items():
                 if fingerprint.get('learned'):
                     analysis['confidence_scores'][protocol] = fingerprint.get('confidence', 0.0)
-                    
+
                 # Analyze traffic patterns
                 if protocol in analysis['detected_protocols']:
                     analysis['traffic_patterns'][protocol] = {
@@ -1180,25 +1186,25 @@ def run_network_license_emulator(app: Any) -> None:
                         'patterns_count': len(fingerprint.get('patterns', [])),
                         'learned': fingerprint.get('learned', False)
                     }
-                    
+
             # Generate recommendations
             if analysis['detected_protocols']:
                 analysis['recommendations'].append("License traffic detected - emulator is working correctly")
-                
+
                 for protocol in analysis['detected_protocols']:
                     if analysis['confidence_scores'].get(protocol, 0) > 0.8:
                         analysis['recommendations'].append(f"High confidence {protocol} protocol detection - consider targeted bypass")
-                        
+
             else:
                 analysis['recommendations'].append("No license traffic detected - check application configuration")
                 analysis['recommendations'].append("Ensure DNS redirection is setup for license server hostnames")
                 analysis['recommendations'].append("Consider using transparent proxy mode")
-                
+
         except Exception as e:
             self.logger.error(f"Error analyzing captured protocols: {e}")
-            
+
         return analysis
-        
+
     def export_learning_data(self) -> Dict[str, Any]:
         """Export learning data for analysis and backup"""
         export_data = {
@@ -1208,7 +1214,7 @@ def run_network_license_emulator(app: Any) -> None:
             'response_data': {},
             'traffic_data': {}
         }
-        
+
         try:
             # Export learned protocol fingerprints
             for protocol, fingerprint in self.protocol_fingerprints.items():
@@ -1218,20 +1224,20 @@ def run_network_license_emulator(app: Any) -> None:
                         'ports': fingerprint.get('ports', []),
                         'confidence': fingerprint.get('confidence', 0.0)
                     }
-                    
+
             # Export response generation data
             if self.response_generator:
                 export_data['response_data'] = self.response_generator.export_learning_data()
-                
+
             # Export traffic statistics
             if self.traffic_engine:
                 export_data['traffic_data'] = self.traffic_engine.get_statistics()
-                
+
         except Exception as e:
             self.logger.error(f"Error exporting learning data: {e}")
-            
+
         return export_data
-        
+
     def import_learning_data(self, data: Dict[str, Any]):
         """Import learning data from previous sessions"""
         try:
@@ -1246,20 +1252,20 @@ def run_network_license_emulator(app: Any) -> None:
                         except ValueError:
                             # Use as string pattern
                             patterns.append(pattern_str.encode())
-                            
+
                     self.protocol_fingerprints[protocol] = {
                         'patterns': patterns,
                         'ports': protocol_data.get('ports', []),
                         'learned': True,
                         'confidence': protocol_data.get('confidence', 0.0)
                     }
-                    
+
                 self.logger.info(f"Imported {len(data['learned_protocols'])} learned protocols")
-                
+
             # Import response generation data
             if 'response_data' in data and self.response_generator:
                 self.response_generator.import_learning_data(data['response_data'])
-                
+
         except Exception as e:
             self.logger.error(f"Error importing learning data: {e}")
 

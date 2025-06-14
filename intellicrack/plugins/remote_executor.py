@@ -21,6 +21,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import base64
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -29,9 +31,7 @@ import socket
 import sys
 import tempfile
 import threading
-import hashlib
-import hmac
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional
 
 __all__ = ['RemotePluginExecutor']
 
@@ -55,7 +55,7 @@ class RemotePluginExecutor:
         self.remote_host = remote_host or "localhost"
         self.remote_port = remote_port or 8765
         self.logger = logging.getLogger(__name__)
-        
+
         # Security: Shared secret for HMAC validation (should be configured securely)
         self.shared_secret = os.environ.get('INTELLICRACK_REMOTE_SECRET', 'default-insecure-secret').encode()
         if self.shared_secret == b'default-insecure-secret':
@@ -80,7 +80,7 @@ class RemotePluginExecutor:
             self.logger.warning("Using pickle for complex object serialization - ensure trusted environment")
             pickle_data = pickle.dumps(data, protocol=2)
             return base64.b64encode(pickle_data).decode('ascii')
-            
+
     def _deserialize_safe(self, encoded_data: str, expected_type: str = 'json') -> Any:
         """
         Safely deserialize data with validation.
@@ -93,7 +93,7 @@ class RemotePluginExecutor:
             Deserialized data
         """
         decoded = base64.b64decode(encoded_data)
-        
+
         if expected_type == 'json':
             try:
                 return json.loads(decoded.decode('utf-8'))
@@ -136,7 +136,7 @@ class RemotePluginExecutor:
                 "kwargs": encoded_kwargs,
                 "serialization": "json"  # Indicate serialization method
             }
-            
+
             # Add HMAC signature for authentication
             request_json = json.dumps(request, sort_keys=True)
             signature = hmac.new(self.shared_secret, request_json.encode('utf-8'), hashlib.sha256).hexdigest()
@@ -171,7 +171,7 @@ class RemotePluginExecutor:
                 # Decode results safely
                 encoded_results = response_data.get("results", "")
                 serialization_type = response_data.get("serialization", "json")
-                
+
                 try:
                     results = self._deserialize_safe(encoded_results, expected_type=serialization_type)
                     return results
@@ -232,17 +232,17 @@ class RemotePluginExecutor:
 
                 # Parse request
                 request = json.loads(request_data.decode('utf-8'))
-                
+
                 # Verify HMAC signature (if present)
                 signature = request.pop("signature", None)
                 if signature:
                     # Get shared secret
                     shared_secret = os.environ.get('INTELLICRACK_REMOTE_SECRET', 'default-insecure-secret').encode()
-                    
+
                     # Verify signature
                     request_json = json.dumps(request, sort_keys=True)
                     expected_sig = hmac.new(shared_secret, request_json.encode('utf-8'), hashlib.sha256).hexdigest()
-                    
+
                     if not hmac.compare_digest(signature, expected_sig):
                         logger.error("Invalid HMAC signature in request")
                         response = {"status": "error", "error": "Authentication failed"}
@@ -253,7 +253,7 @@ class RemotePluginExecutor:
                 plugin_code = base64.b64decode(request.get("plugin_code", ""))
                 method_name = request.get("method_name", "")
                 serialization_type = request.get("serialization", "pickle")
-                
+
                 # Deserialize arguments based on type
                 executor = RemotePluginExecutor()
                 try:

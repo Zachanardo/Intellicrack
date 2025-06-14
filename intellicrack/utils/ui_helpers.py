@@ -108,7 +108,7 @@ def generate_exploit_payload_common(payload_type, target_path="target_software")
     """
     try:
         from ..core.patching.payload_generator import generate_advanced_payload
-        from ..exploitation import generate_exploit, generate_license_bypass_payload
+        from .exploitation import generate_exploit, generate_license_bypass_payload
 
         if payload_type == "License Bypass":
             payload_result = generate_license_bypass_payload(target_path, "patch")
@@ -143,8 +143,8 @@ def generate_exploit_strategy_common(binary_path, vulnerability_type="buffer_ove
         dict: Strategy result with 'strategy', 'automation_script' fields or 'error'
     """
     try:
-        from ..exploitation import generate_exploit_strategy
-        
+        from .exploitation import generate_exploit_strategy
+
         strategy = generate_exploit_strategy(binary_path, vulnerability_type)
         return strategy
 

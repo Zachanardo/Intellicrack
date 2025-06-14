@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional
 
 # Import LLM backend support
 try:
-    from ..ai.llm_backends import get_llm_manager, LLMMessage
+    from ..ai.llm_backends import LLMMessage, get_llm_manager
     LLM_AVAILABLE = True
 except ImportError:
     LLM_AVAILABLE = False
@@ -469,7 +469,7 @@ class AIBinaryBridge:
         else:
             self.use_llm_backend = False
             self.llm_manager = None
-            
+
         # Legacy model manager support
         self.model_manager = model_manager
         self.context_builder = BinaryContextBuilder()
@@ -1157,7 +1157,7 @@ class AIBinaryBridge:
         query_lower = query.lower() if query else ""
         is_security_focused = any(word in query_lower for word in ["security", "vulnerability", "exploit", "malware"])
         is_structure_focused = any(word in query_lower for word in ["structure", "format", "header", "metadata"])
-        
+
         # Check for file signatures
         for _hint in context.get("structure_hints", []):
             if _hint["type"] == "file_signature":
@@ -1179,14 +1179,14 @@ class AIBinaryBridge:
                     "description": f"High entropy region (entropy: {_segment['entropy']:.2f})",
                     "severity": "medium" if _segment['entropy'] > 7.5 else "low"
                 }
-                
+
                 # Add security implications if security-focused
                 if is_security_focused:
                     if _segment['entropy'] > 7.8:
                         anomaly["security_implication"] = "Possible encrypted/compressed content or packed executable"
                     else:
                         anomaly["security_implication"] = "Moderately obfuscated data"
-                        
+
                 anomalies.append(anomaly)
 
         # Check for strings with enhanced analysis
@@ -1199,7 +1199,7 @@ class AIBinaryBridge:
                 "description": f"{_string['encoding']} string: '{_string['value']}'",
                 "encoding": _string['encoding']
             }
-            
+
             # Check for suspicious patterns in strings
             value_lower = _string['value'].lower()
             if any(susp in value_lower for susp in ["password", "key", "token", "secret", "admin", "root"]):
@@ -1211,7 +1211,7 @@ class AIBinaryBridge:
             elif any(susp in value_lower for susp in ["http://", "https://", "ftp://", "ws://"]):
                 pattern["security_flag"] = "network_related"
                 suspicious_strings.append(_string['value'])
-                
+
             patterns.append(pattern)
 
         # Analyze structure patterns
@@ -1220,7 +1220,7 @@ class AIBinaryBridge:
             "endianness": "unknown",
             "architecture": "unknown"
         }
-        
+
         # Check for common structural patterns
         if context.get("size", 0) >= 64:
             hex_data = context.get("hex_representation", "").replace(" ", "")
@@ -1232,11 +1232,11 @@ class AIBinaryBridge:
                 structure_analysis["architecture"] = "varies"
             elif hex_data.startswith("CAFEBABE"):  # Mach-O or Java
                 structure_analysis["format"] = "Mach-O or Java class"
-                
+
         # Generate data meaning with more context
         data_meaning = "Unknown binary data"
         data_type = "binary"
-        
+
         for _hint in context.get("structure_hints", []):
             if _hint["type"] == "file_signature":
                 data_meaning = f"{_hint['description']} file"
@@ -1255,14 +1255,14 @@ class AIBinaryBridge:
                 "priority": "high",
                 "action": f"Review suspicious strings found: {', '.join(suspicious_strings[:3])}{'...' if len(suspicious_strings) > 3 else ''}"
             })
-            
+
         if any(a["severity"] == "medium" for a in anomalies):
             recommendations.append({
                 "type": "analysis",
-                "priority": "medium", 
+                "priority": "medium",
                 "action": "Investigate high entropy regions for possible encryption or packing"
             })
-            
+
         if is_structure_focused and structure_analysis.get("format") == "unknown":
             recommendations.append({
                 "type": "structure",
@@ -1295,7 +1295,7 @@ class AIBinaryBridge:
         """Generate a mock AI response for edit suggestions."""
         intent_lower = edit_intent.lower()
         edit_suggestions = []
-        
+
         # Parse intent for common edit operations
         if "nop" in intent_lower or "remove" in intent_lower and "check" in intent_lower:
             # License check removal suggestion
@@ -1310,7 +1310,7 @@ class AIBinaryBridge:
                         "consequences": "May bypass license validation - use only for legitimate testing",
                         "confidence": 0.85
                     })
-                    
+
         elif "string" in intent_lower:
             # String modification suggestions
             target_string = None
@@ -1324,16 +1324,16 @@ class AIBinaryBridge:
                         if target_part in _string["value"].lower():
                             target_string = _string
                             break
-            
+
             if not target_string:
                 # Use first string as example
                 for _string in context.get("strings", []):
                     target_string = _string
                     break
-                    
+
             if target_string:
                 original_bytes = " ".join(f"{_b:02X}" for _b in target_string["value"].encode(target_string["encoding"]))
-                
+
                 # Determine replacement based on string content
                 if "error" in target_string["value"].lower():
                     new_value = "Success"
@@ -1343,9 +1343,9 @@ class AIBinaryBridge:
                     new_value = "Active"
                 else:
                     new_value = "Modified"
-                    
+
                 new_bytes = " ".join(f"{_b:02X}" for _b in new_value.encode(target_string["encoding"]))
-                
+
                 # Pad or truncate to match original length
                 orig_len = len(target_string["value"])
                 new_len = len(new_value)
@@ -1358,7 +1358,7 @@ class AIBinaryBridge:
                     # Truncate
                     new_value = new_value[:orig_len]
                     new_bytes = " ".join(f"{_b:02X}" for _b in new_value.encode(target_string["encoding"]))
-                
+
                 edit_suggestions.append({
                     "edit_type": "string_replace",
                     "offset": target_string["offset"],
@@ -1370,15 +1370,15 @@ class AIBinaryBridge:
                     "consequences": "Changes displayed text - may affect program logic if string is used for comparisons",
                     "confidence": 0.9
                 })
-                
+
         elif "patch" in intent_lower or "fix" in intent_lower:
             # Generic patching suggestions based on file type
             hex_data = context.get("hex_representation", "").replace(" ", "")
-            
+
             if hex_data.startswith("4D5A"):  # PE file
                 # Suggest PE header modifications
                 edit_suggestions.append({
-                    "edit_type": "header_modification", 
+                    "edit_type": "header_modification",
                     "offset": 0x3C,  # PE header offset location
                     "original_bytes": "F0 00 00 00",  # Example
                     "new_bytes": "F0 00 00 00",  # Keep same
@@ -1386,29 +1386,29 @@ class AIBinaryBridge:
                     "consequences": "Modifying PE headers can corrupt the executable",
                     "confidence": 0.3
                 })
-                
+
         elif "zero" in intent_lower or "null" in intent_lower:
             # Zeroing suggestions
             offset = 0
             length = 8
-            
+
             # Look for specific offset in intent
             import re
             offset_match = re.search(r'offset\s+(\d+|0x[0-9a-fA-F]+)', intent_lower)
             if offset_match:
                 offset_str = offset_match.group(1)
                 offset = int(offset_str, 16) if offset_str.startswith('0x') else int(offset_str)
-                
+
             length_match = re.search(r'(\d+)\s*bytes?', intent_lower)
             if length_match:
                 length = int(length_match.group(1))
-                
+
             # Get original bytes
             original_hex = context.get("hex_representation", "").replace(" ", "")
             byte_offset = offset * 2  # Each byte is 2 hex chars
-            original_bytes = " ".join(original_hex[byte_offset + i:byte_offset + i + 2] 
+            original_bytes = " ".join(original_hex[byte_offset + i:byte_offset + i + 2]
                                     for i in range(0, min(length * 2, len(original_hex) - byte_offset), 2))
-            
+
             edit_suggestions.append({
                 "edit_type": "zero_fill",
                 "offset": offset,
@@ -1418,7 +1418,7 @@ class AIBinaryBridge:
                 "consequences": "May corrupt data structures or cause crashes if critical data is zeroed",
                 "confidence": 0.7
             })
-            
+
         # If no specific suggestions, provide a generic one
         if not edit_suggestions:
             # Generic edit based on first interesting pattern
@@ -1434,7 +1434,7 @@ class AIBinaryBridge:
                         "confidence": 0.6
                     })
                     break
-                    
+
         # Still no suggestions? Provide a safe default
         if not edit_suggestions:
             edit_suggestions.append({
@@ -1446,7 +1446,7 @@ class AIBinaryBridge:
                 "consequences": "No changes suggested",
                 "confidence": 0.1
             })
-            
+
         # Create comprehensive response
         mock_response = {
             "edit_intent": edit_intent,
@@ -1477,14 +1477,14 @@ class AIBinaryBridge:
             "data_structure": [],
             "protocol": []
         }
-        
+
         # Check known patterns if provided
         if known_patterns:
             for kp in known_patterns:
                 # Match against context data
                 hex_data = context.get("hex_representation", "").replace(" ", "")
                 pattern_hex = kp.get("pattern", "").replace(" ", "")
-                
+
                 if pattern_hex and pattern_hex in hex_data:
                     idx = hex_data.find(pattern_hex) // 2  # Convert hex position to byte offset
                     patterns.append({
@@ -1514,7 +1514,7 @@ class AIBinaryBridge:
                 }
                 patterns.append(pattern)
                 pattern_categories["file_format"].append(pattern)
-                
+
         # Check for cryptographic patterns
         for _segment in context.get("entropy_segments", []):
             if _segment.get("high_entropy", False) and _segment["entropy"] > 7.9:
@@ -1532,10 +1532,10 @@ class AIBinaryBridge:
                 }
                 patterns.append(pattern)
                 pattern_categories["cryptographic"].append(pattern)
-                
+
         # Check for common data structures
         hex_data = context.get("hex_representation", "").replace(" ", "")
-        
+
         # PE DOS header
         if hex_data.startswith("4D5A"):
             pe_offset_hex = hex_data[120:128]  # e_lfanew at offset 0x3C
@@ -1559,7 +1559,7 @@ class AIBinaryBridge:
                         }
                         patterns.append(pattern)
                         pattern_categories["executable"].append(pattern)
-                        
+
         # ELF header details
         elif hex_data.startswith("7F454C46"):
             elf_class = "64-bit" if hex_data[8:10] == "02" else "32-bit"
@@ -1579,7 +1579,7 @@ class AIBinaryBridge:
             }
             patterns.append(pattern)
             pattern_categories["executable"].append(pattern)
-            
+
         # ZIP/JAR/APK detection
         elif "504B0304" in hex_data or "504B0506" in hex_data:
             idx = hex_data.find("504B0304") // 2 if "504B0304" in hex_data else hex_data.find("504B0506") // 2
@@ -1597,7 +1597,7 @@ class AIBinaryBridge:
             }
             patterns.append(pattern)
             pattern_categories["compression"].append(pattern)
-            
+
         # Protocol patterns
         protocol_sigs = {
             "474554": ("HTTP GET", "HTTP GET request"),
@@ -1607,7 +1607,7 @@ class AIBinaryBridge:
             "534D42": ("SMB", "Server Message Block protocol"),
             "52494646": ("RIFF", "Resource Interchange File Format")
         }
-        
+
         for sig, (name, desc) in protocol_sigs.items():
             if sig in hex_data:
                 idx = hex_data.find(sig) // 2
@@ -1624,7 +1624,7 @@ class AIBinaryBridge:
                 }
                 patterns.append(pattern)
                 pattern_categories["protocol"].append(pattern)
-                
+
         # License/protection patterns
         license_keywords = ["license", "trial", "expire", "registration", "serial", "crack", "patch"]
         for _string in context.get("strings", []):
@@ -1643,10 +1643,10 @@ class AIBinaryBridge:
                     }
                 }
                 patterns.append(pattern)
-                
+
         # Sort patterns by offset
         patterns.sort(key=lambda p: p["start_offset"])
-        
+
         # Generate insights
         insights = []
         if pattern_categories["file_format"]:
@@ -1658,7 +1658,7 @@ class AIBinaryBridge:
         if pattern_categories["protocol"]:
             protocols = ", ".join(set(p["metadata"]["protocol"] for p in pattern_categories["protocol"]))
             insights.append(f"Network protocols detected: {protocols}")
-            
+
         # Create comprehensive response
         mock_response = {
             "identified_patterns": patterns,
@@ -1681,7 +1681,7 @@ class AIBinaryBridge:
         """Generate a mock AI response for semantic search."""
         matches = []
         query_lower = query.lower()
-        
+
         # Parse query for semantic understanding
         search_contexts = {
             "strings": ["string", "text", "ascii", "unicode", "message", "error", "warning"],
@@ -1692,32 +1692,32 @@ class AIBinaryBridge:
             "data": ["struct", "array", "table", "list", "buffer", "heap", "stack"],
             "security": ["vulnerability", "exploit", "overflow", "injection", "bypass", "hook"]
         }
-        
+
         # Determine search intent
         search_intents = []
         for intent, keywords in search_contexts.items():
             if any(keyword in query_lower for keyword in keywords):
                 search_intents.append(intent)
-                
+
         if not search_intents:
             # Generic search - look for any relevant content
             search_intents = ["strings", "binary", "data"]
-        
+
         # Search based on intents
         if "strings" in search_intents:
             for _string in context.get("strings", []):
                 relevance = 0.0
                 value_lower = _string["value"].lower()
-                
+
                 # Calculate relevance based on query terms
                 query_terms = query_lower.split()
                 matching_terms = sum(1 for term in query_terms if term in value_lower)
                 if matching_terms > 0:
                     relevance = min(0.95, 0.3 + (matching_terms * 0.2))
-                elif any(intent_keyword in value_lower for intent in search_intents 
+                elif any(intent_keyword in value_lower for intent in search_intents
                         for intent_keyword in search_contexts.get(intent, [])):
                     relevance = 0.6
-                    
+
                 if relevance > 0.3:
                     matches.append({
                         "start_offset": _string["offset"],
@@ -1749,11 +1749,11 @@ class AIBinaryBridge:
                             "size": _segment["size"]
                         }
                     })
-                    
+
         if "network" in search_intents:
             # Look for network-related patterns
             hex_data = context.get("hex_representation", "").replace(" ", "")
-            
+
             # Common network signatures
             network_patterns = {
                 "http://": "687474703A2F2F",
@@ -1761,7 +1761,7 @@ class AIBinaryBridge:
                 "ftp://": "6674703A2F2F",
                 "ws://": "77733A2F2F"
             }
-            
+
             for pattern_name, pattern_hex in network_patterns.items():
                 if pattern_hex.lower() in hex_data.lower():
                     idx = hex_data.lower().find(pattern_hex.lower()) // 2
@@ -1776,7 +1776,7 @@ class AIBinaryBridge:
                             "protocol": pattern_name.replace("://", "")
                         }
                     })
-                    
+
             # Look for IP address patterns in strings
             import re
             ip_pattern = re.compile(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b')
@@ -1793,7 +1793,7 @@ class AIBinaryBridge:
                             "string_type": "ip_address"
                         }
                     })
-                    
+
         if "binary" in search_intents:
             # Look for instruction patterns
             for _hint in context.get("structure_hints", []):
@@ -1813,7 +1813,7 @@ class AIBinaryBridge:
                             "mnemonic": _hint.get("mnemonic", "")
                         }
                     })
-                    
+
         if "license" in search_intents:
             # License-related search
             license_keywords = ["license", "serial", "key", "registration", "trial", "expire", "activate"]
@@ -1831,7 +1831,7 @@ class AIBinaryBridge:
                             "protection_type": "string_check"
                         }
                     })
-                    
+
         if "security" in search_intents:
             # Security-related patterns
             vuln_patterns = ["strcpy", "sprintf", "gets", "scanf", "%s", "%n"]
@@ -1848,15 +1848,15 @@ class AIBinaryBridge:
                             "vulnerability_type": "unsafe_function"
                         }
                     })
-        
+
         # Sort by relevance score
         matches.sort(key=lambda m: m["relevance_score"], reverse=True)
-        
+
         # Limit results and add ranking
         top_matches = matches[:10]  # Limit to top 10
         for i, match in enumerate(top_matches):
             match["rank"] = i + 1
-            
+
         # Generate search summary
         summary = {
             "query": query,
@@ -1865,7 +1865,7 @@ class AIBinaryBridge:
             "returned_matches": len(top_matches),
             "match_types": list(set(m["match_type"] for m in top_matches))
         }
-        
+
         # Generate insights
         insights = []
         if top_matches:
@@ -1876,7 +1876,7 @@ class AIBinaryBridge:
                 insights.append("License-related content detected - useful for protection analysis")
         else:
             insights.append("No direct matches found - try broadening search terms")
-            
+
         # Create comprehensive response
         mock_response = {
             "matches": top_matches,

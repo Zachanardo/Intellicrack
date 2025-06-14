@@ -18,7 +18,7 @@ def analyze_network_apis(pe_binary, network_apis, logger_func=None):
         dict: Dictionary of category -> list of detected APIs
     """
     detected_apis = defaultdict(list)
-    
+
     if hasattr(pe_binary, 'DIRECTORY_ENTRY_IMPORT'):
         for entry in pe_binary.DIRECTORY_ENTRY_IMPORT:
             for imp in entry.imports:
@@ -30,12 +30,27 @@ def analyze_network_apis(pe_binary, network_apis, logger_func=None):
                 for category, apis in network_apis.items():
                     if any(api.lower() in func_name.lower() for api in apis):
                         detected_apis[category].append(func_name)
-                        
+
                         # Log detection if logger provided
                         if logger_func and len(detected_apis[category]) <= 3:
                             logger_func(f"[Network Analysis] Found {category} API: {func_name}")
-    
+
     return dict(detected_apis)
+
+
+def detect_network_apis(pe_binary, network_apis, logger_func=None):
+    """
+    Alias for analyze_network_apis for backward compatibility.
+    
+    Args:
+        pe_binary: Parsed PE binary object
+        network_apis: Dictionary mapping API categories to API lists
+        logger_func: Optional function to log detected APIs
+        
+    Returns:
+        dict: Dictionary of category -> list of detected APIs
+    """
+    return analyze_network_apis(pe_binary, network_apis, logger_func)
 
 
 def get_network_api_categories():
@@ -66,10 +81,10 @@ def summarize_network_capabilities(detected_apis):
     summary = {
         cat: len(apis) for cat, apis in detected_apis.items() if apis
     }
-    
+
     # Add capability flags
     summary['has_ssl'] = bool(detected_apis.get('ssl', []))
     summary['has_network'] = bool(detected_apis.get('basic', [])) or bool(detected_apis.get('http', []))
     summary['has_dns'] = bool(detected_apis.get('dns', []))
-    
+
     return summary

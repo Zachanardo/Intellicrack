@@ -27,11 +27,9 @@ import subprocess
 import time
 
 from ..common_imports import (
-    QApplication,
     QCheckBox,
     QColor,
     QComboBox,
-    QDialog,
     QFileDialog,
     QFont,
     QGridLayout,
@@ -39,20 +37,19 @@ from ..common_imports import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
-    QLineEdit,
     QMessageBox,
     QProgressBar,
     QPushButton,
     QSpinBox,
-    QTabWidget,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
     QTextEdit,
     QThread,
     QTimer,
     QVBoxLayout,
     QWidget,
-    pyqtSignal
+    pyqtSignal,
 )
 from .base_dialog import BinarySelectionDialog
 
@@ -187,7 +184,7 @@ class KeygenDialog(BinarySelectionDialog):
     def setup_header(self, layout):
         """Setup header with binary selection."""
         # Use the base class method with analyze button
-        super().setup_header(layout, show_label=True, 
+        super().setup_header(layout, show_label=True,
                            extra_buttons=[("Analyze Binary", self.analyze_binary)])
 
     def setup_tabs(self, layout):

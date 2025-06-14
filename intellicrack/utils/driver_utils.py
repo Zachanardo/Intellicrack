@@ -6,7 +6,6 @@ This module provides utilities for finding Windows driver paths.
 
 import logging
 import os
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

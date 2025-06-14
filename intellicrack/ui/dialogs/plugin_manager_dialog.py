@@ -20,18 +20,34 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import logging
 import os
 import shutil
 import zipfile
 
 # Optional imports with graceful fallbacks
 from .common_imports import (
-    HAS_PYQT, QDialog, QThread, pyqtSignal, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QListWidget, QListWidgetItem, QProgressBar,
-    QMessageBox, QGroupBox, QCheckBox, QComboBox, QLineEdit, QTextEdit,
-    QTabWidget, QWidget, QFileDialog, QFormLayout, QSpinBox, QSlider,
-    logger
+    HAS_PYQT,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QFileDialog,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QTabWidget,
+    QTextEdit,
+    QThread,
+    QVBoxLayout,
+    QWidget,
+    logger,
+    pyqtSignal,
 )
 
 # Additional imports specific to plugin manager
@@ -127,10 +143,10 @@ else:
             self.plugins_dir = "plugins"
             self.installed_plugins = []
             self.available_plugins = []
-            
+
             # Ensure plugins directory exists
             os.makedirs(self.plugins_dir, exist_ok=True)
-            
+
             if HAS_PYQT:
                 self.setup_ui()
                 self.load_installed_plugins()
@@ -141,269 +157,269 @@ else:
             self.setWindowTitle("Plugin Manager")
             self.setModal(True)
             self.resize(800, 600)
-            
+
             layout = QVBoxLayout(self)
-            
+
             # Create tab widget
             tab_widget = QTabWidget()
-            
+
             # Installed plugins tab
             installed_tab = QWidget()
             self.setup_installed_tab(installed_tab)
             tab_widget.addTab(installed_tab, "Installed Plugins")
-            
+
             # Available plugins tab
             available_tab = QWidget()
             self.setup_available_tab(available_tab)
             tab_widget.addTab(available_tab, "Available Plugins")
-            
+
             # Install from file tab
             install_tab = QWidget()
             self.setup_install_tab(install_tab)
             tab_widget.addTab(install_tab, "Install from File")
-            
+
             # Plugin development tab
             dev_tab = QWidget()
             self.setup_development_tab(dev_tab)
             tab_widget.addTab(dev_tab, "Plugin Development")
-            
+
             layout.addWidget(tab_widget)
-            
+
             # Dialog buttons
             button_layout = QHBoxLayout()
-            
+
             refresh_btn = QPushButton("Refresh")
             refresh_btn.clicked.connect(self.refresh_plugins)
-            
+
             close_btn = QPushButton("Close")
             close_btn.clicked.connect(self.accept)
-            
+
             button_layout.addWidget(refresh_btn)
             button_layout.addStretch()
             button_layout.addWidget(close_btn)
-            
+
             layout.addLayout(button_layout)
 
         def setup_installed_tab(self, tab):
             """Setup the installed plugins tab."""
             layout = QVBoxLayout(tab)
-            
+
             # Header
             header_group = QGroupBox("Installed Plugins")
             header_layout = QVBoxLayout(header_group)
-            
+
             self.installed_list = QListWidget()
             header_layout.addWidget(self.installed_list)
-            
+
             # Plugin controls
             controls_layout = QHBoxLayout()
-            
+
             self.enable_btn = QPushButton("Enable")
             self.enable_btn.clicked.connect(self.enable_selected_plugin)
-            
+
             self.disable_btn = QPushButton("Disable")
             self.disable_btn.clicked.connect(self.disable_selected_plugin)
-            
+
             self.remove_btn = QPushButton("Remove")
             self.remove_btn.clicked.connect(self.remove_selected_plugin)
-            
+
             self.configure_btn = QPushButton("Configure")
             self.configure_btn.clicked.connect(self.configure_selected_plugin)
-            
+
             controls_layout.addWidget(self.enable_btn)
             controls_layout.addWidget(self.disable_btn)
             controls_layout.addWidget(self.remove_btn)
             controls_layout.addWidget(self.configure_btn)
             controls_layout.addStretch()
-            
+
             header_layout.addLayout(controls_layout)
-            
+
             # Plugin info
             info_group = QGroupBox("Plugin Information")
             info_layout = QVBoxLayout(info_group)
-            
+
             self.plugin_info = QTextEdit()
             self.plugin_info.setReadOnly(True)
             self.plugin_info.setMaximumHeight(150)
             info_layout.addWidget(self.plugin_info)
-            
+
             layout.addWidget(header_group)
             layout.addWidget(info_group)
-            
+
             # Connect selection change
             self.installed_list.itemSelectionChanged.connect(self.on_installed_selection_changed)
 
         def setup_available_tab(self, tab):
             """Setup the available plugins tab."""
             layout = QVBoxLayout(tab)
-            
+
             # Repository selection
             repo_group = QGroupBox("Plugin Repository")
             repo_layout = QHBoxLayout(repo_group)
-            
+
             repo_layout.addWidget(QLabel("Repository:"))
             self.repo_combo = QComboBox()
             self.repo_combo.addItems(["Official Repository", "Community Repository", "Local Repository"])
             repo_layout.addWidget(self.repo_combo)
-            
+
             refresh_repo_btn = QPushButton("Refresh")
             refresh_repo_btn.clicked.connect(self.refresh_available_plugins)
             repo_layout.addWidget(refresh_repo_btn)
-            
+
             layout.addWidget(repo_group)
-            
+
             # Available plugins list
             available_group = QGroupBox("Available Plugins")
             available_layout = QVBoxLayout(available_group)
-            
+
             self.available_list = QListWidget()
             available_layout.addWidget(self.available_list)
-            
+
             # Install controls
             install_layout = QHBoxLayout()
-            
+
             self.install_btn = QPushButton("Install Selected")
             self.install_btn.clicked.connect(self.install_selected_plugin)
-            
+
             self.preview_btn = QPushButton("Preview")
             self.preview_btn.clicked.connect(self.preview_selected_plugin)
-            
+
             install_layout.addWidget(self.install_btn)
             install_layout.addWidget(self.preview_btn)
             install_layout.addStretch()
-            
+
             available_layout.addLayout(install_layout)
-            
+
             layout.addWidget(available_group)
-            
+
             # Plugin details
             details_group = QGroupBox("Plugin Details")
             details_layout = QVBoxLayout(details_group)
-            
+
             self.plugin_details = QTextEdit()
             self.plugin_details.setReadOnly(True)
             self.plugin_details.setMaximumHeight(150)
             details_layout.addWidget(self.plugin_details)
-            
+
             layout.addWidget(details_group)
-            
+
             # Connect selection change
             self.available_list.itemSelectionChanged.connect(self.on_available_selection_changed)
 
         def setup_install_tab(self, tab):
             """Setup the install from file tab."""
             layout = QVBoxLayout(tab)
-            
+
             # File selection
             file_group = QGroupBox("Install Plugin from File")
             file_layout = QFormLayout(file_group)
-            
+
             self.file_path_edit = QLineEdit()
             browse_btn = QPushButton("Browse...")
             browse_btn.clicked.connect(self.browse_plugin_file)
-            
+
             file_selection_layout = QHBoxLayout()
             file_selection_layout.addWidget(self.file_path_edit)
             file_selection_layout.addWidget(browse_btn)
-            
+
             file_layout.addRow("Plugin File:", file_selection_layout)
-            
+
             # Installation options
             self.auto_enable = QCheckBox("Auto-enable after installation")
             self.auto_enable.setChecked(True)
-            
+
             self.backup_existing = QCheckBox("Backup existing plugins")
             self.backup_existing.setChecked(True)
-            
+
             file_layout.addRow(self.auto_enable)
             file_layout.addRow(self.backup_existing)
-            
+
             layout.addWidget(file_group)
-            
+
             # Installation progress
             progress_group = QGroupBox("Installation Progress")
             progress_layout = QVBoxLayout(progress_group)
-            
+
             self.progress_bar = QProgressBar()
             self.progress_bar.setVisible(False)
             progress_layout.addWidget(self.progress_bar)
-            
+
             self.status_label = QLabel("Ready to install plugin")
             progress_layout.addWidget(self.status_label)
-            
+
             layout.addWidget(progress_group)
-            
+
             # Install button
             install_file_btn = QPushButton("Install Plugin")
             install_file_btn.clicked.connect(self.install_from_file)
             layout.addWidget(install_file_btn)
-            
+
             layout.addStretch()
 
         def setup_development_tab(self, tab):
             """Setup the plugin development tab."""
             layout = QVBoxLayout(tab)
-            
+
             # Template selection
             template_group = QGroupBox("Create New Plugin")
             template_layout = QFormLayout(template_group)
-            
+
             self.plugin_name_edit = QLineEdit()
             template_layout.addRow("Plugin Name:", self.plugin_name_edit)
-            
+
             self.plugin_type_combo = QComboBox()
             self.plugin_type_combo.addItems([
                 "Analysis Plugin",
-                "Exploit Plugin", 
+                "Exploit Plugin",
                 "UI Plugin",
                 "Tool Plugin",
                 "Generic Plugin"
             ])
             template_layout.addRow("Plugin Type:", self.plugin_type_combo)
-            
+
             self.author_edit = QLineEdit()
             template_layout.addRow("Author:", self.author_edit)
-            
+
             create_btn = QPushButton("Create Plugin Template")
             create_btn.clicked.connect(self.create_plugin_template)
             template_layout.addRow(create_btn)
-            
+
             layout.addWidget(template_group)
-            
+
             # Plugin testing
             test_group = QGroupBox("Plugin Testing")
             test_layout = QVBoxLayout(test_group)
-            
+
             test_info = QLabel("Select a plugin file to test:")
             test_layout.addWidget(test_info)
-            
+
             test_file_layout = QHBoxLayout()
             self.test_file_edit = QLineEdit()
             test_browse_btn = QPushButton("Browse...")
             test_browse_btn.clicked.connect(self.browse_test_plugin)
-            
+
             test_file_layout.addWidget(self.test_file_edit)
             test_file_layout.addWidget(test_browse_btn)
             test_layout.addLayout(test_file_layout)
-            
+
             test_btn = QPushButton("Test Plugin")
             test_btn.clicked.connect(self.test_plugin)
             test_layout.addWidget(test_btn)
-            
+
             self.test_output = QTextEdit()
             self.test_output.setReadOnly(True)
             self.test_output.setMaximumHeight(200)
             test_layout.addWidget(self.test_output)
-            
+
             layout.addWidget(test_group)
-            
+
             layout.addStretch()
 
         def load_installed_plugins(self):
             """Load list of installed plugins."""
             self.installed_plugins = []
             self.installed_list.clear()
-            
+
             try:
                 if os.path.exists(self.plugins_dir):
                     for item in os.listdir(self.plugins_dir):
@@ -411,17 +427,17 @@ else:
                         if os.path.isdir(item_path) or item.endswith('.py'):
                             plugin_info = self.get_plugin_info(item_path)
                             self.installed_plugins.append(plugin_info)
-                            
+
                             list_item = QListWidgetItem(plugin_info['name'])
                             list_item.setData(0, plugin_info)
-                            
+
                             # Color code based on status
                             if plugin_info.get('enabled', True):
                                 list_item.setForeground(list_item.foreground())  # Default color
                             else:
                                 from PyQt5.QtGui import QColor
                                 list_item.setForeground(QColor(128, 128, 128))  # Gray for disabled
-                            
+
                             self.installed_list.addItem(list_item)
             except Exception as e:
                 logger.error(f"Error loading installed plugins: {e}")
@@ -430,7 +446,7 @@ else:
             """Load list of available plugins from repositories."""
             self.available_plugins = []
             self.available_list.clear()
-            
+
             # Simulate available plugins (in real implementation, would fetch from repositories)
             demo_plugins = [
                 {
@@ -443,7 +459,7 @@ else:
                 },
                 {
                     'name': 'Packer Detector Pro',
-                    'version': '2.1.0', 
+                    'version': '2.1.0',
                     'description': 'Detect and analyze various executable packers',
                     'author': 'Security Team',
                     'category': 'Analysis',
@@ -458,7 +474,7 @@ else:
                     'size': '67 KB'
                 }
             ]
-            
+
             for plugin in demo_plugins:
                 self.available_plugins.append(plugin)
                 list_item = QListWidgetItem(f"{plugin['name']} v{plugin['version']}")
@@ -475,13 +491,13 @@ else:
                 'version': '1.0.0',
                 'description': 'No description available'
             }
-            
+
             # Try to read plugin metadata
             try:
                 if plugin_path.endswith('.py'):
                     with open(plugin_path, 'r', encoding='utf-8') as f:
                         content = f.read()
-                        
+
                     # Extract basic metadata from comments
                     lines = content.split('\n')
                     for line in lines[:20]:  # Check first 20 lines
@@ -494,10 +510,10 @@ else:
                             info['description'] = line.split(':', 1)[1].strip()
                         elif 'def ' in line and 'main' in line:
                             info['has_main'] = True
-                            
+
             except Exception as e:
                 logger.debug(f"Could not read plugin metadata: {e}")
-                
+
             return info
 
         def on_installed_selection_changed(self):
@@ -561,19 +577,19 @@ Description: {plugin_info['description']}"""
             if current_item:
                 plugin_info = current_item.data(0)
                 reply = QMessageBox.question(
-                    self, 
+                    self,
                     "Confirm Removal",
                     f"Are you sure you want to remove plugin '{plugin_info['name']}'?",
                     QMessageBox.Yes | QMessageBox.No
                 )
-                
+
                 if reply == QMessageBox.Yes:
                     try:
                         if os.path.isfile(plugin_info['path']):
                             os.remove(plugin_info['path'])
                         elif os.path.isdir(plugin_info['path']):
                             shutil.rmtree(plugin_info['path'])
-                        
+
                         self.load_installed_plugins()  # Refresh list
                         QMessageBox.information(self, "Success", "Plugin removed successfully")
                     except Exception as e:
@@ -585,7 +601,7 @@ Description: {plugin_info['description']}"""
             if current_item:
                 plugin_info = current_item.data(0)
                 QMessageBox.information(
-                    self, 
+                    self,
                     "Plugin Configuration",
                     f"Configuration for '{plugin_info['name']}' is not yet implemented.\n\n"
                     "This feature will allow you to modify plugin settings and parameters."
@@ -627,7 +643,7 @@ Description: {plugin_info['description']}"""
                 "",
                 "Plugin Files (*.py *.zip);;Python Files (*.py);;ZIP Archives (*.zip);;All Files (*)"
             )
-            
+
             if file_path:
                 self.file_path_edit.setText(file_path)
 
@@ -637,20 +653,20 @@ Description: {plugin_info['description']}"""
             if not plugin_file:
                 QMessageBox.warning(self, "Warning", "Please select a plugin file first")
                 return
-                
+
             if not os.path.exists(plugin_file):
                 QMessageBox.critical(self, "Error", "Selected file does not exist")
                 return
-            
+
             # Start installation thread
             install_dir = os.path.join(self.plugins_dir, os.path.splitext(os.path.basename(plugin_file))[0])
             os.makedirs(install_dir, exist_ok=True)
-            
+
             self.install_thread = PluginInstallThread(plugin_file, install_dir)
             self.install_thread.progress_updated.connect(self.progress_bar.setValue)
             self.install_thread.status_updated.connect(self.status_label.setText)
             self.install_thread.installation_finished.connect(self.on_installation_finished)
-            
+
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
             self.install_thread.start()
@@ -658,11 +674,11 @@ Description: {plugin_info['description']}"""
         def on_installation_finished(self, success, message):
             """Handle installation completion."""
             self.progress_bar.setVisible(False)
-            
+
             if success:
                 QMessageBox.information(self, "Success", message)
                 self.load_installed_plugins()  # Refresh installed plugins list
-                
+
                 if self.auto_enable.isChecked():
                     self.status_label.setText("Plugin installed and enabled")
                 else:
@@ -677,10 +693,10 @@ Description: {plugin_info['description']}"""
             if not plugin_name:
                 QMessageBox.warning(self, "Warning", "Please enter a plugin name")
                 return
-                
+
             plugin_type = self.plugin_type_combo.currentText()
             author = self.author_edit.text().strip() or "Unknown Author"
-            
+
             # Generate template code
             template_code = f"""#!/usr/bin/env python3
 \"\"\"
@@ -789,24 +805,24 @@ if __name__ == '__main__':
     print(f"Description: {{plugin.description}}")
     print(f"Author: {{plugin.author}}")
 """
-            
+
             # Save template file
             try:
                 filename = f"{plugin_name.replace(' ', '_').lower()}_plugin.py"
                 file_path = os.path.join(self.plugins_dir, filename)
-                
+
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(template_code)
-                
+
                 QMessageBox.information(
                     self,
                     "Template Created",
                     f"Plugin template created successfully:\n{file_path}\n\n"
                     "You can now edit the template to implement your plugin functionality."
                 )
-                
+
                 self.load_installed_plugins()  # Refresh list
-                
+
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to create template: {str(e)}")
 
@@ -818,7 +834,7 @@ if __name__ == '__main__':
                 self.plugins_dir,
                 "Python Files (*.py);;All Files (*)"
             )
-            
+
             if file_path:
                 self.test_file_edit.setText(file_path)
 
@@ -828,41 +844,41 @@ if __name__ == '__main__':
             if not plugin_file:
                 QMessageBox.warning(self, "Warning", "Please select a plugin file to test")
                 return
-                
+
             if not os.path.exists(plugin_file):
                 QMessageBox.critical(self, "Error", "Selected plugin file does not exist")
                 return
-            
+
             self.test_output.clear()
             self.test_output.append("Testing plugin...\n")
-            
+
             try:
                 # Basic syntax check
                 with open(plugin_file, 'r', encoding='utf-8') as f:
                     content = f.read()
-                
+
                 # Try to compile the code
                 compile(content, plugin_file, 'exec')
                 self.test_output.append("✓ Syntax check passed")
-                
+
                 # Check for required components
                 if 'class ' in content and 'Plugin' in content:
                     self.test_output.append("✓ Plugin class found")
                 else:
                     self.test_output.append("⚠ Warning: No plugin class found")
-                
+
                 if 'def execute(' in content:
                     self.test_output.append("✓ Execute method found")
                 else:
                     self.test_output.append("⚠ Warning: No execute method found")
-                
+
                 if 'PLUGIN_INFO' in content:
                     self.test_output.append("✓ Plugin metadata found")
                 else:
                     self.test_output.append("⚠ Warning: No plugin metadata found")
-                
+
                 self.test_output.append("\n✅ Plugin test completed successfully")
-                
+
             except SyntaxError as e:
                 self.test_output.append(f"❌ Syntax error: {e}")
             except Exception as e:

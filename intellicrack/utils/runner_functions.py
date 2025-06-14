@@ -457,7 +457,7 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
 
                 # Use path_discovery to find Ghidra installation
                 from .path_discovery import find_tool
-                
+
                 ghidra_path = find_tool('ghidra')
                 if ghidra_path:
                     ghidra_dir = os.path.dirname(ghidra_path)
@@ -476,14 +476,14 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
                         os.path.join(os.path.expanduser("~"), "Ghidra")
                     ]
 
-                for location in common_locations:
-                    if os.path.exists(location):
-                        app_instance.update_output.emit(log_message(
-                            f"[Ghidra Analysis] Found potential Ghidra installation at: {location}"))
-                        run_file = os.path.join(location, "ghidraRun.bat")
-                        if os.path.exists(run_file):
+                    for location in common_locations:
+                        if os.path.exists(location):
                             app_instance.update_output.emit(log_message(
-                                f"[Ghidra Analysis] To fix this error, go to Settings tab and set Ghidra path to: {run_file}"))
+                                f"[Ghidra Analysis] Found potential Ghidra installation at: {location}"))
+                            run_file = os.path.join(location, "ghidraRun.bat")
+                            if os.path.exists(run_file):
+                                app_instance.update_output.emit(log_message(
+                                    f"[Ghidra Analysis] To fix this error, go to Settings tab and set Ghidra path to: {run_file}"))
 
             return {"status": "error", "message": error_msg}
 
@@ -518,7 +518,7 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
 
         # Build the command using common Ghidra utility
         from .ghidra_utils import build_ghidra_command, get_ghidra_headless_path
-        
+
         # Use dynamic path discovery or fallback
         analyze_headless = get_ghidra_headless_path()
         if not analyze_headless:
@@ -2301,7 +2301,7 @@ def run_autonomous_patching(app_instance=None, **kwargs) -> Dict[str, Any]:
     """
     try:
         logger.info("Starting autonomous patching analysis")
-        
+
         # Initialize result structure
         result = {
             "status": "success",
@@ -2315,36 +2315,36 @@ def run_autonomous_patching(app_instance=None, **kwargs) -> Dict[str, Any]:
             "warnings": [],
             "processing_time": 0.0
         }
-        
+
         import time
         start_time = time.time()
-        
+
         # Extract parameters
         target_binary = kwargs.get('target_binary')
         patch_strategy = kwargs.get('patch_strategy', 'conservative')
         backup_original = kwargs.get('backup_original', True)
         verify_patches = kwargs.get('verify_patches', True)
-        
+
         if not target_binary:
             result["warnings"].append("No target binary specified")
             return result
-        
+
         logger.info("Autonomous patching target: %s", target_binary)
-        
+
         # Phase 1: Initial Binary Analysis
         logger.info("Phase 1: Analyzing target binary")
         analysis_result = _autonomous_analyze_binary(target_binary)
         result["analysis_phases"]["binary_analysis"] = analysis_result
-        
+
         if not analysis_result.get("success", False):
             result["warnings"].append("Binary analysis failed - cannot proceed with patching")
             return result
-        
+
         # Phase 2: Vulnerability and License Detection
         logger.info("Phase 2: Detecting vulnerabilities and license checks")
         detection_result = _autonomous_detect_targets(target_binary, analysis_result)
         result["analysis_phases"]["target_detection"] = detection_result
-        
+
         # Phase 3: Patch Generation
         logger.info("Phase 3: Generating autonomous patches")
         patch_generation_result = _autonomous_generate_patches(
@@ -2352,13 +2352,13 @@ def run_autonomous_patching(app_instance=None, **kwargs) -> Dict[str, Any]:
         )
         result["analysis_phases"]["patch_generation"] = patch_generation_result
         result["patches_found"] = patch_generation_result.get("patches", [])
-        
+
         # Phase 4: Backup Original (if requested)
         if backup_original and result["patches_found"]:
             logger.info("Phase 4: Creating backup of original binary")
             backup_result = _autonomous_backup_original(target_binary)
             result["analysis_phases"]["backup"] = backup_result
-        
+
         # Phase 5: Patch Application
         if result["patches_found"]:
             logger.info("Phase 5: Applying generated patches")
@@ -2367,20 +2367,20 @@ def run_autonomous_patching(app_instance=None, **kwargs) -> Dict[str, Any]:
             )
             result["analysis_phases"]["patch_application"] = application_result
             result["patches_applied"] = application_result.get("applied_count", 0)
-            
+
             # Phase 6: Patch Verification (if requested)
             if verify_patches and result["patches_applied"] > 0:
                 logger.info("Phase 6: Verifying patch effectiveness")
                 verification_result = _autonomous_verify_patches(target_binary)
                 result["verification_results"] = verification_result
-        
+
         # Generate statistics and recommendations
         result["patch_statistics"] = _generate_patch_statistics(result)
         result["recommendations"] = _generate_autonomous_recommendations(result)
-        
+
         # Calculate processing time
         result["processing_time"] = time.time() - start_time
-        
+
         # Final status determination
         if result["patches_applied"] > 0:
             result["message"] = f"Autonomous patching completed: {result['patches_applied']} patches applied successfully"
@@ -2391,7 +2391,7 @@ def run_autonomous_patching(app_instance=None, **kwargs) -> Dict[str, Any]:
         else:
             result["message"] = "No viable patches identified for autonomous application"
             result["warnings"].append("No patchable targets detected")
-        
+
         return result
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2402,100 +2402,100 @@ def run_autonomous_patching(app_instance=None, **kwargs) -> Dict[str, Any]:
 def _autonomous_analyze_binary(target_binary: str) -> Dict[str, Any]:
     """Analyze binary for autonomous patching."""
     result = {"success": False, "findings": [], "vulnerability_count": 0}
-    
+
     try:
         import os
-        
+
         if not os.path.exists(target_binary):
             result["findings"].append("Target binary not found")
             return result
-            
+
         # Basic binary analysis
         file_size = os.path.getsize(target_binary)
         result["file_size"] = file_size
         result["findings"].append(f"Binary size: {file_size} bytes")
-        
+
         # Detect binary format
         with open(target_binary, 'rb') as f:
             header = f.read(64)
-            
+
         if header.startswith(b'MZ'):
             result["format"] = "PE"
             result["findings"].append("Windows PE executable detected")
         elif header.startswith(b'\x7fELF'):
-            result["format"] = "ELF"  
+            result["format"] = "ELF"
             result["findings"].append("Linux ELF executable detected")
         else:
             result["format"] = "Unknown"
             result["findings"].append("Unknown binary format")
-            
+
         result["success"] = True
-        
+
     except Exception as e:
         result["findings"].append(f"Analysis error: {e}")
-        
+
     return result
 
 
 def _autonomous_detect_targets(target_binary: str, analysis_result: Dict[str, Any]) -> Dict[str, Any]:
     """Detect patching targets (license checks, vulnerabilities)."""
     result = {"targets_found": [], "license_checks": [], "vulnerabilities": []}
-    
+
     try:
         # Use existing vulnerability detection
         from ..core.analysis.vulnerability_engine import VulnerabilityEngine
-        
+
         vuln_engine = VulnerabilityEngine()
         vulns = vuln_engine.scan_binary(target_binary)
-        
+
         result["vulnerabilities"] = vulns.get("vulnerabilities", [])
         result["targets_found"].extend([f"Vulnerability: {v.get('type', 'unknown')}" for v in result["vulnerabilities"]])
-        
+
         # Detect license check patterns
         try:
             with open(target_binary, 'rb') as f:
                 binary_data = f.read(min(1024*1024, 1000000))  # First 1MB
-                
+
             license_strings = [b'license', b'trial', b'demo', b'activation', b'serial']
             for string in license_strings:
                 if string in binary_data:
                     result["license_checks"].append(f"Found license string: {string.decode()}")
                     result["targets_found"].append(f"License check: {string.decode()}")
-                    
+
         except Exception as e:
             logger.debug("License detection error: %s", e)
-            
+
     except Exception as e:
         logger.error("Target detection error: %s", e)
-        
+
     return result
 
 
 def _autonomous_generate_patches(target_binary: str, detection_result: Dict[str, Any], strategy: str) -> Dict[str, Any]:
     """Generate patches based on detected targets."""
     result = {"patches": [], "patch_count": 0}
-    
+
     try:
         patches = []
-        
+
         # Generate patches for vulnerabilities
         for vuln in detection_result.get("vulnerabilities", []):
             patch = _generate_vulnerability_patch(vuln, strategy)
             if patch:
                 patches.append(patch)
-                
+
         # Generate patches for license checks
         for license_check in detection_result.get("license_checks", []):
             patch = _generate_license_patch(license_check, strategy)
             if patch:
                 patches.append(patch)
-                
+
         result["patches"] = patches
         result["patch_count"] = len(patches)
-        
+
     except Exception as e:
         logger.error("Patch generation error: %s", e)
-        
+
     return result
 
 
@@ -2507,9 +2507,9 @@ def _generate_vulnerability_patch(vulnerability: Dict[str, Any], strategy: str) 
         "strategy": strategy,
         "operations": []
     }
-    
+
     vuln_type = vulnerability.get("type", "")
-    
+
     if "buffer_overflow" in vuln_type.lower():
         # Example buffer overflow patch
         patch["operations"].append({
@@ -2526,7 +2526,7 @@ def _generate_vulnerability_patch(vulnerability: Dict[str, Any], strategy: str) 
             "value": 1,
             "description": "Force license check to return success"
         })
-        
+
     return patch if patch["operations"] else None
 
 
@@ -2548,84 +2548,83 @@ def _generate_license_patch(license_check: str, strategy: str) -> Dict[str, Any]
 def _autonomous_backup_original(target_binary: str) -> Dict[str, Any]:
     """Create backup of original binary."""
     result = {"success": False, "backup_path": ""}
-    
+
     try:
         import shutil
-        import os
-        
+
         backup_path = target_binary + ".backup"
         shutil.copy2(target_binary, backup_path)
-        
+
         result["success"] = True
         result["backup_path"] = backup_path
         result["message"] = f"Backup created: {backup_path}"
-        
+
     except Exception as e:
         result["message"] = f"Backup failed: {e}"
-        
+
     return result
 
 
 def _autonomous_apply_patches(target_binary: str, patches: List[Dict[str, Any]], strategy: str) -> Dict[str, Any]:
     """Apply generated patches to binary."""
     result = {"applied_count": 0, "failed_count": 0, "results": []}
-    
+
     try:
         for patch in patches:
             patch_result = _apply_single_patch(target_binary, patch, strategy)
             result["results"].append(patch_result)
-            
+
             if patch_result.get("success", False):
                 result["applied_count"] += 1
             else:
                 result["failed_count"] += 1
-                
+
     except Exception as e:
         logger.error("Patch application error: %s", e)
-        
+
     return result
 
 
 def _apply_single_patch(target_binary: str, patch: Dict[str, Any], strategy: str) -> Dict[str, Any]:
     """Apply a single patch to the binary."""
     result = {"success": False, "message": ""}
-    
+
     try:
         # Simulate patch application based on patch type
         patch_type = patch.get("type", "")
         operations = patch.get("operations", [])
-        
+
         if not operations:
             result["message"] = "No patch operations defined"
             return result
-            
+
         # For now, simulate successful application
         # In real implementation, this would modify the binary file
         result["success"] = True
         result["message"] = f"Applied {len(operations)} operations for {patch_type} patch"
-        
+
     except Exception as e:
         result["message"] = f"Patch application failed: {e}"
-        
+
     return result
 
 
 def _autonomous_verify_patches(target_binary: str) -> Dict[str, Any]:
     """Verify effectiveness of applied patches."""
     result = {"verification_passed": False, "tests": []}
-    
+
     try:
         # Use existing verification functionality
         from .additional_runners import _verify_crack
-        
+
         verification_result = _verify_crack(target_binary)
         result["verification_passed"] = verification_result.get("verified", False)
         result["confidence"] = verification_result.get("confidence", 0.0)
         result["tests"] = verification_result.get("findings", [])
-        
+
     except Exception as e:
         result["tests"].append(f"Verification error: {e}")
-        
+
     return result
 
 
@@ -2643,18 +2642,18 @@ def _generate_patch_statistics(result: Dict[str, Any]) -> Dict[str, Any]:
 def _generate_autonomous_recommendations(result: Dict[str, Any]) -> List[str]:
     """Generate recommendations based on patching results."""
     recommendations = []
-    
+
     if result.get("patches_applied", 0) == 0:
         recommendations.append("No patches were applied - consider manual analysis")
-        
+
     if result.get("verification_results", {}).get("verification_passed", False):
         recommendations.append("Patch verification passed - binary appears successfully modified")
     elif result.get("patches_applied", 0) > 0:
         recommendations.append("Patches applied but verification failed - manual review recommended")
-        
+
     if len(result.get("patches_found", [])) > result.get("patches_applied", 0):
         recommendations.append("Some patches failed to apply - check error logs")
-        
+
     return recommendations
 
 

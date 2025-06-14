@@ -27,12 +27,12 @@ from typing import Any, Optional
 
 from PyQt5.QtWidgets import QMessageBox
 
+from ...utils.logger import get_logger
 from ...utils.protection_detection import (
     detect_checksum_verification,
     detect_obfuscation,
     detect_self_healing_code,
 )
-from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -395,9 +395,9 @@ def bypass_memory_protection(address: int, size: int, protection: int = None) ->
         True if protection changed successfully, False otherwise
     """
     import platform
-    
+
     system = platform.system()
-    
+
     if system == 'Windows':
         return _bypass_memory_protection_windows(address, size, protection)
     elif system in ['Linux', 'Darwin']:
@@ -422,7 +422,7 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
     try:
         import ctypes
         from ctypes import wintypes
-        
+
         # Windows memory protection constants
         PAGE_NOACCESS = 0x01
         PAGE_READONLY = 0x02
@@ -432,13 +432,13 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
         PAGE_EXECUTE_READ = 0x20
         PAGE_EXECUTE_READWRITE = 0x40
         PAGE_EXECUTE_WRITECOPY = 0x80
-        
+
         # Default to RWX if not specified
         if protection is None:
             protection = PAGE_EXECUTE_READWRITE
-            
+
         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-        
+
         # VirtualProtect function
         VirtualProtect = kernel32.VirtualProtect
         VirtualProtect.argtypes = [
@@ -448,10 +448,10 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
             ctypes.POINTER(wintypes.DWORD)  # lpflOldProtect
         ]
         VirtualProtect.restype = wintypes.BOOL
-        
+
         # Store old protection
         old_protection = wintypes.DWORD()
-        
+
         # Change memory protection
         success = VirtualProtect(
             ctypes.c_void_p(address),
@@ -459,7 +459,7 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
             protection,
             ctypes.byref(old_protection)
         )
-        
+
         if success:
             logger.info(f"Successfully changed memory protection at {hex(address)}")
             logger.info(f"Old protection: {hex(old_protection.value)}, New protection: {hex(protection)}")
@@ -468,7 +468,7 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
             error = ctypes.get_last_error()
             logger.error(f"VirtualProtect failed with error code: {error}")
             return False
-            
+
     except Exception as e:
         logger.error(f"Exception during Windows memory protection bypass: {e}")
         return False
@@ -489,20 +489,20 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
     try:
         import ctypes
         import mmap
-        
+
         # Unix memory protection constants
         PROT_NONE = 0x0
         PROT_READ = 0x1
         PROT_WRITE = 0x2
         PROT_EXEC = 0x4
-        
+
         # Default to RWX if not specified
         if protection is None:
             protection = PROT_READ | PROT_WRITE | PROT_EXEC
-            
+
         # Load libc
         libc = ctypes.CDLL(None)
-        
+
         # mprotect function
         mprotect = libc.mprotect
         mprotect.argtypes = [
@@ -511,22 +511,22 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
             ctypes.c_int         # prot
         ]
         mprotect.restype = ctypes.c_int
-        
+
         # Align address to page boundary
         page_size = mmap.PAGESIZE
         aligned_address = address & ~(page_size - 1)
-        
+
         # Adjust size to cover the entire range
         size_adjustment = address - aligned_address
         aligned_size = ((size + size_adjustment + page_size - 1) // page_size) * page_size
-        
+
         # Change memory protection
         result = mprotect(
             ctypes.c_void_p(aligned_address),
             aligned_size,
             protection
         )
-        
+
         if result == 0:
             logger.info(f"Successfully changed memory protection at {hex(aligned_address)}")
             logger.info(f"Protection flags: {hex(protection)}")
@@ -535,7 +535,7 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
             errno = ctypes.get_errno()
             logger.error(f"mprotect failed with errno: {errno}")
             return False
-            
+
     except Exception as e:
         logger.error(f"Exception during Unix memory protection bypass: {e}")
         return False
@@ -554,9 +554,9 @@ def patch_memory_direct(process_id: int, address: int, data: bytes) -> bool:
         True if patching successful, False otherwise
     """
     import platform
-    
+
     system = platform.system()
-    
+
     if system == 'Windows':
         return _patch_memory_windows(process_id, address, data)
     elif system in ['Linux', 'Darwin']:
@@ -581,19 +581,19 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
     try:
         import ctypes
         from ctypes import wintypes
-        
+
         # Constants
         PROCESS_ALL_ACCESS = 0x1F0FFF
         PAGE_EXECUTE_READWRITE = 0x40
-        
+
         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-        
+
         # Open process
         process_handle = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, process_id)
         if not process_handle:
             logger.error(f"Failed to open process {process_id}")
             return False
-            
+
         try:
             # Change memory protection to allow writing
             old_protection = wintypes.DWORD()
@@ -604,11 +604,11 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
                 PAGE_EXECUTE_READWRITE,
                 ctypes.byref(old_protection)
             )
-            
+
             if not success:
                 logger.error("Failed to change memory protection")
                 return False
-                
+
             # Write memory
             bytes_written = ctypes.c_size_t(0)
             success = kernel32.WriteProcessMemory(
@@ -618,10 +618,10 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
                 len(data),
                 ctypes.byref(bytes_written)
             )
-            
+
             if success and bytes_written.value == len(data):
                 logger.info(f"Successfully patched {len(data)} bytes at {hex(address)}")
-                
+
                 # Restore original protection
                 kernel32.VirtualProtectEx(
                     process_handle,
@@ -630,16 +630,16 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
                     old_protection.value,
                     ctypes.byref(old_protection)
                 )
-                
+
                 return True
             else:
                 logger.error("Failed to write process memory")
                 return False
-                
+
         finally:
             # Always close handle
             kernel32.CloseHandle(process_handle)
-            
+
     except Exception as e:
         logger.error(f"Exception during Windows memory patching: {e}")
         return False
@@ -660,59 +660,59 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
     try:
         # Try using /proc/pid/mem first (requires appropriate permissions)
         mem_path = f"/proc/{process_id}/mem"
-        
+
         if os.path.exists(mem_path):
             try:
                 with open(mem_path, 'r+b') as mem_file:
                     mem_file.seek(address)
                     mem_file.write(data)
                     mem_file.flush()
-                    
+
                 logger.info(f"Successfully patched {len(data)} bytes at {hex(address)} via /proc/pid/mem")
                 return True
-                
+
             except (IOError, OSError) as e:
                 logger.warning(f"Failed to patch via /proc/pid/mem: {e}")
-                
+
         # Fallback to ptrace
         import ctypes
-        
+
         # ptrace constants
         PTRACE_ATTACH = 16
         PTRACE_DETACH = 17
         PTRACE_POKEDATA = 5
-        
+
         libc = ctypes.CDLL(None)
         ptrace = libc.ptrace
         ptrace.argtypes = [ctypes.c_long, ctypes.c_long, ctypes.c_void_p, ctypes.c_void_p]
         ptrace.restype = ctypes.c_long
-        
+
         # Attach to process
         if ptrace(PTRACE_ATTACH, process_id, None, None) < 0:
             logger.error("Failed to attach to process with ptrace")
             return False
-            
+
         try:
             # Write data word by word (ptrace limitation)
             word_size = ctypes.sizeof(ctypes.c_long)
-            
+
             for i in range(0, len(data), word_size):
                 word_data = data[i:i+word_size].ljust(word_size, b'\x00')
                 word_value = int.from_bytes(word_data, 'little')
-                
-                if ptrace(PTRACE_POKEDATA, process_id, 
-                         ctypes.c_void_p(address + i), 
+
+                if ptrace(PTRACE_POKEDATA, process_id,
+                         ctypes.c_void_p(address + i),
                          ctypes.c_void_p(word_value)) < 0:
                     logger.error(f"Failed to write at offset {i}")
                     return False
-                    
+
             logger.info(f"Successfully patched {len(data)} bytes at {hex(address)} via ptrace")
             return True
-            
+
         finally:
             # Detach from process
             ptrace(PTRACE_DETACH, process_id, None, None)
-            
+
     except Exception as e:
         logger.error(f"Exception during Unix memory patching: {e}")
         return False
@@ -732,9 +732,9 @@ def handle_guard_pages(address: int, size: int, process_handle: int = None) -> b
         True if guard pages handled successfully, False otherwise
     """
     import platform
-    
+
     system = platform.system()
-    
+
     if system == 'Windows':
         return _handle_guard_pages_windows(address, size, process_handle)
     elif system in ['Linux', 'Darwin']:
@@ -744,7 +744,7 @@ def handle_guard_pages(address: int, size: int, process_handle: int = None) -> b
         return False
 
 
-def _handle_guard_pages_windows(address: int, size: int, 
+def _handle_guard_pages_windows(address: int, size: int,
                                 process_handle: int = None) -> bool:
     """
     Handle PAGE_GUARD on Windows
@@ -760,16 +760,16 @@ def _handle_guard_pages_windows(address: int, size: int,
     try:
         import ctypes
         from ctypes import wintypes
-        
+
         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-        
+
         # Memory protection constants
         PAGE_GUARD = 0x100
         PAGE_NOACCESS = 0x01
         PAGE_READONLY = 0x02
         PAGE_READWRITE = 0x04
         PAGE_EXECUTE_READWRITE = 0x40
-        
+
         # MEMORY_BASIC_INFORMATION structure
         class MEMORY_BASIC_INFORMATION(ctypes.Structure):
             _fields_ = [
@@ -781,9 +781,9 @@ def _handle_guard_pages_windows(address: int, size: int,
                 ("Protect", wintypes.DWORD),
                 ("Type", wintypes.DWORD)
             ]
-        
+
         mbi = MEMORY_BASIC_INFORMATION()
-        
+
         # Query memory information
         if process_handle:
             # Remote process
@@ -800,20 +800,20 @@ def _handle_guard_pages_windows(address: int, size: int,
                 ctypes.byref(mbi),
                 ctypes.sizeof(mbi)
             )
-            
+
         if not result:
             error = ctypes.get_last_error()
             logger.error(f"VirtualQuery failed with error: {error}")
             return False
-            
+
         # Check if PAGE_GUARD is set
         if mbi.Protect & PAGE_GUARD:
             logger.info(f"PAGE_GUARD detected at {hex(address)}")
-            
+
             # Remove PAGE_GUARD by changing protection
             old_protection = wintypes.DWORD()
             new_protection = mbi.Protect & ~PAGE_GUARD  # Remove guard flag
-            
+
             if process_handle:
                 # Remote process
                 success = kernel32.VirtualProtectEx(
@@ -831,19 +831,19 @@ def _handle_guard_pages_windows(address: int, size: int,
                     new_protection,
                     ctypes.byref(old_protection)
                 )
-                
+
             if success:
                 logger.info(f"Removed PAGE_GUARD from {hex(address)}")
-                
+
                 # Optionally trigger the guard page to clear it
                 if not process_handle:  # Only for current process
                     try:
                         # Read first byte to trigger guard
                         dummy = ctypes.c_byte()
                         ctypes.memmove(ctypes.byref(dummy), address, 1)
-                    except:
+                    except (OSError, ValueError, Exception):
                         pass
-                        
+
                 return True
             else:
                 error = ctypes.get_last_error()
@@ -852,13 +852,13 @@ def _handle_guard_pages_windows(address: int, size: int,
         else:
             logger.debug(f"No PAGE_GUARD at {hex(address)}")
             return True
-            
+
     except Exception as e:
         logger.error(f"Exception handling guard pages: {e}")
         return False
 
 
-def _handle_guard_pages_unix(address: int, size: int, 
+def _handle_guard_pages_unix(address: int, size: int,
                             process_handle: int = None) -> bool:
     """
     Handle guard pages on Unix-like systems
@@ -874,15 +874,15 @@ def _handle_guard_pages_unix(address: int, size: int,
     try:
         import ctypes
         import mmap
-        
+
         # On Unix, guard pages are typically implemented differently
         # We'll check /proc/self/maps for memory regions
-        
+
         if process_handle:
             maps_file = f"/proc/{process_handle}/maps"
         else:
             maps_file = "/proc/self/maps"
-            
+
         # Read memory mappings
         try:
             with open(maps_file, 'r') as f:
@@ -892,51 +892,51 @@ def _handle_guard_pages_unix(address: int, size: int,
                         addr_range = parts[0].split('-')
                         start_addr = int(addr_range[0], 16)
                         end_addr = int(addr_range[1], 16)
-                        
+
                         if start_addr <= address < end_addr:
                             perms = parts[1]
                             logger.info(f"Memory region at {hex(address)} has permissions: {perms}")
-                            
+
                             # Check if it's a guard page (no permissions)
                             if perms == '---p':
                                 logger.info("Guard page detected")
-                                
+
                                 # Change permissions to make it accessible
                                 libc = ctypes.CDLL(None)
                                 mprotect = libc.mprotect
-                                
+
                                 # Align to page boundary
                                 page_size = mmap.PAGESIZE
                                 aligned_addr = address & ~(page_size - 1)
-                                
+
                                 # Set read/write permissions
                                 PROT_READ = 0x1
                                 PROT_WRITE = 0x2
-                                
+
                                 result = mprotect(
                                     ctypes.c_void_p(aligned_addr),
                                     page_size,
                                     PROT_READ | PROT_WRITE
                                 )
-                                
+
                                 if result == 0:
                                     logger.info("Successfully removed guard page protection")
                                     return True
                                 else:
                                     logger.error("Failed to change guard page permissions")
                                     return False
-                                    
+
         except IOError:
             logger.warning(f"Cannot read {maps_file}")
-            
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Exception handling Unix guard pages: {e}")
         return False
 
 
-def detect_and_bypass_guard_pages(process_handle: int, address: int, 
+def detect_and_bypass_guard_pages(process_handle: int, address: int,
                                  size: int) -> bool:
     """
     Detect and bypass guard pages before memory operations
@@ -954,15 +954,15 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
         if not handle_guard_pages(address, size, process_handle):
             logger.warning("Failed to handle guard pages")
             return False
-            
+
         # Additionally check for other protections
         import platform
         if platform.system() == 'Windows':
             import ctypes
             from ctypes import wintypes
-            
+
             kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-            
+
             # Check if memory is committed
             class MEMORY_BASIC_INFORMATION(ctypes.Structure):
                 _fields_ = [
@@ -974,7 +974,7 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
                     ("Protect", wintypes.DWORD),
                     ("Type", wintypes.DWORD)
                 ]
-            
+
             mbi = MEMORY_BASIC_INFORMATION()
             result = kernel32.VirtualQueryEx(
                 process_handle,
@@ -982,21 +982,21 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
                 ctypes.byref(mbi),
                 ctypes.sizeof(mbi)
             )
-            
+
             if result:
                 MEM_COMMIT = 0x1000
                 if not (mbi.State & MEM_COMMIT):
                     logger.error("Memory not committed")
                     return False
-                    
+
                 # Check for NO_ACCESS
                 PAGE_NOACCESS = 0x01
                 if mbi.Protect == PAGE_NOACCESS:
                     logger.error("Memory has PAGE_NOACCESS protection")
                     return False
-                    
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Error detecting guard pages: {e}")
         return False

@@ -3,7 +3,7 @@ Common Ghidra plugin execution utilities to avoid code duplication.
 """
 
 import os
-import subprocess
+
 from .logger import log_message
 
 
@@ -27,7 +27,7 @@ def run_ghidra_plugin(ghidra_path, temp_dir, project_name, binary_path, plugin_d
     if app:
         app.update_output.emit(log_message(
             "[Plugin] Setting up Ghidra project..."))
-    
+
     # Build the command
     from .ghidra_utils import build_ghidra_command
     cmd = build_ghidra_command(
@@ -39,11 +39,11 @@ def run_ghidra_plugin(ghidra_path, temp_dir, project_name, binary_path, plugin_d
         plugin_file,
         overwrite=overwrite
     )
-    
+
     if app:
         app.update_output.emit(log_message(
             "[Plugin] Running Ghidra headless analyzer..."))
-    
+
     # Run Ghidra
     try:
         from .process_helpers import run_ghidra_process
@@ -69,7 +69,7 @@ def get_ghidra_output_messages(returncode, stdout, stderr, app=None):
         list: List of formatted messages
     """
     messages = []
-    
+
     if returncode == 0:
         messages.append("[Plugin] Ghidra analysis completed successfully")
         if stdout:
@@ -78,10 +78,10 @@ def get_ghidra_output_messages(returncode, stdout, stderr, app=None):
         messages.append(f"[Plugin] Ghidra analysis failed with code {returncode}")
         if stderr:
             messages.append(f"[Plugin] Error: {stderr[:500]}{'...' if len(stderr) > 500 else ''}")
-    
+
     # Emit messages if app provided
     if app:
         for message in messages:
             app.update_output.emit(log_message(message))
-    
+
     return messages

@@ -19,13 +19,14 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import hashlib
+import json
+import random
 import struct
 import time
-import hashlib
-import random
-import json
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
+from typing import Any, Dict, Optional
+
 from ....utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -43,7 +44,7 @@ class HASPRequest:
     encryption_data: bytes
     additional_params: Dict[str, Any]
 
-@dataclass 
+@dataclass
 class HASPResponse:
     """HASP/Sentinel response structure"""
     status: int
@@ -56,11 +57,11 @@ class HASPResponse:
 
 class HASPSentinelParser:
     """Real HASP/Sentinel protocol parser and response generator"""
-    
+
     # HASP command constants
     HASP_COMMANDS = {
         0x01: "LOGIN",
-        0x02: "LOGOUT", 
+        0x02: "LOGOUT",
         0x03: "ENCRYPT",
         0x04: "DECRYPT",
         0x05: "GET_SIZE",
@@ -80,11 +81,11 @@ class HASPSentinelParser:
         0x14: "TRANSFER_DATA",
         0x15: "GET_HARDWARE_INFO"
     }
-    
+
     # HASP status codes
     HASP_STATUS_CODES = {
         0x00000000: "STATUS_OK",
-        0x00000001: "MEM_RANGE", 
+        0x00000001: "MEM_RANGE",
         0x00000002: "INV_VCODE",
         0x00000003: "INV_SPEC",
         0x00000004: "INV_MEM",
@@ -104,11 +105,11 @@ class HASPSentinelParser:
         0x00000012: "CLOCK_ROLLBACK",
         0x00000013: "INVALID_VENDOR_CODE"
     }
-    
+
     # Common vendor codes for major software
     VENDOR_CODES = {
         0x12345678: "AUTODESK",
-        0x87654321: "BENTLEY", 
+        0x87654321: "BENTLEY",
         0x11223344: "SIEMENS",
         0x44332211: "DASSAULT",
         0x56789ABC: "ANSYS",
@@ -118,14 +119,14 @@ class HASPSentinelParser:
         0x2468ACE0: "MENTOR",
         0xACE02468: "GENERIC"
     }
-    
+
     def __init__(self):
         self.logger = get_logger(__name__)
         self.active_sessions = {}  # Track active sessions
         self.hardware_fingerprint = self._generate_hardware_fingerprint()
         self.encryption_keys = {}  # Store encryption keys per session
         self._load_default_features()
-        
+
     def _load_default_features(self):
         """Load default HASP features for common applications"""
         self.features = {
@@ -140,7 +141,7 @@ class HASPSentinelParser:
                 "rtc_supported": True
             },
             101: {
-                "name": "INVENTOR_PRO", 
+                "name": "INVENTOR_PRO",
                 "vendor_code": 0x12345678,
                 "expiry": "31-dec-2025",
                 "max_users": 50,
@@ -150,25 +151,25 @@ class HASPSentinelParser:
             },
             102: {
                 "name": "MAYA_COMPLETE",
-                "vendor_code": 0x12345678, 
+                "vendor_code": 0x12345678,
                 "expiry": "31-dec-2025",
                 "max_users": 25,
                 "encryption_supported": True,
                 "memory_size": 1024,
                 "rtc_supported": False
             },
-            
+
             # Bentley features
             200: {
                 "name": "MICROSTATION",
                 "vendor_code": 0x87654321,
-                "expiry": "31-dec-2025", 
+                "expiry": "31-dec-2025",
                 "max_users": 100,
                 "encryption_supported": True,
                 "memory_size": 8192,
                 "rtc_supported": True
             },
-            
+
             # Siemens features
             300: {
                 "name": "NX_ADVANCED",
@@ -179,10 +180,10 @@ class HASPSentinelParser:
                 "memory_size": 4096,
                 "rtc_supported": True
             },
-            
+
             # ANSYS features
             400: {
-                "name": "ANSYS_MECHANICAL", 
+                "name": "ANSYS_MECHANICAL",
                 "vendor_code": 0x56789ABC,
                 "expiry": "31-dec-2025",
                 "max_users": 25,
@@ -190,7 +191,7 @@ class HASPSentinelParser:
                 "memory_size": 2048,
                 "rtc_supported": False
             },
-            
+
             # Generic feature for testing
             999: {
                 "name": "GENERIC_FEATURE",
@@ -202,7 +203,7 @@ class HASPSentinelParser:
                 "rtc_supported": True
             }
         }
-        
+
     def _generate_hardware_fingerprint(self) -> Dict[str, Any]:
         """Generate realistic hardware fingerprint"""
         return {
@@ -214,7 +215,7 @@ class HASPSentinelParser:
             "serial": f"H{random.randint(10000000, 99999999)}",
             "firmware": "4.05"
         }
-        
+
     def parse_request(self, data: bytes) -> Optional[HASPRequest]:
         """
         Parse incoming HASP request
@@ -229,76 +230,76 @@ class HASPSentinelParser:
             if len(data) < 20:  # Minimum HASP header
                 self.logger.warning("HASP request too short")
                 return None
-                
+
             offset = 0
-            
+
             # Check HASP magic signature
             magic = struct.unpack('<I', data[offset:offset+4])[0]
             offset += 4
-            
+
             if magic not in [0x48415350, 0x53454E54, 0x484C4D58]:  # "HASP", "SENT", "HLMX"
                 self.logger.debug(f"Invalid HASP magic: 0x{magic:X}")
                 return None
-                
+
             # Parse header
             command = struct.unpack('<I', data[offset:offset+4])[0]
             offset += 4
-            
+
             session_id = struct.unpack('<I', data[offset:offset+4])[0]
             offset += 4
-            
-            feature_id = struct.unpack('<I', data[offset:offset+4])[0] 
+
+            feature_id = struct.unpack('<I', data[offset:offset+4])[0]
             offset += 4
-            
+
             vendor_code = struct.unpack('<I', data[offset:offset+4])[0]
             offset += 4
-            
+
             # Parse variable-length fields
             scope_length = struct.unpack('<H', data[offset:offset+2])[0]
             offset += 2
-            
+
             if offset + scope_length > len(data):
                 return None
-                
+
             scope = data[offset:offset+scope_length].decode('utf-8', errors='ignore')
             offset += scope_length
-            
+
             format_length = struct.unpack('<H', data[offset:offset+2])[0]
             offset += 2
-            
+
             if offset + format_length > len(data):
                 return None
-                
+
             format_str = data[offset:offset+format_length].decode('utf-8', errors='ignore')
             offset += format_length
-            
+
             # Parse client info JSON
-            client_info_length = struct.unpack('<H', data[offset:offset+2])[0] 
+            client_info_length = struct.unpack('<H', data[offset:offset+2])[0]
             offset += 2
-            
+
             client_info = {}
             if client_info_length > 0 and offset + client_info_length <= len(data):
                 try:
                     client_info_json = data[offset:offset+client_info_length].decode('utf-8')
                     client_info = json.loads(client_info_json)
-                except:
+                except (UnicodeDecodeError, ValueError, json.JSONDecodeError, Exception):
                     pass
                 offset += client_info_length
-                
+
             # Parse encryption data
             encryption_length = struct.unpack('<H', data[offset:offset+2])[0]
             offset += 2
-            
+
             encryption_data = b''
             if encryption_length > 0 and offset + encryption_length <= len(data):
                 encryption_data = data[offset:offset+encryption_length]
                 offset += encryption_length
-                
+
             # Parse additional parameters
             additional_params = {}
             if offset < len(data):
                 additional_params = self._parse_additional_params(data[offset:])
-                
+
             request = HASPRequest(
                 command=command,
                 session_id=session_id,
@@ -310,15 +311,15 @@ class HASPSentinelParser:
                 encryption_data=encryption_data,
                 additional_params=additional_params
             )
-            
+
             command_name = self.HASP_COMMANDS.get(command, f"UNKNOWN_{command:02X}")
             self.logger.info(f"Parsed HASP {command_name} request for feature {feature_id}")
             return request
-            
+
         except Exception as e:
             self.logger.error(f"Failed to parse HASP request: {e}")
             return None
-            
+
     def _parse_additional_params(self, data: bytes) -> Dict[str, Any]:
         """Parse additional HASP parameters"""
         params = {}
@@ -328,16 +329,16 @@ class HASPSentinelParser:
                 param_type = struct.unpack('<H', data[offset:offset+2])[0]
                 param_length = struct.unpack('<H', data[offset+2:offset+4])[0]
                 offset += 4
-                
+
                 if offset + param_length > len(data):
                     break
-                    
+
                 param_data = data[offset:offset+param_length]
                 offset += param_length
-                
+
                 if param_type == 0x0001:  # Hostname
                     params['hostname'] = param_data.decode('utf-8', errors='ignore')
-                elif param_type == 0x0002:  # Username  
+                elif param_type == 0x0002:  # Username
                     params['username'] = param_data.decode('utf-8', errors='ignore')
                 elif param_type == 0x0003:  # Process name
                     params['process'] = param_data.decode('utf-8', errors='ignore')
@@ -346,12 +347,12 @@ class HASPSentinelParser:
                         params['ip_address'] = '.'.join(str(b) for b in param_data)
                 else:
                     params[f'param_{param_type:04X}'] = param_data
-                    
+
         except Exception as e:
             self.logger.debug(f"Error parsing additional params: {e}")
-            
+
         return params
-        
+
     def generate_response(self, request: HASPRequest) -> HASPResponse:
         """
         Generate appropriate HASP response based on request
@@ -364,7 +365,7 @@ class HASPSentinelParser:
         """
         command_name = self.HASP_COMMANDS.get(request.command, "UNKNOWN")
         self.logger.info(f"Generating response for {command_name} command")
-        
+
         if request.command == 0x01:  # LOGIN
             return self._handle_login(request)
         elif request.command == 0x02:  # LOGOUT
@@ -395,7 +396,7 @@ class HASPSentinelParser:
             return self._handle_get_hardware_info(request)
         else:
             return self._handle_unknown_command(request)
-            
+
     def _handle_login(self, request: HASPRequest) -> HASPResponse:
         """Handle HASP login request"""
         # Validate vendor code
@@ -409,10 +410,10 @@ class HASPSentinelParser:
                 expiry_info={},
                 hardware_info={}
             )
-            
+
         # Generate session ID
         session_id = random.randint(1000, 9999)
-        
+
         # Store session
         self.active_sessions[session_id] = {
             "vendor_code": request.vendor_code,
@@ -420,13 +421,13 @@ class HASPSentinelParser:
             "login_time": time.time(),
             "client_info": request.client_info
         }
-        
+
         # Generate encryption key for session
         if session_id not in self.encryption_keys:
             self.encryption_keys[session_id] = hashlib.md5(
                 f"{session_id}:{request.vendor_code}:{time.time()}".encode()
             ).digest()
-            
+
         return HASPResponse(
             status=0x00000000,  # STATUS_OK
             session_id=session_id,
@@ -439,7 +440,7 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info=self.hardware_fingerprint
         )
-        
+
     def _handle_logout(self, request: HASPRequest) -> HASPResponse:
         """Handle HASP logout request"""
         if request.session_id in self.active_sessions:
@@ -449,7 +450,7 @@ class HASPSentinelParser:
             status = 0x00000000  # STATUS_OK
         else:
             status = 0x00000010  # NOT_LOGGED_IN
-            
+
         return HASPResponse(
             status=status,
             session_id=request.session_id,
@@ -459,7 +460,7 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info={}
         )
-        
+
     def _handle_feature_login(self, request: HASPRequest) -> HASPResponse:
         """Handle feature-specific login"""
         if request.feature_id not in self.features:
@@ -472,9 +473,9 @@ class HASPSentinelParser:
                 expiry_info={},
                 hardware_info={}
             )
-            
+
         feature = self.features[request.feature_id]
-        
+
         # Check vendor code match
         if request.vendor_code != feature["vendor_code"]:
             return HASPResponse(
@@ -486,11 +487,11 @@ class HASPSentinelParser:
                 expiry_info={},
                 hardware_info={}
             )
-            
+
         # Check if feature is already in use (simulate concurrent user limit)
-        active_users = len([s for s in self.active_sessions.values() 
+        active_users = len([s for s in self.active_sessions.values()
                            if s.get("feature_id") == request.feature_id])
-        
+
         if active_users >= feature["max_users"]:
             return HASPResponse(
                 status=0x00000008,  # TOO_MANY_USERS
@@ -501,7 +502,7 @@ class HASPSentinelParser:
                 expiry_info={},
                 hardware_info={}
             )
-            
+
         return HASPResponse(
             status=0x00000000,  # STATUS_OK
             session_id=request.session_id,
@@ -517,7 +518,7 @@ class HASPSentinelParser:
             },
             hardware_info=self.hardware_fingerprint
         )
-        
+
     def _handle_encrypt(self, request: HASPRequest) -> HASPResponse:
         """Handle encryption request"""
         if request.session_id not in self.active_sessions:
@@ -530,19 +531,19 @@ class HASPSentinelParser:
                 expiry_info={},
                 hardware_info={}
             )
-            
+
         # Simulate encryption (XOR with key for demo)
         if request.session_id in self.encryption_keys:
             key = self.encryption_keys[request.session_id]
             encrypted_data = bytearray()
-            
+
             for i, byte in enumerate(request.encryption_data):
                 encrypted_data.append(byte ^ key[i % len(key)])
-                
+
             encryption_response = bytes(encrypted_data)
         else:
             encryption_response = request.encryption_data  # Pass through
-            
+
         return HASPResponse(
             status=0x00000000,  # STATUS_OK
             session_id=request.session_id,
@@ -552,19 +553,19 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info={}
         )
-        
+
     def _handle_decrypt(self, request: HASPRequest) -> HASPResponse:
         """Handle decryption request"""
         # Same as encrypt for XOR cipher
         return self._handle_encrypt(request)
-        
+
     def _handle_get_size(self, request: HASPRequest) -> HASPResponse:
         """Handle get memory size request"""
         if request.feature_id in self.features:
             memory_size = self.features[request.feature_id]["memory_size"]
         else:
             memory_size = 4096  # Default
-            
+
         return HASPResponse(
             status=0x00000000,  # STATUS_OK
             session_id=request.session_id,
@@ -574,18 +575,18 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info={}
         )
-        
+
     def _handle_read(self, request: HASPRequest) -> HASPResponse:
         """Handle memory read request"""
         # Simulate reading from HASP memory
         # Generate deterministic data based on address
         address = request.additional_params.get('address', 0)
         length = request.additional_params.get('length', 16)
-        
+
         data = bytearray()
         for i in range(length):
             data.append((address + i) & 0xFF)
-            
+
         return HASPResponse(
             status=0x00000000,  # STATUS_OK
             session_id=request.session_id,
@@ -595,7 +596,7 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info={}
         )
-        
+
     def _handle_write(self, request: HASPRequest) -> HASPResponse:
         """Handle memory write request"""
         # Simulate successful write
@@ -608,11 +609,11 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info={}
         )
-        
+
     def _handle_get_rtc(self, request: HASPRequest) -> HASPResponse:
         """Handle real-time clock request"""
         current_time = int(time.time())
-        
+
         return HASPResponse(
             status=0x00000000,  # STATUS_OK
             session_id=request.session_id,
@@ -625,7 +626,7 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info={}
         )
-        
+
     def _handle_get_info(self, request: HASPRequest) -> HASPResponse:
         """Handle get HASP info request"""
         return HASPResponse(
@@ -642,7 +643,7 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info=self.hardware_fingerprint
         )
-        
+
     def _handle_get_feature_info(self, request: HASPRequest) -> HASPResponse:
         """Handle get feature info request"""
         if request.feature_id in self.features:
@@ -669,7 +670,7 @@ class HASPSentinelParser:
                 expiry_info={},
                 hardware_info={}
             )
-            
+
     def _handle_feature_logout(self, request: HASPRequest) -> HASPResponse:
         """Handle feature logout request"""
         return HASPResponse(
@@ -681,7 +682,7 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info={}
         )
-        
+
     def _handle_heartbeat(self, request: HASPRequest) -> HASPResponse:
         """Handle heartbeat request"""
         if request.session_id in self.active_sessions:
@@ -689,7 +690,7 @@ class HASPSentinelParser:
             status = 0x00000000  # STATUS_OK
         else:
             status = 0x00000010  # NOT_LOGGED_IN
-            
+
         return HASPResponse(
             status=status,
             session_id=request.session_id,
@@ -699,7 +700,7 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info={}
         )
-        
+
     def _handle_get_hardware_info(self, request: HASPRequest) -> HASPResponse:
         """Handle hardware info request"""
         return HASPResponse(
@@ -711,7 +712,7 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info=self.hardware_fingerprint
         )
-        
+
     def _handle_unknown_command(self, request: HASPRequest) -> HASPResponse:
         """Handle unknown command"""
         self.logger.warning(f"Unknown HASP command: 0x{request.command:02X}")
@@ -724,7 +725,7 @@ class HASPSentinelParser:
             expiry_info={},
             hardware_info={}
         )
-        
+
     def serialize_response(self, response: HASPResponse) -> bytes:
         """
         Serialize HASP response to bytes
@@ -737,40 +738,40 @@ class HASPSentinelParser:
         """
         try:
             packet = bytearray()
-            
+
             # Magic signature
             packet.extend(struct.pack('<I', 0x48415350))  # "HASP"
-            
+
             # Status code
             packet.extend(struct.pack('<I', response.status))
-            
+
             # Session ID
             packet.extend(struct.pack('<I', response.session_id))
-            
+
             # Feature ID
             packet.extend(struct.pack('<I', response.feature_id))
-            
+
             # License data (JSON)
             license_json = json.dumps(response.license_data).encode('utf-8')
             packet.extend(struct.pack('<H', len(license_json)))
             packet.extend(license_json)
-            
+
             # Encryption response
             packet.extend(struct.pack('<H', len(response.encryption_response)))
             packet.extend(response.encryption_response)
-            
+
             # Expiry info (JSON)
             expiry_json = json.dumps(response.expiry_info).encode('utf-8')
             packet.extend(struct.pack('<H', len(expiry_json)))
             packet.extend(expiry_json)
-            
+
             # Hardware info (JSON)
             hardware_json = json.dumps(response.hardware_info).encode('utf-8')
             packet.extend(struct.pack('<H', len(hardware_json)))
             packet.extend(hardware_json)
-            
+
             return bytes(packet)
-            
+
         except Exception as e:
             self.logger.error(f"Failed to serialize HASP response: {e}")
             # Return minimal error response

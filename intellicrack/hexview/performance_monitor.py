@@ -36,12 +36,12 @@ from ..ui.common_imports import (
     QLabel,
     QProgressBar,
     QPushButton,
-    QTabWidget,
+    Qt,
     QTableWidget,
+    QTabWidget,
     QTimer,
     QVBoxLayout,
     QWidget,
-    Qt
 )
 
 logger = logging.getLogger(__name__)

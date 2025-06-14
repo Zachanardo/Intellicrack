@@ -37,12 +37,12 @@ from ..ui.common_imports import (
     QLabel,
     QLineEdit,
     QPushButton,
-    QTabWidget,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
-    pyqtSignal
+    pyqtSignal,
 )
 
 logger = logging.getLogger(__name__)

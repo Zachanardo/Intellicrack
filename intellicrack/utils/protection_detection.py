@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 from .driver_utils import get_driver_path
 
+
 def _get_driver_path(driver_name: str) -> str:
     """Get Windows driver path dynamically."""
     return get_driver_path(driver_name)

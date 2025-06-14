@@ -42,8 +42,10 @@ def generate_exploit_strategy(self):
 
 def generate_exploit_payload(self, payload_type):
     """Generate an exploit payload of the specified type."""
-    from ..utils.ui_helpers import check_binary_path_and_warn, emit_log_message, generate_exploit_payload_common
-    from ..utils.logger import log_message
+    from ..utils.ui_helpers import (
+        check_binary_path_and_warn,
+        emit_log_message,
+    )
 
     if not check_binary_path_and_warn(self):
         return

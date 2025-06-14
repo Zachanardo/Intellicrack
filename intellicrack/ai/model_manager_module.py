@@ -625,7 +625,7 @@ class ModelManager:
         if model_id in self.model_metadata:
             model_info = self.model_metadata[model_id]
             path = model_info.get('path', '')
-            
+
             # Handle different model types
             if model_info.get('type') == 'api':
                 # API models return their API endpoint
@@ -645,11 +645,11 @@ class ModelManager:
                         extended_path = model_path + ext
                         if os.path.exists(extended_path):
                             return extended_path
-                            
+
             # For local models, check if path exists
             if path and os.path.exists(path):
                 return path
-                
+
             # Try to find in models directory
             possible_paths = [
                 os.path.join(self.models_dir, model_id),
@@ -661,14 +661,14 @@ class ModelManager:
                 os.path.join(self.models_dir, 'downloads', model_id),
                 os.path.join(self.models_dir, 'downloads', f"{model_id}.pth"),
             ]
-            
+
             for p in possible_paths:
                 if os.path.exists(p):
                     # Update metadata with found path
                     self.model_metadata[model_id]['path'] = p
                     self._save_model_metadata()
                     return p
-                    
+
         # Model not found - return empty string
         logger.warning(f"Model path not found for model_id: {model_id}")
         return ''

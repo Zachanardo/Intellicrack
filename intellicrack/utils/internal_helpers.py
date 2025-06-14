@@ -22,7 +22,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import hashlib
 import json
+import math
 import os
+import socket
 import struct
 import subprocess
 import threading
@@ -120,18 +122,17 @@ def _handle_check_license(request_data: Dict[str, Any]) -> Dict[str, Any]:
         Dict containing detailed license validation results
     """
     import hashlib
-    import time
     from datetime import datetime, timedelta
-    
+
     # Extract request parameters
     user = request_data.get('user', 'default_user')
     product = request_data.get('product', 'unknown_product')
     version = request_data.get('version', '1.0')
     hardware_id = request_data.get('hardware_id', 'DEFAULT_HW_ID')
-    
+
     # Generate deterministic license validation based on input
     license_hash = hashlib.md5(f"{user}:{product}:{hardware_id}".encode()).hexdigest()
-    
+
     # Determine license status based on product and user patterns
     if any(pattern in product.lower() for pattern in ['trial', 'demo', 'eval']):
         # Trial license - limited time
@@ -154,7 +155,7 @@ def _handle_check_license(request_data: Dict[str, Any]) -> Dict[str, Any]:
         status = 'valid'
         expiry_date = (datetime.now() + timedelta(days=180)).strftime('%Y-%m-%d')
         features = ['standard', 'basic_features']
-    
+
     # Add version-specific features
     try:
         major_version = int(version.split('.')[0])
@@ -164,7 +165,7 @@ def _handle_check_license(request_data: Dict[str, Any]) -> Dict[str, Any]:
             features.extend(['ai_assistance', 'cloud_sync'])
     except (ValueError, IndexError):
         pass
-    
+
     # Generate realistic license details
     response = {
         'status': status,
@@ -183,31 +184,32 @@ def _handle_check_license(request_data: Dict[str, Any]) -> Dict[str, Any]:
         'server_version': '2.1.4',
         'signature': hashlib.sha256(f"{license_hash}:{status}".encode()).hexdigest()[:32]
     }
-    
+
     # Add warnings or notices based on license status
     if status == 'trial':
         response['notices'] = ['Trial license expires soon', 'Upgrade to full license for continued access']
     elif (datetime.strptime(expiry_date, '%Y-%m-%d') - datetime.now()).days < 30:
         response['notices'] = ['License expires within 30 days', 'Please renew your license']
-    
+
     return response
 
 
 def _handle_decrypt(data: bytes, key: bytes) -> bytes:
     """Handle decryption request using proper cryptography."""
     try:
-        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+        import hashlib
+
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import padding
-        import hashlib
-        
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
         # Derive a proper key from the provided key using SHA-256
         derived_key = hashlib.sha256(key).digest()  # 32 bytes for AES-256
-        
+
         # Use first 16 bytes of hashed key as IV for simplicity
         # In production, IV should be random and transmitted with ciphertext
         iv = hashlib.sha256(key + b'_iv').digest()[:16]
-        
+
         # Decrypt using AES-CBC
         cipher = Cipher(
             algorithms.AES(derived_key),
@@ -215,14 +217,14 @@ def _handle_decrypt(data: bytes, key: bytes) -> bytes:
             backend=default_backend()
         )
         decryptor = cipher.decryptor()
-        
+
         # Decrypt and remove padding
         padded_plaintext = decryptor.update(data) + decryptor.finalize()
         unpadder = padding.PKCS7(128).unpadder()
         plaintext = unpadder.update(padded_plaintext) + unpadder.finalize()
-        
+
         return plaintext
-        
+
     except ImportError:
         # Fallback to XOR if cryptography not available
         logger.warning("cryptography library not available - using weak XOR decryption")
@@ -239,22 +241,23 @@ def _handle_decrypt(data: bytes, key: bytes) -> bytes:
 def _handle_encrypt(data: bytes, key: bytes) -> bytes:
     """Handle encryption request using proper cryptography."""
     try:
-        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+        import hashlib
+
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import padding
-        import hashlib
-        
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
         # Derive a proper key from the provided key using SHA-256
         derived_key = hashlib.sha256(key).digest()  # 32 bytes for AES-256
-        
+
         # Use first 16 bytes of hashed key as IV for simplicity
         # In production, IV should be random and transmitted with ciphertext
         iv = hashlib.sha256(key + b'_iv').digest()[:16]
-        
+
         # Pad the data to AES block size
         padder = padding.PKCS7(128).padder()
         padded_data = padder.update(data) + padder.finalize()
-        
+
         # Encrypt using AES-CBC
         cipher = Cipher(
             algorithms.AES(derived_key),
@@ -263,9 +266,9 @@ def _handle_encrypt(data: bytes, key: bytes) -> bytes:
         )
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(padded_data) + encryptor.finalize()
-        
+
         return ciphertext
-        
+
     except ImportError:
         # Fallback to XOR if cryptography not available
         logger.warning("cryptography library not available - using weak XOR encryption")
@@ -292,7 +295,7 @@ def _handle_get_info() -> Dict[str, Any]:
     import platform
     import time
     from datetime import datetime
-    
+
     # Get system information
     system_info = {
         'os': platform.system(),
@@ -301,13 +304,13 @@ def _handle_get_info() -> Dict[str, Any]:
         'python_version': platform.python_version(),
         'hostname': platform.node()
     }
-    
+
     # Calculate uptime (simulated)
     start_time = time.time() - 3600  # Assume server started 1 hour ago
     uptime_seconds = int(time.time() - start_time)
     uptime_hours = uptime_seconds // 3600
     uptime_minutes = (uptime_seconds % 3600) // 60
-    
+
     return {
         'server': {
             'name': 'Intellicrack License Server',
@@ -380,58 +383,58 @@ def _handle_get_key(key_id: str) -> Optional[str]:
     import base64
     import time
     from datetime import datetime
-    
+
     if not key_id:
         return None
-        
+
     # Generate base hash from key ID
     base_hash = hashlib.sha256(f"{key_id}:license_key".encode()).hexdigest()
-    
+
     # Determine key type based on key_id patterns
     key_id_lower = key_id.lower()
-    
+
     if any(pattern in key_id_lower for pattern in ['adobe', 'cc', 'creative']):
         # Adobe Creative Cloud style key
         segments = [base_hash[i:i+4].upper() for i in range(0, 16, 4)]
         return f"ADBE-{'-'.join(segments)}"
-        
+
     elif any(pattern in key_id_lower for pattern in ['autodesk', 'autocad', 'maya']):
         # Autodesk style key
         key_part = base_hash[:20].upper()
         return f"ADSK-{key_part[:5]}-{key_part[5:10]}-{key_part[10:15]}-{key_part[15:20]}"
-        
+
     elif any(pattern in key_id_lower for pattern in ['microsoft', 'office', 'windows']):
         # Microsoft style product key
         segments = [base_hash[i:i+5].upper() for i in range(0, 25, 5)]
         return '-'.join(segments)
-        
+
     elif any(pattern in key_id_lower for pattern in ['jetbrains', 'intellij', 'idea']):
         # JetBrains style key
         timestamp = int(time.time())
         encoded_data = base64.b64encode(f"{key_id}:{timestamp}".encode()).decode()[:32]
         return f"JB-{encoded_data[:8]}-{encoded_data[8:16]}-{encoded_data[16:24]}-{encoded_data[24:32]}"
-        
+
     elif any(pattern in key_id_lower for pattern in ['flexlm', 'flex', 'license']):
         # FlexLM style license
         feature_hash = hashlib.md5(f"feature_{key_id}".encode()).hexdigest()[:8]
         return f"FEATURE {key_id.upper()} {feature_hash} 1.0 permanent 999 HOSTID=ANY"
-        
+
     elif any(pattern in key_id_lower for pattern in ['hasp', 'sentinel', 'dongle']):
         # HASP/Sentinel style key
         hasp_id = int(base_hash[:8], 16) % 999999
         return f"HASP-{hasp_id:06d}-{base_hash[:8].upper()}-{base_hash[8:16].upper()}"
-        
+
     elif any(pattern in key_id_lower for pattern in ['trial', 'demo', 'eval']):
         # Trial license key with expiration
         trial_hash = base_hash[:16].upper()
         expiry_date = (datetime.now().replace(year=datetime.now().year + 1)).strftime('%Y%m%d')
         return f"TRIAL-{trial_hash[:4]}-{trial_hash[4:8]}-{trial_hash[8:12]}-{trial_hash[12:16]}-EXP{expiry_date}"
-        
+
     elif 'enterprise' in key_id_lower or 'corp' in key_id_lower:
         # Enterprise license key
         ent_hash = base_hash[:24].upper()
         return f"ENT-{ent_hash[:6]}-{ent_hash[6:12]}-{ent_hash[12:18]}-{ent_hash[18:24]}-UNLIMITED"
-        
+
     else:
         # Generic license key format
         segments = [base_hash[i:i+4].upper() for i in range(0, 20, 4)]
@@ -454,13 +457,13 @@ def _handle_get_license(license_id: str) -> Dict[str, Any]:
     """
     import time
     from datetime import datetime, timedelta
-    
+
     if not license_id:
         return {'error': 'License ID required'}
-    
+
     # Generate deterministic license data based on ID
     license_hash = hashlib.sha256(license_id.encode()).hexdigest()
-    
+
     # Determine license type from ID pattern
     if license_id.startswith('LIC-TRIAL'):
         license_type = 'trial'
@@ -505,36 +508,36 @@ def _handle_get_license(license_id: str) -> Dict[str, Any]:
         max_users = 5
         issued_days_ago = 60
         expires_days_from_now = 305
-    
+
     # Calculate dates
     base_time = time.time()
     issued_timestamp = base_time - (issued_days_ago * 86400)
     expires_timestamp = base_time + (expires_days_from_now * 86400)
-    
+
     issued_date = datetime.fromtimestamp(issued_timestamp)
     expires_date = datetime.fromtimestamp(expires_timestamp)
-    
+
     # Generate user and organization info based on license hash
     org_types = ['Corporation', 'Educational Institution', 'Government Agency', 'Non-Profit', 'Small Business']
     org_type = org_types[int(license_hash[:2], 16) % len(org_types)]
-    
+
     user_id = f"user_{license_hash[:8]}"
     organization = f"{org_type} {int(license_hash[8:12], 16) % 1000 + 1}"
-    
+
     # Calculate current usage
     current_users = min(max_users, max(0, int(license_hash[12:14], 16) % (max_users + 1)))
     if status != 'active':
         current_users = 0
-    
+
     # Generate version and platform info
     version = f"{int(license_hash[14:15], 16) % 5 + 1}.{int(license_hash[15:16], 16) % 10}.{int(license_hash[16:18], 16) % 100}"
     platforms = ['Windows', 'macOS', 'Linux', 'Multi-Platform']
     platform = platforms[int(license_hash[18:20], 16) % len(platforms)]
-    
+
     # Calculate maintenance and support info
     maintenance_expires = expires_date + timedelta(days=90)
     support_level = 'premium' if license_type == 'enterprise' else 'standard'
-    
+
     # Generate billing information
     if license_type == 'trial':
         billing_cycle = 'trial'
@@ -548,10 +551,10 @@ def _handle_get_license(license_id: str) -> Dict[str, Any]:
     else:
         billing_cycle = 'monthly'
         cost_per_month = 99.99
-    
+
     # Last activity simulation
     last_checkin = datetime.now() - timedelta(hours=int(license_hash[20:22], 16) % 72)
-    
+
     return {
         'id': license_id,
         'status': status,
@@ -611,9 +614,8 @@ def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
     Returns:
         List of license dictionaries matching the query criteria
     """
-    import time
     from datetime import datetime, timedelta
-    
+
     # Extract query parameters
     limit = min(query.get('limit', 10), 100)  # Limit to 100 for performance
     offset = query.get('offset', 0)
@@ -621,10 +623,10 @@ def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
     user_filter = query.get('user', None)
     product_filter = query.get('product', None)
     license_type = query.get('license_type', None)
-    
+
     # Generate realistic license data
     licenses = []
-    
+
     # Define realistic license templates
     license_templates = [
         {
@@ -658,18 +660,18 @@ def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
             'max_users': 999
         }
     ]
-    
+
     # Generate licenses based on templates
     for i in range(limit + offset):
         if i < offset:
             continue
-            
+
         template = license_templates[i % len(license_templates)]
-        
+
         # Generate user information
         user_types = ['individual', 'corporate', 'educational', 'government']
         user_type = user_types[i % len(user_types)]
-        
+
         # Determine license status
         statuses = ['active', 'expired', 'suspended', 'trial']
         if status_filter:
@@ -686,10 +688,10 @@ def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
                     status_index = idx
                     break
             license_status = statuses[status_index]
-        
+
         # Generate dates based on status
         base_date = datetime.now() - timedelta(days=hash(f"date_{i}") % 365)
-        
+
         if license_status == 'active':
             issued_date = base_date - timedelta(days=30)
             expiry_date = base_date + timedelta(days=365)
@@ -702,27 +704,27 @@ def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
         else:  # suspended
             issued_date = base_date - timedelta(days=100)
             expiry_date = base_date + timedelta(days=200)
-        
+
         # Generate user information
         user_id = f"{user_type}_{i+1:04d}"
         if user_filter and user_filter.lower() not in user_id.lower():
             continue
-            
+
         # Check product filter
         if product_filter and product_filter.lower() not in template['product'].lower():
             continue
-            
+
         # Check license type filter
         if license_type and license_type != template['type']:
             continue
-        
+
         # Generate license ID with realistic format
         license_hash = hashlib.sha256(f"{template['product']}_{user_id}_{i}".encode()).hexdigest()[:8]
         license_id = f"LIC-{license_hash.upper()}-{i+1:04d}"
-        
+
         # Calculate usage statistics
         current_users = min(template['max_users'], max(1, (hash(f"usage_{i}") % template['max_users']) + 1))
-        
+
         license_data = {
             'id': license_id,
             'user': user_id,
@@ -748,9 +750,9 @@ def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
             'contact_email': f"{user_id}@example.com",
             'notes': f"License for {template['product']} - {license_status.title()} status"
         }
-        
+
         licenses.append(license_data)
-    
+
     return licenses
 
 
@@ -769,20 +771,20 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
     """
     import time
     from datetime import datetime, timedelta
-    
+
     if not license_id:
         return {'error': 'License ID required for release'}
-    
+
     release_timestamp = time.time()
     release_datetime = datetime.fromtimestamp(release_timestamp)
-    
+
     # Generate release tracking information
     license_hash = hashlib.sha256(f"{license_id}:release:{release_timestamp}".encode()).hexdigest()
     release_id = f"REL-{license_hash[:12].upper()}"
-    
+
     # Simulate getting current license information for release processing
     current_license = _handle_get_license(license_id)
-    
+
     # Calculate session duration if license was active
     if current_license.get('status') == 'active':
         last_checkin_str = current_license.get('last_checkin', '')
@@ -794,7 +796,7 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
             session_hours = 0.5  # Default session time
     else:
         session_hours = 0
-    
+
     # Generate usage statistics for the session
     features_used = current_license.get('features', [])
     session_stats = {
@@ -804,7 +806,7 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
         'operations_performed': max(0, int(license_hash[16:20], 16) % 10000),
         'peak_memory_usage_mb': max(0, int(license_hash[20:24], 16) % 2048)
     }
-    
+
     # Determine release reason based on session characteristics
     if session_hours < 0.1:
         release_reason = 'immediate_shutdown'
@@ -814,11 +816,11 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
         release_reason = 'license_expired_or_suspended'
     else:
         release_reason = 'normal_user_logout'
-    
+
     # Calculate billing information for the session
     cost_per_hour = current_license.get('cost_per_month', 99.99) / (30 * 24)  # Approximate hourly cost
     session_cost = round(session_hours * cost_per_hour, 4)
-    
+
     # Generate compliance and audit information
     compliance_check = {
         'license_valid': current_license.get('status') == 'active',
@@ -826,13 +828,13 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
         'features_authorized': all(feature in current_license.get('features', []) for feature in features_used),
         'maintenance_current': datetime.strptime(current_license.get('maintenance_expires', '1999-01-01'), '%Y-%m-%d') > release_datetime
     }
-    
+
     compliance_status = 'compliant' if all(compliance_check.values()) else 'violation_detected'
-    
+
     # Generate next available license slot information
     max_users = current_license.get('max_users', 1)
     current_users = max(0, current_license.get('current_users', 1) - 1)  # Decrease by 1 after release
-    
+
     return {
         'id': license_id,
         'release_id': release_id,
@@ -929,7 +931,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
     """
     # Limit size to prevent memory issues
     size = min(size, 8192)  # Max 8KB read
-    
+
     # Simulate different memory regions based on address
     if address < 0x1000:
         # Null page - return zeros
@@ -950,7 +952,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
             b'\x75',           # jnz
             b'\xC3',           # ret
         ]
-        
+
         memory_data = bytearray()
         for i in range(size):
             pattern = code_patterns[i % len(code_patterns)]
@@ -958,7 +960,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
                 memory_data.append(pattern)
             else:
                 memory_data.append(pattern[i % len(pattern)])
-        
+
         return bytes(memory_data)
     elif 0x600000 <= address < 0x700000:
         # Data section - simulate initialized data
@@ -968,7 +970,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
             b'license\x00', b'serial\x00', b'key\x00', b'valid\x00',
             b'expired\x00', b'trial\x00', b'full\x00', b'demo\x00'
         ]
-        
+
         string_data = b''.join(base_strings)
         for i in range(size):
             if i < len(string_data):
@@ -976,7 +978,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
             else:
                 # Fill with semi-random but predictable data
                 data_content.append((address + i) % 256)
-        
+
         return bytes(data_content)
     elif 0x7F0000000000 <= address < 0x800000000000:
         # 64-bit stack region
@@ -991,7 +993,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
             else:
                 # Simulate local variables
                 stack_data.append((i * 7 + address) % 256)
-        
+
         return bytes(stack_data[:size])
     elif 0x7FFE0000 <= address < 0x7FFF0000:
         # Windows shared user data region
@@ -999,7 +1001,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
         system_data = bytearray()
         import time
         current_time = int(time.time())
-        
+
         for i in range(size):
             if i < 4:
                 # Timestamp
@@ -1011,7 +1013,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
             else:
                 # Other system data
                 system_data.append((i * 3 + 0x42) % 256)
-        
+
         return bytes(system_data)
     else:
         # Generic memory region
@@ -1021,7 +1023,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
             # Create patterns that look like real memory
             byte_val = (address + i * 13 + 0x5A) % 256
             generic_data.append(byte_val)
-        
+
         return bytes(generic_data)
 
 
@@ -1340,16 +1342,16 @@ def _dump_memory_region(address: int, size: int) -> bytes:
     """
     import struct
     import time
-    
+
     # Limit dump size to prevent memory issues
     size = min(size, 16384)  # Max 16KB dump
-    
+
     # Use the enhanced memory reading function as base
     base_memory = _handle_read_memory(address, size)
-    
+
     # Add memory dump formatting and structure
     dump_data = bytearray(base_memory)
-    
+
     # Enhance with realistic memory structures based on address range
     if 0x400000 <= address < 0x500000:
         # Code region - add realistic function prologues and epilogues
@@ -1360,15 +1362,15 @@ def _dump_memory_region(address: int, size: int) -> bytes:
                 dump_data[func_start] = 0x55      # push ebp
                 dump_data[func_start + 1] = 0x8B  # mov ebp, esp (part 1)
                 dump_data[func_start + 2] = 0xEC  # mov ebp, esp (part 2)
-                
+
             # Add a return instruction near the end of the "function"
             ret_pos = func_start + 60
             if ret_pos < size:
                 dump_data[ret_pos] = 0xC3  # ret
-                
+
     elif 0x600000 <= address < 0x700000:
         # Data region - add structured data
-        
+
         # Add some realistic strings at regular intervals
         license_strings = [
             b"SOFTWARE_LICENSE_KEY",
@@ -1378,13 +1380,13 @@ def _dump_memory_region(address: int, size: int) -> bytes:
             b"EVALUATION_COPY",
             b"FULL_VERSION"
         ]
-        
+
         for i, string in enumerate(license_strings):
             pos = (i * 100) % (size - len(string) - 1)
             if pos + len(string) < size:
                 dump_data[pos:pos+len(string)] = string
                 dump_data[pos + len(string)] = 0  # Null terminator
-                
+
         # Add some realistic numerical data (timestamps, counts, etc.)
         for i in range(0, size - 8, 200):
             if i + 8 < size:
@@ -1392,7 +1394,7 @@ def _dump_memory_region(address: int, size: int) -> bytes:
                 timestamp = int(time.time()) + i
                 timestamp_bytes = struct.pack('<Q', timestamp)
                 dump_data[i:i+8] = timestamp_bytes
-                
+
     elif address >= 0x7F0000000000:  # 64-bit stack region
         # Stack region - add realistic stack frame structures
         for i in range(0, size - 16, 32):
@@ -1400,16 +1402,16 @@ def _dump_memory_region(address: int, size: int) -> bytes:
                 # Simulate stack frame: [saved ebp][return addr][local vars...]
                 saved_ebp = struct.pack('<Q', 0x7F0000001000 + i)
                 return_addr = struct.pack('<Q', 0x401000 + (i % 0x1000))
-                
+
                 dump_data[i:i+8] = saved_ebp
                 dump_data[i+8:i+16] = return_addr
-                
+
     # Add some entropy to make it look more realistic
     for i in range(0, size, 127):
         if i < size:
             # Add some "randomness" but keep it deterministic
             dump_data[i] = (dump_data[i] + ((address + i) % 251)) % 256
-    
+
     return bytes(dump_data)
 
 
@@ -1646,24 +1648,24 @@ def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
 
     try:
         import numpy as np
-        
+
         # Convert bytes to numerical arrays for TensorFlow processing
         data_array = np.frombuffer(data, dtype=np.uint8)
         pattern_array = np.frombuffer(pattern, dtype=np.uint8)
-        
+
         if len(pattern_array) == 0 or len(data_array) < len(pattern_array):
             return []
-        
+
         # Use TensorFlow for efficient pattern matching
         matches = _tensorflow_convolve_search(data_array, pattern_array)
-        
+
         if matches is not None:
             return matches
         else:
             # Fallback if TensorFlow method fails
             logger.debug("TensorFlow convolution failed, using fallback")
             return _match_pattern(data, pattern)
-            
+
     except Exception as e:
         logger.error("TensorFlow pattern matching failed: %s", e)
         return _match_pattern(data, pattern)
@@ -1672,22 +1674,21 @@ def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
 def _tensorflow_convolve_search(data_array: 'np.ndarray', pattern_array: 'np.ndarray') -> List[int]:
     """Perform pattern matching using TensorFlow convolution."""
     try:
-        import numpy as np
-        
+
         # Method 1: Try TensorFlow convolution if available
         if HAS_TENSORFLOW:
             matches = _tf_convolution_search(data_array, pattern_array)
             if matches is not None:
                 return matches
-        
+
         # Method 2: NumPy-based correlation fallback
         matches = _numpy_correlation_search(data_array, pattern_array)
         if matches is not None:
             return matches
-            
+
         # Method 3: Simple sliding window fallback
         return _sliding_window_search(data_array, pattern_array)
-        
+
     except Exception as e:
         logger.debug("Convolution search error: %s", e)
         return []
@@ -1697,30 +1698,30 @@ def _tf_convolution_search(data_array: 'np.ndarray', pattern_array: 'np.ndarray'
     """Use TensorFlow convolution for pattern matching."""
     try:
         import numpy as np
-        
+
         # Reshape data for TensorFlow convolution
         # TensorFlow expects [batch, height, width, channels] format
         data_tensor = tf.expand_dims(tf.expand_dims(tf.cast(data_array, tf.float32), 0), -1)
         pattern_tensor = tf.expand_dims(tf.expand_dims(tf.cast(pattern_array[::-1], tf.float32), -1), -1)
-        
+
         # Perform 1D convolution
         convolution_result = tf.nn.conv1d(
-            data_tensor, 
-            pattern_tensor, 
-            stride=1, 
+            data_tensor,
+            pattern_tensor,
+            stride=1,
             padding='VALID'
         )
-        
+
         # Calculate expected sum for exact match
         expected_sum = float(np.sum(pattern_array * pattern_array))
-        
+
         # Find positions where convolution equals expected sum (exact matches)
         matches_tensor = tf.where(tf.abs(convolution_result[0, :, 0] - expected_sum) < 0.1)
-        
+
         # Convert to numpy and extract indices
         matches_np = matches_tensor.numpy()
         return [int(match[0]) for match in matches_np]
-        
+
     except Exception as e:
         logger.debug("TensorFlow convolution error: %s", e)
         return None
@@ -1730,23 +1731,23 @@ def _numpy_correlation_search(data_array: 'np.ndarray', pattern_array: 'np.ndarr
     """Use NumPy correlation for pattern matching."""
     try:
         import numpy as np
-        
+
         # Use normalized cross-correlation
         pattern_normalized = pattern_array.astype(np.float32)
         data_normalized = data_array.astype(np.float32)
-        
+
         # Calculate correlation using numpy's correlate function
         correlation = np.correlate(data_normalized, pattern_normalized, mode='valid')
-        
+
         # Calculate expected correlation value for exact match
         expected_correlation = np.sum(pattern_normalized * pattern_normalized)
-        
+
         # Find positions with high correlation (near exact matches)
         threshold = expected_correlation * 0.99  # Allow for small floating point errors
         match_positions = np.where(correlation >= threshold)[0]
-        
+
         return match_positions.tolist()
-        
+
     except Exception as e:
         logger.debug("NumPy correlation error: %s", e)
         return None
@@ -1756,18 +1757,18 @@ def _sliding_window_search(data_array: 'np.ndarray', pattern_array: 'np.ndarray'
     """Simple sliding window pattern search."""
     try:
         import numpy as np
-        
+
         matches = []
         pattern_len = len(pattern_array)
         data_len = len(data_array)
-        
+
         # Optimized sliding window using NumPy vectorization
         for i in range(data_len - pattern_len + 1):
             if np.array_equal(data_array[i:i + pattern_len], pattern_array):
                 matches.append(i)
-                
+
         return matches
-        
+
     except Exception as e:
         logger.debug("Sliding window search error: %s", e)
         return []
@@ -1777,15 +1778,15 @@ def _match_pattern(data: bytes, pattern: bytes) -> List[int]:
     """Simple byte-level pattern matching fallback."""
     matches = []
     pattern_len = len(pattern)
-    
+
     if pattern_len == 0:
         return matches
-        
+
     # Simple byte-by-byte search
     for i in range(len(data) - pattern_len + 1):
         if data[i:i + pattern_len] == pattern:
             matches.append(i)
-            
+
     return matches
 
 
@@ -1898,32 +1899,30 @@ def _write_dummy_tensor_data(file_handle: Any, tensors: List[Dict[str, Any]]) ->
         file_handle: File handle to write tensor data to
         tensors: List of tensor specifications with dims, types, and names
     """
-    import struct
-    import math
-    
+
     try:
         for tensor_idx, tensor in enumerate(tensors):
             tensor_name = tensor.get('name', f'tensor_{tensor_idx}')
             dims = tensor.get('dims', [1])
             data_type = tensor.get('type', 'float32')
             tensor_role = tensor.get('role', 'weight')  # weight, bias, embedding, etc.
-            
+
             # Calculate total tensor size
             total_elements = 1
             for dim in dims:
                 total_elements *= dim
-            
+
             # Determine bytes per element based on data type
             type_sizes = {
-                'float32': 4, 'float16': 2, 'int32': 4, 'int16': 2, 
+                'float32': 4, 'float16': 2, 'int32': 4, 'int16': 2,
                 'int8': 1, 'uint8': 1, 'bool': 1, 'double': 8
             }
             bytes_per_element = type_sizes.get(data_type, 4)
             total_bytes = total_elements * bytes_per_element
-            
-            logger.debug("Writing tensor %s: %s elements (%d bytes)", 
+
+            logger.debug("Writing tensor %s: %s elements (%d bytes)",
                         tensor_name, total_elements, total_bytes)
-            
+
             # Generate realistic data based on tensor role and dimensions
             if tensor_role == 'embedding' or 'embed' in tensor_name.lower():
                 # Embedding tables - normalized random values
@@ -1943,13 +1942,13 @@ def _write_dummy_tensor_data(file_handle: Any, tensors: List[Dict[str, Any]]) ->
             else:
                 # Generic tensor data
                 tensor_data = _generate_generic_tensor_data(dims, data_type, total_elements)
-            
+
             # Write data in chunks to handle large tensors efficiently
             chunk_size = min(8192, len(tensor_data))  # 8KB chunks
             for i in range(0, len(tensor_data), chunk_size):
                 chunk = tensor_data[i:i + chunk_size]
                 file_handle.write(chunk)
-                
+
     except Exception as e:
         logger.error("Error writing realistic tensor data: %s", e)
         # Fallback to simple zero data if sophisticated generation fails
@@ -1966,9 +1965,9 @@ def _generate_embedding_data(dims: List[int], data_type: str, total_elements: in
     """Generate realistic embedding table data."""
     import random
     import struct
-    
+
     data = bytearray()
-    
+
     if data_type == 'float32':
         # Embedding values typically in range [-0.1, 0.1] with some structure
         for i in range(total_elements):
@@ -1978,11 +1977,11 @@ def _generate_embedding_data(dims: List[int], data_type: str, total_elements: in
             if len(dims) >= 2 and i % dims[-1] < 64:  # First 64 dimensions get positional patterns
                 pos_component = 0.01 * math.sin(i * 0.01) * math.cos(i * 0.001)
                 base_val += pos_component
-            
+
             # Clamp to reasonable range
             val = max(-0.2, min(0.2, base_val))
             data.extend(struct.pack('f', val))
-            
+
     elif data_type == 'float16':
         # Half precision embeddings
         for i in range(total_elements):
@@ -1990,54 +1989,54 @@ def _generate_embedding_data(dims: List[int], data_type: str, total_elements: in
             val = max(-0.1, min(0.1, val))
             # Pack as half precision (approximated with struct)
             data.extend(struct.pack('e', val))
-            
+
     else:
         # Fallback for other types
         data.extend(b'\x00' * (total_elements * 4))
-    
+
     return bytes(data)
 
 
 def _generate_weight_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic weight matrix data using proper initialization."""
+    import math
     import random
     import struct
-    import math
-    
+
     data = bytearray()
-    
+
     # Determine initialization strategy based on dimensions
     if len(dims) >= 2:
         fan_in = dims[-2] if len(dims) > 1 else dims[0]
         fan_out = dims[-1]
-        
+
         # Xavier/Glorot initialization
         xavier_std = math.sqrt(2.0 / (fan_in + fan_out))
         # He initialization (better for ReLU)
         he_std = math.sqrt(2.0 / fan_in)
-        
+
         # Use He initialization for most weights
         std_dev = he_std
     else:
         # For 1D tensors, use a small standard deviation
         std_dev = 0.02
-    
+
     if data_type == 'float32':
         for i in range(total_elements):
             # Generate weight with proper initialization
             weight = random.gauss(0, std_dev)
-            
+
             # Add small amount of structured initialization for some weights
             if i % 1000 == 0:  # Every 1000th weight gets a small boost
                 weight *= 1.1
-                
+
             data.extend(struct.pack('f', weight))
-            
+
     elif data_type == 'float16':
         for i in range(total_elements):
             weight = random.gauss(0, std_dev * 0.8)  # Slightly smaller for fp16
             data.extend(struct.pack('e', weight))
-            
+
     else:
         # Integer weights (quantized models)
         if data_type == 'int8':
@@ -2048,7 +2047,7 @@ def _generate_weight_data(dims: List[int], data_type: str, total_elements: int) 
                 data.extend(struct.pack('b', weight))
         else:
             data.extend(b'\x00' * (total_elements * 4))
-    
+
     return bytes(data)
 
 
@@ -2056,9 +2055,9 @@ def _generate_bias_data(dims: List[int], data_type: str, total_elements: int) ->
     """Generate realistic bias vector data."""
     import random
     import struct
-    
+
     data = bytearray()
-    
+
     if data_type == 'float32':
         for i in range(total_elements):
             # Bias typically starts small or zero, with occasional non-zero values
@@ -2066,30 +2065,30 @@ def _generate_bias_data(dims: List[int], data_type: str, total_elements: int) ->
                 bias = random.gauss(0, 0.01)
             else:
                 bias = 0.0
-                
+
             # Some biases get special initialization (e.g., forget gate bias)
             if i % 128 == 0:  # Every 128th bias (forget gate pattern)
                 bias = 1.0  # Forget gate bias typically initialized to 1
-                
+
             data.extend(struct.pack('f', bias))
-            
+
     elif data_type == 'float16':
         for i in range(total_elements):
             bias = random.gauss(0, 0.005) if random.random() < 0.1 else 0.0
             data.extend(struct.pack('e', bias))
-            
+
     else:
         data.extend(b'\x00' * (total_elements * 4))
-    
+
     return bytes(data)
 
 
 def _generate_norm_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic layer normalization parameters."""
     import struct
-    
+
     data = bytearray()
-    
+
     if data_type == 'float32':
         for i in range(total_elements):
             # Layer norm weights typically initialized to 1.0
@@ -2098,28 +2097,28 @@ def _generate_norm_data(dims: List[int], data_type: str, total_elements: int) ->
                 val = 1.0  # Weight parameter
             else:
                 val = 0.0  # Bias parameter
-                
+
             data.extend(struct.pack('f', val))
-            
+
     elif data_type == 'float16':
         for i in range(total_elements):
             val = 1.0 if i % 2 == 0 else 0.0
             data.extend(struct.pack('e', val))
-            
+
     else:
         data.extend(b'\x00' * (total_elements * 4))
-    
+
     return bytes(data)
 
 
 def _generate_attention_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic attention mechanism parameters."""
+    import math
     import random
     import struct
-    import math
-    
+
     data = bytearray()
-    
+
     # Attention weights need careful initialization
     if len(dims) >= 2:
         # For multi-head attention, scale initialization
@@ -2127,26 +2126,26 @@ def _generate_attention_data(dims: List[int], data_type: str, total_elements: in
         scale_factor = 1.0 / math.sqrt(head_dim)
     else:
         scale_factor = 0.02
-    
+
     if data_type == 'float32':
         for i in range(total_elements):
             # Query/Key/Value projection weights
             weight = random.gauss(0, scale_factor)
-            
+
             # Add some structure for positional patterns
             if i % 64 < 8:  # First few dimensions get slightly different initialization
                 weight *= 0.9
-                
+
             data.extend(struct.pack('f', weight))
-            
+
     elif data_type == 'float16':
         for i in range(total_elements):
             weight = random.gauss(0, scale_factor * 0.9)
             data.extend(struct.pack('e', weight))
-            
+
     else:
         data.extend(b'\x00' * (total_elements * 4))
-    
+
     return bytes(data)
 
 
@@ -2154,39 +2153,39 @@ def _generate_generic_tensor_data(dims: List[int], data_type: str, total_element
     """Generate generic realistic tensor data."""
     import random
     import struct
-    
+
     data = bytearray()
-    
+
     if data_type == 'float32':
         for i in range(total_elements):
             # Generic small random values
             val = random.gauss(0, 0.01)
-            
+
             # Add some deterministic patterns based on position
             pattern_val = 0.001 * math.sin(i * 0.01)
             val += pattern_val
-            
+
             data.extend(struct.pack('f', val))
-            
+
     elif data_type == 'float16':
         for i in range(total_elements):
             val = random.gauss(0, 0.008)
             data.extend(struct.pack('e', val))
-            
+
     elif data_type == 'int32':
         for i in range(total_elements):
             val = random.randint(-1000, 1000)
             data.extend(struct.pack('i', val))
-            
+
     elif data_type == 'int8':
         for i in range(total_elements):
             val = random.randint(-100, 100)
             data.extend(struct.pack('b', val))
-            
+
     else:
         # Default to zeros for unknown types
         data.extend(b'\x00' * (total_elements * 4))
-    
+
     return bytes(data)
 
 

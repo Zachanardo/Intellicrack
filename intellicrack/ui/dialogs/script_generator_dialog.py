@@ -24,11 +24,9 @@ import os
 import time
 
 from ..common_imports import (
-    QApplication,
     QCheckBox,
     QColor,
     QComboBox,
-    QDialog,
     QFileDialog,
     QFont,
     QGridLayout,
@@ -40,13 +38,13 @@ from ..common_imports import (
     QPlainTextEdit,
     QPushButton,
     QSplitter,
+    Qt,
     QTabWidget,
     QTextEdit,
     QThread,
     QVBoxLayout,
     QWidget,
-    Qt,
-    pyqtSignal
+    pyqtSignal,
 )
 from .base_dialog import BinarySelectionDialog
 

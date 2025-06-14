@@ -5,7 +5,7 @@ This module provides common functions for PE file import parsing.
 """
 
 import logging
-from typing import List, Optional
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ def extract_pe_imports(pe_obj) -> List[str]:
         List of import function names
     """
     imports = []
-    
+
     try:
         if hasattr(pe_obj, 'DIRECTORY_ENTRY_IMPORT'):
             for entry in pe_obj.DIRECTORY_ENTRY_IMPORT:
@@ -31,7 +31,7 @@ def extract_pe_imports(pe_obj) -> List[str]:
                         imports.append(func_name)
     except (AttributeError, ValueError) as e:
         logger.debug("Error extracting PE imports: %s", e)
-        
+
     return imports
 
 
@@ -52,13 +52,13 @@ def analyze_pe_import_security(pe_obj) -> dict:
         'registry': ['RegOpenKey', 'RegQueryValue', 'RegSetValue', 'RegCreateKey'],
         'file': ['CreateFile', 'ReadFile', 'WriteFile', 'DeleteFile']
     }
-    
+
     results = {category: [] for category in security_apis}
     imports = extract_pe_imports(pe_obj)
-    
+
     for func_name in imports:
         for category, apis in security_apis.items():
             if any(api.lower() in func_name.lower() for api in apis):
                 results[category].append(func_name)
-                
+
     return results

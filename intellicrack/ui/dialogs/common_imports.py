@@ -42,14 +42,14 @@ try:
     HAS_PYQT = True
 except ImportError:
     HAS_PYQT = False
-    
+
     # Stub classes for when PyQt is not available
     class QDialog:
         pass
-    
+
     class QThread:
         pass
-    
+
     def pyqtSignal(*args, **kwargs):
         return lambda: None
 

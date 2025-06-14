@@ -25,11 +25,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from ...utils.import_checks import (
-    FRIDA_AVAILABLE, frida,
-    PSUTIL_AVAILABLE, psutil
-)
-
+from ...utils.import_checks import FRIDA_AVAILABLE, PSUTIL_AVAILABLE, frida, psutil
 from ...utils.logger import get_logger, log_message
 
 logger = get_logger(__name__)
@@ -585,7 +581,7 @@ class AdvancedDynamicAnalyzer:
             Dictionary containing scan results with matches, addresses, and context
         """
         self.logger.info(f"Starting memory keyword scan for: {keywords}")
-        
+
         try:
             if FRIDA_AVAILABLE:
                 return self._frida_memory_scan(keywords, target_process)
@@ -606,14 +602,14 @@ class AdvancedDynamicAnalyzer:
         try:
             # Get process to attach to
             process_name = target_process or Path(self.binary_path).name
-            
+
             # Find the target process
             session = None
             for proc in frida.enumerate_processes():
                 if process_name.lower() in proc.name.lower():
                     session = frida.attach(proc.pid)
                     break
-            
+
             if not session:
                 # Try to spawn the process if not found
                 try:
@@ -627,7 +623,7 @@ class AdvancedDynamicAnalyzer:
                         'error': f'Could not attach to or spawn process: {process_name}',
                         'matches': []
                     }
-            
+
             # Frida script for memory scanning
             script_code = f"""
             // Memory scanning script
@@ -690,10 +686,10 @@ class AdvancedDynamicAnalyzer:
                 send({{ type: 'complete' }});
             }}, 30000);
             """
-            
+
             script = session.create_script(script_code)
             results = {'matches': [], 'status': 'success', 'scan_count': 0}
-            
+
             def on_message(message, data):
                 if message['type'] == 'send':
                     payload = message['payload']
@@ -704,19 +700,19 @@ class AdvancedDynamicAnalyzer:
                         self.logger.error(f"Frida script error: {payload['message']}")
                     elif payload['type'] == 'complete':
                         results['status'] = 'complete'
-            
+
             script.on('message', on_message)
             script.load()
-            
+
             # Wait for scanning to complete
             timeout = 35  # Give extra time for completion
             start_time = time.time()
             while time.time() - start_time < timeout and results['status'] != 'complete':
                 time.sleep(1)
-            
+
             script.unload()
             session.detach()
-            
+
             # Remove duplicates and sort by address
             unique_matches = []
             seen = set()
@@ -725,12 +721,12 @@ class AdvancedDynamicAnalyzer:
                 if key not in seen:
                     seen.add(key)
                     unique_matches.append(match)
-            
+
             results['matches'] = sorted(unique_matches, key=lambda x: int(x['address'], 16))
             self.logger.info(f"Frida memory scan found {len(results['matches'])} matches")
-            
+
             return results
-            
+
         except Exception as e:
             self.logger.error(f"Frida memory scan error: {e}")
             return {
@@ -743,7 +739,7 @@ class AdvancedDynamicAnalyzer:
         """Perform basic memory scanning using psutil (limited functionality)."""
         try:
             process_name = target_process or Path(self.binary_path).name
-            
+
             # Find target process
             target_proc = None
             for proc in psutil.process_iter(['pid', 'name', 'exe']):
@@ -753,7 +749,7 @@ class AdvancedDynamicAnalyzer:
                         break
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
-            
+
             if not target_proc:
                 # Try to start the process
                 try:
@@ -767,20 +763,20 @@ class AdvancedDynamicAnalyzer:
                         'error': f'Could not find or start process: {process_name}',
                         'matches': []
                     }
-            
+
             matches = []
-            
+
             # Basic memory information (limited on most systems)
             try:
                 memory_info = target_proc.memory_info()
                 memory_maps = target_proc.memory_maps() if hasattr(target_proc, 'memory_maps') else []
-                
+
                 # Simulate memory scanning with process environment and command line
                 cmdline = ' '.join(target_proc.cmdline()) if hasattr(target_proc, 'cmdline') else ''
                 environ_vars = list(target_proc.environ().values()) if hasattr(target_proc, 'environ') else []
-                
+
                 search_text = (cmdline + ' ' + ' '.join(environ_vars)).lower()
-                
+
                 for keyword in keywords:
                     if keyword.lower() in search_text:
                         matches.append({
@@ -791,9 +787,9 @@ class AdvancedDynamicAnalyzer:
                             'region_base': '0x00000000',
                             'region_size': len(search_text)
                         })
-                
+
                 self.logger.info(f"PSUtil memory scan found {len(matches)} matches")
-                
+
                 return {
                     'status': 'success',
                     'matches': matches,
@@ -803,14 +799,14 @@ class AdvancedDynamicAnalyzer:
                         'num_memory_maps': len(memory_maps)
                     }
                 }
-                
+
             except (psutil.AccessDenied, psutil.NoSuchProcess) as e:
                 return {
                     'status': 'error',
                     'error': f'Access denied or process not found: {e}',
                     'matches': []
                 }
-                
+
         except Exception as e:
             self.logger.error(f"PSUtil memory scan error: {e}")
             return {
@@ -823,30 +819,30 @@ class AdvancedDynamicAnalyzer:
         """Fallback memory scanning using binary file analysis."""
         try:
             self.logger.info("Using fallback memory scan (binary file analysis)")
-            
+
             matches = []
-            
+
             # Read and scan the binary file itself
             with open(self.binary_path, 'rb') as f:
                 binary_data = f.read()
-            
+
             # Convert to text for searching
             binary_text = binary_data.decode('utf-8', errors='ignore').lower()
-            
+
             for keyword in keywords:
                 keyword_lower = keyword.lower()
                 offset = 0
-                
+
                 while True:
                     index = binary_text.find(keyword_lower, offset)
                     if index == -1:
                         break
-                        
+
                     # Get context around the match
                     context_start = max(0, index - 50)
                     context_end = min(len(binary_text), index + len(keyword) + 50)
                     context = binary_text[context_start:context_end]
-                    
+
                     matches.append({
                         'address': f'0x{index:08X}',
                         'keyword': keyword,
@@ -855,17 +851,17 @@ class AdvancedDynamicAnalyzer:
                         'region_base': '0x00000000',
                         'region_size': len(binary_data)
                     })
-                    
+
                     offset = index + len(keyword)
-            
+
             self.logger.info(f"Fallback memory scan found {len(matches)} matches")
-            
+
             return {
                 'status': 'success',
                 'matches': matches,
                 'scan_type': 'binary_file_analysis'
             }
-            
+
         except Exception as e:
             self.logger.error(f"Fallback memory scan error: {e}")
             return {

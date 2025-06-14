@@ -20,7 +20,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import datetime
 import logging
 import os
 import subprocess
@@ -104,7 +103,7 @@ class SSLTLSInterceptor:
 
         try:
             from ...utils.certificate_utils import generate_self_signed_cert
-            
+
             cert_result = generate_self_signed_cert(
                 common_name="Intellicrack Root CA",
                 organization="Intellicrack CA",
@@ -113,7 +112,7 @@ class SSLTLSInterceptor:
                 valid_days=3650,
                 is_ca=True
             )
-            
+
             if cert_result:
                 return cert_result
             else:
@@ -299,12 +298,12 @@ def response(flow: http.HTTPFlow) -> None:
             str: Path to the executable, or None if not found
         """
         from ...utils.path_discovery import find_tool
-        
+
         # Try to find using path_discovery first
         path = find_tool(executable)
         if path:
             return path
-            
+
         # Fallback to simple PATH search for tools not in path_discovery specs
         import shutil
         return shutil.which(executable)

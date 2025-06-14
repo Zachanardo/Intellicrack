@@ -302,7 +302,7 @@ def manual_network_capture(traffic_analyzer):
                     print(f"    Found proxy: {proxy_server}")
                     
                 winreg.CloseKey(key)
-            except:
+            except (OSError, WindowsError, Exception):
                 pass
         else:
             # Check environment variables

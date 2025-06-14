@@ -39,7 +39,12 @@ except ImportError as e:
     GuidedWorkflowWizard = None
 
 try:
-    from .model_finetuning_dialog import ModelFinetuningDialog, TrainingConfig, AugmentationConfig, TrainingThread
+    from .model_finetuning_dialog import (
+        AugmentationConfig,
+        ModelFinetuningDialog,
+        TrainingConfig,
+        TrainingThread,
+    )
 except ImportError as e:
     logger.warning("Failed to import model_finetuning_dialog: %s", e)
     ModelFinetuningDialog = None
@@ -54,7 +59,7 @@ except ImportError as e:
     PluginManagerDialog = None
 
 try:
-    from .report_manager_dialog import ReportManagerDialog, ReportGenerationThread
+    from .report_manager_dialog import ReportGenerationThread, ReportManagerDialog
 except ImportError as e:
     logger.warning("Failed to import report_manager_dialog: %s", e)
     ReportManagerDialog = None
@@ -73,7 +78,7 @@ except ImportError as e:
     SplashScreen = None
 
 try:
-    from .text_editor_dialog import TextEditorDialog, PythonSyntaxHighlighter, FindReplaceDialog
+    from .text_editor_dialog import FindReplaceDialog, PythonSyntaxHighlighter, TextEditorDialog
 except ImportError as e:
     logger.warning("Failed to import text_editor_dialog: %s", e)
     TextEditorDialog = None

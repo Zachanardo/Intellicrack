@@ -103,14 +103,14 @@ except ImportError as e:
         """
         # Try to load available plugins from directories
         loaded_plugins = {}
-        
+
         # Load custom Python plugins
         if CUSTOM_MODULES_DIR.exists():
             for plugin_file in CUSTOM_MODULES_DIR.glob("*.py"):
                 if plugin_file.stem != "__init__":
                     try:
                         module = importlib.import_module(
-                            f".custom_modules.{plugin_file.stem}", 
+                            f".custom_modules.{plugin_file.stem}",
                             package="intellicrack.plugins"
                         )
                         loaded_plugins[plugin_file.stem] = {
@@ -121,7 +121,7 @@ except ImportError as e:
                         logger.info("Loaded Python plugin: %s", plugin_file.stem)
                     except Exception as e:
                         logger.error("Failed to load plugin %s: %s", plugin_file.stem, e)
-        
+
         # Register Frida scripts
         if FRIDA_SCRIPTS_DIR.exists():
             for script_file in FRIDA_SCRIPTS_DIR.glob("*.js"):
@@ -130,7 +130,7 @@ except ImportError as e:
                     'path': str(script_file)
                 }
                 logger.info("Found Frida script: %s", script_file.stem)
-        
+
         # Register Ghidra scripts
         if GHIDRA_SCRIPTS_DIR.exists():
             for ext in ['*.java', '*.py']:
@@ -141,7 +141,7 @@ except ImportError as e:
                         'language': 'java' if ext == '*.java' else 'python'
                     }
                     logger.info("Found Ghidra script: %s", script_file.stem)
-        
+
         return loaded_plugins
     def run_plugin(*args, **kwargs):
         """

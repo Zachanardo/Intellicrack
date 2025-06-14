@@ -23,27 +23,27 @@ def add_extra_buttons(header_layout, extra_buttons, widget_refs=None):
     """
     if not PYQT_AVAILABLE or not extra_buttons:
         return {}
-    
+
     buttons = {}
-    
+
     for button_text, callback in extra_buttons:
         btn = QPushButton(button_text)
         btn.clicked.connect(callback)
-        
+
         # Apply special styling for Analyze Binary button
         if button_text == "Analyze Binary":
             btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; font-weight: bold; }")
-        
+
         header_layout.addWidget(btn)
         buttons[button_text] = btn
-        
+
         # Store reference if widget_refs provided
         if widget_refs is not None:
             if button_text == "Analyze Binary":
                 widget_refs['analyze_btn'] = btn
             elif 'extra_buttons' in widget_refs:
                 widget_refs['extra_buttons'][button_text] = btn
-    
+
     return buttons
 
 

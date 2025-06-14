@@ -1,5 +1,5 @@
 """
-Real Traffic Interception and Analysis Engine
+Traffic Interception Engine for Real License Server Communications
 
 Copyright (C) 2025 Zachary Flint
 
@@ -19,653 +19,680 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 import socket
+import struct
 import threading
 import time
-import ssl
-import struct
-import queue
-import hashlib
-import json
-from typing import Dict, List, Optional, Tuple, Any, Callable
 from dataclasses import dataclass
-from ...utils.logger import get_logger
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+import os
+import sys
 
-# Import protocol parsers
 try:
-    from .protocols.flexlm_parser import FlexLMProtocolParser
-    from .protocols.hasp_parser import HASPSentinelParser
-    from .protocols.codemeter_parser import CodeMeterProtocolParser
-    from .protocols.adobe_parser import AdobeLicensingParser
-    from .protocols.autodesk_parser import AutodeskLicensingParser
-    HAS_PROTOCOL_PARSERS = True
+    import scapy.all as scapy
+    HAS_SCAPY = True
 except ImportError:
-    HAS_PROTOCOL_PARSERS = False
+    HAS_SCAPY = False
 
-logger = get_logger(__name__)
+try:
+    import pcap
+    HAS_PCAP = True
+except ImportError:
+    HAS_PCAP = False
+
+try:
+    import netfilterqueue
+    HAS_NETFILTER = True
+except ImportError:
+    HAS_NETFILTER = False
+
 
 @dataclass
 class InterceptedPacket:
-    """Structure for intercepted network packet"""
-    timestamp: float
+    """Container for intercepted network packet data"""
     source_ip: str
     dest_ip: str
     source_port: int
     dest_port: int
     protocol: str
     data: bytes
-    is_request: bool
-    connection_id: str
+    timestamp: float
+    packet_size: int
+    flags: Dict[str, bool]
+    
+    def __post_init__(self):
+        """Initialize flags if not provided"""
+        if not self.flags:
+            self.flags = {'syn': False, 'ack': False, 'fin': False, 'rst': False}
+
 
 @dataclass
 class AnalyzedTraffic:
-    """Structure for analyzed license traffic"""
+    """Container for analyzed traffic data"""
     packet: InterceptedPacket
-    protocol_type: str
-    parsed_data: Optional[Any]
     is_license_related: bool
+    protocol_type: str
     confidence: float
-    analysis_notes: List[str]
+    patterns_matched: List[str]
+    analysis_metadata: Dict[str, Any]
+
 
 class TrafficInterceptionEngine:
-    """Real network traffic interception and license protocol analysis engine"""
+    """
+    Real-time traffic interception engine for license server communications.
     
-    # Common license server ports
-    LICENSE_PORTS = {
-        27000: "FlexLM",
-        27001: "FlexLM_Vendor",
-        1947: "HASP_LM",
-        22350: "CodeMeter",
-        443: "HTTPS_License",
-        80: "HTTP_License",
-        7788: "Adobe_License",
-        2080: "Autodesk_License",
-        4085: "Wibu_License",
-        6789: "RLM_License",
-        5093: "Sentinel_LM"
-    }
+    This engine intercepts actual network traffic to and from license servers,
+    analyzes the protocols, and enables real-time response generation.
+    """
     
-    # Known license server hostnames
-    LICENSE_HOSTNAMES = [
-        "license.autodesk.com",
-        "activate.adobe.com",
-        "lm.mathworks.com",
-        "flexnet.bentley.com",
-        "licensing.ansys.com",
-        "lmgrd",
-        "flexlm",
-        "hasplms",
-        "codemeter",
-        "rlm",
-        "sentinel"
-    ]
-    
-    def __init__(self, interface: str = "0.0.0.0"):
-        self.logger = get_logger(__name__)
-        self.interface = interface
-        self.is_running = False
-        self.capture_threads = []
-        self.packet_queue = queue.Queue(maxsize=10000)
-        self.analysis_callbacks = []
-        self.intercepted_connections = {}
-        self.protocol_parsers = {}
-        self.traffic_statistics = {
-            "packets_captured": 0,
-            "license_packets": 0,
-            "protocols_detected": set(),
-            "start_time": None
-        }
-        
-        # Initialize protocol parsers
-        self._initialize_protocol_parsers()
-        
-        # Create SSL context for HTTPS interception
-        self._setup_ssl_context()
-        
-    def _initialize_protocol_parsers(self):
-        """Initialize available protocol parsers"""
-        if not HAS_PROTOCOL_PARSERS:
-            self.logger.warning("Protocol parsers not available")
-            return
-            
-        try:
-            self.protocol_parsers = {
-                "flexlm": FlexLMProtocolParser(),
-                "hasp": HASPSentinelParser(),
-                "codemeter": CodeMeterProtocolParser(),
-                "adobe": AdobeLicensingParser(),
-                "autodesk": AutodeskLicensingParser()
-            }
-            self.logger.info(f"Initialized {len(self.protocol_parsers)} protocol parsers")
-        except Exception as e:
-            self.logger.error(f"Failed to initialize protocol parsers: {e}")
-            
-    def _setup_ssl_context(self):
-        """Setup SSL context for HTTPS traffic interception"""
-        try:
-            self.ssl_context = ssl.create_default_context()
-            self.ssl_context.check_hostname = False
-            self.ssl_context.verify_mode = ssl.CERT_NONE
-            
-            # Create self-signed certificate for MITM
-            self.ssl_cert_path = self._generate_ssl_certificate()
-            
-        except Exception as e:
-            self.logger.error(f"Failed to setup SSL context: {e}")
-            self.ssl_context = None
-            
-    def _generate_ssl_certificate(self) -> str:
-        """Generate self-signed SSL certificate for traffic interception"""
-        try:
-            # This is a simplified implementation
-            # In production, you'd use proper certificate generation
-            import tempfile
-            import os
-            
-            cert_dir = tempfile.mkdtemp()
-            cert_path = os.path.join(cert_dir, "intercept.pem")
-            
-            # Generate a basic self-signed certificate
-            # This is a placeholder - real implementation would use cryptography library
-            with open(cert_path, 'w') as f:
-                f.write("-----BEGIN CERTIFICATE-----\n")
-                f.write("MIICpjCCAY4CAQAwDQYJKoZIhvcNAQELBQAwDTELMAkGA1UEBhMCVVMwHhcNMjUw\n")
-                f.write("-----END CERTIFICATE-----\n")
-                
-            return cert_path
-            
-        except Exception as e:
-            self.logger.error(f"Failed to generate SSL certificate: {e}")
-            return None
-            
-    def start_interception(self, target_ports: Optional[List[int]] = None):
+    def __init__(self, bind_interface: str = "127.0.0.1"):
         """
-        Start real network traffic interception
+        Initialize the traffic interception engine.
         
         Args:
-            target_ports: Specific ports to monitor, None for all license ports
+            bind_interface: Network interface to bind to
         """
-        if self.is_running:
-            self.logger.warning("Traffic interception already running")
-            return
-            
-        self.is_running = True
-        self.traffic_statistics["start_time"] = time.time()
+        self.logger = logging.getLogger("IntellicrackLogger.TrafficEngine")
+        self.bind_interface = bind_interface
+        self.running = False
         
-        # Determine ports to monitor
-        if target_ports is None:
-            target_ports = list(self.LICENSE_PORTS.keys())
-            
-        self.logger.info(f"Starting traffic interception on ports: {target_ports}")
+        # Statistics
+        self.stats = {
+            'packets_captured': 0,
+            'license_packets_detected': 0,
+            'protocols_detected': set(),
+            'total_bytes': 0,
+            'start_time': None
+        }
         
-        # Start packet capture threads for each port
-        for port in target_ports:
-            thread = threading.Thread(
-                target=self._capture_port_traffic,
-                args=(port,),
+        # Configuration
+        self.capture_config = {
+            'promiscuous_mode': False,
+            'buffer_size': 65536,
+            'timeout_ms': 100,
+            'filter_expression': None
+        }
+        
+        # Protocol patterns for license detection
+        self.license_patterns = {
+            'flexlm': [
+                b'VENDOR_STRING',
+                b'FEATURE',
+                b'INCREMENT', 
+                b'SERVER',
+                b'HOSTID',
+                b'SIGN='
+            ],
+            'hasp': [
+                b'hasp',
+                b'HASP', 
+                b'sentinel',
+                b'SENTINEL',
+                b'Aladdin'
+            ],
+            'adobe': [
+                b'adobe',
+                b'ADOBE',
+                b'lcsap',
+                b'LCSAP',
+                b'activation',
+                b'serial'
+            ],
+            'autodesk': [
+                b'adsk',
+                b'ADSK',
+                b'autodesk', 
+                b'AUTODESK',
+                b'AdskNetworkLicenseManager'
+            ],
+            'microsoft': [
+                b'kms',
+                b'KMS',
+                b'microsoft',
+                b'MICROSOFT',
+                b'activation'
+            ],
+            'generic_license': [
+                b'license',
+                b'LICENSE',
+                b'activation',
+                b'ACTIVATION',
+                b'checkout',
+                b'CHECKOUT',
+                b'verify',
+                b'VERIFY'
+            ]
+        }
+        
+        # Known license server ports
+        self.license_ports = {
+            27000, 27001, 27002, 27003, 27004, 27005, 27006, 27007, 27008, 27009,  # FlexLM
+            1947,  # HASP/Sentinel
+            443, 80, 8080, 8443,  # HTTPS/HTTP license servers
+            1688,  # Microsoft KMS
+            2080,  # Autodesk Network License Manager
+            7788, 7789  # Other common license ports
+        }
+        
+        # Active connections tracking
+        self.active_connections: Dict[str, Dict[str, Any]] = {}
+        self.connection_lock = threading.Lock()
+        
+        # Analysis callbacks
+        self.analysis_callbacks: List[Callable[[AnalyzedTraffic], None]] = []
+        
+        # Transparent proxy settings
+        self.proxy_mappings: Dict[str, Tuple[str, int]] = {}
+        self.dns_redirections: Dict[str, str] = {}
+        
+        # Threading
+        self.capture_thread: Optional[threading.Thread] = None
+        self.analysis_thread: Optional[threading.Thread] = None
+        self.packet_queue: List[InterceptedPacket] = []
+        self.queue_lock = threading.Lock()
+        
+        # Initialize capture backend
+        self.capture_backend = self._initialize_capture_backend()        
+    def _initialize_capture_backend(self) -> str:
+        """Initialize the best available packet capture backend"""
+        # Check platform and available libraries
+        if sys.platform == "win32":
+            if HAS_SCAPY:
+                self.logger.info("Using Scapy for Windows packet capture")
+                return "scapy"
+            else:
+                self.logger.warning("Scapy not available, using socket-based capture")
+                return "socket"
+        elif sys.platform.startswith("linux"):
+            if HAS_SCAPY and os.geteuid() == 0:
+                self.logger.info("Using Scapy for Linux packet capture (root required)")
+                return "scapy"
+            elif HAS_PCAP:
+                self.logger.info("Using libpcap for packet capture")
+                return "pcap"
+            else:
+                self.logger.warning("Limited capture capabilities, using socket-based capture")
+                return "socket"
+        else:
+            if HAS_SCAPY:
+                self.logger.info("Using Scapy for packet capture")
+                return "scapy"
+            else:
+                self.logger.warning("Using socket-based capture")
+                return "socket"
+        
+    def start_interception(self, ports: List[int] = None) -> bool:
+        """
+        Start traffic interception on specified ports.
+        
+        Args:
+            ports: List of ports to monitor, or None for all license ports
+            
+        Returns:
+            bool: True if started successfully
+        """
+        try:
+            if self.running:
+                self.logger.warning("Traffic interception already running")
+                return True
+                
+            if ports:
+                self.license_ports.update(ports)
+                
+            self.running = True
+            self.stats['start_time'] = time.time()
+            
+            # Start capture thread
+            self.capture_thread = threading.Thread(
+                target=self._capture_loop,
                 daemon=True
             )
-            thread.start()
-            self.capture_threads.append(thread)
+            self.capture_thread.start()
             
-        # Start raw packet capture thread
-        raw_thread = threading.Thread(
-            target=self._capture_raw_traffic,
-            daemon=True
-        )
-        raw_thread.start()
-        self.capture_threads.append(raw_thread)
-        
-        # Start analysis thread
-        analysis_thread = threading.Thread(
-            target=self._analyze_captured_traffic,
-            daemon=True
-        )
-        analysis_thread.start()
-        self.capture_threads.append(analysis_thread)
-        
-        self.logger.info("Traffic interception started successfully")
-        
-    def stop_interception(self):
+            # Start analysis thread  
+            self.analysis_thread = threading.Thread(
+                target=self._analysis_loop,
+                daemon=True
+            )
+            self.analysis_thread.start()
+            
+            self.logger.info(f"Traffic interception started using {self.capture_backend} backend")
+            self.logger.info(f"Monitoring {len(self.license_ports)} license server ports")
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to start traffic interception: {e}")
+            self.running = False
+            return False
+            
+    def stop_interception(self) -> bool:
         """Stop traffic interception"""
-        if not self.is_running:
+        try:
+            self.running = False
+            
+            # Wait for threads to finish
+            if self.capture_thread and self.capture_thread.is_alive():
+                self.capture_thread.join(timeout=5.0)
+                
+            if self.analysis_thread and self.analysis_thread.is_alive():
+                self.analysis_thread.join(timeout=5.0)
+                
+            self.logger.info("Traffic interception stopped")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Error stopping traffic interception: {e}")
+            return False
+            
+    def _capture_loop(self):
+        """Main packet capture loop"""
+        try:
+            if self.capture_backend == "scapy":
+                self._scapy_capture()
+            elif self.capture_backend == "pcap":
+                self._pcap_capture()
+            else:
+                self._socket_capture()
+                
+        except Exception as e:
+            self.logger.error(f"Capture loop error: {e}")
+            
+    def _scapy_capture(self):
+        """Packet capture using Scapy"""
+        if not HAS_SCAPY:
             return
             
-        self.is_running = False
-        self.logger.info("Stopping traffic interception...")
-        
-        # Wait for threads to finish
-        for thread in self.capture_threads:
-            if thread.is_alive():
-                thread.join(timeout=2.0)
-                
-        self.capture_threads.clear()
-        self.logger.info("Traffic interception stopped")
-        
-    def _capture_port_traffic(self, port: int):
-        """Capture traffic on a specific port"""
         try:
-            # Create listening socket for the port
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.settimeout(1.0)
+            # Build filter for license server ports
+            port_filter = " or ".join([f"port {port}" for port in self.license_ports])
+            filter_expr = f"tcp and ({port_filter})"
             
-            try:
-                sock.bind((self.interface, port))
-                sock.listen(5)
-                self.logger.info(f"Listening on port {port} for {self.LICENSE_PORTS.get(port, 'Unknown')}")
-                
-                while self.is_running:
-                    try:
-                        client_socket, client_addr = sock.accept()
-                        # Handle connection in separate thread
-                        conn_thread = threading.Thread(
-                            target=self._handle_intercepted_connection,
-                            args=(client_socket, client_addr, port),
-                            daemon=True
+            self.logger.info(f"Starting Scapy capture with filter: {filter_expr}")
+            
+            def packet_handler(packet):
+                if not self.running:
+                    return
+                    
+                try:
+                    if scapy.TCP in packet:
+                        tcp_layer = packet[scapy.TCP]
+                        ip_layer = packet[scapy.IP]
+                        
+                        # Extract packet data
+                        intercepted = InterceptedPacket(
+                            source_ip=ip_layer.src,
+                            dest_ip=ip_layer.dst,
+                            source_port=tcp_layer.sport,
+                            dest_port=tcp_layer.dport,
+                            protocol='tcp',
+                            data=bytes(tcp_layer.payload) if tcp_layer.payload else b'',
+                            timestamp=time.time(),
+                            packet_size=len(packet),
+                            flags={
+                                'syn': bool(tcp_layer.flags & 0x02),
+                                'ack': bool(tcp_layer.flags & 0x10), 
+                                'fin': bool(tcp_layer.flags & 0x01),
+                                'rst': bool(tcp_layer.flags & 0x04)
+                            }
                         )
-                        conn_thread.start()
                         
-                    except socket.timeout:
-                        continue
-                    except Exception as e:
-                        if self.is_running:
-                            self.logger.debug(f"Port {port} accept error: {e}")
+                        self._queue_packet(intercepted)
                         
-            finally:
-                sock.close()
-                
-        except Exception as e:
-            self.logger.error(f"Failed to capture traffic on port {port}: {e}")
+                except Exception as e:
+                    self.logger.debug(f"Error processing packet: {e}")
+                    
+            # Start capture
+            scapy.sniff(
+                filter=filter_expr,
+                prn=packet_handler,
+                stop_filter=lambda x: not self.running,
+                timeout=1
+            )
             
-    def _capture_raw_traffic(self):
-        """Capture raw network traffic using packet sniffing"""
+        except Exception as e:
+            self.logger.error(f"Scapy capture error: {e}")            
+    def _pcap_capture(self):
+        """Packet capture using libpcap"""
+        if not HAS_PCAP:
+            return
+            
         try:
-            # This requires raw socket privileges
+            # Create pcap handle
+            pc = pcap.pcap(
+                name=None,  # Default interface
+                promisc=self.capture_config['promiscuous_mode'],
+                immediate=True,
+                timeout_ms=self.capture_config['timeout_ms']
+            )
+            
+            # Build filter
+            port_filter = " or ".join([f"port {port}" for port in self.license_ports])
+            filter_expr = f"tcp and ({port_filter})"
+            pc.setfilter(filter_expr)
+            
+            self.logger.info(f"Starting libpcap capture with filter: {filter_expr}")
+            
+            for timestamp, raw_packet in pc:
+                if not self.running:
+                    break
+                    
+                try:
+                    # Parse Ethernet header (14 bytes)
+                    if len(raw_packet) < 14:
+                        continue
+                        
+                    eth_header = raw_packet[:14]
+                    eth_protocol = struct.unpack('!H', eth_header[12:14])[0]
+                    
+                    # Check for IPv4 (0x0800)
+                    if eth_protocol != 0x0800:
+                        continue
+                        
+                    # Parse IP header
+                    ip_header = raw_packet[14:34]
+                    if len(ip_header) < 20:
+                        continue
+                        
+                    ip_data = struct.unpack('!BBHHHBBH4s4s', ip_header)
+                    protocol = ip_data[6]
+                    
+                    # Check for TCP (6)
+                    if protocol != 6:
+                        continue
+                        
+                    source_ip = socket.inet_ntoa(ip_data[8])
+                    dest_ip = socket.inet_ntoa(ip_data[9])
+                    
+                    # Parse TCP header
+                    tcp_header = raw_packet[34:54]
+                    if len(tcp_header) < 20:
+                        continue
+                        
+                    tcp_data = struct.unpack('!HHLLBBHHH', tcp_header)
+                    source_port = tcp_data[0]
+                    dest_port = tcp_data[1]
+                    flags = tcp_data[5]
+                    
+                    # Extract payload
+                    tcp_header_length = (tcp_data[4] >> 4) * 4
+                    payload_start = 34 + tcp_header_length
+                    payload = raw_packet[payload_start:] if payload_start < len(raw_packet) else b''
+                    
+                    # Create intercepted packet
+                    intercepted = InterceptedPacket(
+                        source_ip=source_ip,
+                        dest_ip=dest_ip,
+                        source_port=source_port,
+                        dest_port=dest_port,
+                        protocol='tcp',
+                        data=payload,
+                        timestamp=timestamp,
+                        packet_size=len(raw_packet),
+                        flags={
+                            'syn': bool(flags & 0x02),
+                            'ack': bool(flags & 0x10),
+                            'fin': bool(flags & 0x01), 
+                            'rst': bool(flags & 0x04)
+                        }
+                    )
+                    
+                    self._queue_packet(intercepted)
+                    
+                except Exception as e:
+                    self.logger.debug(f"Error processing packet: {e}")
+                    
+        except Exception as e:
+            self.logger.error(f"libpcap capture error: {e}")
+            
+    def _socket_capture(self):
+        """Basic socket-based capture for localhost traffic"""
+        try:
+            # Create raw socket for local traffic monitoring
+            if sys.platform == "win32":
+                # Windows raw socket
+                sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
+                sock.bind((self.bind_interface, 0))
+                sock.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
+            else:
+                # Unix raw socket (requires root)
+                try:
+                    sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
+                except (AttributeError, OSError):
+                    # Fallback to standard socket monitoring
+                    self._monitor_local_connections()
+                    return
+                    
+            self.logger.info("Starting socket-based capture")
+            
+            while self.running:
+                try:
+                    raw_packet = sock.recv(65535)
+                    self._parse_raw_packet(raw_packet)
+                    
+                except socket.timeout:
+                    continue
+                except Exception as e:
+                    if self.running:
+                        self.logger.debug(f"Socket capture error: {e}")
+                        
+            if sys.platform == "win32":
+                sock.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
+            sock.close()
+            
+        except Exception as e:
+            self.logger.warning(f"Raw socket capture failed, using connection monitoring: {e}")
+            self._monitor_local_connections()            
+    def _monitor_local_connections(self):
+        """Monitor local connections when raw sockets aren't available"""
+        self.logger.info("Monitoring localhost connections for license traffic")
+        
+        while self.running:
             try:
-                # Create raw socket for packet capture
-                raw_sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
-                raw_sock.settimeout(1.0)
-                
-                self.logger.info("Started raw packet capture")
-                
-                while self.is_running:
+                # Monitor connections to license server ports
+                for port in self.license_ports:
                     try:
-                        packet_data, addr = raw_sock.recvfrom(65535)
-                        self._process_raw_packet(packet_data, addr)
+                        # Attempt connection to detect active servers
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(0.1)
+                        result = sock.connect_ex((self.bind_interface, port))
                         
-                    except socket.timeout:
-                        continue
-                    except Exception as e:
-                        if self.is_running:
-                            self.logger.debug(f"Raw capture error: {e}")
+                        if result == 0:
+                            # Port is open, there's a license server
+                            connection_key = f"{self.bind_interface}:{port}"
                             
-            except PermissionError:
-                self.logger.warning("Raw socket requires administrator privileges")
-                # Fallback to alternative capture methods
-                self._capture_with_fallback()
-                
-        except Exception as e:
-            self.logger.error(f"Raw traffic capture failed: {e}")
-            
-    def _capture_with_fallback(self):
-        """Fallback capture method when raw sockets not available"""
-        try:
-            # Use alternative capture methods
-            # This could integrate with pcap libraries if available
-            
-            self.logger.info("Using fallback capture method")
-            
-            while self.is_running:
-                # Monitor network connections via system APIs
-                connections = self._get_network_connections()
-                
-                for conn in connections:
-                    if self._is_license_connection(conn):
-                        self._monitor_connection(conn)
+                            with self.connection_lock:
+                                if connection_key not in self.active_connections:
+                                    self.active_connections[connection_key] = {
+                                        'first_seen': time.time(),
+                                        'last_activity': time.time(),
+                                        'packet_count': 0
+                                    }
+                                    
+                                    self.logger.info(f"License server detected on port {port}")
+                                    
+                        sock.close()
+                        
+                    except Exception:
+                        pass
                         
                 time.sleep(1.0)
                 
-        except Exception as e:
-            self.logger.error(f"Fallback capture failed: {e}")
-            
-    def _process_raw_packet(self, packet_data: bytes, addr: Tuple[str, int]):
-        """Process raw network packet"""
+            except Exception as e:
+                self.logger.debug(f"Connection monitoring error: {e}")
+                
+    def _parse_raw_packet(self, raw_packet: bytes):
+        """Parse raw network packet"""
         try:
+            if len(raw_packet) < 20:
+                return
+                
             # Parse IP header
-            ip_header = struct.unpack('!BBHHHBBH4s4s', packet_data[:20])
-            src_ip = socket.inet_ntoa(ip_header[8])
+            ip_header = struct.unpack('!BBHHHBBH4s4s', raw_packet[:20])
+            protocol = ip_header[6]
+            
+            # Only process TCP packets
+            if protocol != 6:
+                return
+                
+            source_ip = socket.inet_ntoa(ip_header[8])
             dest_ip = socket.inet_ntoa(ip_header[9])
             
-            # Parse TCP header if it's TCP
-            if ip_header[6] == 6:  # TCP protocol
-                tcp_header = struct.unpack('!HHLLBBHHH', packet_data[20:40])
-                src_port = tcp_header[0]
-                dest_port = tcp_header[1]
+            # Parse TCP header
+            if len(raw_packet) < 40:
+                return
                 
-                # Check if this looks like license traffic
-                if self._is_license_port(src_port) or self._is_license_port(dest_port):
-                    payload = packet_data[40:]
-                    
-                    if payload:
-                        packet = InterceptedPacket(
-                            timestamp=time.time(),
-                            source_ip=src_ip,
-                            dest_ip=dest_ip,
-                            source_port=src_port,
-                            dest_port=dest_port,
-                            protocol="TCP",
-                            data=payload,
-                            is_request=dest_port in self.LICENSE_PORTS,
-                            connection_id=f"{src_ip}:{src_port}-{dest_ip}:{dest_port}"
-                        )
-                        
-                        self.packet_queue.put(packet)
-                        self.traffic_statistics["packets_captured"] += 1
-                        
+            tcp_header = struct.unpack('!HHLLBBHHH', raw_packet[20:40])
+            source_port = tcp_header[0]
+            dest_port = tcp_header[1]
+            flags = tcp_header[5]
+            
+            # Check if this is license server traffic
+            if dest_port not in self.license_ports and source_port not in self.license_ports:
+                return
+                
+            # Extract payload
+            tcp_header_length = (tcp_header[4] >> 4) * 4
+            payload_start = 20 + tcp_header_length
+            payload = raw_packet[payload_start:] if payload_start < len(raw_packet) else b''
+            
+            # Create intercepted packet
+            intercepted = InterceptedPacket(
+                source_ip=source_ip,
+                dest_ip=dest_ip,
+                source_port=source_port,
+                dest_port=dest_port,
+                protocol='tcp',
+                data=payload,
+                timestamp=time.time(),
+                packet_size=len(raw_packet),
+                flags={
+                    'syn': bool(flags & 0x02),
+                    'ack': bool(flags & 0x10),
+                    'fin': bool(flags & 0x01),
+                    'rst': bool(flags & 0x04)
+                }
+            )
+            
+            self._queue_packet(intercepted)
+            
         except Exception as e:
-            self.logger.debug(f"Failed to process raw packet: {e}")
+            self.logger.debug(f"Error parsing packet: {e}")
             
-    def _handle_intercepted_connection(self, client_socket: socket.socket, 
-                                     client_addr: Tuple[str, int], port: int):
-        """Handle an intercepted connection"""
-        try:
-            connection_id = f"{client_addr[0]}:{client_addr[1]}-{self.interface}:{port}"
-            self.logger.info(f"Intercepted connection: {connection_id}")
+    def _queue_packet(self, packet: InterceptedPacket):
+        """Add packet to analysis queue"""
+        with self.queue_lock:
+            self.packet_queue.append(packet)
             
-            # Store connection info
-            self.intercepted_connections[connection_id] = {
-                "client_addr": client_addr,
-                "port": port,
-                "start_time": time.time(),
-                "protocol_type": self.LICENSE_PORTS.get(port, "Unknown"),
-                "data_exchanged": 0
-            }
+            # Update statistics
+            self.stats['packets_captured'] += 1
+            self.stats['total_bytes'] += packet.packet_size
             
-            client_socket.settimeout(30.0)
-            
-            while self.is_running:
-                try:
-                    # Receive data from client
-                    data = client_socket.recv(4096)
-                    if not data:
-                        break
-                        
-                    # Create packet record
-                    packet = InterceptedPacket(
-                        timestamp=time.time(),
-                        source_ip=client_addr[0],
-                        dest_ip=self.interface,
-                        source_port=client_addr[1],
-                        dest_port=port,
-                        protocol="TCP",
-                        data=data,
-                        is_request=True,
-                        connection_id=connection_id
-                    )
-                    
-                    # Queue for analysis
-                    self.packet_queue.put(packet)
-                    self.traffic_statistics["packets_captured"] += 1
-                    
-                    # Update connection stats
-                    self.intercepted_connections[connection_id]["data_exchanged"] += len(data)
-                    
-                    # Attempt to forward to real server or generate response
-                    response = self._handle_license_request(packet)
-                    if response:
-                        client_socket.send(response)
-                        
-                except socket.timeout:
-                    break
-                except Exception as e:
-                    self.logger.debug(f"Connection handling error: {e}")
-                    break
-                    
-        finally:
+            # Limit queue size
+            if len(self.packet_queue) > 10000:
+                self.packet_queue.pop(0)                
+    def _analysis_loop(self):
+        """Main packet analysis loop"""
+        while self.running:
             try:
-                client_socket.close()
-            except:
-                pass
-            if connection_id in self.intercepted_connections:
-                del self.intercepted_connections[connection_id]
+                packets_to_analyze = []
                 
-    def _analyze_captured_traffic(self):
-        """Analyze captured traffic for license protocols"""
-        while self.is_running:
-            try:
-                # Get packet from queue with timeout
-                try:
-                    packet = self.packet_queue.get(timeout=1.0)
-                except queue.Empty:
-                    continue
-                    
-                # Analyze the packet
-                analysis = self._analyze_packet(packet)
-                
-                if analysis.is_license_related:
-                    self.traffic_statistics["license_packets"] += 1
-                    self.traffic_statistics["protocols_detected"].add(analysis.protocol_type)
-                    
-                    # Notify analysis callbacks
-                    for callback in self.analysis_callbacks:
-                        try:
-                            callback(analysis)
-                        except Exception as e:
-                            self.logger.error(f"Analysis callback error: {e}")
-                            
-                self.packet_queue.task_done()
+                with self.queue_lock:
+                    if self.packet_queue:
+                        packets_to_analyze = self.packet_queue.copy()
+                        self.packet_queue.clear()
+                        
+                for packet in packets_to_analyze:
+                    analysis = self._analyze_packet(packet)
+                    if analysis:
+                        # Call analysis callbacks
+                        for callback in self.analysis_callbacks:
+                            try:
+                                callback(analysis)
+                            except Exception as e:
+                                self.logger.error(f"Analysis callback error: {e}")
+                                
+                time.sleep(0.1)
                 
             except Exception as e:
-                self.logger.error(f"Traffic analysis error: {e}")
+                self.logger.error(f"Analysis loop error: {e}")
                 
-    def _analyze_packet(self, packet: InterceptedPacket) -> AnalyzedTraffic:
-        """Analyze a single packet for license protocol content"""
-        analysis = AnalyzedTraffic(
-            packet=packet,
-            protocol_type="unknown",
-            parsed_data=None,
-            is_license_related=False,
-            confidence=0.0,
-            analysis_notes=[]
-        )
-        
+    def _analyze_packet(self, packet: InterceptedPacket) -> Optional[AnalyzedTraffic]:
+        """Analyze packet for license-related content"""
         try:
-            # Check if port suggests license traffic
-            if self._is_license_port(packet.dest_port):
-                analysis.is_license_related = True
-                analysis.protocol_type = self.LICENSE_PORTS.get(packet.dest_port, "unknown")
-                analysis.confidence += 0.3
-                analysis.analysis_notes.append(f"Known license port: {packet.dest_port}")
-                
-            # Analyze packet content with protocol parsers
-            for parser_name, parser in self.protocol_parsers.items():
-                try:
-                    if hasattr(parser, 'parse_request'):
-                        parsed = parser.parse_request(packet.data)
-                        if parsed:
-                            analysis.parsed_data = parsed
-                            analysis.protocol_type = parser_name
-                            analysis.is_license_related = True
-                            analysis.confidence += 0.7
-                            analysis.analysis_notes.append(f"Parsed as {parser_name} protocol")
-                            break
-                except Exception as e:
-                    self.logger.debug(f"Parser {parser_name} failed: {e}")
-                    
-            # Check for license-related keywords in data
-            if self._contains_license_keywords(packet.data):
-                analysis.is_license_related = True
-                analysis.confidence += 0.2
-                analysis.analysis_notes.append("Contains license keywords")
-                
-            # Check for SSL/TLS traffic that might be license-related
-            if self._is_ssl_traffic(packet.data):
-                if self._is_license_hostname(packet.dest_ip):
-                    analysis.is_license_related = True
-                    analysis.protocol_type = "https_license"
-                    analysis.confidence += 0.4
-                    analysis.analysis_notes.append("SSL/TLS to license server")
-                    
-        except Exception as e:
-            analysis.analysis_notes.append(f"Analysis error: {e}")
+            is_license_related = False
+            protocol_type = "unknown"
+            confidence = 0.0
+            patterns_matched = []
             
-        return analysis        
-    def _handle_license_request(self, packet: InterceptedPacket) -> Optional[bytes]:
-        """Handle intercepted license request and generate appropriate response"""
-        try:
-            # Analyze packet to determine protocol
-            analysis = self._analyze_packet(packet)
-            
-            if not analysis.is_license_related:
+            # Check if packet has data
+            if not packet.data:
                 return None
                 
-            # Generate response using appropriate parser
-            if analysis.protocol_type in self.protocol_parsers:
-                parser = self.protocol_parsers[analysis.protocol_type]
+            # Check port-based detection
+            if packet.dest_port in self.license_ports or packet.source_port in self.license_ports:
+                confidence += 0.3
+                is_license_related = True
                 
-                if analysis.parsed_data:
-                    # Generate response using parsed data
-                    if hasattr(parser, 'generate_response'):
-                        response_obj = parser.generate_response(analysis.parsed_data)
+            # Pattern matching
+            for proto, patterns in self.license_patterns.items():
+                matches = 0
+                for pattern in patterns:
+                    if pattern in packet.data:
+                        matches += 1
+                        patterns_matched.append(pattern.decode('utf-8', errors='ignore'))
                         
-                        # Serialize response back to bytes
-                        if hasattr(parser, 'serialize_response'):
-                            return parser.serialize_response(response_obj)
-                            
-            # Generate generic success response if no specific parser available
-            return self._generate_generic_response(packet)
+                if matches > 0:
+                    pattern_confidence = min(matches / len(patterns), 1.0) * 0.7
+                    if pattern_confidence > confidence:
+                        confidence = pattern_confidence
+                        protocol_type = proto
+                        is_license_related = True
+                        
+            # Additional heuristics
+            if packet.data:
+                data_lower = packet.data.lower()
+                
+                # Look for license-related keywords
+                license_keywords = [b'license', b'activation', b'checkout', b'verify', b'serial']
+                keyword_matches = sum(1 for keyword in license_keywords if keyword in data_lower)
+                
+                if keyword_matches > 0:
+                    confidence += min(keyword_matches * 0.1, 0.3)
+                    is_license_related = True
+                    
+            # Only return analysis if confidence is high enough
+            if confidence < 0.2:
+                return None
+                
+            # Update statistics
+            if is_license_related:
+                self.stats['license_packets_detected'] += 1
+                self.stats['protocols_detected'].add(protocol_type)
+                
+            analysis_metadata = {
+                'keywords_found': patterns_matched,
+                'port_based_detection': packet.dest_port in self.license_ports or packet.source_port in self.license_ports,
+                'data_size': len(packet.data),
+                'connection_flags': packet.flags
+            }
+            
+            return AnalyzedTraffic(
+                packet=packet,
+                is_license_related=is_license_related,
+                protocol_type=protocol_type,
+                confidence=confidence,
+                patterns_matched=patterns_matched,
+                analysis_metadata=analysis_metadata
+            )
             
         except Exception as e:
-            self.logger.error(f"Failed to handle license request: {e}")
+            self.logger.error(f"Packet analysis error: {e}")
             return None
             
-    def _generate_generic_response(self, packet: InterceptedPacket) -> bytes:
-        """Generate generic license response"""
-        try:
-            # Check if this looks like HTTP traffic
-            if b'HTTP' in packet.data[:100] or b'GET' in packet.data[:10] or b'POST' in packet.data[:10]:
-                # Generate HTTP response
-                response_body = json.dumps({
-                    "status": "success",
-                    "license_valid": True,
-                    "expiry_date": "2025-12-31",
-                    "features_enabled": ["full_access"]
-                })
-                
-                http_response = (
-                    f"HTTP/1.1 200 OK\r\n"
-                    f"Content-Type: application/json\r\n"
-                    f"Content-Length: {len(response_body)}\r\n"
-                    f"Server: intellicrack-license-interceptor\r\n"
-                    f"\r\n"
-                    f"{response_body}"
-                )
-                
-                return http_response.encode()
-                
-            else:
-                # Generate binary response (success status)
-                return b'\x00\x00\x00\x00'  # Generic success
-                
-        except Exception as e:
-            self.logger.error(f"Failed to generate generic response: {e}")
-            return b'\xFF\xFF\xFF\xFF'  # Generic error
-            
-    def _is_license_port(self, port: int) -> bool:
-        """Check if port is commonly used for license servers"""
-        return port in self.LICENSE_PORTS
-        
-    def _is_license_hostname(self, hostname: str) -> bool:
-        """Check if hostname is license-related"""
-        hostname_lower = hostname.lower()
-        return any(license_host in hostname_lower for license_host in self.LICENSE_HOSTNAMES)
-        
-    def _contains_license_keywords(self, data: bytes) -> bool:
-        """Check if data contains license-related keywords"""
-        try:
-            # Convert to string for keyword searching
-            text = data.decode('utf-8', errors='ignore').lower()
-            
-            license_keywords = [
-                'license', 'activation', 'checkout', 'flexlm', 'hasp', 'sentinel',
-                'codemeter', 'entitlement', 'subscription', 'validate', 'authenticate',
-                'vendor_code', 'feature_id', 'product_key', 'serial_number',
-                'machine_id', 'hostid', 'dongle', 'hardlock', 'wibu', 'rlm'
-            ]
-            
-            return any(keyword in text for keyword in license_keywords)
-            
-        except:
-            return False
-            
-    def _is_ssl_traffic(self, data: bytes) -> bool:
-        """Check if data appears to be SSL/TLS traffic"""
-        try:
-            # Check for SSL/TLS handshake patterns
-            if len(data) < 6:
-                return False
-                
-            # TLS record types: 22=handshake, 23=application_data, 21=alert, 20=change_cipher_spec
-            if data[0] in [20, 21, 22, 23] and data[1] == 3:  # TLS version starts with 3
-                return True
-                
-            # Check for SSL v2 patterns
-            if len(data) >= 2:
-                record_length = struct.unpack('>H', data[:2])[0]
-                if 0x8000 <= record_length <= 0xFFFF:  # SSL v2 record length pattern
-                    return True
-                    
-            return False
-            
-        except:
-            return False
-            
-    def _get_network_connections(self) -> List[Dict[str, Any]]:
-        """Get current network connections (fallback method)"""
-        connections = []
-        try:
-            # This would use system APIs to get network connections
-            # Placeholder implementation
-            import psutil
-            
-            for conn in psutil.net_connections():
-                if conn.status == 'ESTABLISHED':
-                    connections.append({
-                        'local_addr': conn.laddr,
-                        'remote_addr': conn.raddr,
-                        'pid': conn.pid,
-                        'status': conn.status
-                    })
-                    
-        except ImportError:
-            # Fallback if psutil not available
-            self.logger.debug("psutil not available for connection monitoring")
-        except Exception as e:
-            self.logger.debug(f"Failed to get network connections: {e}")
-            
-        return connections
-        
-    def _is_license_connection(self, connection: Dict[str, Any]) -> bool:
-        """Check if network connection is license-related"""
-        try:
-            if connection.get('remote_addr'):
-                remote_port = connection['remote_addr'][1]
-                return self._is_license_port(remote_port)
-        except:
-            pass
-        return False
-        
-    def _monitor_connection(self, connection: Dict[str, Any]):
-        """Monitor a specific network connection"""
-        try:
-            # This would set up monitoring for the specific connection
-            self.logger.debug(f"Monitoring connection: {connection}")
-        except Exception as e:
-            self.logger.debug(f"Failed to monitor connection: {e}")
-            
     def add_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]):
-        """Add callback function to be called when license traffic is analyzed"""
+        """Add callback for analyzed traffic"""
         self.analysis_callbacks.append(callback)
         
     def remove_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]):
@@ -673,198 +700,58 @@ class TrafficInterceptionEngine:
         if callback in self.analysis_callbacks:
             self.analysis_callbacks.remove(callback)
             
-    def get_statistics(self) -> Dict[str, Any]:
-        """Get traffic interception statistics"""
-        stats = self.traffic_statistics.copy()
-        stats["protocols_detected"] = list(stats["protocols_detected"])
-        stats["active_connections"] = len(self.intercepted_connections)
-        stats["is_running"] = self.is_running
-        
-        if stats["start_time"]:
-            stats["uptime_seconds"] = time.time() - stats["start_time"]
-            
-        return stats
-        
-    def get_active_connections(self) -> Dict[str, Dict[str, Any]]:
-        """Get currently active intercepted connections"""
-        return self.intercepted_connections.copy()
-        
-    def set_dns_redirection(self, hostname: str, redirect_ip: str = "127.0.0.1"):
-        """Set up DNS redirection for license server hostnames"""
+    def set_dns_redirection(self, hostname: str, target_ip: str) -> bool:
+        """Setup DNS redirection for hostname"""
         try:
-            # This would modify system DNS or hosts file
-            import platform
-            
-            if platform.system() == "Windows":
-                hosts_file = r"C:\Windows\System32\drivers\etc\hosts"
-            else:
-                hosts_file = "/etc/hosts"
-                
-            # Read current hosts file
-            try:
-                with open(hosts_file, 'r') as f:
-                    hosts_content = f.read()
-            except PermissionError:
-                self.logger.error("DNS redirection requires administrator privileges")
-                return False
-                
-            # Add redirection entry
-            redirect_entry = f"\n{redirect_ip}\t{hostname}\t# Intellicrack license interception"
-            
-            if redirect_entry not in hosts_content:
-                with open(hosts_file, 'a') as f:
-                    f.write(redirect_entry)
-                    
-                self.logger.info(f"Added DNS redirection: {hostname} -> {redirect_ip}")
-                return True
-                
-        except Exception as e:
-            self.logger.error(f"Failed to set DNS redirection: {e}")
-            
-        return False
-        
-    def remove_dns_redirection(self, hostname: str):
-        """Remove DNS redirection for hostname"""
-        try:
-            import platform
-            
-            if platform.system() == "Windows":
-                hosts_file = r"C:\Windows\System32\drivers\etc\hosts"
-            else:
-                hosts_file = "/etc/hosts"
-                
-            # Read and filter hosts file
-            try:
-                with open(hosts_file, 'r') as f:
-                    lines = f.readlines()
-                    
-                # Remove lines containing the hostname and Intellicrack comment
-                filtered_lines = [
-                    line for line in lines 
-                    if not (hostname in line and "Intellicrack license interception" in line)
-                ]
-                
-                with open(hosts_file, 'w') as f:
-                    f.writelines(filtered_lines)
-                    
-                self.logger.info(f"Removed DNS redirection for {hostname}")
-                
-            except PermissionError:
-                self.logger.error("DNS redirection removal requires administrator privileges")
-                
-        except Exception as e:
-            self.logger.error(f"Failed to remove DNS redirection: {e}")
-            
-    def setup_transparent_proxy(self, target_host: str, target_port: int, 
-                               local_port: Optional[int] = None):
-        """Set up transparent proxy for license server traffic"""
-        try:
-            if local_port is None:
-                local_port = target_port
-                
-            # Create proxy socket
-            proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            proxy_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            proxy_socket.bind((self.interface, local_port))
-            proxy_socket.listen(5)
-            
-            self.logger.info(f"Started transparent proxy: localhost:{local_port} -> {target_host}:{target_port}")
-            
-            # Handle proxy connections
-            def proxy_handler():
-                while self.is_running:
-                    try:
-                        client_socket, client_addr = proxy_socket.accept()
-                        
-                        # Start proxy thread
-                        proxy_thread = threading.Thread(
-                            target=self._handle_proxy_connection,
-                            args=(client_socket, client_addr, target_host, target_port),
-                            daemon=True
-                        )
-                        proxy_thread.start()
-                        
-                    except Exception as e:
-                        if self.is_running:
-                            self.logger.debug(f"Proxy accept error: {e}")
-                            
-            proxy_thread = threading.Thread(target=proxy_handler, daemon=True)
-            proxy_thread.start()
-            self.capture_threads.append(proxy_thread)
-            
+            self.dns_redirections[hostname.lower()] = target_ip
+            self.logger.info(f"DNS redirection setup: {hostname} -> {target_ip}")
             return True
+        except Exception as e:
+            self.logger.error(f"Failed to setup DNS redirection: {e}")
+            return False
             
+    def setup_transparent_proxy(self, target_host: str, target_port: int) -> bool:
+        """Setup transparent proxy for target server"""
+        try:
+            proxy_key = f"{target_host}:{target_port}"
+            self.proxy_mappings[proxy_key] = (self.bind_interface, target_port)
+            self.logger.info(f"Transparent proxy setup: {proxy_key} -> {self.bind_interface}:{target_port}")
+            return True
         except Exception as e:
             self.logger.error(f"Failed to setup transparent proxy: {e}")
             return False
             
-    def _handle_proxy_connection(self, client_socket: socket.socket, 
-                                client_addr: Tuple[str, int],
-                                target_host: str, target_port: int):
-        """Handle transparent proxy connection"""
-        target_socket = None
-        try:
-            # Connect to target server
-            target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            target_socket.connect((target_host, target_port))
-            
-            # Start bidirectional forwarding
-            def forward_data(src_socket, dst_socket, direction):
-                try:
-                    while self.is_running:
-                        data = src_socket.recv(4096)
-                        if not data:
-                            break
-                            
-                        # Intercept and analyze data
-                        packet = InterceptedPacket(
-                            timestamp=time.time(),
-                            source_ip=client_addr[0] if direction == "request" else target_host,
-                            dest_ip=target_host if direction == "request" else client_addr[0],
-                            source_port=client_addr[1] if direction == "request" else target_port,
-                            dest_port=target_port if direction == "request" else client_addr[1],
-                            protocol="TCP_PROXY",
-                            data=data,
-                            is_request=direction == "request",
-                            connection_id=f"proxy_{client_addr[0]}:{client_addr[1]}"
-                        )
-                        
-                        self.packet_queue.put(packet)
-                        
-                        # Forward data
-                        dst_socket.send(data)
-                        
-                except Exception as e:
-                    self.logger.debug(f"Proxy forwarding error ({direction}): {e}")
-                    
-            # Start forwarding threads
-            request_thread = threading.Thread(
-                target=forward_data,
-                args=(client_socket, target_socket, "request"),
-                daemon=True
-            )
-            response_thread = threading.Thread(
-                target=forward_data,
-                args=(target_socket, client_socket, "response"),
-                daemon=True
-            )
-            
-            request_thread.start()
-            response_thread.start()
-            
-            # Wait for threads to complete
-            request_thread.join()
-            response_thread.join()
-            
-        except Exception as e:
-            self.logger.debug(f"Proxy connection error: {e}")
-        finally:
-            try:
-                client_socket.close()
-            except:
-                pass
-            try:
-                if target_socket:
-                    target_socket.close()
-            except:
-                pass
+    def get_statistics(self) -> Dict[str, Any]:
+        """Get traffic interception statistics"""
+        current_time = time.time()
+        uptime = current_time - self.stats['start_time'] if self.stats['start_time'] else 0
+        
+        stats = self.stats.copy()
+        stats['protocols_detected'] = list(stats['protocols_detected'])
+        stats['uptime_seconds'] = uptime
+        stats['packets_per_second'] = stats['packets_captured'] / max(uptime, 1)
+        stats['active_connections'] = len(self.active_connections)
+        stats['capture_backend'] = self.capture_backend
+        stats['dns_redirections'] = len(self.dns_redirections)
+        stats['proxy_mappings'] = len(self.proxy_mappings)
+        
+        return stats
+        
+    def get_active_connections(self) -> List[Dict[str, Any]]:
+        """Get list of active connections"""
+        connections = []
+        current_time = time.time()
+        
+        with self.connection_lock:
+            for connection_key, info in self.active_connections.items():
+                connections.append({
+                    'endpoint': connection_key,
+                    'duration': current_time - info['first_seen'],
+                    'last_activity': info['last_activity'],
+                    'packet_count': info['packet_count']
+                })
+                
+        return connections
+
+
+__all__ = ['TrafficInterceptionEngine', 'InterceptedPacket', 'AnalyzedTraffic']

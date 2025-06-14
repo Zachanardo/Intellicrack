@@ -44,10 +44,7 @@ try:
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
 
-from ...utils.import_checks import (
-    PEFILE_AVAILABLE, pefile,
-    CAPSTONE_AVAILABLE, capstone
-)
+from ...utils.import_checks import CAPSTONE_AVAILABLE, PEFILE_AVAILABLE, capstone, pefile
 
 if CAPSTONE_AVAILABLE and capstone:
     from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
@@ -204,20 +201,20 @@ class CFGExplorer:
         """Analyze a specific function (compatibility method)."""
         if not self.set_current_function(function_name):
             return None
-            
+
         func_data = self.functions.get(function_name)
         if not func_data:
             return None
-            
+
         # Get complexity metrics
         complexity = self.get_complexity_metrics()
-        
+
         # Find license patterns
         license_patterns = self.find_license_check_patterns()
-        
+
         # Count basic blocks
         num_blocks = len(func_data.get('blocks', []))
-        
+
         return {
             "name": function_name,
             "address": f"0x{func_data['addr']:x}",
@@ -476,6 +473,91 @@ class CFGExplorer:
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error exporting DOT file: %s", e)
             return False
+
+    def analyze_cfg(self, binary_path: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Perform comprehensive CFG analysis on a binary.
+
+        Args:
+            binary_path: Path to binary file to analyze (optional)
+
+        Returns:
+            Dictionary containing CFG analysis results
+        """
+        results = {
+            'binary_path': binary_path or self.binary_path,
+            'functions_analyzed': 0,
+            'complexity_metrics': {},
+            'license_patterns': [],
+            'graph_data': None,
+            'errors': []
+        }
+
+        try:
+            # Use provided path or existing path
+            if binary_path:
+                self.binary_path = binary_path
+
+            if not self.binary_path:
+                error_msg = "No binary path specified for CFG analysis"
+                self.logger.error(error_msg)
+                results['errors'].append(error_msg)
+                return results
+
+            # Load the binary and build CFG
+            if not self.load_binary(self.binary_path):
+                error_msg = f"Failed to load binary for CFG analysis: {self.binary_path}"
+                self.logger.error(error_msg)
+                results['errors'].append(error_msg)
+                return results
+
+            self.logger.info("Starting CFG analysis for: %s", self.binary_path)
+
+            # Get function list
+            function_list = self.get_function_list()
+            results['functions_analyzed'] = len(function_list)
+
+            # Analyze each function for license patterns
+            all_license_patterns = []
+            for function_name in function_list[:10]:  # Limit to first 10 functions for performance
+                try:
+                    if self.set_current_function(function_name):
+                        patterns = self.find_license_check_patterns()
+                        if patterns:
+                            all_license_patterns.extend(patterns)
+                            self.logger.debug("Found %d patterns in function %s", len(patterns), function_name)
+                except (OSError, ValueError, RuntimeError) as e:
+                    self.logger.debug("Error analyzing function %s: %s", function_name, e)
+
+            results['license_patterns'] = all_license_patterns
+
+            # Get complexity metrics
+            try:
+                results['complexity_metrics'] = self.get_complexity_metrics()
+            except (OSError, ValueError, RuntimeError) as e:
+                self.logger.debug("Error getting complexity metrics: %s", e)
+                results['complexity_metrics'] = {}
+
+            # Get graph data for the main function if available
+            try:
+                if function_list and len(function_list) > 0:
+                    main_function = function_list[0]  # Assume first function is main/entry
+                    if self.set_current_function(main_function):
+                        graph_data = self.get_graph_data()
+                        if graph_data:
+                            results['graph_data'] = graph_data
+            except (OSError, ValueError, RuntimeError) as e:
+                self.logger.debug("Error getting graph data: %s", e)
+
+            self.logger.info("CFG analysis completed. Found %d license patterns in %d functions", 
+                           len(all_license_patterns), results['functions_analyzed'])
+
+        except (OSError, ValueError, RuntimeError) as e:
+            error_msg = f"CFG analysis failed: {e}"
+            self.logger.error(error_msg)
+            results['errors'].append(error_msg)
+
+        return results
 
 
 def run_deep_cfg_analysis(app):

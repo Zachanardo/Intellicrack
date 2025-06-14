@@ -29,8 +29,11 @@ from typing import Any, Dict, List
 
 # Import common patterns from centralized module
 from .import_patterns import (
-    pefile, PEFILE_AVAILABLE,
-    CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs, CAPSTONE_AVAILABLE
+    CS_ARCH_X86,
+    CS_MODE_32,
+    CS_MODE_64,
+    Cs,
+    pefile,
 )
 
 try:

@@ -83,20 +83,20 @@ class LicenseProtocolHandler(ABC):
         Subclasses should override this to clear protocol-specific data structures.
         """
         self.logger.debug("Clearing protocol handler data")
-        
+
         # Clear any base-level captured data
         if hasattr(self, 'captured_requests'):
             self.captured_requests.clear()
             self.logger.debug("Cleared %d captured requests", len(self.captured_requests))
-        
+
         if hasattr(self, 'captured_responses'):
             self.captured_responses.clear()
             self.logger.debug("Cleared captured responses")
-            
+
         if hasattr(self, 'session_data'):
             self.session_data.clear()
             self.logger.debug("Cleared session data")
-            
+
         if hasattr(self, 'client_connections'):
             self.client_connections.clear()
             self.logger.debug("Cleared client connections tracking")
@@ -154,7 +154,7 @@ class LicenseProtocolHandler(ABC):
 
         self.logger.info("Stopped %s proxy", self.__class__.__name__)
         return True
-    
+
     def shutdown(self) -> None:
         """
         Shutdown the protocol handler completely.
@@ -162,18 +162,18 @@ class LicenseProtocolHandler(ABC):
         This method stops the proxy server and cleans up all resources.
         """
         self.logger.info("Shutting down %s protocol handler", self.__class__.__name__)
-        
+
         # Stop the proxy server
         if self.running:
             self.stop_proxy()
-        
+
         # Clear all data
         self.clear_data()
-        
+
         # Reset state
         self.running = False
         self.proxy_thread = None
-        
+
         self.logger.info("Protocol handler shutdown complete")
 
     def is_running(self) -> bool:
@@ -291,7 +291,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         self.session_data = {}
         self.client_connections = {}
         self.vendor_daemon_port = self.config.get('vendor_daemon_port', 27001)
-    
+
     def clear_data(self) -> None:
         """Clear FlexLM-specific captured data."""
         super().clear_data()
@@ -306,28 +306,27 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             port: Port to bind the proxy server to
         """
         import socket
-        import struct
-        
+
         self.logger.info("FlexLM proxy started on port %s", port)
-        
+
         # Create TCP socket for FlexLM protocol
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
+
         try:
             # Use configured host (defaults to localhost for security)
             bind_host = self.config.get('bind_host', self.host)
             server_socket.bind((bind_host, port))
             server_socket.listen(5)
             server_socket.settimeout(1.0)  # 1 second timeout for checking self.running
-            
+
             self.logger.info("FlexLM proxy listening on port %s", port)
-            
+
             while self.running:
                 try:
                     client_socket, client_addr = server_socket.accept()
                     self.logger.info("FlexLM connection from %s:%s", client_addr[0], client_addr[1])
-                    
+
                     # Handle client connection in a separate thread
                     client_thread = threading.Thread(
                         target=self._handle_flexlm_client,
@@ -335,13 +334,13 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
                         daemon=True
                     )
                     client_thread.start()
-                    
+
                 except socket.timeout:
                     continue  # Check self.running and continue
                 except Exception as e:
                     if self.running:
                         self.logger.error("FlexLM proxy error: %s", e)
-                        
+
         finally:
             server_socket.close()
             self.logger.info("FlexLM proxy stopped")
@@ -382,7 +381,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             self.logger.error("Error handling FlexLM client %s: %s", client_addr, e)
         finally:
             client_socket.close()
-    
+
     def generate_response(self, request_data: bytes) -> bytes:
         """
         Generate FlexLM protocol response.
@@ -393,28 +392,27 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         Returns:
             FlexLM response data
         """
-        import struct
         import time
-        
+
         # Store request for analysis
         self.captured_requests.append({
             'timestamp': time.time(),
             'data': request_data,
             'hex': request_data.hex()
         })
-        
+
         # Parse FlexLM request to determine type
         if len(request_data) < 4:
             return b"ERROR: Invalid request\n"
-            
+
         # FlexLM uses a simple text-based protocol for many operations
         request_str = request_data.decode('utf-8', errors='ignore')
-        
+
         # Check for common FlexLM commands
         if request_str.startswith('HELLO'):
             # Initial handshake
             return b"HELLO 1 1 27001\n"  # version 1.1, vendor daemon on port 27001
-            
+
         elif request_str.startswith('GETLIC'):
             # License checkout request
             # Format: GETLIC feature version user host display
@@ -424,22 +422,22 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
                 # Generate a success response with license details
                 response = f"GRANT {feature} 1.0 permanent 0 0 0 0 HOSTID=ANY\n"
                 return response.encode('utf-8')
-                
+
         elif request_str.startswith('CHECKIN'):
             # License checkin
             return b"CHECKIN_OK\n"
-            
+
         elif request_str.startswith('HEARTBEAT'):
             # Keepalive
             return b"HEARTBEAT_OK\n"
-            
+
         elif 'STATUS' in request_str:
             # Status query
             response = "STATUS OK\n"
             response += "SERVER UP\n"
-            response += f"LICENSES AVAILABLE: 999\n"
+            response += "LICENSES AVAILABLE: 999\n"
             return response.encode('utf-8')
-            
+
         else:
             # For unknown requests, send a generic success
             self.logger.debug("Unknown FlexLM request: %s", request_str[:100])
@@ -462,7 +460,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         self.captured_responses = []
         self.session_data = {}
         self.client_connections = {}
-        
+
     def clear_data(self) -> None:
         """Clear HASP-specific captured data."""
         super().clear_data()
@@ -477,27 +475,27 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             port: Port to bind the proxy server to
         """
         import socket
-        
+
         self.logger.info("HASP proxy started on port %s", port)
-        
+
         # HASP uses both TCP and UDP, but primarily TCP for license server
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        
+
         try:
             # Use configured host (defaults to localhost for security)
             bind_host = self.config.get('bind_host', self.host)
             server_socket.bind((bind_host, port))
             server_socket.listen(5)
             server_socket.settimeout(1.0)
-            
+
             self.logger.info("HASP proxy listening on port %s", port)
-            
+
             while self.running:
                 try:
                     client_socket, client_addr = server_socket.accept()
                     self.logger.info("HASP connection from %s:%s", client_addr[0], client_addr[1])
-                    
+
                     # Handle client connection in a separate thread
                     client_thread = threading.Thread(
                         target=self._handle_hasp_client,  # pylint: disable=no-member
@@ -505,13 +503,13 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         daemon=True
                     )
                     client_thread.start()
-                    
+
                 except socket.timeout:
                     continue
                 except Exception as e:
                     if self.running:
                         self.logger.error("HASP proxy error: %s", e)
-                        
+
         finally:
             server_socket.close()
             self.logger.info("HASP proxy stopped")
@@ -551,7 +549,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             self.logger.error("Error handling HASP client %s: %s", client_addr, e)
         finally:
             client_socket.close()
-    
+
     def generate_response(self, request_data: bytes) -> bytes:
         """
         Generate HASP protocol response.
@@ -564,48 +562,49 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         """
         import struct
         import time
-        
+
         # Store request for analysis
         self.captured_requests.append({
             'timestamp': time.time(),
             'data': request_data,
             'hex': request_data.hex()
         })
-        
+
         # HASP protocol uses binary format
         if len(request_data) < 8:
             return b"\x00\x00\x00\x00"  # Error response
-        
+
         # Parse HASP packet header
         # Common HASP packet structure: [command_id(4), data_len(4), data(...)]
         try:
             command_id = struct.unpack('<I', request_data[:4])[0]
-            
+
             # Handle common HASP commands
             if command_id == 0x01:  # HASP_LOGIN
                 # Login response: success status + handle
                 response = struct.pack('<II', 0x00000000, 0x12345678)  # Success + handle
                 return response
-                
+
             elif command_id == 0x02:  # HASP_LOGOUT
                 # Logout response: success
                 return struct.pack('<I', 0x00000000)
-                
+
             elif command_id == 0x03:  # HASP_ENCRYPT
                 # Encryption response: return encrypted data using AES-CTR
                 if len(request_data) > 8:
                     data_to_encrypt = request_data[8:]
                     try:
                         # Use proper encryption (AES-CTR mode for HASP emulation)
-                        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-                        from cryptography.hazmat.backends import default_backend
                         import os
-                        
+
+                        from cryptography.hazmat.backends import default_backend
+                        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
                         # Generate or use stored key/nonce for this session
                         if not hasattr(self, '_hasp_aes_key'):
                             self._hasp_aes_key = os.urandom(32)  # AES-256
                             self._hasp_nonce = os.urandom(16)
-                        
+
                         # Encrypt data
                         cipher = Cipher(
                             algorithms.AES(self._hasp_aes_key),
@@ -614,7 +613,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         )
                         encryptor = cipher.encryptor()
                         encrypted = encryptor.update(data_to_encrypt) + encryptor.finalize()
-                        
+
                         return struct.pack('<I', 0x00000000) + encrypted
                     except ImportError:
                         # Fallback to XOR if cryptography not available, but warn
@@ -622,16 +621,16 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         encrypted = bytes(b ^ 0xAA for b in data_to_encrypt)
                         return struct.pack('<I', 0x00000000) + encrypted
                 return struct.pack('<I', 0x00000000)
-                
+
             elif command_id == 0x04:  # HASP_DECRYPT
                 # Decryption response: return decrypted data using AES-CTR
                 if len(request_data) > 8:
                     data_to_decrypt = request_data[8:]
                     try:
                         # Use proper decryption (AES-CTR mode for HASP emulation)
-                        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
                         from cryptography.hazmat.backends import default_backend
-                        
+                        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
                         # Use stored key/nonce from encryption
                         if hasattr(self, '_hasp_aes_key'):
                             cipher = Cipher(
@@ -645,7 +644,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                             # No key established yet
                             logger.error("No encryption key established for decryption")
                             decrypted = data_to_decrypt
-                        
+
                         return struct.pack('<I', 0x00000000) + decrypted
                     except ImportError:
                         # Fallback to XOR if cryptography not available
@@ -653,11 +652,11 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         decrypted = bytes(b ^ 0xAA for b in data_to_decrypt)
                         return struct.pack('<I', 0x00000000) + decrypted
                 return struct.pack('<I', 0x00000000)
-                
+
             elif command_id == 0x05:  # HASP_GET_SIZE
                 # Return size of available memory
                 return struct.pack('<II', 0x00000000, 0x10000)  # Success + 64KB
-                
+
             elif command_id == 0x06:  # HASP_READ
                 # Read memory response
                 # Parse read request to get offset and size
@@ -670,7 +669,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                     else:
                         offset = 0
                         size = 64
-                        
+
                     # Generate realistic license data based on offset
                     if offset < 16:
                         # License header area - return license signature
@@ -682,31 +681,31 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                     else:
                         # Data area - return mixed content
                         license_data = bytes((i + offset) % 256 for i in range(size))
-                        
+
                     return struct.pack('<I', 0x00000000) + license_data
                 except struct.error:
                     # Fallback for malformed requests
                     return struct.pack('<I', 0x00000001)  # Error status
-                
+
             elif command_id == 0x07:  # HASP_WRITE
                 # Write memory response: success
                 return struct.pack('<I', 0x00000000)
-                
+
             elif command_id == 0x08:  # HASP_GET_RTC
                 # Get real-time clock
                 current_time = int(time.time())
                 return struct.pack('<II', 0x00000000, current_time)
-                
+
             elif command_id == 0x09:  # HASP_GET_INFO
                 # Get HASP info
                 info = b"HASP_EMU_v1.0\x00"
                 return struct.pack('<I', 0x00000000) + info
-                
+
             else:
                 # Unknown command - return generic success
                 self.logger.debug("Unknown HASP command: 0x%08X", command_id)
                 return struct.pack('<I', 0x00000000)
-                
+
         except struct.error:
             # Malformed packet
             return b"\xFF\xFF\xFF\xFF"  # Error response

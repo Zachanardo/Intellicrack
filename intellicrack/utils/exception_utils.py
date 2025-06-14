@@ -296,7 +296,7 @@ def load_ai_model(model_path: str) -> Optional[Any]:
         if not os.path.exists(model_path):
             logger.error("Model file not found: %s", model_path)
             return None
-            
+
         # Security validation
         file_size = os.path.getsize(model_path)
         max_size = 500 * 1024 * 1024  # 500MB max
@@ -318,14 +318,14 @@ def load_ai_model(model_path: str) -> Optional[Any]:
             try:
                 import pickle
                 logger.warning("Loading model with pickle - ensure file is from trusted source")
-                
+
                 # Additional validation for pickle files
                 if hasattr(os, 'stat'):
                     stat_info = os.stat(model_path)
                     # Check file permissions - warn if world-writable
                     if stat_info.st_mode & 0o002:
                         logger.warning("Model file is world-writable - potential security risk")
-                
+
                 with open(model_path, 'rb') as f:
                     model = pickle.load(f)  # Security: Models are from trusted project directory
                 logger.info("Pickle model loaded: %s", model_path)

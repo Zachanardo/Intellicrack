@@ -314,13 +314,13 @@ def check_suspicious_pe_sections(pe_obj) -> list:
         if hasattr(pe_obj, 'sections'):
             for section in pe_obj.sections:
                 section_name = section.Name.decode('utf-8', errors='ignore').strip('\x00')
-                
+
                 # Check if section is both writable and executable (security risk)
                 if (section.Characteristics & 0x20000000) and (section.Characteristics & 0x80000000):
                     suspicious_sections.append(section_name)
     except (AttributeError, ValueError) as e:
         logger.debug("Error checking PE sections: %s", e)
-        
+
     return suspicious_sections
 
 
@@ -338,15 +338,15 @@ def validate_binary_path(binary_path: str, logger_instance=None) -> bool:
         bool: True if binary exists, False otherwise
     """
     use_logger = logger_instance or logger
-    
+
     if not binary_path:
         use_logger.error("Binary path is empty")
         return False
-        
+
     if not os.path.exists(binary_path):
         use_logger.error("Binary not found: %s", binary_path)
         return False
-        
+
     return True
 
 

@@ -20,10 +20,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
+import hashlib
 import os
 import pickle
-import hashlib
-import hmac
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -124,25 +123,25 @@ class MLVulnerabilityPredictor:
         """
         if not os.path.exists(file_path):
             return False
-            
+
         # Check file size (reject suspiciously large files)
         file_size = os.path.getsize(file_path)
         max_size = 500 * 1024 * 1024  # 500MB max
         if file_size > max_size:
             self.logger.warning("Pickle file too large (%d bytes), rejecting for security", file_size)
             return False
-            
+
         # Optionally verify hash
         if expected_hash:
             sha256_hash = hashlib.sha256()
             with open(file_path, 'rb') as f:
                 for chunk in iter(lambda: f.read(4096), b""):
                     sha256_hash.update(chunk)
-            
+
             if sha256_hash.hexdigest() != expected_hash:
                 self.logger.error("Pickle file hash mismatch, potential tampering detected")
                 return False
-                
+
         return True
 
     def load_model(self, model_path: str) -> bool:
@@ -182,9 +181,9 @@ class MLVulnerabilityPredictor:
                 if not self._validate_pickle_file(model_path):
                     self.logger.error("Pickle file validation failed, refusing to load")
                     return False
-                    
+
                 self.logger.warning("Loading model with pickle - ensure file is from trusted source")
-                
+
                 try:
                     with open(model_path, 'rb') as f:
                         model_data = pickle.load(f)  # Security: Pickle files come from trusted model directory
@@ -226,20 +225,20 @@ class MLVulnerabilityPredictor:
             if not SKLEARN_AVAILABLE:
                 self.logger.error("Cannot create fallback model: scikit-learn not available")
                 return False
-                
+
             self.logger.info("Creating trained fallback vulnerability prediction model")
-            
+
             # Generate synthetic training data based on real binary characteristics
             X_train, y_train = self._generate_synthetic_training_data()
-            
+
             if len(X_train) == 0:
                 self.logger.error("Failed to generate training data for fallback model")
                 return False
-            
+
             # Initialize scaler and model
             self.scaler = StandardScaler()
             X_scaled = self.scaler.fit_transform(X_train)
-            
+
             # Create and train a RandomForest model optimized for binary analysis
             self.model = RandomForestClassifier(
                 n_estimators=150,           # More trees for better stability
@@ -252,10 +251,10 @@ class MLVulnerabilityPredictor:
                 n_jobs=-1,                  # Use all available cores
                 class_weight='balanced'     # Handle class imbalance
             )
-            
+
             # Train the model
             self.model.fit(X_scaled, y_train)
-            
+
             # Set feature names for interpretability
             self.feature_names = [
                 'file_size', 'entropy', 'byte_freq_0', 'byte_freq_1', 'byte_freq_2',
@@ -267,17 +266,17 @@ class MLVulnerabilityPredictor:
                 'section_2_size', 'section_3_exec', 'section_3_write', 'section_3_size',
                 'import_count', 'dangerous_imports', 'has_resources', 'is_signed', 'is_packed'
             ]
-            
+
             # Validate model performance on training data
             train_accuracy = self.model.score(X_scaled, y_train)
             self.logger.info("Fallback model created with training accuracy: %.3f", train_accuracy)
-            
+
             return True
-            
+
         except Exception as e:
             self.logger.error("Error creating fallback model: %s", e)
             return False
-    
+
     def _generate_synthetic_training_data(self) -> tuple:
         """
         Generate synthetic training data for the fallback model.
@@ -290,46 +289,46 @@ class MLVulnerabilityPredictor:
         """
         try:
             import numpy as np
-            
+
             # Number of synthetic samples
             n_samples = 2000
             n_features = 258  # File size, entropy, 256 byte frequencies + PE features
-            
+
             X_train = []
             y_train = []
-            
+
             # Generate vulnerable binary patterns (40% of dataset)
             vulnerable_samples = int(n_samples * 0.4)
             for _ in range(vulnerable_samples):
                 features = self._generate_vulnerable_binary_features()
                 X_train.append(features)
                 y_train.append(1)  # Vulnerable
-            
+
             # Generate benign binary patterns (60% of dataset)
             benign_samples = n_samples - vulnerable_samples
             for _ in range(benign_samples):
                 features = self._generate_benign_binary_features()
                 X_train.append(features)
                 y_train.append(0)  # Not vulnerable
-            
+
             return np.array(X_train), np.array(y_train)
-            
+
         except Exception as e:
             self.logger.error("Error generating synthetic training data: %s", e)
             return np.array([]), np.array([])
-    
+
     def _generate_vulnerable_binary_features(self) -> List[float]:
         """Generate feature vector for a vulnerable binary pattern."""
         import random
-        
+
         features = []
-        
+
         # File size (vulnerable binaries often smaller due to packing/obfuscation)
         features.append(random.uniform(50000, 800000))  # 50KB - 800KB
-        
+
         # Entropy (higher entropy suggests packing/encryption)
         features.append(random.uniform(6.5, 7.8))  # High entropy
-        
+
         # Byte frequency distribution (256 features)
         # Vulnerable binaries often have skewed byte distributions
         base_freq = 1.0 / 256
@@ -341,7 +340,7 @@ class MLVulnerabilityPredictor:
             else:
                 freq = base_freq * random.uniform(0.3, 1.2)
             features.append(freq)
-        
+
         # PE header features (vulnerable patterns)
         features.extend([
             random.randint(2, 6),          # NumberOfSections (fewer sections)
@@ -350,7 +349,7 @@ class MLVulnerabilityPredictor:
             random.uniform(5000, 50000),   # SizeOfInitializedData
             random.uniform(4096, 16384),   # AddressOfEntryPoint (suspicious entry points)
             1, 0, random.uniform(8192, 32768),     # Section 1: executable, not writable
-            0, 1, random.uniform(4096, 16384),     # Section 2: not exec, writable  
+            0, 1, random.uniform(4096, 16384),     # Section 2: not exec, writable
             0, 0, random.uniform(1024, 4096),      # Section 3: neither
             random.randint(5, 25),         # Import count (fewer imports)
             random.randint(3, 8),          # Dangerous import count (more dangerous APIs)
@@ -358,21 +357,21 @@ class MLVulnerabilityPredictor:
             0,                             # Is signed (unsigned more suspicious)
             random.choice([1, 1, 0])       # Is packed (more likely packed)
         ])
-        
+
         return features
-    
+
     def _generate_benign_binary_features(self) -> List[float]:
         """Generate feature vector for a benign binary pattern."""
         import random
-        
+
         features = []
-        
+
         # File size (benign binaries often larger with debug info)
         features.append(random.uniform(100000, 5000000))  # 100KB - 5MB
-        
+
         # Entropy (lower entropy for normal code)
         features.append(random.uniform(4.5, 6.5))  # Normal entropy
-        
+
         # Byte frequency distribution (256 features)
         # Benign binaries have more uniform byte distributions
         base_freq = 1.0 / 256
@@ -384,7 +383,7 @@ class MLVulnerabilityPredictor:
             else:
                 freq = base_freq * random.uniform(0.7, 1.3)
             features.append(freq)
-        
+
         # PE header features (benign patterns)
         features.extend([
             random.randint(4, 12),         # NumberOfSections (more sections)
@@ -401,7 +400,7 @@ class MLVulnerabilityPredictor:
             random.choice([1, 0]),         # Is signed (50% chance of being signed)
             0                              # Is packed (usually not packed)
         ])
-        
+
         return features
 
     def extract_features(self, binary_path: str) -> Optional[np.ndarray]:

@@ -24,10 +24,7 @@ import logging
 import platform
 from typing import Any, Dict, List, Optional
 
-from ...utils.import_checks import (
-    FRIDA_AVAILABLE, frida,
-    WINREG_AVAILABLE, winreg
-)
+from ...utils.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
 
 class HardwareDongleEmulator:

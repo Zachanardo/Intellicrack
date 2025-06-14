@@ -5,7 +5,7 @@ This module consolidates PE parsing patterns to reduce code duplication.
 """
 
 import logging
-from typing import Dict, List, Set
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +21,10 @@ def analyze_pe_imports(pe, target_apis: Dict[str, List[str]]) -> Dict[str, List[
         Dictionary mapping categories to detected APIs
     """
     detected_apis = {category: [] for category in target_apis.keys()}
-    
+
     if not hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
         return detected_apis
-        
+
     for entry in pe.DIRECTORY_ENTRY_IMPORT:
         for imp in entry.imports:
             if not imp.name:
@@ -36,7 +36,7 @@ def analyze_pe_imports(pe, target_apis: Dict[str, List[str]]) -> Dict[str, List[
             for category, apis in target_apis.items():
                 if any(api.lower() in func_name.lower() for api in apis):
                     detected_apis[category].append(func_name)
-                    
+
     return detected_apis
 
 def get_pe_sections_info(pe) -> List[Dict]:
@@ -50,7 +50,7 @@ def get_pe_sections_info(pe) -> List[Dict]:
         List of section information dictionaries
     """
     sections = []
-    
+
     for section in pe.sections:
         section_info = {
             'name': section.Name.decode('utf-8', errors='ignore').rstrip('\x00'),
@@ -60,5 +60,5 @@ def get_pe_sections_info(pe) -> List[Dict]:
             'characteristics': section.Characteristics
         }
         sections.append(section_info)
-        
+
     return sections

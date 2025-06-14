@@ -6,13 +6,12 @@ This module provides common subprocess execution patterns.
 
 import logging
 import subprocess
-from typing import Tuple, Optional, List, Union
-
+from typing import List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
 
-def run_subprocess(cmd: Union[str, List[str]], 
+def run_subprocess(cmd: Union[str, List[str]],
                   timeout: Optional[int] = None,
                   capture_output: bool = True,
                   text: bool = True,
@@ -36,7 +35,7 @@ def run_subprocess(cmd: Union[str, List[str]],
         # Convert string command to list if needed
         if isinstance(cmd, str):
             cmd = cmd.split()
-            
+
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE if capture_output else None,
@@ -45,22 +44,22 @@ def run_subprocess(cmd: Union[str, List[str]],
             cwd=cwd,
             env=env
         )
-        
+
         try:
             stdout, stderr = process.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
             process.kill()
             stdout, stderr = process.communicate()
             logger.warning("Process timed out after %s seconds", timeout)
-            
+
         return process.returncode, stdout or "", stderr or ""
-        
+
     except Exception as e:
         logger.error("Error running subprocess: %s", e)
         return -1, "", str(e)
 
 
-def run_subprocess_check(cmd: Union[str, List[str]], 
+def run_subprocess_check(cmd: Union[str, List[str]],
                         timeout: int = 10,
                         capture_output: bool = True,
                         text: bool = True,
@@ -89,8 +88,8 @@ def run_subprocess_check(cmd: Union[str, List[str]],
             check=check
         )
         return result
-        
-    except subprocess.TimeoutExpired as e:
+
+    except subprocess.TimeoutExpired:
         logger.warning("Command timed out after %s seconds: %s", timeout, cmd)
         raise
     except subprocess.CalledProcessError as e:

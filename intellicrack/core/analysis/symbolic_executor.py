@@ -119,7 +119,7 @@ class SymbolicExecutionEngine:
 
             # Analyze results with enhanced vulnerability detection
             vulnerabilities = []
-            
+
             # Use enhanced vulnerability analysis
             enhanced_vulns = self._analyze_vulnerable_paths(simgr, vulnerability_types)
             vulnerabilities.extend(enhanced_vulns)
@@ -290,15 +290,26 @@ class SymbolicExecutionEngine:
         """
         try:
             self.logger.debug("Checking for buffer overflow at 0x%x", state.addr)
-            
+
             # Check for memory violations
             if hasattr(state, 'memory'):
                 try:
                     # Look for writes to invalid memory regions
-                    memory_plugins = state.memory.mem._memory_backer
-                    if hasattr(memory_plugins, '_memory_objects_by_region'):
+                    if hasattr(state.memory.mem, 'get_memory_backer'):
+                        memory_plugins = state.memory.mem.get_memory_backer()
+                    else:
+                        memory_plugins = getattr(state.memory.mem, '_memory_backer', None)
+                    
+                    if memory_plugins and hasattr(memory_plugins, 'get_memory_objects_by_region'):
+                        memory_objects_by_region = memory_plugins.get_memory_objects_by_region()
+                    elif memory_plugins:
+                        memory_objects_by_region = getattr(memory_plugins, '_memory_objects_by_region', [])
+                    else:
+                        memory_objects_by_region = []
+                        
+                    if memory_objects_by_region:
                         # Check if we're writing outside allocated regions
-                        for region in memory_plugins._memory_objects_by_region:
+                        for region in memory_objects_by_region:
                             if hasattr(region, 'violations') and region.violations:
                                 self.logger.info("Memory violation detected at 0x%x", state.addr)
                                 return True
@@ -312,21 +323,21 @@ class SymbolicExecutionEngine:
                     sp_name = 'rsp' if state.arch.bits == 64 else 'esp'
                     if hasattr(state.regs, sp_name):
                         current_sp = getattr(state.regs, sp_name)
-                        
+
                         # Check if stack pointer is symbolic and unconstrained
                         if current_sp.symbolic and len(current_sp.variables) > 0:
                             # Check if we can make SP point to arbitrary locations
                             try:
                                 min_sp = state.solver.min(current_sp)
                                 max_sp = state.solver.max(current_sp)
-                                
+
                                 # If SP can vary widely, it might indicate stack corruption
                                 if max_sp - min_sp > 0x10000:  # 64KB range
                                     self.logger.info("Potential stack buffer overflow: SP can vary by %d bytes", max_sp - min_sp)
                                     return True
                             except (RuntimeError, ValueError) as e:
                                 self.logger.debug("Failed to analyze stack pointer variation: %s", e)
-                                
+
                 except (AttributeError, TypeError) as e:
                     self.logger.debug("Failed to analyze stack buffer overflow: %s", e)
 
@@ -343,7 +354,7 @@ class SymbolicExecutionEngine:
                                         target = insn.operands[0].value.imm
                                         if target in project.kb.functions:
                                             func = project.kb.functions[target]
-                                            if func.name and any(dangerous in func.name.lower() for dangerous in 
+                                            if func.name and any(dangerous in func.name.lower() for dangerous in
                                                                ['strcpy', 'strcat', 'gets', 'sprintf', 'scanf']):
                                                 # Check if arguments are symbolic
                                                 for reg in ['rdi', 'rsi', 'rdx'] if state.arch.bits == 64 else ['eax', 'ebx', 'ecx']:
@@ -364,7 +375,7 @@ class SymbolicExecutionEngine:
                 try:
                     # Look for heap metadata corruption indicators
                     heap_chunks = getattr(state.heap, '_chunks', {})
-                    for chunk_addr, chunk_info in heap_chunks.items():
+                    for chunk_info in heap_chunks.values():
                         if hasattr(chunk_info, 'size') and hasattr(chunk_info, 'data'):
                             # Check if chunk size is symbolic and can be made very large
                             if chunk_info.size.symbolic:
@@ -379,7 +390,7 @@ class SymbolicExecutionEngine:
                     self.logger.debug("Failed to analyze heap buffer overflow: %s", e)
 
             return False
-            
+
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.warning("Error during buffer overflow check: %s", e, exc_info=False)
             return False
@@ -396,7 +407,7 @@ class SymbolicExecutionEngine:
             list: Detected vulnerabilities with enhanced information
         """
         vulnerabilities = []
-        
+
         try:
             # Enhanced buffer overflow detection
             if "buffer_overflow" in vulnerability_types:
@@ -415,7 +426,7 @@ class SymbolicExecutionEngine:
 
                 # Check active and deadended states for potential overflows
                 for state in simgr.active + simgr.deadended:
-                    if self._check_buffer_overflow(state, simgr._project):
+                    if self._check_buffer_overflow(state, getattr(simgr, 'project', None) or getattr(simgr, '_project', None)):
                         vuln = {
                             "type": "buffer_overflow",
                             "address": hex(state.addr),
@@ -427,7 +438,7 @@ class SymbolicExecutionEngine:
                         vulnerabilities.append(vuln)
 
             return vulnerabilities
-            
+
         except Exception as e:
             self.logger.error("Error analyzing vulnerable paths: %s", e)
             return vulnerabilities
@@ -456,51 +467,51 @@ class SymbolicExecutionEngine:
         self.logger.info("Target vulnerability types: %s", vulnerability_types)
 
         vulnerabilities = []
-        
+
         try:
             # Read and analyze the binary file
             with open(self.binary_path, 'rb') as f:
                 binary_data = f.read()
-            
+
             # Extract strings for analysis
             strings = self._extract_binary_strings(binary_data)
-            
+
             # Perform disassembly if possible
             disasm_info = self._perform_basic_disassembly(binary_data)
-            
+
             # Analyze each vulnerability type
             if "buffer_overflow" in vulnerability_types:
                 vulns = self._detect_buffer_overflow_patterns(binary_data, strings, disasm_info)
                 vulnerabilities.extend(vulns)
-                
+
             if "format_string" in vulnerability_types:
                 vulns = self._detect_format_string_vulns(binary_data, strings, disasm_info)
                 vulnerabilities.extend(vulns)
-                
+
             if "integer_overflow" in vulnerability_types:
                 vulns = self._detect_integer_overflow_patterns(binary_data, strings, disasm_info)
                 vulnerabilities.extend(vulns)
-                
+
             if "command_injection" in vulnerability_types:
                 vulns = self._detect_command_injection_patterns(binary_data, strings, disasm_info)
                 vulnerabilities.extend(vulns)
-                
+
             if "use_after_free" in vulnerability_types:
                 vulns = self._detect_use_after_free_patterns(binary_data, strings, disasm_info)
                 vulnerabilities.extend(vulns)
-                
+
             if "path_traversal" in vulnerability_types:
                 vulns = self._detect_path_traversal_patterns(binary_data, strings, disasm_info)
                 vulnerabilities.extend(vulns)
-                
+
             if "sql_injection" in vulnerability_types:
                 vulns = self._detect_sql_injection_patterns(binary_data, strings, disasm_info)
                 vulnerabilities.extend(vulns)
-                
+
             if "memory_leak" in vulnerability_types:
                 vulns = self._detect_memory_leak_patterns(binary_data, strings, disasm_info)
                 vulnerabilities.extend(vulns)
-                
+
             if "null_pointer_deref" in vulnerability_types:
                 vulns = self._detect_null_pointer_patterns(binary_data, strings, disasm_info)
                 vulnerabilities.extend(vulns)
@@ -518,7 +529,7 @@ class SymbolicExecutionEngine:
     def _extract_binary_strings(self, binary_data: bytes) -> List[Dict[str, Any]]:
         """Extract strings from binary data for vulnerability analysis."""
         strings = []
-        
+
         # ASCII strings
         import re
         ascii_pattern = re.compile(b'[ -~]{4,}')
@@ -533,7 +544,7 @@ class SymbolicExecutionEngine:
                 })
             except UnicodeDecodeError:
                 pass
-        
+
         # UTF-16 strings (Windows)
         utf16_pattern = re.compile(rb'(?:[A-Za-z0-9!@#$%^&*()_+={}\\[\]|\\:";\'<>?,./ ][\x00]){4,}')
         for match in utf16_pattern.finditer(binary_data):
@@ -548,7 +559,7 @@ class SymbolicExecutionEngine:
                     })
             except UnicodeDecodeError:
                 pass
-        
+
         return strings
 
     def _perform_basic_disassembly(self, binary_data: bytes) -> Dict[str, Any]:
@@ -560,12 +571,12 @@ class SymbolicExecutionEngine:
             'system_calls': [],
             'dangerous_functions': []
         }
-        
+
         try:
             # Try to use capstone if available
             try:
                 import capstone
-                
+
                 # Detect architecture from binary header
                 if binary_data.startswith(b'MZ'):  # PE file
                     cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
@@ -576,12 +587,12 @@ class SymbolicExecutionEngine:
                         cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
                 else:
                     cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
-                
+
                 cs.detail = True
-                
+
                 # Find code sections and disassemble
                 code_sections = self._find_code_sections(binary_data)
-                
+
                 for section_offset, section_data in code_sections:
                     for instruction in cs.disasm(section_data[:min(4096, len(section_data))], section_offset):
                         inst_info = {
@@ -591,38 +602,38 @@ class SymbolicExecutionEngine:
                             'bytes': instruction.bytes
                         }
                         disasm_info['instructions'].append(inst_info)
-                        
+
                         # Track function calls
                         if instruction.mnemonic in ['call', 'jmp']:
                             disasm_info['function_calls'].append(inst_info)
-                            
+
                             # Check for dangerous function calls
-                            if any(func in instruction.op_str.lower() for func in 
+                            if any(func in instruction.op_str.lower() for func in
                                   ['strcpy', 'sprintf', 'gets', 'scanf', 'strcat', 'memcpy']):
                                 disasm_info['dangerous_functions'].append(inst_info)
-                        
+
                         # Track jumps and branches
                         elif instruction.mnemonic.startswith('j'):
                             disasm_info['jumps'].append(inst_info)
-                        
+
                         # Track system calls
                         elif instruction.mnemonic in ['int', 'syscall', 'sysenter']:
                             disasm_info['system_calls'].append(inst_info)
-                            
+
             except ImportError:
                 self.logger.warning("Capstone not available - using basic pattern analysis")
                 disasm_info = self._basic_pattern_analysis(binary_data)
-                
+
         except Exception as e:
             self.logger.warning("Disassembly failed: %s", e)
             disasm_info = self._basic_pattern_analysis(binary_data)
-            
+
         return disasm_info
 
     def _find_code_sections(self, binary_data: bytes) -> List[tuple]:
         """Find executable code sections in the binary."""
         code_sections = []
-        
+
         try:
             if binary_data.startswith(b'MZ'):  # PE file
                 # Basic PE parsing
@@ -634,19 +645,19 @@ class SymbolicExecutionEngine:
                         if pe_sig == b'PE\x00\x00':
                             # Found PE header - assume .text section starts at 0x1000
                             code_sections.append((0x1000, binary_data[0x1000:0x5000]))
-                            
+
             elif binary_data.startswith(b'\x7fELF'):  # ELF file
                 # Basic ELF parsing - assume .text section
                 code_sections.append((0x1000, binary_data[0x1000:0x5000]))
-                
+
             else:
                 # Unknown format - assume first 4KB contains code
                 code_sections.append((0, binary_data[:4096]))
-                
+
         except Exception:
             # Fallback - analyze first 4KB
             code_sections.append((0, binary_data[:4096]))
-            
+
         return code_sections
 
     def _basic_pattern_analysis(self, binary_data: bytes) -> Dict[str, Any]:
@@ -658,7 +669,7 @@ class SymbolicExecutionEngine:
             'system_calls': [],
             'dangerous_functions': []
         }
-        
+
         # Look for common x86 instruction patterns
         dangerous_patterns = [
             b'\xff\x25',  # jmp [mem] - indirect jump
@@ -666,7 +677,7 @@ class SymbolicExecutionEngine:
             b'\xcd\x80',  # int 0x80 - Linux system call
             b'\x0f\x05',  # syscall - 64-bit system call
         ]
-        
+
         for pattern in dangerous_patterns:
             offset = 0
             while True:
@@ -679,19 +690,19 @@ class SymbolicExecutionEngine:
                     'description': 'Potential system call'
                 })
                 offset += len(pattern)
-                
+
         return patterns
 
     def _detect_buffer_overflow_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential buffer overflow vulnerabilities."""
         vulnerabilities = []
-        
+
         # Check for dangerous function usage in strings
         dangerous_functions = [
-            'strcpy', 'strcat', 'sprintf', 'gets', 'scanf', 
+            'strcpy', 'strcat', 'sprintf', 'gets', 'scanf',
             'memcpy', 'memmove', 'strncpy', 'strncat'
         ]
-        
+
         for string in strings:
             for func in dangerous_functions:
                 if func in string['value'].lower():
@@ -705,7 +716,7 @@ class SymbolicExecutionEngine:
                         'detection_method': 'string_analysis'
                     }
                     vulnerabilities.append(vuln)
-        
+
         # Check disassembly for dangerous function calls
         for func_call in disasm_info.get('dangerous_functions', []):
             vuln = {
@@ -717,7 +728,7 @@ class SymbolicExecutionEngine:
                 'detection_method': 'disassembly_analysis'
             }
             vulnerabilities.append(vuln)
-        
+
         # Look for large stack allocations
         for instruction in disasm_info.get('instructions', []):
             if instruction['mnemonic'] == 'sub' and 'esp' in instruction['op_str']:
@@ -736,16 +747,16 @@ class SymbolicExecutionEngine:
                             'detection_method': 'stack_analysis'
                         }
                         vulnerabilities.append(vuln)
-        
+
         return vulnerabilities
 
     def _detect_format_string_vulns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential format string vulnerabilities."""
         vulnerabilities = []
-        
+
         # Look for format string patterns
         format_patterns = ['%s', '%d', '%x', '%n', '%p', '%%']
-        
+
         for string in strings:
             format_count = sum(string['value'].count(pattern) for pattern in format_patterns)
             if format_count > 0:
@@ -759,7 +770,7 @@ class SymbolicExecutionEngine:
                 else:
                     severity = 'medium'
                     desc = f'Format string with {format_count} specifiers'
-                    
+
                 vuln = {
                     'type': 'format_string',
                     'severity': severity,
@@ -770,16 +781,16 @@ class SymbolicExecutionEngine:
                     'detection_method': 'string_analysis'
                 }
                 vulnerabilities.append(vuln)
-        
+
         return vulnerabilities
 
     def _detect_integer_overflow_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential integer overflow vulnerabilities."""
         vulnerabilities = []
-        
+
         # Look for arithmetic operations without bounds checking
         arithmetic_ops = ['add', 'mul', 'imul', 'shl', 'sal']
-        
+
         for instruction in disasm_info.get('instructions', []):
             if instruction['mnemonic'] in arithmetic_ops:
                 # Look for operations on user-controlled data
@@ -793,7 +804,7 @@ class SymbolicExecutionEngine:
                         'detection_method': 'instruction_analysis'
                     }
                     vulnerabilities.append(vuln)
-        
+
         # Check for size calculations in strings
         size_keywords = ['size', 'length', 'count', 'num', 'malloc', 'calloc']
         for string in strings:
@@ -808,17 +819,17 @@ class SymbolicExecutionEngine:
                         'detection_method': 'string_analysis'
                     }
                     vulnerabilities.append(vuln)
-        
+
         return vulnerabilities
 
     def _detect_command_injection_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential command injection vulnerabilities."""
         vulnerabilities = []
-        
+
         # Look for system command execution
         dangerous_functions = ['system', 'exec', 'popen', 'CreateProcess', 'ShellExecute']
         command_chars = [';', '|', '&', '`', '$', '>', '<']
-        
+
         for string in strings:
             # Check for dangerous function calls
             for func in dangerous_functions:
@@ -833,7 +844,7 @@ class SymbolicExecutionEngine:
                         'detection_method': 'string_analysis'
                     }
                     vulnerabilities.append(vuln)
-            
+
             # Check for command injection characters
             injection_chars = [char for char in command_chars if char in string['value']]
             if injection_chars:
@@ -847,16 +858,16 @@ class SymbolicExecutionEngine:
                     'detection_method': 'pattern_analysis'
                 }
                 vulnerabilities.append(vuln)
-        
+
         return vulnerabilities
 
     def _detect_use_after_free_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential use-after-free vulnerabilities."""
         vulnerabilities = []
-        
+
         # Look for malloc/free patterns
         memory_functions = ['malloc', 'free', 'calloc', 'realloc', 'new', 'delete']
-        
+
         for string in strings:
             for func in memory_functions:
                 if func in string['value'].lower():
@@ -870,16 +881,16 @@ class SymbolicExecutionEngine:
                         'detection_method': 'string_analysis'
                     }
                     vulnerabilities.append(vuln)
-        
+
         return vulnerabilities
 
     def _detect_path_traversal_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential path traversal vulnerabilities."""
         vulnerabilities = []
-        
+
         # Look for path traversal patterns
         traversal_patterns = ['../', '..\\', '%2e%2e%2f', '%2e%2e%5c']
-        
+
         for string in strings:
             for pattern in traversal_patterns:
                 if pattern in string['value'].lower():
@@ -893,21 +904,21 @@ class SymbolicExecutionEngine:
                         'detection_method': 'pattern_analysis'
                     }
                     vulnerabilities.append(vuln)
-        
+
         return vulnerabilities
 
     def _detect_sql_injection_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential SQL injection vulnerabilities."""
         vulnerabilities = []
-        
+
         # Look for SQL keywords and injection patterns
         sql_keywords = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP', 'UNION', 'OR', 'AND']
         injection_patterns = ["'", '"', '--', '/*', '*/', 'UNION SELECT', "' OR '1'='1"]
-        
+
         for string in strings:
             sql_count = sum(1 for keyword in sql_keywords if keyword in string['value'].upper())
             injection_count = sum(1 for pattern in injection_patterns if pattern in string['value'])
-            
+
             if sql_count > 0 or injection_count > 0:
                 severity = 'high' if injection_count > 0 else 'medium'
                 vuln = {
@@ -921,16 +932,16 @@ class SymbolicExecutionEngine:
                     'detection_method': 'pattern_analysis'
                 }
                 vulnerabilities.append(vuln)
-        
+
         return vulnerabilities
 
     def _detect_memory_leak_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential memory leak vulnerabilities."""
         vulnerabilities = []
-        
+
         # Look for memory allocation without corresponding free
         alloc_functions = ['malloc', 'calloc', 'realloc', 'new', 'LocalAlloc', 'GlobalAlloc']
-        
+
         for string in strings:
             for func in alloc_functions:
                 if func in string['value'].lower():
@@ -944,13 +955,13 @@ class SymbolicExecutionEngine:
                         'detection_method': 'static_analysis'
                     }
                     vulnerabilities.append(vuln)
-        
+
         return vulnerabilities
 
     def _detect_null_pointer_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential null pointer dereference vulnerabilities."""
         vulnerabilities = []
-        
+
         # Look for null checks and pointer operations
         for instruction in disasm_info.get('instructions', []):
             # Look for comparisons with NULL (0)
@@ -964,7 +975,7 @@ class SymbolicExecutionEngine:
                     'detection_method': 'instruction_analysis'
                 }
                 vulnerabilities.append(vuln)
-        
+
         return vulnerabilities
 
     def _deduplicate_and_rank_vulnerabilities(self, vulnerabilities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -972,17 +983,17 @@ class SymbolicExecutionEngine:
         # Remove duplicates based on type and address
         seen = set()
         unique_vulns = []
-        
+
         for vuln in vulnerabilities:
             key = (vuln['type'], vuln.get('address', ''))
             if key not in seen:
                 seen.add(key)
                 unique_vulns.append(vuln)
-        
+
         # Sort by severity
         severity_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
         unique_vulns.sort(key=lambda v: severity_order.get(v.get('severity', 'low'), 3))
-        
+
         return unique_vulns
 
 

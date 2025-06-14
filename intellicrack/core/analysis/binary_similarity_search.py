@@ -273,31 +273,31 @@ class BinarySimilaritySearch:
         try:
             # Advanced similarity components
             similarity_scores = {}
-            
+
             # 1. Structural Similarity Analysis
             similarity_scores['structural'] = self._calculate_structural_similarity(features1, features2)
-            
-            # 2. Content Similarity Analysis  
+
+            # 2. Content Similarity Analysis
             similarity_scores['content'] = self._calculate_content_similarity(features1, features2)
-            
+
             # 3. Statistical Similarity Analysis
             similarity_scores['statistical'] = self._calculate_statistical_similarity(features1, features2)
-            
+
             # 4. Advanced Algorithm-based Similarity
             similarity_scores['advanced'] = self._calculate_advanced_similarity(features1, features2)
-            
+
             # 5. Fuzzy Hash Similarity (if available)
             similarity_scores['fuzzy'] = self._calculate_fuzzy_hash_similarity(features1, features2)
-            
+
             # 6. Control Flow Similarity
             similarity_scores['control_flow'] = self._calculate_control_flow_similarity(features1, features2)
-            
+
             # 7. Opcode Sequence Similarity
             similarity_scores['opcode'] = self._calculate_opcode_similarity(features1, features2)
 
             # Calculate weighted overall similarity with adaptive weights
             weights = self._calculate_adaptive_weights(features1, features2)
-            
+
             weighted_similarity = sum(
                 similarity_scores[component] * weights.get(component, 0.1)
                 for component in similarity_scores
@@ -446,24 +446,24 @@ class BinarySimilaritySearch:
                 features1.get("sections", []),
                 features2.get("sections", [])
             )
-            
+
             # Import/Export API similarity with weighted comparison
             import_similarity = self._calculate_weighted_api_similarity(
                 features1.get("imports", []),
                 features2.get("imports", [])
             )
-            
+
             export_similarity = self._calculate_list_similarity(
                 features1.get("exports", []),
                 features2.get("exports", [])
             )
-            
+
             # PE header similarity
             header_similarity = self._calculate_pe_header_similarity(features1, features2)
-            
-            return (section_similarity * 0.4 + import_similarity * 0.3 + 
+
+            return (section_similarity * 0.4 + import_similarity * 0.3 +
                    export_similarity * 0.2 + header_similarity * 0.1)
-                   
+
         except Exception as e:
             self.logger.error("Error in structural similarity: %s", e)
             return 0.0
@@ -476,18 +476,18 @@ class BinarySimilaritySearch:
                 features1.get("strings", []),
                 features2.get("strings", [])
             )
-            
+
             # N-gram analysis for content patterns
             ngram_similarity = self._calculate_ngram_similarity(
                 features1.get("strings", []),
                 features2.get("strings", [])
             )
-            
+
             # Entropy-based content analysis
             entropy_pattern_similarity = self._calculate_entropy_pattern_similarity(features1, features2)
-            
+
             return (string_similarity * 0.5 + ngram_similarity * 0.3 + entropy_pattern_similarity * 0.2)
-            
+
         except Exception as e:
             self.logger.error("Error in content similarity: %s", e)
             return 0.0
@@ -500,21 +500,21 @@ class BinarySimilaritySearch:
                 features1.get("file_size", 0),
                 features2.get("file_size", 0)
             )
-            
+
             # Entropy similarity
             entropy_similarity = self._calculate_entropy_similarity(
                 features1.get("entropy", 0.0),
                 features2.get("entropy", 0.0)
             )
-            
+
             # Section count and distribution similarity
             section_distribution_similarity = self._calculate_section_distribution_similarity(
                 features1.get("sections", []),
                 features2.get("sections", [])
             )
-            
+
             return (size_similarity * 0.4 + entropy_similarity * 0.3 + section_distribution_similarity * 0.3)
-            
+
         except Exception as e:
             self.logger.error("Error in statistical similarity: %s", e)
             return 0.0
@@ -527,18 +527,18 @@ class BinarySimilaritySearch:
                 features1.get("imports", []) + features1.get("exports", []),
                 features2.get("imports", []) + features2.get("exports", [])
             )
-            
+
             # Edit distance for string sequences
             edit_distance_similarity = self._calculate_edit_distance_similarity(
                 features1.get("strings", []),
                 features2.get("strings", [])
             )
-            
+
             # Cosine similarity for feature vectors
             cosine_similarity = self._calculate_cosine_similarity(features1, features2)
-            
+
             return (lsh_similarity * 0.4 + edit_distance_similarity * 0.3 + cosine_similarity * 0.3)
-            
+
         except Exception as e:
             self.logger.error("Error in advanced similarity: %s", e)
             return 0.0
@@ -549,14 +549,14 @@ class BinarySimilaritySearch:
             # Generate simple rolling hash for each binary's content
             hash1 = self._generate_rolling_hash(features1.get("strings", []))
             hash2 = self._generate_rolling_hash(features2.get("strings", []))
-            
+
             # Calculate hash similarity
             if not hash1 or not hash2:
                 return 0.0
-                
+
             # Use Hamming distance for hash comparison
             return self._calculate_hash_similarity(hash1, hash2)
-            
+
         except Exception as e:
             self.logger.error("Error in fuzzy hash similarity: %s", e)
             return 0.0
@@ -567,21 +567,21 @@ class BinarySimilaritySearch:
             # Analyze section characteristics for control flow indicators
             sections1 = features1.get("sections", [])
             sections2 = features2.get("sections", [])
-            
+
             # Look for executable sections and their entropy patterns
             exec_entropy1 = [s.get("entropy", 0) for s in sections1 if ".text" in s.get("name", "")]
             exec_entropy2 = [s.get("entropy", 0) for s in sections2 if ".text" in s.get("name", "")]
-            
+
             if not exec_entropy1 or not exec_entropy2:
                 return 0.0
-                
+
             # Calculate entropy pattern similarity for code sections
             avg_entropy1 = sum(exec_entropy1) / len(exec_entropy1)
             avg_entropy2 = sum(exec_entropy2) / len(exec_entropy2)
-            
+
             entropy_diff = abs(avg_entropy1 - avg_entropy2)
             return max(0.0, 1.0 - entropy_diff / 8.0)
-            
+
         except Exception as e:
             self.logger.error("Error in control flow similarity: %s", e)
             return 0.0
@@ -592,26 +592,26 @@ class BinarySimilaritySearch:
             # Use import patterns as proxy for opcode patterns
             imports1 = features1.get("imports", [])
             imports2 = features2.get("imports", [])
-            
+
             # Group imports by DLL for pattern analysis
             dll_patterns1 = {}
             dll_patterns2 = {}
-            
+
             for imp in imports1:
                 if ":" in imp:
                     dll, func = imp.split(":", 1)
                     dll_patterns1.setdefault(dll, []).append(func)
-                    
+
             for imp in imports2:
                 if ":" in imp:
                     dll, func = imp.split(":", 1)
                     dll_patterns2.setdefault(dll, []).append(func)
-            
+
             # Calculate pattern similarity
             common_dlls = set(dll_patterns1.keys()).intersection(set(dll_patterns2.keys()))
             if not common_dlls:
                 return 0.0
-                
+
             pattern_similarities = []
             for dll in common_dlls:
                 funcs1 = set(dll_patterns1[dll])
@@ -619,9 +619,9 @@ class BinarySimilaritySearch:
                 if funcs1 and funcs2:
                     similarity = len(funcs1.intersection(funcs2)) / len(funcs1.union(funcs2))
                     pattern_similarities.append(similarity)
-            
+
             return sum(pattern_similarities) / len(pattern_similarities) if pattern_similarities else 0.0
-            
+
         except Exception as e:
             self.logger.error("Error in opcode similarity: %s", e)
             return 0.0
@@ -637,25 +637,25 @@ class BinarySimilaritySearch:
             'control_flow': 0.10,
             'opcode': 0.05
         }
-        
+
         try:
             # Adjust weights based on feature richness
             if len(features1.get("imports", [])) > 50 and len(features2.get("imports", [])) > 50:
                 weights['structural'] += 0.1
                 weights['opcode'] += 0.05
-                
+
             if len(features1.get("strings", [])) > 30 and len(features2.get("strings", [])) > 30:
                 weights['content'] += 0.1
                 weights['fuzzy'] += 0.05
-                
+
             # Normalize weights to sum to 1.0
             total_weight = sum(weights.values())
             if total_weight > 0:
                 weights = {k: v / total_weight for k, v in weights.items()}
-                
+
         except Exception as e:
             self.logger.error("Error calculating adaptive weights: %s", e)
-            
+
         return weights
 
     def _calculate_weighted_api_similarity(self, imports1: List[str], imports2: List[str]) -> float:
@@ -663,7 +663,7 @@ class BinarySimilaritySearch:
         try:
             if not imports1 or not imports2:
                 return 0.0
-                
+
             # Weight APIs by criticality (security, crypto, system calls)
             critical_apis = {
                 'kernel32.dll': 1.5,
@@ -674,24 +674,24 @@ class BinarySimilaritySearch:
                 'user32.dll': 1.0,
                 'shell32.dll': 1.1
             }
-            
+
             weighted_score = 0.0
             total_weight = 0.0
-            
+
             set1 = set(imports1)
             set2 = set(imports2)
             common_imports = set1.intersection(set2)
-            
+
             for imp in set1.union(set2):
                 dll = imp.split(':')[0] if ':' in imp else 'unknown'
                 weight = critical_apis.get(dll, 1.0)
                 total_weight += weight
-                
+
                 if imp in common_imports:
                     weighted_score += weight
-                    
+
             return weighted_score / total_weight if total_weight > 0 else 0.0
-            
+
         except Exception as e:
             self.logger.error("Error in weighted API similarity: %s", e)
             return 0.0
@@ -700,13 +700,13 @@ class BinarySimilaritySearch:
         """Calculate PE header metadata similarity."""
         try:
             similarity_scores = []
-            
+
             # Machine type similarity
             machine1 = features1.get("machine", 0)
             machine2 = features2.get("machine", 0)
             if machine1 and machine2:
                 similarity_scores.append(1.0 if machine1 == machine2 else 0.0)
-                
+
             # Characteristics similarity
             char1 = features1.get("characteristics", 0)
             char2 = features2.get("characteristics", 0)
@@ -717,9 +717,9 @@ class BinarySimilaritySearch:
                 max_bits = max(char1.bit_length(), char2.bit_length())
                 char_similarity = 1.0 - (bit_diff / max_bits) if max_bits > 0 else 1.0
                 similarity_scores.append(char_similarity)
-                
+
             return sum(similarity_scores) / len(similarity_scores) if similarity_scores else 0.0
-            
+
         except Exception as e:
             self.logger.error("Error in PE header similarity: %s", e)
             return 0.0
@@ -729,28 +729,28 @@ class BinarySimilaritySearch:
         try:
             if not strings1 or not strings2:
                 return 0.0
-                
+
             # Use simplified Levenshtein-based fuzzy matching
             matches = 0
             total_comparisons = 0
-            
+
             # Sample strings to avoid O(n²) complexity
             sample_size = min(20, len(strings1), len(strings2))
             sampled1 = strings1[:sample_size]
             sampled2 = strings2[:sample_size]
-            
+
             for s1 in sampled1:
                 best_similarity = 0.0
                 for s2 in sampled2:
                     similarity = self._calculate_string_similarity(s1, s2)
                     best_similarity = max(best_similarity, similarity)
                     total_comparisons += 1
-                    
+
                 if best_similarity > 0.7:  # Threshold for fuzzy match
                     matches += 1
-                    
+
             return matches / len(sampled1) if sampled1 else 0.0
-            
+
         except Exception as e:
             self.logger.error("Error in fuzzy string similarity: %s", e)
             return 0.0
@@ -760,23 +760,23 @@ class BinarySimilaritySearch:
         try:
             if not s1 or not s2:
                 return 0.0
-                
+
             # Simplified edit distance calculation
             if s1 == s2:
                 return 1.0
-                
+
             # Calculate character-level similarity
             set1 = set(s1.lower())
             set2 = set(s2.lower())
-            
+
             if not set1 or not set2:
                 return 0.0
-                
+
             intersection = len(set1.intersection(set2))
             union = len(set1.union(set2))
-            
+
             return intersection / union
-            
+
         except Exception as e:
             self.logger.error("Error in string similarity calculation: %s", e)
             return 0.0
@@ -786,7 +786,7 @@ class BinarySimilaritySearch:
         try:
             if not strings1 or not strings2:
                 return 0.0
-                
+
             # Generate character n-grams (trigrams)
             def generate_ngrams(text_list: List[str], n: int = 3) -> set:
                 ngrams = set()
@@ -795,18 +795,18 @@ class BinarySimilaritySearch:
                     for i in range(len(text) - n + 1):
                         ngrams.add(text[i:i+n])
                 return ngrams
-                
+
             ngrams1 = generate_ngrams(strings1)
             ngrams2 = generate_ngrams(strings2)
-            
+
             if not ngrams1 or not ngrams2:
                 return 0.0
-                
+
             intersection = len(ngrams1.intersection(ngrams2))
             union = len(ngrams1.union(ngrams2))
-            
+
             return intersection / union
-            
+
         except Exception as e:
             self.logger.error("Error in n-gram similarity: %s", e)
             return 0.0
@@ -816,14 +816,14 @@ class BinarySimilaritySearch:
         try:
             sections1 = features1.get("sections", [])
             sections2 = features2.get("sections", [])
-            
+
             if not sections1 or not sections2:
                 return 0.0
-                
+
             # Calculate entropy distribution
             entropies1 = [s.get("entropy", 0) for s in sections1]
             entropies2 = [s.get("entropy", 0) for s in sections2]
-            
+
             # Create entropy buckets for distribution comparison
             def create_entropy_distribution(entropies):
                 buckets = [0] * 8  # 8 entropy buckets (0-1, 1-2, ..., 7-8)
@@ -832,20 +832,20 @@ class BinarySimilaritySearch:
                     buckets[bucket] += 1
                 total = sum(buckets)
                 return [b / total for b in buckets] if total > 0 else buckets
-                
+
             dist1 = create_entropy_distribution(entropies1)
             dist2 = create_entropy_distribution(entropies2)
-            
+
             # Calculate distribution similarity using cosine similarity
             dot_product = sum(a * b for a, b in zip(dist1, dist2))
             norm1 = sum(a * a for a in dist1) ** 0.5
             norm2 = sum(b * b for b in dist2) ** 0.5
-            
+
             if norm1 == 0 or norm2 == 0:
                 return 0.0
-                
+
             return dot_product / (norm1 * norm2)
-            
+
         except Exception as e:
             self.logger.error("Error in entropy pattern similarity: %s", e)
             return 0.0
@@ -855,17 +855,17 @@ class BinarySimilaritySearch:
         try:
             if size1 <= 0 or size2 <= 0:
                 return 0.0
-                
+
             # Use logarithmic scaling to reduce impact of large size differences
             import math
             log_size1 = math.log(size1)
             log_size2 = math.log(size2)
-            
+
             size_diff = abs(log_size1 - log_size2)
             max_log_diff = max(log_size1, log_size2)
-            
+
             return max(0.0, 1.0 - size_diff / max_log_diff) if max_log_diff > 0 else 1.0
-            
+
         except Exception as e:
             self.logger.error("Error in logarithmic size similarity: %s", e)
             return 0.0
@@ -875,14 +875,14 @@ class BinarySimilaritySearch:
         try:
             if entropy1 <= 0 or entropy2 <= 0:
                 return 0.0
-                
+
             entropy_diff = abs(entropy1 - entropy2)
             # Use adaptive scaling based on entropy values
             scale_factor = max(entropy1, entropy2) / 8.0
             normalized_diff = entropy_diff / (8.0 * scale_factor) if scale_factor > 0 else 0.0
-            
+
             return max(0.0, 1.0 - normalized_diff)
-            
+
         except Exception as e:
             self.logger.error("Error in entropy similarity: %s", e)
             return 0.0
@@ -892,28 +892,28 @@ class BinarySimilaritySearch:
         try:
             if not sections1 or not sections2:
                 return 0.0
-                
+
             # Calculate relative section sizes
             def get_size_distribution(sections):
                 sizes = [s.get("raw_data_size", 0) for s in sections]
                 total = sum(sizes)
                 return [s / total for s in sizes] if total > 0 else []
-                
+
             dist1 = get_size_distribution(sections1)
             dist2 = get_size_distribution(sections2)
-            
+
             if not dist1 or not dist2:
                 return 0.0
-                
+
             # Pad distributions to same length
             max_len = max(len(dist1), len(dist2))
             dist1.extend([0.0] * (max_len - len(dist1)))
             dist2.extend([0.0] * (max_len - len(dist2)))
-            
+
             # Calculate similarity using mean squared error
             mse = sum((a - b) ** 2 for a, b in zip(dist1, dist2)) / max_len
             return max(0.0, 1.0 - mse)
-            
+
         except Exception as e:
             self.logger.error("Error in section distribution similarity: %s", e)
             return 0.0
@@ -923,7 +923,7 @@ class BinarySimilaritySearch:
         try:
             if not features1 or not features2:
                 return 0.0
-                
+
             # Simple LSH approximation using hash-based bucketing
             def create_hash_signature(features, num_hashes=32):
                 import hashlib
@@ -935,14 +935,14 @@ class BinarySimilaritySearch:
                         hash_val = min(hash_val, feature_hash) if hash_val > 0 else feature_hash
                     signature.append(hash_val)
                 return signature
-                
+
             sig1 = create_hash_signature(features1)
             sig2 = create_hash_signature(features2)
-            
+
             # Calculate signature similarity
             matches = sum(1 for a, b in zip(sig1, sig2) if a == b)
             return matches / len(sig1)
-            
+
         except Exception as e:
             self.logger.error("Error in LSH similarity: %s", e)
             return 0.0
@@ -952,19 +952,19 @@ class BinarySimilaritySearch:
         try:
             if not strings1 or not strings2:
                 return 0.0
-                
+
             # Use first few strings for performance
             sample1 = " ".join(strings1[:10])
             sample2 = " ".join(strings2[:10])
-            
+
             # Simplified edit distance calculation
             def edit_distance(s1, s2):
                 if len(s1) < len(s2):
                     s1, s2 = s2, s1
-                    
+
                 if len(s2) == 0:
                     return len(s1)
-                    
+
                 previous_row = list(range(len(s2) + 1))
                 for i, c1 in enumerate(s1):
                     current_row = [i + 1]
@@ -974,14 +974,14 @@ class BinarySimilaritySearch:
                         substitutions = previous_row[j] + (c1 != c2)
                         current_row.append(min(insertions, deletions, substitutions))
                     previous_row = current_row
-                    
+
                 return previous_row[-1]
-                
+
             distance = edit_distance(sample1, sample2)
             max_len = max(len(sample1), len(sample2))
-            
+
             return 1.0 - (distance / max_len) if max_len > 0 else 1.0
-            
+
         except Exception as e:
             self.logger.error("Error in edit distance similarity: %s", e)
             return 0.0
@@ -999,20 +999,20 @@ class BinarySimilaritySearch:
                 vector.append(len(features.get("exports", [])))
                 vector.append(len(features.get("strings", [])))
                 return vector
-                
+
             vec1 = create_feature_vector(features1)
             vec2 = create_feature_vector(features2)
-            
+
             # Calculate cosine similarity
             dot_product = sum(a * b for a, b in zip(vec1, vec2))
             norm1 = sum(a * a for a in vec1) ** 0.5
             norm2 = sum(b * b for b in vec2) ** 0.5
-            
+
             if norm1 == 0 or norm2 == 0:
                 return 0.0
-                
+
             return dot_product / (norm1 * norm2)
-            
+
         except Exception as e:
             self.logger.error("Error in cosine similarity: %s", e)
             return 0.0
@@ -1022,16 +1022,16 @@ class BinarySimilaritySearch:
         try:
             if not strings:
                 return ""
-                
+
             import hashlib
-            
+
             # Combine strings and create rolling hash
             combined = " ".join(strings[:20])  # Use first 20 strings
             hash_bytes = hashlib.md5(combined.encode()).digest()
-            
+
             # Convert to hex string for comparison
             return hash_bytes.hex()
-            
+
         except Exception as e:
             self.logger.error("Error generating rolling hash: %s", e)
             return ""
@@ -1041,13 +1041,13 @@ class BinarySimilaritySearch:
         try:
             if not hash1 or not hash2 or len(hash1) != len(hash2):
                 return 0.0
-                
+
             # Calculate Hamming distance
             differences = sum(c1 != c2 for c1, c2 in zip(hash1, hash2))
             similarity = 1.0 - (differences / len(hash1))
-            
+
             return max(0.0, similarity)
-            
+
         except Exception as e:
             self.logger.error("Error calculating hash similarity: %s", e)
             return 0.0

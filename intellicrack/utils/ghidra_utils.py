@@ -41,10 +41,10 @@ def build_ghidra_command(ghidra_headless_path: str,
         "-scriptPath", script_path,
         "-postScript", script_name
     ]
-    
+
     if overwrite:
         cmd.append("-overwrite")
-        
+
     return cmd
 
 
@@ -62,7 +62,7 @@ def get_ghidra_headless_path() -> Optional[str]:
         # Intentionally silent - fall back to manual path checking
         # This is expected when path_discovery module is not available
         logger.debug("path_discovery module not available, using fallback path detection")
-        
+
     # Common locations to check
     common_paths = [
         "/opt/ghidra/support/analyzeHeadless",
@@ -70,9 +70,9 @@ def get_ghidra_headless_path() -> Optional[str]:
         "C:\\ghidra\\support\\analyzeHeadless.bat",
         "C:\\Program Files\\ghidra\\support\\analyzeHeadless.bat"
     ]
-    
+
     for path in common_paths:
         if os.path.exists(path):
             return path
-            
+
     return None

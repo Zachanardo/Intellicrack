@@ -21,9 +21,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import logging
-import os
-import random
-import webbrowser
 from typing import Any, Dict, List, Optional
 
 try:
@@ -54,7 +51,7 @@ class TaintAnalysisEngine:
     def set_binary(self, binary_path: str) -> bool:
         """Set the binary to analyze"""
         from ...utils.binary_utils import validate_binary_path
-        
+
         if not validate_binary_path(binary_path, self.logger):
             return False
 
@@ -168,25 +165,25 @@ class TaintAnalysisEngine:
             if not disassembly:
                 self.logger.error("Could not disassemble binary for taint analysis")
                 return
-            
+
             # Build control flow graph
             cfg = self._build_control_flow_graph(disassembly)
-            
+
             # Find source and sink instructions
             source_instructions = self._find_source_instructions(disassembly)
             sink_instructions = self._find_sink_instructions(disassembly)
-            
+
             self.logger.info("Found %d taint sources and %d taint sinks in binary",
                            len(source_instructions), len(sink_instructions))
-            
+
             # Perform taint propagation analysis
             for source in source_instructions:
                 taint_paths = self._trace_taint_propagation(source, sink_instructions, cfg)
                 self.taint_propagation.extend(taint_paths)
-            
+
             # Analyze results for license-related patterns
             license_checks, bypass_points = self._analyze_license_patterns()
-            
+
             self.results = {
                 'total_sources': len(self.taint_sources),
                 'total_sinks': len(self.taint_sinks),
@@ -195,7 +192,7 @@ class TaintAnalysisEngine:
                 'potential_bypass_points': bypass_points,
                 'analysis_method': 'static_analysis'
             }
-            
+
         except Exception as e:
             self.logger.error("Error in real taint analysis: %s", e)
             # Fallback to basic analysis if full analysis fails
@@ -209,27 +206,33 @@ class TaintAnalysisEngine:
             List of instruction dictionaries or None if disassembly fails
         """
         instructions = []
-        
+
         try:
             # Try using Capstone first
-            from ...utils.import_patterns import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs, CAPSTONE_AVAILABLE
-            
+            from ...utils.import_patterns import (
+                CAPSTONE_AVAILABLE,
+                CS_ARCH_X86,
+                CS_MODE_32,
+                CS_MODE_64,
+                Cs,
+            )
+
             if CAPSTONE_AVAILABLE:
                 with open(self.binary_path, 'rb') as f:
                     binary_data = f.read()
-                
+
                 # Determine architecture from binary header
                 if binary_data[:2] == b'MZ':  # PE file
                     # Use x86_64 by default, could be enhanced to detect 32/64 bit
                     md = Cs(CS_ARCH_X86, CS_MODE_64)
                 else:
                     md = Cs(CS_ARCH_X86, CS_MODE_32)
-                
+
                 md.detail = True
-                
+
                 # Disassemble main executable sections
                 base_address = 0x400000  # Default base for PE files
-                
+
                 for i, (address, size, mnemonic, op_str) in enumerate(md.disasm_lite(binary_data, base_address)):
                     instructions.append({
                         'address': address,
@@ -238,32 +241,32 @@ class TaintAnalysisEngine:
                         'size': size,
                         'index': i
                     })
-                    
+
                     # Limit to first 10000 instructions for performance
                     if i >= 10000:
                         break
-                
+
                 self.logger.info("Disassembled %d instructions using Capstone", len(instructions))
                 return instructions
-                
+
         except ImportError:
             self.logger.debug("Capstone not available, trying alternative methods")
-            
+
         # Fallback: Try to use objdump if available
         try:
             import subprocess
             result = subprocess.run([
                 'objdump', '-d', self.binary_path
             ], capture_output=True, text=True, timeout=30, check=False)
-            
+
             if result.returncode == 0:
                 instructions = self._parse_objdump_output(result.stdout)
                 self.logger.info("Disassembled %d instructions using objdump", len(instructions))
                 return instructions
-                
+
         except (FileNotFoundError, subprocess.TimeoutExpired):
             self.logger.debug("objdump not available or timed out")
-            
+
         # Final fallback: Basic analysis without full disassembly
         self.logger.warning("No disassembly engine available, using basic pattern analysis")
         return self._perform_pattern_based_analysis()
@@ -272,7 +275,7 @@ class TaintAnalysisEngine:
         """Parse objdump disassembly output into instruction list."""
         from ...utils.windows_structures import parse_objdump_line
         instructions = []
-        
+
         for line_num, line in enumerate(objdump_output.split('\n')):
             parsed = parse_objdump_line(line)
             if parsed:
@@ -280,17 +283,17 @@ class TaintAnalysisEngine:
                 parsed['size'] = 1
                 parsed['index'] = line_num
                 instructions.append(parsed)
-                    
+
         return instructions
 
     def _perform_pattern_based_analysis(self) -> List[Dict[str, Any]]:
         """Perform basic pattern-based analysis when disassembly is not available."""
         instructions = []
-        
+
         try:
             with open(self.binary_path, 'rb') as f:
                 data = f.read()
-            
+
             # Look for common instruction patterns in bytes
             license_patterns = [
                 (b'\xE8', 'call'),  # Call instruction
@@ -299,7 +302,7 @@ class TaintAnalysisEngine:
                 (b'\x83\xF8', 'cmp eax,'),  # Compare with EAX
                 (b'\x3D', 'cmp eax,'),      # Compare EAX with immediate
             ]
-            
+
             offset = 0
             for i, byte in enumerate(data):
                 for pattern, mnemonic in license_patterns:
@@ -311,14 +314,14 @@ class TaintAnalysisEngine:
                             'size': len(pattern),
                             'index': len(instructions)
                         })
-                        
+
                 # Limit analysis scope
                 if len(instructions) > 1000:
                     break
-                    
+
         except Exception as e:
             self.logger.error("Error in pattern-based analysis: %s", e)
-            
+
         return instructions
 
     def _build_control_flow_graph(self, instructions: List[Dict[str, Any]]) -> Dict[int, List[int]]:
@@ -329,20 +332,20 @@ class TaintAnalysisEngine:
             Dictionary mapping instruction addresses to lists of successor addresses
         """
         cfg = {}
-        
+
         for i, instr in enumerate(instructions):
             address = instr['address']
             mnemonic = instr['mnemonic'].lower()
             successors = []
-            
+
             # Add sequential successor for most instructions
             if i + 1 < len(instructions):
                 next_addr = instructions[i + 1]['address']
-                
+
                 # Unconditional jumps and returns don't have sequential successors
                 if mnemonic not in ['jmp', 'ret', 'retn']:
                     successors.append(next_addr)
-            
+
             # Add jump targets for control flow instructions
             if mnemonic.startswith('j'):  # Jump instructions
                 # Extract target address from operands (simplified)
@@ -357,19 +360,19 @@ class TaintAnalysisEngine:
                 # Call instructions have the return address as successor
                 if i + 1 < len(instructions):
                     successors.append(instructions[i + 1]['address'])
-            
+
             cfg[address] = successors
-            
+
         return cfg
 
     def _find_source_instructions(self, instructions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Find instructions that could be taint sources."""
         sources = []
-        
+
         for instr in instructions:
             mnemonic = instr['mnemonic'].lower()
             op_str = instr.get('op_str', '').lower()
-            
+
             # File I/O operations
             if 'call' in mnemonic and any(func in op_str for func in [
                 'readfile', 'createfile', 'fopen', 'fread'
@@ -379,7 +382,7 @@ class TaintAnalysisEngine:
                     'source_type': 'file_io',
                     'taint_status': 'source'
                 })
-            
+
             # Registry operations
             elif 'call' in mnemonic and any(func in op_str for func in [
                 'regopen', 'regquery', 'regget'
@@ -389,7 +392,7 @@ class TaintAnalysisEngine:
                     'source_type': 'registry',
                     'taint_status': 'source'
                 })
-            
+
             # Network operations
             elif 'call' in mnemonic and any(func in op_str for func in [
                 'recv', 'winsock', 'urldownload'
@@ -399,7 +402,7 @@ class TaintAnalysisEngine:
                     'source_type': 'network',
                     'taint_status': 'source'
                 })
-            
+
             # Hardware ID functions
             elif 'call' in mnemonic and any(func in op_str for func in [
                 'getvolume', 'getadapter', 'getsystem'
@@ -409,17 +412,17 @@ class TaintAnalysisEngine:
                     'source_type': 'hardware_id',
                     'taint_status': 'source'
                 })
-        
+
         return sources
 
     def _find_sink_instructions(self, instructions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Find instructions that could be taint sinks."""
         sinks = []
-        
+
         for instr in instructions:
             mnemonic = instr['mnemonic'].lower()
             op_str = instr.get('op_str', '').lower()
-            
+
             # Comparison operations
             if mnemonic in ['cmp', 'test']:
                 sinks.append({
@@ -427,7 +430,7 @@ class TaintAnalysisEngine:
                     'sink_type': 'comparison',
                     'taint_status': 'sink'
                 })
-            
+
             # Conditional jumps (decision points)
             elif mnemonic in ['je', 'jne', 'jz', 'jnz', 'ja', 'jb']:
                 sinks.append({
@@ -435,7 +438,7 @@ class TaintAnalysisEngine:
                     'sink_type': 'conditional',
                     'taint_status': 'sink'
                 })
-            
+
             # String comparison calls
             elif 'call' in mnemonic and any(func in op_str for func in [
                 'strcmp', 'memcmp', 'lstrcmp'
@@ -445,7 +448,7 @@ class TaintAnalysisEngine:
                     'sink_type': 'string_compare',
                     'taint_status': 'sink'
                 })
-            
+
             # Cryptographic operations
             elif 'call' in mnemonic and any(func in op_str for func in [
                 'hash', 'md5', 'sha', 'crypt', 'verify'
@@ -455,10 +458,10 @@ class TaintAnalysisEngine:
                     'sink_type': 'crypto',
                     'taint_status': 'sink'
                 })
-                
+
         return sinks
 
-    def _trace_taint_propagation(self, source: Dict[str, Any], sinks: List[Dict[str, Any]], 
+    def _trace_taint_propagation(self, source: Dict[str, Any], sinks: List[Dict[str, Any]],
                                 cfg: Dict[int, List[int]]) -> List[List[Dict[str, Any]]]:
         """
         Trace taint propagation from a source to potential sinks.
@@ -469,13 +472,13 @@ class TaintAnalysisEngine:
         paths = []
         visited = set()
         max_path_length = 50  # Prevent infinite loops
-        
+
         def dfs_path(current_addr: int, current_path: List[Dict[str, Any]], tainted_registers: set):
             if len(current_path) >= max_path_length or current_addr in visited:
                 return
-                
+
             visited.add(current_addr)
-            
+
             # Check if we've reached a sink
             for sink in sinks:
                 if sink['address'] == current_addr:
@@ -483,7 +486,7 @@ class TaintAnalysisEngine:
                     complete_path = [source] + current_path + [sink]
                     paths.append(complete_path)
                     return
-            
+
             # Continue following the control flow
             successors = cfg.get(current_addr, [])
             for next_addr in successors:
@@ -494,17 +497,17 @@ class TaintAnalysisEngine:
                         # Would need to map back to instruction details
                         next_instr = {'address': next_addr, 'mnemonic': 'unknown', 'op_str': ''}
                         break
-                
+
                 if next_instr:
                     new_path = current_path + [next_instr]
                     # Simplified register tracking (could be much more sophisticated)
                     new_tainted = tainted_registers.copy()
                     dfs_path(next_addr, new_path, new_tainted)
-        
+
         # Start DFS from source
         initial_tainted = {'eax', 'rax'}  # Assume data loaded into these registers
         dfs_path(source['address'], [], initial_tainted)
-        
+
         return paths
 
     def _analyze_license_patterns(self) -> tuple:
@@ -516,28 +519,28 @@ class TaintAnalysisEngine:
         """
         license_checks = 0
         bypass_points = 0
-        
+
         for path in self.taint_propagation:
             # Look for license validation patterns in the path
             has_file_read = any(step.get('source_type') == 'file_io' for step in path)
             has_comparison = any(step.get('sink_type') == 'comparison' for step in path)
             has_conditional = any(step.get('sink_type') == 'conditional' for step in path)
-            
+
             if has_file_read and has_comparison and has_conditional:
                 license_checks += 1
-                
+
                 # Potential bypass points are conditional jumps after comparisons
                 for i, step in enumerate(path):
-                    if (step.get('sink_type') == 'conditional' and 
+                    if (step.get('sink_type') == 'conditional' and
                         i > 0 and path[i-1].get('sink_type') == 'comparison'):
                         bypass_points += 1
-        
+
         return license_checks, bypass_points
 
     def _perform_basic_analysis(self) -> None:
         """Fallback basic analysis when full taint analysis is not possible."""
         self.logger.info("Performing basic taint analysis fallback")
-        
+
         # Create basic analysis results
         self.results = {
             'total_sources': len(self.taint_sources),
@@ -761,8 +764,8 @@ def run_taint_analysis(app: Any) -> None:
 
             # Handle report generation if PyQt5 is available
             if PYQT5_AVAILABLE:
-                from ...utils.ui_helpers import ask_yes_no_question, show_file_dialog
                 from ...utils.ui_common import ask_open_report
+                from ...utils.ui_helpers import ask_yes_no_question, show_file_dialog
 
                 generate_report = ask_yes_no_question(
                     app,

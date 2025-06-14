@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
+import os
 from typing import Any, Dict, List, Optional
 
 # Optional GPU backend imports
@@ -49,7 +50,6 @@ except ImportError:
     ipex = None
 
 from ...utils.import_checks import TENSORFLOW_AVAILABLE, tf
-
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -650,6 +650,95 @@ class GPUAccelerator:
         entropy = -cp.sum(hist_norm * cp.log2(hist_norm))
 
         return float(entropy)
+
+    def run_gpu_analysis(self, binary_path: Optional[str] = None, analysis_type: str = "comprehensive") -> Dict[str, Any]:
+        """
+        Run GPU-accelerated binary analysis.
+
+        Args:
+            binary_path: Path to binary file to analyze (optional)
+            analysis_type: Type of analysis to perform
+
+        Returns:
+            Analysis results dictionary
+        """
+        results = {
+            'gpu_backend': self.selected_backend,
+            'analysis_type': analysis_type,
+            'binary_path': binary_path,
+            'timestamp': None,
+            'patterns_found': [],
+            'entropy_analysis': {},
+            'performance_metrics': {},
+            'errors': []
+        }
+
+        try:
+            import time
+            start_time = time.time()
+            results['timestamp'] = start_time
+
+            if binary_path and os.path.exists(binary_path):
+                # Load binary data
+                with open(binary_path, 'rb') as f:
+                    binary_data = f.read()
+
+                # GPU-accelerated pattern matching
+                if analysis_type in ("comprehensive", "pattern_matching"):
+                    common_patterns = [
+                        b'\x4D\x5A',  # PE header
+                        b'\x7F\x45\x4C\x46',  # ELF header
+                        b'\xFE\xED\xFA',  # Mach-O header
+                        b'This program cannot be run in DOS mode',
+                        b'kernel32.dll',
+                        b'ntdll.dll'
+                    ]
+                    matches = self.accelerate_pattern_matching(binary_data, common_patterns)
+                    results['patterns_found'] = matches
+                    self.logger.info("Found %d pattern matches using GPU acceleration", len(matches))
+
+                # GPU-accelerated entropy calculation
+                if analysis_type in ("comprehensive", "entropy"):
+                    entropy = self.accelerate_entropy_calculation(binary_data)
+                    results['entropy_analysis'] = {
+                        'overall_entropy': entropy,
+                        'file_size': len(binary_data),
+                        'entropy_per_kb': entropy / (len(binary_data) / 1024) if binary_data else 0
+                    }
+                    self.logger.info("Calculated entropy: %.3f using GPU acceleration", entropy)
+
+            else:
+                # Run without specific binary (benchmark mode)
+                self.logger.info("Running GPU analysis in benchmark mode")
+                test_data = bytes(range(256)) * 1000  # 256KB test data
+                
+                # Test pattern matching
+                test_patterns = [b'\x00\x01', b'\xFF\xFE', b'\x90\x90']
+                matches = self.accelerate_pattern_matching(test_data, test_patterns)
+                results['patterns_found'] = matches
+                
+                # Test entropy calculation
+                entropy = self.accelerate_entropy_calculation(test_data)
+                results['entropy_analysis'] = {'test_entropy': entropy}
+
+            # Performance metrics
+            end_time = time.time()
+            results['performance_metrics'] = {
+                'total_time': end_time - start_time,
+                'backend_used': self.selected_backend,
+                'gpu_available': bool(self.selected_backend),
+                'acceleration_status': self.get_acceleration_status()
+            }
+
+            self.logger.info("GPU analysis completed in %.3f seconds", end_time - start_time)
+
+        except (OSError, ValueError, RuntimeError) as e:
+            error_msg = f"GPU analysis failed: {e}"
+            self.logger.error(error_msg)
+            results['errors'].append(error_msg)
+            self.error_counts[self.selected_backend or 'unknown'] += 1
+
+        return results
 
     def get_acceleration_status(self) -> Dict[str, Any]:
         """

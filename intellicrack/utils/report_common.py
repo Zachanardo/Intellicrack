@@ -21,30 +21,30 @@ def generate_analysis_report(app, report_type, results_data, generator_func=None
     except ImportError:
         # Fallback if UI common not available
         return None
-    
+
     generate_report = ask_yes_no_question(
         app,
         "Generate Report",
         f"Do you want to generate a report of the {report_type} results?"
     )
-    
+
     if not generate_report:
         return None
-    
+
     filename = show_file_dialog(app, "Save Report")
-    
+
     if not filename:
         return None
-    
+
     if not filename.endswith('.html'):
         filename += '.html'
-    
+
     # Generate report using provided function or default
     if generator_func:
         report_path = generator_func(filename, results_data)
     else:
         report_path = _generate_default_report(filename, report_type, results_data)
-    
+
     return report_path
 
 
@@ -81,7 +81,7 @@ def _generate_default_report(filename, report_type, results_data):
     </body>
     </html>
     """
-    
+
     try:
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(html_content)

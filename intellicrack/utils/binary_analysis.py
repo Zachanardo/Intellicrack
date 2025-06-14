@@ -153,13 +153,13 @@ def analyze_binary(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
     # Validate input type and value
     if not isinstance(binary_path, (str, bytes, os.PathLike)):
         return {"error": f"Invalid path type: {type(binary_path).__name__}"}
-    
+
     try:
         # Convert to string if needed
         binary_path = str(binary_path)
     except (ValueError, TypeError, OverflowError) as e:
         return {"error": f"Invalid path value: {str(e)}"}
-    
+
     if not os.path.exists(binary_path):
         return {"error": f"Binary not found: {binary_path}"}
 
@@ -1127,6 +1127,128 @@ def _optimized_pattern_analysis(data, chunk_info=None) -> Dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
+def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> List[str]:
+    """
+    Get quick disassembly of binary entry point for UI display.
+    
+    Args:
+        binary_path: Path to binary file
+        max_instructions: Maximum number of instructions to disassemble
+        
+    Returns:
+        List of disassembly lines
+    """
+    try:
+        # Try to use capstone for disassembly
+        try:
+            import capstone
+            HAS_CAPSTONE = True
+        except ImportError:
+            HAS_CAPSTONE = False
+            
+        if not HAS_CAPSTONE:
+            return _get_basic_disassembly_info(binary_path)
+            
+        # Determine architecture from binary
+        binary_format = identify_binary_format(binary_path)
+        if not binary_format:
+            return ["Unable to identify binary format"]
+            
+        # Read binary data
+        with open(binary_path, 'rb') as f:
+            data = f.read(4096)  # Read first 4KB
+            
+        # Configure capstone based on format
+        if binary_format == 'PE':
+            md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+            entry_offset = _get_pe_entry_point(binary_path)
+        elif binary_format == 'ELF':
+            md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+            entry_offset = _get_elf_entry_point(binary_path)
+        else:
+            # Default to x86-64
+            md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+            entry_offset = 0x1000  # Common entry point
+            
+        # Disassemble instructions
+        disasm_lines = []
+        instructions = md.disasm(data[entry_offset:entry_offset+512], entry_offset)
+        
+        count = 0
+        for insn in instructions:
+            if count >= max_instructions:
+                break
+                
+            line = f"0x{insn.address:08x}: {insn.mnemonic:10} {insn.op_str}"
+            disasm_lines.append(line)
+            count += 1
+            
+        if not disasm_lines:
+            return _get_basic_disassembly_info(binary_path)
+            
+        return disasm_lines
+        
+    except Exception as e:
+        logger.debug(f"Quick disassembly error: {e}")
+        return _get_basic_disassembly_info(binary_path)
+        
+def _get_basic_disassembly_info(binary_path: str) -> List[str]:
+    """Get basic binary information when disassembly isn't available."""
+    try:
+        info = extract_binary_info(binary_path)
+        
+        lines = [
+            f"# Binary: {os.path.basename(binary_path)}",
+            f"# Format: {info.get('format', 'Unknown')}",
+            f"# Size: {info.get('file_size', 'Unknown')} bytes",
+            f"# Architecture: {info.get('architecture', 'Unknown')}",
+            "",
+            "# Disassembly not available - install capstone for full disassembly",
+            "# Run 'pip install capstone' to enable instruction-level analysis",
+            "",
+            "# Binary Structure Analysis:",
+        ]
+        
+        if 'sections' in info:
+            lines.append("# Sections:")
+            for section in info['sections'][:5]:  # First 5 sections
+                lines.append(f"#   {section.get('name', 'Unknown')}: {section.get('virtual_address', 'N/A')}")
+                
+        if 'entry_point' in info:
+            lines.append(f"# Entry Point: 0x{info['entry_point']:08x}")
+            
+        return lines
+        
+    except Exception:
+        return [
+            f"# Binary: {os.path.basename(binary_path)}",
+            "# Unable to analyze - may be corrupted or unsupported format",
+            "# Try using external disassembly tools like objdump or radare2"
+        ]
+
+def _get_pe_entry_point(binary_path: str) -> int:
+    """Get PE entry point offset."""
+    try:
+        if PEFILE_AVAILABLE:
+            pe = pefile.PE(binary_path)
+            return pe.OPTIONAL_HEADER.AddressOfEntryPoint
+    except Exception:
+        pass
+    return 0x1000  # Default
+
+def _get_elf_entry_point(binary_path: str) -> int:
+    """Get ELF entry point offset.""" 
+    try:
+        if PYELFTOOLS_AVAILABLE:
+            from elftools.elf.elffile import ELFFile
+            with open(binary_path, 'rb') as f:
+                elf = ELFFile(f)
+                return elf.header['e_entry']
+    except Exception:
+        pass
+    return 0x1000  # Default
+
+
 # Export all functions
 __all__ = [
     'analyze_binary',
@@ -1140,5 +1262,6 @@ __all__ = [
     'extract_binary_info',
     'extract_binary_features',
     'extract_patterns_from_binary',
-    'scan_binary'
+    'scan_binary',
+    'get_quick_disassembly'
 ]

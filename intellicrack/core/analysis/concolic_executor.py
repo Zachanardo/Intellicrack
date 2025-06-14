@@ -54,7 +54,7 @@ except ImportError:
             Represents a single execution state in the concolic execution engine,
             maintaining both concrete and symbolic values for program variables.
             """
-            
+
             def __init__(self, pc: int = 0, memory: dict = None, registers: dict = None):
                 """Initialize a new execution state."""
                 self.pc = pc  # Program counter
@@ -72,16 +72,16 @@ except ImportError:
                 self.termination_reason = None
                 self.stack = []  # Call stack
                 self.execution_trace = []  # Execution history
-                
+
             def is_terminated(self) -> bool:
                 """Check if state is terminated."""
                 return self.is_terminated_flag
-                
+
             def terminate(self, reason: str = "normal"):
                 """Terminate the state."""
                 self.is_terminated_flag = True
                 self.termination_reason = reason
-                
+
             def fork(self):
                 """Create a copy of this state for branching."""
                 new_state = NativeConcolicState(self.pc, self.memory.copy(), self.registers.copy())
@@ -92,28 +92,28 @@ except ImportError:
                 new_state.stack = self.stack.copy()
                 new_state.execution_trace = self.execution_trace.copy()
                 return new_state
-                
+
             def add_constraint(self, constraint: str):
                 """Add a path constraint."""
                 self.constraints.append(constraint)
-                
+
             def set_register(self, reg: str, value, symbolic: bool = False):
                 """Set register value."""
                 self.registers[reg] = value
                 if symbolic:
                     self.symbolic_registers[reg] = value
-                    
+
             def get_register(self, reg: str):
                 """Get register value."""
                 return self.registers.get(reg, 0)
-                
+
             def write_memory(self, addr: int, value, size: int = 4, symbolic: bool = False):
                 """Write to memory."""
                 for i in range(size):
                     self.memory[addr + i] = (value >> (i * 8)) & 0xFF
                 if symbolic:
                     self.symbolic_memory[addr] = value
-                    
+
             def read_memory(self, addr: int, size: int = 4):
                 """Read from memory."""
                 value = 0
@@ -129,7 +129,7 @@ except ImportError:
             This is a comprehensive implementation that provides concolic execution
             capabilities without requiring external dependencies like the Manticore framework.
             """
-            
+
             def __init__(self, binary_path: str = None, *args, **kwargs):
                 """Initialize native concolic execution engine."""
                 self.binary_path = binary_path
@@ -144,23 +144,23 @@ except ImportError:
                 self.max_states = 1000  # Maximum states to explore
                 self.instruction_count = 0
                 self.max_instructions = 100000  # Maximum instructions per state
-                
+
                 # Binary analysis components
                 self.binary_data = None
                 self.entry_point = 0
                 self.code_sections = []
-                
+
                 self.logger.info("Native concolic execution engine initialized")
-                
+
                 if binary_path:
                     self._load_binary()
-                
+
             def _load_binary(self):
                 """Load and analyze the target binary."""
                 try:
                     with open(self.binary_path, 'rb') as f:
                         self.binary_data = f.read()
-                    
+
                     # Basic binary analysis
                     if self.binary_data.startswith(b'MZ'):  # PE file
                         self.entry_point = self._parse_pe_entry_point()
@@ -168,12 +168,12 @@ except ImportError:
                         self.entry_point = self._parse_elf_entry_point()
                     else:
                         self.entry_point = 0x1000  # Default entry point
-                        
+
                     self.logger.info("Binary loaded, entry point: 0x%x", self.entry_point)
-                    
+
                 except Exception as e:
                     self.logger.error("Failed to load binary: %s", e)
-                    
+
             def _parse_pe_entry_point(self) -> int:
                 """Parse PE file to find entry point."""
                 try:
@@ -192,7 +192,7 @@ except ImportError:
                 except Exception:
                     pass
                 return 0x401000  # Default PE entry point
-                
+
             def _parse_elf_entry_point(self) -> int:
                 """Parse ELF file to find entry point."""
                 try:
@@ -206,71 +206,71 @@ except ImportError:
                 except Exception:
                     pass
                 return 0x8048000  # Default ELF entry point
-                
+
             def add_hook(self, address: int, callback) -> None:
                 """Add execution hook at specific address."""
                 self.hooks[address] = callback
                 self.logger.debug("Hook added for address 0x%x", address)
-                
+
             def register_plugin(self, plugin) -> None:
                 """Register a plugin for execution callbacks."""
                 self.plugins.append(plugin)
                 self.logger.debug("Plugin registered: %s", type(plugin).__name__)
-                
+
             def set_exec_timeout(self, timeout: int) -> None:
                 """Set execution timeout in seconds."""
                 self.timeout = timeout
                 self.logger.debug("Execution timeout set to %d seconds", timeout)
-                
+
             def run(self, procs: int = 1) -> None:
                 """Run concolic execution."""
                 import time
                 start_time = time.time()
-                
+
                 self.logger.info("Starting concolic execution (timeout: %ds)", self.timeout)
-                
+
                 # Create initial state
                 initial_state = NativeConcolicState(pc=self.entry_point)
                 self.ready_states.append(initial_state)
                 self.all_states[0] = initial_state
-                
+
                 state_id = 0
-                
+
                 try:
                     while self.ready_states and not self.execution_complete:
                         # Check timeout
                         if time.time() - start_time > self.timeout:
                             self.logger.warning("Execution timeout reached")
                             break
-                            
+
                         # Check state limit
                         if len(self.all_states) >= self.max_states:
                             self.logger.warning("Maximum state limit reached")
                             break
-                        
+
                         # Get next state to execute
                         current_state = self.ready_states.pop(0)
-                        
+
                         # Execute instructions for this state
                         for _ in range(100):  # Execute up to 100 instructions per iteration
                             if current_state.is_terminated():
                                 break
-                                
+
                             if self.instruction_count >= self.max_instructions:
                                 current_state.terminate("instruction_limit")
                                 break
-                                
+
                             # Execute single instruction
                             self._execute_instruction(current_state)
                             self.instruction_count += 1
-                            
+
                             # Check for hooks
                             if current_state.pc in self.hooks:
                                 try:
                                     self.hooks[current_state.pc](current_state)
                                 except Exception as e:
                                     self.logger.error("Hook execution failed: %s", e)
-                            
+
                             # Check for branching conditions
                             new_states = self._check_for_branches(current_state)
                             if new_states:
@@ -278,22 +278,22 @@ except ImportError:
                                     state_id += 1
                                     self.all_states[state_id] = new_state
                                     self.ready_states.append(new_state)
-                        
+
                         # Move completed state to terminated
                         if current_state.is_terminated():
                             self.terminated_states.append(current_state)
                         else:
                             self.ready_states.append(current_state)  # Continue later
-                            
+
                 except KeyboardInterrupt:
                     self.logger.info("Execution interrupted by user")
                 except Exception as e:
                     self.logger.error("Execution error: %s", e)
-                
+
                 self.execution_complete = True
-                self.logger.info("Concolic execution completed. States: %d terminated, %d active", 
+                self.logger.info("Concolic execution completed. States: %d terminated, %d active",
                                len(self.terminated_states), len(self.ready_states))
-                
+
             def _execute_instruction(self, state: NativeConcolicState):
                 """Execute a single instruction in the given state."""
                 try:
@@ -301,45 +301,45 @@ except ImportError:
                     if not self.binary_data:
                         state.terminate("no_binary_data")
                         return
-                        
+
                     # Simple instruction simulation
                     # This is a simplified implementation - real implementation would use disassembly
                     pc_offset = state.pc - self.entry_point
                     if pc_offset < 0 or pc_offset >= len(self.binary_data):
                         state.terminate("invalid_pc")
                         return
-                    
+
                     # Read instruction bytes (simplified)
                     instruction_bytes = self.binary_data[pc_offset:pc_offset + 8]
                     if not instruction_bytes:
                         state.terminate("end_of_code")
                         return
-                    
+
                     # Add to execution trace
                     state.execution_trace.append({
                         'pc': state.pc,
                         'instruction': instruction_bytes[:4].hex(),
                         'registers': state.registers.copy()
                     })
-                    
+
                     # Simple instruction emulation
                     self._emulate_instruction(state, instruction_bytes)
-                    
+
                 except Exception as e:
                     self.logger.debug("Instruction execution error at 0x%x: %s", state.pc, e)
                     state.terminate("execution_error")
-                    
+
             def _emulate_instruction(self, state: NativeConcolicState, instruction_bytes: bytes):
                 """Emulate instruction execution."""
                 # This is a simplified instruction emulator
                 # Real implementation would use proper disassembly and emulation
-                
+
                 if len(instruction_bytes) == 0:
                     state.terminate("empty_instruction")
                     return
-                    
+
                 opcode = instruction_bytes[0]
-                
+
                 # Simple instruction patterns
                 if opcode == 0x90:  # NOP
                     state.pc += 1
@@ -375,11 +375,11 @@ except ImportError:
                 else:
                     # Default: advance by instruction length
                     state.pc += min(len(instruction_bytes), 4)
-                    
+
             def _check_for_branches(self, state: NativeConcolicState) -> list:
                 """Check if the current state should branch into multiple states."""
                 new_states = []
-                
+
                 # Simple branching logic - in real implementation this would be more sophisticated
                 if len(state.constraints) > 0:
                     last_constraint = state.constraints[-1]
@@ -390,17 +390,17 @@ except ImportError:
                         # Simulate taking the branch
                         alternate_state.pc += 10  # Simple branch offset
                         new_states.append(alternate_state)
-                        
+
                 return new_states
-                
+
             def get_all_states(self):
                 """Get all execution states."""
                 return list(self.all_states.values())
-                
+
             def get_terminated_states(self):
                 """Get all terminated states."""
                 return self.terminated_states
-                
+
             def get_ready_states(self):
                 """Get all ready states."""
                 return self.ready_states
@@ -412,24 +412,24 @@ except ImportError:
             Provides hooks and callbacks for monitoring and modifying
             the concolic execution process.
             """
-            
+
             def __init__(self):
                 """Initialize native plugin."""
                 self.logger = logging.getLogger(__name__)
                 self.logger.debug("Native plugin implementation initialized")
-                
+
             def will_run_callback(self, executor, *args, **kwargs):
                 """Callback before execution starts."""
                 self.logger.debug("Execution starting")
-                
+
             def did_finish_run_callback(self, executor, *args, **kwargs):
                 """Callback after execution completes."""
                 self.logger.debug("Execution finished")
-                
+
             def will_fork_state_callback(self, state, new_state, *args, **kwargs):
                 """Callback before state fork."""
                 self.logger.debug("State fork: PC 0x%x -> 0x%x", state.pc, new_state.pc)
-                
+
             def will_execute_instruction_callback(self, state, pc, insn):
                 """Callback before instruction execution."""
                 self.logger.debug("Executing instruction at 0x%x", pc)
@@ -746,7 +746,7 @@ class ConcolicExecutionEngine:
                         # Heuristic: look for potential function boundaries before the string
                         potential_func_start = max(0, string_offset - 0x1000) # Look back 4KB
                         potential_func_start = (potential_func_start // 0x10) * 0x10  # Align to 16 bytes
-                        
+
                         self.logger.info("Found potential license string at offset 0x%x, "
                                        "estimated function at 0x%x", string_offset, potential_func_start)
                         return potential_func_start

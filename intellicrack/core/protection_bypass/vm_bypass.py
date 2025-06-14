@@ -24,12 +24,9 @@ import logging
 import platform
 from typing import Any, Dict, List, Optional
 
-from ...utils.import_checks import (
-    FRIDA_AVAILABLE, frida,
-    WINREG_AVAILABLE, winreg
-)
 # from ...utils.driver_utils import get_driver_path  # Removed unused import
 from ...utils.binary_io import analyze_binary_for_strings
+from ...utils.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
 
 class VirtualizationDetectionBypass:
@@ -319,11 +316,11 @@ class VirtualizationDetectionBypass:
         Hide VM-specific artifacts from detection.
         """
         self.logger.info("Hiding VM artifacts")
-        
+
         try:
             # Hide VM processes
             vm_processes = ["VBoxService.exe", "VBoxTray.exe", "vmtoolsd.exe", "vmware.exe"]
-            
+
             if FRIDA_AVAILABLE:
                 # Use Frida to hide processes
                 hide_process_script = """
@@ -349,7 +346,7 @@ class VirtualizationDetectionBypass:
                     "script": hide_process_script,
                     "target": "Process Hiding"
                 })
-            
+
             # Hide VM files
             import os
             vm_files = [
@@ -358,7 +355,7 @@ class VirtualizationDetectionBypass:
                 "C:\\Windows\\System32\\drivers\\vmhgfs.sys",
                 "C:\\Windows\\System32\\drivers\\vmmemctl.sys"
             ]
-            
+
             # Rename VM files if possible (requires admin rights)
             renamed_files = 0
             for vm_file in vm_files:
@@ -370,9 +367,9 @@ class VirtualizationDetectionBypass:
                         self.logger.info(f"Renamed {vm_file} to {new_name}")
                     except (OSError, PermissionError) as e:
                         self.logger.debug(f"Could not rename {vm_file}: {e}")
-            
+
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Error hiding VM artifacts: {e}")
             return False
@@ -382,51 +379,51 @@ class VirtualizationDetectionBypass:
         Modify system information to appear as physical machine.
         """
         self.logger.info("Modifying system information")
-        
+
         try:
             if platform.system() != "Windows":
                 self.logger.info("Not on Windows - using generic system info modification")
                 # For Linux/macOS, modify DMI information if possible
                 return self._modify_dmi_info()
-            
+
             # Windows-specific modifications
             if not WINREG_AVAILABLE or winreg is None:
                 self.logger.warning("winreg not available - cannot modify system info")
                 return False
-            
+
             # Modify system information in registry
             system_modifications = [
                 # Change system manufacturer
-                (winreg.HKEY_LOCAL_MACHINE, 
+                (winreg.HKEY_LOCAL_MACHINE,
                  r"HARDWARE\DESCRIPTION\System\BIOS",
                  "SystemManufacturer", "Dell Inc."),
-                
+
                 # Change system product name
                 (winreg.HKEY_LOCAL_MACHINE,
-                 r"HARDWARE\DESCRIPTION\System\BIOS", 
+                 r"HARDWARE\DESCRIPTION\System\BIOS",
                  "SystemProductName", "OptiPlex 9020"),
-                
+
                 # Change BIOS version
                 (winreg.HKEY_LOCAL_MACHINE,
                  r"HARDWARE\DESCRIPTION\System\BIOS",
                  "BIOSVersion", "A28"),
-                
+
                 # Remove VM-specific registry keys
                 (winreg.HKEY_LOCAL_MACHINE,
                  r"SYSTEM\CurrentControlSet\Services\Disk",
                  "VMware", None),  # None means delete
-                
+
                 # Modify processor information
                 (winreg.HKEY_LOCAL_MACHINE,
                  r"HARDWARE\DESCRIPTION\System\CentralProcessor\0",
                  "ProcessorNameString", "Intel(R) Core(TM) i7-4790 CPU @ 3.60GHz"),
             ]
-            
+
             modifications_applied = 0
             for hkey, path, name, value in system_modifications:
                 try:
                     key = winreg.OpenKey(hkey, path, 0, winreg.KEY_ALL_ACCESS)
-                    
+
                     if value is None:
                         # Delete the value
                         try:
@@ -440,12 +437,12 @@ class VirtualizationDetectionBypass:
                         winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
                         self.logger.info(f"Set {path}\\{name} = {value}")
                         modifications_applied += 1
-                    
+
                     winreg.CloseKey(key)
-                    
+
                 except (OSError, PermissionError) as e:
                     self.logger.debug(f"Could not modify {path}\\{name}: {e}")
-            
+
             # Hook WMI queries to return modified information
             if FRIDA_AVAILABLE:
                 wmi_hook_script = """
@@ -476,17 +473,17 @@ class VirtualizationDetectionBypass:
                 }
                 """
                 self.hooks.append({
-                    "type": "frida", 
+                    "type": "frida",
                     "script": wmi_hook_script,
                     "target": "WMI Modification"
                 })
-            
+
             return modifications_applied > 0
-            
+
         except Exception as e:
             self.logger.error(f"Error modifying system info: {e}")
             return False
-    
+
     def _modify_dmi_info(self) -> bool:
         """
         Modify DMI information on Linux/macOS systems.
@@ -502,7 +499,7 @@ class VirtualizationDetectionBypass:
                 "/sys/class/dmi/id/bios_vendor": "Dell Inc.",
                 "/sys/class/dmi/id/bios_version": "A28"
             }
-            
+
             modifications_applied = 0
             for path, value in dmi_modifications.items():
                 try:
@@ -512,9 +509,9 @@ class VirtualizationDetectionBypass:
                     self.logger.info(f"Modified {path} = {value}")
                 except (OSError, PermissionError) as e:
                     self.logger.debug(f"Could not modify {path}: {e}")
-            
+
             return modifications_applied > 0
-            
+
         except Exception as e:
             self.logger.error(f"Error modifying DMI info: {e}")
             return False
@@ -802,7 +799,7 @@ class VirtualizationAnalyzer:
             return results
 
         found_strings = string_analysis["strings_found"]
-        
+
         try:
             with open(self.binary_path, 'rb') as f:
                 data = f.read()

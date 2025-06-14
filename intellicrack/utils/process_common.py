@@ -4,9 +4,9 @@ Common process handling utilities.
 This module consolidates process creation and management patterns.
 """
 
-import subprocess
 import logging
-from typing import List, Optional, Tuple
+import subprocess
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -55,5 +55,5 @@ def create_popen_safely(cmd: List[str], **kwargs) -> subprocess.Popen:
         'text': True
     }
     defaults.update(kwargs)
-    
+
     return subprocess.Popen(cmd, **defaults)

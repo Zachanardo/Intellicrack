@@ -28,9 +28,12 @@ logger = logging.getLogger(__name__)
 
 # Import availability checks from common module
 from .import_checks import (
-    PEFILE_AVAILABLE, pefile,
-    CAPSTONE_AVAILABLE, capstone,
-    PSUTIL_AVAILABLE, psutil
+    CAPSTONE_AVAILABLE,
+    PEFILE_AVAILABLE,
+    PSUTIL_AVAILABLE,
+    capstone,
+    pefile,
+    psutil,
 )
 
 
@@ -77,7 +80,7 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
             # Check imports for vulnerable functions
             from .pe_common import extract_pe_imports
             imports = extract_pe_imports(pe)
-            
+
             # Also need DLL names for detailed analysis
             if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
@@ -115,11 +118,11 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
             fallback_analysis = _analyze_patterns_without_disassembly(data)
             results["unsafe_patterns"].extend(fallback_analysis.get("patterns", []))
             results["stack_canaries"] = fallback_analysis.get("stack_canaries", False)
-        
+
         # Additional vulnerability pattern detection
         vuln_patterns = _detect_vulnerability_patterns(data)
         results["unsafe_patterns"].extend(vuln_patterns)
-        
+
         # Check for ROP/JOP gadgets that could be exploited
         gadget_analysis = _analyze_rop_gadgets(data)
         if gadget_analysis["gadget_count"] > 10:
@@ -128,7 +131,7 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
                 "count": gadget_analysis["gadget_count"],
                 "risk": "high"
             })
-        
+
         # Analyze string operations for potential buffer overflows
         string_analysis = _analyze_string_operations(data)
         results["unsafe_patterns"].extend(string_analysis)
@@ -170,21 +173,21 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
         "stack_canaries": False,
         "stack_operations": []
     }
-    
+
     try:
         if not CAPSTONE_AVAILABLE:
             logger.warning("Capstone not available for stack pattern analysis")
             return results
-            
+
         # Determine architecture
         is_64bit = b'PE\x00\x00d\x86' in data[:1024] or b'\x7fELF\x02' in data[:10]
-        
+
         # Initialize Capstone disassembler
         if is_64bit:
             md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
         else:
             md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
-            
+
         # Look for stack-related patterns
         stack_patterns = {
             # Stack buffer allocations
@@ -199,7 +202,7 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
             b'\x48\x8d': 'LEA instruction (potential buffer reference)',
             b'\x8d': 'LEA instruction (potential buffer reference)'
         }
-        
+
         for pattern, description in stack_patterns.items():
             occurrences = data.count(pattern)
             if occurrences > 0:
@@ -210,7 +213,7 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
                 })
                 if "canary" in description:
                     results["stack_canaries"] = True
-                    
+
         # Disassemble and analyze instructions
         code_sections = []
         if PEFILE_AVAILABLE and binary_path.lower().endswith(('.exe', '.dll')):
@@ -219,11 +222,11 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
                 for section in pe.sections:
                     if section.Characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
                         code_sections.append((section.VirtualAddress, section.get_data()))
-            except:
+            except (pefile.PEFormatError, IOError, Exception):
                 code_sections = [(0, data)]
         else:
             code_sections = [(0, data)]
-            
+
         # Analyze instructions for stack operations
         dangerous_stack_ops = 0
         for base_addr, code_data in code_sections[:1]:  # Limit analysis to first code section
@@ -240,19 +243,19 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
                                 "risk": "high" if size > 0x10000 else "medium"
                             })
                             dangerous_stack_ops += 1
-                    except:
+                    except (ValueError, AttributeError, Exception):
                         pass
-                        
+
         if dangerous_stack_ops > 0:
             results["patterns"].append({
                 "pattern": "Large stack allocations",
                 "count": dangerous_stack_ops,
                 "risk": "high"
             })
-            
+
     except Exception as e:
         logger.error("Error in stack pattern analysis: %s", e)
-        
+
     return results
 
 
@@ -270,7 +273,7 @@ def _analyze_patterns_without_disassembly(data: bytes) -> Dict[str, Any]:
         "patterns": [],
         "stack_canaries": False
     }
-    
+
     try:
         # Look for common patterns indicating stack protection
         canary_patterns = [
@@ -281,7 +284,7 @@ def _analyze_patterns_without_disassembly(data: bytes) -> Dict[str, Any]:
             b'__security_cookie',
             b'__security_check_cookie'
         ]
-        
+
         for pattern in canary_patterns:
             if pattern in data:
                 results["stack_canaries"] = True
@@ -291,18 +294,18 @@ def _analyze_patterns_without_disassembly(data: bytes) -> Dict[str, Any]:
                     "risk": "low"
                 })
                 break
-                
+
         # Look for unsafe function references
         unsafe_refs = {
             b'strcpy': 'strcpy (no bounds checking)',
-            b'strcat': 'strcat (no bounds checking)', 
+            b'strcat': 'strcat (no bounds checking)',
             b'gets': 'gets (extremely unsafe)',
             b'sprintf': 'sprintf (no bounds checking)',
             b'vsprintf': 'vsprintf (no bounds checking)',
             b'scanf': 'scanf (unsafe input)',
             b'memcpy': 'memcpy (no bounds checking)'
         }
-        
+
         for func, desc in unsafe_refs.items():
             count = data.count(func + b'\x00')  # Look for null-terminated strings
             if count > 0:
@@ -311,10 +314,10 @@ def _analyze_patterns_without_disassembly(data: bytes) -> Dict[str, Any]:
                     "count": count,
                     "risk": "high" if func in [b'gets', b'strcpy'] else "medium"
                 })
-                
+
     except Exception as e:
         logger.error("Error in pattern analysis without disassembly: %s", e)
-        
+
     return results
 
 
@@ -329,7 +332,7 @@ def _detect_vulnerability_patterns(data: bytes) -> List[Dict[str, Any]]:
         list: Detected vulnerability patterns
     """
     patterns = []
-    
+
     try:
         # Look for common vulnerability indicators
         vuln_indicators = {
@@ -347,7 +350,7 @@ def _detect_vulnerability_patterns(data: bytes) -> List[Dict[str, Any]]:
             b'alloca': {'desc': 'Stack allocation', 'risk': 'medium'},
             b'_alloca': {'desc': 'Stack allocation', 'risk': 'medium'}
         }
-        
+
         for pattern, info in vuln_indicators.items():
             count = data.count(pattern)
             if count > 0:
@@ -356,7 +359,7 @@ def _detect_vulnerability_patterns(data: bytes) -> List[Dict[str, Any]]:
                     "count": count,
                     "risk": info['risk']
                 })
-                
+
         # Look for integer overflow patterns in x86 assembly
         overflow_patterns = [
             b'\xf7\xe0',  # mul eax
@@ -365,7 +368,7 @@ def _detect_vulnerability_patterns(data: bytes) -> List[Dict[str, Any]]:
             b'\x69',      # imul with immediate
             b'\x6b'       # imul with immediate (byte)
         ]
-        
+
         overflow_count = sum(data.count(p) for p in overflow_patterns)
         if overflow_count > 10:
             patterns.append({
@@ -373,10 +376,10 @@ def _detect_vulnerability_patterns(data: bytes) -> List[Dict[str, Any]]:
                 "count": overflow_count,
                 "risk": "medium"
             })
-            
+
     except Exception as e:
         logger.error("Error detecting vulnerability patterns: %s", e)
-        
+
     return patterns
 
 
@@ -395,7 +398,7 @@ def _analyze_rop_gadgets(data: bytes) -> Dict[str, Any]:
         "gadget_types": {},
         "exploitability": "low"
     }
-    
+
     try:
         # Common ROP gadget patterns (x86/x64)
         gadget_patterns = {
@@ -416,7 +419,7 @@ def _analyze_rop_gadgets(data: bytes) -> Dict[str, Any]:
             b'\xff\xd0': 'call eax',
             b'\xff\xd4': 'call esp'
         }
-        
+
         # Count gadgets
         for pattern, gadget_type in gadget_patterns.items():
             count = data.count(pattern)
@@ -425,18 +428,18 @@ def _analyze_rop_gadgets(data: bytes) -> Dict[str, Any]:
                 if gadget_type not in results["gadget_types"]:
                     results["gadget_types"][gadget_type] = 0
                 results["gadget_types"][gadget_type] += count
-                
+
         # Assess exploitability based on gadget diversity and count
         unique_gadget_types = len(results["gadget_types"])
         total_gadgets = results["gadget_count"]
-        
+
         if total_gadgets > 100 and unique_gadget_types > 5:
             results["exploitability"] = "high"
         elif total_gadgets > 50 and unique_gadget_types > 3:
             results["exploitability"] = "medium"
         else:
             results["exploitability"] = "low"
-            
+
         # Look for specific useful gadget chains
         useful_chains = {
             b'\x58\x5b\xc3': 'pop eax; pop ebx; ret',
@@ -444,15 +447,15 @@ def _analyze_rop_gadgets(data: bytes) -> Dict[str, Any]:
             b'\x83\xc4\x04\xc3': 'add esp, 4; ret',
             b'\x83\xc4\x08\xc3': 'add esp, 8; ret'
         }
-        
+
         for chain, desc in useful_chains.items():
             if chain in data:
                 results["gadget_types"][desc] = data.count(chain)
                 results["gadget_count"] += data.count(chain)
-                
+
     except Exception as e:
         logger.error("Error analyzing ROP gadgets: %s", e)
-        
+
     return results
 
 
@@ -467,7 +470,7 @@ def _analyze_string_operations(data: bytes) -> List[Dict[str, Any]]:
         list: Unsafe string operation patterns
     """
     patterns = []
-    
+
     try:
         # String operation patterns that might indicate unsafe usage
         string_ops = {
@@ -490,27 +493,27 @@ def _analyze_string_operations(data: bytes) -> List[Dict[str, Any]]:
             b'StrCpy': 'StrCpy (unbounded copy)',
             b'StrCat': 'StrCat (unbounded concatenation)'
         }
-        
+
         for pattern, desc in string_ops.items():
             # Look for both the pattern and variations
             count = 0
             count += data.count(pattern)
             # Also check without @@ suffix
             count += data.count(pattern.replace(b'@@', b''))
-            
+
             if count > 0:
                 risk = "high"
                 if b'strn' in pattern or b'snprintf' in pattern:
                     risk = "medium"
                 elif b'gets' in pattern or b'strcpy' in pattern:
                     risk = "critical"
-                    
+
                 patterns.append({
                     "pattern": f"String operation: {desc}",
                     "count": count,
                     "risk": risk
                 })
-                
+
         # Look for string length checks (good practice)
         safety_patterns = {
             b'strlen': 'String length checks',
@@ -519,18 +522,18 @@ def _analyze_string_operations(data: bytes) -> List[Dict[str, Any]]:
             b'StringCchLength': 'Safe string length (Windows)',
             b'StringCbLength': 'Safe string byte length (Windows)'
         }
-        
+
         safety_count = 0
         for pattern, desc in safety_patterns.items():
             safety_count += data.count(pattern)
-            
+
         if safety_count > 0:
             patterns.append({
                 "pattern": "String safety checks present",
                 "count": safety_count,
                 "risk": "low"
             })
-            
+
         # Look for bounds checking patterns
         bounds_patterns = [
             b'boundary check',
@@ -539,7 +542,7 @@ def _analyze_string_operations(data: bytes) -> List[Dict[str, Any]]:
             b'max length',
             b'sizeof'
         ]
-        
+
         bounds_count = sum(data.count(p) for p in bounds_patterns)
         if bounds_count > 0:
             patterns.append({
@@ -547,10 +550,10 @@ def _analyze_string_operations(data: bytes) -> List[Dict[str, Any]]:
                 "count": bounds_count,
                 "risk": "low"
             })
-            
+
     except Exception as e:
         logger.error("Error analyzing string operations: %s", e)
-        
+
     return patterns
 
 

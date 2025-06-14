@@ -286,7 +286,7 @@ class WindowsActivator:
                 'error': 'Prerequisites not met for Office activation',
                 'issues': issues
             }
-        
+
         try:
             # Detect Office installation if version is auto
             if office_version == "auto":
@@ -296,12 +296,12 @@ class WindowsActivator:
                         'success': False,
                         'error': 'No Microsoft Office installation detected'
                     }
-            
+
             logger.info("Starting Office activation for version: %s", office_version)
-            
+
             # Try C2R (Click-to-Run) activation first, then MSI if needed
             result = self._activate_office_c2r(office_version)
-            
+
             # If C2R failed, try MSI method
             if not result.get('success', False):
                 logger.info("C2R activation failed, trying MSI method...")
@@ -311,16 +311,16 @@ class WindowsActivator:
                 else:
                     # Combine error information
                     result['msi_error'] = msi_result.get('error', 'MSI activation also failed')
-            
+
             # Get Office activation status after attempt
             if result.get('success', False):
                 result['post_activation_status'] = self._get_office_status()
                 logger.info("Office activation completed successfully")
             else:
                 logger.error("Office activation failed: %s", result.get('error', 'Unknown error'))
-            
+
             return result
-            
+
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error during Office activation: %s", e)
             return {
@@ -343,9 +343,9 @@ class WindowsActivator:
                 r"C:\Program Files\Microsoft Office\root\Office16",
                 r"C:\Program Files (x86)\Microsoft Office\root\Office16"
             ]
-            
+
             detected_versions = []
-            
+
             for base_path in office_paths:
                 if os.path.exists(base_path):
                     # Look for version-specific folders
@@ -354,7 +354,7 @@ class WindowsActivator:
                             item_path = os.path.join(base_path, item)
                             if os.path.isdir(item_path):
                                 # Check for Office executables
-                                if any(os.path.exists(os.path.join(item_path, exe)) 
+                                if any(os.path.exists(os.path.join(item_path, exe))
                                       for exe in ['WINWORD.EXE', 'EXCEL.EXE', 'POWERPNT.EXE']):
                                     if 'Office16' in item or '16.0' in item:
                                         detected_versions.append('2016')
@@ -364,7 +364,7 @@ class WindowsActivator:
                                         detected_versions.append('2010')
                     except (OSError, PermissionError):
                         continue
-            
+
             # Also check registry for C2R installations
             try:
                 import winreg
@@ -372,7 +372,7 @@ class WindowsActivator:
                     r"SOFTWARE\Microsoft\Office\ClickToRun\Configuration",
                     r"SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration"
                 ]
-                
+
                 for reg_path in registry_paths:
                     try:
                         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, reg_path) as key:
@@ -386,11 +386,11 @@ class WindowsActivator:
                                 pass
                     except FileNotFoundError:
                         continue
-                        
+
             except ImportError:
                 # winreg not available (non-Windows)
                 pass
-            
+
             # Return most recent version detected
             if detected_versions:
                 if "2021" in detected_versions:
@@ -403,9 +403,9 @@ class WindowsActivator:
                     return "2013"
                 else:
                     return detected_versions[0]
-            
+
             return ""
-            
+
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error detecting Office version: %s", e)
             return ""
@@ -423,16 +423,16 @@ class WindowsActivator:
         try:
             # Use office_script_path from script directory if available
             office_script = self.script_path.parent / "OfficeActivator.cmd"
-            
+
             # If specific Office script doesn't exist, use main script with Office flag
             if not office_script.exists():
                 office_script = self.script_path
                 cmd_args = [str(office_script), "/Office"]
             else:
                 cmd_args = [str(office_script), "/C2R", f"/Version:{office_version}"]
-            
+
             logger.info("Running Office C2R activation: %s", ' '.join(cmd_args))
-            
+
             result = subprocess.run(
                 cmd_args,
                 capture_output=True,
@@ -440,9 +440,9 @@ class WindowsActivator:
                 timeout=300,  # 5 minutes timeout
                 cwd=self.script_path.parent
             , check=False)
-            
+
             success = result.returncode == 0
-            
+
             return {
                 'success': success,
                 'method': 'C2R',
@@ -451,7 +451,7 @@ class WindowsActivator:
                 'stdout': result.stdout,
                 'stderr': result.stderr
             }
-            
+
         except subprocess.TimeoutExpired:
             return {
                 'success': False,
@@ -483,20 +483,20 @@ class WindowsActivator:
                 r"C:\Program Files\Microsoft Office\Office15\OSPP.VBS",
                 r"C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS"
             ]
-            
+
             ospp_script = None
             for path in ospp_paths:
                 if os.path.exists(path):
                     ospp_script = path
                     break
-            
+
             if not ospp_script:
                 return {
                     'success': False,
                     'method': 'MSI',
                     'error': 'OSPP.VBS script not found - Office may not be installed'
                 }
-            
+
             # Try to activate using OSPP with generic volume license key
             volume_keys = {
                 "2019": "NMMKJ-6RK4F-KMJVX-8D9MJ-6MWKP",  # Office Pro Plus 2019
@@ -504,46 +504,46 @@ class WindowsActivator:
                 "2013": "YC7DK-G2NP3-2QQC3-J6H88-GVGXT",  # Office Pro Plus 2013
                 "2021": "FXYTK-NJJ8C-GB6DW-3DYQT-6F7TH"   # Office Pro Plus 2021
             }
-            
+
             key = volume_keys.get(office_version, volume_keys.get("2016"))  # Default to 2016 key
-            
+
             # Install the product key
             install_cmd = [
                 'cscript', '//nologo', ospp_script, f'/inpkey:{key}'
             ]
-            
+
             logger.info("Installing Office product key for version %s", office_version)
-            
+
             result = subprocess.run(
                 install_cmd,
                 capture_output=True,
                 text=True,
                 timeout=60
             , check=False)
-            
+
             if result.returncode != 0:
                 return {
                     'success': False,
                     'method': 'MSI',
                     'error': f'Failed to install product key: {result.stderr}'
                 }
-            
+
             # Activate the installed key
             activate_cmd = [
                 'cscript', '//nologo', ospp_script, '/act'
             ]
-            
+
             logger.info("Activating Office using MSI method")
-            
+
             result = subprocess.run(
                 activate_cmd,
                 capture_output=True,
                 text=True,
                 timeout=120
             , check=False)
-            
+
             success = result.returncode == 0
-            
+
             return {
                 'success': success,
                 'method': 'MSI',
@@ -553,7 +553,7 @@ class WindowsActivator:
                 'stdout': result.stdout,
                 'stderr': result.stderr
             }
-            
+
         except subprocess.TimeoutExpired:
             return {
                 'success': False,
@@ -582,19 +582,19 @@ class WindowsActivator:
                 r"C:\Program Files\Microsoft Office\Office15\OSPP.VBS",
                 r"C:\Program Files (x86)\Microsoft Office\Office15\OSPP.VBS"
             ]
-            
+
             ospp_script = None
             for path in ospp_paths:
                 if os.path.exists(path):
                     ospp_script = path
                     break
-            
+
             if not ospp_script:
                 return {
                     'status': 'unknown',
                     'error': 'OSPP.VBS not found'
                 }
-            
+
             # Check activation status
             result = subprocess.run(
                 ['cscript', '//nologo', ospp_script, '/dstatus'],
@@ -602,12 +602,12 @@ class WindowsActivator:
                 text=True,
                 timeout=60
             , check=False)
-            
+
             status_info = {
                 'raw_output': result.stdout.strip(),
                 'error': result.stderr.strip() if result.stderr else None
             }
-            
+
             if result.returncode == 0:
                 output = result.stdout.lower()
                 if 'license status: ---licensed---' in output:
@@ -620,9 +620,9 @@ class WindowsActivator:
                     status_info['status'] = 'not_activated'
             else:
                 status_info['status'] = 'error'
-            
+
             return status_info
-            
+
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error getting Office status: %s", e)
             return {

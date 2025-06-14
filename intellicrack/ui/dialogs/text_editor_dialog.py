@@ -26,7 +26,16 @@ import re
 from typing import Optional
 
 # Import common PyQt5 components
-from .common_imports import *
+from .common_imports import (
+    Qt, QThread, QTimer, pyqtSignal, QFont, QIcon, QPixmap,
+    QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout,
+    QGroupBox, QHBoxLayout, QHeaderView, QInputDialog, QLabel,
+    QLineEdit, QListWidget, QListWidgetItem, QMessageBox,
+    QProgressBar, QPushButton, QSlider, QSpinBox, QSplitter,
+    QTableWidget, QTableWidgetItem, QTabWidget, QTextEdit,
+    QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, HAS_PYQT, logger
+)
+
 try:
     from PyQt5.QtCore import QFileSystemWatcher
     from PyQt5.QtGui import (

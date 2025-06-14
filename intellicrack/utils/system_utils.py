@@ -587,7 +587,7 @@ def optimize_memory_usage() -> Dict[str, Any]:
                     except Exception as e:
                         failed_count += 1
                         logger.debug("Failed to clear cache for %s: %s", type(obj).__name__, e)
-            
+
             logger.debug("Cache clearing: %d successful, %d failed", cleared_count, failed_count)
     except (OSError, ValueError, RuntimeError) as e:
         logger.warning("Error clearing caches: %s", e)
