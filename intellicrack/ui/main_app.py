@@ -23012,8 +23012,8 @@ def launch():
             
             if results.get("status") == "success":
                 self.update_output.emit(log_message("[License Server] Server started successfully"))
-                self.update_analysis_results.emit(f"\n=== Network License Server ===\n")
-                self.update_analysis_results.emit(f"Status: Running\n")
+                self.update_analysis_results.emit("\n=== Network License Server ===\n")
+                self.update_analysis_results.emit("Status: Running\n")
                 self.update_analysis_results.emit(f"Port: {results.get('port', 'Unknown')}\n")
                 self.update_analysis_results.emit(f"Protocol: {results.get('protocol', 'Unknown')}\n")
                 
@@ -23040,7 +23040,7 @@ def launch():
             
             if results.get("status") == "success":
                 self.update_output.emit(log_message("[Frida] Analysis completed successfully"))
-                self.update_analysis_results.emit(f"\n=== Frida Dynamic Analysis Results ===\n")
+                self.update_analysis_results.emit("\n=== Frida Dynamic Analysis Results ===\n")
                 self.update_analysis_results.emit(f"Target: {os.path.basename(self.binary_path)}\n")
                 self.update_analysis_results.emit(f"Process ID: {results.get('pid', 'Unknown')}\n\n")
                 
