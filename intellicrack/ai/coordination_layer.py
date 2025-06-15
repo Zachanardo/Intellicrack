@@ -600,36 +600,9 @@ class AICoordinationLayer:
     def _parse_llm_response(self, response_content: str, request: AnalysisRequest) -> Dict[str, Any]:
         """Parse LLM response into structured analysis result."""
         # Extract key information from LLM response
-        vulnerabilities = []
-        recommendations = []
-        attack_vectors = []
-
-        # Simple parsing logic - could be enhanced with more sophisticated NLP
-        lines = response_content.split('\n')
-        current_section = None
-
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-
-            # Detect sections
-            if any(keyword in line.lower() for keyword in ['vulnerabilit', 'security issue', 'weakness']):
-                current_section = 'vulnerabilities'
-            elif any(keyword in line.lower() for keyword in ['recommend', 'suggest', 'should']):
-                current_section = 'recommendations'
-            elif any(keyword in line.lower() for keyword in ['attack', 'exploit', 'vector']):
-                current_section = 'attack_vectors'
-
-            # Extract content based on section
-            if line.startswith('-') or line.startswith('*') or line.startswith(('1.', '2.', '3.', '4.', '5.')):
-                item = line.lstrip('-*0123456789. ')
-                if current_section == 'vulnerabilities' and len(item) > 10:
-                    vulnerabilities.append(item)
-                elif current_section == 'recommendations' and len(item) > 10:
-                    recommendations.append(item)
-                elif current_section == 'attack_vectors' and len(item) > 10:
-                    attack_vectors.append(item)
+        # Parse using common AI response parser
+        from .response_parser import parse_attack_vector_response
+        vulnerabilities, recommendations, attack_vectors = parse_attack_vector_response(response_content)
 
         # Calculate confidence based on response quality
         confidence = min(0.95, 0.6 + (len(vulnerabilities) * 0.1) + (len(recommendations) * 0.05))

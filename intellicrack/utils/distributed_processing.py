@@ -28,6 +28,8 @@ import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from .entropy_utils import calculate_byte_entropy
+
 logger = logging.getLogger(__name__)
 
 # Try to import optional dependencies
@@ -294,20 +296,8 @@ def run_distributed_entropy_analysis(binary_path: str,
         if not data:
             return {"entropy": 0.0}
 
-        # Calculate byte frequency
-        freq = {}
-        for byte in data:
-            freq[byte] = freq.get(byte, 0) + 1
-
-        # Calculate entropy
-        import math
-        entropy = 0.0
-        data_len = len(data)
-
-        for count in freq.values():
-            if count > 0:
-                probability = count / data_len
-                entropy -= probability * math.log2(probability)
+        # Calculate entropy using shared utility
+        entropy = calculate_byte_entropy(data)
 
         return {
             "entropy": entropy,
@@ -798,22 +788,32 @@ def _distributed_string_extraction(binary_path: str,
         """Extract printable strings from chunk."""
         strings = []
         current = []
+        current_offset = 0
 
-        for byte in data:
+        for i, byte in enumerate(data):
             if 32 <= byte <= 126:  # Printable ASCII
+                if not current:  # Start of new string
+                    current_offset = i
                 current.append(chr(byte))
             else:
                 if len(current) >= min_length:
-                    strings.append(''.join(current))
+                    strings.append({
+                        'text': ''.join(current),
+                        'offset': chunk_info["offset"] + current_offset
+                    })
                 current = []
 
         # Don't forget last string
         if len(current) >= min_length:
-            strings.append(''.join(current))
+            strings.append({
+                'text': ''.join(current),
+                'offset': chunk_info["offset"] + current_offset
+            })
 
         return {
             "strings_count": len(strings),
-            "strings": strings[:100]  # Limit to prevent memory issues
+            "strings": strings[:100],  # Limit to prevent memory issues
+            "chunk_offset": chunk_info["offset"]
         }
 
     results = process_binary_chunks(
@@ -920,7 +920,6 @@ def _run_cpu_fallback(task_type: str, data: Any) -> Dict[str, Any]:
 
 def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
     """GPU-accelerated pattern matching."""
-    import time
     start_time = time.time()
     patterns_found = 0
 
@@ -982,7 +981,6 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
 def _gpu_crypto_operations(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
     """GPU-accelerated cryptographic operations."""
     import hashlib
-    import time
 
     operation = config.get('operation', 'hash')
     input_data = data.get('data', b'')
@@ -1027,11 +1025,9 @@ def _gpu_crypto_operations(data: Dict[str, Any], config: Dict[str, Any]) -> Dict
 
 def _gpu_ml_inference(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
     """GPU-accelerated ML inference."""
-    import time
     start_time = time.time()
 
     try:
-        import numpy as np
         import torch
 
         # Check for GPU availability

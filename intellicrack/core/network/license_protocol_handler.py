@@ -460,6 +460,8 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         self.captured_responses = []
         self.session_data = {}
         self.client_connections = {}
+        self._hasp_aes_key = None
+        self._hasp_nonce = None
 
     def clear_data(self) -> None:
         """Clear HASP-specific captured data."""
@@ -601,7 +603,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
                         # Generate or use stored key/nonce for this session
-                        if not hasattr(self, '_hasp_aes_key'):
+                        if self._hasp_aes_key is None:
                             self._hasp_aes_key = os.urandom(32)  # AES-256
                             self._hasp_nonce = os.urandom(16)
 
@@ -617,7 +619,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         return struct.pack('<I', 0x00000000) + encrypted
                     except ImportError:
                         # Fallback to XOR if cryptography not available, but warn
-                        logger.warning("cryptography library not available - using weak XOR encryption")
+                        self.logger.warning("cryptography library not available - using weak XOR encryption")
                         encrypted = bytes(b ^ 0xAA for b in data_to_encrypt)
                         return struct.pack('<I', 0x00000000) + encrypted
                 return struct.pack('<I', 0x00000000)
@@ -632,7 +634,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
                         # Use stored key/nonce from encryption
-                        if hasattr(self, '_hasp_aes_key'):
+                        if self._hasp_aes_key is not None:
                             cipher = Cipher(
                                 algorithms.AES(self._hasp_aes_key),
                                 modes.CTR(self._hasp_nonce),
@@ -642,13 +644,13 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                             decrypted = decryptor.update(data_to_decrypt) + decryptor.finalize()
                         else:
                             # No key established yet
-                            logger.error("No encryption key established for decryption")
+                            self.logger.error("No encryption key established for decryption")
                             decrypted = data_to_decrypt
 
                         return struct.pack('<I', 0x00000000) + decrypted
                     except ImportError:
                         # Fallback to XOR if cryptography not available
-                        logger.warning("cryptography library not available - using weak XOR decryption")
+                        self.logger.warning("cryptography library not available - using weak XOR decryption")
                         decrypted = bytes(b ^ 0xAA for b in data_to_decrypt)
                         return struct.pack('<I', 0x00000000) + decrypted
                 return struct.pack('<I', 0x00000000)

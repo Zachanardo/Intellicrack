@@ -20,24 +20,8 @@ def analyze_pe_imports(pe, target_apis: Dict[str, List[str]]) -> Dict[str, List[
     Returns:
         Dictionary mapping categories to detected APIs
     """
-    detected_apis = {category: [] for category in target_apis.keys()}
-
-    if not hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-        return detected_apis
-
-    for entry in pe.DIRECTORY_ENTRY_IMPORT:
-        for imp in entry.imports:
-            if not imp.name:
-                continue
-
-            func_name = imp.name.decode('utf-8', errors='ignore')
-
-            # Check each category of APIs
-            for category, apis in target_apis.items():
-                if any(api.lower() in func_name.lower() for api in apis):
-                    detected_apis[category].append(func_name)
-
-    return detected_apis
+    from .network_api_common import analyze_network_apis
+    return analyze_network_apis(pe, target_apis)
 
 def get_pe_sections_info(pe) -> List[Dict]:
     """

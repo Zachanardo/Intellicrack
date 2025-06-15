@@ -884,7 +884,6 @@ class TrainingThread(QThread):
                 }
 
             def forward(self, *args, **kwargs):
-                import logging
                 logger = logging.getLogger(__name__)
                 logger.warning("PyTorch not available - cannot perform forward pass")
                 return {"error": "PyTorch not available", "status": "fallback_mode"}
@@ -1082,6 +1081,50 @@ class ModelFinetuningDialog(QDialog):
         Raises:
             ImportError: If PyQt5 is not available
         """
+
+        # Initialize UI attributes
+        self.apply_aug_button = None
+        self.aug_per_sample_spin = None
+        self.aug_prob_label = None
+        self.aug_prob_slider = None
+        self.aug_progress = None
+        self.aug_status = None
+        self.backtranslation_check = None
+        self.batch_size_spin = None
+        self.create_dataset_button = None
+        self.cutoff_len_spin = None
+        self.dataset_format_combo = None
+        self.dataset_path_button = None
+        self.dataset_path_edit = None
+        self.dataset_preview = None
+        self.epochs_spin = None
+        self.export_dataset_button = None
+        self.export_metrics_button = None
+        self.gradient_accum_spin = None
+        self.learning_rate_spin = None
+        self.load_preview_button = None
+        self.lora_alpha_spin = None
+        self.lora_rank_spin = None
+        self.metrics_view = None
+        self.model_format_combo = None
+        self.model_path_button = None
+        self.model_path_edit = None
+        self.paraphrase_check = None
+        self.preserve_labels_check = None
+        self.preview_aug_button = None
+        self.random_delete_check = None
+        self.random_insert_check = None
+        self.random_swap_check = None
+        self.sample_count_spin = None
+        self.save_model_button = None
+        self.save_plot_button = None
+        self.stop_button = None
+        self.synonym_check = None
+        self.train_button = None
+        self.training_args = None
+        self.training_log = None
+        self.validate_dataset_button = None
+        self.visualization_label = None
         if not PyQt5_available:
             raise ImportError("PyQt5 is required for ModelFinetuningDialog")
 
@@ -1684,7 +1727,7 @@ class ModelFinetuningDialog(QDialog):
             self.training_log.append("Training finished!")
 
             # Offer to save model
-            if hasattr(self, 'training_thread') and self.training_thread.training_history:
+            if self.training_thread is not None and self.training_thread.training_history:
                 reply = QMessageBox.question(
                     self,
                     "Training Complete",
@@ -2294,7 +2337,7 @@ class ModelFinetuningDialog(QDialog):
     def _export_metrics(self):
         """Export training metrics to file."""
         try:
-            if not hasattr(self, 'training_thread') or not self.training_thread.training_history:
+            if self.training_thread is None or not self.training_thread.training_history:
                 QMessageBox.warning(self, "No Metrics", "No training metrics available to export.")
                 return
 
@@ -2337,7 +2380,7 @@ class ModelFinetuningDialog(QDialog):
     def _save_plot(self):
         """Save the current training plot."""
         try:
-            if not hasattr(self, 'training_thread') or not self.training_thread.training_history:
+            if self.training_thread is None or not self.training_thread.training_history:
                 QMessageBox.warning(self, "No Plot", "No training plot available to save.")
                 return
 
@@ -2448,7 +2491,7 @@ class ModelFinetuningDialog(QDialog):
         """Handle dialog close event."""
         try:
             # Stop training if running
-            if hasattr(self, 'training_thread') and self.training_thread.isRunning():
+            if self.training_thread is not None and self.training_thread.isRunning():
                 reply = QMessageBox.question(
                     self,
                     "Training in Progress",

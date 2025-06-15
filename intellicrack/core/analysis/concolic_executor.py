@@ -133,6 +133,8 @@ except ImportError:
             def __init__(self, binary_path: str = None, *args, **kwargs):
                 """Initialize native concolic execution engine."""
                 self.binary_path = binary_path
+                self.init_args = args
+                self.init_kwargs = kwargs
                 self.all_states = {}
                 self.ready_states = []
                 self.terminated_states = []
@@ -225,6 +227,7 @@ except ImportError:
             def run(self, procs: int = 1) -> None:
                 """Run concolic execution."""
                 import time
+                self.logger.info(f"Starting concolic execution with {procs} processes")
                 start_time = time.time()
 
                 self.logger.info("Starting concolic execution (timeout: %ds)", self.timeout)
@@ -420,19 +423,19 @@ except ImportError:
 
             def will_run_callback(self, executor, *args, **kwargs):
                 """Callback before execution starts."""
-                self.logger.debug("Execution starting")
+                self.logger.debug(f"Execution starting on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
 
             def did_finish_run_callback(self, executor, *args, **kwargs):
                 """Callback after execution completes."""
-                self.logger.debug("Execution finished")
+                self.logger.debug(f"Execution finished on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
 
             def will_fork_state_callback(self, state, new_state, *args, **kwargs):
                 """Callback before state fork."""
-                self.logger.debug("State fork: PC 0x%x -> 0x%x", state.pc, new_state.pc)
+                self.logger.debug(f"State fork: PC 0x{state.pc:x} -> 0x{new_state.pc:x} with args={args}, kwargs={kwargs}")
 
             def will_execute_instruction_callback(self, state, pc, insn):
                 """Callback before instruction execution."""
-                self.logger.debug("Executing instruction at 0x%x", pc)
+                self.logger.debug(f"Executing instruction at 0x{pc:x}, state={state}, insn={insn}")
         logging.getLogger(__name__).warning("Neither Manticore nor simconcolic available")
 
 try:

@@ -238,31 +238,8 @@ class AIAssistant:
 
     def _parse_ai_code_response(self, response: str) -> tuple:
         """Parse AI response to extract insights and suggestions."""
-        insights = []
-        suggestions = []
-
-        lines = response.split('\n')
-        current_section = None
-
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-
-            # Detect sections
-            if any(keyword in line.lower() for keyword in ['vulnerabilit', 'security', 'risk']):
-                current_section = 'insights'
-            elif any(keyword in line.lower() for keyword in ['suggest', 'recommend', 'should', 'consider']):
-                current_section = 'suggestions'
-
-            # Extract items
-            if line.startswith(('-', '*', '•')) or line.startswith(('1.', '2.', '3.', '4.', '5.')):
-                item = line.lstrip('-*•0123456789. ')
-                if current_section == 'insights' and len(item) > 10:
-                    insights.append(item)
-                elif current_section == 'suggestions' and len(item) > 10:
-                    suggestions.append(item)
-
+        from .response_parser import parse_security_analysis_response
+        insights, suggestions = parse_security_analysis_response(response)
         return insights[:5], suggestions[:5]  # Limit to top 5 each
 
     def _get_timestamp(self) -> str:
@@ -545,29 +522,8 @@ class CodeAnalyzer:
 
     def _parse_ai_binary_response(self, response: str) -> tuple:
         """Parse AI response for binary analysis."""
-        findings = []
-        recommendations = []
-
-        lines = response.split('\n')
-        current_section = None
-
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-
-            if any(keyword in line.lower() for keyword in ['risk', 'vulnerability', 'threat', 'suspicious']):
-                current_section = 'findings'
-            elif any(keyword in line.lower() for keyword in ['recommend', 'suggest', 'should', 'analyze']):
-                current_section = 'recommendations'
-
-            if line.startswith(('-', '*', '•')) or line.startswith(('1.', '2.', '3.', '4.', '5.')):
-                item = line.lstrip('-*•0123456789. ')
-                if current_section == 'findings' and len(item) > 10:
-                    findings.append(item)
-                elif current_section == 'recommendations' and len(item) > 10:
-                    recommendations.append(item)
-
+        from .response_parser import parse_simple_response
+        findings, recommendations = parse_simple_response(response)
         return findings[:8], recommendations[:6]
 
     def _analyze_assembly_patterns(self, assembly_code: str) -> Dict[str, Any]:
@@ -696,34 +652,33 @@ class CodeAnalyzer:
 
     def _parse_ai_assembly_response(self, response: str) -> tuple:
         """Parse AI response for assembly analysis."""
-        patterns = []
-        vulnerabilities = []
-        recommendations = []
-
-        lines = response.split('\n')
-        current_section = None
-
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-
-            if any(keyword in line.lower() for keyword in ['vulnerabilit', 'exploit', 'overflow', 'injection']):
-                current_section = 'vulnerabilities'
-            elif any(keyword in line.lower() for keyword in ['pattern', 'technique', 'instruction', 'behavior']):
-                current_section = 'patterns'
-            elif any(keyword in line.lower() for keyword in ['recommend', 'suggest', 'analyze', 'investigate']):
-                current_section = 'recommendations'
-
+        from .parsing_utils import ResponseLineParser
+        from typing import Optional
+        
+        # Define section keywords
+        section_keywords = {
+            'vulnerabilities': ['vulnerabilit', 'exploit', 'overflow', 'injection'],
+            'patterns': ['pattern', 'technique', 'instruction', 'behavior'],
+            'recommendations': ['recommend', 'suggest', 'analyze', 'investigate']
+        }
+        
+        # Custom line processor for list items
+        def process_line(line: str, section: str) -> Optional[str]:
             if line.startswith(('-', '*', '•')) or line.startswith(('1.', '2.', '3.', '4.', '5.')):
                 item = line.lstrip('-*•0123456789. ')
-                if current_section == 'vulnerabilities' and len(item) > 10:
-                    vulnerabilities.append(item)
-                elif current_section == 'patterns' and len(item) > 10:
-                    patterns.append(item)
-                elif current_section == 'recommendations' and len(item) > 10:
-                    recommendations.append(item)
-
+                if len(item) > 10:  # Only return valid items
+                    return item
+            return None
+        
+        # Parse using shared utility
+        sections = ResponseLineParser.parse_lines_by_sections(
+            response, section_keywords, process_line
+        )
+        
+        patterns = sections.get('patterns', [])
+        vulnerabilities = sections.get('vulnerabilities', [])
+        recommendations = sections.get('recommendations', [])
+        
         return patterns[:6], vulnerabilities[:6], recommendations[:5]
 
 

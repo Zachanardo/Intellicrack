@@ -33,8 +33,10 @@ import subprocess
 import time
 from typing import Any, Dict, Optional
 
+from .base_snapshot_handler import BaseSnapshotHandler
 
-class DockerContainer:
+
+class DockerContainer(BaseSnapshotHandler):
     """
     Manages Docker container operations for distributed analysis.
 
@@ -61,12 +63,11 @@ class DockerContainer:
         Raises:
             RuntimeError: If Docker is not available on the system
         """
+        super().__init__()
         self.binary_path = binary_path
         self.image = image
         self.container_id: Optional[str] = None
         self.container_name: Optional[str] = None
-        self.snapshots: Dict[str, Dict[str, Any]] = {}
-        self.logger = logging.getLogger(__name__)
 
         # Validate binary path if provided
         if binary_path and not os.path.exists(binary_path):
@@ -165,12 +166,8 @@ class DockerContainer:
 
             # Start the container
             self.logger.info("Starting Docker container: %s", self.container_name)
-            result = subprocess.run(
-                docker_cmd,
-                capture_output=True,
-                text=True,
-                timeout=60
-            , check=False)
+            from ...utils.subprocess_utils import run_subprocess_check
+            result = run_subprocess_check(docker_cmd, timeout=60)
 
             if result.returncode != 0:
                 self.logger.error("Failed to start container: %s", result.stderr)
@@ -446,22 +443,21 @@ class DockerContainer:
         Returns:
             Dictionary containing differences between snapshots
         """
-        if snapshot1 not in self.snapshots:
-            error_msg = f"Snapshot '{snapshot1}' not found"
-            self.logger.error(error_msg)
-            return {"error": error_msg}
+        # Use base class functionality to eliminate duplicate code
+        return self.compare_snapshots_base(snapshot1, snapshot2)
 
-        if snapshot2 not in self.snapshots:
-            error_msg = f"Snapshot '{snapshot2}' not found"
-            self.logger.error(error_msg)
-            return {"error": error_msg}
-
+    def _perform_platform_specific_comparison(self, s1: Dict[str, Any], s2: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Perform Docker-specific snapshot comparison logic.
+        
+        Args:
+            s1: First snapshot data
+            s2: Second snapshot data
+            
+        Returns:
+            Dictionary containing Docker-specific comparison results
+        """
         try:
-            self.logger.info("Comparing snapshots: %s vs %s", snapshot1, snapshot2)
-
-            s1 = self.snapshots[snapshot1]
-            s2 = self.snapshots[snapshot2]
-
             # Compare files
             files1 = set(s1["files"].splitlines() if s1.get("files") else [])
             files2 = set(s2["files"].splitlines() if s2.get("files") else [])
@@ -504,12 +500,9 @@ class DockerContainer:
             new_env = list(env2 - env1)
             removed_env = list(env1 - env2)
 
-            result = {
-                "snapshot1": snapshot1,
-                "snapshot2": snapshot2,
+            return {
                 "timestamp1": s1["timestamp"],
                 "timestamp2": s2["timestamp"],
-                "time_diff": s2["timestamp"] - s1["timestamp"],
                 "new_files": new_files,
                 "deleted_files": deleted_files,
                 "new_processes": new_processes,
@@ -523,13 +516,9 @@ class DockerContainer:
                                 len(new_env) + len(removed_env))
             }
 
-            self.logger.info(f"Snapshot comparison complete: {result['total_changes']} total changes")
-            return result
-
-        except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error comparing snapshots: {str(e)}"
-            self.logger.error(error_msg)
-            return {"error": error_msg}
+        except Exception as e:
+            self.logger.error(f"Docker-specific comparison failed: {e}")
+            return {"docker_comparison_error": str(e)}
 
     def collect_analysis_artifacts(self) -> Dict[str, Any]:
         """

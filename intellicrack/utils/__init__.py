@@ -124,6 +124,18 @@ except ImportError as e:
     _init_logger.warning("Failed to import dependencies: %s", e)
 
 try:
+    from .entropy_utils import (
+        analyze_entropy_sections,
+        calculate_byte_entropy,
+        calculate_entropy,
+        calculate_frequency_distribution,
+        calculate_string_entropy,
+        is_high_entropy,
+    )
+except ImportError as e:
+    _init_logger.warning("Failed to import entropy_utils: %s", e)
+
+try:
     from .tool_wrappers import log_message as tool_log_message
     from .tool_wrappers import (
         run_ghidra_headless,
@@ -316,6 +328,11 @@ except ImportError as e:
     _init_logger.warning("Failed to import additional_runners: %s", e)
 
 try:
+    from .os_detection_mixin import OSDetectionMixin
+except ImportError as e:
+    _init_logger.warning("Failed to import os_detection_mixin: %s", e)
+
+try:
     from .core_utilities import (
         TOOL_REGISTRY,
         deep_runtime_monitoring,
@@ -475,6 +492,24 @@ try:
 except ImportError as e:
     _init_logger.warning("Failed to import certificate_common functions: %s", e)
 
+try:
+    from .pattern_search import (
+        find_function_prologues,
+        find_license_patterns,
+        search_patterns_in_binary,
+    )
+except ImportError as e:
+    _init_logger.warning("Failed to import pattern_search functions: %s", e)
+
+try:
+    from .severity_levels import (
+        SecurityRelevance,
+        SeverityLevel,
+        VulnerabilityLevel,
+    )
+except ImportError as e:
+    _init_logger.warning("Failed to import severity_levels: %s", e)
+
 __all__ = [
     # From binary_utils
     'compute_file_hash', 'get_file_hash', 'read_binary',
@@ -483,6 +518,9 @@ __all__ = [
 
     # From logger
     'get_logger', 'setup_logging', 'logger',
+
+    # From os_detection_mixin  
+    'OSDetectionMixin',
 
     # From misc_utils
     'log_message', 'get_timestamp', 'format_bytes', 'validate_path',
@@ -512,6 +550,10 @@ __all__ = [
     # From dependencies
     'check_and_install_dependencies', 'install_dependencies',
     'setup_required_environment', 'check_weasyprint_dependencies',
+
+    # From entropy_utils
+    'calculate_entropy', 'calculate_byte_entropy', 'calculate_string_entropy',
+    'calculate_frequency_distribution', 'is_high_entropy', 'analyze_entropy_sections',
 
     # From tool_wrappers
     'tool_log_message', 'wrapper_find_file', 'wrapper_load_binary',
@@ -656,7 +698,17 @@ __all__ = [
     'create_popen_safely',
 
     # From certificate_common
-    'create_certificate_builder'
+    'create_certificate_builder',
+    
+    # From pattern_search
+    'search_patterns_in_binary',
+    'find_function_prologues',
+    'find_license_patterns',
+    
+    # From severity_levels
+    'SeverityLevel',
+    'SecurityRelevance',
+    'VulnerabilityLevel',
 ]
 
 # Package metadata

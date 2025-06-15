@@ -54,17 +54,8 @@ try:
 except ImportError:
     REPORTLAB_AVAILABLE = False
 
-try:
-    import matplotlib.pyplot as plt
-    MATPLOTLIB_AVAILABLE = True
-except ImportError:
-    MATPLOTLIB_AVAILABLE = False
-
-try:
-    import pdfkit
-    PDFKIT_AVAILABLE = True
-except ImportError:
-    PDFKIT_AVAILABLE = False
+# Import matplotlib and pdfkit from common imports
+from ...utils.common_imports import MATPLOTLIB_AVAILABLE, plt, PDFKIT_AVAILABLE, pdfkit
 
 # Import common patterns from centralized module
 from ...utils.import_patterns import PEFILE_AVAILABLE, pefile
@@ -669,8 +660,8 @@ class PDFReportGenerator:
             self.logger.error(traceback.format_exc())
             return None
 
-    def export_analysis(self, format_type: str = 'pdf', binary_path: Optional[str] = None, 
-                       analysis_results: Optional[Dict[str, Any]] = None, 
+    def export_analysis(self, format_type: str = 'pdf', binary_path: Optional[str] = None,
+                       analysis_results: Optional[Dict[str, Any]] = None,
                        output_path: Optional[str] = None) -> bool:
         """
         Export analysis results in various formats.
@@ -686,54 +677,54 @@ class PDFReportGenerator:
         """
         try:
             # Get data from app instance if not provided
-            if binary_path is None and self.app_instance:
-                binary_path = getattr(self.app_instance, 'binary_path', None)
-                
-            if analysis_results is None and self.app_instance:
-                analysis_results = getattr(self.app_instance, 'analyze_results', {})
-                
+            if binary_path is None and self.app:
+                binary_path = getattr(self.app, 'binary_path', None)
+
+            if analysis_results is None and self.app:
+                analysis_results = getattr(self.app, 'analyze_results', {})
+
             if not binary_path or not analysis_results:
                 self.logger.error("Missing binary path or analysis results for export")
                 return False
-                
+
             # Generate appropriate export based on format
             if format_type.lower() == 'pdf':
                 result = self.generate_report(binary_path, analysis_results, output_path=output_path)
                 return result is not None
-                
+
             elif format_type.lower() == 'html':
                 result = self.generate_html_report(binary_path, analysis_results)
                 return result is not None
-                
+
             elif format_type.lower() == 'json':
                 return self._export_json(binary_path, analysis_results, output_path)
-                
+
             elif format_type.lower() == 'xml':
                 return self._export_xml(binary_path, analysis_results, output_path)
-                
+
             elif format_type.lower() == 'csv':
                 return self._export_csv(binary_path, analysis_results, output_path)
-                
+
             else:
                 self.logger.error(f"Unsupported export format: {format_type}")
                 return False
-                
+
         except Exception as e:
             self.logger.error(f"Export error: {e}")
             return False
-            
-    def _export_json(self, binary_path: str, analysis_results: Dict[str, Any], 
+
+    def _export_json(self, binary_path: str, analysis_results: Dict[str, Any],
                      output_path: Optional[str] = None) -> bool:
         """Export analysis results as JSON."""
         try:
             import json
-            
+
             # Create output path if not provided
             if output_path is None:
                 binary_name = os.path.basename(binary_path)
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 output_path = os.path.join(self.output_dir, f"analysis_{binary_name}_{timestamp}.json")
-                
+
             # Prepare export data
             export_data = {
                 'metadata': {
@@ -746,19 +737,19 @@ class PDFReportGenerator:
                 'analysis_results': self._sanitize_for_json(analysis_results),
                 'summary': self._generate_analysis_summary(analysis_results)
             }
-            
+
             # Write JSON file
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(export_data, f, indent=2, default=str, ensure_ascii=False)
-                
+
             self.logger.info(f"JSON export completed: {output_path}")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"JSON export error: {e}")
             return False
-            
-    def _export_xml(self, binary_path: str, analysis_results: Dict[str, Any], 
+
+    def _export_xml(self, binary_path: str, analysis_results: Dict[str, Any],
                     output_path: Optional[str] = None) -> bool:
         """Export analysis results as XML."""
         try:
@@ -767,11 +758,11 @@ class PDFReportGenerator:
                 binary_name = os.path.basename(binary_path)
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 output_path = os.path.join(self.output_dir, f"analysis_{binary_name}_{timestamp}.xml")
-                
+
             # Generate XML content
             xml_content = ['<?xml version="1.0" encoding="UTF-8"?>']
             xml_content.append('<intellicrack_analysis>')
-            
+
             # Metadata
             xml_content.append('  <metadata>')
             xml_content.append(f'    <binary_path>{self._xml_escape(binary_path)}</binary_path>')
@@ -779,72 +770,72 @@ class PDFReportGenerator:
             xml_content.append(f'    <export_timestamp>{datetime.datetime.now().isoformat()}</export_timestamp>')
             xml_content.append('    <intellicrack_version>1.0.0</intellicrack_version>')
             xml_content.append('  </metadata>')
-            
+
             # Analysis results
             xml_content.append('  <analysis_results>')
             xml_content.extend(self._dict_to_xml(analysis_results, indent='    '))
             xml_content.append('  </analysis_results>')
-            
+
             # Summary
             summary = self._generate_analysis_summary(analysis_results)
             xml_content.append('  <summary>')
             xml_content.extend(self._dict_to_xml(summary, indent='    '))
             xml_content.append('  </summary>')
-            
+
             xml_content.append('</intellicrack_analysis>')
-            
+
             # Write XML file
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(xml_content))
-                
+
             self.logger.info(f"XML export completed: {output_path}")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"XML export error: {e}")
             return False
-            
-    def _export_csv(self, binary_path: str, analysis_results: Dict[str, Any], 
+
+    def _export_csv(self, binary_path: str, analysis_results: Dict[str, Any],
                     output_path: Optional[str] = None) -> bool:
         """Export analysis results as CSV."""
         try:
             import csv
-            
+
             # Create output path if not provided
             if output_path is None:
                 binary_name = os.path.basename(binary_path)
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 output_path = os.path.join(self.output_dir, f"analysis_{binary_name}_{timestamp}.csv")
-                
+
             # Flatten analysis results for CSV format
             csv_data = []
-            
+
             # Add metadata
             csv_data.append(['Section', 'Key', 'Value', 'Description'])
             csv_data.append(['Metadata', 'Binary Path', binary_path, 'Path to analyzed binary'])
             csv_data.append(['Metadata', 'Binary Name', os.path.basename(binary_path), 'Name of analyzed binary'])
             csv_data.append(['Metadata', 'Export Timestamp', datetime.datetime.now().isoformat(), 'When export was generated'])
             csv_data.append(['Metadata', 'Intellicrack Version', '1.0.0', 'Version of Intellicrack used'])
-            
+
             # Flatten analysis results
             self._flatten_dict_for_csv(analysis_results, csv_data, 'Analysis')
-            
+
             # Add summary
             summary = self._generate_analysis_summary(analysis_results)
             self._flatten_dict_for_csv(summary, csv_data, 'Summary')
-            
+
             # Write CSV file
             with open(output_path, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 writer.writerows(csv_data)
-                
+
             self.logger.info(f"CSV export completed: {output_path}")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"CSV export error: {e}")
             return False
-            
+
     def _sanitize_for_json(self, obj: Any) -> Any:
         """Sanitize object for JSON serialization."""
         if isinstance(obj, dict):
@@ -855,7 +846,7 @@ class PDFReportGenerator:
             return obj
         else:
             return str(obj)
-            
+
     def _xml_escape(self, text: str) -> str:
         """Escape XML special characters."""
         text = str(text)
@@ -865,11 +856,11 @@ class PDFReportGenerator:
         text = text.replace('"', '&quot;')
         text = text.replace("'", '&apos;')
         return text
-        
+
     def _dict_to_xml(self, data: Any, indent: str = '') -> List[str]:
         """Convert dictionary to XML elements."""
         xml_lines = []
-        
+
         if isinstance(data, dict):
             for key, value in data.items():
                 clean_key = str(key).replace(' ', '_').replace('-', '_')
@@ -886,10 +877,10 @@ class PDFReportGenerator:
                 xml_lines.append(f'{indent}</item_{i}>')
         else:
             xml_lines.append(f'{indent}{self._xml_escape(str(data))}')
-            
+
         return xml_lines
-        
-    def _flatten_dict_for_csv(self, data: Any, csv_data: List[List[str]], 
+
+    def _flatten_dict_for_csv(self, data: Any, csv_data: List[List[str]],
                              section: str, parent_key: str = '') -> None:
         """Flatten dictionary for CSV export."""
         if isinstance(data, dict):
@@ -908,7 +899,7 @@ class PDFReportGenerator:
                     csv_data.append([section, full_key, str(item), ''])
         else:
             csv_data.append([section, parent_key or 'value', str(data), ''])
-            
+
     def _generate_analysis_summary(self, analysis_results: Dict[str, Any]) -> Dict[str, Any]:
         """Generate summary of analysis results."""
         summary = {
@@ -918,35 +909,35 @@ class PDFReportGenerator:
             'vulnerabilities_found': 0,
             'license_checks': 0
         }
-        
+
         try:
             # Count different types of results
             if isinstance(analysis_results, dict):
                 summary['categories'] = list(analysis_results.keys())
                 summary['total_items'] = len(analysis_results)
-                
+
             # Count specific findings
             if isinstance(analysis_results, list):
                 summary['total_items'] = len(analysis_results)
                 summary['findings_count'] = len(analysis_results)
-                
+
             # Look for vulnerabilities
             vuln_keywords = ['vulnerability', 'exploit', 'security', 'risk']
             for key, value in (analysis_results.items() if isinstance(analysis_results, dict) else []):
-                if any(keyword in str(key).lower() or keyword in str(value).lower() 
+                if any(keyword in str(key).lower() or keyword in str(value).lower()
                        for keyword in vuln_keywords):
                     summary['vulnerabilities_found'] += 1
-                    
+
             # Look for license checks
             license_keywords = ['license', 'activation', 'serial', 'key']
             for key, value in (analysis_results.items() if isinstance(analysis_results, dict) else []):
-                if any(keyword in str(key).lower() or keyword in str(value).lower() 
+                if any(keyword in str(key).lower() or keyword in str(value).lower()
                        for keyword in license_keywords):
                     summary['license_checks'] += 1
-                    
+
         except Exception:
             pass
-            
+
         return summary
 
 

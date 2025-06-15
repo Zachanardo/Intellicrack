@@ -20,7 +20,30 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
+# Import all core modules
 from . import analysis, network, patching, processing, protection_bypass, reporting
+
+# Import new exploitation modules
+try:
+    from . import (
+        c2_infrastructure,
+        evasion,
+        mitigation_bypass,
+        payload_generation,
+        post_exploitation,
+        vulnerability_research,
+    )
+    EXPLOITATION_MODULES_AVAILABLE = True
+except ImportError as e:
+    import logging
+    logging.getLogger(__name__).warning(f"Exploitation modules not available: {e}")
+    payload_generation = None
+    c2_infrastructure = None
+    evasion = None
+    mitigation_bypass = None
+    post_exploitation = None
+    vulnerability_research = None
+    EXPLOITATION_MODULES_AVAILABLE = False
 
 __all__ = [
     'analysis',
@@ -28,5 +51,12 @@ __all__ = [
     'patching',
     'processing',
     'protection_bypass',
-    'reporting'
+    'reporting',
+    'payload_generation',
+    'c2_infrastructure',
+    'evasion',
+    'mitigation_bypass',
+    'post_exploitation',
+    'vulnerability_research',
+    'EXPLOITATION_MODULES_AVAILABLE'
 ]

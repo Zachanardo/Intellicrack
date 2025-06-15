@@ -79,6 +79,7 @@ class SSLTLSInterceptor:
         self.ca_key = None
         self.traffic_log = []
         self.response_templates = {}
+        self.proxy_process = None
 
         # Load response templates
         self._load_response_templates()
@@ -109,8 +110,7 @@ class SSLTLSInterceptor:
                 organization="Intellicrack CA",
                 state="California",
                 locality="San Francisco",
-                valid_days=3650,
-                is_ca=True
+                valid_days=3650
             )
 
             if cert_result:
@@ -276,7 +276,7 @@ def response(flow: http.HTTPFlow) -> None:
         """
         try:
             # Stop proxy process
-            if hasattr(self, 'proxy_process') and self.proxy_process:
+            if self.proxy_process is not None:
                 self.proxy_process.terminate()
                 self.proxy_process = None
 

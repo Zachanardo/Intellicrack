@@ -103,6 +103,19 @@ class IntellicrackMainWindow(QMainWindow):
         self.setGeometry(100, 100, 1400, 900)
 
         # Central widget with tab system
+
+        # Initialize UI attributes
+        self.analysis_output = None
+        self.auto_save_results_cb = None
+        self.clear_results_button = None
+        self.entropy_analysis_cb = None
+        self.export_analysis_cb = None
+        self.export_results_button = None
+        self.import_analysis_cb = None
+        self.info_display = None
+        self.results_display = None
+        self.verbose_logging_cb = None
+        self.vulnerability_scan_cb = None
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 

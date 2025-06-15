@@ -69,10 +69,18 @@ class BinarySimilaritySearchDialog(QDialog):
             binary_path: Path to the binary file to analyze
             parent: Parent widget
         """
+        # Initialize UI attributes
+        self.db_info_label = None
+        self.threshold_label = None
+        self.results_table = None
+        self.patterns_view = None
+        self.status_label = None
+
         super().__init__(parent)
         self.binary_path = binary_path
         self.database_path = os.path.join(os.getcwd(), "binary_database.json")
         self.similar_binaries: List[Dict[str, Any]] = []
+        self.search_thread = None
 
         if HAS_SIMILARITY_SEARCH:
             self.search_engine = BinarySimilaritySearch(self.database_path)

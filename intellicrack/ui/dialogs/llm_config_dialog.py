@@ -133,6 +133,29 @@ class LLMConfigDialog(QDialog):
     """Dialog for configuring LLM models in Intellicrack."""
 
     def __init__(self, parent=None):
+
+        # Initialize UI attributes
+        self.anthropic_api_key = None
+        self.anthropic_max_tokens = None
+        self.anthropic_model = None
+        self.anthropic_temp = None
+        self.anthropic_tools = None
+        self.gguf_context = None
+        self.gguf_max_tokens = None
+        self.gguf_model_name = None
+        self.gguf_model_path = None
+        self.gguf_temp = None
+        self.gguf_tools = None
+        self.ollama_max_tokens = None
+        self.ollama_model = None
+        self.ollama_temp = None
+        self.ollama_url = None
+        self.openai_api_key = None
+        self.openai_base_url = None
+        self.openai_max_tokens = None
+        self.openai_model = None
+        self.openai_temp = None
+        self.openai_tools = None
         super().__init__(parent)
         self.setWindowTitle("LLM Model Configuration - Intellicrack Agentic AI")
         self.setFixedSize(800, 600)

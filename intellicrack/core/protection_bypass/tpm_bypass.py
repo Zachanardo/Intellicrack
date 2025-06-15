@@ -236,6 +236,12 @@ class TPMProtectionBypass:
 
     def _tpm_get_capability(self, params: bytes) -> bytes:
         """Generate TPM2_GetCapability response."""
+        # Parse capability type from params if provided
+        capability_type = None
+        if len(params) >= 4:
+            capability_type = int.from_bytes(params[0:4], 'big')
+            self.logger.debug(f"TPM2_GetCapability requested for type: 0x{capability_type:X}")
+
         # Return TPM properties indicating TPM 2.0 with full capabilities
         capabilities = b'\x00\x00\x00\x01'  # More data: NO
         capabilities += b'\x00\x00\x00\x06'  # Property count
@@ -255,6 +261,16 @@ class TPMProtectionBypass:
 
     def _tpm_startup(self, params: bytes) -> bytes:
         """Generate TPM2_Startup response."""
+        # Check startup type from params
+        startup_type = "CLEAR"
+        if len(params) >= 2:
+            type_code = int.from_bytes(params[0:2], 'big')
+            if type_code == 0x0000:
+                startup_type = "CLEAR"
+            elif type_code == 0x0001:
+                startup_type = "STATE"
+            self.logger.debug(f"TPM2_Startup called with type: {startup_type}")
+
         # TPM already initialized
         return b''  # Empty response for success
 
@@ -274,6 +290,11 @@ class TPMProtectionBypass:
 
     def _tpm_create_primary(self, params: bytes) -> bytes:
         """Generate TPM2_CreatePrimary response."""
+        # Parse primary object attributes from params
+        if len(params) >= 4:
+            primary_handle = int.from_bytes(params[0:4], 'big')
+            self.logger.debug(f"TPM2_CreatePrimary for hierarchy: 0x{primary_handle:X}")
+
         # Return a fake primary key handle
         handle = b'\x80\x00\x00\x01'  # Primary key handle
         # Fake public key structure
@@ -290,6 +311,11 @@ class TPMProtectionBypass:
 
     def _tpm_create(self, params: bytes) -> bytes:
         """Generate TPM2_Create response."""
+        # Parse parent handle and object type from params
+        if len(params) >= 4:
+            parent_handle = int.from_bytes(params[0:4], 'big')
+            self.logger.debug(f"TPM2_Create with parent handle: 0x{parent_handle:X}")
+
         # Return creation data for a key
         private_data = b'\x00\x10' + b'\x00' * 16  # Dummy private data
         public_data = b'\x00\x20' + b'\x00' * 32   # Dummy public data
@@ -297,11 +323,25 @@ class TPMProtectionBypass:
 
     def _tpm_load(self, params: bytes) -> bytes:
         """Generate TPM2_Load response."""
+        # Parse parent handle from params
+        if len(params) >= 4:
+            parent_handle = int.from_bytes(params[0:4], 'big')
+            self.logger.debug(f"TPM2_Load into parent: 0x{parent_handle:X}")
+
         # Return a loaded object handle
         return b'\x80\x00\x00\x02'  # Loaded object handle
 
     def _tpm_sign(self, params: bytes) -> bytes:
         """Generate TPM2_Sign response."""
+        # Parse signing key handle and digest from params
+        if len(params) >= 4:
+            key_handle = int.from_bytes(params[0:4], 'big')
+            self.logger.debug(f"TPM2_Sign with key handle: 0x{key_handle:X}")
+            # Check if digest is provided
+            if len(params) > 4:
+                digest_size = min(len(params) - 4, 32)
+                self.logger.debug(f"Signing {digest_size} bytes of data")
+
         # Return a dummy signature
         signature = b'\x00\x40'  # Signature size
         signature += b'\x00' * 64  # Dummy RSA signature
@@ -309,6 +349,18 @@ class TPMProtectionBypass:
 
     def _tpm_pcr_read(self, params: bytes) -> bytes:
         """Generate TPM2_PCR_Read response."""
+        # Parse PCR selection from params
+        pcr_count = 24  # Default to all PCRs
+        if len(params) >= 4:
+            # Parse PCR selection structure
+            pcr_selection_count = int.from_bytes(params[0:4], 'big')
+            self.logger.debug(f"TPM2_PCR_Read for {pcr_selection_count} PCR banks")
+            if len(params) >= 7 and pcr_selection_count > 0:
+                # Extract PCR bitmap
+                pcr_bitmap = params[6] if len(params) > 6 else 0xFF
+                pcr_count = bin(pcr_bitmap).count('1')
+                self.logger.debug(f"Reading {pcr_count} PCRs")
+
         # Return PCR values (all zeros for clean state)
         pcr_update_counter = b'\x00\x00\x00\x01'
         pcr_selection = b'\x00\x00\x00\x01'  # Count
@@ -327,11 +379,30 @@ class TPMProtectionBypass:
 
     def _tpm_pcr_extend(self, params: bytes) -> bytes:
         """Generate TPM2_PCR_Extend response."""
+        # Parse PCR handle and digest from params
+        if len(params) >= 4:
+            pcr_handle = int.from_bytes(params[0:4], 'big')
+            pcr_index = pcr_handle & 0xFF  # Extract PCR index from handle
+            self.logger.debug(f"TPM2_PCR_Extend for PCR[{pcr_index}]")
+
+            # Check if digest data is provided
+            if len(params) > 4:
+                digest_count = int.from_bytes(params[4:8], 'big') if len(params) >= 8 else 0
+                self.logger.debug(f"Extending with {digest_count} digest(s)")
+
         # Return empty response for success
         return b''
 
     def _tpm_default_response(self, params: bytes) -> bytes:
         """Generate default success response for unknown commands."""
+        # Log unknown command parameters for debugging
+        if params:
+            self.logger.debug(f"Unknown TPM command with {len(params)} bytes of parameters")
+            # Try to parse common parameter structure
+            if len(params) >= 4:
+                first_param = int.from_bytes(params[0:4], 'big')
+                self.logger.debug(f"First parameter: 0x{first_param:X}")
+
         return b''  # Empty response with success code
 
     def _patch_tpm_calls(self, binary_path: str) -> bool:
@@ -751,7 +822,7 @@ def analyze_tpm_protection(binary_path: str) -> Dict[str, Any]:
     return analyzer.analyze()
 
 
-def detect_tpm_usage(process_name: Optional[str] = None) -> bool:  # pylint: disable=unused-argument
+def detect_tpm_usage(process_name: Optional[str] = None) -> bool:
     """
     Detect if a process is using TPM functionality.
     
@@ -761,21 +832,61 @@ def detect_tpm_usage(process_name: Optional[str] = None) -> bool:  # pylint: dis
     Returns:
         bool: True if TPM usage detected
     """
+    logger = logging.getLogger("IntellicrackLogger.TPMAnalyzer")
+
     if platform.system() != "Windows":
         return False
 
     try:
-        # Check if TPM service is running
         import subprocess
+
+        # Check if TPM service is running
         result = subprocess.run(
             ["sc", "query", "TPM"],
             capture_output=True,
-            text=True
-        , check=False)
-        return "RUNNING" in result.stdout
+            text=True,
+            check=False
+        )
+        tpm_service_running = "RUNNING" in result.stdout
+
+        # If process name specified, check if it's using TPM
+        if process_name and tpm_service_running:
+            logger.debug(f"Checking if process '{process_name}' uses TPM")
+
+            # Check if process has TPM-related DLLs loaded
+            try:
+                # Use tasklist to check loaded modules
+                tasklist_result = subprocess.run(
+                    ["tasklist", "/m", "tbs.dll"],
+                    capture_output=True,
+                    text=True,
+                    check=False
+                )
+                if process_name.lower() in tasklist_result.stdout.lower():
+                    logger.info(f"Process '{process_name}' is using TPM (tbs.dll loaded)")
+                    return True
+
+                # Check for NCrypt TPM provider
+                tasklist_result = subprocess.run(
+                    ["tasklist", "/m", "ncrypt.dll"],
+                    capture_output=True,
+                    text=True,
+                    check=False
+                )
+                if process_name.lower() in tasklist_result.stdout.lower():
+                    # Further check if using TPM provider specifically
+                    logger.debug(f"Process '{process_name}' has ncrypt.dll loaded, checking TPM usage")
+                    # This is a heuristic - processes with ncrypt.dll might use TPM
+                    return True
+
+            except (OSError, ValueError) as e:
+                logger.debug(f"Error checking process modules: {e}")
+
+        return tpm_service_running
+
     except (OSError, ValueError, RuntimeError) as e:
         # TPM service check failed - log and return False
-        logging.getLogger("IntellicrackLogger.TPMAnalyzer").debug("TPM service check failed: %s", e)
+        logger.debug("TPM service check failed: %s", e)
         return False
 
 

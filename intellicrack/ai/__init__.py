@@ -130,6 +130,25 @@ except ImportError as e:
     logger.warning("Failed to import ai_assistant_enhanced: %s", e)
     IntellicrackAIAssistant = Tool = ToolCategory = None
 
+try:
+    from .parsing_utils import ResponseLineParser
+except ImportError as e:
+    logger.warning("Failed to import parsing_utils: %s", e)
+    ResponseLineParser = None
+
+# Import new exploitation AI modules
+try:
+    from .vulnerability_research_integration import VulnerabilityResearchAI
+except ImportError as e:
+    logger.warning("Failed to import vulnerability_research_integration: %s", e)
+    VulnerabilityResearchAI = None
+
+try:
+    from .exploitation_orchestrator import ExploitationOrchestrator
+except ImportError as e:
+    logger.warning("Failed to import exploitation_orchestrator: %s", e)
+    ExploitationOrchestrator = None
+
 # Define package exports
 __all__ = [
     # From ai_tools
@@ -183,6 +202,10 @@ __all__ = [
     'Tool',
     'ToolCategory',
 
+    # From exploitation modules
+    'VulnerabilityResearchAI',
+    'ExploitationOrchestrator',
+
     # From llm_backends (GGUF and API Support)
     'LLMManager',
     'LLMBackend',
@@ -196,6 +219,9 @@ __all__ = [
     'create_anthropic_config',
     'create_gguf_config',
     'create_ollama_config',
+    
+    # From parsing_utils
+    'ResponseLineParser',
 ]
 
 # Package metadata

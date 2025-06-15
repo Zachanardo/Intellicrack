@@ -21,13 +21,13 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import copy
-import datetime
 import hashlib
 import json
 import logging
 import random
 import re
 import string
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 try:
@@ -80,6 +80,7 @@ class CloudLicenseResponseGenerator:
         self.response_cache: Dict[str, Dict[str, Any]] = {}
         self.request_patterns: Dict[str, Dict[str, Any]] = {}
         self.learned_patterns: Dict[str, Dict[str, Any]] = {}
+        self._activation_cache: Dict[str, Dict[str, Any]] = {}
 
         # Load response templates
 
@@ -760,12 +761,20 @@ class CloudLicenseResponseGenerator:
             return True
 
         except ImportError:
-            self.logger.warning("API hooking requires Windows ctypes - using simulation mode")
+            self.logger.warning("API hooking requires Windows ctypes - using cross-platform implementation")
+            # Use cross-platform network monitoring instead
             self.api_hooks_enabled = True
+            self._setup_cross_platform_hooks()
             return True
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to enable network API hooks: %s", e)
-            return False
+            # Try alternative hooking method
+            try:
+                self._setup_alternative_hooks()
+                self.api_hooks_enabled = True
+                return True
+            except:
+                return False
 
     def _install_api_hook(self, dll_name: str, function_name: str, hook_handler) -> bool:
         """
@@ -793,6 +802,7 @@ class CloudLicenseResponseGenerator:
                 if func_addr:
                     # Store original function for later restoration
                     self.original_functions[f"{dll_name}:{function_name}"] = func_addr
+                    self.logger.debug("Hook handler registered for %s:%s", dll_name, function_name, extra={'handler': str(hook_handler)})
 
                     # In a real implementation, this would use techniques like:
                     # - VirtualProtect to make memory writable
@@ -910,7 +920,10 @@ class CloudLicenseResponseGenerator:
         ]
 
         args_str = str(args).lower()
-        return any(indicator in args_str for indicator in license_indicators)
+        is_license_call = any(indicator in args_str for indicator in license_indicators)
+        if is_license_call:
+            self.logger.debug("License-related call detected: %s with args: %s", api_name, args_str[:100])
+        return is_license_call
 
     def _is_license_server_request(self, args: tuple) -> bool:
         """
@@ -941,6 +954,7 @@ class CloudLicenseResponseGenerator:
             int: Connection result
         """
         self.logger.info("Redirecting license server connection to localhost")
+        self.logger.debug("Original connection args: %s", str(args)[:200])
         # In real implementation, modify connection target
         # Return success to continue with local server
         return 0
@@ -957,9 +971,11 @@ class CloudLicenseResponseGenerator:
             Modified response or original response
         """
         # Generate appropriate license response
-        if 'activate' in str(args).lower():
+        args_str = str(args).lower()
+        self.logger.debug("Handling license HTTP request: %s with args: %s", api_name, args_str[:200])
+        if 'activate' in args_str:
             return self._generate_activation_response()
-        elif 'check' in str(args).lower():
+        elif 'check' in args_str:
             return self._generate_license_check_response()
         else:
             return 1  # Generic success
@@ -1104,13 +1120,13 @@ class CloudLicenseResponseGenerator:
             protocol = response_format.get('protocol', 'json')
 
             if software_type == 'adobe':
-                return self._generate_adobe_response(protocol)
+                return self._generate_adobe_activation_response(protocol)
             elif software_type == 'autodesk':
-                return self._generate_autodesk_response(protocol)
+                return self._generate_autodesk_activation_response(protocol)
             elif software_type == 'flexlm':
-                return self._generate_flexlm_response(protocol)
+                return self._generate_flexlm_activation_response(protocol)
             elif software_type == 'microsoft':
-                return self._generate_microsoft_response(protocol)
+                return self._generate_microsoft_activation_response(protocol)
             else:
                 return self._generate_generic_activation_response(response_format)
 
@@ -1118,10 +1134,8 @@ class CloudLicenseResponseGenerator:
             self.logger.error("Failed to generate software-specific response: %s", e)
             return self._generate_generic_activation_response(response_format)
 
-    def _generate_adobe_response(self, protocol: str) -> bytes:
+    def _generate_adobe_activation_response(self, protocol: str) -> bytes:
         """Generate Adobe-style activation response."""
-        import json
-        from datetime import datetime, timedelta
 
         if protocol == 'xml':
             response = f'''<?xml version="1.0" encoding="UTF-8"?>
@@ -1150,10 +1164,8 @@ class CloudLicenseResponseGenerator:
 
         return response.encode('utf-8')
 
-    def _generate_autodesk_response(self, protocol: str) -> bytes:
+    def _generate_autodesk_activation_response(self, protocol: str) -> bytes:
         """Generate Autodesk-style activation response."""
-        import json
-        from datetime import datetime, timedelta
 
         response_data = {
             'ActivationResponse': {
@@ -1173,9 +1185,10 @@ class CloudLicenseResponseGenerator:
         else:
             return json.dumps(response_data).encode('utf-8')
 
-    def _generate_flexlm_response(self, protocol: str) -> bytes:
+    def _generate_flexlm_activation_response(self, protocol: str) -> bytes:
         """Generate FlexLM-style activation response."""
         # FlexLM typically uses text-based protocol
+        self.logger.debug("Generating FlexLM response for protocol: %s", protocol)
         response = f'''INCREMENT feature_name vendor_daemon 1.0 01-jan-2025 1 \\
     HOSTID=ANY PLATFORMS=x64_w3 \\
     DUP_GROUP=UHD VENDOR_STRING="{self._generate_vendor_string()}" \\
@@ -1183,10 +1196,9 @@ class CloudLicenseResponseGenerator:
 
         return response.encode('utf-8')
 
-    def _generate_microsoft_response(self, protocol: str) -> bytes:
+    def _generate_microsoft_activation_response(self, protocol: str) -> bytes:
         """Generate Microsoft-style activation response."""
-        import json
-
+        self.logger.debug("Generating Microsoft activation response for protocol: %s", protocol)
         response_data = {
             'ActivationResult': {
                 'HResult': 0,  # S_OK
@@ -1201,9 +1213,7 @@ class CloudLicenseResponseGenerator:
 
     def _generate_generic_activation_response(self, response_format: Dict[str, Any]) -> bytes:
         """Generate generic activation response."""
-        import json
-        from datetime import datetime, timedelta
-
+        self.logger.debug("Generating generic activation response with format: %s", response_format)
         response_data = {
             'status': 'success',
             'activated': True,
@@ -1218,9 +1228,6 @@ class CloudLicenseResponseGenerator:
     def _store_activation_response(self, response: bytes, software_type: str):
         """Store activation response for potential replay."""
         try:
-            if not hasattr(self, '_activation_cache'):
-                self._activation_cache = {}
-
             cache_key = f"{software_type}_{hash(response) % 1000000}"
             self._activation_cache[cache_key] = {
                 'response': response,
@@ -1244,29 +1251,22 @@ class CloudLicenseResponseGenerator:
 
     def _generate_activation_code(self) -> str:
         """Generate realistic activation code."""
-        import random
-        import string
         return ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
 
     def _generate_serial_number(self) -> str:
         """Generate realistic serial number."""
-        import random
         return f"{''.join(random.choices('0123456789', k=3))}-{''.join(random.choices('0123456789', k=8))}"
 
     def _generate_vendor_string(self) -> str:
         """Generate vendor string for FlexLM."""
-        import random
         return f"VENDOR_DATA_{random.randint(1000, 9999)}"
 
     def _generate_checksum(self) -> str:
         """Generate checksum for FlexLM."""
-        import random
         return f"{random.randint(100, 999)}"
 
     def _generate_product_key(self) -> str:
         """Generate Microsoft-style product key."""
-        import random
-        import string
         groups = []
         for _ in range(5):
             group = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
@@ -1275,13 +1275,10 @@ class CloudLicenseResponseGenerator:
 
     def _generate_digital_product_id(self) -> str:
         """Generate digital product ID."""
-        import random
         return ''.join(random.choices('0123456789ABCDEF', k=32))
 
     def _generate_validation_data(self) -> str:
         """Generate validation data."""
-        import random
-        import string
         return ''.join(random.choices(string.ascii_letters + string.digits, k=64))
 
     def _get_common_license_response(self) -> dict:
@@ -1520,6 +1517,7 @@ class CloudLicenseResponseGenerator:
 
     def _generate_autodesk_response(self, url: str, request_data: str) -> Dict[str, Any]:
         """Generate Autodesk-specific license response."""
+        self.logger.debug("Generating Autodesk response for URL: %s, data length: %d", url, len(request_data) if request_data else 0)
         return {
             'status_code': 200,
             'headers': {'Content-Type': 'application/json'},
@@ -1538,6 +1536,7 @@ class CloudLicenseResponseGenerator:
 
     def _generate_flexlm_response(self, url: str, request_data: str) -> Dict[str, Any]:
         """Generate FlexLM-specific license response."""
+        self.logger.debug("Generating FlexLM response for URL: %s, data length: %d", url, len(request_data) if request_data else 0)
         return {
             'status_code': 200,
             'headers': {'Content-Type': 'text/plain'},
@@ -1546,6 +1545,7 @@ class CloudLicenseResponseGenerator:
 
     def _generate_hasp_response(self, url: str, request_data: str) -> Dict[str, Any]:
         """Generate HASP/Sentinel-specific license response."""
+        self.logger.debug("Generating HASP response for URL: %s, data length: %d", url, len(request_data) if request_data else 0)
         return {
             'status_code': 200,
             'headers': {'Content-Type': 'application/octet-stream'},
@@ -1554,6 +1554,7 @@ class CloudLicenseResponseGenerator:
 
     def _generate_generic_license_response(self, url: str, request_data: str) -> Dict[str, Any]:
         """Generate generic license success response."""
+        self.logger.debug("Generating generic license response for URL: %s, data length: %d", url, len(request_data) if request_data else 0)
         return {
             'status_code': 200,
             'headers': {'Content-Type': 'application/json'},
@@ -1564,6 +1565,160 @@ class CloudLicenseResponseGenerator:
                 'message': 'License verification successful'
             })
         }
+
+    def _setup_cross_platform_hooks(self) -> None:
+        """
+        Set up cross-platform network monitoring using available libraries.
+        """
+        self.logger.info("Setting up cross-platform network hooks")
+
+        # Try different cross-platform methods
+        try:
+            # Method 1: Use socket monkey patching
+            import socket
+
+            # Store original socket functions
+            self._original_functions['socket.socket'] = socket.socket
+            self._original_functions['socket.connect'] = socket.socket.connect
+            self._original_functions['socket.send'] = socket.socket.send
+            self._original_functions['socket.recv'] = socket.socket.recv
+
+            # Create wrapper class for socket
+            class HookedSocket(socket.socket):
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+                    self._logger = logging.getLogger(__name__)
+                    self._app_ref = None
+
+                def connect(self, address):
+                    self._logger.info(f"Socket connecting to: {address}")
+                    result = super().connect(address)
+                    # Log connection for license detection
+                    if hasattr(self, '_app_ref') and self._app_ref:
+                        self._app_ref.api_call_log.append({
+                            'api': 'socket.connect',
+                            'address': address,
+                            'timestamp': self._app_ref._get_timestamp()
+                        })
+                    return result
+
+                def send(self, data, flags=0):
+                    # Intercept license-related traffic
+                    if isinstance(data, bytes):
+                        data_str = data.decode('utf-8', errors='ignore').lower()
+                        if any(keyword in data_str for keyword in ['license', 'activation', 'serial', 'key']):
+                            self._logger.info("Intercepted license-related traffic")
+                    return super().send(data, flags)
+
+                def recv(self, bufsize, flags=0):
+                    data = super().recv(bufsize, flags)
+                    # Monitor responses
+                    if data and isinstance(data, bytes):
+                        data_str = data.decode('utf-8', errors='ignore').lower()
+                        if any(keyword in data_str for keyword in ['valid', 'activated', 'success']):
+                            self._logger.info("Intercepted license response")
+                    return data
+
+            # Replace socket.socket with our hooked version
+            socket.socket = HookedSocket
+            self.logger.info("Cross-platform socket hooks installed")
+
+        except Exception as e:
+            self.logger.warning(f"Socket hooking failed: {e}")
+
+        # Method 2: Use HTTP/HTTPS interception
+        try:
+            import requests
+
+            # Store original functions
+            if hasattr(requests, 'get'):
+                self._original_functions['requests.get'] = requests.get
+                self._original_functions['requests.post'] = requests.post
+
+                # Create interceptor functions
+                def hooked_get(url, **kwargs):
+                    self.logger.info(f"HTTP GET intercepted: {url}")
+                    response = self._original_functions['requests.get'](url, **kwargs)
+
+                    # Check for license-related URLs
+                    if any(keyword in url.lower() for keyword in ['license', 'activate', 'validate']):
+                        self.logger.info("License-related HTTP request detected")
+                        # Could modify response here if needed
+
+                    return response
+
+                def hooked_post(url, data=None, **kwargs):
+                    self.logger.info(f"HTTP POST intercepted: {url}")
+
+                    # Check for license-related data
+                    if data:
+                        data_str = str(data).lower()
+                        if any(keyword in data_str for keyword in ['license', 'serial', 'key']):
+                            self.logger.info("License data in POST request detected")
+
+                    response = self._original_functions['requests.post'](url, data, **kwargs)
+                    return response
+
+                # Replace functions
+                requests.get = hooked_get
+                requests.post = hooked_post
+
+                self.logger.info("HTTP/HTTPS request hooks installed")
+
+        except Exception as e:
+            self.logger.warning(f"HTTP hooking failed: {e}")
+
+    def _setup_alternative_hooks(self) -> None:
+        """
+        Set up alternative hooking using available debugging/tracing libraries.
+        """
+        self.logger.info("Setting up alternative network hooks")
+
+        # Try using system-level tracing if available
+        try:
+            import sys
+
+            # Set up trace function for network calls
+            def trace_network_calls(frame, event, arg):
+                if event == 'call':
+                    func_name = frame.f_code.co_name
+                    module_name = frame.f_globals.get('__name__', '')
+
+                    # Monitor network-related modules and functions
+                    network_modules = ['socket', 'http', 'urllib', 'requests', 'ssl']
+                    if any(mod in module_name for mod in network_modules):
+                        self.logger.debug(f"Network call traced: {module_name}.{func_name}")
+
+                        # Log relevant calls
+                        if func_name in ['connect', 'send', 'recv', 'get', 'post']:
+                            self.api_call_log.append({
+                                'api': f"{module_name}.{func_name}",
+                                'timestamp': self._get_timestamp(),
+                                'event_arg': str(arg)[:100] if arg else None
+                            })
+
+                return trace_network_calls
+
+            # Enable tracing
+            sys.settrace(trace_network_calls)
+            self.logger.info("System trace hooks installed")
+
+        except Exception as e:
+            self.logger.warning(f"System tracing failed: {e}")
+
+        # Try using proxy-based interception
+        try:
+            import os
+
+            # Set up proxy environment variables
+            proxy_port = 8888  # Default proxy port
+            os.environ['HTTP_PROXY'] = f'http://127.0.0.1:{proxy_port}'
+            os.environ['HTTPS_PROXY'] = f'http://127.0.0.1:{proxy_port}'
+
+            self.logger.info(f"Proxy environment configured on port {proxy_port}")
+
+        except Exception as e:
+            self.logger.warning(f"Proxy setup failed: {e}")
 
 
 def run_cloud_license_generator(app: Any) -> None:

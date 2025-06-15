@@ -29,6 +29,8 @@ try:
 except ImportError:
     PYQT5_AVAILABLE = False
 
+from ...utils.ui_common import ask_open_report
+
 
 class TaintAnalysisEngine:
     """
@@ -253,19 +255,15 @@ class TaintAnalysisEngine:
             self.logger.debug("Capstone not available, trying alternative methods")
 
         # Fallback: Try to use objdump if available
-        try:
-            import subprocess
-            result = subprocess.run([
-                'objdump', '-d', self.binary_path
-            ], capture_output=True, text=True, timeout=30, check=False)
+        from ...utils.binary_analysis import disassemble_with_objdump
 
-            if result.returncode == 0:
-                instructions = self._parse_objdump_output(result.stdout)
-                self.logger.info("Disassembled %d instructions using objdump", len(instructions))
-                return instructions
+        instructions = disassemble_with_objdump(
+            self.binary_path,
+            parse_func=self._parse_objdump_output
+        )
 
-        except (FileNotFoundError, subprocess.TimeoutExpired):
-            self.logger.debug("objdump not available or timed out")
+        if instructions:
+            return instructions
 
         # Final fallback: Basic analysis without full disassembly
         self.logger.warning("No disassembly engine available, using basic pattern analysis")
@@ -764,32 +762,22 @@ def run_taint_analysis(app: Any) -> None:
 
             # Handle report generation if PyQt5 is available
             if PYQT5_AVAILABLE:
-                from ...utils.ui_common import ask_open_report
-                from ...utils.ui_helpers import ask_yes_no_question, show_file_dialog
+                from ...utils.report_common import handle_pyqt5_report_generation
 
-                generate_report = ask_yes_no_question(
+                report_path = handle_pyqt5_report_generation(
                     app,
-                    "Generate Report",
-                    "Do you want to generate a report of the taint analysis results?"
+                    "taint analysis",
+                    engine
                 )
+                if report_path:
+                    if hasattr(app, 'update_output'):
+                        app.update_output.emit(f"log_message([Taint Analysis] Report saved to {report_path})")
 
-                if generate_report:
-                    filename = show_file_dialog(app, "Save Report")
-
-                    if filename:
-                        if not filename.endswith('.html'):
-                            filename += '.html'
-
-                        report_path = engine.generate_report(filename)
-                        if report_path:
-                            if hasattr(app, 'update_output'):
-                                app.update_output.emit(f"log_message([Taint Analysis] Report saved to {report_path})")
-
-                            # Ask if user wants to open the report
-                            ask_open_report(app, report_path)
-                        else:
-                            if hasattr(app, 'update_output'):
-                                app.update_output.emit("log_message([Taint Analysis] Failed to generate report)")
+                    # Ask if user wants to open the report
+                    ask_open_report(app, report_path)
+                else:
+                    if hasattr(app, 'update_output'):
+                        app.update_output.emit("log_message([Taint Analysis] Failed to generate report)")
         else:
             if hasattr(app, 'update_output'):
                 app.update_output.emit("log_message([Taint Analysis] Analysis failed)")

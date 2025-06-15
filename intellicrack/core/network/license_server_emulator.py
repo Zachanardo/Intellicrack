@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
+import hashlib
 import json
 import logging
 import os
@@ -89,6 +90,10 @@ class NetworkLicenseServerEmulator:
         if config:
             self.config.update(config)
 
+        # Set default port and protocol
+        self.port = self.config['listen_ports'][0] if self.config['listen_ports'] else 27000
+        self.protocol = "FlexLM"  # Default protocol
+
         # Add handlers from the first implementation
         self.protocol_handlers: Dict[str, Any] = {}
         self.running: bool = False
@@ -101,6 +106,8 @@ class NetworkLicenseServerEmulator:
         self.traffic_recorder: Optional[Any] = None
         self.response_templates: Dict[str, Dict[str, bytes]] = {}
         self.protocol_fingerprints: Dict[str, Dict[str, Any]] = {}
+        self.license_hostnames: Dict[bytes, str] = {}
+        self.dns_socket: Optional[socket.socket] = None
 
         # New enhanced components
         self.traffic_engine: Optional[TrafficInterceptionEngine] = None
@@ -134,6 +141,47 @@ class NetworkLicenseServerEmulator:
             self.logger.error(f"Failed to initialize enhanced components: {e}")
             self.traffic_engine = None
             self.response_generator = None
+
+    def _handle_analyzed_traffic(self, traffic_data: Dict[str, Any]) -> None:
+        """
+        Handle analyzed traffic data from the traffic interception engine.
+        
+        Args:
+            traffic_data: Dictionary containing analyzed traffic information
+        """
+        try:
+            # Extract relevant information from traffic data
+            protocol = traffic_data.get('protocol', 'unknown')
+            source = traffic_data.get('source', 'unknown')
+            destination = traffic_data.get('destination', 'unknown')
+            data = traffic_data.get('data', b'')
+
+            self.logger.debug(f"Handling analyzed traffic: {protocol} from {source} to {destination}")
+
+            # Store the traffic data for later use if needed
+            if hasattr(self, 'captured_traffic'):
+                self.captured_traffic.append(traffic_data)
+
+            # If response generator is available, prepare a response
+            if self.response_generator and protocol != 'unknown' and HAS_NEW_COMPONENTS:
+                # Create ResponseContext for the generator
+                context = ResponseContext(
+                    source_ip=source.split(':')[0] if ':' in source else source,
+                    source_port=int(source.split(':')[1]) if ':' in source else 0,
+                    target_host=destination.split(':')[0] if ':' in destination else destination,
+                    target_port=int(destination.split(':')[1]) if ':' in destination else 0,
+                    protocol_type=protocol,
+                    request_data=data,
+                    parsed_request=None,
+                    client_fingerprint=hashlib.md5(data).hexdigest() if data else '',
+                    timestamp=time.time()
+                )
+                response = self.response_generator.generate_response(context)
+                if response:
+                    self.logger.debug(f"Generated response for {protocol} protocol")
+
+        except Exception as e:
+            self.logger.error(f"Error handling analyzed traffic: {e}")
 
     def _load_protocol_fingerprints(self) -> None:
         """
@@ -482,9 +530,6 @@ class NetworkLicenseServerEmulator:
         This DNS server intercepts license server DNS queries and redirects them
         to the local license server emulator, enabling license bypass.
         """
-        import socket
-        import threading
-
         self.logger.info("Starting DNS server for license server redirection")
 
         # Common license server hostnames to intercept
@@ -629,6 +674,10 @@ class NetworkLicenseServerEmulator:
         Returns:
             DNS response packet
         """
+        # Log the DNS response creation for debugging
+        self.logger.debug("Creating DNS response for query '%s' -> %s",
+                         query_name.decode('utf-8', errors='ignore'), ip_address)
+
         # DNS header (response)
         header = struct.pack('>HHHHHH',
             transaction_id,  # Transaction ID

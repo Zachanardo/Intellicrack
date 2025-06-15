@@ -29,6 +29,8 @@ try:
 except ImportError:
     PYQT5_AVAILABLE = False
 
+from ...utils.ui_common import ask_open_report
+
 
 class ROPChainGenerator:
     """
@@ -230,19 +232,16 @@ class ROPChainGenerator:
                 self.logger.debug("Capstone not available, trying objdump")
 
             # Fallback to objdump if available
-            try:
-                import subprocess
-                result = subprocess.run([
-                    'objdump', '-d', '--no-show-raw-insn', self.binary_path
-                ], capture_output=True, text=True, timeout=30, check=False)
+            from ...utils.binary_analysis import disassemble_with_objdump
 
-                if result.returncode == 0:
-                    instructions = self._parse_objdump_output(result.stdout)
-                    self.logger.info("Disassembled %d instructions using objdump", len(instructions))
-                    return instructions
+            instructions = disassemble_with_objdump(
+                self.binary_path,
+                extra_args=['--no-show-raw-insn'],
+                parse_func=self._parse_objdump_output
+            )
 
-            except (FileNotFoundError, subprocess.TimeoutExpired):
-                self.logger.debug("objdump not available")
+            if instructions:
+                return instructions
 
         except Exception as e:
             self.logger.debug("Disassembly failed: %s", e)
@@ -711,6 +710,11 @@ class ROPChainGenerator:
         """Find gadgets for setting up function arguments."""
         arg_gadgets = []
 
+        # Check requirements for specific argument patterns
+        required_args = requirements.get('arguments', [])
+        if required_args:
+            self.logger.debug(f"Looking for gadgets to satisfy {len(required_args)} argument requirements")
+
         # Look for mov gadgets to set up arguments
         mov_gadgets = [g for g in self.gadgets if g.get('type') == 'mov_reg_reg']
         if mov_gadgets:
@@ -740,6 +744,8 @@ class ROPChainGenerator:
 
     def _find_execution_gadgets(self, target: Dict[str, Any], requirements: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Find gadgets for final execution/function call."""
+        execution_control = requirements.get('execution_control', 'call')
+        self.logger.debug(f"Finding execution gadgets for {target} with control type: {execution_control}")
         exec_gadgets = []
 
         # For most targets, we need a way to transfer control
@@ -1160,32 +1166,22 @@ def run_rop_chain_generator(app: Any) -> None:
 
                 # Handle report generation if PyQt5 is available
                 if PYQT5_AVAILABLE:
-                    from ...utils.ui_common import ask_open_report
-                    from ...utils.ui_helpers import ask_yes_no_question, show_file_dialog
+                    from ...utils.report_common import handle_pyqt5_report_generation
 
-                    generate_report = ask_yes_no_question(
+                    report_path = handle_pyqt5_report_generation(
                         app,
-                        "Generate Report",
-                        "Do you want to generate a report of the ROP chain generation results?"
+                        "ROP chain generation",
+                        generator
                     )
+                    if report_path:
+                        if hasattr(app, 'update_output'):
+                            app.update_output.emit(f"log_message([ROP Chain Generator] Report saved to {report_path})")
 
-                    if generate_report:
-                        filename = show_file_dialog(app, "Save Report")
-
-                        if filename:
-                            if not filename.endswith('.html'):
-                                filename += '.html'
-
-                            report_path = generator.generate_report(filename)
-                            if report_path:
-                                if hasattr(app, 'update_output'):
-                                    app.update_output.emit(f"log_message([ROP Chain Generator] Report saved to {report_path})")
-
-                                # Ask if user wants to open the report
-                                ask_open_report(app, report_path)
-                            else:
-                                if hasattr(app, 'update_output'):
-                                    app.update_output.emit("log_message([ROP Chain Generator] Failed to generate report)")
+                        # Ask if user wants to open the report
+                        ask_open_report(app, report_path)
+                    else:
+                        if hasattr(app, 'update_output'):
+                            app.update_output.emit("log_message([ROP Chain Generator] Failed to generate report)")
             else:
                 if hasattr(app, 'update_output'):
                     app.update_output.emit("log_message([ROP Chain Generator] Failed to generate chains)")

@@ -1055,8 +1055,6 @@ def _detect_windows_usb_dongles() -> List[Dict[str, Any]]:
     dongles = []
 
     try:
-        import json
-        import subprocess
 
         # Use PowerShell to query USB devices
         cmd = ["powershell", "-Command",
@@ -1094,7 +1092,6 @@ def _detect_linux_usb_dongles() -> List[Dict[str, Any]]:
     dongles = []
 
     try:
-        import subprocess
 
         # Use lsusb to list USB devices
         result = subprocess.run(["lsusb"], capture_output=True, text=True, timeout=5)
@@ -1179,7 +1176,6 @@ def _detect_windows_dongle_drivers() -> List[Dict[str, Any]]:
     drivers = []
 
     try:
-        import subprocess
 
         # Check for known dongle drivers
         driver_patterns = ["hasp", "sentinel", "wibu", "aksusb", "securikey"]
@@ -1213,7 +1209,6 @@ def _detect_linux_dongle_drivers() -> List[Dict[str, Any]]:
     drivers = []
 
     try:
-        import subprocess
 
         # Check loaded kernel modules
         result = subprocess.run(["lsmod"], capture_output=True, text=True, timeout=5)
@@ -1241,7 +1236,6 @@ def _detect_license_dongles() -> List[Dict[str, Any]]:
 
     try:
         import glob
-        import os
 
         # Common license file locations and patterns
         search_patterns = [
@@ -1361,7 +1355,7 @@ def detect_hardware_dongles() -> Dict[str, Any]:
     return results
 
 
-def detect_tpm_protection(binary_path: str) -> Dict[str, Any]:
+def detect_local_tpm_protection(binary_path: str) -> Dict[str, Any]:
     """
     Detect TPM protection in binary.
 
@@ -1531,8 +1525,6 @@ def _verify_static_analysis(binary_path: str) -> Dict[str, Any]:
     result = {"success": False, "confidence": 0.0, "checks": []}
 
     try:
-        import os
-
         if not os.path.exists(binary_path):
             result["checks"].append("File does not exist")
             return result
@@ -1583,9 +1575,7 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
     result = {"success": False, "confidence": 0.0, "tests": []}
 
     try:
-        import os
         import platform
-        import subprocess
 
         if not os.path.exists(binary_path):
             result["tests"].append("Binary file not found")
@@ -1834,8 +1824,6 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
     result = {"valid": False, "confidence": 0.0, "integrity_checks": []}
 
     try:
-        import hashlib
-        import os
 
         # Check 1: File exists and is readable
         if not os.path.exists(binary_path):
@@ -2370,7 +2358,7 @@ def run_weak_crypto_detection(binary_path: str) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_comprehensive_protection_scan(binary_path: str) -> Dict[str, Any]:
+def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
     """
     Run comprehensive protection scan.
 
@@ -2598,14 +2586,12 @@ __all__ = [
     'load_ai_model',
     'get_target_process_pid',
     'detect_hardware_dongles',
-    'detect_tpm_protection',
     'run_vulnerability_scan',
     'run_cfg_analysis',
     'run_rop_gadget_finder',
     'run_section_analysis',
     'run_import_export_analysis',
     'run_weak_crypto_detection',
-    'run_comprehensive_protection_scan',
     'run_ml_vulnerability_prediction',
     'run_generate_patch_suggestions',
     'run_multi_format_analysis',

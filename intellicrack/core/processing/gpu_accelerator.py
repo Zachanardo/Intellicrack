@@ -711,12 +711,12 @@ class GPUAccelerator:
                 # Run without specific binary (benchmark mode)
                 self.logger.info("Running GPU analysis in benchmark mode")
                 test_data = bytes(range(256)) * 1000  # 256KB test data
-                
+
                 # Test pattern matching
                 test_patterns = [b'\x00\x01', b'\xFF\xFE', b'\x90\x90']
                 matches = self.accelerate_pattern_matching(test_data, test_patterns)
                 results['patterns_found'] = matches
-                
+
                 # Test entropy calculation
                 entropy = self.accelerate_entropy_calculation(test_data)
                 results['entropy_analysis'] = {'test_entropy': entropy}

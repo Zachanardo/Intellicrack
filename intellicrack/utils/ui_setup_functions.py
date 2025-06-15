@@ -23,39 +23,25 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any, Optional
 
 # Optional imports with graceful fallbacks
-try:
-    from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
-    from PyQt5.QtGui import QColor, QFont
-    from PyQt5.QtWidgets import (
-        QCheckBox,
+from .common_imports import HAS_PYQT
+
+if HAS_PYQT:
+    from .common_imports import (
         QComboBox,
-        QDial,
-        QFileDialog,
         QGroupBox,
         QHBoxLayout,
-        QHeaderView,
         QLabel,
-        QLineEdit,
-        QListWidget,
-        QListWidgetItem,
         QPlainTextEdit,
         QProgressBar,
         QPushButton,
-        QSlider,
         QSpinBox,
         QSplitter,
+        Qt,
         QTableWidget,
-        QTableWidgetItem,
-        QTabWidget,
-        QTextEdit,
-        QTreeWidget,
-        QTreeWidgetItem,
+        QTimer,
         QVBoxLayout,
         QWidget,
     )
-    HAS_PYQT = True
-except ImportError:
-    HAS_PYQT = False
 
 try:
     import matplotlib

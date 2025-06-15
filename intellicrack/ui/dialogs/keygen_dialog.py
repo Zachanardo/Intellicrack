@@ -150,6 +150,26 @@ class KeygenDialog(BinarySelectionDialog):
     """Professional Keygen Dialog with advanced features."""
 
     def __init__(self, parent=None, binary_path: str = ""):
+
+        # Initialize UI attributes
+        self.analysis_display = None
+        self.analyze_keys_btn = None
+        self.batch_algorithm_combo = None
+        self.batch_clear_btn = None
+        self.batch_count_spin = None
+        self.batch_export_btn = None
+        self.batch_format_combo = None
+        self.batch_generate_btn = None
+        self.batch_progress = None
+        self.batch_stop_btn = None
+        self.batch_table = None
+        self.copy_btn = None
+        self.existing_keys_input = None
+        self.generate_btn = None
+        self.key_analysis_display = None
+        self.key_display = None
+        self.results_display = None
+        self.save_single_btn = None
         super().__init__(parent, binary_path)
         self.worker = None
         self.generated_keys = []
@@ -640,7 +660,7 @@ class KeygenDialog(BinarySelectionDialog):
 
     def save_single_key(self):
         """Save the generated key to file."""
-        if not hasattr(self, 'last_generated_key') or not self.last_generated_key:
+        if not self.last_generated_key:
             QMessageBox.warning(self, "Warning", "No key to save. Generate a key first.")
             return
 

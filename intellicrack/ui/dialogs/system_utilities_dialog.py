@@ -200,6 +200,30 @@ class SystemUtilitiesDialog(QDialog):
     """System Utilities Dialog with various system tools."""
 
     def __init__(self, parent=None):
+
+        # Initialize UI attributes
+        self.close_btn = None
+        self.deps_check_btn = None
+        self.deps_install_btn = None
+        self.deps_table = None
+        self.memory_free_label = None
+        self.memory_percent_label = None
+        self.memory_results = None
+        self.memory_total_label = None
+        self.memory_used_label = None
+        self.opt_clear_cache = None
+        self.opt_compress_memory = None
+        self.opt_defrag_memory = None
+        self.optimize_memory_btn = None
+        self.process_filter = None
+        self.process_kill_btn = None
+        self.process_refresh_btn = None
+        self.process_table = None
+        self.progress_bar = None
+        self.status_label = None
+        self.sysinfo_display = None
+        self.sysinfo_export_btn = None
+        self.sysinfo_refresh_btn = None
         super().__init__(parent)
         self.worker = None
         self.current_results = {}

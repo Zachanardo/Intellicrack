@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+import os
 import threading
 from typing import Any, Callable, Dict, Optional
 
@@ -84,10 +85,28 @@ class EmulatorManager(QObject):
             self.emulator_error.emit("QEMU", "QEMU is not installed. Please install QEMU first.")
             return False
 
+        # Validate binary path
+        if not binary_path:
+            self.emulator_error.emit("QEMU", "Binary path cannot be empty")
+            return False
+
+        # Normalize the path
+        binary_path = os.path.abspath(binary_path)
+
+        # Log the binary being emulated
+        self.logger.info(f"Ensuring QEMU is running for binary: {binary_path}")
+
         with self.lock:
             # Check if already running
             if self.qemu_running and self.qemu_instance:
-                return True
+                # Check if we're using the same binary
+                if hasattr(self.qemu_instance, 'binary_path') and self.qemu_instance.binary_path == binary_path:
+                    self.logger.debug(f"QEMU already running for binary: {binary_path}")
+                    return True
+                else:
+                    # Different binary, need to restart
+                    self.logger.info(f"QEMU running for different binary, restarting for: {binary_path}")
+                    self.stop_qemu()
 
             # Check if already starting
             if self.qemu_starting:
@@ -97,11 +116,21 @@ class EmulatorManager(QObject):
             self.qemu_starting = True
 
         try:
-            self.emulator_status_changed.emit("QEMU", False, "Starting QEMU emulator...")
+            self.emulator_status_changed.emit("QEMU", False, f"Starting QEMU emulator for {os.path.basename(binary_path)}...")
+
+            # Prepare configuration with binary path
+            if config is None:
+                config = {}
+
+            # Add binary path to configuration
+            config['binary_path'] = binary_path
 
             # Create QEMU instance if needed
             if not self.qemu_instance:
                 self.qemu_instance = QemuEmulator(config=config)
+                # Store binary path for future reference
+                if hasattr(self.qemu_instance, '__dict__'):
+                    self.qemu_instance.binary_path = binary_path
 
             # Start the system
             self.qemu_instance.start_system()
@@ -110,7 +139,7 @@ class EmulatorManager(QObject):
                 self.qemu_running = True
                 self.qemu_starting = False
 
-            self.emulator_status_changed.emit("QEMU", True, "QEMU emulator started successfully")
+            self.emulator_status_changed.emit("QEMU", True, f"QEMU emulator started successfully for {os.path.basename(binary_path)}")
             return True
 
         except Exception as e:
@@ -118,7 +147,7 @@ class EmulatorManager(QObject):
                 self.qemu_running = False
                 self.qemu_starting = False
 
-            error_msg = f"Failed to start QEMU: {str(e)}"
+            error_msg = f"Failed to start QEMU for {binary_path}: {str(e)}"
             self.logger.error(error_msg)
             self.emulator_error.emit("QEMU", error_msg)
             self.emulator_status_changed.emit("QEMU", False, "QEMU failed to start")

@@ -296,6 +296,7 @@ node_modules/
 *.db
 *.sqlite
 *.sqlite3
+data/*.db
 
 # Profiling data
 *.prof

@@ -98,3 +98,45 @@ def run_subprocess_check(cmd: Union[str, List[str]],
     except Exception as e:
         logger.error("Error running command %s: %s", cmd, e)
         raise
+
+
+def create_popen_with_encoding(cmd: List[str], encoding: str = "utf-8",
+                              timeout: Optional[int] = None) -> Tuple[int, str, str]:
+    """
+    Create Popen process with encoding and error handling.
+    
+    Common pattern for process creation with output capture and encoding.
+    
+    Args:
+        cmd: Command list to execute
+        encoding: Text encoding for output (default: utf-8)
+        timeout: Optional timeout in seconds
+        
+    Returns:
+        Tuple of (return_code, stdout, stderr)
+    """
+    try:
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding=encoding,
+            errors='replace'
+        )
+
+        if timeout:
+            stdout, stderr = process.communicate(timeout=timeout)
+        else:
+            stdout, stderr = process.communicate()
+
+        return process.returncode, stdout or "", stderr or ""
+
+    except subprocess.TimeoutExpired:
+        logger.warning("Process timed out after %s seconds", timeout)
+        process.kill()
+        stdout, stderr = process.communicate()
+        return -1, stdout or "", stderr or ""
+    except Exception as e:
+        logger.error("Error creating process: %s", e)
+        return -1, "", str(e)

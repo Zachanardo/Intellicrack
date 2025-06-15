@@ -288,8 +288,6 @@ class MLVulnerabilityPredictor:
             Tuple of (X_train, y_train) - features and labels
         """
         try:
-            import numpy as np
-
             # Number of synthetic samples
             n_samples = 2000
             n_features = 258  # File size, entropy, 256 byte frequencies + PE features

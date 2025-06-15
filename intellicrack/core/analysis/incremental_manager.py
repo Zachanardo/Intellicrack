@@ -524,7 +524,6 @@ class IncrementalAnalysisManager:
         }
 
         try:
-            import time
             start_time = time.time()
 
             # Set the binary for cache management
@@ -543,7 +542,7 @@ class IncrementalAnalysisManager:
             # Check cache for each analysis type
             for analysis_type in analysis_types:
                 cached_result = self.get_cached_analysis(analysis_type)
-                
+
                 if cached_result is not None:
                     self.logger.info("Using cached results for %s analysis", analysis_type)
                     results['analysis_results'][analysis_type] = cached_result
@@ -552,7 +551,7 @@ class IncrementalAnalysisManager:
                     # Perform fresh analysis
                     self.logger.info("Performing fresh %s analysis", analysis_type)
                     fresh_result = self._perform_analysis(binary_path, analysis_type)
-                    
+
                     if fresh_result is not None:
                         results['analysis_results'][analysis_type] = fresh_result
                         # Cache the fresh results
@@ -623,13 +622,13 @@ class IncrementalAnalysisManager:
         try:
             with open(binary_path, 'rb') as f:
                 data = f.read(8192)  # Sample first 8KB
-            
+
             # Calculate entropy
             if data:
                 frequencies = [0] * 256
                 for byte in data:
                     frequencies[byte] += 1
-                
+
                 entropy = 0.0
                 data_len = len(data)
                 for freq in frequencies:
@@ -654,11 +653,11 @@ class IncrementalAnalysisManager:
             import re
             with open(binary_path, 'rb') as f:
                 data = f.read(16384)  # Sample first 16KB
-            
+
             # Extract printable strings (4+ characters)
             strings = re.findall(rb'[ -~]{4,}', data)
             string_list = [s.decode('ascii', errors='ignore') for s in strings[:50]]  # Limit to 50 strings
-            
+
             return {
                 'strings_count': len(string_list),
                 'strings_sample': string_list,
@@ -672,7 +671,7 @@ class IncrementalAnalysisManager:
         try:
             with open(binary_path, 'rb') as f:
                 header = f.read(64)  # Read first 64 bytes
-            
+
             file_type = 'unknown'
             if header.startswith(b'MZ'):
                 file_type = 'PE'
@@ -680,7 +679,7 @@ class IncrementalAnalysisManager:
                 file_type = 'ELF'
             elif header.startswith(b'\xfe\xed\xfa'):
                 file_type = 'Mach-O'
-            
+
             return {
                 'file_type': file_type,
                 'header_bytes': header[:16].hex(),

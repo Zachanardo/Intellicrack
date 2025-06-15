@@ -299,14 +299,14 @@ class SymbolicExecutionEngine:
                         memory_plugins = state.memory.mem.get_memory_backer()
                     else:
                         memory_plugins = getattr(state.memory.mem, '_memory_backer', None)
-                    
+
                     if memory_plugins and hasattr(memory_plugins, 'get_memory_objects_by_region'):
                         memory_objects_by_region = memory_plugins.get_memory_objects_by_region()
                     elif memory_plugins:
                         memory_objects_by_region = getattr(memory_plugins, '_memory_objects_by_region', [])
                     else:
                         memory_objects_by_region = []
-                        
+
                     if memory_objects_by_region:
                         # Check if we're writing outside allocated regions
                         for region in memory_objects_by_region:
@@ -697,6 +697,10 @@ class SymbolicExecutionEngine:
         """Detect potential buffer overflow vulnerabilities."""
         vulnerabilities = []
 
+        # Log analysis context
+        self.logger.debug(f"Analyzing {len(binary_data)} bytes of binary data")
+        self.logger.debug(f"Found {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+
         # Check for dangerous function usage in strings
         dangerous_functions = [
             'strcpy', 'strcat', 'sprintf', 'gets', 'scanf',
@@ -754,6 +758,10 @@ class SymbolicExecutionEngine:
         """Detect potential format string vulnerabilities."""
         vulnerabilities = []
 
+        # Log analysis context
+        self.logger.debug(f"Analyzing {len(binary_data)} bytes for format string vulnerabilities")
+        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+
         # Look for format string patterns
         format_patterns = ['%s', '%d', '%x', '%n', '%p', '%%']
 
@@ -787,6 +795,10 @@ class SymbolicExecutionEngine:
     def _detect_integer_overflow_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential integer overflow vulnerabilities."""
         vulnerabilities = []
+
+        # Log analysis context
+        self.logger.debug(f"Analyzing {len(binary_data)} bytes for integer overflow patterns")
+        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
 
         # Look for arithmetic operations without bounds checking
         arithmetic_ops = ['add', 'mul', 'imul', 'shl', 'sal']
@@ -825,6 +837,10 @@ class SymbolicExecutionEngine:
     def _detect_command_injection_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential command injection vulnerabilities."""
         vulnerabilities = []
+
+        # Log analysis context
+        self.logger.debug(f"Analyzing {len(binary_data)} bytes for command injection patterns")
+        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
 
         # Look for system command execution
         dangerous_functions = ['system', 'exec', 'popen', 'CreateProcess', 'ShellExecute']
@@ -865,6 +881,10 @@ class SymbolicExecutionEngine:
         """Detect potential use-after-free vulnerabilities."""
         vulnerabilities = []
 
+        # Log analysis context
+        self.logger.debug(f"Analyzing {len(binary_data)} bytes for use-after-free patterns")
+        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+
         # Look for malloc/free patterns
         memory_functions = ['malloc', 'free', 'calloc', 'realloc', 'new', 'delete']
 
@@ -888,6 +908,10 @@ class SymbolicExecutionEngine:
         """Detect potential path traversal vulnerabilities."""
         vulnerabilities = []
 
+        # Log analysis context
+        self.logger.debug(f"Analyzing {len(binary_data)} bytes for path traversal patterns")
+        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
+
         # Look for path traversal patterns
         traversal_patterns = ['../', '..\\', '%2e%2e%2f', '%2e%2e%5c']
 
@@ -910,6 +934,10 @@ class SymbolicExecutionEngine:
     def _detect_sql_injection_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential SQL injection vulnerabilities."""
         vulnerabilities = []
+
+        # Log analysis context
+        self.logger.debug(f"Analyzing {len(binary_data)} bytes for SQL injection patterns")
+        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
 
         # Look for SQL keywords and injection patterns
         sql_keywords = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP', 'UNION', 'OR', 'AND']
@@ -938,6 +966,10 @@ class SymbolicExecutionEngine:
     def _detect_memory_leak_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
         """Detect potential memory leak vulnerabilities."""
         vulnerabilities = []
+
+        # Log analysis context
+        self.logger.debug(f"Analyzing {len(binary_data)} bytes for memory leak patterns")
+        self.logger.debug(f"Processing {len(strings)} strings and {len(disasm_info.get('instructions', []))} instructions")
 
         # Look for memory allocation without corresponding free
         alloc_functions = ['malloc', 'calloc', 'realloc', 'new', 'LocalAlloc', 'GlobalAlloc']

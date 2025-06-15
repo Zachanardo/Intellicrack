@@ -1393,7 +1393,6 @@ class AIBinaryBridge:
             length = 8
 
             # Look for specific offset in intent
-            import re
             offset_match = re.search(r'offset\s+(\d+|0x[0-9a-fA-F]+)', intent_lower)
             if offset_match:
                 offset_str = offset_match.group(1)
@@ -1778,7 +1777,6 @@ class AIBinaryBridge:
                     })
 
             # Look for IP address patterns in strings
-            import re
             ip_pattern = re.compile(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b')
             for _string in context.get("strings", []):
                 if ip_pattern.search(_string["value"]):

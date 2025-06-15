@@ -388,8 +388,8 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) > 1:
-        file_path = sys.argv[1]
-        read_only = len(sys.argv) <= 2 or sys.argv[2].lower() != "edit"
-        launch_hex_viewer(file_path, read_only)
+        target_file_path = sys.argv[1]
+        is_read_only = len(sys.argv) <= 2 or sys.argv[2].lower() != "edit"
+        launch_hex_viewer(target_file_path, is_read_only)
     else:
         print("Usage: python -m Intellicrack.hexview.api <file_path> [edit]")

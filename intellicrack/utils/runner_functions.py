@@ -418,7 +418,6 @@ def run_ai_guided_patching(app_instance=None, binary_path: Optional[str] = None,
 def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """Run advanced Ghidra analysis."""
     from ..config import CONFIG
-    from ..utils.logger import log_message
 
     try:
         logger.info("Starting advanced Ghidra analysis")
@@ -568,7 +567,6 @@ def process_ghidra_analysis_results(app, json_path):
         app: Application instance
         json_path: Path to the JSON results file
     """
-    from ..utils.logger import log_message
 
     try:
         # Validate file path
@@ -1033,8 +1031,7 @@ def run_qemu_analysis(app_instance=None, binary_path: Optional[str] = None, **kw
                 results["status"] = "success"
 
         if app_instance and results.get('status') == 'success':
-            from ..utils.logger import log_message
-            app_instance.update_output.emit(log_message(
+                    app_instance.update_output.emit(log_message(
                 "[QEMU] Analysis completed successfully"))
 
         return results
@@ -1071,8 +1068,7 @@ def run_qiling_emulation(app_instance=None, binary_path: Optional[str] = None, *
         }
 
         if app_instance:
-            from ..utils.logger import log_message
-            app_instance.update_output.emit(log_message(
+                    app_instance.update_output.emit(log_message(
                 "[Qiling] Starting binary emulation..."))
 
         results = qiling_run(binary_path, options)
@@ -1193,7 +1189,6 @@ def run_memory_analysis(app_instance=None, binary_path: Optional[str] = None, **
     Returns:
         Dict with memory analysis results
     """
-    import psutil
     try:
         import pefile
     except ImportError:
@@ -1260,7 +1255,7 @@ def run_memory_analysis(app_instance=None, binary_path: Optional[str] = None, **
                 if hasattr(app_instance.dynamic_analyzer, 'get_target_pid'):
                     pid = app_instance.dynamic_analyzer.get_target_pid()
 
-                if pid:
+                if pid and PSUTIL_AVAILABLE:
                     process = psutil.Process(pid)
 
                     # Memory info
@@ -1354,6 +1349,8 @@ def run_network_analysis(app_instance=None, binary_path: Optional[str] = None, *
                 pe = pefile.PE(binary_path)
 
                 # Define network API categories
+                from .network_api_common import analyze_network_apis
+
                 network_apis = {
                     'basic': ['socket', 'connect', 'bind', 'listen', 'accept', 'send', 'recv'],
                     'http': ['HttpOpenRequest', 'InternetConnect', 'WinHttpConnect'],
@@ -1361,30 +1358,14 @@ def run_network_analysis(app_instance=None, binary_path: Optional[str] = None, *
                     'dns': ['gethostbyname', 'DnsQuery', 'getaddrinfo']
                 }
 
-                detected_apis = {category: [] for category in network_apis}
+                detected_apis = analyze_network_apis(pe, network_apis)
+                from .network_api_common import process_network_api_results
 
-                # Check imports
-                if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-                    for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                        for imp in entry.imports:
-                            if not imp.name:
-                                continue
-                            func_name = imp.name.decode('utf-8', errors='ignore')
+                api_results = process_network_api_results(detected_apis)
+                results["static_analysis"].update(api_results)
 
-                            # Categorize APIs
-                            for category, apis in network_apis.items():
-                                if any(api.lower() in func_name.lower() for api in apis):
-                                    detected_apis[category].append(func_name)
-
-                results["static_analysis"]["network_apis"] = {
-                    cat: len(apis) for cat, apis in detected_apis.items() if apis
-                }
-
-                # Check for SSL usage
-                has_ssl = bool(detected_apis['ssl'])
-                has_network = bool(detected_apis['basic']) or bool(detected_apis['http'])
-
-                if has_network and not has_ssl:
+                # Add security issue if network without SSL
+                if api_results["ssl_usage"]["network_without_ssl"]:
                     results["security_issues"].append({
                         "type": "NO_SSL",
                         "message": "Application uses network APIs without SSL/TLS",
@@ -1500,7 +1481,6 @@ def run_ghidra_plugin_from_file(app, plugin_path):
         plugin_path: Path to the Ghidra script file
     """
     from ..config import CONFIG
-    from ..utils.logger import log_message
 
     if not app or not hasattr(app, 'binary_path') or not app.binary_path:
         if app:
@@ -1531,47 +1511,18 @@ def run_ghidra_plugin_from_file(app, plugin_path):
             app.update_output.emit(log_message(
                 "[Plugin] Setting up Ghidra project..."))
 
-        # Build the command
-        from .ghidra_utils import build_ghidra_command
-        ghidra_headless = ghidra_path.replace("ghidraRun.bat", "support\\analyzeHeadless.bat")
-        cmd = build_ghidra_command(
-            ghidra_headless,
+        # Use the common Ghidra plugin runner
+        from .ghidra_common import run_ghidra_plugin
+        return_code, stdout, stderr = run_ghidra_plugin(
+            ghidra_path,
             temp_dir,
             project_name,
-            app.binary_path,
+            app.binary_path if app else None,
             os.path.dirname(plugin_path),
             os.path.basename(plugin_path),
+            app=app,
             overwrite=True
         )
-
-        if app:
-            app.update_output.emit(log_message(
-                "[Plugin] Running Ghidra headless analyzer..."))
-
-        # Run Ghidra
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding="utf-8",
-            errors='replace'
-        )
-
-        stdout, stderr = process.communicate()
-
-        # Process output
-        if stdout and isinstance(stdout, (str, bytes)) and app:
-            for line in (stdout.splitlines() if stdout is not None else []):
-                if line and line.strip():
-                    app.update_output.emit(
-                        log_message(f"[Ghidra] {line.strip()}"))
-
-        if stderr and isinstance(stderr, (str, bytes)) and app:
-            for line in (stderr.splitlines() if stderr is not None else []):
-                if line and line.strip():
-                    app.update_output.emit(log_message(
-                        f"[Ghidra Error] {line.strip()}"))
 
         if app:
             app.update_output.emit(log_message(
@@ -1611,7 +1562,6 @@ def _run_ghidra_thread(app, cmd, temp_dir):
     """
     Background thread for Ghidra execution with improved error handling.
     """
-    from ..utils.logger import log_message
 
     try:
         # Run Ghidra
@@ -1772,7 +1722,6 @@ def run_frida_analysis(app_instance=None, binary_path: Optional[str] = None, **k
         Dict with analysis results
     """
     try:
-        from ..utils.logger import log_message
 
         # Get binary path
         if not binary_path and app_instance:
@@ -1849,7 +1798,6 @@ def run_frida_analysis(app_instance=None, binary_path: Optional[str] = None, **k
                 app_instance.update_output.emit(log_message(
                     f"[Frida Analysis] Launching target: {binary_path}"))
 
-            import subprocess
             process = subprocess.Popen([binary_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             target_pid = process.pid
 
@@ -1964,7 +1912,6 @@ def run_dynamic_instrumentation(app_instance=None, binary_path: Optional[str] = 
         Dict with instrumentation results
     """
     try:
-        from ..utils.logger import log_message
 
         # Get binary path
         if not binary_path and app_instance:
@@ -2118,9 +2065,6 @@ def run_radare2_analysis(app_instance=None, binary_path: Optional[str] = None, *
             logger.warning("r2pipe not available, using command-line radare2")
 
             # Fallback to command-line
-            import json
-            import subprocess
-
             try:
                 # Get basic info
                 result = subprocess.run(
@@ -2404,8 +2348,6 @@ def _autonomous_analyze_binary(target_binary: str) -> Dict[str, Any]:
     result = {"success": False, "findings": [], "vulnerability_count": 0}
 
     try:
-        import os
-
         if not os.path.exists(target_binary):
             result["findings"].append("Target binary not found")
             return result
@@ -2550,8 +2492,6 @@ def _autonomous_backup_original(target_binary: str) -> Dict[str, Any]:
     result = {"success": False, "backup_path": ""}
 
     try:
-        import shutil
-
         backup_path = target_binary + ".backup"
         shutil.copy2(target_binary, backup_path)
 

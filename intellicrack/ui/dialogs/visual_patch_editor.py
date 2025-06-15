@@ -234,6 +234,8 @@ class VisualPatchEditorDialog(QDialog):
 
     def patch_selected(self, current, previous) -> None:
         """Handle patch selection in the list."""
+        # Note: previous parameter is required by Qt signal but not used
+        _ = previous  # Acknowledge unused parameter
         if not current:
             self.clear_patch_form()
             return

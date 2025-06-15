@@ -22,6 +22,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import gc
 import logging
+import os
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -76,6 +77,10 @@ class MemoryOptimizer:
         }
 
         self.logger = logging.getLogger("IntellicrackLogger.MemoryOptimizer")
+
+        # Initialize memory tracking attributes
+        self._memory_history: List[float] = []
+        self._leak_history: List[Dict[str, Any]] = []
 
         # Initialize memory tracking
         if PSUTIL_AVAILABLE:
@@ -515,9 +520,6 @@ class MemoryOptimizer:
             current_memory, total_memory, usage_percentage = self.get_current_memory_usage()
 
             # Track memory growth over time
-            if not hasattr(self, '_memory_history'):
-                self._memory_history = []
-
             self._memory_history.append(current_memory)
             if len(self._memory_history) > 10:
                 self._memory_history = self._memory_history[-10:]  # Keep last 10 measurements
@@ -576,9 +578,6 @@ class MemoryOptimizer:
             getattr(self.logger, log_level)(log_message)
 
             # Store leak detection results for trending
-            if not hasattr(self, '_leak_history'):
-                self._leak_history = []
-
             self._leak_history.append({
                 'timestamp': time.time(),
                 'status': status,
@@ -719,13 +718,11 @@ class MemoryOptimizer:
 
             # Check for file handle leaks (if psutil available)
             try:
-                import os
-
-                import psutil
-                process = psutil.Process(os.getpid())
-                file_handles = len(process.open_files())
-                if file_handles > 100:
-                    leaks.append(f"Many file handles: {file_handles}")
+                if PSUTIL_AVAILABLE:
+                    process = psutil.Process(os.getpid())
+                    file_handles = len(process.open_files())
+                    if file_handles > 100:
+                        leaks.append(f"Many file handles: {file_handles}")
             except ImportError as e:
                 self.logger.debug("psutil not available for file handle leak detection: %s", e)
 

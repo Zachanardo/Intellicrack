@@ -61,8 +61,10 @@ elif SCAPY_AVAILABLE:
 else:
     PACKET_CAPTURE_LIB = "socket"  # Fallback to raw sockets
 
+from .base_network_analyzer import BaseNetworkAnalyzer
 
-class NetworkTrafficAnalyzer:
+
+class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
     """
     Visual network traffic analyzer for license communications.
 
@@ -77,6 +79,7 @@ class NetworkTrafficAnalyzer:
         Args:
             config: Configuration dictionary (optional)
         """
+        super().__init__()
         self.logger = logging.getLogger(__name__)
 
         # Default configuration
@@ -476,7 +479,9 @@ class NetworkTrafficAnalyzer:
 
                 Logs the interrupt and restores the original signal handler.
                 """
-                self.logger.info("Received interrupt signal, stopping capture...")
+                self.logger.info("Received interrupt signal %d, stopping capture...", sig)
+                if frame:
+                    self.logger.debug("Signal received at frame: %s", frame.f_code.co_filename if hasattr(frame, 'f_code') else 'unknown')
                 signal.signal(signal.SIGINT, original_sigint_handler)
 
             signal.signal(signal.SIGINT, signal_handler)
@@ -716,20 +721,15 @@ class NetworkTrafficAnalyzer:
                 ")"
             )
 
-            # Packet handler function
-            def packet_handler(packet):
-                """Process each captured packet."""
-                if not self.capturing:
-                    return
-
-                try:
-                    # Check if it's a TCP packet with IP layer
-                    if hasattr(scapy, 'IP') and hasattr(scapy, 'TCP') and scapy.IP in packet and scapy.TCP in packet:
+            # Define packet processing function
+            def process_tcp_packet(packet, IP, TCP):
+                """Process TCP packets for analysis."""
+                if IP in packet and TCP in packet:
                         # Extract packet info
-                        src_ip = packet[scapy.IP].src
-                        dst_ip = packet[scapy.IP].dst
-                        src_port = packet[scapy.TCP].sport
-                        dst_port = packet[scapy.TCP].dport
+                        src_ip = packet[IP].src
+                        dst_ip = packet[IP].dst
+                        src_port = packet[TCP].sport
+                        dst_port = packet[TCP].dport
 
                         # Create connection key
                         conn_key = f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
@@ -803,14 +803,19 @@ class NetworkTrafficAnalyzer:
                         if self.config['auto_analyze'] and len(self.packets) % 100 == 0:
                             self.analyze_traffic()
 
-                except Exception as e:
-                    self.logger.error("Error processing packet: %s", e)
+            # Create packet handler using base class
+            packet_handler = self.create_packet_handler(
+                scapy, 
+                lambda: self.capturing,
+                process_tcp_packet
+            )
 
             # Start sniffing
             self.logger.info("Starting Scapy sniffer with filter: %s", bpf_filter)
 
             # Use sniff with a stop filter
             def stop_filter(packet):
+                self.logger.debug("Checking stop condition for packet: %s", type(packet).__name__)
                 return not self.capturing
 
             # Start capture

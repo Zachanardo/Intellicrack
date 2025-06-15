@@ -875,6 +875,15 @@ def _handle_guard_pages_unix(address: int, size: int,
         import ctypes
         import mmap
 
+        # Validate size parameter
+        if size <= 0:
+            logger.error(f"Invalid size parameter: {size}")
+            return False
+
+        # Calculate the full range that needs to be handled
+        end_address = address + size
+        logger.debug(f"Handling guard pages for range {hex(address)}-{hex(end_address)} (size: {size} bytes)")
+
         # On Unix, guard pages are typically implemented differently
         # We'll check /proc/self/maps for memory regions
 
@@ -893,21 +902,28 @@ def _handle_guard_pages_unix(address: int, size: int,
                         start_addr = int(addr_range[0], 16)
                         end_addr = int(addr_range[1], 16)
 
-                        if start_addr <= address < end_addr:
+                        # Check if our target region overlaps with this memory region
+                        if (start_addr <= address < end_addr) or (start_addr < end_address <= end_addr) or (address <= start_addr < end_address):
                             perms = parts[1]
-                            logger.info(f"Memory region at {hex(address)} has permissions: {perms}")
+                            logger.info(f"Memory region {hex(start_addr)}-{hex(end_addr)} overlaps target range, permissions: {perms}")
 
                             # Check if it's a guard page (no permissions)
                             if perms == '---p':
-                                logger.info("Guard page detected")
+                                logger.info("Guard page detected in target range")
 
                                 # Change permissions to make it accessible
                                 libc = ctypes.CDLL(None)
                                 mprotect = libc.mprotect
 
-                                # Align to page boundary
+                                # Align to page boundary and calculate proper size
                                 page_size = mmap.PAGESIZE
                                 aligned_addr = address & ~(page_size - 1)
+
+                                # Calculate aligned size to cover the entire requested region
+                                aligned_end = (end_address + page_size - 1) & ~(page_size - 1)
+                                aligned_size = aligned_end - aligned_addr
+
+                                logger.debug(f"Aligned region: {hex(aligned_addr)}-{hex(aligned_end)} (size: {aligned_size} bytes)")
 
                                 # Set read/write permissions
                                 PROT_READ = 0x1
@@ -915,12 +931,12 @@ def _handle_guard_pages_unix(address: int, size: int,
 
                                 result = mprotect(
                                     ctypes.c_void_p(aligned_addr),
-                                    page_size,
+                                    aligned_size,
                                     PROT_READ | PROT_WRITE
                                 )
 
                                 if result == 0:
-                                    logger.info("Successfully removed guard page protection")
+                                    logger.info(f"Successfully removed guard page protection for {aligned_size} bytes")
                                     return True
                                 else:
                                     logger.error("Failed to change guard page permissions")

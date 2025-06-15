@@ -63,6 +63,34 @@ class PerformanceWidget(QWidget if PYQT5_AVAILABLE else object):
         self.stats_history = []
         self.max_history = 100
 
+        # Initialize UI attributes
+        self.file_size_label = None
+        self.memory_strategy_label = None
+        self.loading_strategy_label = None
+        self.read_operations_label = None
+        self.cache_hit_rate_label = None
+        self.sequential_ratio_label = None
+        self.avg_read_time_label = None
+        self.optimization_status = None
+        self.background_loader_status = None
+        self.memory_used_label = None
+        self.memory_limit_label = None
+        self.memory_progress = None
+        self.system_memory_label = None
+        self.system_memory_progress = None
+        self.cache_regions_label = None
+        self.cache_memory_label = None
+        self.cache_utilization_label = None
+        self.cache_hits_label = None
+        self.cache_misses_label = None
+        self.cache_progress = None
+        self.pattern_table = None
+        self.sequential_count_label = None
+        self.random_count_label = None
+        self.large_read_label = None
+        self.optimize_button = None
+        self.clear_stats_button = None
+
         self.setup_ui()
 
         # Update timer

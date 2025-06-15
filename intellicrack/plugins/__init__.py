@@ -101,6 +101,7 @@ except ImportError as e:
         Returns:
             dict: Empty dictionary
         """
+        logger.debug(f"Fallback load_plugins called with args: {args}, kwargs: {kwargs}")
         # Try to load available plugins from directories
         loaded_plugins = {}
 
@@ -119,8 +120,8 @@ except ImportError as e:
                             'path': str(plugin_file)
                         }
                         logger.info("Loaded Python plugin: %s", plugin_file.stem)
-                    except Exception as e:
-                        logger.error("Failed to load plugin %s: %s", plugin_file.stem, e)
+                    except Exception as exc:
+                        logger.error("Failed to load plugin %s: %s", plugin_file.stem, exc)
 
         # Register Frida scripts
         if FRIDA_SCRIPTS_DIR.exists():
@@ -149,6 +150,7 @@ except ImportError as e:
         
         Does nothing when the actual plugin system cannot be imported.
         """
+        logger.debug(f"Fallback run_plugin called with args: {args}, kwargs: {kwargs}")
         pass
     def run_custom_plugin(*args, **kwargs):
         """
@@ -156,6 +158,7 @@ except ImportError as e:
         
         Does nothing when the actual plugin system cannot be imported.
         """
+        logger.debug(f"Fallback run_custom_plugin called with args: {args}, kwargs: {kwargs}")
         pass
     def run_frida_plugin_from_file(*args, **kwargs):
         """
@@ -163,6 +166,7 @@ except ImportError as e:
         
         Does nothing when the actual plugin system cannot be imported.
         """
+        logger.debug(f"Fallback run_frida_plugin_from_file called with args: {args}, kwargs: {kwargs}")
         pass
     def run_ghidra_plugin_from_file(*args, **kwargs):
         """
@@ -170,6 +174,7 @@ except ImportError as e:
         
         Does nothing when the actual plugin system cannot be imported.
         """
+        logger.debug(f"Fallback run_ghidra_plugin_from_file called with args: {args}, kwargs: {kwargs}")
         pass
     def create_sample_plugins(*args, **kwargs):
         """
@@ -177,6 +182,7 @@ except ImportError as e:
         
         Does nothing when the actual plugin system cannot be imported.
         """
+        logger.debug(f"Fallback create_sample_plugins called with args: {args}, kwargs: {kwargs}")
         pass
     def run_plugin_in_sandbox(*args, **kwargs):
         """
@@ -185,6 +191,7 @@ except ImportError as e:
         Returns:
             None
         """
+        logger.debug(f"Fallback run_plugin_in_sandbox called with args: {args}, kwargs: {kwargs}")
         return None
     def run_plugin_remotely(*args, **kwargs):
         """
@@ -193,6 +200,7 @@ except ImportError as e:
         Returns:
             None
         """
+        logger.debug(f"Fallback run_plugin_remotely called with args: {args}, kwargs: {kwargs}")
         return None
 
 # Import remote executor if available

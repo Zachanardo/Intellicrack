@@ -20,7 +20,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import subprocess
 from typing import List, Optional, Tuple
 
 
@@ -36,26 +35,8 @@ def run_process_with_output(cmd: List[str], encoding: str = 'utf-8',
     Returns:
         tuple: (return_code, stdout, stderr)
     """
-    try:
-        # Create process with standard output/error capture
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding=encoding,
-            errors='replace'
-        )
-
-        stdout, stderr = process.communicate(timeout=timeout)
-        return process.returncode, stdout, stderr
-
-    except subprocess.TimeoutExpired:
-        process.kill()
-        stdout, stderr = process.communicate()
-        return -1, stdout, "Process timed out"
-    except (OSError, ValueError, RuntimeError) as e:
-        return -1, "", str(e)
+    from .subprocess_utils import create_popen_with_encoding
+    return create_popen_with_encoding(cmd, encoding, timeout)
 
 def run_ghidra_process(cmd: List[str]) -> Tuple[int, str, str]:
     """Run Ghidra subprocess with standard configuration.

@@ -326,36 +326,33 @@ Remember: Your goal is to help users understand binary protection mechanisms and
         # Check for _specific intents
         if any(_word in message_lower for _word in ["analyze", "scan", "check", "examine"]):
             return {"type": "analysis", "focus": self._extract_focus(message)}
-        elif any(_word in message_lower for _word in ["patch", "bypass", "crack", "remove"]):
+        if any(_word in message_lower for _word in ["patch", "bypass", "crack", "remove"]):
             return {"type": "patching", "target": self._extract_target(message)}
-        elif any(_word in message_lower for _word in ["help", "explain", "what", "how"]):
+        if any(_word in message_lower for _word in ["help", "explain", "what", "how"]):
             return {"type": "explanation", "topic": self._extract_topic(message)}
-        elif any(_word in message_lower for _word in ["network", "protocol", "communication"]):
+        if any(_word in message_lower for _word in ["network", "protocol", "communication"]):
             return {"type": "network", "aspect": self._extract_aspect(message)}
-        else:
-            return {"type": "general", "content": message}
+        return {"type": "general", "content": message}
 
     def _extract_focus(self, message: str) -> str:
         """Extract analysis focus from message."""
         if "license" in message.lower():
             return "license"
-        elif "protection" in message.lower():
+        if "protection" in message.lower():
             return "protection"
-        elif "vulnerability" in message.lower():
+        if "vulnerability" in message.lower():
             return "vulnerability"
-        else:
-            return "comprehensive"
+        return "comprehensive"
 
     def _extract_target(self, message: str) -> str:
         """Extract patching target from message."""
         if "license" in message.lower():
             return "license"
-        elif "trial" in message.lower():
+        if "trial" in message.lower():
             return "trial"
-        elif "protection" in message.lower():
+        if "protection" in message.lower():
             return "protection"
-        else:
-            return "auto"
+        return "auto"
 
     def _extract_topic(self, message: str) -> str:  # pylint: disable=unused-argument
         """Extract help topic from message."""
@@ -399,10 +396,9 @@ Remember: Your goal is to help users understand binary protection mechanisms and
         # Suggest appropriate analysis
         if focus == "license":
             return f"I'll analyze {binary} for license checks. Let me start by finding license validation routines.\n\nWould you like me to:\n1. Run comprehensive analysis first\n2. Directly search for license checks\n3. Check for specific protection mechanisms"
-        elif focus == "protection":
+        if focus == "protection":
             return f"I'll detect all protection mechanisms in {binary}. This includes:\n- Packing and obfuscation\n- Anti-debugging techniques\n- License/trial checks\n- Hardware locks\n\nShall I proceed with the protection scan?"
-        else:
-            return f"I'll perform a comprehensive analysis of {binary}. This will include:\n- Binary structure and format\n- Protection mechanisms\n- Potential vulnerabilities\n- License/trial logic\n\nThis may take a few minutes. Shall I proceed?"
+        return f"I'll perform a comprehensive analysis of {binary}. This will include:\n- Binary structure and format\n- Protection mechanisms\n- Potential vulnerabilities\n- License/trial logic\n\nThis may take a few minutes. Shall I proceed?"
 
     def _handle_patching_intent(self, intent: Dict[str, Any]) -> str:
         """Handle patching intent."""
@@ -437,8 +433,7 @@ What would you like to learn about?"""
         """Analyze a binary file."""
         if self.cli_interface:
             return self.cli_interface.analyze_binary(binary_path, analyses)
-        else:
-            return {"status": "error", "message": "CLI interface not available"}
+        return {"status": "error", "message": "CLI interface not available"}
 
     def _detect_protections(self, binary_path: str) -> Dict[str, Any]:
         """Detect protection mechanisms."""

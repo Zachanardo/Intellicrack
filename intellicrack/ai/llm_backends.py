@@ -93,6 +93,9 @@ class LLMBackend:
 
     def chat(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> LLMResponse:
         """Send chat messages and get response."""
+        # Log the messages and tools for debugging
+        logger.debug(f"Chat called with {len(messages)} messages and {len(tools or [])} tools")
+
         logger.error("Base LLMBackend.chat() called - this method must be implemented by subclasses")
         return LLMResponse(
             content="Error: LLM backend not properly initialized. Please use a concrete backend implementation.",

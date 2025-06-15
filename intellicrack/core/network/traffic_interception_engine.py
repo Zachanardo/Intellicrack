@@ -20,14 +20,14 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+import os
 import socket
 import struct
+import sys
 import threading
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
-import os
-import sys
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 try:
     import scapy.all as scapy
@@ -60,7 +60,7 @@ class InterceptedPacket:
     timestamp: float
     packet_size: int
     flags: Dict[str, bool]
-    
+
     def __post_init__(self):
         """Initialize flags if not provided"""
         if not self.flags:
@@ -77,15 +77,17 @@ class AnalyzedTraffic:
     patterns_matched: List[str]
     analysis_metadata: Dict[str, Any]
 
+from .base_network_analyzer import BaseNetworkAnalyzer
 
-class TrafficInterceptionEngine:
+
+class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     """
     Real-time traffic interception engine for license server communications.
     
     This engine intercepts actual network traffic to and from license servers,
     analyzes the protocols, and enables real-time response generation.
     """
-    
+
     def __init__(self, bind_interface: str = "127.0.0.1"):
         """
         Initialize the traffic interception engine.
@@ -93,10 +95,11 @@ class TrafficInterceptionEngine:
         Args:
             bind_interface: Network interface to bind to
         """
+        super().__init__()
         self.logger = logging.getLogger("IntellicrackLogger.TrafficEngine")
         self.bind_interface = bind_interface
         self.running = False
-        
+
         # Statistics
         self.stats = {
             'packets_captured': 0,
@@ -105,7 +108,7 @@ class TrafficInterceptionEngine:
             'total_bytes': 0,
             'start_time': None
         }
-        
+
         # Configuration
         self.capture_config = {
             'promiscuous_mode': False,
@@ -113,20 +116,20 @@ class TrafficInterceptionEngine:
             'timeout_ms': 100,
             'filter_expression': None
         }
-        
+
         # Protocol patterns for license detection
         self.license_patterns = {
             'flexlm': [
                 b'VENDOR_STRING',
                 b'FEATURE',
-                b'INCREMENT', 
+                b'INCREMENT',
                 b'SERVER',
                 b'HOSTID',
                 b'SIGN='
             ],
             'hasp': [
                 b'hasp',
-                b'HASP', 
+                b'HASP',
                 b'sentinel',
                 b'SENTINEL',
                 b'Aladdin'
@@ -142,7 +145,7 @@ class TrafficInterceptionEngine:
             'autodesk': [
                 b'adsk',
                 b'ADSK',
-                b'autodesk', 
+                b'autodesk',
                 b'AUTODESK',
                 b'AdskNetworkLicenseManager'
             ],
@@ -164,7 +167,7 @@ class TrafficInterceptionEngine:
                 b'VERIFY'
             ]
         }
-        
+
         # Known license server ports
         self.license_ports = {
             27000, 27001, 27002, 27003, 27004, 27005, 27006, 27007, 27008, 27009,  # FlexLM
@@ -174,26 +177,26 @@ class TrafficInterceptionEngine:
             2080,  # Autodesk Network License Manager
             7788, 7789  # Other common license ports
         }
-        
+
         # Active connections tracking
         self.active_connections: Dict[str, Dict[str, Any]] = {}
         self.connection_lock = threading.Lock()
-        
+
         # Analysis callbacks
         self.analysis_callbacks: List[Callable[[AnalyzedTraffic], None]] = []
-        
+
         # Transparent proxy settings
         self.proxy_mappings: Dict[str, Tuple[str, int]] = {}
         self.dns_redirections: Dict[str, str] = {}
-        
+
         # Threading
         self.capture_thread: Optional[threading.Thread] = None
         self.analysis_thread: Optional[threading.Thread] = None
         self.packet_queue: List[InterceptedPacket] = []
         self.queue_lock = threading.Lock()
-        
+
         # Initialize capture backend
-        self.capture_backend = self._initialize_capture_backend()        
+        self.capture_backend = self._initialize_capture_backend()
     def _initialize_capture_backend(self) -> str:
         """Initialize the best available packet capture backend"""
         # Check platform and available libraries
@@ -205,7 +208,9 @@ class TrafficInterceptionEngine:
                 self.logger.warning("Scapy not available, using socket-based capture")
                 return "socket"
         elif sys.platform.startswith("linux"):
-            if HAS_SCAPY and os.geteuid() == 0:
+            # Check if running as root (geteuid only available on Unix-like systems)
+            is_root = hasattr(os, 'geteuid') and os.geteuid() == 0  # pylint: disable=no-member
+            if HAS_SCAPY and is_root:
                 self.logger.info("Using Scapy for Linux packet capture (root required)")
                 return "scapy"
             elif HAS_PCAP:
@@ -221,7 +226,7 @@ class TrafficInterceptionEngine:
             else:
                 self.logger.warning("Using socket-based capture")
                 return "socket"
-        
+
     def start_interception(self, ports: List[int] = None) -> bool:
         """
         Start traffic interception on specified ports.
@@ -236,56 +241,56 @@ class TrafficInterceptionEngine:
             if self.running:
                 self.logger.warning("Traffic interception already running")
                 return True
-                
+
             if ports:
                 self.license_ports.update(ports)
-                
+
             self.running = True
             self.stats['start_time'] = time.time()
-            
+
             # Start capture thread
             self.capture_thread = threading.Thread(
                 target=self._capture_loop,
                 daemon=True
             )
             self.capture_thread.start()
-            
-            # Start analysis thread  
+
+            # Start analysis thread
             self.analysis_thread = threading.Thread(
                 target=self._analysis_loop,
                 daemon=True
             )
             self.analysis_thread.start()
-            
+
             self.logger.info(f"Traffic interception started using {self.capture_backend} backend")
             self.logger.info(f"Monitoring {len(self.license_ports)} license server ports")
-            
+
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Failed to start traffic interception: {e}")
             self.running = False
             return False
-            
+
     def stop_interception(self) -> bool:
         """Stop traffic interception"""
         try:
             self.running = False
-            
+
             # Wait for threads to finish
             if self.capture_thread and self.capture_thread.is_alive():
                 self.capture_thread.join(timeout=5.0)
-                
+
             if self.analysis_thread and self.analysis_thread.is_alive():
                 self.analysis_thread.join(timeout=5.0)
-                
+
             self.logger.info("Traffic interception stopped")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Error stopping traffic interception: {e}")
             return False
-            
+
     def _capture_loop(self):
         """Main packet capture loop"""
         try:
@@ -295,31 +300,29 @@ class TrafficInterceptionEngine:
                 self._pcap_capture()
             else:
                 self._socket_capture()
-                
+
         except Exception as e:
             self.logger.error(f"Capture loop error: {e}")
-            
+
     def _scapy_capture(self):
         """Packet capture using Scapy"""
         if not HAS_SCAPY:
             return
-            
+
         try:
             # Build filter for license server ports
             port_filter = " or ".join([f"port {port}" for port in self.license_ports])
             filter_expr = f"tcp and ({port_filter})"
-            
+
             self.logger.info(f"Starting Scapy capture with filter: {filter_expr}")
-            
-            def packet_handler(packet):
-                if not self.running:
-                    return
-                    
-                try:
-                    if scapy.TCP in packet:
-                        tcp_layer = packet[scapy.TCP]
-                        ip_layer = packet[scapy.IP]
-                        
+
+            # Define packet processing function
+            def process_license_packet(packet, IP, TCP):
+                """Process packets for license interception."""
+                if TCP in packet:
+                        tcp_layer = packet[TCP]
+                        ip_layer = packet[IP]
+
                         # Extract packet data
                         intercepted = InterceptedPacket(
                             source_ip=ip_layer.src,
@@ -332,17 +335,21 @@ class TrafficInterceptionEngine:
                             packet_size=len(packet),
                             flags={
                                 'syn': bool(tcp_layer.flags & 0x02),
-                                'ack': bool(tcp_layer.flags & 0x10), 
+                                'ack': bool(tcp_layer.flags & 0x10),
                                 'fin': bool(tcp_layer.flags & 0x01),
                                 'rst': bool(tcp_layer.flags & 0x04)
                             }
                         )
-                        
+
                         self._queue_packet(intercepted)
-                        
-                except Exception as e:
-                    self.logger.debug(f"Error processing packet: {e}")
-                    
+
+            # Create packet handler using base class
+            packet_handler = self.create_packet_handler(
+                scapy,
+                lambda: self.running,
+                process_license_packet
+            )
+
             # Start capture
             scapy.sniff(
                 filter=filter_expr,
@@ -350,14 +357,14 @@ class TrafficInterceptionEngine:
                 stop_filter=lambda x: not self.running,
                 timeout=1
             )
-            
+
         except Exception as e:
-            self.logger.error(f"Scapy capture error: {e}")            
+            self.logger.error(f"Scapy capture error: {e}")
     def _pcap_capture(self):
         """Packet capture using libpcap"""
         if not HAS_PCAP:
             return
-            
+
         try:
             # Create pcap handle
             pc = pcap.pcap(
@@ -366,60 +373,60 @@ class TrafficInterceptionEngine:
                 immediate=True,
                 timeout_ms=self.capture_config['timeout_ms']
             )
-            
+
             # Build filter
             port_filter = " or ".join([f"port {port}" for port in self.license_ports])
             filter_expr = f"tcp and ({port_filter})"
             pc.setfilter(filter_expr)
-            
+
             self.logger.info(f"Starting libpcap capture with filter: {filter_expr}")
-            
+
             for timestamp, raw_packet in pc:
                 if not self.running:
                     break
-                    
+
                 try:
                     # Parse Ethernet header (14 bytes)
                     if len(raw_packet) < 14:
                         continue
-                        
+
                     eth_header = raw_packet[:14]
                     eth_protocol = struct.unpack('!H', eth_header[12:14])[0]
-                    
+
                     # Check for IPv4 (0x0800)
                     if eth_protocol != 0x0800:
                         continue
-                        
+
                     # Parse IP header
                     ip_header = raw_packet[14:34]
                     if len(ip_header) < 20:
                         continue
-                        
+
                     ip_data = struct.unpack('!BBHHHBBH4s4s', ip_header)
                     protocol = ip_data[6]
-                    
+
                     # Check for TCP (6)
                     if protocol != 6:
                         continue
-                        
+
                     source_ip = socket.inet_ntoa(ip_data[8])
                     dest_ip = socket.inet_ntoa(ip_data[9])
-                    
+
                     # Parse TCP header
                     tcp_header = raw_packet[34:54]
                     if len(tcp_header) < 20:
                         continue
-                        
+
                     tcp_data = struct.unpack('!HHLLBBHHH', tcp_header)
                     source_port = tcp_data[0]
                     dest_port = tcp_data[1]
                     flags = tcp_data[5]
-                    
+
                     # Extract payload
                     tcp_header_length = (tcp_data[4] >> 4) * 4
                     payload_start = 34 + tcp_header_length
                     payload = raw_packet[payload_start:] if payload_start < len(raw_packet) else b''
-                    
+
                     # Create intercepted packet
                     intercepted = InterceptedPacket(
                         source_ip=source_ip,
@@ -433,19 +440,19 @@ class TrafficInterceptionEngine:
                         flags={
                             'syn': bool(flags & 0x02),
                             'ack': bool(flags & 0x10),
-                            'fin': bool(flags & 0x01), 
+                            'fin': bool(flags & 0x01),
                             'rst': bool(flags & 0x04)
                         }
                     )
-                    
+
                     self._queue_packet(intercepted)
-                    
+
                 except Exception as e:
                     self.logger.debug(f"Error processing packet: {e}")
-                    
+
         except Exception as e:
             self.logger.error(f"libpcap capture error: {e}")
-            
+
     def _socket_capture(self):
         """Basic socket-based capture for localhost traffic"""
         try:
@@ -463,31 +470,31 @@ class TrafficInterceptionEngine:
                     # Fallback to standard socket monitoring
                     self._monitor_local_connections()
                     return
-                    
+
             self.logger.info("Starting socket-based capture")
-            
+
             while self.running:
                 try:
                     raw_packet = sock.recv(65535)
                     self._parse_raw_packet(raw_packet)
-                    
+
                 except socket.timeout:
                     continue
                 except Exception as e:
                     if self.running:
                         self.logger.debug(f"Socket capture error: {e}")
-                        
+
             if sys.platform == "win32":
                 sock.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
             sock.close()
-            
+
         except Exception as e:
             self.logger.warning(f"Raw socket capture failed, using connection monitoring: {e}")
-            self._monitor_local_connections()            
+            self._monitor_local_connections()
     def _monitor_local_connections(self):
         """Monitor local connections when raw sockets aren't available"""
         self.logger.info("Monitoring localhost connections for license traffic")
-        
+
         while self.running:
             try:
                 # Monitor connections to license server ports
@@ -497,11 +504,11 @@ class TrafficInterceptionEngine:
                         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         sock.settimeout(0.1)
                         result = sock.connect_ex((self.bind_interface, port))
-                        
+
                         if result == 0:
                             # Port is open, there's a license server
                             connection_key = f"{self.bind_interface}:{port}"
-                            
+
                             with self.connection_lock:
                                 if connection_key not in self.active_connections:
                                     self.active_connections[connection_key] = {
@@ -509,54 +516,54 @@ class TrafficInterceptionEngine:
                                         'last_activity': time.time(),
                                         'packet_count': 0
                                     }
-                                    
+
                                     self.logger.info(f"License server detected on port {port}")
-                                    
+
                         sock.close()
-                        
+
                     except Exception:
                         pass
-                        
+
                 time.sleep(1.0)
-                
+
             except Exception as e:
                 self.logger.debug(f"Connection monitoring error: {e}")
-                
+
     def _parse_raw_packet(self, raw_packet: bytes):
         """Parse raw network packet"""
         try:
             if len(raw_packet) < 20:
                 return
-                
+
             # Parse IP header
             ip_header = struct.unpack('!BBHHHBBH4s4s', raw_packet[:20])
             protocol = ip_header[6]
-            
+
             # Only process TCP packets
             if protocol != 6:
                 return
-                
+
             source_ip = socket.inet_ntoa(ip_header[8])
             dest_ip = socket.inet_ntoa(ip_header[9])
-            
+
             # Parse TCP header
             if len(raw_packet) < 40:
                 return
-                
+
             tcp_header = struct.unpack('!HHLLBBHHH', raw_packet[20:40])
             source_port = tcp_header[0]
             dest_port = tcp_header[1]
             flags = tcp_header[5]
-            
+
             # Check if this is license server traffic
             if dest_port not in self.license_ports and source_port not in self.license_ports:
                 return
-                
+
             # Extract payload
             tcp_header_length = (tcp_header[4] >> 4) * 4
             payload_start = 20 + tcp_header_length
             payload = raw_packet[payload_start:] if payload_start < len(raw_packet) else b''
-            
+
             # Create intercepted packet
             intercepted = InterceptedPacket(
                 source_ip=source_ip,
@@ -574,35 +581,35 @@ class TrafficInterceptionEngine:
                     'rst': bool(flags & 0x04)
                 }
             )
-            
+
             self._queue_packet(intercepted)
-            
+
         except Exception as e:
             self.logger.debug(f"Error parsing packet: {e}")
-            
+
     def _queue_packet(self, packet: InterceptedPacket):
         """Add packet to analysis queue"""
         with self.queue_lock:
             self.packet_queue.append(packet)
-            
+
             # Update statistics
             self.stats['packets_captured'] += 1
             self.stats['total_bytes'] += packet.packet_size
-            
+
             # Limit queue size
             if len(self.packet_queue) > 10000:
-                self.packet_queue.pop(0)                
+                self.packet_queue.pop(0)
     def _analysis_loop(self):
         """Main packet analysis loop"""
         while self.running:
             try:
                 packets_to_analyze = []
-                
+
                 with self.queue_lock:
                     if self.packet_queue:
                         packets_to_analyze = self.packet_queue.copy()
                         self.packet_queue.clear()
-                        
+
                 for packet in packets_to_analyze:
                     analysis = self._analyze_packet(packet)
                     if analysis:
@@ -612,12 +619,12 @@ class TrafficInterceptionEngine:
                                 callback(analysis)
                             except Exception as e:
                                 self.logger.error(f"Analysis callback error: {e}")
-                                
+
                 time.sleep(0.1)
-                
+
             except Exception as e:
                 self.logger.error(f"Analysis loop error: {e}")
-                
+
     def _analyze_packet(self, packet: InterceptedPacket) -> Optional[AnalyzedTraffic]:
         """Analyze packet for license-related content"""
         try:
@@ -625,16 +632,16 @@ class TrafficInterceptionEngine:
             protocol_type = "unknown"
             confidence = 0.0
             patterns_matched = []
-            
+
             # Check if packet has data
             if not packet.data:
                 return None
-                
+
             # Check port-based detection
             if packet.dest_port in self.license_ports or packet.source_port in self.license_ports:
                 confidence += 0.3
                 is_license_related = True
-                
+
             # Pattern matching
             for proto, patterns in self.license_patterns.items():
                 matches = 0
@@ -642,42 +649,42 @@ class TrafficInterceptionEngine:
                     if pattern in packet.data:
                         matches += 1
                         patterns_matched.append(pattern.decode('utf-8', errors='ignore'))
-                        
+
                 if matches > 0:
                     pattern_confidence = min(matches / len(patterns), 1.0) * 0.7
                     if pattern_confidence > confidence:
                         confidence = pattern_confidence
                         protocol_type = proto
                         is_license_related = True
-                        
+
             # Additional heuristics
             if packet.data:
                 data_lower = packet.data.lower()
-                
+
                 # Look for license-related keywords
                 license_keywords = [b'license', b'activation', b'checkout', b'verify', b'serial']
                 keyword_matches = sum(1 for keyword in license_keywords if keyword in data_lower)
-                
+
                 if keyword_matches > 0:
                     confidence += min(keyword_matches * 0.1, 0.3)
                     is_license_related = True
-                    
+
             # Only return analysis if confidence is high enough
             if confidence < 0.2:
                 return None
-                
+
             # Update statistics
             if is_license_related:
                 self.stats['license_packets_detected'] += 1
                 self.stats['protocols_detected'].add(protocol_type)
-                
+
             analysis_metadata = {
                 'keywords_found': patterns_matched,
                 'port_based_detection': packet.dest_port in self.license_ports or packet.source_port in self.license_ports,
                 'data_size': len(packet.data),
                 'connection_flags': packet.flags
             }
-            
+
             return AnalyzedTraffic(
                 packet=packet,
                 is_license_related=is_license_related,
@@ -686,20 +693,20 @@ class TrafficInterceptionEngine:
                 patterns_matched=patterns_matched,
                 analysis_metadata=analysis_metadata
             )
-            
+
         except Exception as e:
             self.logger.error(f"Packet analysis error: {e}")
             return None
-            
+
     def add_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]):
         """Add callback for analyzed traffic"""
         self.analysis_callbacks.append(callback)
-        
+
     def remove_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]):
         """Remove analysis callback"""
         if callback in self.analysis_callbacks:
             self.analysis_callbacks.remove(callback)
-            
+
     def set_dns_redirection(self, hostname: str, target_ip: str) -> bool:
         """Setup DNS redirection for hostname"""
         try:
@@ -709,7 +716,7 @@ class TrafficInterceptionEngine:
         except Exception as e:
             self.logger.error(f"Failed to setup DNS redirection: {e}")
             return False
-            
+
     def setup_transparent_proxy(self, target_host: str, target_port: int) -> bool:
         """Setup transparent proxy for target server"""
         try:
@@ -720,12 +727,12 @@ class TrafficInterceptionEngine:
         except Exception as e:
             self.logger.error(f"Failed to setup transparent proxy: {e}")
             return False
-            
+
     def get_statistics(self) -> Dict[str, Any]:
         """Get traffic interception statistics"""
         current_time = time.time()
         uptime = current_time - self.stats['start_time'] if self.stats['start_time'] else 0
-        
+
         stats = self.stats.copy()
         stats['protocols_detected'] = list(stats['protocols_detected'])
         stats['uptime_seconds'] = uptime
@@ -734,14 +741,14 @@ class TrafficInterceptionEngine:
         stats['capture_backend'] = self.capture_backend
         stats['dns_redirections'] = len(self.dns_redirections)
         stats['proxy_mappings'] = len(self.proxy_mappings)
-        
+
         return stats
-        
+
     def get_active_connections(self) -> List[Dict[str, Any]]:
         """Get list of active connections"""
         connections = []
         current_time = time.time()
-        
+
         with self.connection_lock:
             for connection_key, info in self.active_connections.items():
                 connections.append({
@@ -750,7 +757,7 @@ class TrafficInterceptionEngine:
                     'last_activity': info['last_activity'],
                     'packet_count': info['packet_count']
                 })
-                
+
         return connections
 
 

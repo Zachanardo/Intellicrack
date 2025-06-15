@@ -6,6 +6,7 @@ This module consolidates certificate creation patterns.
 
 import datetime
 import logging
+from typing import Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -39,11 +40,26 @@ def create_certificate_builder():
             ])
         ).serial_number(
             x509.random_serial_number()
-        ).not_valid_before(
-            datetime.datetime.utcnow()
-        ).not_valid_after(
-            datetime.datetime.utcnow() + datetime.timedelta(days=365)
         )
+
+        # Set validity dates
+        not_valid_before, not_valid_after = get_certificate_validity_dates(365)
+        builder = builder.not_valid_before(not_valid_before).not_valid_after(not_valid_after)
     except ImportError:
         logger.warning("cryptography library not available for certificate generation")
         return None
+
+
+def get_certificate_validity_dates(valid_days: int = 365) -> Tuple[datetime.datetime, datetime.datetime]:
+    """
+    Get certificate validity dates.
+    
+    Args:
+        valid_days: Number of days the certificate should be valid
+        
+    Returns:
+        Tuple of (not_valid_before, not_valid_after) datetimes
+    """
+    not_valid_before = datetime.datetime.utcnow()
+    not_valid_after = not_valid_before + datetime.timedelta(days=valid_days)
+    return not_valid_before, not_valid_after

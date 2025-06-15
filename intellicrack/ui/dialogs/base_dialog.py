@@ -1,82 +1,145 @@
 """
-Base dialog classes for common UI patterns in Intellicrack.
+Base Dialog Module
 
-This module provides base classes to reduce code duplication in dialogs.
+Provides common functionality for dialog components to eliminate code duplication.
 """
 
+from PyQt6.QtWidgets import (
+    QDialog, QWidget, QVBoxLayout, QHBoxLayout, QGroupBox, 
+    QListWidget, QComboBox, QLabel, QPushButton, QTextEdit
+)
+from PyQt6.QtCore import pyqtSignal
+from typing import List, Optional
 
-try:
-    from PyQt5.QtWidgets import QDialog, QFileDialog, QGroupBox, QHBoxLayout, QLineEdit, QPushButton
-    HAS_PYQT = True
-except ImportError:
-    HAS_PYQT = False
-    QDialog = object
 
-
-class BinarySelectionDialog(QDialog if HAS_PYQT else object):
-    """Base dialog class for dialogs that need binary file selection."""
-
-    def __init__(self, parent=None, binary_path: str = ""):
-        if HAS_PYQT:
-            super().__init__(parent)
-        self.binary_path = binary_path
-        self.binary_path_edit = None
-        self.browse_btn = None
-
-    def setup_header(self, layout, show_label=True, extra_buttons=None):
+class BaseTemplateDialog(QDialog):
+    """
+    Base class for dialogs with template selection functionality.
+    """
+    
+    template_selected = pyqtSignal(str)
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.template_list = None
+        self.template_combo = None
+        
+    def create_template_widget(self, title: str, templates: List[str], 
+                             use_combo: bool = False, 
+                             category_names: Optional[List[str]] = None) -> QWidget:
         """
-        Setup header with binary selection.
+        Create a standard template selection widget.
         
         Args:
-            layout: Parent layout to add header to
-            show_label: Whether to show "Binary Path:" label
-            extra_buttons: List of (button_text, callback) tuples for additional buttons
+            title: Title for the template group box
+            templates: List of template names
+            use_combo: Use QComboBox instead of QListWidget
+            category_names: Optional category names for combo box
+            
+        Returns:
+            QWidget containing the template selection UI
         """
-        if not HAS_PYQT:
-            return
-
-        header_group = QGroupBox("Target Binary")
-        header_layout = QHBoxLayout(header_group)
-
-        if show_label:
-            from PyQt5.QtWidgets import QLabel
-            header_layout.addWidget(QLabel("Binary Path:"))
-
-        self.binary_path_edit = QLineEdit(self.binary_path)
-        self.binary_path_edit.setPlaceholderText("Select target binary file...")
-
-        self.browse_btn = QPushButton("Browse")
-        self.browse_btn.clicked.connect(self.browse_binary)
-
-        header_layout.addWidget(self.binary_path_edit)
-        header_layout.addWidget(self.browse_btn)
-
-        # Add any extra buttons
-        if extra_buttons:
-            from ...utils.ui_button_common import add_extra_buttons
-            buttons = add_extra_buttons(header_layout, extra_buttons, {'analyze_btn': None})
-            if 'Analyze Binary' in buttons:
-                self.analyze_btn = buttons['Analyze Binary']
-
-        layout.addWidget(header_group)
-
-    def browse_binary(self):
-        """Browse for binary file."""
-        if not HAS_PYQT:
-            return
-
-        filename, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select Binary File",
-            "",
-            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*.*)"
-        )
-
-        if filename:
-            self.binary_path = filename
-            self.binary_path_edit.setText(filename)
-            self.on_binary_selected(filename)
-
-    def on_binary_selected(self, filename: str):
-        """Called when a binary is selected. Override in subclasses."""
+        widget = QWidget()
+        layout = QVBoxLayout()
+        
+        # Template group
+        template_group = QGroupBox(title)
+        template_layout = QVBoxLayout()
+        
+        # Category selection if provided
+        if category_names and use_combo:
+            category_layout = QHBoxLayout()
+            category_layout.addWidget(QLabel("Category:"))
+            
+            category_combo = QComboBox()
+            category_combo.addItems(category_names)
+            category_layout.addWidget(category_combo)
+            category_layout.addStretch()
+            
+            template_layout.addLayout(category_layout)
+        
+        # Template selection
+        if use_combo:
+            self.template_combo = QComboBox()
+            self.template_combo.addItems(templates)
+            self.template_combo.currentTextChanged.connect(self._on_template_selected)
+            template_layout.addWidget(self.template_combo)
+        else:
+            self.template_list = QListWidget()
+            self.template_list.addItems(templates)
+            self.template_list.itemSelectionChanged.connect(self._on_template_list_selected)
+            template_layout.addWidget(self.template_list)
+        
+        # Action buttons
+        button_layout = QHBoxLayout()
+        
+        load_btn = QPushButton("Load Template")
+        load_btn.clicked.connect(self.load_template)
+        button_layout.addWidget(load_btn)
+        
+        save_btn = QPushButton("Save as Template")
+        save_btn.clicked.connect(self.save_template)
+        button_layout.addWidget(save_btn)
+        
+        button_layout.addStretch()
+        template_layout.addLayout(button_layout)
+        
+        template_group.setLayout(template_layout)
+        layout.addWidget(template_group)
+        
+        # Template details
+        details_group = QGroupBox("Template Details")
+        details_layout = QVBoxLayout()
+        
+        self.template_details = QTextEdit()
+        self.template_details.setReadOnly(True)
+        self.template_details.setMaximumHeight(150)
+        
+        details_layout.addWidget(self.template_details)
+        details_group.setLayout(details_layout)
+        layout.addWidget(details_group)
+        
+        layout.addStretch()
+        widget.setLayout(layout)
+        
+        return widget
+    
+    def _on_template_selected(self, template_name: str):
+        """Handle combo box template selection."""
+        self.template_selected.emit(template_name)
+        self.on_template_selected(template_name)
+    
+    def _on_template_list_selected(self):
+        """Handle list widget template selection."""
+        if self.template_list and self.template_list.currentItem():
+            template_name = self.template_list.currentItem().text()
+            self.template_selected.emit(template_name)
+            self.on_template_selected(template_name)
+    
+    def on_template_selected(self, template_name: str):
+        """Override this method to handle template selection."""
         pass
+    
+    def load_template(self):
+        """Override this method to implement template loading."""
+        pass
+    
+    def save_template(self):
+        """Override this method to implement template saving."""
+        pass
+    
+    @staticmethod
+    def finalize_widget(widget: QWidget, layout: QVBoxLayout) -> QWidget:
+        """
+        Common widget finalization pattern.
+        
+        Args:
+            widget: Widget to finalize
+            layout: Layout to apply to the widget
+            
+        Returns:
+            The finalized widget
+        """
+        layout.addStretch()
+        widget.setLayout(layout)
+        return widget

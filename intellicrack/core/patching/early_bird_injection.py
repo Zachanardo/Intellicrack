@@ -24,36 +24,28 @@ import struct
 from typing import Any, Optional
 
 from ...utils.logger import get_logger
-from ...utils.windows_common import get_windows_kernel32, is_windows_available
+from ...utils.windows_common import is_windows_available
+from .base_patcher import BaseWindowsPatcher
 
 logger = get_logger(__name__)
 
 # Check Windows availability using common utility
 AVAILABLE = is_windows_available()
 
-class EarlyBirdInjector:
+class EarlyBirdInjector(BaseWindowsPatcher):
     """Early Bird injection - inject code before main thread executes"""
 
     def __init__(self):
         if not AVAILABLE:
             raise RuntimeError("Early Bird injection requires Windows")
-
-        self.kernel32 = get_windows_kernel32()
-        if not self.kernel32:
-            raise RuntimeError("Failed to load kernel32")
-
-        # Process creation flags
-        self.CREATE_SUSPENDED = 0x00000004
-        self.CREATE_NO_WINDOW = 0x08000000
-
-        # Memory constants
-        self.MEM_COMMIT = 0x1000
-        self.MEM_RESERVE = 0x2000
-        self.PAGE_EXECUTE_READWRITE = 0x40
-
-        # Thread constants
-        self.THREAD_SET_CONTEXT = 0x0010
+        
+        super().__init__()
+        self.logger = get_logger(__name__)
         self.THREAD_GET_CONTEXT = 0x0008
+        
+    def get_required_libraries(self) -> list:
+        """Get list of required Windows libraries for this patcher."""
+        return ['kernel32']
 
     def inject_early_bird(self, target_exe: str, dll_path: str,
                          command_line: str = None) -> bool:
@@ -109,8 +101,8 @@ class EarlyBirdInjector:
 
             finally:
                 # Clean up handles
-                self.kernel32.CloseHandle(process_info['thread_handle'])
-                self.kernel32.CloseHandle(process_info['process_handle'])
+                from ...utils.windows_common import cleanup_process_handles
+                cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
             logger.error(f"Early Bird injection failed: {e}")
@@ -164,8 +156,8 @@ class EarlyBirdInjector:
 
             finally:
                 # Clean up handles
-                self.kernel32.CloseHandle(process_info['thread_handle'])
-                self.kernel32.CloseHandle(process_info['process_handle'])
+                from ...utils.windows_common import cleanup_process_handles
+                cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
             logger.error(f"Early Bird shellcode injection failed: {e}")
@@ -185,17 +177,21 @@ class EarlyBirdInjector:
             True if successful, False otherwise
         """
         try:
-            # Create process in suspended state
-            process_info = self._create_suspended_process(target_exe)
-            if not process_info:
+            from ...utils.process_common import create_suspended_process_with_context
+
+            # Create process and get context using common function
+            result = create_suspended_process_with_context(
+                self._create_suspended_process,
+                self._get_thread_context,
+                target_exe,
+                logger
+            )
+
+            success, process_info, context = self.handle_suspended_process_result(result, logger)
+            if not success:
                 return False
 
             try:
-                # Get thread context
-                context = self._get_thread_context(process_info['thread_handle'])
-                if not context:
-                    logger.error("Failed to get thread context")
-                    return False
 
                 # Allocate memory for injection stub
                 stub_addr = self._create_injection_stub(
@@ -243,8 +239,8 @@ class EarlyBirdInjector:
 
             finally:
                 # Clean up handles
-                self.kernel32.CloseHandle(process_info['thread_handle'])
-                self.kernel32.CloseHandle(process_info['process_handle'])
+                from ...utils.windows_common import cleanup_process_handles
+                cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
             logger.error(f"Advanced Early Bird injection failed: {e}")

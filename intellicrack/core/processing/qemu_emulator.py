@@ -33,8 +33,10 @@ import subprocess
 import time
 from typing import Any, Dict, List, Optional
 
+from .base_snapshot_handler import BaseSnapshotHandler
 
-class QEMUSystemEmulator:
+
+class QEMUSystemEmulator(BaseSnapshotHandler):
     """
     Comprehensive QEMU-based full system emulator for dynamic binary analysis.
 
@@ -76,6 +78,8 @@ class QEMUSystemEmulator:
             ValueError: If architecture not supported or binary not found
             FileNotFoundError: If required files are missing
         """
+        super().__init__()
+        
         if not os.path.exists(binary_path):
             raise FileNotFoundError(f"Binary file not found: {binary_path}")
 
@@ -85,7 +89,6 @@ class QEMUSystemEmulator:
         self.binary_path = os.path.abspath(binary_path)
         self.architecture = architecture
         self.config = config or {}
-        self.logger = logging.getLogger(__name__)
 
         # Set default configuration
         self._set_default_config()
@@ -93,7 +96,6 @@ class QEMUSystemEmulator:
         # QEMU process and management
         self.qemu_process: Optional[subprocess.Popen] = None
         self.monitor_socket: Optional[str] = None
-        self.snapshots: Dict[str, Dict[str, Any]] = {}
 
         # SSH client for guest communication
         self.ssh_client: Optional[Any] = None
@@ -408,7 +410,7 @@ class QEMUSystemEmulator:
                 except OSError:
                     pass
 
-    def execute_command(self, command: str, timeout: int = 30) -> Optional[str]:  # pylint: disable=unused-argument
+    def execute_command(self, command: str, timeout: int = 30) -> Optional[str]:
         """
         Execute a command in the guest system.
 
@@ -424,11 +426,18 @@ class QEMUSystemEmulator:
             return None
 
         try:
-            self.logger.debug("Executing command in guest: %s", command)
+            self.logger.debug("Executing command in guest: %s (timeout: %ds)", command, timeout)
+
+            # Set timeout for monitor socket communication
+            original_timeout = getattr(self, '_monitor_timeout', 10)
+            self._monitor_timeout = timeout
 
             # This is a simplified implementation
             # In practice, you'd need guest agent or SSH connectivity
             result = self._send_monitor_command(f'human-monitor-command {command}')
+
+            # Restore original timeout
+            self._monitor_timeout = original_timeout
 
             return result
 
@@ -457,7 +466,9 @@ class QEMUSystemEmulator:
             else:
                 self.logger.error("AF_UNIX socket not available on this platform")
                 return None
-            sock.settimeout(10)
+            # Use timeout from execute_command if set, otherwise default
+            sock_timeout = getattr(self, '_monitor_timeout', 10)
+            sock.settimeout(sock_timeout)
             sock.connect(self.monitor_socket)
 
             # Send command
@@ -556,22 +567,27 @@ class QEMUSystemEmulator:
         Returns:
             Dictionary containing comparison results
         """
-        if snapshot1 not in self.snapshots or snapshot2 not in self.snapshots:
-            error_msg = f"Snapshot not found: {snapshot1 if snapshot1 not in self.snapshots else snapshot2}"
-            self.logger.error(error_msg)
-            return {"error": error_msg}
+        # Use base class functionality to eliminate duplicate code
+        return self.compare_snapshots_base(snapshot1, snapshot2)
 
+    def _perform_platform_specific_comparison(self, s1: Dict[str, Any], s2: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Perform QEMU-specific snapshot comparison logic.
+        
+        Args:
+            s1: First snapshot data
+            s2: Second snapshot data
+            
+        Returns:
+            Dictionary containing QEMU-specific comparison results
+        """
         try:
-            self.logger.info("Comparing snapshots: %s vs %s", snapshot1, snapshot2)
+            # Extract snapshot names for analysis methods
+            snapshot1 = s1.get("name", "unknown1")
+            snapshot2 = s2.get("name", "unknown2")
 
-            s1 = self.snapshots[snapshot1]
-            s2 = self.snapshots[snapshot2]
-
-            # Basic comparison structure
+            # QEMU-specific comparison structure
             comparison = {
-                "snapshot1": snapshot1,
-                "snapshot2": snapshot2,
-                "timestamp_diff": s2["timestamp"] - s1["timestamp"],
                 "memory_changes": self._analyze_memory_changes(snapshot1, snapshot2),
                 "filesystem_changes": self._analyze_filesystem_changes(snapshot1, snapshot2),
                 "process_changes": self._analyze_process_changes(snapshot1, snapshot2),
@@ -583,10 +599,9 @@ class QEMUSystemEmulator:
 
             return comparison
 
-        except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error comparing snapshots: {e}"
-            self.logger.error(error_msg)
-            return {"error": error_msg}
+        except Exception as e:
+            self.logger.error(f"QEMU-specific comparison failed: {e}")
+            return {"qemu_comparison_error": str(e)}
 
     def _analyze_memory_changes(self, snap1: str, snap2: str) -> Dict[str, Any]:
         """Analyze memory changes between snapshots."""
@@ -1162,6 +1177,16 @@ class QEMUSystemEmulator:
                 stdin, stdout, stderr = self.ssh_client.exec_command('find /var /etc /opt -type f -exec stat --format="%n|%s|%Y" {} + 2>/dev/null | head -1000')
                 output = stdout.read().decode('utf-8', errors='ignore')
 
+                # Log any errors from stderr for debugging
+                if stderr:
+                    error_output = stderr.read().decode('utf-8', errors='ignore')
+                    if error_output.strip():
+                        self.logger.debug("SSH command stderr: %s", error_output.strip())
+
+                # Close stdin as we don't need it
+                if stdin:
+                    stdin.close()
+
                 for line in output.strip().split('\n'):
                     if '|' in line:
                         path, size, mtime = line.split('|', 2)
@@ -1189,6 +1214,16 @@ class QEMUSystemEmulator:
                 stdin, stdout, stderr = self.ssh_client.exec_command('ps axo pid,comm,args,vsz 2>/dev/null')
                 output = stdout.read().decode('utf-8', errors='ignore')
 
+                # Check for errors in process listing
+                if stderr:
+                    error_output = stderr.read().decode('utf-8', errors='ignore')
+                    if error_output.strip():
+                        self.logger.debug("Process listing stderr: %s", error_output.strip())
+
+                # Close stdin
+                if stdin:
+                    stdin.close()
+
                 for line in output.strip().split('\n')[1:]:  # Skip header
                     parts = line.strip().split(None, 3)
                     if len(parts) >= 3:
@@ -1214,6 +1249,16 @@ class QEMUSystemEmulator:
                 # Get network connections via SSH
                 stdin, stdout, stderr = self.ssh_client.exec_command('netstat -tuln 2>/dev/null')
                 output = stdout.read().decode('utf-8', errors='ignore')
+
+                # Log network command errors if any
+                if stderr:
+                    error_output = stderr.read().decode('utf-8', errors='ignore')
+                    if error_output.strip():
+                        self.logger.debug("Network connections stderr: %s", error_output.strip())
+
+                # Close stdin
+                if stdin:
+                    stdin.close()
 
                 for line in output.strip().split('\n'):
                     if 'LISTEN' in line or 'ESTABLISHED' in line:
@@ -1298,6 +1343,15 @@ class QEMUSystemEmulator:
                 try:
                     stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
                     output = stdout.read().decode('utf-8', errors='ignore')
+
+                    # Log command execution details for debugging
+                    stderr_output = stderr.read().decode('utf-8', errors='ignore') if stderr else ''
+                    if stderr_output and stderr_output.strip():
+                        self.logger.debug("DNS capture command '%s' stderr: %s", cmd[:30], stderr_output.strip())
+
+                    # Close stdin
+                    if stdin:
+                        stdin.close()
 
                     if 'tcpdump' in cmd and 'tcpdump_failed' not in output:
                         # Parse tcpdump output for DNS queries
@@ -1387,6 +1441,16 @@ class QEMUSystemEmulator:
                         stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
                         output = stdout.read().decode('utf-8', errors='ignore')
 
+                        # Check for command execution errors
+                        if stderr:
+                            stderr_output = stderr.read().decode('utf-8', errors='ignore')
+                            if stderr_output.strip():
+                                self.logger.debug("DNS cache command stderr: %s", stderr_output.strip())
+
+                        # Clean up stdin
+                        if stdin:
+                            stdin.close()
+
                         if 'systemd' in cmd and 'systemd_failed' not in output:
                             # Parse systemd-resolve statistics
                             for line in output.split('\n'):
@@ -1442,6 +1506,16 @@ class QEMUSystemEmulator:
                     try:
                         stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
                         output = stdout.read().decode('utf-8', errors='ignore')
+
+                        # Monitor process command errors
+                        if stderr:
+                            stderr_data = stderr.read().decode('utf-8', errors='ignore')
+                            if stderr_data.strip():
+                                self.logger.debug("DNS process monitoring stderr: %s", stderr_data.strip())
+
+                        # Clean up unused stdin
+                        if stdin:
+                            stdin.close()
 
                         if 'lsof' in cmd and 'lsof_failed' not in output:
                             # Parse lsof output for DNS connections
@@ -1503,6 +1577,16 @@ class QEMUSystemEmulator:
                     try:
                         stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
                         output = stdout.read().decode('utf-8', errors='ignore')
+
+                        # Log parsing errors if any
+                        if stderr:
+                            stderr_content = stderr.read().decode('utf-8', errors='ignore')
+                            if stderr_content.strip():
+                                self.logger.debug("DNS log parsing stderr: %s", stderr_content.strip())
+
+                        # Close stdin handle
+                        if stdin:
+                            stdin.close()
 
                         if 'journal' in cmd and 'journal_failed' not in output:
                             # Parse journalctl DNS entries

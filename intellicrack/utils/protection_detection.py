@@ -248,9 +248,9 @@ def run_comprehensive_protection_scan(binary_path: str) -> Dict[str, Any]:
 
         # Run TPM detection
         try:
-            from intellicrack.utils.process_utils import detect_tpm_protection
-            tpm_results = detect_tpm_protection()
-            results["scan_results"]["tpm"] = tpm_results
+            from intellicrack.utils.process_utils import detect_tpm_protection as detect_system_tpm
+            tmp_results = detect_system_tpm()
+            results["scan_results"]["tmp"] = tmp_results
         except ImportError:
             logger.debug("TPM detection not available")
 

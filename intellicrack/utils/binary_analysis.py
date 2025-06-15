@@ -36,6 +36,9 @@ try:
 except ImportError:
     PERFORMANCE_OPTIMIZER_AVAILABLE = False
 
+# Import subprocess for objdump fallback
+import subprocess
+
 # Import binary analysis libraries from common imports
 from .common_imports import LIEF_AVAILABLE, PEFILE_AVAILABLE, PYELFTOOLS_AVAILABLE
 
@@ -655,11 +658,205 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
         "protocols": {}
     }
 
-    # This would require pyshark or scapy
-    # For now, return a placeholder
-    results["error"] = "Traffic analysis requires pyshark or scapy module"
+    try:
+        # Try using scapy first (more common)
+        if 'scapy' in sys.modules or _try_import_scapy():
+            from scapy.all import IP, TCP, UDP, rdpcap, sniff
+
+            packets = []
+            if pcap_file and os.path.exists(pcap_file):
+                # Read from PCAP file
+                packets = rdpcap(pcap_file)
+            elif interface:
+                # Capture live traffic (limited to 100 packets for performance)
+                packets = sniff(iface=interface, count=100, timeout=10)
+
+            # Analyze packets
+            for packet in packets:
+                results["packets_analyzed"] += 1
+
+                # Check for IP layer
+                if IP in packet:
+                    src_ip = packet[IP].src
+                    dst_ip = packet[IP].dst
+
+                    # Check for TCP/UDP
+                    if TCP in packet:
+                        src_port = packet[TCP].sport
+                        dst_port = packet[TCP].dport
+                        protocol = "TCP"
+                    elif UDP in packet:
+                        src_port = packet[UDP].sport
+                        dst_port = packet[UDP].dport
+                        protocol = "UDP"
+                    else:
+                        continue
+
+                    # Track protocols
+                    if protocol not in results["protocols"]:
+                        results["protocols"][protocol] = 0
+                    results["protocols"][protocol] += 1
+
+                    # Check for license server ports
+                    license_ports = {
+                        27000: "FlexLM",
+                        27001: "FlexLM",
+                        1947: "HASP/Sentinel",
+                        8080: "Generic HTTP",
+                        443: "HTTPS",
+                        5053: "RLM",
+                        2080: "Autodesk",
+                        49152: "CodeMeter"
+                    }
+
+                    for port, service in license_ports.items():
+                        if dst_port == port or src_port == port:
+                            server_info = {
+                                "ip": dst_ip if dst_port == port else src_ip,
+                                "port": port,
+                                "service": service,
+                                "protocol": protocol,
+                                "packet_count": 1
+                            }
+
+                            # Update existing or add new
+                            found = False
+                            for srv in results["license_servers"]:
+                                if srv["ip"] == server_info["ip"] and srv["port"] == port:
+                                    srv["packet_count"] += 1
+                                    found = True
+                                    break
+                            if not found:
+                                results["license_servers"].append(server_info)
+
+                    # Check for suspicious patterns
+                    if _is_suspicious_connection(src_ip, dst_ip, dst_port):
+                        results["suspicious_connections"].append({
+                            "src": f"{src_ip}:{src_port}",
+                            "dst": f"{dst_ip}:{dst_port}",
+                            "protocol": protocol,
+                            "reason": _get_suspicious_reason(dst_ip, dst_port)
+                        })
+
+        # Try pyshark as fallback
+        elif 'pyshark' in sys.modules or _try_import_pyshark():
+            import pyshark
+
+            if pcap_file and os.path.exists(pcap_file):
+                cap = pyshark.FileCapture(pcap_file)
+            elif interface:
+                cap = pyshark.LiveCapture(interface)
+                cap.sniff(timeout=10)
+            else:
+                return results
+
+            # Analyze with pyshark
+            for packet in cap:
+                results["packets_analyzed"] += 1
+
+                if hasattr(packet, 'ip'):
+                    src_ip = packet.ip.src
+                    dst_ip = packet.ip.dst
+
+                    protocol = None
+                    src_port = None
+                    dst_port = None
+
+                    if hasattr(packet, 'tcp'):
+                        protocol = "TCP"
+                        src_port = int(packet.tcp.srcport)
+                        dst_port = int(packet.tcp.dstport)
+                    elif hasattr(packet, 'udp'):
+                        protocol = "UDP"
+                        src_port = int(packet.udp.srcport)
+                        dst_port = int(packet.udp.dstport)
+
+                    if protocol:
+                        # Track protocols
+                        if protocol not in results["protocols"]:
+                            results["protocols"][protocol] = 0
+                        results["protocols"][protocol] += 1
+
+                        # Check license servers (same logic as above)
+                        license_ports = {
+                            27000: "FlexLM", 27001: "FlexLM", 1947: "HASP/Sentinel",
+                            8080: "Generic HTTP", 443: "HTTPS", 5053: "RLM",
+                            2080: "Autodesk", 49152: "CodeMeter"
+                        }
+
+                        for port, service in license_ports.items():
+                            if dst_port == port:
+                                server_info = {
+                                    "ip": dst_ip,
+                                    "port": port,
+                                    "service": service,
+                                    "protocol": protocol
+                                }
+                                if server_info not in results["license_servers"]:
+                                    results["license_servers"].append(server_info)
+
+            cap.close()
+
+        else:
+            # No packet analysis library available
+            results["error"] = "Neither scapy nor pyshark available for traffic analysis"
+
+    except Exception as e:
+        results["error"] = f"Traffic analysis failed: {str(e)}"
 
     return results
+
+
+def _try_import_scapy():
+    """Try to import scapy."""
+    try:
+        import scapy.all
+        return True
+    except ImportError:
+        return False
+
+
+def _try_import_pyshark():
+    """Try to import pyshark."""
+    try:
+        import pyshark
+        return True
+    except ImportError:
+        return False
+
+
+def _is_suspicious_connection(src_ip, dst_ip, port):
+    """Check if connection is suspicious."""
+    # Log connection details for debugging
+    logger.debug(f"Checking connection from {src_ip} to {dst_ip}:{port}")
+    
+    # Check for common C2 ports
+    suspicious_ports = [4444, 4445, 8888, 9999, 1337, 31337]
+    if port in suspicious_ports:
+        return True
+
+    # Check for non-standard license server connections
+    if port > 49152 and not dst_ip.startswith(("10.", "192.168.", "172.")):
+        return True
+    
+    # Check for suspicious source IPs (e.g., localhost connecting externally)
+    if src_ip in ["127.0.0.1", "::1"] and not dst_ip.startswith(("127.", "::1", "localhost")):
+        return True
+
+    return False
+
+
+def _get_suspicious_reason(ip, port):
+    """Get reason why connection is suspicious."""
+    # Include IP in analysis for more specific reasons
+    if port in [4444, 4445, 8888, 9999, 1337, 31337]:
+        return f"Common backdoor/C2 port {port} to {ip}"
+    elif port > 49152:
+        return f"High ephemeral port {port} to external IP {ip}"
+    elif ip.startswith(("10.", "192.168.", "172.")):
+        return f"Internal network connection to {ip}:{port}"
+    else:
+        return f"Suspicious traffic pattern to {ip}:{port}"
 
 
 # Helper functions
@@ -714,13 +911,16 @@ def analyze_pe_resources(pe) -> List[Dict[str, Any]]:
 
     def walk_resources(directory, level=0):
         """Recursively walk resource directory tree."""
+        logger.debug(f"Walking resources at level {level}")
+        
         for entry in directory.entries:
             if hasattr(entry, 'data'):
                 resource_info = {
                     "type": entry.name if hasattr(entry, 'name') and entry.name else f"Type_{entry.id}",
                     "size": entry.data.struct.Size,
                     "language": entry.data.lang,
-                    "sublanguage": entry.data.sublang
+                    "sublanguage": entry.data.sublang,
+                    "level": level  # Track resource depth
                 }
                 resources.append(resource_info)
             elif hasattr(entry, 'directory'):
@@ -1145,19 +1345,19 @@ def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> List[
             HAS_CAPSTONE = True
         except ImportError:
             HAS_CAPSTONE = False
-            
+
         if not HAS_CAPSTONE:
             return _get_basic_disassembly_info(binary_path)
-            
+
         # Determine architecture from binary
         binary_format = identify_binary_format(binary_path)
         if not binary_format:
             return ["Unable to identify binary format"]
-            
+
         # Read binary data
         with open(binary_path, 'rb') as f:
             data = f.read(4096)  # Read first 4KB
-            
+
         # Configure capstone based on format
         if binary_format == 'PE':
             md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
@@ -1169,34 +1369,34 @@ def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> List[
             # Default to x86-64
             md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
             entry_offset = 0x1000  # Common entry point
-            
+
         # Disassemble instructions
         disasm_lines = []
         instructions = md.disasm(data[entry_offset:entry_offset+512], entry_offset)
-        
+
         count = 0
         for insn in instructions:
             if count >= max_instructions:
                 break
-                
+
             line = f"0x{insn.address:08x}: {insn.mnemonic:10} {insn.op_str}"
             disasm_lines.append(line)
             count += 1
-            
+
         if not disasm_lines:
             return _get_basic_disassembly_info(binary_path)
-            
+
         return disasm_lines
-        
+
     except Exception as e:
         logger.debug(f"Quick disassembly error: {e}")
         return _get_basic_disassembly_info(binary_path)
-        
+
 def _get_basic_disassembly_info(binary_path: str) -> List[str]:
     """Get basic binary information when disassembly isn't available."""
     try:
         info = extract_binary_info(binary_path)
-        
+
         lines = [
             f"# Binary: {os.path.basename(binary_path)}",
             f"# Format: {info.get('format', 'Unknown')}",
@@ -1208,17 +1408,17 @@ def _get_basic_disassembly_info(binary_path: str) -> List[str]:
             "",
             "# Binary Structure Analysis:",
         ]
-        
+
         if 'sections' in info:
             lines.append("# Sections:")
             for section in info['sections'][:5]:  # First 5 sections
                 lines.append(f"#   {section.get('name', 'Unknown')}: {section.get('virtual_address', 'N/A')}")
-                
+
         if 'entry_point' in info:
             lines.append(f"# Entry Point: 0x{info['entry_point']:08x}")
-            
+
         return lines
-        
+
     except Exception:
         return [
             f"# Binary: {os.path.basename(binary_path)}",
@@ -1231,22 +1431,66 @@ def _get_pe_entry_point(binary_path: str) -> int:
     try:
         if PEFILE_AVAILABLE:
             pe = pefile.PE(binary_path)
-            return pe.OPTIONAL_HEADER.AddressOfEntryPoint
+            return getattr(pe.OPTIONAL_HEADER, 'AddressOfEntryPoint', 0x1000)
     except Exception:
         pass
     return 0x1000  # Default
 
 def _get_elf_entry_point(binary_path: str) -> int:
-    """Get ELF entry point offset.""" 
+    """Get ELF entry point offset."""
     try:
         if PYELFTOOLS_AVAILABLE:
-            from elftools.elf.elffile import ELFFile
             with open(binary_path, 'rb') as f:
                 elf = ELFFile(f)
                 return elf.header['e_entry']
     except Exception:
         pass
     return 0x1000  # Default
+
+
+def disassemble_with_objdump(binary_path: str, extra_args: Optional[List[str]] = None,
+                           timeout: int = 30, parse_func=None) -> Optional[List[Any]]:
+    """
+    Common objdump disassembly fallback function.
+    
+    Args:
+        binary_path: Path to binary file
+        extra_args: Additional objdump arguments (e.g., ['--no-show-raw-insn'])
+        timeout: Command timeout in seconds
+        parse_func: Function to parse objdump output (should accept stdout string)
+        
+    Returns:
+        List of parsed instructions or None if objdump fails
+    """
+    try:
+        cmd = ['objdump', '-d']
+        if extra_args:
+            cmd.extend(extra_args)
+        cmd.append(binary_path)
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False
+        )
+
+        if result.returncode == 0:
+            if parse_func:
+                instructions = parse_func(result.stdout)
+            else:
+                # Simple default parsing - just return lines
+                instructions = [line for line in result.stdout.splitlines()
+                              if line.strip() and not line.startswith(' ')]
+
+            logger.info("Disassembled %d instructions using objdump", len(instructions))
+            return instructions
+
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        logger.debug("objdump not available or timed out")
+
+    return None
 
 
 # Export all functions
@@ -1263,5 +1507,6 @@ __all__ = [
     'extract_binary_features',
     'extract_patterns_from_binary',
     'scan_binary',
-    'get_quick_disassembly'
+    'get_quick_disassembly',
+    'disassemble_with_objdump'
 ]

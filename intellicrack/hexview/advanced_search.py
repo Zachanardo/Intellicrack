@@ -528,6 +528,36 @@ class AdvancedSearchDialog(QDialog if PYQT5_AVAILABLE else object):
         self.search_history = SearchHistory()
         self.current_search_thread = None
 
+        # Initialize UI attributes
+        self.search_pattern_combo = None
+        self.search_type_combo = None
+        self.case_sensitive_check = None
+        self.whole_words_check = None
+        self.direction_group = None
+        self.forward_radio = None
+        self.backward_radio = None
+        self.find_next_button = None
+        self.find_previous_button = None
+        self.search_status_label = None
+        self.find_pattern_combo = None
+        self.replace_pattern_edit = None
+        self.replace_type_combo = None
+        self.replace_case_sensitive_check = None
+        self.replace_whole_words_check = None
+        self.replace_button = None
+        self.replace_all_button = None
+        self.replace_status_label = None
+        self.find_all_pattern_combo = None
+        self.find_all_type_combo = None
+        self.max_results_spin = None
+        self.find_all_button = None
+        self.cancel_search_button = None
+        self.search_progress = None
+        self.results_table = None
+        self.history_list = None
+        self.use_history_button = None
+        self.clear_history_button = None
+
         self.setWindowTitle("Advanced Search")
         self.setModal(False)
         self.resize(600, 500)

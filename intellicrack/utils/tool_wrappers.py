@@ -598,8 +598,8 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
 
             # Method 5: Machine learning predictions (if available)
             try:
-                from ..ai.ai_tools import analyze_binary
-                ml_result = analyze_binary(app_instance.binary_path)
+                from ..ai.ml_predictor import predict_vulnerabilities
+                ml_result = predict_vulnerabilities(app_instance.binary_path)
                 if ml_result.get('vulnerabilities'):
                     ml_patches = _convert_vulnerabilities_to_patches(ml_result['vulnerabilities'])
                     patches.extend(ml_patches)
@@ -793,27 +793,27 @@ def _extract_import_patches(pe, detected_apis) -> List[Dict[str, Any]]:
     """Extract import patches from PE analysis."""
     patches = []
 
-    for entry in pe.DIRECTORY_ENTRY_IMPORT:
-        dll_name = entry.dll.decode('utf-8', errors='ignore')
+    from .pe_common import iterate_pe_imports_with_dll
 
-        for imp in entry.imports:
-            if imp.name:
-                func_name = imp.name.decode('utf-8', errors='ignore')
+    def check_import_patch(dll_name, func_name, imp):
+        # Check if this function was detected
+        for category, funcs in detected_apis.items():
+            if func_name in funcs:
+                return {
+                    'type': 'import_hook',
+                    'description': f'Hook {dll_name}::{func_name} for bypassing checks',
+                    'address': hex(imp.address) if imp.address else '0x0',
+                    'file_offset': imp.address - pe.OPTIONAL_HEADER.ImageBase if imp.address else 0,
+                    'function': func_name,
+                    'dll': dll_name,
+                    'patch_type': 'import_redirection',
+                    'analysis_method': 'import_analysis'
+                }
+        return None
 
-                # Check if this function was detected
-                for category, funcs in detected_apis.items():
-                    if func_name in funcs:
-                        patches.append({
-                            'type': 'import_hook',
-                            'description': f'Hook {dll_name}::{func_name} for bypassing checks',
-                            'address': hex(imp.address) if imp.address else '0x0',
-                            'file_offset': imp.address - pe.OPTIONAL_HEADER.ImageBase if imp.address else 0,
-                            'function': func_name,
-                            'dll': dll_name,
-                            'patch_type': 'import_redirection',
-                            'analysis_method': 'import_analysis'
-                        })
-                        break
+    # Use the common function to iterate imports
+    for patch in iterate_pe_imports_with_dll(pe, check_import_patch, include_import_obj=True):
+        patches.append(patch)
 
     return patches
 
@@ -950,7 +950,6 @@ def _assess_compatibility(patch: Dict[str, Any], binary_path: str) -> str:
 def _get_binary_info(binary_path: str) -> Dict[str, Any]:
     """Get basic binary information."""
     try:
-        import os
         stat = os.stat(binary_path)
 
         with open(binary_path, 'rb') as f:
@@ -1319,7 +1318,6 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
     Returns:
         Comprehensive analysis results including symbols, functions, strings, etc.
     """
-    import os
     import shutil
     import subprocess
     from pathlib import Path
@@ -1493,7 +1491,6 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
         cmd.append("-quiet")
 
         # Execute Ghidra analysis
-        import time
         start_time = time.time()
 
         logger.info(f"Running Ghidra headless analysis: {' '.join(cmd)}")

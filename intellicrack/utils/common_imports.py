@@ -75,4 +75,57 @@ try:
     import matplotlib.pyplot as plt
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
+    plt = None
     MATPLOTLIB_AVAILABLE = False
+
+# PDF generation
+try:
+    import pdfkit
+    PDFKIT_AVAILABLE = True
+except ImportError:
+    pdfkit = None
+    PDFKIT_AVAILABLE = False
+
+# UI Framework
+try:
+    from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
+    from PyQt5.QtGui import QColor, QFont
+    from PyQt5.QtWidgets import (
+        QApplication,
+        QCheckBox,
+        QComboBox,
+        QDial,
+        QFileDialog,
+        QGroupBox,
+        QHBoxLayout,
+        QHeaderView,
+        QLabel,
+        QLineEdit,
+        QListWidget,
+        QListWidgetItem,
+        QPlainTextEdit,
+        QProgressBar,
+        QPushButton,
+        QSlider,
+        QSpinBox,
+        QSplitter,
+        QTableWidget,
+        QTableWidgetItem,
+        QTabWidget,
+        QTextEdit,
+        QTreeWidget,
+        QTreeWidgetItem,
+        QVBoxLayout,
+        QWidget,
+    )
+    HAS_PYQT = True
+except ImportError:
+    HAS_PYQT = False
+    # Create dummy classes to prevent import errors
+    Qt = QThread = QTimer = pyqtSignal = None
+    QColor = QFont = None
+    (QApplication, QWidget, QCheckBox, QComboBox, QDial, QFileDialog,
+     QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget,
+     QListWidgetItem, QPlainTextEdit, QProgressBar, QPushButton, QSlider,
+     QSpinBox, QSplitter, QTableWidget, QTableWidgetItem, QTabWidget,
+     QTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout) = [None] * 25

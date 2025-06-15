@@ -497,6 +497,8 @@ class HyperparameterOptimizationWidget(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.optimization_timer = None
+        self.current_trial = 0
         self.init_ui()
 
     def init_ui(self):
@@ -675,7 +677,7 @@ class HyperparameterOptimizationWidget(QWidget):
 
     def stop_optimization(self):
         """Stop optimization process."""
-        if hasattr(self, 'optimization_timer'):
+        if self.optimization_timer is not None:
             self.optimization_timer.stop()
         self.start_optimization_btn.setEnabled(True)
         self.stop_optimization_btn.setEnabled(False)
@@ -692,6 +694,19 @@ class EnhancedTrainingInterface(QDialog):
 
         self.training_thread = None
         self.config = TrainingConfiguration()
+
+        # Initialize UI attributes
+        self.model_name_edit = None
+        self.model_type_combo = None
+        self.learning_rate_spin = None
+        self.batch_size_spin = None
+        self.epochs_spin = None
+        self.validation_split_slider = None
+        self.validation_split_spin = None
+        self.early_stopping_cb = None
+        self.augmentation_cb = None
+        self.transfer_learning_cb = None
+        self.gpu_cb = None
 
         self.init_ui()
         self.connect_signals()

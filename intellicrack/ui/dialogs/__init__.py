@@ -91,6 +91,18 @@ except ImportError as e:
     logger.warning("Failed to import visual_patch_editor: %s", e)
     VisualPatchEditorDialog = None
 
+try:
+    from .payload_generator_dialog import PayloadGeneratorDialog
+except ImportError as e:
+    logger.warning("Failed to import payload_generator_dialog: %s", e)
+    PayloadGeneratorDialog = None
+
+try:
+    from .c2_management_dialog import C2ManagementDialog
+except ImportError as e:
+    logger.warning("Failed to import c2_management_dialog: %s", e)
+    C2ManagementDialog = None
+
 # Define package exports - only include successfully imported items
 __all__ = []
 
@@ -121,6 +133,12 @@ if TextEditorDialog is not None:
 
 if VisualPatchEditorDialog is not None:
     __all__.append('VisualPatchEditorDialog')
+
+if PayloadGeneratorDialog is not None:
+    __all__.append('PayloadGeneratorDialog')
+
+if C2ManagementDialog is not None:
+    __all__.append('C2ManagementDialog')
 
 # Package metadata
 __version__ = "0.1.0"

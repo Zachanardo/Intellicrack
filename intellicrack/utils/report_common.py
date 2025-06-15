@@ -104,3 +104,46 @@ def ensure_html_extension(filename):
     if not filename.endswith('.html'):
         return filename + '.html'
     return filename
+
+
+def handle_pyqt5_report_generation(app, report_type, generator):
+    """
+    Handle PyQt5 report generation workflow.
+    
+    Args:
+        app: Application instance for UI dialogs
+        report_type: Type of report for dialog message
+        generator: Object with generate_report method
+        
+    Returns:
+        str or None: Path to generated report file, or None if cancelled
+    """
+    try:
+        # Check if PyQt5 is available
+        import PyQt5
+        PYQT5_AVAILABLE = True
+    except ImportError:
+        PYQT5_AVAILABLE = False
+
+    if not PYQT5_AVAILABLE:
+        return None
+
+    from ..ui_helpers import ask_yes_no_question, show_file_dialog
+
+    generate_report = ask_yes_no_question(
+        app,
+        "Generate Report",
+        f"Do you want to generate a report of the {report_type} results?"
+    )
+
+    if generate_report:
+        filename = show_file_dialog(app, "Save Report")
+
+        if filename:
+            if not filename.endswith('.html'):
+                filename += '.html'
+
+            report_path = generator.generate_report(filename)
+            return report_path
+
+    return None

@@ -62,6 +62,11 @@ class HelpDocumentationWidget(QWidget):
 
     def setup_ui(self):
         """Set up the user interface."""
+
+        # Initialize UI attributes
+        self.issues_tree = None
+        self.solution_viewer = None
+        self.tutorial_viewer = None
         layout = QVBoxLayout(self)
 
         # Header with search
@@ -525,6 +530,8 @@ class HelpDocumentationWidget(QWidget):
 
     def on_nav_item_clicked(self, item: QTreeWidgetItem, column: int):
         """Handle navigation item click."""
+        # Note: column parameter is required by Qt signal but not used
+        _ = column  # Acknowledge unused parameter
         if item.parent():
             category = item.parent().text(0)
             topic = item.text(0)
@@ -532,6 +539,8 @@ class HelpDocumentationWidget(QWidget):
 
     def on_feature_double_clicked(self, item: QTreeWidgetItem, column: int):
         """Handle feature double-click to launch it."""
+        # Note: column parameter is required by Qt signal but not used
+        _ = column  # Acknowledge unused parameter
         if item.parent():
             category = item.parent().text(0)
             feature = item.text(0)
@@ -637,6 +646,8 @@ class HelpDocumentationWidget(QWidget):
 
     def on_issue_selected(self, item: QTreeWidgetItem, column: int):
         """Handle troubleshooting issue selection."""
+        # Note: column parameter is required by Qt signal but not used
+        _ = column  # Acknowledge unused parameter
         if item.parent():
             issue = item.text(0)
             self.load_solution(issue)

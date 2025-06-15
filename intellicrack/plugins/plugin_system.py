@@ -480,27 +480,18 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
     project_name = "temp_project"
 
     try:
-        app.update_output.emit(log_message(
-            "[Plugin] Setting up Ghidra project..."))
-
-        # Build the command
-        from ..utils.ghidra_utils import build_ghidra_command
-        cmd = build_ghidra_command(
+        # Use the common Ghidra plugin runner
+        from ..utils.ghidra_common import run_ghidra_plugin
+        returncode, stdout, stderr = run_ghidra_plugin(
             ghidra_path,
             temp_dir,
             project_name,
             app.binary_path,
             os.path.dirname(plugin_path),
             os.path.basename(plugin_path),
+            app=app,
             overwrite=True
         )
-
-        app.update_output.emit(log_message(
-            "[Plugin] Running Ghidra headless analyzer..."))
-
-        # Run Ghidra
-        from ..utils.process_helpers import run_ghidra_process
-        _, stdout, stderr = run_ghidra_process(cmd)
 
         # Process output
         if stdout and isinstance(stdout, (str, bytes)):
@@ -849,29 +840,15 @@ class AdvancedDemoPlugin:
     
     def _extract_strings(self, binary_path: str, min_length: int = 4) -> List[str]:
         """Extract printable strings from binary."""
-        strings = []
+        from ..utils.string_utils import extract_ascii_strings
         
         try:
             with open(binary_path, 'rb') as f:
                 data = f.read()
-                
-                current_string = ""
-                for byte in data:
-                    if 32 <= byte <= 126:  # Printable ASCII
-                        current_string += chr(byte)
-                    else:
-                        if len(current_string) >= min_length:
-                            strings.append(current_string)
-                        current_string = ""
-                
-                # Don't forget the last string
-                if len(current_string) >= min_length:
-                    strings.append(current_string)
-                    
+                strings = extract_ascii_strings(data, min_length)
+                return strings[:100]  # Limit to first 100 strings
         except Exception as e:
-            strings.append(f"Error extracting strings: {str(e)}")
-        
-        return strings[:100]  # Limit to first 100 strings
+            return [f"Error extracting strings: {str(e)}"]
     
     def _get_file_hashes(self, binary_path: str) -> Dict[str, str]:
         """Calculate multiple hash values for the file."""
@@ -1142,13 +1119,13 @@ PLUGIN_INFO = {
 
     # Create additional specialized templates
     _create_specialized_templates(plugin_dir)
-    
+
     logger.info("Comprehensive sample plugins created successfully!")
 
 
 def _create_specialized_templates(plugin_dir: str) -> None:
     """Create specialized plugin templates for different use cases."""
-    
+
     # Simple Analysis Plugin Template
     simple_template = '''"""
 Simple Analysis Plugin Template
@@ -1176,7 +1153,7 @@ class SimpleAnalysisPlugin:
 def register():
     return SimpleAnalysisPlugin()
 '''
-    
+
     # Patcher Plugin Template
     patcher_template = '''"""
 Binary Patcher Plugin Template
@@ -1237,7 +1214,7 @@ class BinaryPatcherPlugin:
 def register():
     return BinaryPatcherPlugin()
 '''
-    
+
     # Network Analysis Plugin Template
     network_template = '''"""
 Network Analysis Plugin Template
@@ -1299,7 +1276,7 @@ class NetworkAnalysisPlugin:
 def register():
     return NetworkAnalysisPlugin()
 '''
-    
+
     # Malware Analysis Plugin Template
     malware_template = '''"""
 Malware Analysis Plugin Template
@@ -1401,7 +1378,7 @@ class MalwareAnalysisPlugin:
 def register():
     return MalwareAnalysisPlugin()
 '''
-    
+
     # Write specialized templates
     templates = [
         ("simple_analysis_plugin.py", simple_template),
@@ -1409,7 +1386,7 @@ def register():
         ("network_analysis_plugin.py", network_template),
         ("malware_analysis_plugin.py", malware_template)
     ]
-    
+
     custom_dir = os.path.join(plugin_dir, "custom_modules")
     for filename, content in templates:
         template_path = os.path.join(custom_dir, filename)
@@ -1430,12 +1407,12 @@ def create_plugin_template(plugin_name: str, template_type: str = "advanced") ->
     Returns:
         String containing the plugin template code
     """
-    
+
     # Sanitize plugin name
     class_name = ''.join(word.capitalize() for word in plugin_name.split())
     if not class_name.endswith("Plugin"):
         class_name += "Plugin"
-    
+
     if template_type == "simple":
         return f'''"""
 {plugin_name}
@@ -1459,7 +1436,7 @@ class {class_name}:
 def register():
     return {class_name}()
 '''
-    
+
     elif template_type == "advanced":
         return f'''"""
 {plugin_name}
@@ -1529,7 +1506,7 @@ class {class_name}:
 def register():
     return {class_name}()
 '''
-    
+
     # Add more template types as needed
     else:
         return create_plugin_template(plugin_name, "advanced")
@@ -1554,7 +1531,6 @@ def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_qu
             resource.setrlimit(resource.RLIMIT_AS, (500 * 1024 * 1024, 500 * 1024 * 1024))
 
         # Import and execute the plugin
-        import importlib.util
         spec = importlib.util.spec_from_file_location("sandboxed_plugin", plugin_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

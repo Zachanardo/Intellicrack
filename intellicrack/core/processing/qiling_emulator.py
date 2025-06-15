@@ -30,6 +30,7 @@ system emulation overhead.
 
 import logging
 import os
+import threading
 import time
 import traceback
 from typing import Any, Callable, Dict, List, Optional
@@ -233,7 +234,7 @@ class QilingEmulator:
         pass
 
     def run(self, timeout: Optional[int] = 60,
-            until_address: Optional[int] = None) -> Dict[str, Any]:  # pylint: disable=unused-argument
+            until_address: Optional[int] = None) -> Dict[str, Any]:
         """
         Run the binary emulation.
 
@@ -245,6 +246,19 @@ class QilingEmulator:
             Dictionary containing analysis results
         """
         start_time = time.time()
+        timeout_occurred = False
+        timeout_timer = None
+
+        def timeout_handler():
+            """Handle timeout by stopping emulation."""
+            nonlocal timeout_occurred
+            timeout_occurred = True
+            if self.ql:
+                try:
+                    self.ql.emu_stop()
+                    self.logger.warning("Emulation stopped due to timeout after %d seconds", timeout)
+                except (RuntimeError, AttributeError):
+                    pass
 
         try:
             # Create Qiling instance
@@ -278,22 +292,44 @@ class QilingEmulator:
                     # API might not exist for this OS
                     pass
 
+            # Set up timeout if specified
+            if timeout and timeout > 0:
+                timeout_timer = threading.Timer(timeout, timeout_handler)
+                timeout_timer.daemon = True
+                timeout_timer.start()
+                self.logger.debug("Set emulation timeout to %d seconds", timeout)
+
             # Run emulation
             if until_address:
                 self.ql.run(end=until_address)
             else:
                 self.ql.run()
 
+            # Cancel timeout timer if emulation completed before timeout
+            if timeout_timer and timeout_timer.is_alive():
+                timeout_timer.cancel()
+
             execution_time = time.time() - start_time
 
             # Analyze results
             results = self._analyze_results()
             results['execution_time'] = execution_time
-            results['status'] = 'success'
+            results['timeout_occurred'] = timeout_occurred
+            results['timeout_limit'] = timeout if timeout else None
+
+            if timeout_occurred:
+                results['status'] = 'timeout'
+                self.logger.info("Emulation timed out after %.2f seconds", execution_time)
+            else:
+                results['status'] = 'success'
 
             return results
 
         except (OSError, ValueError, RuntimeError) as e:
+            # Cancel timeout timer if it's still running
+            if timeout_timer and timeout_timer.is_alive():
+                timeout_timer.cancel()
+
             self.logger.error("Qiling emulation error: %s", e)
             self.logger.debug(traceback.format_exc())
 
@@ -301,12 +337,18 @@ class QilingEmulator:
                 'status': 'error',
                 'error': str(e),
                 'execution_time': time.time() - start_time,
+                'timeout_occurred': timeout_occurred,
+                'timeout_limit': timeout if timeout else None,
                 'api_calls': self.api_calls,
                 'memory_accesses': self.memory_accesses,
                 'license_checks': self.license_checks
             }
 
         finally:
+            # Cancel timeout timer if it's still running
+            if timeout_timer and timeout_timer.is_alive():
+                timeout_timer.cancel()
+
             # Cleanup
             if self.ql:
                 try:

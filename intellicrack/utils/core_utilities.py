@@ -391,6 +391,11 @@ def on_message(message: Dict[str, Any], data: Any = None) -> None:
 
         # Log the message
         logger.info("[Frida] %s", payload)
+        
+        # Handle binary data if provided
+        if data is not None:
+            logger.debug(f"[Frida] Binary data received: {len(data)} bytes")
+            # Could save or process binary data here if needed
 
         # Handle specific message types
         if isinstance(payload, dict):

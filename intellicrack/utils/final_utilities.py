@@ -38,18 +38,12 @@ try:
 except ImportError:
     HAS_PSUTIL = False
 
-try:
-    from PyQt5.QtCore import QThread, QTimer, pyqtSignal
-    from PyQt5.QtWidgets import QApplication, QWidget
-    HAS_PYQT = True
-except ImportError:
-    HAS_PYQT = False
+from .common_imports import HAS_NUMPY, HAS_PYQT
 
-try:
-    import numpy as np
-    HAS_NUMPY = True
-except ImportError:
-    HAS_NUMPY = False
+if HAS_PYQT:
+    from .common_imports import QApplication
+if HAS_NUMPY:
+    pass
 
 from ..utils.logger import setup_logger
 
@@ -893,7 +887,6 @@ def copy_to_clipboard(text: str) -> bool:
     """Copy text to system clipboard."""
     try:
         if HAS_PYQT:
-            from PyQt5.QtWidgets import QApplication
             if QApplication.instance():
                 clipboard = QApplication.clipboard()
                 clipboard.setText(text)
@@ -1067,7 +1060,6 @@ def _validate_and_enhance_report(report_data: Dict[str, Any]) -> Optional[Dict[s
 
 def _generate_report_id(report_data: Dict[str, Any]) -> str:
     """Generate unique report ID based on content and timestamp."""
-    import hashlib
 
     # Create deterministic hash from report content
     content_str = json.dumps(report_data.get("content", {}), sort_keys=True)
@@ -1112,36 +1104,60 @@ def _submit_to_remote_endpoint(report_data: Dict[str, Any], endpoint: str, repor
             "version": "1.0"
         }
 
-        # Try HTTP submission (simulated for security)
-        # In a real implementation, this would use requests library
+        # Try HTTP submission
         try:
-            # Simulate HTTP POST request
-            logger.info("Submitting report to endpoint: %s", endpoint)
+            # Check if requests library is available
+            try:
+                import requests
+                REQUESTS_AVAILABLE = True
+            except ImportError:
+                REQUESTS_AVAILABLE = False
 
-            # Simulate network delay
-            import random
-            time.sleep(random.uniform(0.1, 0.5))
+            if REQUESTS_AVAILABLE:
+                # Attempt real HTTP submission
+                logger.info("Submitting report to endpoint: %s", endpoint)
 
-            # Simulate successful submission
-            if "test" in endpoint.lower() or "localhost" in endpoint.lower():
-                # Test endpoints always succeed
-                return {
-                    "status": "submitted",
-                    "endpoint": endpoint,
-                    "response_code": 200,
-                    "response_message": "Report submitted successfully",
-                    "tracking_url": f"{endpoint}/reports/{report_id}",
-                    "delivery_method": "http_post"
+                # Set timeout and headers
+                headers = {
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Intellicrack/1.0'
                 }
+
+                try:
+                    response = requests.post(
+                        endpoint,
+                        json=submission_payload,
+                        headers=headers,
+                        timeout=30
+                    )
+
+                    return {
+                        "status": "submitted",
+                        "endpoint": endpoint,
+                        "response_code": response.status_code,
+                        "response_message": response.text[:200] if response.text else "Report submitted",
+                        "tracking_id": report_id,
+                        "delivery_method": "http_post"
+                    }
+                except requests.exceptions.RequestException as e:
+                    logger.warning("HTTP submission failed: %s", e)
+                    return {
+                        "status": "failed",
+                        "endpoint": endpoint,
+                        "error": str(e),
+                        "retry_recommended": True,
+                        "delivery_method": "http_post"
+                    }
             else:
-                # Real endpoints are simulated
+                # No requests library - return informative message
+                logger.info("HTTP submission not available - requests library not installed")
                 return {
-                    "status": "simulated",
+                    "status": "unavailable",
                     "endpoint": endpoint,
-                    "response_code": 200,
-                    "response_message": "Report submission simulated (no actual network request)",
+                    "response_code": 0,
+                    "response_message": "HTTP submission requires 'requests' library - install with: pip install requests",
                     "tracking_id": report_id,
-                    "delivery_method": "simulated_http"
+                    "delivery_method": "http_post_unavailable"
                 }
 
         except Exception as e:
@@ -1257,14 +1273,63 @@ def _attempt_email_delivery(report_data: Dict[str, Any], report_id: str) -> Opti
     if not email_config:
         return None
 
-    # Simulate email delivery
-    return {
-        "method": "email",
-        "status": "simulated",
-        "recipient": "reports@example.com",
-        "subject": f"Intellicrack Report {report_id}",
-        "message": "Email delivery is simulated - configure SMTP settings for real delivery"
-    }
+    try:
+        # Parse email configuration (expected format: smtp_host:port:username:password:recipient)
+        config_parts = email_config.split(':')
+        if len(config_parts) < 5:
+            logger.warning("Invalid email configuration format")
+            return None
+
+        smtp_host, smtp_port, username, password, recipient = config_parts[:5]
+
+        # Try to send email using smtplib
+        try:
+            import smtplib
+            from email.mime.multipart import MIMEMultipart
+            from email.mime.text import MIMEText
+
+            # Create message
+            msg = MIMEMultipart()
+            msg['From'] = username
+            msg['To'] = recipient
+            msg['Subject'] = f"Intellicrack Report {report_id}"
+
+            # Add report as attachment
+            body = json.dumps(report_data, indent=2)
+            msg.attach(MIMEText(body, 'plain'))
+
+            # Send email
+            with smtplib.SMTP(smtp_host, int(smtp_port)) as server:
+                server.starttls()
+                server.login(username, password)
+                server.send_message(msg)
+
+            return {
+                "method": "email",
+                "status": "sent",
+                "recipient": recipient,
+                "subject": f"Intellicrack Report {report_id}",
+                "message": "Email sent successfully"
+            }
+
+        except ImportError:
+            return {
+                "method": "email",
+                "status": "unavailable",
+                "message": "Email delivery requires Python's built-in smtplib"
+            }
+        except Exception as e:
+            logger.warning("Email delivery failed: %s", e)
+            return {
+                "method": "email",
+                "status": "failed",
+                "error": str(e),
+                "message": "Email delivery failed - check SMTP configuration"
+            }
+
+    except Exception as e:
+        logger.error("Email configuration error: %s", e)
+        return None
 
 
 def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optional[Dict[str, Any]]:
@@ -1274,15 +1339,124 @@ def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optio
     if not cloud_config:
         return None
 
-    # Simulate cloud storage
-    return {
-        "method": "cloud_storage",
-        "status": "simulated",
-        "provider": "aws_s3",
-        "bucket": "intellicrack-reports",
-        "key": f"reports/{report_id}.json",
-        "message": "Cloud storage is simulated - configure AWS/Azure credentials for real upload"
-    }
+    try:
+        # Parse cloud configuration
+        config = json.loads(cloud_config)
+        provider = config.get('provider', 'aws_s3').lower()
+
+        if provider == 'aws_s3':
+            # Try AWS S3 upload
+            try:
+                import boto3
+
+                s3 = boto3.client('s3',
+                    aws_access_key_id=config.get('access_key'),
+                    aws_secret_access_key=config.get('secret_key'),
+                    region_name=config.get('region', 'us-east-1')
+                )
+
+                bucket = config.get('bucket', 'intellicrack-reports')
+                key = f"reports/{report_id}.json"
+
+                # Upload the report
+                s3.put_object(
+                    Bucket=bucket,
+                    Key=key,
+                    Body=json.dumps(report_data, indent=2),
+                    ContentType='application/json'
+                )
+
+                return {
+                    "method": "cloud_storage",
+                    "status": "success",
+                    "provider": "aws_s3",
+                    "bucket": bucket,
+                    "key": key,
+                    "message": f"Report uploaded to s3://{bucket}/{key}"
+                }
+
+            except ImportError:
+                logger.warning("boto3 not installed - cannot upload to AWS S3")
+                return {
+                    "method": "cloud_storage",
+                    "status": "failed",
+                    "provider": "aws_s3",
+                    "message": "AWS SDK (boto3) not installed. Install with: pip install boto3"
+                }
+            except Exception as e:
+                return {
+                    "method": "cloud_storage",
+                    "status": "failed",
+                    "provider": "aws_s3",
+                    "error": str(e),
+                    "message": f"Failed to upload to AWS S3: {e}"
+                }
+
+        elif provider == 'azure':
+            # Try Azure Blob Storage upload
+            try:
+                from azure.storage.blob import BlobServiceClient
+
+                connection_string = config.get('connection_string')
+                container = config.get('container', 'intellicrack-reports')
+                blob_name = f"reports/{report_id}.json"
+
+                blob_service = BlobServiceClient.from_connection_string(connection_string)
+                blob_client = blob_service.get_blob_client(container=container, blob=blob_name)
+
+                # Upload the report
+                blob_client.upload_blob(
+                    json.dumps(report_data, indent=2),
+                    overwrite=True,
+                    content_settings={'content_type': 'application/json'}
+                )
+
+                return {
+                    "method": "cloud_storage",
+                    "status": "success",
+                    "provider": "azure",
+                    "container": container,
+                    "blob": blob_name,
+                    "message": f"Report uploaded to Azure: {container}/{blob_name}"
+                }
+
+            except ImportError:
+                logger.warning("azure-storage-blob not installed - cannot upload to Azure")
+                return {
+                    "method": "cloud_storage",
+                    "status": "failed",
+                    "provider": "azure",
+                    "message": "Azure SDK not installed. Install with: pip install azure-storage-blob"
+                }
+            except Exception as e:
+                return {
+                    "method": "cloud_storage",
+                    "status": "failed",
+                    "provider": "azure",
+                    "error": str(e),
+                    "message": f"Failed to upload to Azure: {e}"
+                }
+
+        else:
+            return {
+                "method": "cloud_storage",
+                "status": "failed",
+                "message": f"Unsupported cloud provider: {provider}. Supported: aws_s3, azure"
+            }
+
+    except json.JSONDecodeError:
+        return {
+            "method": "cloud_storage",
+            "status": "failed",
+            "message": "Invalid cloud configuration JSON in INTELLICRACK_CLOUD_CONFIG"
+        }
+    except Exception as e:
+        return {
+            "method": "cloud_storage",
+            "status": "failed",
+            "error": str(e),
+            "message": f"Cloud storage error: {e}"
+        }
 
 
 def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Optional[Dict[str, Any]]:
@@ -1292,15 +1466,189 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
     if not db_config:
         return None
 
-    # Simulate database storage
-    return {
-        "method": "database",
-        "status": "simulated",
-        "database": "intellicrack_reports",
-        "table": "analysis_reports",
-        "record_id": report_id,
-        "message": "Database storage is simulated - configure database connection for real storage"
-    }
+    try:
+        # Parse database configuration
+        config = json.loads(db_config)
+        db_type = config.get('type', 'sqlite').lower()
+
+        if db_type == 'sqlite':
+            # SQLite database storage
+            try:
+                import sqlite3
+
+                db_path = config.get('path', 'intellicrack_reports.db')
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+
+                # Create table if it doesn't exist
+                cursor.execute('''CREATE TABLE IF NOT EXISTS analysis_reports
+                               (id TEXT PRIMARY KEY, 
+                                timestamp REAL,
+                                report_data TEXT,
+                                metadata TEXT)''')
+
+                # Insert report
+                cursor.execute('''INSERT OR REPLACE INTO analysis_reports 
+                               (id, timestamp, report_data, metadata) 
+                               VALUES (?, ?, ?, ?)''',
+                               (report_id,
+                                time.time(),
+                                json.dumps(report_data),
+                                json.dumps(report_data.get('report_metadata', {}))))
+
+                conn.commit()
+                conn.close()
+
+                return {
+                    "method": "database",
+                    "status": "success",
+                    "database": "sqlite",
+                    "path": db_path,
+                    "record_id": report_id,
+                    "message": f"Report stored in SQLite database: {db_path}"
+                }
+
+            except Exception as e:
+                return {
+                    "method": "database",
+                    "status": "failed",
+                    "database": "sqlite",
+                    "error": str(e),
+                    "message": f"Failed to store in SQLite: {e}"
+                }
+
+        elif db_type == 'postgresql':
+            # PostgreSQL database storage
+            try:
+                import psycopg2
+
+                conn = psycopg2.connect(
+                    host=config.get('host', 'localhost'),
+                    port=config.get('port', 5432),
+                    database=config.get('database', 'intellicrack'),
+                    user=config.get('user'),
+                    password=config.get('password')
+                )
+                cursor = conn.cursor()
+
+                # Create table if it doesn't exist
+                cursor.execute('''CREATE TABLE IF NOT EXISTS analysis_reports
+                               (id VARCHAR(255) PRIMARY KEY,
+                                timestamp TIMESTAMP,
+                                report_data JSONB,
+                                metadata JSONB)''')
+
+                # Insert report
+                cursor.execute('''INSERT INTO analysis_reports 
+                               (id, timestamp, report_data, metadata)
+                               VALUES (%s, to_timestamp(%s), %s, %s)
+                               ON CONFLICT (id) DO UPDATE 
+                               SET timestamp = EXCLUDED.timestamp,
+                                   report_data = EXCLUDED.report_data,
+                                   metadata = EXCLUDED.metadata''',
+                               (report_id,
+                                time.time(),
+                                json.dumps(report_data),
+                                json.dumps(report_data.get('report_metadata', {}))))
+
+                conn.commit()
+                conn.close()
+
+                return {
+                    "method": "database",
+                    "status": "success",
+                    "database": "postgresql",
+                    "host": config.get('host', 'localhost'),
+                    "record_id": report_id,
+                    "message": "Report stored in PostgreSQL database"
+                }
+
+            except ImportError:
+                logger.warning("psycopg2 not installed - cannot connect to PostgreSQL")
+                return {
+                    "method": "database",
+                    "status": "failed",
+                    "database": "postgresql",
+                    "message": "PostgreSQL driver not installed. Install with: pip install psycopg2-binary"
+                }
+            except Exception as e:
+                return {
+                    "method": "database",
+                    "status": "failed",
+                    "database": "postgresql",
+                    "error": str(e),
+                    "message": f"Failed to store in PostgreSQL: {e}"
+                }
+
+        elif db_type == 'mongodb':
+            # MongoDB database storage
+            try:
+                import pymongo
+
+                client = pymongo.MongoClient(config.get('connection_string', 'mongodb://localhost:27017/'))
+                db = client[config.get('database', 'intellicrack')]
+                collection = db[config.get('collection', 'analysis_reports')]
+
+                # Insert or update report
+                collection.replace_one(
+                    {'_id': report_id},
+                    {
+                        '_id': report_id,
+                        'timestamp': time.time(),
+                        'report_data': report_data,
+                        'metadata': report_data.get('report_metadata', {})
+                    },
+                    upsert=True
+                )
+
+                client.close()
+
+                return {
+                    "method": "database",
+                    "status": "success",
+                    "database": "mongodb",
+                    "collection": config.get('collection', 'analysis_reports'),
+                    "record_id": report_id,
+                    "message": "Report stored in MongoDB"
+                }
+
+            except ImportError:
+                logger.warning("pymongo not installed - cannot connect to MongoDB")
+                return {
+                    "method": "database",
+                    "status": "failed",
+                    "database": "mongodb",
+                    "message": "MongoDB driver not installed. Install with: pip install pymongo"
+                }
+            except Exception as e:
+                return {
+                    "method": "database",
+                    "status": "failed",
+                    "database": "mongodb",
+                    "error": str(e),
+                    "message": f"Failed to store in MongoDB: {e}"
+                }
+
+        else:
+            return {
+                "method": "database",
+                "status": "failed",
+                "message": f"Unsupported database type: {db_type}. Supported: sqlite, postgresql, mongodb"
+            }
+
+    except json.JSONDecodeError:
+        return {
+            "method": "database",
+            "status": "failed",
+            "message": "Invalid database configuration JSON in INTELLICRACK_DB_CONFIG"
+        }
+    except Exception as e:
+        return {
+            "method": "database",
+            "status": "failed",
+            "error": str(e),
+            "message": f"Database storage error: {e}"
+        }
 
 
 def _generate_report_summary(report_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -1677,37 +2025,4 @@ def do_GET(request_handler: Any) -> None:
     request_handler.wfile.write(b"Intellicrack Server Running")
 
 
-# Export all functions
-__all__ = [
-    # UI Functions
-    'add_table', 'browse_dataset', 'browse_model',
-    'show_simulation_results', 'update_training_progress',
-    'update_visualization', 'center_on_screen', 'copy_to_clipboard',
-    'showEvent',
-
-    # Analysis Functions
-    'monitor_memory', 'predict_vulnerabilities',
-
-    # Core Utility Functions
-    'accelerate_hash_calculation', 'compute_binary_hash',
-    'compute_section_hashes', 'identify_changed_sections',
-    'get_file_icon', 'get_resource_type', 'cache_analysis_results',
-    'get_captured_requests', 'force_memory_cleanup',
-    'initialize_memory_optimizer', 'sandbox_process',
-    'select_backend_for_workload', 'truncate_text',
-    'async_wrapper', 'hash_func',
-
-    # Report Functions
-    'export_metrics', 'submit_report',
-
-    # Training Functions
-    'start_training', 'stop_training', 'on_training_finished',
-
-    # Model Functions
-    'create_dataset', 'augment_dataset', 'load_dataset_preview',
-    'create_full_feature_model',
-
-    # Misc Functions
-    'add_code_snippet', 'add_dataset_row', 'add_image',
-    'add_recommendations', 'patches_reordered', 'do_GET'
-]
+# Note: Exports are handled by the package-level __init__.py to avoid duplication

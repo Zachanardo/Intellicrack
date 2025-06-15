@@ -25,9 +25,9 @@ from typing import Optional, Tuple
 
 try:
     from cryptography import x509
-    from cryptography.x509.oid import NameOID
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.x509.oid import NameOID
     HAS_CRYPTOGRAPHY = True
 except ImportError:
     HAS_CRYPTOGRAPHY = False
@@ -56,18 +56,18 @@ def generate_self_signed_cert(
         Tuple of (certificate_pem, private_key_pem) or None if generation fails
     """
     logger = logging.getLogger("IntellicrackLogger.CertUtils")
-    
+
     if not HAS_CRYPTOGRAPHY:
         logger.error("cryptography library not available for certificate generation")
         return None
-        
+
     try:
         # Generate private key
         private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=2048,
         )
-        
+
         # Create certificate subject
         subject = issuer = x509.Name([
             x509.NameAttribute(NameOID.COUNTRY_NAME, country),
@@ -76,7 +76,7 @@ def generate_self_signed_cert(
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization),
             x509.NameAttribute(NameOID.COMMON_NAME, common_name),
         ])
-        
+
         # Create certificate
         cert = x509.CertificateBuilder().subject_name(
             subject
@@ -86,11 +86,12 @@ def generate_self_signed_cert(
             private_key.public_key()
         ).serial_number(
             x509.random_serial_number()
-        ).not_valid_before(
-            datetime.datetime.utcnow()
-        ).not_valid_after(
-            datetime.datetime.utcnow() + datetime.timedelta(days=valid_days)
-        ).add_extension(
+        )
+
+        # Set validity dates
+        from .certificate_common import get_certificate_validity_dates
+        not_valid_before, not_valid_after = get_certificate_validity_dates(valid_days)
+        cert = cert.not_valid_before(not_valid_before).not_valid_after(not_valid_after).add_extension(
             x509.SubjectAlternativeName([
                 x509.DNSName(common_name),
                 x509.DNSName("localhost"),
@@ -114,7 +115,7 @@ def generate_self_signed_cert(
             ),
             critical=True,
         ).sign(private_key, hashes.SHA256())
-        
+
         # Serialize certificate and key to PEM format
         cert_pem = cert.public_bytes(serialization.Encoding.PEM)
         key_pem = private_key.private_bytes(
@@ -122,10 +123,10 @@ def generate_self_signed_cert(
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption()
         )
-        
+
         logger.info(f"Generated self-signed certificate for {common_name}")
         return cert_pem, key_pem
-        
+
     except Exception as e:
         logger.error(f"Failed to generate self-signed certificate: {e}")
         return None
@@ -142,19 +143,19 @@ def load_certificate_from_file(cert_path: str) -> Optional[x509.Certificate]:
         Certificate object or None if loading fails
     """
     logger = logging.getLogger("IntellicrackLogger.CertUtils")
-    
+
     if not HAS_CRYPTOGRAPHY:
         logger.error("cryptography library not available")
         return None
-        
+
     try:
         with open(cert_path, 'rb') as f:
             cert_data = f.read()
-            
+
         cert = x509.load_pem_x509_certificate(cert_data)
         logger.info(f"Loaded certificate from {cert_path}")
         return cert
-        
+
     except Exception as e:
         logger.error(f"Failed to load certificate from {cert_path}: {e}")
         return None
@@ -173,7 +174,7 @@ def verify_certificate_validity(cert: x509.Certificate) -> bool:
     try:
         now = datetime.datetime.utcnow()
         return cert.not_valid_before <= now <= cert.not_valid_after
-        
+
     except Exception:
         return False
 
@@ -199,15 +200,15 @@ def get_certificate_info(cert: x509.Certificate) -> dict:
             'signature_algorithm': cert.signature_algorithm_oid._name,
             'extensions': []
         }
-        
+
         # Extract subject information
         for attribute in cert.subject:
             info['subject'][attribute.oid._name] = attribute.value
-            
+
         # Extract issuer information
         for attribute in cert.issuer:
             info['issuer'][attribute.oid._name] = attribute.value
-            
+
         # Extract extensions
         for extension in cert.extensions:
             ext_info = {
@@ -216,16 +217,16 @@ def get_certificate_info(cert: x509.Certificate) -> dict:
                 'value': str(extension.value)
             }
             info['extensions'].append(ext_info)
-            
+
         return info
-        
+
     except Exception as e:
         return {'error': str(e)}
 
 
 __all__ = [
     'generate_self_signed_cert',
-    'load_certificate_from_file', 
+    'load_certificate_from_file',
     'verify_certificate_validity',
     'get_certificate_info'
 ]

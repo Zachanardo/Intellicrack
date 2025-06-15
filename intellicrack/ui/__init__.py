@@ -36,6 +36,77 @@ try:
 except ImportError as e:
     logger.warning("Failed to import dashboard_manager: %s", e)
 
+# Import comprehensive radare2 UI integration
+try:
+    from .comprehensive_integration import (
+        integrate_radare2_comprehensive,
+        get_comprehensive_integration,
+        get_integration_status,
+        cleanup_integration,
+        ComprehensiveR2Integration
+    )
+    logger.info("Radare2 comprehensive UI integration loaded successfully")
+except ImportError as e:
+    logger.warning("Failed to import radare2 UI integration: %s", e)
+    # Provide fallback functions
+    def integrate_radare2_comprehensive(main_app):
+        logger.error("Radare2 integration not available")
+        return False
+    
+    def get_comprehensive_integration():
+        logger.error("Radare2 integration not available")
+        return None
+    
+    def get_integration_status():
+        return {"error": "Integration not available"}
+    
+    def cleanup_integration():
+        pass
+    
+    ComprehensiveR2Integration = None
+
+# Import radare2 UI components
+try:
+    from .radare2_integration_ui import (
+        R2IntegrationWidget,
+        R2ConfigurationDialog,
+        R2ResultsViewer,
+        create_radare2_tab
+    )
+    logger.info("Radare2 UI components loaded successfully")
+except ImportError as e:
+    logger.warning("Failed to import radare2 UI components: %s", e)
+    R2IntegrationWidget = None
+    R2ConfigurationDialog = None
+    R2ResultsViewer = None
+    create_radare2_tab = None
+
+# Import enhanced UI features
+try:
+    from .enhanced_ui_integration import (
+        EnhancedAnalysisDashboard,
+        EnhancedMainWindow,
+        create_enhanced_application
+    )
+    logger.info("Enhanced UI features loaded successfully")
+except ImportError as e:
+    logger.warning("Failed to import enhanced UI features: %s", e)
+    EnhancedAnalysisDashboard = None
+    EnhancedMainWindow = None
+    create_enhanced_application = None
+
+# Import UI manager
+try:
+    from .radare2_ui_manager import (
+        R2UIManager,
+        create_r2_ui_manager
+    )
+    logger.info("Radare2 UI manager loaded successfully")
+except ImportError as e:
+    logger.warning("Failed to import radare2 UI manager: %s", e)
+    R2UIManager = None
+    create_r2_ui_manager = None
+
 # Import subpackages
 try:
     from . import dialogs, widgets
@@ -49,6 +120,28 @@ __all__ = [
 
     # From dashboard_manager
     'DashboardManager',
+    
+    # Radare2 comprehensive integration
+    'integrate_radare2_comprehensive',
+    'get_comprehensive_integration',
+    'get_integration_status',
+    'cleanup_integration',
+    'ComprehensiveR2Integration',
+    
+    # Radare2 UI components
+    'R2IntegrationWidget',
+    'R2ConfigurationDialog',
+    'R2ResultsViewer',
+    'create_radare2_tab',
+    
+    # Enhanced UI features
+    'EnhancedAnalysisDashboard',
+    'EnhancedMainWindow',
+    'create_enhanced_application',
+    
+    # UI manager
+    'R2UIManager',
+    'create_r2_ui_manager',
 
     # Subpackages
     'dialogs',

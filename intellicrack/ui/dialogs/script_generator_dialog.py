@@ -155,6 +155,37 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
     """Script Generation Dialog with multiple script types."""
 
     def __init__(self, parent=None, binary_path: str = ""):
+
+        # Initialize UI attributes
+        self.analysis_depth = None
+        self.bypass_output = None
+        self.close_btn = None
+        self.copy_btn = None
+        self.doc_display = None
+        self.exploit_advanced = None
+        self.exploit_config = None
+        self.exploit_type = None
+        self.highlighter = None
+        self.include_analysis = None
+        self.include_exploitation = None
+        self.include_options = None
+        self.include_persistence = None
+        self.include_recon = None
+        self.method_hook = None
+        self.method_loader = None
+        self.method_memory = None
+        self.method_patch = None
+        self.method_registry = None
+        self.payload_type = None
+        self.save_btn = None
+        self.script_display = None
+        self.script_tabs = None
+        self.status_label = None
+        self.strategy_config = None
+        self.strategy_type = None
+        self.target_function = None
+        self.template_display = None
+        self.test_btn = None
         super().__init__(parent, binary_path)
         self.worker = None
         self.generated_scripts = {}

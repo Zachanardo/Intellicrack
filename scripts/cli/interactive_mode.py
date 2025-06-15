@@ -33,7 +33,7 @@ import cmd
 import json
 import time
 import readline
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from pathlib import Path
 
 # Rich imports for beautiful terminal UI
@@ -2226,8 +2226,15 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
     def _show_vulnerabilities(self):
         """Show vulnerability results."""
         vulns = self.analysis_results.get('vulnerabilities', {})
+        
+        # If no vulns from previous analysis, do real-time detection
+        if not vulns and self.current_binary:
+            self.info("Performing real-time vulnerability detection...")
+            vulns = self._detect_vulnerabilities_realtime()
+            self.analysis_results['vulnerabilities'] = vulns
+        
         if not vulns:
-            self.info("No vulnerability data available")
+            self.info("No vulnerabilities detected in this binary")
             return
             
         if not self.console:
@@ -2240,21 +2247,147 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
         table.add_column("Location")
         table.add_column("Description")
         
-        # Mock data for demonstration
-        table.add_row(
-            "[red]HIGH[/red]",
-            "Buffer Overflow",
-            "0x401234",
-            "Unsafe strcpy usage"
-        )
-        table.add_row(
-            "[yellow]MEDIUM[/yellow]",
-            "Format String",
-            "0x401567",
-            "User input in printf"
-        )
+        # Display actual detected vulnerabilities
+        for vuln in vulns:
+            severity_color = {
+                'HIGH': '[red]HIGH[/red]',
+                'MEDIUM': '[yellow]MEDIUM[/yellow]',
+                'LOW': '[green]LOW[/green]',
+                'INFO': '[blue]INFO[/blue]'
+            }.get(vuln.get('severity', 'INFO'), '[dim]UNKNOWN[/dim]')
+            
+            table.add_row(
+                severity_color,
+                vuln.get('type', 'Unknown'),
+                vuln.get('location', 'N/A'),
+                vuln.get('description', 'No description available')
+            )
         
         self.console.print(table)
+        
+        # Show statistics
+        stats = self._calculate_vuln_stats(vulns)
+        self.console.print(f"\n📊 Total: {stats['total']} | "
+                          f"High: {stats['high']} | "
+                          f"Medium: {stats['medium']} | "
+                          f"Low: {stats['low']}")
+    
+    def _detect_vulnerabilities_realtime(self):
+        """Perform real-time vulnerability detection on current binary."""
+        vulns = []
+        
+        if not self.current_binary or not os.path.exists(self.current_binary):
+            return vulns
+        
+        try:
+            # Import necessary modules
+            try:
+                from intellicrack.utils.binary_analysis import analyze_binary
+                from intellicrack.core.analysis.vulnerability_engine import VulnerabilityEngine
+                
+                # Use Intellicrack's vulnerability engine
+                engine = VulnerabilityEngine()
+                scan_results = engine.scan_binary(self.current_binary)
+                
+                # Convert to our format
+                for issue in scan_results.get('issues', []):
+                    vulns.append({
+                        'severity': issue.get('severity', 'INFO').upper(),
+                        'type': issue.get('category', 'Unknown'),
+                        'location': issue.get('address', 'N/A'),
+                        'description': issue.get('description', 'No description')
+                    })
+                    
+            except ImportError:
+                # Fallback to basic analysis
+                with open(self.current_binary, 'rb') as f:
+                    data = f.read()
+                
+                # Check for common vulnerability patterns
+                patterns = [
+                    # Buffer overflow indicators
+                    (b'strcpy', 'HIGH', 'Buffer Overflow', 'Unsafe strcpy usage detected'),
+                    (b'strcat', 'HIGH', 'Buffer Overflow', 'Unsafe strcat usage detected'),
+                    (b'gets', 'HIGH', 'Buffer Overflow', 'Dangerous gets() function detected'),
+                    (b'sprintf', 'MEDIUM', 'Buffer Overflow', 'Potentially unsafe sprintf usage'),
+                    
+                    # Format string vulnerabilities
+                    (b'printf', 'MEDIUM', 'Format String', 'Direct printf usage detected'),
+                    (b'fprintf', 'MEDIUM', 'Format String', 'Direct fprintf usage detected'),
+                    (b'syslog', 'MEDIUM', 'Format String', 'Syslog format string risk'),
+                    
+                    # Command injection
+                    (b'system', 'HIGH', 'Command Injection', 'System() call detected'),
+                    (b'popen', 'HIGH', 'Command Injection', 'popen() call detected'),
+                    (b'exec', 'HIGH', 'Command Injection', 'exec() family function detected'),
+                    
+                    # Crypto weaknesses
+                    (b'rand', 'LOW', 'Weak Crypto', 'Weak random number generator'),
+                    (b'MD5', 'MEDIUM', 'Weak Crypto', 'Deprecated MD5 hash detected'),
+                    (b'SHA1', 'LOW', 'Weak Crypto', 'SHA1 hash (consider SHA256+)'),
+                    
+                    # Memory issues
+                    (b'malloc', 'INFO', 'Memory Management', 'Dynamic memory allocation'),
+                    (b'free', 'INFO', 'Memory Management', 'Memory deallocation'),
+                ]
+                
+                # Search for patterns
+                for pattern, severity, vuln_type, description in patterns:
+                    offset = 0
+                    while True:
+                        pos = data.find(pattern, offset)
+                        if pos == -1:
+                            break
+                        
+                        vulns.append({
+                            'severity': severity,
+                            'type': vuln_type,
+                            'location': f'0x{pos:08x}',
+                            'description': description
+                        })
+                        
+                        # Only report first instance of each pattern
+                        break
+                
+                # Check for missing security features
+                if not any(p in data for p in [b'__stack_chk_fail', b'__fortify_fail']):
+                    vulns.append({
+                        'severity': 'MEDIUM',
+                        'type': 'Missing Protection',
+                        'location': 'Binary',
+                        'description': 'No stack canary protection detected'
+                    })
+                
+                # Check for ASLR/PIE
+                if data[:4] == b'\x7fELF':  # ELF binary
+                    e_type = int.from_bytes(data[16:18], 'little')
+                    if e_type != 3:  # ET_DYN
+                        vulns.append({
+                            'severity': 'MEDIUM',
+                            'type': 'Missing Protection',
+                            'location': 'Binary',
+                            'description': 'Position Independent Executable (PIE) not enabled'
+                        })
+                
+        except Exception as e:
+            self.error(f"Error during vulnerability detection: {e}")
+        
+        return vulns
+    
+    def _calculate_vuln_stats(self, vulns):
+        """Calculate vulnerability statistics."""
+        stats = {'total': len(vulns), 'high': 0, 'medium': 0, 'low': 0, 'info': 0}
+        for vuln in vulns:
+            severity = vuln.get('severity', 'INFO').upper()
+            if severity == 'HIGH':
+                stats['high'] += 1
+            elif severity == 'MEDIUM':
+                stats['medium'] += 1
+            elif severity == 'LOW':
+                stats['low'] += 1
+            else:
+                stats['info'] += 1
+        return stats
     
     def _export_basic(self, format_type: str, output_path: str):
         """Basic export fallback when advanced export unavailable."""
@@ -2720,10 +2853,17 @@ Let's start by loading a binary file!""",
             
         vulns = self.analysis_results.get('vulnerabilities', {})
         
+        # Generate real patch suggestions based on actual vulnerabilities
+        suggestions = self._generate_patch_suggestions(vulns)
+        
+        if not suggestions:
+            self.info("No specific patches suggested. Binary appears secure.")
+            return
+        
         if not self.console:
             print("\nSuggested Patches:")
-            print("1. Buffer overflow at 0x401234: Replace strcpy with strncpy")
-            print("2. Format string at 0x401567: Sanitize user input")
+            for i, (priority, loc, issue, fix) in enumerate(suggestions, 1):
+                print(f"{i}. {issue} at {loc}: {fix}")
             return
             
         table = Table(title="🔧 Suggested Patches")
@@ -2732,18 +2872,154 @@ Let's start by loading a binary file!""",
         table.add_column("Issue", style="cyan")
         table.add_column("Suggested Fix")
         
-        # Mock patch suggestions
-        suggestions = [
-            ("HIGH", "0x401234", "Buffer Overflow", "Replace strcpy with strncpy"),
-            ("MEDIUM", "0x401567", "Format String", "Use %s format specifier"),
-            ("LOW", "0x401890", "Weak Random", "Use cryptographic RNG")
-        ]
-        
         for priority, loc, issue, fix in suggestions:
             color = "red" if priority == "HIGH" else "yellow" if priority == "MEDIUM" else "green"
             table.add_row(f"[{color}]{priority}[/{color}]", loc, issue, fix)
         
         self.console.print(table)
+        
+        # Offer to create patch file
+        if self.console:
+            create_patch = Confirm.ask("\nWould you like to create a patch file?", default=False)
+            if create_patch:
+                self._create_patch_from_suggestions(suggestions)
+    
+    def _generate_patch_suggestions(self, vulns: Dict[str, Any]) -> List[Tuple[str, str, str, str]]:
+        """Generate real patch suggestions based on vulnerabilities."""
+        suggestions = []
+        
+        # Check for specific vulnerability types and suggest fixes
+        if isinstance(vulns, dict):
+            # Process vulnerability list
+            vuln_list = vulns.get('vulnerabilities', [])
+            if isinstance(vuln_list, list):
+                for vuln in vuln_list:
+                    if isinstance(vuln, dict):
+                        vuln_type = vuln.get('type', '')
+                        location = vuln.get('location', vuln.get('address', 'Unknown'))
+                        severity = vuln.get('severity', vuln.get('risk', 'MEDIUM')).upper()
+                        
+                        # Generate fix based on vulnerability type
+                        fix = self._get_fix_for_vulnerability(vuln_type, vuln)
+                        
+                        if fix:
+                            suggestions.append((severity, str(location), vuln_type, fix))
+            
+            # Check for patterns in analysis results
+            if 'quick' in self.analysis_results:
+                quick = self.analysis_results['quick']
+                
+                # Check for dangerous imports
+                imports = quick.get('imports', {})
+                dangerous_funcs = {
+                    'strcpy': ('HIGH', 'Buffer Overflow Risk', 'Replace with strncpy or strcpy_s'),
+                    'strcat': ('HIGH', 'Buffer Overflow Risk', 'Replace with strncat or strcat_s'),
+                    'gets': ('CRITICAL', 'Buffer Overflow Risk', 'Replace with fgets or gets_s'),
+                    'sprintf': ('MEDIUM', 'Format String Risk', 'Replace with snprintf'),
+                    'vsprintf': ('MEDIUM', 'Format String Risk', 'Replace with vsnprintf'),
+                    'scanf': ('MEDIUM', 'Input Validation Risk', 'Add length specifiers or use safer alternatives'),
+                    'rand': ('LOW', 'Weak Random Number', 'Use cryptographic RNG (CryptGenRandom on Windows)')
+                }
+                
+                for dll, funcs in imports.items():
+                    for func in funcs:
+                        if func in dangerous_funcs:
+                            severity, issue, fix = dangerous_funcs[func]
+                            suggestions.append((severity, f"{dll}!{func}", issue, fix))
+                
+                # Check for missing security features
+                pe_header = quick.get('pe_header', {})
+                if pe_header:
+                    # Check for DEP
+                    if not pe_header.get('nx_compatible', True):
+                        suggestions.append((
+                            'HIGH',
+                            'PE Header',
+                            'DEP Not Enabled',
+                            'Enable DEP/NX bit in PE header flags'
+                        ))
+                    
+                    # Check for ASLR
+                    if not pe_header.get('dynamic_base', True):
+                        suggestions.append((
+                            'MEDIUM',
+                            'PE Header',
+                            'ASLR Not Enabled',
+                            'Enable DYNAMICBASE flag for ASLR support'
+                        ))
+                    
+                    # Check for SafeSEH
+                    if pe_header.get('architecture', '') == 'x86' and not pe_header.get('safe_seh', True):
+                        suggestions.append((
+                            'MEDIUM',
+                            'PE Header',
+                            'SafeSEH Not Enabled',
+                            'Rebuild with /SAFESEH linker flag'
+                        ))
+        
+        # Sort by priority
+        priority_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
+        suggestions.sort(key=lambda x: priority_order.get(x[0], 99))
+        
+        return suggestions[:10]  # Return top 10 suggestions
+    
+    def _get_fix_for_vulnerability(self, vuln_type: str, vuln_details: Dict[str, Any]) -> Optional[str]:
+        """Get specific fix recommendation for vulnerability type."""
+        vuln_type_lower = vuln_type.lower()
+        
+        fix_map = {
+            'buffer overflow': 'Add bounds checking or use safer string functions',
+            'stack overflow': 'Increase stack size or reduce local variable usage',
+            'heap overflow': 'Validate allocation sizes and use heap protection',
+            'use after free': 'Set pointers to NULL after free and check before use',
+            'double free': 'Track freed pointers and prevent duplicate frees',
+            'format string': 'Use format string literals or validate user input',
+            'integer overflow': 'Add overflow checks before arithmetic operations',
+            'null pointer': 'Add NULL checks before pointer dereference',
+            'race condition': 'Add proper synchronization (mutexes/critical sections)',
+            'path traversal': 'Sanitize file paths and restrict directory access',
+            'command injection': 'Validate and escape shell command arguments',
+            'sql injection': 'Use parameterized queries instead of string concatenation',
+            'weak crypto': 'Use strong cryptographic algorithms (AES, SHA-256+)',
+            'hardcoded key': 'Move keys to secure storage or use key derivation',
+            'weak random': 'Replace with cryptographically secure RNG'
+        }
+        
+        # Check for matches
+        for pattern, fix in fix_map.items():
+            if pattern in vuln_type_lower:
+                # Add specific details if available
+                if 'function' in vuln_details:
+                    fix = f"{fix} in function {vuln_details['function']}"
+                return fix
+        
+        # Generic fix if no specific match
+        return f"Review and fix {vuln_type} vulnerability"
+    
+    def _create_patch_from_suggestions(self, suggestions: List[Tuple[str, str, str, str]]):
+        """Create a patch file from suggestions."""
+        filename = Prompt.ask("Patch filename", default="suggested_patches.json")
+        
+        patches = []
+        for priority, location, issue, fix in suggestions:
+            patches.append({
+                'priority': priority,
+                'location': location,
+                'issue': issue,
+                'fix': fix,
+                'status': 'pending'
+            })
+        
+        patch_data = {
+            'binary': self.current_binary,
+            'created': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'patches': patches
+        }
+        
+        with open(filename, 'w') as f:
+            json.dump(patch_data, f, indent=2)
+        
+        self.success(f"Created patch file: {filename}")
     
     def _apply_patch(self, patch_file: str):
         """Apply a patch from file."""

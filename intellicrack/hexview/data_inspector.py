@@ -343,6 +343,23 @@ class DataInspector(QWidget if PYQT5_AVAILABLE else object):
         super().__init__(parent)
         self.current_data = b''
         self.current_offset = 0
+
+        # Initialize UI attributes
+        self.integer_table = None
+        self.float_table = None
+        self.ascii_edit = None
+        self.utf8_edit = None
+        self.utf16le_edit = None
+        self.utf16be_edit = None
+        self.hex_edit = None
+        self.binary_edit = None
+        self.time_table = None
+        self.special_table = None
+        self.input_type_combo = None
+        self.value_edit = None
+        self.apply_button = None
+        self.clear_button = None
+
         self.setup_ui()
 
     def setup_ui(self):

@@ -82,18 +82,20 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
             imports = extract_pe_imports(pe)
 
             # Also need DLL names for detailed analysis
-            if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
-                for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = entry.dll.decode('utf-8', errors='ignore')
-                    for imp in entry.imports:
-                        if imp.name:
-                            func_name = imp.name.decode('utf-8', errors='ignore')
-                            if func_name.lower() in [f.lower() for f in unsafe_functions]:
-                                results["vulnerable_functions"].append({
-                                    "function": func_name,
-                                    "dll": dll_name,
-                                    "risk": "high" if func_name.lower() in ["gets", "strcpy", "sprintf"] else "medium"
-                                })
+            from .pe_common import iterate_pe_imports_with_dll
+
+            def check_vulnerable_function(dll_name, func_name):
+                if func_name.lower() in [f.lower() for f in unsafe_functions]:
+                    return {
+                        "function": func_name,
+                        "dll": dll_name,
+                        "risk": "high" if func_name.lower() in ["gets", "strcpy", "sprintf"] else "medium"
+                    }
+                return None
+
+            # Use the common function to iterate imports
+            for vuln_func in iterate_pe_imports_with_dll(pe, check_vulnerable_function):
+                results["vulnerable_functions"].append(vuln_func)
 
         # Check for _patterns in binary
         with open(binary_path, 'rb') as f:

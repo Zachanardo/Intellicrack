@@ -691,6 +691,8 @@ class AdvancedDynamicAnalyzer:
             results = {'matches': [], 'status': 'success', 'scan_count': 0}
 
             def on_message(message, data):
+                if data:
+                    self.logger.debug(f"Message data: {len(data)} bytes")
                 if message['type'] == 'send':
                     payload = message['payload']
                     if payload['type'] == 'scan_complete':
@@ -753,7 +755,6 @@ class AdvancedDynamicAnalyzer:
             if not target_proc:
                 # Try to start the process
                 try:
-                    import subprocess
                     proc = subprocess.Popen([str(self.binary_path)])
                     time.sleep(2)
                     target_proc = psutil.Process(proc.pid)
@@ -818,7 +819,10 @@ class AdvancedDynamicAnalyzer:
     def _fallback_memory_scan(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
         """Fallback memory scanning using binary file analysis."""
         try:
-            self.logger.info("Using fallback memory scan (binary file analysis)")
+            if target_process:
+                self.logger.info(f"Using fallback memory scan for process {target_process}")
+            else:
+                self.logger.info("Using fallback memory scan (binary file analysis)")
 
             matches = []
 

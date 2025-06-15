@@ -37,13 +37,11 @@ class BinaryType(Enum):
     APK = "apk"
     UNKNOWN = "unknown"
 
-class VulnerabilityLevel(Enum):
-    """Vulnerability severity levels."""
-    CRITICAL = "critical"
-    HIGH = "high"
-    MEDIUM = "medium"
-    LOW = "low"
-    INFO = "info"
+# Import from shared severity levels
+from ..utils.severity_levels import SeverityLevel
+
+# Use common severity levels
+VulnerabilityLevel = SeverityLevel
 
 class ProtectionType(Enum):
     """Types of protection mechanisms."""

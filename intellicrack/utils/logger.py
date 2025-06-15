@@ -201,8 +201,8 @@ def setup_logger(name: str = 'Intellicrack', level: int = logging.INFO,
     Returns:
         Configured logger instance
     """
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
+    target_logger = logging.getLogger(name)
+    target_logger.setLevel(level)
 
     # Default format if not specified
     if format_string is None:
@@ -214,16 +214,16 @@ def setup_logger(name: str = 'Intellicrack', level: int = logging.INFO,
     console_handler = logging.StreamHandler()
     console_handler.setLevel(level)
     console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+    target_logger.addHandler(console_handler)
 
     # File handler if specified
     if log_file:
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(level)
         file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+        target_logger.addHandler(file_handler)
 
-    return logger
+    return target_logger
 
 
 def get_logger(name: str = None) -> logging.Logger:
@@ -260,6 +260,13 @@ def configure_logging(level: int = logging.INFO, log_file: str = None,
     """
     # Set up the root logger
     setup_logger('Intellicrack', level, log_file, format_string)
+    
+    # Configure comprehensive logging if enabled
+    if enable_comprehensive:
+        # Set more verbose logging format for comprehensive mode
+        comprehensive_format = '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(funcName)s() - %(message)s'
+        setup_logger('Intellicrack', logging.DEBUG, log_file, comprehensive_format)
+        logging.debug("Comprehensive logging enabled with detailed function tracking")
 
 def setup_logging(level: str = "INFO", log_file: str = None,
                   enable_rotation: bool = True, max_bytes: int = 10485760,

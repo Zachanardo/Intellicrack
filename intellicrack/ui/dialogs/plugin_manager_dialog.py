@@ -68,6 +68,29 @@ if not HAS_PYQT:
         def __init__(self, parent=None):
             self.parent = parent
 
+            # Initialize UI attributes
+            self.author_edit = None
+            self.auto_enable = None
+            self.available_list = None
+            self.backup_existing = None
+            self.configure_btn = None
+            self.disable_btn = None
+            self.enable_btn = None
+            self.file_path_edit = None
+            self.install_btn = None
+            self.install_thread = None
+            self.installed_list = None
+            self.plugin_details = None
+            self.plugin_info = None
+            self.plugin_name_edit = None
+            self.plugin_type_combo = None
+            self.preview_btn = None
+            self.progress_bar = None
+            self.remove_btn = None
+            self.repo_combo = None
+            self.status_label = None
+            self.test_file_edit = None
+            self.test_output = None
         def show(self):
             """
             Show the dialog (no-op when PyQt5 is not available).
@@ -137,6 +160,29 @@ else:
         """Dialog for managing Intellicrack plugins."""
 
         def __init__(self, parent=None):
+            # Initialize UI attributes
+            self.author_edit = None
+            self.auto_enable = None
+            self.available_list = None
+            self.backup_existing = None
+            self.configure_btn = None
+            self.disable_btn = None
+            self.enable_btn = None
+            self.file_path_edit = None
+            self.install_btn = None
+            self.install_thread = None
+            self.installed_list = None
+            self.plugin_details = None
+            self.plugin_info = None
+            self.plugin_name_edit = None
+            self.plugin_type_combo = None
+            self.preview_btn = None
+            self.progress_bar = None
+            self.remove_btn = None
+            self.repo_combo = None
+            self.status_label = None
+            self.test_file_edit = None
+            self.test_output = None
             if HAS_PYQT:
                 super().__init__(parent)
             self.parent = parent
@@ -749,12 +795,16 @@ class {plugin_name.replace(' ', '')}Plugin:
         Returns:
             dict: Execution results
         \"\"\"
+        logger.debug(f"Plugin {{self.name}} execute called with args: {args}, kwargs: {kwargs}")
+        
         try:
             # TODO: Implement plugin functionality here
             result = {{
                 'status': 'success',
                 'message': f'{{self.name}} executed successfully',
-                'data': {{}}
+                'data': {{}},
+                'args_received': len(args),
+                'kwargs_received': list(kwargs.keys()) if kwargs else []
             }}
             
             logger.info(f"{{self.name}} plugin executed")

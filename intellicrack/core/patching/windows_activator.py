@@ -514,12 +514,8 @@ class WindowsActivator:
 
             logger.info("Installing Office product key for version %s", office_version)
 
-            result = subprocess.run(
-                install_cmd,
-                capture_output=True,
-                text=True,
-                timeout=60
-            , check=False)
+            from ...utils.subprocess_utils import run_subprocess_check
+            result = run_subprocess_check(install_cmd, timeout=60)
 
             if result.returncode != 0:
                 return {

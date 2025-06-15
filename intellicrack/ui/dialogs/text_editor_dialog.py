@@ -27,13 +27,20 @@ from typing import Optional
 
 # Import common PyQt5 components
 from .common_imports import (
-    Qt, QThread, QTimer, pyqtSignal, QFont, QIcon, QPixmap,
-    QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout,
-    QGroupBox, QHBoxLayout, QHeaderView, QInputDialog, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QMessageBox,
-    QProgressBar, QPushButton, QSlider, QSpinBox, QSplitter,
-    QTableWidget, QTableWidgetItem, QTabWidget, QTextEdit,
-    QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, HAS_PYQT, logger
+    HAS_PYQT,
+    QCheckBox,
+    QDialog,
+    QFileDialog,
+    QFont,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QSpinBox,
+    QVBoxLayout,
+    logger,
+    pyqtSignal,
 )
 
 try:
