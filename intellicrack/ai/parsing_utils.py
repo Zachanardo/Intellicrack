@@ -4,7 +4,7 @@ AI Response Parsing Utilities
 Shared utilities for parsing AI responses to eliminate code duplication.
 """
 
-from typing import Dict, List, Callable, Optional
+from typing import Callable, Dict, List, Optional
 
 
 class ResponseLineParser:
@@ -14,7 +14,7 @@ class ResponseLineParser:
     """
 
     @staticmethod
-    def parse_lines_by_sections(response: str, 
+    def parse_lines_by_sections(response: str,
                               section_keywords: Dict[str, List[str]],
                               line_processor: Optional[Callable[[str, str], Optional[str]]] = None) -> Dict[str, List[str]]:
         """
@@ -30,20 +30,20 @@ class ResponseLineParser:
         """
         sections = {section: [] for section in section_keywords.keys()}
         current_section = None
-        
+
         lines = response.split('\n')
-        
+
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-            
+
             # Detect section changes
             detected_section = ResponseLineParser._detect_section(line, section_keywords)
             if detected_section:
                 current_section = detected_section
                 continue
-            
+
             # Process line if we're in a section
             if current_section:
                 processed_line = line
@@ -53,9 +53,9 @@ class ResponseLineParser:
                         processed_line = processed_result
                     else:
                         continue  # Skip this line if processor returns None
-                
+
                 sections[current_section].append(processed_line)
-        
+
         return sections
 
     @staticmethod
@@ -76,23 +76,23 @@ class ResponseLineParser:
         categories = {cat: [] for cat in category_keywords.keys()}
         if default_category not in categories:
             categories[default_category] = []
-        
+
         lines = response.split('\n')
-        
+
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-            
+
             # Find matching category
             matched_category = default_category
             for category, keywords in category_keywords.items():
                 if any(keyword.lower() in line.lower() for keyword in keywords):
                     matched_category = category
                     break
-            
+
             categories[matched_category].append(line)
-        
+
         return categories
 
     @staticmethod
@@ -111,23 +111,23 @@ class ResponseLineParser:
             List of dictionaries containing matched content
         """
         import re
-        
+
         extracted = []
         lines = response.split('\n')
         current_section = 'content'
-        
+
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-            
+
             # Check for section separators
             if section_separators:
                 for separator in section_separators:
                     if re.match(separator, line, re.IGNORECASE):
                         current_section = line
                         continue
-            
+
             # Try to match patterns
             for i, pattern in enumerate(patterns):
                 match = re.search(pattern, line, re.IGNORECASE)
@@ -140,7 +140,7 @@ class ResponseLineParser:
                         'groups': match.groups() if match.groups() else []
                     }
                     extracted.append(content)
-        
+
         return extracted
 
     @staticmethod
@@ -156,15 +156,15 @@ class ResponseLineParser:
             Section name if detected, None otherwise
         """
         line_lower = line.lower()
-        
+
         for section, keywords in section_keywords.items():
             if any(keyword.lower() in line_lower for keyword in keywords):
                 return section
-        
+
         return None
 
     @staticmethod
-    def clean_and_filter_lines(lines: List[str], 
+    def clean_and_filter_lines(lines: List[str],
                              min_length: int = 3,
                              filter_patterns: Optional[List[str]] = None) -> List[str]:
         """
@@ -179,16 +179,16 @@ class ResponseLineParser:
             List of cleaned and filtered lines
         """
         import re
-        
+
         cleaned = []
-        
+
         for line in lines:
             line = line.strip()
-            
+
             # Skip empty or too short lines
             if not line or len(line) < min_length:
                 continue
-            
+
             # Apply filter patterns
             if filter_patterns:
                 skip_line = False
@@ -198,7 +198,7 @@ class ResponseLineParser:
                         break
                 if skip_line:
                     continue
-            
+
             cleaned.append(line)
-        
+
         return cleaned

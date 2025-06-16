@@ -232,7 +232,7 @@ class ROPChainGenerator:
                 self.logger.debug("Capstone not available, trying objdump")
 
             # Fallback to objdump if available
-            from ...utils.binary_analysis import disassemble_with_objdump
+            from ...utils.analysis.binary_analysis import disassemble_with_objdump
 
             instructions = disassemble_with_objdump(
                 self.binary_path,

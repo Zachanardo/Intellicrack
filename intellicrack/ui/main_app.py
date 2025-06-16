@@ -1599,7 +1599,7 @@ except ImportError as e:
             # Longer timeout = more detailed monitoring simulation
             simulation_intensity = min(timeout / 10000, 3.0)  # Scale simulation based on timeout
             max_operations = int(3 * simulation_intensity)
-            
+
             results.append(f"Monitoring intensity level: {simulation_intensity:.1f} (based on {timeout}ms timeout)")
 
             # File operations
@@ -2074,11 +2074,11 @@ except ImportError as e:
                             b'\x48\x8b\xc4',           # mov rax, rsp (x64)
                         ]
 
-                        from ..utils.pattern_search import find_function_prologues
-                        
+                        from ..utils.analysis.pattern_search import find_function_prologues
+
                         # Find function prologues with standard PE base
                         found_funcs = find_function_prologues(binary_data, base_address=0x400000)
-                        
+
                         for func in found_funcs:
                             function_patterns.append({
                                 'address': hex(func['address']),
@@ -2333,8 +2333,8 @@ except ImportError as e:
                         app.update_output.emit(log_message(f"[Concolic] Binary format: {binary_info['format']} ({binary_info['arch']}, {binary_info['bits']}-bit)"))
 
                     # Find interesting analysis targets
-                    from ..utils.pattern_search import find_license_patterns
-                    
+                    from ..utils.analysis.pattern_search import find_license_patterns
+
                     # Look for common license/validation function patterns
                     interesting_patterns = find_license_patterns(binary_data, base_address=0x400000, max_results=20)
 
@@ -3837,25 +3837,23 @@ except ImportError as e:
                         b'MessageBox', b'FindWindow', b'GetWindowText'
                     ]
 
-                    for pattern in api_patterns:
-                        offset = 0
-                        while True:
-                            pos = binary_data.find(pattern, offset)
-                            if pos == -1:
-                                break
+                    from ..utils.analysis.pattern_search import find_all_pattern_occurrences
 
+                    for pattern in api_patterns:
+                        pattern_results = find_all_pattern_occurrences(binary_data, pattern, max_results=50-len(potential_imports))
+
+                        for result in pattern_results:
                             # Extract surrounding context
-                            start = max(0, pos - 20)
-                            end = min(len(binary_data), pos + len(pattern) + 20)
+                            start = max(0, result['offset'] - 20)
+                            end = min(len(binary_data), result['offset'] + len(pattern) + 20)
                             context = binary_data[start:end]
 
                             potential_imports.append({
                                 'api': pattern.decode('ascii', errors='ignore'),
-                                'offset': hex(pos),
+                                'offset': hex(result['offset']),
                                 'context': context.hex()
                             })
 
-                            offset = pos + 1
                             if len(potential_imports) > 50:  # Limit results
                                 break
                         if len(potential_imports) > 50:
@@ -10668,8 +10666,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         custom_layout.addLayout(custom_buttons_layout)
 
         # Add plugin sub-tabs
-        plugin_subtabs.addTab(frida_scripts_tab, "Frida Scripts")
-        plugin_subtabs.addTab(ghidra_scripts_tab, "Ghidra Scripts")
+        # Note: Frida and Ghidra scripts are now managed independently via their own managers
+        # plugin_subtabs.addTab(frida_scripts_tab, "Frida Scripts")  # Removed - use Frida Manager
+        # plugin_subtabs.addTab(ghidra_scripts_tab, "Ghidra Scripts")  # Removed - use Ghidra Script Manager
         plugin_subtabs.addTab(custom_plugins_tab, "Custom Python Plugins")
 
         plugin_layout.addWidget(plugin_subtabs)
@@ -11878,7 +11877,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         edit_plugin_btn = QPushButton("Edit Plugin")
         edit_plugin_btn.setIcon(QIcon.fromTheme("document-edit"))
-        edit_plugin_btn.clicked.connect(lambda: self.edit_plugin_file("plugins/custom_modules/demo_plugin.py"))
+        edit_plugin_btn.clicked.connect(lambda: self.edit_plugin_file("intellicrack/plugins/custom_modules/demo_plugin.py"))
 
         uninstall_plugin_btn = QPushButton("Uninstall")
         uninstall_plugin_btn.setIcon(QIcon.fromTheme("edit-delete"))
@@ -13924,7 +13923,7 @@ def register():
 
             # If plugin_path is just a name, find the full path
             if not os.path.exists(plugin_path):
-                frida_dir = os.path.join("plugins", "frida_scripts")
+                frida_dir = os.path.join("C:", "Intellicrack", "scripts", "frida")
                 if not plugin_path.endswith(".js"):
                     plugin_path += ".js"
                 full_path = os.path.join(frida_dir, plugin_path)
@@ -14027,7 +14026,7 @@ def register():
         """Test sandboxed plugin execution."""
         try:
             # Use the demo plugin for testing
-            demo_plugin_path = "plugins/custom_modules/demo_plugin.py"
+            demo_plugin_path = "intellicrack/plugins/custom_modules/demo_plugin.py"
             if os.path.exists(demo_plugin_path):
                 self.update_output.emit(log_message("[Test] Testing sandboxed plugin execution..."))
                 self.run_plugin_in_sandbox(demo_plugin_path, "analyze", "test_binary.exe")
@@ -14043,7 +14042,7 @@ def register():
             # Create a mock plugin info for testing
             plugin_info = {
                 "name": "Demo Plugin",
-                "path": "plugins/custom_modules/demo_plugin.py",
+                "path": "intellicrack/plugins/custom_modules/demo_plugin.py",
                 "description": "Test plugin for remote execution"
             }
 
@@ -24765,58 +24764,58 @@ def launch():
             self.protection_results.append(f"\nError during scan: {e}\n")
 
     def run_advanced_ghidra_analysis(self):
-        """Run Ghidra headless analysis with advanced script."""
+        """Run Ghidra headless analysis with script selection."""
         if not self.binary_path:
             QMessageBox.warning(self, "No File", "Please select a binary file first.")
             return
 
+        # Show script selector dialog
+        from .dialogs.ghidra_script_selector import GhidraScriptSelector
+        
+        dialog = GhidraScriptSelector(self, show_invalid=False)
+        if dialog.exec_() != QDialog.Accepted:
+            return
+        
+        script_path = dialog.get_selected_script()
+        if not script_path:
+            return
+
+        # Update UI to show which script is being used
+        if script_path == "__DEFAULT__":
+            self.update_output.emit(log_message("[Ghidra] Using default AdvancedAnalysis.java script"))
+            script_name = "AdvancedAnalysis.java"
+        else:
+            from ..utils.ghidra_script_manager import get_script_manager
+            script_manager = get_script_manager()
+            script = script_manager.get_script(script_path)
+            if script:
+                script_name = script.name
+                self.update_output.emit(log_message(f"[Ghidra] Using custom script: {script_name}"))
+                self.update_output.emit(log_message(f"[Ghidra] Description: {script.description}"))
+            else:
+                QMessageBox.warning(self, "Script Error", "Selected script not found.")
+                return
+
         self.update_output.emit(log_message("[Ghidra] Starting headless analysis..."))
-        self.update_analysis_results.emit("\n=== Ghidra Advanced Analysis ===\n")
+        self.update_analysis_results.emit(f"\n=== Ghidra Analysis ({script_name}) ===\n")
 
         try:
-            from ..utils.tool_wrappers import run_ghidra_headless
-
-            # Run Ghidra analysis
-            results = run_ghidra_headless(
-                self.binary_path,
-                script_path="AdvancedAnalysis.java",
-                options={"timeout": 300}  # 5 minutes timeout
+            from ..utils.runner_functions import run_advanced_ghidra_analysis as run_ghidra
+            
+            # Run Ghidra analysis with selected script
+            results = run_ghidra(
+                app_instance=self,
+                binary_path=self.binary_path,
+                script_path=script_path
             )
 
-            if results.get('success'):
-                self.update_analysis_results.emit("Ghidra analysis completed successfully!\n\n")
-
-                # Parse and display results
-                output = results.get('output', '')
-
-                # Extract key findings
-                if 'License' in output or 'license' in output:
-                    self.update_analysis_results.emit("🔑 License-related findings detected\n")
-
-                if 'Vulnerability' in output or 'vulnerable' in output:
-                    self.update_analysis_results.emit("⚠️ Potential vulnerabilities found\n")
-
-                # Show output
-                self.update_analysis_results.emit("\nAnalysis Output:\n")
-                self.update_analysis_results.emit("-" * 50 + "\n")
-
-                # Limit output to prevent UI freeze
-                lines = output.split('\n')
-                for line in lines[:100]:  # Show first 100 lines
-                    self.update_analysis_results.emit(line + "\n")
-
-                if len(lines) > 100:
-                    self.update_analysis_results.emit(f"\n... and {len(lines) - 100} more lines\n")
-
-                # Check if report was generated
-                report_path = results.get('report_path')
-                if report_path and os.path.exists(report_path):
-                    self.update_analysis_results.emit(f"\nDetailed report saved to: {report_path}\n")
+            if results.get('status') == 'success':
+                self.update_output.emit(log_message("[Ghidra] Analysis started successfully"))
+                # Results will be handled by _run_ghidra_thread callback
             else:
-                error = results.get('error', 'Unknown error')
+                error = results.get('message', 'Unknown error')
                 self.update_analysis_results.emit(f"Ghidra analysis failed: {error}\n")
-
-            self.update_output.emit(log_message("[Ghidra] Analysis complete"))
+                self.update_output.emit(log_message(f"[Ghidra] Error: {error}"))
 
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(log_message(f"[Ghidra] Error: {e}"))
@@ -25974,7 +25973,7 @@ if __name__ == "__main__":
                         return str(result)
 
             # Try to perform quick disassembly analysis
-            from ..utils.binary_analysis import get_quick_disassembly
+            from ..utils.analysis.binary_analysis import get_quick_disassembly
             disasm_lines = get_quick_disassembly(self.binary_path, max_instructions=50)
 
             if disasm_lines:

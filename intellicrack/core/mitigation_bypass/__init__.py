@@ -6,7 +6,7 @@ This module provides compatibility aliases for the exploit mitigation bypass com
 
 # Import from the actual exploit mitigation module
 try:
-    from ..exploit_mitigation.cfi_bypass import CFIBypass
+    from ..exploitation.cfi_bypass import CFIBypass
     HAS_CFI_BYPASS = True
 except ImportError:
     CFIBypass = None

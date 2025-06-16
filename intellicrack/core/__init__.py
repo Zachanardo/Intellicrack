@@ -26,24 +26,30 @@ from . import analysis, network, patching, processing, protection_bypass, report
 # Import new exploitation modules
 try:
     from . import (
-        c2_infrastructure,
-        evasion,
-        mitigation_bypass,
-        payload_generation,
-        post_exploitation,
+        exploitation,
         vulnerability_research,
     )
     EXPLOITATION_MODULES_AVAILABLE = True
 except ImportError as e:
     import logging
     logging.getLogger(__name__).warning(f"Exploitation modules not available: {e}")
-    payload_generation = None
-    c2_infrastructure = None
-    evasion = None
-    mitigation_bypass = None
-    post_exploitation = None
+    exploitation = None
     vulnerability_research = None
     EXPLOITATION_MODULES_AVAILABLE = False
+
+# Import Frida modules
+try:
+    from .frida_bypass_wizard import FridaBypassWizard
+    from .frida_manager import FridaManager
+    from .frida_presets import FRIDA_PRESETS
+    FRIDA_MODULES_AVAILABLE = True
+except ImportError as e:
+    import logging
+    logging.getLogger(__name__).warning(f"Frida modules not available: {e}")
+    FridaManager = None
+    FRIDA_PRESETS = None
+    FridaBypassWizard = None
+    FRIDA_MODULES_AVAILABLE = False
 
 __all__ = [
     'analysis',
@@ -52,11 +58,11 @@ __all__ = [
     'processing',
     'protection_bypass',
     'reporting',
-    'payload_generation',
-    'c2_infrastructure',
-    'evasion',
-    'mitigation_bypass',
-    'post_exploitation',
+    'exploitation',
     'vulnerability_research',
-    'EXPLOITATION_MODULES_AVAILABLE'
+    'EXPLOITATION_MODULES_AVAILABLE',
+    'FridaManager',
+    'FRIDA_PRESETS',
+    'FridaBypassWizard',
+    'FRIDA_MODULES_AVAILABLE'
 ]

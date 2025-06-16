@@ -9,12 +9,11 @@ import asyncio
 import logging
 from typing import Any, Dict
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QCheckBox,
     QComboBox,
-    QDialog,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
@@ -22,15 +21,12 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QListWidget,
     QMessageBox,
-    QPushButton,
     QSpinBox,
-    QSplitter,
-    QTabWidget,
     QTextEdit,
     QVBoxLayout,
 )
 
-from ...core.payload_generation import (
+from ...core.exploitation import (
     Architecture,
     EncoderEngine,
     EvasionTechnique,
@@ -38,7 +34,7 @@ from ...core.payload_generation import (
     PayloadTemplates,
     PayloadType,
 )
-from ...utils.entropy_utils import calculate_byte_entropy
+from ...utils.analysis.entropy_utils import calculate_byte_entropy
 from .base_dialog import BaseTemplateDialog
 
 logger = logging.getLogger(__name__)
@@ -100,7 +96,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
     def setup_ui(self):
         """Setup the user interface."""
         from ..shared_ui_layouts import UILayoutHelpers
-        
+
         # Create main tabbed dialog layout
         layout, self.tab_widget = UILayoutHelpers.create_tabbed_dialog_layout(
             self, "Advanced Payload Generator", (1000, 700), is_modal=False
@@ -124,7 +120,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             ("Close", self.close, True)
         ]
         buttons = UILayoutHelpers.create_dialog_buttons(button_specs, layout)
-        
+
         # Store button references for enabling/disabling
         self.generate_btn, self.save_btn, self.test_btn, self.close_btn = buttons
         self.save_btn.setEnabled(False)
@@ -139,17 +135,17 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             "Shell", "Persistence", "Privilege Escalation",
             "Lateral Movement", "Steganography", "Anti-Analysis"
         ]
-        
+
         # Get initial templates for first category
         initial_templates = PayloadTemplates.get_templates_by_category("Shell")
-        
+
         widget = self.create_template_widget(
             title="Payload Templates",
             templates=initial_templates,
             use_combo=False,
             category_names=template_categories
         )
-        
+
         # The base class already provides the template details widget
         # Add any specific customizations here if needed
         return widget
@@ -424,7 +420,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
                 if not items:
                     return
                 template_name = items[0].text()
-            
+
             # Determine category based on current selection
             category = self.category_combo.currentText().lower().replace(" ", "_") if hasattr(self, 'category_combo') else "shell"
 

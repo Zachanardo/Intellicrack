@@ -14,12 +14,14 @@ Licensed under GNU GPL v3
 
 from .beacon_manager import BeaconManager
 from .c2_client import C2Client
+from .c2_manager import C2Manager
 from .c2_server import C2Server
 from .communication_protocols import DnsProtocol, HttpsProtocol, TcpProtocol
 from .encryption_manager import EncryptionManager
 from .session_manager import SessionManager
 
 __all__ = [
+    'C2Manager',
     'C2Server',
     'C2Client',
     'BeaconManager',

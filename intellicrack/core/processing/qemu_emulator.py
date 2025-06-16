@@ -27,7 +27,6 @@ This module provides comprehensive QEMU-based full system emulation capabilities
 for dynamic binary analysis with snapshot-based state comparison and license detection.
 """
 
-import logging
 import os
 import subprocess
 import time
@@ -79,7 +78,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             FileNotFoundError: If required files are missing
         """
         super().__init__()
-        
+
         if not os.path.exists(binary_path):
             raise FileNotFoundError(f"Binary file not found: {binary_path}")
 

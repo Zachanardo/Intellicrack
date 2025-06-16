@@ -24,10 +24,14 @@ import json
 import logging
 import os
 import sys
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 # Configure module logger
 logger = logging.getLogger(__name__)
+
+# Define the centralized config path
+CONFIG_PATH = Path(__file__).parent.parent / "config" / "intellicrack_config.json"
 
 # Define functions for path discovery
 def find_tool(tool_name, required_executables=None):
@@ -296,13 +300,18 @@ class ConfigManager:
     with JSON persistence and default fallbacks.
     """
 
-    def __init__(self, config_path: str = "intellicrack_config.json"):
+    def __init__(self, config_path: str = None):
         """
         Initialize configuration manager.
 
         Args:
             config_path: Path to the configuration file
         """
+        if config_path is None:
+            # Use centralized config path
+            from pathlib import Path
+            project_root = Path(__file__).parent.parent
+            config_path = str(project_root / "config" / "intellicrack_config.json")
         self.config_path = config_path
         self.config: Dict[str, Any] = {}
         self.load_config()
@@ -531,7 +540,7 @@ class ConfigManager:
 _config_manager: Optional[ConfigManager] = None
 
 
-def load_config(config_path: str = "intellicrack_config.json") -> Dict[str, Any]:
+def load_config(config_path: str = None) -> Dict[str, Any]:
     """
     Load configuration using the global config manager.
 

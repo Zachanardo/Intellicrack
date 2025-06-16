@@ -12,9 +12,8 @@ import random
 import time
 from typing import Any, Dict, List, Optional
 
-from .communication_protocols import DnsProtocol, HttpsProtocol, TcpProtocol
-from .encryption_manager import EncryptionManager
 from .base_c2 import BaseC2
+from .encryption_manager import EncryptionManager
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +71,7 @@ class C2Client(BaseC2):
         """Initialize communication protocols in order of preference."""
         protocols_config = []
         protocol_configs = self.config.get('protocols', {})
-        
+
         # HTTPS Protocol (primary)
         if protocol_configs.get('https_enabled', True):
             https_config = protocol_configs.get('https', {})
@@ -82,7 +81,7 @@ class C2Client(BaseC2):
                 'headers': https_config.get('headers', {}),
                 'priority': 1
             })
-        
+
         # DNS Protocol (backup)
         if protocol_configs.get('dns_enabled', False):
             dns_config = protocol_configs.get('dns', {})
@@ -92,7 +91,7 @@ class C2Client(BaseC2):
                 'dns_server': f"{dns_config.get('host', '127.0.0.1')}:{dns_config.get('port', 53)}",
                 'priority': 2
             })
-        
+
         # TCP Protocol (fallback)
         if protocol_configs.get('tcp_enabled', False):
             tcp_config = protocol_configs.get('tcp', {})
@@ -102,7 +101,7 @@ class C2Client(BaseC2):
                 'port': tcp_config.get('port', 4444),
                 'priority': 3
             })
-        
+
         # Use base class method
         self.initialize_protocols(protocols_config, self.encryption_manager)
 

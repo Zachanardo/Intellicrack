@@ -87,7 +87,7 @@ class BaseDetector(ABC):
     def get_detection_type(self) -> str:
         """Get the type of detection this class performs."""
         pass
-    
+
     def get_running_processes(self) -> Tuple[str, List[str]]:
         """
         Get list of running processes based on platform.
@@ -102,7 +102,7 @@ class BaseDetector(ABC):
             else:
                 result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
                 processes = result.stdout.lower()
-            
+
             # Also get individual process names
             process_list = []
             if platform.system() == 'Windows':
@@ -121,15 +121,15 @@ class BaseDetector(ABC):
                         if len(parts) >= 11:
                             process_name = parts[10].lower()
                             process_list.append(process_name)
-            
+
             return processes, process_list
-            
+
         except Exception as e:
             self.logger.debug(f"Error getting process list: {e}")
             return "", []
-    
-    def calculate_detection_score(self, detections: Dict[str, Any], 
-                                strong_methods: List[str], 
+
+    def calculate_detection_score(self, detections: Dict[str, Any],
+                                strong_methods: List[str],
                                 medium_methods: List[str] = None) -> int:
         """
         Calculate detection score based on method difficulty.
@@ -144,7 +144,7 @@ class BaseDetector(ABC):
         """
         if medium_methods is None:
             medium_methods = []
-        
+
         score = 0
         for method, result in detections.items():
             if isinstance(result, dict) and result.get('detected'):
@@ -154,5 +154,5 @@ class BaseDetector(ABC):
                     score += 2
                 else:
                     score += 1
-        
+
         return min(10, score)

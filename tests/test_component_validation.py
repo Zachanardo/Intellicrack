@@ -31,46 +31,46 @@ class TestComponentValidation(unittest.TestCase):
     def test_core_payload_generation_imports(self):
         """Test imports for payload generation components."""
         components = [
-            'intellicrack.core.payload_generation.payload_engine',
-            'intellicrack.core.payload_generation.payload_types',
-            'intellicrack.core.payload_generation.shellcode_generator',
-            'intellicrack.core.payload_generation.payload_templates'
+            'intellicrack.core.exploitation.payload_engine',
+            'intellicrack.core.exploitation.payload_types',
+            'intellicrack.core.exploitation.shellcode_generator',
+            'intellicrack.core.exploitation.payload_templates'
         ]
         
         import_results = self._test_imports(components)
         self._assert_import_success(import_results, 'Payload Generation')
     
-    def test_core_c2_infrastructure_imports(self):
-        """Test imports for C2 infrastructure components."""
+    def test_core_c2_imports(self):
+        """Test imports for C2 components."""
         components = [
-            'intellicrack.core.c2_infrastructure.c2_manager',
-            'intellicrack.core.c2_infrastructure.c2_server',
-            'intellicrack.core.c2_infrastructure.session_manager',
-            'intellicrack.core.c2_infrastructure.encryption_handler'
+            'intellicrack.core.c2.c2_manager',
+            'intellicrack.core.c2.c2_server',
+            'intellicrack.core.c2.session_manager',
+            'intellicrack.core.c2.encryption_manager'
         ]
         
         import_results = self._test_imports(components)
-        self._assert_import_success(import_results, 'C2 Infrastructure')
+        self._assert_import_success(import_results, 'C2')
     
-    def test_core_evasion_imports(self):
-        """Test imports for evasion components."""
+    def test_core_anti_analysis_imports(self):
+        """Test imports for anti-analysis components."""
         components = [
-            'intellicrack.core.evasion.anti_analysis',
-            'intellicrack.core.evasion.vm_detection',
-            'intellicrack.core.evasion.sandbox_detection',
-            'intellicrack.core.evasion.debugger_detection'
+            'intellicrack.core.anti_analysis',
+            'intellicrack.core.anti_analysis.vm_detector',
+            'intellicrack.core.anti_analysis.sandbox_detector',
+            'intellicrack.core.anti_analysis.debugger_detector'
         ]
         
         import_results = self._test_imports(components)
-        self._assert_import_success(import_results, 'Evasion Techniques')
+        self._assert_import_success(import_results, 'Anti-Analysis')
     
     def test_core_mitigation_bypass_imports(self):
         """Test imports for mitigation bypass components."""
         components = [
-            'intellicrack.core.mitigation_bypass.bypass_engine',
-            'intellicrack.core.mitigation_bypass.aslr_bypass',
-            'intellicrack.core.mitigation_bypass.cfi_bypass',
-            'intellicrack.core.mitigation_bypass.dep_bypass'
+            'intellicrack.core.exploitation.bypass_engine',
+            'intellicrack.core.exploitation.aslr_bypass',
+            'intellicrack.core.exploitation.cfi_bypass',
+            'intellicrack.core.exploitation.dep_bypass'
         ]
         
         import_results = self._test_imports(components)
@@ -79,10 +79,10 @@ class TestComponentValidation(unittest.TestCase):
     def test_core_post_exploitation_imports(self):
         """Test imports for post-exploitation components."""
         components = [
-            'intellicrack.core.post_exploitation.persistence_manager',
-            'intellicrack.core.post_exploitation.privilege_escalation',
-            'intellicrack.core.post_exploitation.lateral_movement',
-            'intellicrack.core.post_exploitation.credential_harvesting'
+            'intellicrack.core.exploitation.persistence_manager',
+            'intellicrack.core.exploitation.privilege_escalation',
+            'intellicrack.core.exploitation.lateral_movement',
+            'intellicrack.core.exploitation.credential_harvesting'
         ]
         
         import_results = self._test_imports(components)
@@ -184,7 +184,7 @@ class TestClassInstantiation(unittest.TestCase):
     def test_payload_engine_instantiation(self):
         """Test PayloadEngine instantiation."""
         try:
-            from intellicrack.core.payload_generation.payload_engine import PayloadEngine
+            from intellicrack.core.exploitation.payload_engine import PayloadEngine
             engine = PayloadEngine()
             self.assertIsNotNone(engine)
             print("✓ PayloadEngine instantiation successful")
@@ -194,7 +194,7 @@ class TestClassInstantiation(unittest.TestCase):
     def test_c2_manager_instantiation(self):
         """Test C2Manager instantiation."""
         try:
-            from intellicrack.core.c2_infrastructure.c2_manager import C2Manager
+            from intellicrack.core.c2.c2_manager import C2Manager
             manager = C2Manager()
             self.assertIsNotNone(manager)
             print("✓ C2Manager instantiation successful")
@@ -204,7 +204,7 @@ class TestClassInstantiation(unittest.TestCase):
     def test_persistence_manager_instantiation(self):
         """Test PersistenceManager instantiation."""
         try:
-            from intellicrack.core.post_exploitation.persistence_manager import PersistenceManager
+            from intellicrack.core.exploitation.persistence_manager import PersistenceManager
             manager = PersistenceManager()
             self.assertIsNotNone(manager)
             print("✓ PersistenceManager instantiation successful")
@@ -238,7 +238,7 @@ class TestMethodAvailability(unittest.TestCase):
     def test_payload_engine_methods(self):
         """Test PayloadEngine key methods are available."""
         try:
-            from intellicrack.core.payload_generation.payload_engine import PayloadEngine
+            from intellicrack.core.exploitation.payload_engine import PayloadEngine
             engine = PayloadEngine()
             
             # Check key methods exist
@@ -252,7 +252,7 @@ class TestMethodAvailability(unittest.TestCase):
     def test_c2_manager_methods(self):
         """Test C2Manager key methods are available."""
         try:
-            from intellicrack.core.c2_infrastructure.c2_manager import C2Manager
+            from intellicrack.core.c2.c2_manager import C2Manager
             manager = C2Manager()
             
             # Check key methods exist

@@ -34,7 +34,7 @@ import psutil
 
 from ...utils.constants import ADOBE_PROCESSES
 
-FRIDA_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "adobe_bypass.js")
+FRIDA_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "adobe_bypass_frida.js")
 
 # Using shared ADOBE_PROCESSES from constants module
 

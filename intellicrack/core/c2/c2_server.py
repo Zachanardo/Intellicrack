@@ -10,11 +10,10 @@ import logging
 import time
 from typing import Any, Callable, Dict, List, Optional
 
+from .base_c2 import BaseC2
 from .beacon_manager import BeaconManager
-from .communication_protocols import DnsProtocol, HttpsProtocol, TcpProtocol
 from .encryption_manager import EncryptionManager
 from .session_manager import SessionManager
-from .base_c2 import BaseC2
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +64,7 @@ class C2Server(BaseC2):
     def _initialize_protocols(self):
         """Initialize all supported communication protocols."""
         protocols_config = []
-        
+
         # HTTPS Protocol
         if self.config.get('https_enabled', True):
             https_config = self.config.get('https', {})
@@ -75,7 +74,7 @@ class C2Server(BaseC2):
                 'headers': https_config.get('headers', {}),
                 'priority': 1
             })
-        
+
         # DNS Protocol
         if self.config.get('dns_enabled', False):
             dns_config = self.config.get('dns', {})
@@ -85,7 +84,7 @@ class C2Server(BaseC2):
                 'dns_server': f"{dns_config.get('host', '0.0.0.0')}:{dns_config.get('port', 53)}",
                 'priority': 2
             })
-        
+
         # TCP Protocol
         if self.config.get('tcp_enabled', False):
             tcp_config = self.config.get('tcp', {})
@@ -95,10 +94,10 @@ class C2Server(BaseC2):
                 'port': tcp_config.get('port', 4444),
                 'priority': 3
             })
-        
+
         # Use base class method
         self.initialize_protocols(protocols_config, self.encryption_manager)
-        
+
         # Convert to dict for server usage
         self.protocols = {p['type']: p['handler'] for p in self.protocols}
 

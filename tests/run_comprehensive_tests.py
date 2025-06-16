@@ -123,8 +123,8 @@ def run_quick_functionality_test():
     # Test 2: Payload Engine
     tests_total += 1
     try:
-        from intellicrack.core.payload_generation.payload_engine import PayloadEngine
-        from intellicrack.core.payload_generation.payload_types import PayloadType, Architecture
+        from intellicrack.core.exploitation.payload_engine import PayloadEngine
+        from intellicrack.core.exploitation.payload_types import PayloadType, Architecture
         
         engine = PayloadEngine()
         # Quick test with minimal configuration

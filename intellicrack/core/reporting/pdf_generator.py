@@ -55,7 +55,7 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
 
 # Import matplotlib and pdfkit from common imports
-from ...utils.common_imports import MATPLOTLIB_AVAILABLE, plt, PDFKIT_AVAILABLE, pdfkit
+from ...utils.core.common_imports import MATPLOTLIB_AVAILABLE, PDFKIT_AVAILABLE, pdfkit, plt
 
 # Import common patterns from centralized module
 from ...utils.import_patterns import PEFILE_AVAILABLE, pefile

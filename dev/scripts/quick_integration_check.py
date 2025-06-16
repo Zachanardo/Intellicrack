@@ -22,10 +22,8 @@ def test_core_imports():
         
         # Test critical exploitation modules
         modules_to_test = [
-            'payload_generation',
             'c2_infrastructure', 
             'evasion',
-            'mitigation_bypass',
             'post_exploitation',
             'vulnerability_research'
         ]
@@ -84,7 +82,7 @@ def test_basic_functionality():
     
     # Test 1: PayloadEngine
     try:
-        from intellicrack.core.payload_generation.payload_engine import PayloadEngine
+        from intellicrack.core.exploitation.payload_engine import PayloadEngine
         engine = PayloadEngine()
         print("  ✓ PayloadEngine instantiation")
         tests_passed += 1

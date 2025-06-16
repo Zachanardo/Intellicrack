@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 # Plugin directories
 PLUGIN_DIR = Path(__file__).parent if __file__ else Path.cwd() / "intellicrack" / "plugins"
 CUSTOM_MODULES_DIR = PLUGIN_DIR / "custom_modules"
-FRIDA_SCRIPTS_DIR = PLUGIN_DIR / "frida_scripts"
-GHIDRA_SCRIPTS_DIR = PLUGIN_DIR / "ghidra_scripts"
+FRIDA_SCRIPTS_DIR = PLUGIN_DIR.parent.parent / "scripts" / "frida"
+GHIDRA_SCRIPTS_DIR = PLUGIN_DIR.parent.parent / "scripts" / "ghidra"
 
 # Plugin registry
 _plugins = {}

@@ -29,35 +29,31 @@ import time
 from datetime import datetime
 from typing import Any, Dict
 
+from .base_dialog import BaseTemplateDialog
+
 # Import common PyQt5 components
 from .common_imports import (
     HAS_PYQT,
     QCheckBox,
     QComboBox,
-    QDialog,
     QFileDialog,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QListWidget,
     QMessageBox,
     QProgressBar,
     QPushButton,
     Qt,
     QTableWidget,
     QTableWidgetItem,
-    QTabWidget,
-    QTextEdit,
     QThread,
     QVBoxLayout,
     QWidget,
     logger,
     pyqtSignal,
 )
-
-from .base_dialog import BaseTemplateDialog
 
 try:
     from PyQt5.QtCore import QDateTime
@@ -211,7 +207,7 @@ class ReportManagerDialog(BaseTemplateDialog):
             return
 
         from ..shared_ui_layouts import UILayoutHelpers
-        
+
         # Create main tabbed dialog layout
         layout, self.tab_widget = UILayoutHelpers.create_tabbed_dialog_layout(
             self, "Report Manager", (1000, 700), is_modal=True
@@ -232,7 +228,7 @@ class ReportManagerDialog(BaseTemplateDialog):
             ("Close", self.accept, True)
         ]
         buttons = UILayoutHelpers.create_dialog_buttons(button_specs, layout)
-        
+
         # Store button references
         self.refresh_btn, self.export_btn, self.close_btn = buttons
 
@@ -418,13 +414,13 @@ class ReportManagerDialog(BaseTemplateDialog):
             "Executive Summary Report",
             "Technical Deep Dive Report"
         ]
-        
+
         # Use base class to create template widget
         widget = self.create_template_widget("Report Templates", templates)
-        
+
         # Update reference to template description
         self.template_description = self.template_details
-        
+
         return widget
 
     def load_reports(self):

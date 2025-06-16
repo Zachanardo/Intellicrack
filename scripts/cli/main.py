@@ -58,7 +58,7 @@ sys.path.insert(0, project_root)
 
 try:
     # Core imports - essential for CLI
-    from intellicrack.utils.binary_analysis import analyze_binary
+    from intellicrack.utils.analysis.binary_analysis import analyze_binary
     from intellicrack.utils.report_generator import generate_report
     from intellicrack.config import CONFIG
 
@@ -159,7 +159,7 @@ except ImportError as e:
 
     # Try to continue with minimal functionality
     try:
-        from intellicrack.utils.binary_analysis import analyze_binary
+        from intellicrack.utils.analysis.binary_analysis import analyze_binary
         from intellicrack.config import CONFIG
         import hashlib
         print("Basic analysis functionality available.")

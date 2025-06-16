@@ -19,12 +19,11 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import hashlib
 import json
-import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Union, Tuple
-import hashlib
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ...utils.logger import get_logger
 
@@ -39,10 +38,10 @@ class R2JSONStandardizer:
     into a standardized JSON schema that can be easily consumed by AI/ML pipelines,
     databases, and external analysis tools.
     """
-    
+
     # Standard schema version for compatibility tracking
     SCHEMA_VERSION = "2.0.0"
-    
+
     # Standard analysis types
     ANALYSIS_TYPES = {
         'decompilation': 'Decompilation Analysis',
@@ -58,13 +57,13 @@ class R2JSONStandardizer:
         'scripting': 'Custom Scripting',
         'comprehensive': 'Comprehensive Analysis'
     }
-    
+
     def __init__(self):
         self.logger = logger
         self.analysis_id = str(uuid.uuid4())
         self.timestamp = datetime.now(timezone.utc).isoformat()
-    
-    def standardize_analysis_result(self, 
+
+    def standardize_analysis_result(self,
                                    analysis_type: str,
                                    raw_result: Dict[str, Any],
                                    binary_path: str,
@@ -84,7 +83,7 @@ class R2JSONStandardizer:
         try:
             # Create base standardized structure
             standardized = self._create_base_structure(analysis_type, binary_path, metadata)
-            
+
             # Process specific analysis type
             if analysis_type == 'decompilation':
                 standardized.update(self._standardize_decompilation(raw_result))
@@ -112,29 +111,29 @@ class R2JSONStandardizer:
                 standardized.update(self._standardize_comprehensive(raw_result))
             else:
                 standardized.update(self._standardize_generic(raw_result))
-            
+
             # Add validation and checksums
             standardized = self._add_validation_data(standardized)
-            
+
             # Validate schema compliance
             self._validate_schema(standardized)
-            
+
             return standardized
-            
+
         except Exception as e:
             self.logger.error(f"Failed to standardize {analysis_type} result: {e}")
             return self._create_error_result(analysis_type, binary_path, str(e))
-    
-    def _create_base_structure(self, 
-                              analysis_type: str, 
-                              binary_path: str, 
+
+    def _create_base_structure(self,
+                              analysis_type: str,
+                              binary_path: str,
                               metadata: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """Create base standardized structure"""
         return {
             # Schema and version information
             "schema_version": self.SCHEMA_VERSION,
             "format_version": "radare2_analysis_v2",
-            
+
             # Analysis metadata
             "analysis_metadata": {
                 "analysis_id": self.analysis_id,
@@ -145,7 +144,7 @@ class R2JSONStandardizer:
                 "engine_version": self._get_radare2_version(),
                 "intellicrack_version": "2.0.0"
             },
-            
+
             # Binary metadata
             "binary_metadata": {
                 "file_path": binary_path,
@@ -154,22 +153,22 @@ class R2JSONStandardizer:
                 "file_size": self._get_file_size(binary_path),
                 "analysis_time": self.timestamp
             },
-            
+
             # Additional metadata
             "additional_metadata": metadata or {},
-            
+
             # Results structure (to be filled by specific methods)
             "analysis_results": {},
-            
+
             # Summary statistics (to be calculated)
             "summary_statistics": {},
-            
+
             # Quality metrics
             "quality_metrics": {},
-            
+
             # AI/ML ready features
             "ml_features": {},
-            
+
             # Status and errors
             "status": {
                 "success": True,
@@ -177,7 +176,7 @@ class R2JSONStandardizer:
                 "warnings": []
             }
         }
-    
+
     def _standardize_decompilation(self, raw_result: Dict[str, Any]) -> Dict[str, Any]:
         """Standardize decompilation analysis results"""
         return {
@@ -197,7 +196,7 @@ class R2JSONStandardizer:
             },
             "summary_statistics": {
                 "total_functions_analyzed": len(raw_result.get('license_functions', [])),
-                "license_functions_found": len([f for f in raw_result.get('license_functions', []) 
+                "license_functions_found": len([f for f in raw_result.get('license_functions', [])
                                               if f.get('confidence', 0) > 0.5]),
                 "decompilation_success_rate": self._calculate_decompilation_success_rate(raw_result),
                 "average_function_complexity": self._calculate_average_complexity(raw_result)
@@ -208,11 +207,11 @@ class R2JSONStandardizer:
                 "complexity_features": self._extract_complexity_features(raw_result)
             }
         }
-    
+
     def _standardize_vulnerability(self, raw_result: Dict[str, Any]) -> Dict[str, Any]:
         """Standardize vulnerability analysis results"""
         vulnerabilities = []
-        
+
         # Collect vulnerabilities from all categories
         vuln_categories = [
             'buffer_overflows', 'format_string_bugs', 'integer_overflows',
@@ -220,12 +219,12 @@ class R2JSONStandardizer:
             'race_conditions', 'privilege_escalation', 'code_injection',
             'path_traversal', 'information_disclosure', 'cryptographic_weaknesses'
         ]
-        
+
         for category in vuln_categories:
             if category in raw_result:
                 for vuln in raw_result[category]:
                     vulnerabilities.append(self._normalize_vulnerability(vuln, category))
-        
+
         return {
             "analysis_results": {
                 "vulnerabilities": vulnerabilities,
@@ -249,7 +248,7 @@ class R2JSONStandardizer:
                 "risk_features": self._extract_risk_features(raw_result)
             }
         }
-    
+
     def _standardize_strings(self, raw_result: Dict[str, Any]) -> Dict[str, Any]:
         """Standardize string analysis results"""
         return {
@@ -276,7 +275,7 @@ class R2JSONStandardizer:
                 "pattern_features": self._extract_string_pattern_features(raw_result)
             }
         }
-    
+
     def _standardize_imports(self, raw_result: Dict[str, Any]) -> Dict[str, Any]:
         """Standardize import/export analysis results"""
         return {
@@ -302,7 +301,7 @@ class R2JSONStandardizer:
                 "suspicious_behavior_features": self._extract_suspicious_behavior_features(raw_result)
             }
         }
-    
+
     def _standardize_cfg(self, raw_result: Dict[str, Any]) -> Dict[str, Any]:
         """Standardize CFG analysis results"""
         return {
@@ -329,7 +328,7 @@ class R2JSONStandardizer:
                 "pattern_features": self._extract_cfg_pattern_features(raw_result)
             }
         }
-    
+
     def _standardize_ai(self, raw_result: Dict[str, Any]) -> Dict[str, Any]:
         """Standardize AI analysis results"""
         return {
@@ -355,11 +354,11 @@ class R2JSONStandardizer:
                 "anomaly_features": self._extract_anomaly_features(raw_result)
             }
         }
-    
+
     def _standardize_comprehensive(self, raw_result: Dict[str, Any]) -> Dict[str, Any]:
         """Standardize comprehensive analysis results"""
         components = raw_result.get('components', {})
-        
+
         # Standardize each component
         standardized_components = {}
         for component_name, component_data in components.items():
@@ -367,7 +366,7 @@ class R2JSONStandardizer:
                 standardized_components[component_name] = self.standardize_analysis_result(
                     component_name, component_data, raw_result.get('binary_path', ''), {}
                 )
-        
+
         return {
             "analysis_results": {
                 "components": standardized_components,
@@ -377,7 +376,7 @@ class R2JSONStandardizer:
             },
             "summary_statistics": {
                 "components_analyzed": len(standardized_components),
-                "successful_components": len([c for c in standardized_components.values() 
+                "successful_components": len([c for c in standardized_components.values()
                                             if c.get('status', {}).get('success', False)]),
                 "total_vulnerabilities": self._count_total_vulnerabilities(standardized_components),
                 "total_license_functions": self._count_total_license_functions(standardized_components),
@@ -390,7 +389,7 @@ class R2JSONStandardizer:
                 "meta_features": self._extract_meta_features(standardized_components)
             }
         }
-    
+
     def _standardize_generic(self, raw_result: Dict[str, Any]) -> Dict[str, Any]:
         """Standardize generic/unknown analysis results"""
         return {
@@ -407,13 +406,13 @@ class R2JSONStandardizer:
                 "generic_features": self._extract_generic_features(raw_result)
             }
         }
-    
+
     def _add_validation_data(self, standardized: Dict[str, Any]) -> Dict[str, Any]:
         """Add validation data and checksums"""
         # Calculate data checksum
         data_str = json.dumps(standardized.get('analysis_results', {}), sort_keys=True)
         data_checksum = hashlib.sha256(data_str.encode()).hexdigest()
-        
+
         # Add validation metadata
         standardized['validation'] = {
             "data_checksum": data_checksum,
@@ -421,22 +420,22 @@ class R2JSONStandardizer:
             "completeness_score": self._calculate_completeness_score(standardized),
             "quality_score": self._calculate_quality_score(standardized)
         }
-        
+
         return standardized
-    
+
     def _validate_schema(self, standardized: Dict[str, Any]) -> bool:
         """Validate standardized result against schema"""
         required_fields = [
             'schema_version', 'analysis_metadata', 'binary_metadata',
             'analysis_results', 'summary_statistics', 'ml_features', 'status'
         ]
-        
+
         for field in required_fields:
             if field not in standardized:
                 raise ValueError(f"Missing required field: {field}")
-        
+
         return True
-    
+
     def _create_error_result(self, analysis_type: str, binary_path: str, error: str) -> Dict[str, Any]:
         """Create standardized error result"""
         return {
@@ -465,9 +464,9 @@ class R2JSONStandardizer:
                 "quality_score": 0.0
             }
         }
-    
+
     # Helper methods for normalization (implementing key ones, others would follow similar patterns)
-    
+
     def _normalize_function_list(self, functions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Normalize function list to standard format"""
         normalized = []
@@ -483,7 +482,7 @@ class R2JSONStandardizer:
                 "cross_references": func.get('cross_references', [])
             })
         return normalized
-    
+
     def _normalize_vulnerability(self, vuln: Dict[str, Any], category: str) -> Dict[str, Any]:
         """Normalize vulnerability to standard format"""
         return {
@@ -499,7 +498,7 @@ class R2JSONStandardizer:
             "mitigation": vuln.get('mitigation', ''),
             "confidence": vuln.get('confidence', 0.5)
         }
-    
+
     def _normalize_address(self, address: Union[str, int]) -> str:
         """Normalize address to standard hex string format"""
         if isinstance(address, str):
@@ -514,7 +513,7 @@ class R2JSONStandardizer:
             return f"0x{address:x}"
         else:
             return "0x0"
-    
+
     def _get_radare2_version(self) -> str:
         """Get radare2 version"""
         try:
@@ -525,7 +524,7 @@ class R2JSONStandardizer:
         except:
             pass
         return "unknown"
-    
+
     def _calculate_file_hash(self, file_path: str) -> str:
         """Calculate file hash"""
         try:
@@ -535,7 +534,7 @@ class R2JSONStandardizer:
         except:
             pass
         return "unknown"
-    
+
     def _get_file_size(self, file_path: str) -> int:
         """Get file size"""
         try:
@@ -544,12 +543,12 @@ class R2JSONStandardizer:
         except:
             pass
         return 0
-    
+
     def _calculate_completeness_score(self, standardized: Dict[str, Any]) -> float:
         """Calculate completeness score for validation"""
         total_fields = 0
         filled_fields = 0
-        
+
         def count_fields(obj, path=""):
             nonlocal total_fields, filled_fields
             if isinstance(obj, dict):
@@ -563,17 +562,17 @@ class R2JSONStandardizer:
                 for i, item in enumerate(obj):
                     if isinstance(item, (dict, list)):
                         count_fields(item, f"{path}[{i}]")
-        
+
         count_fields(standardized.get('analysis_results', {}))
-        
+
         return filled_fields / max(1, total_fields)
-    
+
     def _calculate_quality_score(self, standardized: Dict[str, Any]) -> float:
         """Calculate quality score for validation"""
         # Simple quality scoring based on data presence and consistency
         score = 0.0
         max_score = 100.0
-        
+
         # Check required sections
         if standardized.get('analysis_results'):
             score += 20
@@ -581,43 +580,43 @@ class R2JSONStandardizer:
             score += 20
         if standardized.get('ml_features'):
             score += 20
-        
+
         # Check status
         if standardized.get('status', {}).get('success', False):
             score += 20
-        
+
         # Check metadata completeness
         metadata = standardized.get('analysis_metadata', {})
         if all(key in metadata for key in ['analysis_id', 'analysis_type', 'timestamp']):
             score += 20
-        
+
         return score / max_score
-    
+
     # Placeholder implementations for complex helper methods
     # (In a full implementation, these would contain detailed logic)
-    
+
     def _extract_function_features(self, raw_result: Dict[str, Any]) -> Dict[str, Any]:
         """Extract ML features from function data"""
         return {"feature_count": len(raw_result.get('license_functions', []))}
-    
+
     def _extract_pattern_features(self, raw_result: Dict[str, Any]) -> Dict[str, Any]:
         """Extract ML features from pattern data"""
         return {"pattern_count": len(raw_result.get('license_patterns', []))}
-    
+
     def _calculate_risk_score(self, vulnerabilities: List[Dict[str, Any]]) -> float:
         """Calculate overall risk score"""
         if not vulnerabilities:
             return 0.0
-        
+
         severity_weights = {'critical': 4, 'high': 3, 'medium': 2, 'low': 1}
         total_weight = sum(severity_weights.get(v.get('severity', 'low'), 1) for v in vulnerabilities)
         max_possible = len(vulnerabilities) * 4
-        
+
         return min(1.0, total_weight / max_possible) if max_possible > 0 else 0.0
 
 
-def standardize_r2_result(analysis_type: str, 
-                         raw_result: Dict[str, Any], 
+def standardize_r2_result(analysis_type: str,
+                         raw_result: Dict[str, Any],
                          binary_path: str,
                          metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
@@ -648,7 +647,7 @@ def batch_standardize_results(results: List[Tuple[str, Dict[str, Any], str]]) ->
     """
     standardizer = R2JSONStandardizer()
     standardized_results = []
-    
+
     for analysis_type, raw_result, binary_path in results:
         try:
             standardized = standardizer.standardize_analysis_result(analysis_type, raw_result, binary_path)
@@ -657,7 +656,7 @@ def batch_standardize_results(results: List[Tuple[str, Dict[str, Any], str]]) ->
             logger.error(f"Failed to standardize {analysis_type} result: {e}")
             error_result = standardizer._create_error_result(analysis_type, binary_path, str(e))
             standardized_results.append(error_result)
-    
+
     return standardized_results
 
 

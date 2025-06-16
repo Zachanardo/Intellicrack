@@ -19,13 +19,11 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import json
 import logging
 import os
-import tempfile
 import time
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 try:
     import r2pipe
@@ -70,7 +68,7 @@ class R2Session:
         self.logger = logging.getLogger(__name__)
         self.is_connected = False
         self.analysis_cache = {}
-        
+
         if not R2PIPE_AVAILABLE:
             raise R2Exception("r2pipe not available - please install radare2-r2pipe")
 
@@ -97,10 +95,10 @@ class R2Session:
 
                 self.r2 = r2pipe.open(self.binary_path, flags=flags)
                 self.is_connected = True
-                
+
                 # Perform initial analysis
                 self.r2.cmd(self.analysis_level)
-                
+
                 self.logger.info(f"Connected to radare2 for binary: {self.binary_path}")
                 return True
 
@@ -249,7 +247,7 @@ class R2Session:
             'trial', 'valid', 'expire', 'auth', 'dongle', 'hwid',
             'crack', 'pirate', 'illegal', 'legitimate', 'genuine'
         ]
-        
+
         all_strings = []
         for pattern in license_patterns:
             try:
@@ -258,7 +256,7 @@ class R2Session:
                     all_strings.extend(results)
             except R2Exception:
                 continue
-        
+
         return all_strings
 
     # Import/Export Analysis
@@ -286,7 +284,7 @@ class R2Session:
             Dictionary of API categories and their functions
         """
         imports = self.get_imports()
-        
+
         api_categories = {
             'crypto': [],
             'network': [],
@@ -296,7 +294,7 @@ class R2Session:
             'debug': [],
             'license': []
         }
-        
+
         crypto_apis = ['Crypt', 'Cipher', 'Encrypt', 'Decrypt', 'Hash', 'AES', 'RSA', 'SHA', 'MD5']
         network_apis = ['socket', 'connect', 'send', 'recv', 'Http', 'Internet', 'Wininet']
         file_apis = ['CreateFile', 'ReadFile', 'WriteFile', 'DeleteFile', 'FindFile']
@@ -304,10 +302,10 @@ class R2Session:
         process_apis = ['CreateProcess', 'OpenProcess', 'TerminateProcess', 'GetModule']
         debug_apis = ['IsDebuggerPresent', 'CheckRemoteDebugger', 'OutputDebugString']
         license_apis = ['GetVolumeInformation', 'GetComputerName', 'GetUserName']
-        
+
         for imp in imports:
             name = imp.get('name', '').lower()
-            
+
             if any(api.lower() in name for api in crypto_apis):
                 api_categories['crypto'].append(imp)
             elif any(api.lower() in name for api in network_apis):
@@ -322,7 +320,7 @@ class R2Session:
                 api_categories['debug'].append(imp)
             elif any(api.lower() in name for api in license_apis):
                 api_categories['license'].append(imp)
-        
+
         return api_categories
 
     # ESIL Analysis Engine
@@ -363,7 +361,7 @@ class R2Session:
             Emulation results
         """
         addr = hex(address) if isinstance(address, int) else address
-        
+
         results = {
             'address': addr,
             'initial_registers': {},
@@ -371,30 +369,30 @@ class R2Session:
             'execution_trace': [],
             'memory_accesses': []
         }
-        
+
         try:
             # Initialize ESIL
             if not self.initialize_esil():
                 return results
-            
+
             # Get initial register state
             results['initial_registers'] = self.get_esil_registers()
-            
+
             # Get function info for emulation bounds
             func_info = self.get_function_info(address)
             if func_info:
                 func_size = func_info.get('size', 100)
-                
+
                 # Step through function
                 trace = self.step_esil(address, min(func_size // 4, 50))
                 results['execution_trace'] = trace.split('\n') if trace else []
-            
+
             # Get final register state
             results['final_registers'] = self.get_esil_registers()
-            
+
         except R2Exception as e:
             results['error'] = str(e)
-        
+
         return results
 
     # Signature Analysis
@@ -427,25 +425,25 @@ class R2Session:
             'null_pointer': [],
             'integer_overflow': []
         }
-        
+
         try:
             # Get all functions for analysis
             functions = self.get_functions()
-            
+
             for func in functions[:20]:  # Limit analysis for performance
                 func_addr = func.get('offset', 0)
                 if not func_addr:
                     continue
-                
+
                 # Analyze function for vulnerabilities
                 func_vulns = self._analyze_function_vulnerabilities(func_addr)
-                
+
                 for vuln_type, findings in func_vulns.items():
                     vulnerabilities[vuln_type].extend(findings)
-        
+
         except R2Exception as e:
             self.logger.error(f"Vulnerability detection failed: {e}")
-        
+
         return vulnerabilities
 
     def _analyze_function_vulnerabilities(self, address: Union[str, int]) -> Dict[str, List[Dict[str, Any]]]:
@@ -459,20 +457,20 @@ class R2Session:
             'null_pointer': [],
             'integer_overflow': []
         }
-        
+
         try:
             # Get function disassembly
             disasm = self._execute_command(f'pdf @ {addr}')
-            
+
             # Check for dangerous functions
             dangerous_functions = ['strcpy', 'strcat', 'sprintf', 'gets', 'scanf']
             format_functions = ['printf', 'fprintf', 'sprintf', 'snprintf']
             memory_functions = ['malloc', 'free', 'realloc', 'calloc']
-            
+
             lines = disasm.split('\n')
             for i, line in enumerate(lines):
                 line_lower = line.lower()
-                
+
                 # Buffer overflow detection
                 if any(func in line_lower for func in dangerous_functions):
                     vulns['buffer_overflow'].append({
@@ -481,7 +479,7 @@ class R2Session:
                         'type': 'dangerous_function_call',
                         'line_number': i
                     })
-                
+
                 # Format string detection
                 if any(func in line_lower for func in format_functions):
                     if 'mov' in line_lower and '%' in line_lower:
@@ -491,7 +489,7 @@ class R2Session:
                             'type': 'potential_format_string',
                             'line_number': i
                         })
-                
+
                 # Memory management issues
                 if any(func in line_lower for func in memory_functions):
                     if 'free' in line_lower:
@@ -505,7 +503,7 @@ class R2Session:
                                     'line_number': i
                                 })
                                 break
-                
+
                 # Null pointer dereference
                 if 'mov' in line_lower and ('dword ptr [0]' in line_lower or 'qword ptr [0]' in line_lower):
                     vulns['null_pointer'].append({
@@ -514,10 +512,10 @@ class R2Session:
                         'type': 'null_pointer_dereference',
                         'line_number': i
                     })
-        
+
         except R2Exception:
             pass
-        
+
         return vulns
 
 
@@ -543,7 +541,7 @@ def r2_session(binary_path: str, radare2_path: Optional[str] = None):
 
 class R2BinaryDiff:
     """Binary comparison and diffing using radare2."""
-    
+
     def __init__(self, binary1: str, binary2: str):
         """
         Initialize binary diff.
@@ -571,13 +569,13 @@ class R2BinaryDiff:
             'unique_to_binary2': [],
             'modified_functions': []
         }
-        
+
         try:
             with r2_session(self.binary1) as r2_1:
                 with r2_session(self.binary2) as r2_2:
                     funcs1 = {f['name']: f for f in r2_1.get_functions()}
                     funcs2 = {f['name']: f for f in r2_2.get_functions()}
-                    
+
                     # Find common, unique, and modified functions
                     for name, func1 in funcs1.items():
                         if name in funcs2:
@@ -592,15 +590,15 @@ class R2BinaryDiff:
                                 results['common_functions'].append(name)
                         else:
                             results['unique_to_binary1'].append(name)
-                    
+
                     for name in funcs2:
                         if name not in funcs1:
                             results['unique_to_binary2'].append(name)
-        
+
         except Exception as e:
             self.logger.error(f"Binary comparison failed: {e}")
             results['error'] = str(e)
-        
+
         return results
 
     def compare_strings(self) -> Dict[str, Any]:
@@ -612,28 +610,28 @@ class R2BinaryDiff:
             'unique_to_binary1': [],
             'unique_to_binary2': []
         }
-        
+
         try:
             with r2_session(self.binary1) as r2_1:
                 with r2_session(self.binary2) as r2_2:
                     strings1 = {s['string']: s for s in r2_1.get_strings()}
                     strings2 = {s['string']: s for s in r2_2.get_strings()}
-                    
+
                     # Compare strings
                     for string, data1 in strings1.items():
                         if string in strings2:
                             results['common_strings'].append(string)
                         else:
                             results['unique_to_binary1'].append(string)
-                    
+
                     for string in strings2:
                         if string not in strings1:
                             results['unique_to_binary2'].append(string)
-        
+
         except Exception as e:
             self.logger.error(f"String comparison failed: {e}")
             results['error'] = str(e)
-        
+
         return results
 
 
@@ -663,27 +661,27 @@ def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] =
         'esil_analysis': {},
         'errors': []
     }
-    
+
     try:
         with r2_session(binary_path, radare2_path) as r2:
             # Basic information
             results['basic_info'] = r2.get_info()
-            
+
             # Function analysis
             results['functions'] = r2.get_functions()
-            
+
             # String analysis
             results['strings'] = r2.get_strings()
             results['license_strings'] = r2.get_license_strings()
-            
+
             # Import/Export analysis
             results['imports'] = r2.get_imports()
             results['exports'] = r2.get_exports()
             results['api_analysis'] = r2.analyze_api_calls()
-            
+
             # Vulnerability detection
             results['vulnerabilities'] = r2.detect_vulnerabilities()
-            
+
             # Decompile a few key functions
             functions = results['functions'][:5]  # Sample first 5 functions
             for func in functions:
@@ -695,7 +693,7 @@ def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] =
                             results['decompiled_samples'][func['name']] = decompiled
                     except R2Exception:
                         continue
-            
+
             # ESIL analysis on main function if available
             if functions:
                 main_func = functions[0]
@@ -704,12 +702,12 @@ def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] =
                     results['esil_analysis'] = esil_result
                 except R2Exception:
                     pass
-    
+
     except Exception as e:
         error_msg = f"Comprehensive analysis failed: {e}"
         results['errors'].append(error_msg)
         logging.getLogger(__name__).error(error_msg)
-    
+
     return results
 
 

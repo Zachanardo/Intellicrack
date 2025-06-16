@@ -132,7 +132,6 @@ class C2ManagementDialog(QDialog):
     @staticmethod
     def finalize_widget_layout(widget, layout):
         """Common widget finalization pattern."""
-        from PyQt5.QtWidgets import QWidget, QVBoxLayout
         layout.addStretch()
         widget.setLayout(layout)
         return widget

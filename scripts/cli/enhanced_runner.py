@@ -44,7 +44,7 @@ from rich import box
 from rich.prompt import Prompt, Confirm
 from rich.tree import Tree
 
-from intellicrack.utils.binary_analysis import analyze_binary
+from intellicrack.utils.analysis.binary_analysis import analyze_binary
 from intellicrack.core.analysis.vulnerability_engine import VulnerabilityEngine
 from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
 from intellicrack.utils.protection_detection import detect_all_protections

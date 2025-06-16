@@ -63,7 +63,7 @@ sys.path.insert(0, project_root)
 
 # Import Intellicrack modules
 try:
-    from intellicrack.utils.binary_analysis import analyze_binary
+    from intellicrack.utils.analysis.binary_analysis import analyze_binary
     from intellicrack.utils.runner_functions import (
         run_comprehensive_analysis,
         run_symbolic_execution,
@@ -2282,7 +2282,7 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
         try:
             # Import necessary modules
             try:
-                from intellicrack.utils.binary_analysis import analyze_binary
+                from intellicrack.utils.analysis.binary_analysis import analyze_binary
                 from intellicrack.core.analysis.vulnerability_engine import VulnerabilityEngine
                 
                 # Use Intellicrack's vulnerability engine

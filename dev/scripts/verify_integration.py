@@ -45,10 +45,8 @@ class IntegrationVerifier:
             from intellicrack import core
             
             required_modules = [
-                'payload_generation',
                 'c2_infrastructure', 
                 'evasion',
-                'mitigation_bypass',
                 'post_exploitation',
                 'vulnerability_research'
             ]
@@ -280,7 +278,7 @@ class IntegrationVerifier:
             
             # Test 1: PayloadEngine can be imported and initialized
             try:
-                from intellicrack.core.payload_generation.payload_engine import PayloadEngine
+                from intellicrack.core.exploitation.payload_engine import PayloadEngine
                 engine = PayloadEngine()
                 cross_references_tested += 1
             except Exception as e:

@@ -13,7 +13,7 @@ class AnalysisStatsGenerator:
     Common utilities for generating analysis statistics and recommendations.
     Eliminates duplicate statistics generation code.
     """
-    
+
     @staticmethod
     def safe_stats_generation(stats_func, *args, **kwargs) -> Dict[str, Any]:
         """
@@ -33,9 +33,9 @@ class AnalysisStatsGenerator:
             logger = logging.getLogger(__name__)
             logger.debug(f"Statistics generation error: {e}")
             return {}
-    
+
     @staticmethod
-    def count_by_attribute(items: List[Dict[str, Any]], attribute: str, 
+    def count_by_attribute(items: List[Dict[str, Any]], attribute: str,
                           default_value: str = 'unknown') -> Dict[str, int]:
         """
         Count items by a specific attribute.
@@ -53,7 +53,7 @@ class AnalysisStatsGenerator:
             value = item.get(attribute, default_value)
             counts[value] = counts.get(value, 0) + 1
         return counts
-    
+
     @staticmethod
     def safe_recommendation_generation(rec_func, *args, **kwargs) -> List[str]:
         """

@@ -4,7 +4,7 @@ Common AI response parsing utilities.
 This module provides shared functions for parsing AI responses across different AI modules.
 """
 
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 def parse_ai_response_sections(response: str, section_keywords: Dict[str, List[str]]) -> Dict[str, List[str]]:
@@ -21,7 +21,7 @@ def parse_ai_response_sections(response: str, section_keywords: Dict[str, List[s
         Dictionary mapping section names to lists of extracted content
     """
     from .parsing_utils import ResponseLineParser
-    
+
     # Use shared parsing utility
     return ResponseLineParser.parse_lines_by_sections(response, section_keywords)
 
@@ -65,7 +65,7 @@ def parse_attack_vector_response(response: str) -> Tuple[List[str], List[str], L
     return sections['vulnerabilities'], sections['recommendations'], sections['attack_vectors']
 
 
-def parse_simple_response(response: str, finding_keywords: Optional[List[str]] = None, 
+def parse_simple_response(response: str, finding_keywords: Optional[List[str]] = None,
                          recommendation_keywords: Optional[List[str]] = None) -> Tuple[List[str], List[str]]:
     """
     Simple response parser for findings and recommendations.
@@ -82,11 +82,11 @@ def parse_simple_response(response: str, finding_keywords: Optional[List[str]] =
         finding_keywords = ['risk', 'vulnerability', 'threat', 'suspicious']
     if recommendation_keywords is None:
         recommendation_keywords = ['recommend', 'suggest', 'should', 'analyze']
-    
+
     section_keywords = {
         'findings': finding_keywords,
         'recommendations': recommendation_keywords
     }
-    
+
     sections = parse_ai_response_sections(response, section_keywords)
     return sections['findings'], sections['recommendations']

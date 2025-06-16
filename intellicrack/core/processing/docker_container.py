@@ -27,7 +27,6 @@ This module provides comprehensive Docker container operations for distributed b
 with container lifecycle management, state snapshots, and artifact collection.
 """
 
-import logging
 import os
 import subprocess
 import time

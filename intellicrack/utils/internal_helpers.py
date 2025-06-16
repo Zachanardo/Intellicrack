@@ -31,8 +31,8 @@ import time
 from typing import Any, Callable, Dict, List, Optional
 
 # Import availability flags from common imports
-from .common_imports import HAS_TENSORFLOW, HAS_TORCH
-from .common_imports import PSUTIL_AVAILABLE as HAS_PSUTIL
+from .core.common_imports import HAS_TENSORFLOW, HAS_TORCH
+from .core.common_imports import PSUTIL_AVAILABLE as HAS_PSUTIL
 
 # Import actual modules when available
 if HAS_PSUTIL:
@@ -1523,7 +1523,7 @@ def _cuda_hash_calculation(data: bytes, algorithm: str = 'sha256') -> Optional[s
 def _gpu_entropy_calculation(data: bytes) -> float:
     """Calculate entropy using GPU acceleration."""
     from .entropy_utils import safe_entropy_calculation
-    
+
     # GPU implementation would go here
     # Fallback to CPU calculation using shared entropy utilities
     return safe_entropy_calculation(data)

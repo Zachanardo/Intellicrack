@@ -652,16 +652,17 @@ class CodeAnalyzer:
 
     def _parse_ai_assembly_response(self, response: str) -> tuple:
         """Parse AI response for assembly analysis."""
-        from .parsing_utils import ResponseLineParser
         from typing import Optional
-        
+
+        from .parsing_utils import ResponseLineParser
+
         # Define section keywords
         section_keywords = {
             'vulnerabilities': ['vulnerabilit', 'exploit', 'overflow', 'injection'],
             'patterns': ['pattern', 'technique', 'instruction', 'behavior'],
             'recommendations': ['recommend', 'suggest', 'analyze', 'investigate']
         }
-        
+
         # Custom line processor for list items
         def process_line(line: str, section: str) -> Optional[str]:
             if line.startswith(('-', '*', '•')) or line.startswith(('1.', '2.', '3.', '4.', '5.')):
@@ -669,16 +670,16 @@ class CodeAnalyzer:
                 if len(item) > 10:  # Only return valid items
                     return item
             return None
-        
+
         # Parse using shared utility
         sections = ResponseLineParser.parse_lines_by_sections(
             response, section_keywords, process_line
         )
-        
+
         patterns = sections.get('patterns', [])
         vulnerabilities = sections.get('vulnerabilities', [])
         recommendations = sections.get('recommendations', [])
-        
+
         return patterns[:6], vulnerabilities[:6], recommendations[:5]
 
 

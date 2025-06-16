@@ -4,7 +4,6 @@ Menu Utilities
 Common functionality for menu operations to eliminate code duplication.
 """
 
-from typing import Optional
 try:
     from PyQt6.QtWidgets import QMenu, QMenuBar
 except ImportError:
@@ -28,6 +27,6 @@ def find_or_create_menu(menu_bar: QMenuBar, menu_name: str) -> QMenu:
             menu = action.menu()
             if menu:
                 return menu
-    
+
     # Create new menu if not found
     return menu_bar.addMenu(menu_name)

@@ -805,7 +805,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
             # Create packet handler using base class
             packet_handler = self.create_packet_handler(
-                scapy, 
+                scapy,
                 lambda: self.capturing,
                 process_tcp_packet
             )

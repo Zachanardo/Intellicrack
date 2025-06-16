@@ -38,11 +38,11 @@ class EarlyBirdInjector(BaseWindowsPatcher):
     def __init__(self):
         if not AVAILABLE:
             raise RuntimeError("Early Bird injection requires Windows")
-        
+
         super().__init__()
         self.logger = get_logger(__name__)
         self.THREAD_GET_CONTEXT = 0x0008
-        
+
     def get_required_libraries(self) -> list:
         """Get list of required Windows libraries for this patcher."""
         return ['kernel32']
@@ -177,17 +177,8 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             True if successful, False otherwise
         """
         try:
-            from ...utils.process_common import create_suspended_process_with_context
-
-            # Create process and get context using common function
-            result = create_suspended_process_with_context(
-                self._create_suspended_process,
-                self._get_thread_context,
-                target_exe,
-                logger
-            )
-
-            success, process_info, context = self.handle_suspended_process_result(result, logger)
+            # Create suspended process and handle result
+            success, process_info, context = self.create_and_handle_suspended_process(target_exe, logger)
             if not success:
                 return False
 

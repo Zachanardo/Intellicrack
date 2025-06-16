@@ -4,7 +4,7 @@ Shared Bypass Configuration
 Common bypass definitions and helper functions used across mitigation bypass modules.
 """
 
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 
 class BypassConfig:
@@ -53,12 +53,12 @@ class BypassConfig:
     def analyze_bypass_capabilities(target_info: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze available bypass capabilities for a target."""
         bypasses = []
-        
+
         for bypass_type, config in BypassConfig.BYPASS_TYPES.items():
             protection_key = config['target_protection']
             if target_info.get(protection_key, False):
                 bypasses.append(bypass_type)
-        
+
         return {
             'bypasses_available': bypasses,
             'target_info': target_info,
@@ -84,12 +84,12 @@ class BypassConfig:
         ]
 
     @staticmethod
-    def get_recommended_bypasses(target_info: Dict[str, Any], 
+    def get_recommended_bypasses(target_info: Dict[str, Any],
                                 min_reliability: int = 6) -> List[str]:
         """Get recommended bypasses based on target and reliability threshold."""
         analysis = BypassConfig.analyze_bypass_capabilities(target_info)
         available_bypasses = analysis['bypasses_available']
-        
+
         return [
             bypass_type for bypass_type in available_bypasses
             if BypassConfig.BYPASS_TYPES[bypass_type]['reliability'] >= min_reliability

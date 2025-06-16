@@ -518,7 +518,7 @@ class DebuggerDetector(BaseDetector):
         # Methods that are hard to bypass
         strong_methods = ['debug_port', 'ptrace', 'proc_status']
         medium_methods = ['isdebuggerpresent', 'checkremotedebuggerpresent', 'heap_flags']
-        
+
         return self.calculate_detection_score(detections, strong_methods, medium_methods)
 
     def generate_antidebug_code(self, techniques: List[str] = None) -> str:

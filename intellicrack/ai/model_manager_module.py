@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 # Import common availability flags
-from ..utils.common_imports import HAS_NUMPY, HAS_TORCH
+from ..utils.core.common_imports import HAS_NUMPY, HAS_TORCH
 
 if HAS_NUMPY:
     import numpy as np

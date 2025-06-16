@@ -85,6 +85,13 @@ except ImportError as e:
         """Fallback class for LogViewer widget when hex_viewer module is not available."""
         pass
 
+# Import console widget
+try:
+    from .console_widget import ConsoleWidget
+except ImportError as e:
+    logger.warning("Failed to import console_widget: %s", e)
+    ConsoleWidget = None
+
 # Define common widget exports
 __all__ = [
     # Analysis widgets
@@ -108,6 +115,10 @@ __all__ = [
     'StatusBar',
     'LogViewer',
 ]
+
+# Add ConsoleWidget if available
+if ConsoleWidget is not None:
+    __all__.append('ConsoleWidget')
 
 # Package metadata
 __version__ = "0.1.0"

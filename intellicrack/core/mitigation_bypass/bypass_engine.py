@@ -4,7 +4,7 @@ Bypass Engine Module
 Central engine for managing exploit mitigation bypasses.
 """
 
-from ..exploit_mitigation.cfi_bypass import CFIBypass
+from ..exploitation.cfi_bypass import CFIBypass
 from ..shared.bypass_config import BypassConfig
 
 

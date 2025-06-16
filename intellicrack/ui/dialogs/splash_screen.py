@@ -74,18 +74,8 @@ class SplashScreen(QSplashScreen):
         # Setup progress bar
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setGeometry(50, pixmap.height() - 50, pixmap.width() - 100, 20)
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: 2px solid grey;
-                border-radius: 5px;
-                text-align: center;
-                background-color: #2b2b2b;
-            }
-            QProgressBar::chunk {
-                background-color: #4CAF50;
-                border-radius: 3px;
-            }
-        """)
+        from ..style_utils import get_splash_progress_bar_style
+        self.progress_bar.setStyleSheet(get_splash_progress_bar_style())
 
         # Status label
         self.status_label = QLabel(self)

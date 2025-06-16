@@ -19,12 +19,11 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import json
 import logging
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
-from ...utils.radare2_utils import R2Session, R2Exception, r2_session
+from ...utils.radare2_utils import R2Exception, R2Session, r2_session
 
 
 class ESILAnalysisEngine:
@@ -65,19 +64,19 @@ class ESILAnalysisEngine:
         try:
             # Initialize ESIL VM
             r2._execute_command('aeim')
-            
+
             # Set up stack
             r2._execute_command('aers 1024')  # Set stack size
-            
+
             # Configure ESIL settings for analysis
             r2._execute_command('e esil.stack.addr=0x100000')
             r2._execute_command('e esil.stack.size=0x10000')
             r2._execute_command('e esil.debug=false')
             r2._execute_command('e esil.verbose=false')
-            
+
             self.logger.info("ESIL VM initialized successfully")
             return True
-            
+
         except R2Exception as e:
             self.logger.error(f"Failed to initialize ESIL VM: {e}")
             return False
@@ -123,7 +122,7 @@ class ESILAnalysisEngine:
 
                 # Set initial program counter
                 r2._execute_command(f's {hex(address)}')
-                
+
                 # Get initial register state
                 initial_registers = r2.get_esil_registers()
                 result['register_states'].append({
@@ -137,15 +136,15 @@ class ESILAnalysisEngine:
                     try:
                         # Execute one ESIL instruction
                         esil_output = r2._execute_command('aes')
-                        
+
                         # Get current instruction
                         current_pc = r2._execute_command('dr?PC')
                         if current_pc:
                             current_pc = current_pc.strip()
-                            
+
                             # Get instruction at current PC
                             instruction = r2._execute_command(f'pd 1 @ {current_pc}')
-                            
+
                             # Record execution trace
                             trace_entry = {
                                 'step': step + 1,
@@ -154,10 +153,10 @@ class ESILAnalysisEngine:
                                 'esil_output': esil_output.strip() if esil_output else ''
                             }
                             result['execution_trace'].append(trace_entry)
-                            
+
                             # Analyze instruction for patterns
                             self._analyze_instruction_patterns(trace_entry, result)
-                            
+
                             # Get register state periodically
                             if step % 10 == 0 or step < 5:
                                 registers = r2.get_esil_registers()
@@ -166,12 +165,12 @@ class ESILAnalysisEngine:
                                     'address': current_pc,
                                     'registers': registers
                                 })
-                            
+
                             # Check for function exit conditions
                             if self._is_function_exit(instruction):
                                 self.logger.info(f"Function exit detected at step {step + 1}")
                                 break
-                                
+
                     except R2Exception as e:
                         self.logger.debug(f"ESIL execution error at step {step}: {e}")
                         if step == 0:  # If first step fails, it's a critical error
@@ -185,7 +184,7 @@ class ESILAnalysisEngine:
                     'stack_pointer': r2._execute_command('dr?SP'),
                     'program_counter': r2._execute_command('dr?PC')
                 }
-                
+
                 result['steps_executed'] = min(step + 1, max_steps)
                 result['execution_time'] = time.time() - start_time
 
@@ -205,7 +204,7 @@ class ESILAnalysisEngine:
         """Analyze individual instruction for interesting patterns."""
         instruction = trace_entry.get('instruction', '').lower()
         address = trace_entry.get('address', '')
-        
+
         # Detect API calls
         if 'call' in instruction:
             # Extract target address
@@ -293,23 +292,23 @@ class ESILAnalysisEngine:
         """Check if instruction indicates function exit."""
         if not instruction:
             return False
-        
+
         instruction_lower = instruction.lower()
         return any(exit_pattern in instruction_lower for exit_pattern in ['ret', 'retn', 'iret'])
 
     def _perform_post_execution_analysis(self, result: Dict[str, Any]):
         """Perform analysis on the complete execution trace."""
         trace = result.get('execution_trace', [])
-        
+
         # Analyze execution patterns
         self._analyze_execution_patterns(result, trace)
-        
+
         # Detect license validation routines
         self._detect_license_validation_patterns(result, trace)
-        
+
         # Analyze API call sequences
         self._analyze_api_call_sequences(result)
-        
+
         # Detect anti-analysis techniques
         self._detect_anti_analysis_techniques(result, trace)
 
@@ -321,16 +320,16 @@ class ESILAnalysisEngine:
         # Calculate basic metrics
         total_instructions = len(trace)
         unique_addresses = len(set(entry.get('address', '') for entry in trace))
-        
+
         # Detect loops
         address_counts = {}
         for entry in trace:
             addr = entry.get('address', '')
             if addr:
                 address_counts[addr] = address_counts.get(addr, 0) + 1
-        
+
         loops_detected = sum(1 for count in address_counts.values() if count > 1)
-        
+
         result['execution_patterns'] = {
             'total_instructions_executed': total_instructions,
             'unique_addresses_visited': unique_addresses,
@@ -341,11 +340,11 @@ class ESILAnalysisEngine:
     def _detect_license_validation_patterns(self, result: Dict[str, Any], trace: List[Dict[str, Any]]):
         """Detect license validation patterns in execution trace."""
         validation_patterns = []
-        
+
         # Look for sequences that suggest license validation
         for i, entry in enumerate(trace):
             instruction = entry.get('instruction', '').lower()
-            
+
             # Pattern 1: String comparison followed by conditional jump
             if 'cmp' in instruction and i + 1 < len(trace):
                 next_instruction = trace[i + 1].get('instruction', '').lower()
@@ -356,7 +355,7 @@ class ESILAnalysisEngine:
                         'end_step': trace[i + 1]['step'],
                         'instructions': [entry['instruction'], trace[i + 1]['instruction']]
                     })
-            
+
             # Pattern 2: Multiple comparisons (complex validation)
             if 'cmp' in instruction:
                 # Look for multiple comparisons within a small window
@@ -364,7 +363,7 @@ class ESILAnalysisEngine:
                 for j in range(i + 1, min(i + 10, len(trace))):
                     if 'cmp' in trace[j].get('instruction', '').lower():
                         comparison_count += 1
-                
+
                 if comparison_count >= 3:
                     validation_patterns.append({
                         'type': 'complex_validation_routine',
@@ -378,14 +377,14 @@ class ESILAnalysisEngine:
     def _analyze_api_call_sequences(self, result: Dict[str, Any]):
         """Analyze sequences of API calls for patterns."""
         api_calls = result.get('api_calls_detected', [])
-        
+
         if not api_calls:
             return
 
         # Group consecutive API calls
         call_sequences = []
         current_sequence = []
-        
+
         for call in api_calls:
             if not current_sequence or call['step'] - current_sequence[-1]['step'] <= 5:
                 current_sequence.append(call)
@@ -393,7 +392,7 @@ class ESILAnalysisEngine:
                 if len(current_sequence) > 1:
                     call_sequences.append(current_sequence)
                 current_sequence = [call]
-        
+
         if len(current_sequence) > 1:
             call_sequences.append(current_sequence)
 
@@ -402,10 +401,10 @@ class ESILAnalysisEngine:
     def _detect_anti_analysis_techniques(self, result: Dict[str, Any], trace: List[Dict[str, Any]]):
         """Detect anti-analysis and anti-debugging techniques."""
         anti_analysis_detected = []
-        
+
         for entry in trace:
             instruction = entry.get('instruction', '').lower()
-            
+
             # Detect debugger checks
             if any(pattern in instruction for pattern in ['isdebuggerpresent', 'checkremotedebugger']):
                 anti_analysis_detected.append({
@@ -414,7 +413,7 @@ class ESILAnalysisEngine:
                     'instruction': instruction,
                     'severity': 'high'
                 })
-            
+
             # Detect timing checks
             if 'rdtsc' in instruction:
                 anti_analysis_detected.append({
@@ -423,7 +422,7 @@ class ESILAnalysisEngine:
                     'instruction': instruction,
                     'severity': 'medium'
                 })
-            
+
             # Detect VM detection
             if any(pattern in instruction for pattern in ['cpuid', 'in ', 'out ']):
                 anti_analysis_detected.append({
@@ -435,7 +434,7 @@ class ESILAnalysisEngine:
 
         result['anti_analysis_techniques'] = anti_analysis_detected
 
-    def emulate_multiple_functions(self, function_addresses: List[int], 
+    def emulate_multiple_functions(self, function_addresses: List[int],
                                  max_steps_per_function: int = 50) -> Dict[str, Any]:
         """
         Emulate multiple functions and provide comparative analysis.
@@ -461,10 +460,10 @@ class ESILAnalysisEngine:
 
         for i, address in enumerate(function_addresses):
             self.logger.info(f"Emulating function {i+1}/{len(function_addresses)}: {hex(address)}")
-            
+
             func_result = self.emulate_function_execution(address, max_steps_per_function)
             results['function_results'][hex(address)] = func_result
-            
+
             # Update summary statistics
             if 'error' not in func_result:
                 results['emulation_summary']['total_steps_executed'] += func_result.get('steps_executed', 0)
@@ -539,7 +538,7 @@ def analyze_binary_esil(binary_path: str, radare2_path: Optional[str] = None,
         Complete ESIL analysis results
     """
     engine = ESILAnalysisEngine(binary_path, radare2_path)
-    
+
     # Get function addresses
     try:
         with r2_session(binary_path, radare2_path) as r2:
@@ -547,10 +546,10 @@ def analyze_binary_esil(binary_path: str, radare2_path: Optional[str] = None,
             addresses = [f['offset'] for f in functions[:function_limit] if f.get('offset')]
     except R2Exception as e:
         return {'error': f"Failed to get function list: {e}"}
-    
+
     if not addresses:
         return {'error': "No functions found for analysis"}
-    
+
     return engine.emulate_multiple_functions(addresses, max_steps)
 
 

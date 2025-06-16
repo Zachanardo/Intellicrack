@@ -22,9 +22,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-from ...utils.radare2_utils import R2Session, R2Exception, r2_session
+from ...utils.radare2_utils import R2Exception, R2Session, r2_session
 
 
 class R2DecompilationEngine:
@@ -158,11 +158,11 @@ class R2DecompilationEngine:
     def _extract_variables(self, r2: R2Session, address: int) -> List[Dict[str, Any]]:
         """Extract function variables and their types."""
         variables = []
-        
+
         try:
             # Get function variables
             var_info = r2._execute_command(f'afvj @ {hex(address)}', expect_json=True)
-            
+
             if isinstance(var_info, list):
                 for var in var_info:
                     variables.append({
@@ -180,7 +180,7 @@ class R2DecompilationEngine:
     def _detect_license_patterns(self, pseudocode: str) -> List[Dict[str, Any]]:
         """Detect license-related patterns in decompiled code."""
         patterns = []
-        
+
         # License-related keywords
         license_keywords = [
             r'\b(?:license|licens)\b',
@@ -208,7 +208,7 @@ class R2DecompilationEngine:
         lines = pseudocode.split('\n')
         for i, line in enumerate(lines):
             line_lower = line.lower()
-            
+
             # Check for license keywords
             for pattern in license_keywords:
                 if re.search(pattern, line_lower, re.IGNORECASE):
@@ -236,7 +236,7 @@ class R2DecompilationEngine:
     def _detect_vulnerability_patterns(self, pseudocode: str) -> List[Dict[str, Any]]:
         """Detect vulnerability patterns in decompiled code."""
         patterns = []
-        
+
         # Buffer overflow patterns
         buffer_patterns = [
             r'strcpy\s*\(',
@@ -353,7 +353,7 @@ class R2DecompilationEngine:
     def _extract_api_calls(self, pseudocode: str) -> List[Dict[str, Any]]:
         """Extract API function calls from pseudocode."""
         api_calls = []
-        
+
         # Common API patterns
         api_patterns = [
             r'(\w+)\s*\(',  # General function calls
@@ -381,11 +381,11 @@ class R2DecompilationEngine:
     def _get_string_references(self, r2: R2Session, address: int) -> List[Dict[str, Any]]:
         """Get string references used by the function."""
         strings = []
-        
+
         try:
             # Get cross-references from the function
             xrefs = r2._execute_command(f'axfj @ {hex(address)}', expect_json=True)
-            
+
             if isinstance(xrefs, list):
                 for xref in xrefs:
                     if xref.get('type') == 'DATA':
@@ -425,26 +425,26 @@ class R2DecompilationEngine:
         if isinstance(graph_data, list) and graph_data:
             blocks = graph_data[0].get('blocks', [])
             flow_analysis['basic_blocks'] = len(blocks)
-            
+
             # Count edges and analyze structure
             total_edges = 0
             exit_points = 0
-            
+
             for block in blocks:
                 # Count outgoing edges
                 jump = block.get('jump')
                 fail = block.get('fail')
-                
+
                 if jump:
                     total_edges += 1
                 if fail:
                     total_edges += 1
                     flow_analysis['conditional_branches'] += 1
-                
+
                 # Check for exit points (blocks with no outgoing edges)
                 if not jump and not fail:
                     exit_points += 1
-            
+
             flow_analysis['edges'] = total_edges
             flow_analysis['exit_points'] = exit_points
             flow_analysis['entry_points'] = 1  # Typically one entry point per function
@@ -462,14 +462,14 @@ class R2DecompilationEngine:
             List of bypass suggestions
         """
         suggestions = []
-        
+
         license_patterns = function_results.get('license_patterns', [])
         pseudocode = function_results.get('pseudocode', '')
-        
+
         for pattern in license_patterns:
             if pattern['type'] == 'license_validation':
                 line_content = pattern['line'].lower()
-                
+
                 # Suggest NOP patches for validation checks
                 if 'if' in line_content and any(keyword in line_content for keyword in ['license', 'key', 'valid']):
                     suggestions.append({
@@ -480,7 +480,7 @@ class R2DecompilationEngine:
                         'confidence': 0.8,
                         'risk': 'low'
                     })
-                
+
                 # Suggest return value modification
                 if 'return' in line_content:
                     suggestions.append({
@@ -491,7 +491,7 @@ class R2DecompilationEngine:
                         'confidence': 0.9,
                         'risk': 'medium'
                     })
-                
+
                 # Suggest jump modification
                 if any(jump in line_content for jump in ['jmp', 'je', 'jne', 'jz', 'jnz']):
                     suggestions.append({
@@ -528,13 +528,13 @@ class R2DecompilationEngine:
                 },
                 'detailed_results': analysis_results
             }
-            
+
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
-            
+
             self.logger.info(f"Analysis report exported to: {output_path}")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Failed to export report: {e}")
             return False

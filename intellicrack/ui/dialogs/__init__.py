@@ -103,6 +103,12 @@ except ImportError as e:
     logger.warning("Failed to import c2_management_dialog: %s", e)
     C2ManagementDialog = None
 
+try:
+    from .frida_manager_dialog import FridaManagerDialog
+except ImportError as e:
+    logger.warning("Failed to import frida_manager_dialog: %s", e)
+    FridaManagerDialog = None
+
 # Define package exports - only include successfully imported items
 __all__ = []
 
@@ -139,6 +145,9 @@ if PayloadGeneratorDialog is not None:
 
 if C2ManagementDialog is not None:
     __all__.append('C2ManagementDialog')
+
+if FridaManagerDialog is not None:
+    __all__.append('FridaManagerDialog')
 
 # Package metadata
 __version__ = "0.1.0"

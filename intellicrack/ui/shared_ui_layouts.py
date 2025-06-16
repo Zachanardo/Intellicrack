@@ -4,9 +4,18 @@ Shared UI Layout Utilities
 Common UI layout patterns to eliminate code duplication between dialog classes.
 """
 
-from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QFormLayout, QPushButton, 
-                            QLineEdit, QTabWidget, QGroupBox, QWidget)
-from typing import List, Tuple, Optional, Callable
+from typing import Callable, List, Optional, Tuple
+
+from PyQt5.QtWidgets import (
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLineEdit,
+    QPushButton,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class UILayoutHelpers:
@@ -31,21 +40,21 @@ class UILayoutHelpers:
         """
         dialog.setWindowTitle(window_title)
         dialog.setMinimumSize(size[0], size[1])
-        
+
         if is_modal:
             dialog.setModal(True)
-        
+
         # Create main layout
         main_layout = QVBoxLayout()
-        
+
         # Create tab widget
         tab_widget = QTabWidget()
         main_layout.addWidget(tab_widget)
-        
+
         return main_layout, tab_widget
 
     @staticmethod
-    def create_dialog_buttons(button_specs: List[Tuple[str, Callable, bool]], 
+    def create_dialog_buttons(button_specs: List[Tuple[str, Callable, bool]],
                              layout: QVBoxLayout) -> List[QPushButton]:
         """
         Create standard dialog buttons with consistent layout.
@@ -59,7 +68,7 @@ class UILayoutHelpers:
         """
         button_layout = QHBoxLayout()
         buttons = []
-        
+
         # Add left-aligned buttons first
         for text, callback, is_right_aligned in button_specs:
             if not is_right_aligned:
@@ -67,10 +76,10 @@ class UILayoutHelpers:
                 btn.clicked.connect(callback)
                 button_layout.addWidget(btn)
                 buttons.append(btn)
-        
+
         # Add stretch to push right-aligned buttons to the right
         button_layout.addStretch()
-        
+
         # Add right-aligned buttons
         for text, callback, is_right_aligned in button_specs:
             if is_right_aligned:
@@ -78,12 +87,12 @@ class UILayoutHelpers:
                 btn.clicked.connect(callback)
                 button_layout.addWidget(btn)
                 buttons.append(btn)
-        
+
         layout.addLayout(button_layout)
         return buttons
 
     @staticmethod
-    def create_file_browse_widget(placeholder_text: str = "", 
+    def create_file_browse_widget(placeholder_text: str = "",
                                  browse_callback: Optional[Callable] = None,
                                  browse_text: str = "Browse...") -> Tuple[QHBoxLayout, QLineEdit, QPushButton]:
         """
@@ -98,18 +107,18 @@ class UILayoutHelpers:
             Tuple of (layout, line_edit, browse_button)
         """
         layout = QHBoxLayout()
-        
+
         line_edit = QLineEdit()
         if placeholder_text:
             line_edit.setPlaceholderText(placeholder_text)
-        
+
         browse_btn = QPushButton(browse_text)
         if browse_callback:
             browse_btn.clicked.connect(browse_callback)
-        
+
         layout.addWidget(line_edit)
         layout.addWidget(browse_btn)
-        
+
         return layout, line_edit, browse_btn
 
     @staticmethod
@@ -125,12 +134,12 @@ class UILayoutHelpers:
             Tuple of (group_box, layout)
         """
         group = QGroupBox(title)
-        
+
         if use_form_layout:
             layout = QFormLayout()
         else:
             layout = QVBoxLayout()
-        
+
         group.setLayout(layout)
         return group, layout
 
@@ -169,7 +178,7 @@ class UILayoutHelpers:
                 layout.addWidget(widget)
 
     @staticmethod
-    def create_tabs_from_specs(tab_widget: QTabWidget, 
+    def create_tabs_from_specs(tab_widget: QTabWidget,
                               tab_specs: List[Tuple[str, QWidget]]) -> None:
         """
         Add multiple tabs to a tab widget from specifications.

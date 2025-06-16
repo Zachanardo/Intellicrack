@@ -260,7 +260,7 @@ def configure_logging(level: int = logging.INFO, log_file: str = None,
     """
     # Set up the root logger
     setup_logger('Intellicrack', level, log_file, format_string)
-    
+
     # Configure comprehensive logging if enabled
     if enable_comprehensive:
         # Set more verbose logging format for comprehensive mode

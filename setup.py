@@ -93,9 +93,6 @@ PACKAGE_DATA = {
         'assets/*',
         'data/signatures/*',
         'data/templates/*',
-        'plugins/frida_scripts/*.js',
-        'plugins/ghidra_scripts/*.java',
-        'plugins/custom_modules/*.py',
     ],
 }
 

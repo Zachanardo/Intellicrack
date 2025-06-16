@@ -28,7 +28,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from .entropy_utils import calculate_byte_entropy
+from .analysis.entropy_utils import calculate_byte_entropy
 
 logger = logging.getLogger(__name__)
 

@@ -43,7 +43,7 @@ from typing import Any, Dict, List, Optional
 
 from PyQt5.QtWidgets import QInputDialog, QMessageBox
 
-from ..utils.common_imports import FRIDA_AVAILABLE
+from ..utils.core.common_imports import FRIDA_AVAILABLE
 
 if FRIDA_AVAILABLE:
     import frida  # pylint: disable=import-error
@@ -89,64 +89,14 @@ def load_plugins(plugin_dir: str = "plugins") -> Dict[str, List[Dict[str, Any]]]
         os.makedirs(plugin_dir)
 
         # Create subdirectories if needed
-        for _subdir in ["frida_scripts", "ghidra_scripts", "custom_modules"]:
+        for _subdir in ["custom_modules"]:
             path = os.path.join(plugin_dir, _subdir)
             if not os.path.exists(path):
                 os.makedirs(path)
 
-    # Load Frida scripts
-    frida_dir = os.path.join(plugin_dir, "frida_scripts")
-    if os.path.exists(frida_dir):
-        for _file in os.listdir(frida_dir):
-            if _file.endswith(".js"):
-                plugin_path = os.path.join(frida_dir, _file)
-                plugin_name = os.path.splitext(
-                    _file)[0].replace("_", " ").title()
+    # Frida scripts are now managed independently by FridaManager
 
-                # Read first 5 lines for description
-                try:
-                    with open(plugin_path, "r", encoding="utf-8") as f:
-                        lines = [f.readline().strip() for __ in range(5)]
-                        description = "".join(
-                            [_line for _line in lines if _line.startswith("//")]).replace("//", "").strip()
-
-                        if not description:
-                            description = f"Frida script: {plugin_name}"
-
-                        plugins["frida"].append({
-                            "name": plugin_name,
-                            "path": plugin_path,
-                            "description": description
-                        })
-                except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error loading Frida plugin %s: %s", _file, e)
-
-    # Load Ghidra scripts
-    ghidra_dir = os.path.join(plugin_dir, "ghidra_scripts")
-    if os.path.exists(ghidra_dir):
-        for _file in os.listdir(ghidra_dir):
-            if _file.endswith(".java"):
-                plugin_path = os.path.join(ghidra_dir, _file)
-                plugin_name = os.path.splitext(
-                    _file)[0].replace("_", " ").title()
-
-                # Read first 10 lines for description
-                try:
-                    with open(plugin_path, "r", encoding="utf-8") as f:
-                        lines = [f.readline().strip() for __ in range(10)]
-                        description = "".join(
-                            [_line for _line in lines if _line.startswith("//")]).replace("//", "").strip()
-
-                        if not description:
-                            description = f"Ghidra script: {plugin_name}"
-
-                        plugins["ghidra"].append({
-                            "name": plugin_name,
-                            "path": plugin_path,
-                            "description": description
-                        })
-                except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error loading Ghidra plugin %s: %s", _file, e)
+    # Ghidra scripts are now managed independently by GhidraScriptManager
 
     # Load custom Python modules
     custom_dir = os.path.join(plugin_dir, "custom_modules")
@@ -547,90 +497,10 @@ def create_sample_plugins(plugin_dir: str = "plugins") -> None:
 
     # Ensure directories exist
     os.makedirs(plugin_dir, exist_ok=True)
-    os.makedirs(os.path.join(plugin_dir, "frida_scripts"), exist_ok=True)
-    os.makedirs(os.path.join(plugin_dir, "ghidra_scripts"), exist_ok=True)
     os.makedirs(os.path.join(plugin_dir, "custom_modules"), exist_ok=True)
-
-    # Create sample Frida script
-    sample_frida = '''// Registry Monitor - Monitors registry access
-// This script hooks Windows registry APIs
-
-Interceptor.attach(Module.findExportByName("advapi32.dll", "RegOpenKeyExW"), {
-    onEnter: function(args) {
-        var keyName = args[1].readUtf16String();
-        send("[Registry] Opening key: " + keyName);
-    }
-});
-
-Interceptor.attach(Module.findExportByName("advapi32.dll", "RegQueryValueExW"), {
-    onEnter: function(args) {
-        var valueName = args[1].readUtf16String();
-        send("[Registry] Querying value: " + valueName);
-    }
-});
-
-send("[Registry Monitor] Started monitoring registry access");
-'''
-
-    frida_path = os.path.join(plugin_dir, "frida_scripts", "registry_monitor.js")
-    if not os.path.exists(frida_path):
-        with open(frida_path, "w", encoding="utf-8") as f:
-            f.write(sample_frida)
-        logger.info("Created sample Frida script: %s", frida_path)
-
-    # Create sample Ghidra script
-    sample_ghidra = '''//License Pattern Scanner
-//Searches for common license validation patterns
-//@category License Analysis
-//@keybinding
-//@menupath
-//@toolbar
-
-import ghidra.app.script.GhidraScript;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
-
-public class LicensePatternScanner extends GhidraScript {
-
-    @Override
-    public void run() throws Exception {
-        println("Scanning for license validation patterns...");
-
-        // Common license-related strings
-        String[] patterns = {
-            "license", "activation", "serial", "key",
-            "validate", "verify", "check", "trial",
-            "expire", "register", "unlock"
-        };
-
-        Memory memory = currentProgram.getMemory();
-
-        for (String pattern : patterns) {
-            println("Searching for: " + pattern);
-
-            // Search for strings
-            byte[] searchBytes = pattern.getBytes();
-            Address start = memory.getMinAddress();
-
-            while (start != null) {
-                start = memory.findBytes(start, searchBytes, null, true, monitor);
-                if (start != null) {
-                    println("  Found at: " + start.toString());
-                    start = start.add(1);
-                }
-            }
-        }
-
-        println("License pattern scan complete!");
-    }
-}
-'''
-
-    ghidra_path = os.path.join(plugin_dir, "ghidra_scripts", "LicensePatternScanner.java")
-    if not os.path.exists(ghidra_path):
-        with open(ghidra_path, "w", encoding="utf-8") as f:
-            f.write(sample_ghidra)
-        logger.info("Created sample Ghidra script: %s", ghidra_path)
+    
+    # Note: Frida and Ghidra sample scripts are now managed by their respective managers
+    # This function only creates Python custom module samples
 
     # Create comprehensive custom Python module template
     sample_custom = '''"""

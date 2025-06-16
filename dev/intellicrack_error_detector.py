@@ -502,7 +502,7 @@ Project: {self.project_path}
         
         # Test analyze_binary
         try:
-            from intellicrack.utils.binary_analysis import analyze_binary
+            from intellicrack.utils.analysis.binary_analysis import analyze_binary
             
             for case_name, test_value in edge_cases:
                 try:

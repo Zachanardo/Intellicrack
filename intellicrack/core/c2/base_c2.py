@@ -14,14 +14,14 @@ class BaseC2:
     Base class for C2 components.
     Provides common protocol initialization functionality.
     """
-    
+
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.protocols = []
         self.running = False
         self.stats = {'start_time': None}
-        
-    def initialize_protocols(self, protocols_config: List[Dict[str, Any]], 
+
+    def initialize_protocols(self, protocols_config: List[Dict[str, Any]],
                            encryption_manager: Any) -> None:
         """
         Initialize communication protocols with error handling.
@@ -33,7 +33,7 @@ class BaseC2:
         try:
             for proto_config in protocols_config:
                 protocol_type = proto_config['type']
-                
+
                 if protocol_type == 'https':
                     from .communication_protocols import HttpsProtocol
                     protocol = HttpsProtocol(
@@ -58,22 +58,22 @@ class BaseC2:
                 else:
                     self.logger.warning(f"Unknown protocol type: {protocol_type}")
                     continue
-                
+
                 self.protocols.append({
                     'type': protocol_type,
                     'handler': protocol,
                     'priority': proto_config.get('priority', 99)
                 })
-            
+
             # Sort by priority
             self.protocols.sort(key=lambda x: x['priority'])
-            
+
             self.logger.info(f"Initialized {len(self.protocols)} communication protocols")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to initialize protocols: {e}")
             raise
-    
+
     def prepare_start(self, component_name: str) -> bool:
         """
         Common start preparation for C2 components.

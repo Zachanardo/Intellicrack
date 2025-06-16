@@ -4,7 +4,7 @@ Payload Result Handler
 Common utilities for handling payload generation results.
 """
 
-from typing import Any, Dict, Optional, Callable
+from typing import Any, Callable, Dict, Optional
 
 
 class PayloadResultHandler:
@@ -12,9 +12,9 @@ class PayloadResultHandler:
     Common handler for payload generation results.
     Eliminates duplicate result processing code.
     """
-    
+
     @staticmethod
-    def process_payload_result(result: Dict[str, Any], 
+    def process_payload_result(result: Dict[str, Any],
                              output_func: Callable[[str], None],
                              save_callback: Optional[Callable[[bytes, Dict[str, Any]], None]] = None) -> bool:
         """
@@ -35,7 +35,7 @@ class PayloadResultHandler:
             output_func("✓ Payload generated successfully!")
             output_func(f"  Size: {metadata['size_bytes']} bytes")
             output_func(f"  Entropy: {metadata['entropy']:.3f}")
-            
+
             # Handle optional metadata fields
             if 'null_bytes' in metadata:
                 output_func(f"  Null bytes: {metadata['null_bytes']}")
@@ -47,11 +47,11 @@ class PayloadResultHandler:
                 output_func(f"  MD5: {metadata['hash_md5']}")
             if 'generation_time' in result:
                 output_func(f"  Generation time: {result['generation_time']:.2f}s")
-            
+
             # Call save callback if provided
             if save_callback:
                 save_callback(payload, metadata)
-                
+
             return True
         else:
             error_msg = result.get('error', 'Unknown error occurred')

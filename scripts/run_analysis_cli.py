@@ -38,7 +38,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 try:
-    from intellicrack.utils.binary_analysis import analyze_binary
+    from intellicrack.utils.analysis.binary_analysis import analyze_binary
     from intellicrack.utils.runner_functions import (
         run_comprehensive_analysis,
         run_deep_license_analysis,

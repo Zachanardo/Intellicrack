@@ -30,7 +30,7 @@ import threading
 import traceback
 from typing import Any, Dict, List, Optional
 
-from .common_imports import PSUTIL_AVAILABLE
+from .core.common_imports import PSUTIL_AVAILABLE
 from .misc_utils import log_message
 
 if PSUTIL_AVAILABLE:
@@ -416,8 +416,9 @@ def run_ai_guided_patching(app_instance=None, binary_path: Optional[str] = None,
 
 
 def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
-    """Run advanced Ghidra analysis."""
+    """Run advanced Ghidra analysis with optional script selection."""
     from ..config import CONFIG
+    from .ghidra_script_manager import get_script_manager
 
     try:
         logger.info("Starting advanced Ghidra analysis")
@@ -486,34 +487,56 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
 
             return {"status": "error", "message": error_msg}
 
-        # Make sure script directory exists
-        if not os.path.exists("ghidra_scripts"):
-            os.makedirs("ghidra_scripts")
-
-        # Copy AdvancedAnalysis.java to ghidra_scripts folder
-        script_source = os.path.join("plugins", "ghidra_scripts", "AdvancedAnalysis.java")
-        script_destination = os.path.join("ghidra_scripts", "AdvancedAnalysis.java")
-
-        if not os.path.exists(script_source):
-            # Create the script if it doesn't exist - get from plugins directory
-            plugins_script = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                                         "plugins", "ghidra_scripts", "AdvancedAnalysis.java")
-            if os.path.exists(plugins_script):
-                script_source = plugins_script
-            else:
-                return {"status": "error", "message": "AdvancedAnalysis.java script not found"}
-
-        try:
-            shutil.copy(script_source, script_destination)
-        except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error copying script: {e}"
-            if app_instance:
-                app_instance.update_output.emit(log_message(f"[Ghidra Analysis] {error_msg}"))
-            return {"status": "error", "message": error_msg}
-
         # Create a temporary directory for the Ghidra project
         temp_dir = tempfile.mkdtemp(prefix="intellicrack_ghidra_")
         project_name = "temp_project"
+        
+        # Make sure script directory exists (use temp directory for execution)
+        temp_script_dir = os.path.join(temp_dir, "scripts")
+        os.makedirs(temp_script_dir, exist_ok=True)
+
+        # Check if a specific script was requested
+        script_path = kwargs.get('script_path')
+        script_name = None
+        script_destination = None
+        
+        if script_path and script_path != "__DEFAULT__":
+            # Use custom script
+            script_manager = get_script_manager()
+            script = script_manager.get_script(script_path)
+            
+            if not script:
+                return {"status": "error", "message": f"Script not found: {script_path}"}
+            
+            if not script.is_valid:
+                return {"status": "error", "message": f"Invalid script: {', '.join(script.validation_errors)}"}
+            
+            # Copy script to temp directory for execution
+            script_destination = script_manager.copy_script_for_execution(script, temp_script_dir)
+            script_name = script.filename
+            
+            if app_instance:
+                app_instance.update_output.emit(log_message(
+                    f"[Ghidra Analysis] Using custom script: {script.name} ({script.type})"))
+                app_instance.update_output.emit(log_message(
+                    f"[Ghidra Analysis] Description: {script.description}"))
+        
+        else:
+            # Use default script from centralized location
+            script_source = os.path.join("scripts", "ghidra", "default", "AdvancedAnalysis.java")
+            script_destination = os.path.join(temp_script_dir, "AdvancedAnalysis.java")
+            script_name = "AdvancedAnalysis.java"
+
+            if not os.path.exists(script_source):
+                return {"status": "error", "message": f"Default script not found at {script_source}"}
+
+            try:
+                shutil.copy(script_source, script_destination)
+            except (OSError, ValueError, RuntimeError) as e:
+                error_msg = f"Error copying script: {e}"
+                if app_instance:
+                    app_instance.update_output.emit(log_message(f"[Ghidra Analysis] {error_msg}"))
+                return {"status": "error", "message": error_msg}
 
         # Build the command using common Ghidra utility
         from .ghidra_utils import build_ghidra_command, get_ghidra_headless_path
@@ -533,8 +556,8 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
             temp_dir,
             project_name,
             binary_path,
-            os.path.abspath("ghidra_scripts"),
-            "AdvancedAnalysis.java",
+            os.path.abspath(temp_script_dir),
+            script_name,
             overwrite=True
         )
 
@@ -841,7 +864,7 @@ def run_incremental_analysis(app_instance=None, binary_path: Optional[str] = Non
             }
         else:
             # Run new analysis and cache it
-            from ..utils.binary_analysis import analyze_binary
+            from ..utils.analysis.binary_analysis import analyze_binary
             analysis_results = analyze_binary(binary_path)
             manager.cache_analysis("comprehensive", analysis_results)
 
@@ -1751,9 +1774,9 @@ def run_frida_analysis(app_instance=None, binary_path: Optional[str] = None, **k
 
             # Try to find a suitable Frida script
             script_options = [
-                "plugins/frida_scripts/registry_monitor.js",
-                "plugins/frida_scripts/anti_debugger.js",
-                "intellicrack/plugins/frida_scripts/registry_monitor.js"
+                "scripts/frida/registry_monitor.js",
+                "scripts/frida/anti_debugger.js",
+                "C:/Intellicrack/scripts/frida/registry_monitor.js"
             ]
 
             script_path = None
@@ -1931,8 +1954,8 @@ def run_dynamic_instrumentation(app_instance=None, binary_path: Optional[str] = 
         if not script_path:
             # Default to registry monitor script
             script_candidates = [
-                "plugins/frida_scripts/registry_monitor.js",
-                "intellicrack/plugins/frida_scripts/registry_monitor.js"
+                "scripts/frida/registry_monitor.js",
+                "C:/Intellicrack/scripts/frida/registry_monitor.js"
             ]
 
             for candidate in script_candidates:

@@ -19,12 +19,11 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import json
 import logging
 import re
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
-from ...utils.radare2_utils import R2Session, R2Exception, r2_session
+from ...utils.radare2_utils import R2Exception, R2Session, r2_session
 
 
 class R2StringAnalyzer:
@@ -91,23 +90,23 @@ class R2StringAnalyzer:
                 # Get all strings using different radare2 commands
                 all_strings = self._get_comprehensive_strings(r2, min_length, encoding)
                 result['total_strings'] = len(all_strings)
-                
+
                 # Analyze strings by section
                 result['string_sections'] = self._analyze_strings_by_section(r2, all_strings)
-                
+
                 # Categorize strings
                 categories = self._categorize_strings(all_strings)
                 result.update(categories)
-                
+
                 # Get cross-references for important strings
                 result['cross_references'] = self._get_string_cross_references(r2, all_strings)
-                
+
                 # Perform entropy analysis
                 result['string_entropy_analysis'] = self._analyze_string_entropy(all_strings)
-                
+
                 # Detect suspicious patterns
                 result['suspicious_patterns'] = self._detect_suspicious_patterns(all_strings)
-                
+
                 # Generate statistics
                 result['categorized_stats'] = self._generate_category_statistics(result)
 
@@ -120,13 +119,13 @@ class R2StringAnalyzer:
     def _get_comprehensive_strings(self, r2: R2Session, min_length: int, encoding: str) -> List[Dict[str, Any]]:
         """Get strings using multiple radare2 commands for comprehensive coverage."""
         all_strings = []
-        
+
         try:
             # Primary string extraction - all strings in sections
             strings_data = r2._execute_command('izzj', expect_json=True)
             if isinstance(strings_data, list):
                 all_strings.extend(strings_data)
-            
+
             # Get strings from data sections specifically
             data_strings = r2._execute_command('izj', expect_json=True)
             if isinstance(data_strings, list):
@@ -135,7 +134,7 @@ class R2StringAnalyzer:
                 for string_data in data_strings:
                     if string_data.get('vaddr', 0) not in existing_addrs:
                         all_strings.append(string_data)
-            
+
             # Get strings with minimum length filter
             if min_length > 4:
                 filtered_strings = []
@@ -143,7 +142,7 @@ class R2StringAnalyzer:
                     if string_data.get('length', 0) >= min_length:
                         filtered_strings.append(string_data)
                 all_strings = filtered_strings
-            
+
             # Get wide character strings (UTF-16)
             try:
                 wide_strings = r2._execute_command('izwj', expect_json=True)
@@ -158,16 +157,16 @@ class R2StringAnalyzer:
                             all_strings.append(wide_string)
             except R2Exception:
                 pass
-            
+
             # Clean and normalize string data
             normalized_strings = []
             for string_data in all_strings:
                 normalized = self._normalize_string_data(string_data)
                 if normalized:
                     normalized_strings.append(normalized)
-            
+
             return normalized_strings
-            
+
         except R2Exception as e:
             self.logger.error(f"Failed to extract strings: {e}")
             return []
@@ -176,12 +175,12 @@ class R2StringAnalyzer:
         """Normalize string data from radare2 output."""
         if not isinstance(string_data, dict):
             return None
-        
+
         # Extract string content
         content = string_data.get('string', '')
         if not content:
             return None
-        
+
         # Normalize the data structure
         normalized = {
             'content': content,
@@ -194,18 +193,18 @@ class R2StringAnalyzer:
             'encoding': string_data.get('encoding', 'ascii'),
             'is_wide': string_data.get('is_wide', False)
         }
-        
+
         # Calculate additional metrics
         normalized['entropy'] = self._calculate_entropy(content)
         normalized['has_null_bytes'] = '\x00' in content
         normalized['is_printable'] = all(c.isprintable() or c.isspace() for c in content)
-        
+
         return normalized
 
     def _analyze_strings_by_section(self, r2: R2Session, strings: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Analyze string distribution by binary sections."""
         sections = {}
-        
+
         # Get section information
         try:
             section_info = r2._execute_command('iSj', expect_json=True)
@@ -219,14 +218,14 @@ class R2StringAnalyzer:
                     }
         except R2Exception:
             pass
-        
+
         # Distribute strings to sections
         for string_data in strings:
             section_name = string_data.get('section', 'unknown')
             if section_name not in sections:
                 sections[section_name] = {'strings': []}
             sections[section_name]['strings'].append(string_data)
-        
+
         # Calculate section statistics
         for section_name, section_data in sections.items():
             section_strings = section_data['strings']
@@ -235,7 +234,7 @@ class R2StringAnalyzer:
             section_data['average_string_length'] = (
                 section_data['total_string_length'] / max(1, section_data['string_count'])
             )
-        
+
         return sections
 
     def _categorize_strings(self, strings: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
@@ -257,51 +256,51 @@ class R2StringAnalyzer:
 
         for string_data in strings:
             content = string_data.get('content', '').lower()
-            
+
             # License-related strings
             if self._is_license_string(content):
                 categories['license_strings'].append(string_data)
-            
+
             # Cryptographic strings
             if self._is_crypto_string(content):
                 categories['crypto_strings'].append(string_data)
-            
+
             # API function names
             if self._is_api_string(content):
                 categories['api_strings'].append(string_data)
-            
+
             # URLs and network endpoints
             if self._is_url_string(content):
                 categories['url_strings'].append(string_data)
-            
+
             # File paths
             if self._is_file_path_string(content):
                 categories['file_path_strings'].append(string_data)
-            
+
             # Registry keys
             if self._is_registry_string(content):
                 categories['registry_strings'].append(string_data)
-            
+
             # Error messages
             if self._is_error_message_string(content):
                 categories['error_message_strings'].append(string_data)
-            
+
             # Version information
             if self._is_version_string(content):
                 categories['version_strings'].append(string_data)
-            
+
             # Compiler artifacts
             if self._is_compiler_string(content):
                 categories['compiler_strings'].append(string_data)
-            
+
             # Debug information
             if self._is_debug_string(content):
                 categories['debug_strings'].append(string_data)
-            
+
             # UI elements
             if self._is_ui_string(content):
                 categories['user_interface_strings'].append(string_data)
-            
+
             # Network-related
             if self._is_network_string(content):
                 categories['network_strings'].append(string_data)
@@ -327,7 +326,7 @@ class R2StringAnalyzer:
             r'\billegal\b.*\bcopy\b',
             r'\bgenuine\b.*\bsoftware\b'
         ]
-        
+
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in license_patterns)
 
     def _is_crypto_string(self, content: str) -> bool:
@@ -343,7 +342,7 @@ class R2StringAnalyzer:
             r'\bcrypto\w*\b',
             r'\bcipher\w*\b'
         ]
-        
+
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in crypto_patterns)
 
     def _is_api_string(self, content: str) -> bool:
@@ -358,11 +357,11 @@ class R2StringAnalyzer:
             r'^_\w+$',      # C runtime functions
             r'^__\w+$'      # Compiler intrinsics
         ]
-        
+
         # Check length (API names are typically not too long)
         if len(content) > 50:
             return False
-        
+
         return any(re.match(pattern, content) for pattern in api_patterns)
 
     def _is_url_string(self, content: str) -> bool:
@@ -376,7 +375,7 @@ class R2StringAnalyzer:
             r':\d{1,5}$',  # Port numbers
             r'\.com|\.org|\.net|\.gov|\.edu|\.mil'
         ]
-        
+
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in url_patterns)
 
     def _is_file_path_string(self, content: str) -> bool:
@@ -390,7 +389,7 @@ class R2StringAnalyzer:
             r'/[^/]+/',    # Unix path separators
             r'\.(exe|dll|sys|bat|cmd|ini|cfg|log|txt|xml|json)$'
         ]
-        
+
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in path_patterns)
 
     def _is_registry_string(self, content: str) -> bool:
@@ -407,7 +406,7 @@ class R2StringAnalyzer:
             r'\\Windows\\',
             r'\\CurrentVersion\\'
         ]
-        
+
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in registry_patterns)
 
     def _is_error_message_string(self, content: str) -> bool:
@@ -426,7 +425,7 @@ class R2StringAnalyzer:
             r'\bnot found\b',
             r'\baccess\b.*\bdenied\b'
         ]
-        
+
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in error_patterns)
 
     def _is_version_string(self, content: str) -> bool:
@@ -439,7 +438,7 @@ class R2StringAnalyzer:
             r'\b(c)\b.*\d{4}',
             r'\ball rights reserved\b'
         ]
-        
+
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in version_patterns)
 
     def _is_compiler_string(self, content: str) -> bool:
@@ -453,7 +452,7 @@ class R2StringAnalyzer:
             r'\b\.obj$',
             r'\b\.lib$'
         ]
-        
+
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in compiler_patterns)
 
     def _is_debug_string(self, content: str) -> bool:
@@ -470,7 +469,7 @@ class R2StringAnalyzer:
             r'\b__LINE__\b',
             r'\b__FUNCTION__\b'
         ]
-        
+
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in debug_patterns)
 
     def _is_ui_string(self, content: str) -> bool:
@@ -486,7 +485,7 @@ class R2StringAnalyzer:
             r'&\w+',  # Mnemonics
             r'\.\.\.$'  # Ellipsis
         ]
-        
+
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in ui_patterns)
 
     def _is_network_string(self, content: str) -> bool:
@@ -501,17 +500,17 @@ class R2StringAnalyzer:
             r'\bgateway\b',
             r'\bfirewall\b'
         ]
-        
+
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in network_patterns)
 
     def _get_string_cross_references(self, r2: R2Session, strings: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
         """Get cross-references for important strings."""
         xrefs = {}
-        
+
         # Focus on license and crypto strings for cross-reference analysis
-        important_strings = [s for s in strings if self._is_license_string(s.get('content', '')) or 
+        important_strings = [s for s in strings if self._is_license_string(s.get('content', '')) or
                            self._is_crypto_string(s.get('content', ''))]
-        
+
         for string_data in important_strings[:20]:  # Limit to avoid performance issues
             addr = string_data.get('address', 0)
             if addr:
@@ -525,7 +524,7 @@ class R2StringAnalyzer:
                         }
                 except R2Exception:
                     continue
-        
+
         return xrefs
 
     def _analyze_string_entropy(self, strings: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -536,12 +535,12 @@ class R2StringAnalyzer:
             'average_entropy': 0,
             'entropy_distribution': {'0-1': 0, '1-2': 0, '2-3': 0, '3-4': 0, '4+': 0}
         }
-        
+
         total_entropy = 0
         for string_data in strings:
             entropy = string_data.get('entropy', 0)
             total_entropy += entropy
-            
+
             # Categorize by entropy
             if entropy > 3.5:
                 entropy_analysis['high_entropy_strings'].append(string_data)
@@ -555,19 +554,19 @@ class R2StringAnalyzer:
             else:
                 entropy_analysis['low_entropy_strings'].append(string_data)
                 entropy_analysis['entropy_distribution']['0-1'] += 1
-        
+
         if strings:
             entropy_analysis['average_entropy'] = total_entropy / len(strings)
-        
+
         return entropy_analysis
 
     def _detect_suspicious_patterns(self, strings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Detect suspicious string patterns."""
         suspicious = []
-        
+
         for string_data in strings:
             content = string_data.get('content', '')
-            
+
             # Base64-like patterns
             if re.match(r'^[A-Za-z0-9+/]{20,}={0,2}$', content):
                 suspicious.append({
@@ -575,7 +574,7 @@ class R2StringAnalyzer:
                     'pattern_type': 'base64_like',
                     'description': 'Possible Base64 encoded data'
                 })
-            
+
             # Hex-like patterns
             if re.match(r'^[0-9A-Fa-f]{32,}$', content):
                 suspicious.append({
@@ -583,7 +582,7 @@ class R2StringAnalyzer:
                     'pattern_type': 'hex_data',
                     'description': 'Long hexadecimal string (possible hash/key)'
                 })
-            
+
             # High entropy short strings (possible keys)
             if string_data.get('entropy', 0) > 3.8 and len(content) < 50:
                 suspicious.append({
@@ -591,7 +590,7 @@ class R2StringAnalyzer:
                     'pattern_type': 'high_entropy',
                     'description': 'High entropy string (possible encrypted data/key)'
                 })
-            
+
             # Suspicious license keywords
             if any(keyword in content.lower() for keyword in ['crack', 'keygen', 'serial', 'patch']):
                 suspicious.append({
@@ -599,19 +598,19 @@ class R2StringAnalyzer:
                     'pattern_type': 'crack_related',
                     'description': 'Contains crack/keygen related keywords'
                 })
-        
+
         return suspicious
 
     def _calculate_entropy(self, text: str) -> float:
         """Calculate Shannon entropy of a string."""
         if not text:
             return 0
-        
+
         # Count character frequencies
         freq = {}
         for char in text:
             freq[char] = freq.get(char, 0) + 1
-        
+
         # Calculate entropy
         entropy = 0
         text_len = len(text)
@@ -619,20 +618,20 @@ class R2StringAnalyzer:
             p = count / text_len
             if p > 0:
                 entropy -= p * (p.bit_length() - 1)
-        
+
         return entropy
 
     def _generate_category_statistics(self, result: Dict[str, Any]) -> Dict[str, Any]:
         """Generate statistics for categorized strings."""
         stats = {}
-        
+
         categories = [
             'license_strings', 'crypto_strings', 'api_strings', 'url_strings',
             'file_path_strings', 'registry_strings', 'error_message_strings',
             'version_strings', 'compiler_strings', 'debug_strings',
             'user_interface_strings', 'network_strings'
         ]
-        
+
         for category in categories:
             category_strings = result.get(category, [])
             stats[category] = {
@@ -640,7 +639,7 @@ class R2StringAnalyzer:
                 'percentage': (len(category_strings) / max(1, result.get('total_strings', 1))) * 100,
                 'average_length': sum(len(s.get('content', '')) for s in category_strings) / max(1, len(category_strings))
             }
-        
+
         return stats
 
     def search_license_validation_strings(self) -> Dict[str, Any]:
@@ -648,14 +647,14 @@ class R2StringAnalyzer:
         try:
             with r2_session(self.binary_path, self.radare2_path) as r2:
                 validation_strings = []
-                
+
                 # Search for specific license validation patterns
                 license_search_terms = [
                     'license', 'registration', 'activation', 'serial', 'key',
                     'trial', 'demo', 'expire', 'valid', 'authentic', 'genuine',
                     'pirat', 'crack', 'illegal', 'stolen', 'tamper'
                 ]
-                
+
                 for term in license_search_terms:
                     try:
                         # Use radare2's search functionality
@@ -678,13 +677,13 @@ class R2StringAnalyzer:
                                         continue
                     except R2Exception:
                         continue
-                
+
                 return {
                     'validation_strings': validation_strings,
                     'total_found': len(validation_strings),
                     'search_terms_used': license_search_terms
                 }
-                
+
         except R2Exception as e:
             return {'error': str(e)}
 

@@ -56,7 +56,7 @@ class WindowsActivator:
     """
 
     def __init__(self):
-        self.script_path = Path(__file__).parent.parent.parent.parent / "Windows_Patch" / "WindowsActivator.cmd"
+        self.script_path = Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
         self.temp_dir = Path(tempfile.gettempdir()) / "intellicrack_activation"
         self.temp_dir.mkdir(exist_ok=True)
 

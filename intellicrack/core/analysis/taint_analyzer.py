@@ -255,7 +255,7 @@ class TaintAnalysisEngine:
             self.logger.debug("Capstone not available, trying alternative methods")
 
         # Fallback: Try to use objdump if available
-        from ...utils.binary_analysis import disassemble_with_objdump
+        from ...utils.analysis.binary_analysis import disassemble_with_objdump
 
         instructions = disassemble_with_objdump(
             self.binary_path,

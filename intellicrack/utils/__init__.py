@@ -124,7 +124,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import dependencies: %s", e)
 
 try:
-    from .entropy_utils import (
+    from .analysis.entropy_utils import (
         analyze_entropy_sections,
         calculate_byte_entropy,
         calculate_entropy,
@@ -238,7 +238,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import patch_verification: %s", e)
 
 try:
-    from .binary_analysis import (
+    from .analysis.binary_analysis import (
         analyze_binary,
         analyze_binary_optimized,
         analyze_elf,
@@ -328,12 +328,12 @@ except ImportError as e:
     _init_logger.warning("Failed to import additional_runners: %s", e)
 
 try:
-    from .os_detection_mixin import OSDetectionMixin
+    from .system.os_detection_mixin import OSDetectionMixin
 except ImportError as e:
     _init_logger.warning("Failed to import os_detection_mixin: %s", e)
 
 try:
-    from .core_utilities import (
+    from .core.core_utilities import (
         TOOL_REGISTRY,
         deep_runtime_monitoring,
         dispatch_tool,
@@ -350,7 +350,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import core_utilities: %s", e)
 
 try:
-    from .final_utilities import (
+    from .core.final_utilities import (
         accelerate_hash_calculation,
         add_code_snippet,
         add_dataset_row,
@@ -493,7 +493,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import certificate_common functions: %s", e)
 
 try:
-    from .pattern_search import (
+    from .analysis.pattern_search import (
         find_function_prologues,
         find_license_patterns,
         search_patterns_in_binary,
@@ -519,7 +519,7 @@ __all__ = [
     # From logger
     'get_logger', 'setup_logging', 'logger',
 
-    # From os_detection_mixin  
+    # From os_detection_mixin
     'OSDetectionMixin',
 
     # From misc_utils
@@ -699,12 +699,12 @@ __all__ = [
 
     # From certificate_common
     'create_certificate_builder',
-    
+
     # From pattern_search
     'search_patterns_in_binary',
     'find_function_prologues',
     'find_license_patterns',
-    
+
     # From severity_levels
     'SeverityLevel',
     'SecurityRelevance',

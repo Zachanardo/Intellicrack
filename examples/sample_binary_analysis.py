@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 try:
-    from intellicrack.utils.binary_analysis import analyze_binary, identify_binary_format
+    from intellicrack.utils.analysis.binary_analysis import analyze_binary, identify_binary_format
     from intellicrack.core.analysis import (
         VulnerabilityEngine,
         SymbolicExecutionEngine,

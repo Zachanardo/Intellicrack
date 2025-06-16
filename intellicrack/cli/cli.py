@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Basic imports (with fallbacks for missing components)
 try:
-    from ..core.payload_generation import Architecture, PayloadEngine, PayloadTemplates, PayloadType
+    from ..core.exploitation import Architecture, PayloadEngine, PayloadTemplates, PayloadType
 except ImportError:
     PayloadEngine = None
     PayloadTemplates = None
@@ -37,18 +37,18 @@ try:
 except ImportError:
     C2Server = None
     C2Client = None
-from ..utils.binary_analysis import analyze_binary
+from ..utils.analysis.binary_analysis import analyze_binary
 from ..utils.exploitation import exploit
 from ..utils.patch_generator import generate_patch
 
 # Import new exploitation modules
 try:
     from ..ai.vulnerability_research_integration import VulnerabilityResearchAI
-    from ..core.c2_infrastructure.c2_manager import C2Manager
-    from ..core.payload_generation.payload_engine import PayloadEngine as AdvancedPayloadEngine
-    from ..core.post_exploitation.lateral_movement import LateralMovementManager
-    from ..core.post_exploitation.persistence_manager import PersistenceManager
-    from ..core.post_exploitation.privilege_escalation import PrivilegeEscalationManager
+    from ..core.c2.c2_manager import C2Manager
+    from ..core.exploitation.payload_engine import PayloadEngine as AdvancedPayloadEngine
+    from ..core.exploitation.lateral_movement import LateralMovementManager
+    from ..core.exploitation.persistence_manager import PersistenceManager
+    from ..core.exploitation.privilege_escalation import PrivilegeEscalationManager
     from ..core.vulnerability_research.research_manager import CampaignType, ResearchManager
     from ..core.vulnerability_research.vulnerability_analyzer import (
         AnalysisMethod,
@@ -547,9 +547,9 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
                      encoding: str, evasion: str, output: Optional[str], format: str):
     """Generate advanced payload with evasion techniques"""
     try:
-        from ..core.payload_generation.payload_types import Architecture as AdvancedArchitecture
-        from ..core.payload_generation.payload_types import EncodingType
-        from ..core.payload_generation.payload_types import PayloadType as AdvancedPayloadType
+        from ..core.exploitation.payload_types import Architecture as AdvancedArchitecture
+        from ..core.exploitation.payload_types import EncodingType
+        from ..core.exploitation.payload_types import PayloadType as AdvancedPayloadType
 
         engine = AdvancedPayloadEngine()
 

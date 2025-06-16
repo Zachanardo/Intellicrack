@@ -462,15 +462,15 @@ class SandboxDetector(BaseDetector):
                 try:
                     # Check running processes using base class method
                     processes, process_list = self.get_running_processes()
-                    
+
                     # Check for sandbox monitoring processes
-                    sandbox_processes = ['procmon', 'dbgview', 'filemon', 'regmon', 
+                    sandbox_processes = ['procmon', 'dbgview', 'filemon', 'regmon',
                                        'wireshark', 'tcpdump', 'netmon', 'apimonitor']
-                    
+
                     for proc in sandbox_processes:
                         if proc in processes or any(proc in p for p in process_list):
                             details['monitoring_signs'].append(f'Monitor process: {proc}')
-                    
+
                     # Check current process for suspicious DLLs
                     import psutil
                     current_proc = psutil.Process()
@@ -692,7 +692,7 @@ class SandboxDetector(BaseDetector):
         # Methods that are hard to evade
         hard_methods = ['file_system', 'process_monitoring', 'api_hooks']
         medium_methods = ['environment_checks', 'network_connectivity']
-        
+
         return self.calculate_detection_score(detections, hard_methods, medium_methods)
 
     def generate_sandbox_evasion(self) -> str:

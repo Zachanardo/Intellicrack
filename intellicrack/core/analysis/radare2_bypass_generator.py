@@ -19,16 +19,13 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import json
 import logging
-import os
-import struct
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-from ...utils.radare2_utils import r2_session, R2Exception
+from ...utils.radare2_utils import R2Exception, r2_session
+from .radare2_ai_integration import R2AIEngine
 from .radare2_decompiler import R2DecompilationEngine
 from .radare2_vulnerability_engine import R2VulnerabilityEngine
-from .radare2_ai_integration import R2AIEngine
 
 
 class R2BypassGenerator:
@@ -49,7 +46,7 @@ class R2BypassGenerator:
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
-        
+
         # Initialize analysis engines
         self.decompiler = R2DecompilationEngine(binary_path, radare2_path)
         self.vulnerability_engine = R2VulnerabilityEngine(binary_path, radare2_path)
@@ -76,37 +73,37 @@ class R2BypassGenerator:
             with r2_session(self.binary_path, self.radare2_path) as r2:
                 # Analyze license validation mechanisms
                 license_analysis = self._analyze_license_mechanisms(r2)
-                
+
                 # Generate bypass strategies
                 result['bypass_strategies'] = self._generate_bypass_strategies(license_analysis)
-                
+
                 # Generate automated patches
                 result['automated_patches'] = self._generate_automated_patches(r2, license_analysis)
-                
+
                 # Generate keygen algorithms
                 result['keygen_algorithms'] = self._generate_keygen_algorithms(license_analysis)
-                
+
                 # Generate registry modifications
                 result['registry_modifications'] = self._generate_registry_modifications(license_analysis)
-                
+
                 # Generate file modifications
                 result['file_modifications'] = self._generate_file_modifications(license_analysis)
-                
+
                 # Generate memory patches
                 result['memory_patches'] = self._generate_memory_patches(r2, license_analysis)
-                
+
                 # Generate API hooks
                 result['api_hooks'] = self._generate_api_hooks(license_analysis)
-                
+
                 # Generate validation bypasses
                 result['validation_bypasses'] = self._generate_validation_bypasses(license_analysis)
-                
+
                 # Calculate success probabilities
                 result['success_probability'] = self._calculate_success_probabilities(result)
-                
+
                 # Generate implementation guide
                 result['implementation_guide'] = self._generate_implementation_guide(result)
-                
+
                 # Assess risks
                 result['risk_assessment'] = self._assess_bypass_risks(result)
 
@@ -134,8 +131,8 @@ class R2BypassGenerator:
             # Get functions that might be license-related
             functions = r2.get_functions()
             license_functions = [
-                f for f in functions 
-                if any(keyword in f.get('name', '').lower() 
+                f for f in functions
+                if any(keyword in f.get('name', '').lower()
                       for keyword in ['license', 'valid', 'check', 'trial', 'register', 'activ'])
             ]
 
@@ -145,11 +142,11 @@ class R2BypassGenerator:
                 if func_addr:
                     # Decompile function
                     decompiled = self.decompiler.decompile_function(func_addr)
-                    
+
                     # Extract validation logic
                     validation_info = self._extract_validation_logic(decompiled, func)
                     analysis['validation_functions'].append(validation_info)
-                    
+
                     # Analyze crypto operations
                     crypto_ops = self._extract_crypto_operations(decompiled)
                     analysis['crypto_operations'].extend(crypto_ops)
@@ -227,9 +224,9 @@ class R2BypassGenerator:
     def _extract_crypto_operations(self, decompiled: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract cryptographic operations from decompiled code."""
         crypto_ops = []
-        
+
         pseudocode = decompiled.get('pseudocode', '')
-        
+
         # Look for crypto function calls
         crypto_patterns = [
             r'(AES|DES|RSA|SHA|MD5|Hash|Encrypt|Decrypt|Cipher)\w*\s*\(',
@@ -240,7 +237,7 @@ class R2BypassGenerator:
 
         import re
         lines = pseudocode.split('\n')
-        
+
         for i, line in enumerate(lines):
             for pattern in crypto_patterns:
                 matches = re.findall(pattern, line, re.IGNORECASE)
@@ -258,7 +255,7 @@ class R2BypassGenerator:
     def _analyze_license_strings(self, r2) -> List[Dict[str, Any]]:
         """Analyze license-related strings."""
         patterns = []
-        
+
         try:
             # Search for license-related strings
             license_keywords = [
@@ -303,11 +300,11 @@ class R2BypassGenerator:
         try:
             # Get imports
             imports = r2._execute_command('iij', expect_json=True)
-            
+
             if isinstance(imports, list):
                 for imp in imports:
                     api_name = imp.get('name', '').lower()
-                    
+
                     # Registry operations
                     if any(reg_api in api_name for reg_api in ['regopen', 'regquery', 'regset']):
                         api_analysis['registry_operations'].append({
@@ -315,7 +312,7 @@ class R2BypassGenerator:
                             'purpose': 'license_storage',
                             'bypass_method': 'registry_redirection'
                         })
-                    
+
                     # File operations
                     elif any(file_api in api_name for file_api in ['createfile', 'readfile', 'writefile']):
                         api_analysis['file_operations'].append({
@@ -323,7 +320,7 @@ class R2BypassGenerator:
                             'purpose': 'license_file_access',
                             'bypass_method': 'file_redirection'
                         })
-                    
+
                     # Network operations
                     elif any(net_api in api_name for net_api in ['internetopen', 'httpopen', 'connect']):
                         api_analysis['network_operations'].append({
@@ -331,7 +328,7 @@ class R2BypassGenerator:
                             'purpose': 'online_validation',
                             'bypass_method': 'network_blocking'
                         })
-                    
+
                     # Time checks
                     elif any(time_api in api_name for time_api in ['getsystemtime', 'getlocaltime']):
                         api_analysis['time_checks'].append({
@@ -339,7 +336,7 @@ class R2BypassGenerator:
                             'purpose': 'trial_expiration',
                             'bypass_method': 'time_manipulation'
                         })
-                    
+
                     # Hardware checks
                     elif any(hw_api in api_name for hw_api in ['getvolumeinformation', 'getcomputername']):
                         api_analysis['hardware_checks'].append({
@@ -356,9 +353,9 @@ class R2BypassGenerator:
     def _build_validation_flow(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Build the validation flow diagram."""
         flow = []
-        
+
         validation_functions = analysis.get('validation_functions', [])
-        
+
         for i, func_info in enumerate(validation_functions):
             flow_step = {
                 'step': i + 1,
@@ -375,12 +372,12 @@ class R2BypassGenerator:
     def _generate_bypass_strategies(self, license_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate bypass strategies based on analysis."""
         strategies = []
-        
+
         validation_functions = license_analysis.get('validation_functions', [])
-        
+
         for func_info in validation_functions:
             validation_type = func_info.get('validation_type', 'unknown')
-            
+
             if validation_type == 'simple':
                 strategies.append({
                     'strategy': 'Direct Patching',
@@ -389,7 +386,7 @@ class R2BypassGenerator:
                     'difficulty': 'easy',
                     'implementation': self._generate_direct_patch_implementation(func_info)
                 })
-            
+
             elif validation_type == 'cryptographic':
                 strategies.append({
                     'strategy': 'Crypto Bypass',
@@ -398,7 +395,7 @@ class R2BypassGenerator:
                     'difficulty': 'medium',
                     'implementation': self._generate_crypto_bypass_implementation(func_info)
                 })
-            
+
             elif validation_type == 'online':
                 strategies.append({
                     'strategy': 'Network Interception',
@@ -407,7 +404,7 @@ class R2BypassGenerator:
                     'difficulty': 'medium',
                     'implementation': self._generate_network_bypass_implementation(func_info)
                 })
-            
+
             elif validation_type == 'time_based':
                 strategies.append({
                     'strategy': 'Time Manipulation',
@@ -432,12 +429,12 @@ class R2BypassGenerator:
     def _generate_automated_patches(self, r2, license_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate automated binary patches."""
         patches = []
-        
+
         validation_functions = license_analysis.get('validation_functions', [])
-        
+
         for func_info in validation_functions:
             bypass_points = func_info.get('bypass_points', [])
-            
+
             for bypass_point in bypass_points:
                 patch = self._create_binary_patch(r2, func_info, bypass_point)
                 if patch:
@@ -448,13 +445,13 @@ class R2BypassGenerator:
     def _generate_keygen_algorithms(self, license_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate keygen algorithms based on crypto analysis."""
         keygens = []
-        
+
         crypto_operations = license_analysis.get('crypto_operations', [])
-        
+
         for crypto_op in crypto_operations:
             algorithm = crypto_op.get('algorithm', '')
             purpose = crypto_op.get('purpose', '')
-            
+
             if purpose == 'key_validation':
                 keygen = {
                     'algorithm': algorithm,
@@ -469,9 +466,9 @@ class R2BypassGenerator:
     def _generate_registry_modifications(self, license_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate registry modification instructions."""
         modifications = []
-        
+
         registry_ops = license_analysis.get('registry_operations', [])
-        
+
         for reg_op in registry_ops:
             modifications.append({
                 'operation': 'create_key',
@@ -487,9 +484,9 @@ class R2BypassGenerator:
     def _generate_file_modifications(self, license_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate file modification instructions."""
         modifications = []
-        
+
         file_ops = license_analysis.get('file_operations', [])
-        
+
         for file_op in file_ops:
             modifications.append({
                 'operation': 'create_file',
@@ -503,12 +500,12 @@ class R2BypassGenerator:
     def _generate_memory_patches(self, r2, license_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate runtime memory patches."""
         patches = []
-        
+
         validation_functions = license_analysis.get('validation_functions', [])
-        
+
         for func_info in validation_functions:
             func_addr = func_info['function'].get('offset', 0)
-            
+
             if func_addr:
                 patches.append({
                     'type': 'memory_patch',
@@ -523,7 +520,7 @@ class R2BypassGenerator:
     def _generate_api_hooks(self, license_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate API hook implementations."""
         hooks = []
-        
+
         # Registry API hooks
         registry_ops = license_analysis.get('registry_operations', [])
         for reg_op in registry_ops:
@@ -549,9 +546,9 @@ class R2BypassGenerator:
     def _generate_validation_bypasses(self, license_analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Generate validation bypass techniques."""
         bypasses = []
-        
+
         validation_flow = license_analysis.get('validation_flow', [])
-        
+
         for step in validation_flow:
             bypass = {
                 'target': step['function'],
@@ -569,7 +566,7 @@ class R2BypassGenerator:
     def _suggest_bypass_method(self, pattern: Dict[str, Any]) -> str:
         """Suggest bypass method for a validation pattern."""
         line = pattern.get('line', '').lower()
-        
+
         if 'if' in line and ('valid' in line or 'check' in line):
             return 'nop_conditional'
         elif 'return' in line:
@@ -582,7 +579,7 @@ class R2BypassGenerator:
     def _identify_crypto_algorithm(self, operation: str) -> str:
         """Identify cryptographic algorithm from operation name."""
         op_lower = operation.lower()
-        
+
         if 'aes' in op_lower:
             return 'AES'
         elif 'des' in op_lower:
@@ -599,7 +596,7 @@ class R2BypassGenerator:
     def _identify_crypto_purpose(self, line: str) -> str:
         """Identify purpose of cryptographic operation."""
         line_lower = line.lower()
-        
+
         if any(keyword in line_lower for keyword in ['key', 'serial', 'license']):
             return 'key_validation'
         elif any(keyword in line_lower for keyword in ['hash', 'digest']):
@@ -612,7 +609,7 @@ class R2BypassGenerator:
     def _assess_string_bypass_potential(self, string_content: str) -> str:
         """Assess bypass potential for license string."""
         content_lower = string_content.lower()
-        
+
         if any(keyword in content_lower for keyword in ['invalid', 'expired', 'trial']):
             return 'high'  # Error messages can be easily patched
         elif any(keyword in content_lower for keyword in ['valid', 'registered', 'licensed']):
@@ -624,7 +621,7 @@ class R2BypassGenerator:
         """Assess bypass difficulty for function."""
         complexity = func_info.get('complexity', 'low')
         validation_type = func_info.get('validation_type', 'simple')
-        
+
         if validation_type == 'cryptographic' and complexity == 'high':
             return 'hard'
         elif validation_type == 'online' or complexity == 'high':
@@ -635,7 +632,7 @@ class R2BypassGenerator:
     def _recommend_bypass_approach(self, func_info: Dict[str, Any]) -> str:
         """Recommend bypass approach for function."""
         validation_type = func_info.get('validation_type', 'simple')
-        
+
         approach_map = {
             'simple': 'direct_patching',
             'cryptographic': 'crypto_bypass',
@@ -643,7 +640,7 @@ class R2BypassGenerator:
             'time_based': 'time_manipulation',
             'hardware_fingerprint': 'hardware_spoofing'
         }
-        
+
         return approach_map.get(validation_type, 'direct_patching')
 
     def _generate_direct_patch_implementation(self, func_info: Dict[str, Any]) -> Dict[str, str]:
@@ -705,11 +702,11 @@ class R2BypassGenerator:
         try:
             # Get function disassembly
             disasm = r2._execute_command(f'pdf @ {hex(func_addr)}')
-            
+
             # Find the target instruction
             target_line = bypass_point.get('line_number', 0)
             bypass_method = bypass_point.get('bypass_method', 'nop_instruction')
-            
+
             patch = {
                 'function': func_info['function']['name'],
                 'address': hex(func_addr),
@@ -720,16 +717,16 @@ class R2BypassGenerator:
                 'patch_instruction': self._generate_patch_instruction(bypass_method),
                 'patch_bytes': self._generate_patch_bytes_for_method(bypass_method)
             }
-            
+
             return patch
-            
+
         except R2Exception:
             return None
 
     def _generate_keygen_implementation(self, crypto_op: Dict[str, Any]) -> Dict[str, str]:
         """Generate keygen implementation."""
         algorithm = crypto_op.get('algorithm', 'Unknown')
-        
+
         if algorithm == 'MD5' or algorithm == 'SHA':
             return {
                 'type': 'hash_based_keygen',
@@ -755,7 +752,7 @@ class R2BypassGenerator:
     def _assess_keygen_feasibility(self, crypto_op: Dict[str, Any]) -> float:
         """Assess feasibility of keygen creation."""
         algorithm = crypto_op.get('algorithm', 'Unknown')
-        
+
         if algorithm in ['MD5', 'SHA', 'CRC32']:
             return 0.8  # Hash-based systems are often reversible
         elif algorithm in ['AES', 'DES']:
@@ -779,13 +776,13 @@ class R2BypassGenerator:
         """Generate fake license value."""
         import random
         import string
-        
+
         # Generate realistic license key format
         segments = []
         for _ in range(4):
             segment = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
             segments.append(segment)
-        
+
         return '-'.join(segments)
 
     def _predict_license_file_path(self, file_op: Dict[str, Any]) -> str:
@@ -849,7 +846,7 @@ HANDLE WINAPI HookedCreateFile(LPCSTR lpFileName, ...) {
     def _generate_bypass_steps(self, step: Dict[str, Any]) -> List[str]:
         """Generate step-by-step bypass instructions."""
         method = step.get('recommended_approach', 'direct_patching')
-        
+
         if method == 'direct_patching':
             return [
                 '1. Open binary in hex editor',
@@ -878,7 +875,7 @@ HANDLE WINAPI HookedCreateFile(LPCSTR lpFileName, ...) {
     def _get_required_tools(self, step: Dict[str, Any]) -> List[str]:
         """Get required tools for bypass."""
         method = step.get('recommended_approach', 'direct_patching')
-        
+
         tool_map = {
             'direct_patching': ['Hex Editor', 'Disassembler', 'Debugger'],
             'crypto_bypass': ['Disassembler', 'Crypto Analysis Tools', 'Debugger'],
@@ -886,7 +883,7 @@ HANDLE WINAPI HookedCreateFile(LPCSTR lpFileName, ...) {
             'time_manipulation': ['API Hooking Tool', 'System Time Manipulation'],
             'hardware_spoofing': ['Hardware ID Spoofer', 'API Hooking Tool']
         }
-        
+
         return tool_map.get(method, ['Disassembler', 'Hex Editor'])
 
     def _get_success_indicators(self, step: Dict[str, Any]) -> List[str]:
@@ -978,18 +975,18 @@ def generate_key():
     def _calculate_success_probabilities(self, result: Dict[str, Any]) -> Dict[str, float]:
         """Calculate success probabilities for different approaches."""
         probabilities = {}
-        
+
         strategies = result.get('bypass_strategies', [])
-        
+
         for strategy in strategies:
             strategy_name = strategy.get('strategy', 'unknown')
             success_rate = strategy.get('success_rate', 0.5)
             probabilities[strategy_name] = success_rate
-        
+
         # Calculate overall success probability
         if probabilities:
             probabilities['overall'] = max(probabilities.values())
-        
+
         return probabilities
 
     def _generate_implementation_guide(self, result: Dict[str, Any]) -> Dict[str, Any]:
@@ -1005,17 +1002,17 @@ def generate_key():
         }
 
         strategies = result.get('bypass_strategies', [])
-        
+
         if strategies:
             # Recommend strategy with highest success rate
             best_strategy = max(strategies, key=lambda x: x.get('success_rate', 0))
-            
+
             guide['recommended_approach'] = best_strategy.get('strategy', 'Unknown')
             guide['step_by_step_guide'] = best_strategy.get('implementation', {}).get('instructions', '').split('. ')
             guide['tools_needed'] = [best_strategy.get('implementation', {}).get('tools', '')]
             guide['difficulty_level'] = best_strategy.get('difficulty', 'medium')
             guide['success_probability'] = best_strategy.get('success_rate', 0.5)
-            
+
             # Add alternative methods
             guide['alternative_methods'] = [
                 {

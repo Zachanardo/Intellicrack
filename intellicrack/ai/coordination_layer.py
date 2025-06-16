@@ -554,7 +554,7 @@ class AICoordinationLayer:
 
                 # Try to get binary format
                 try:
-                    from ..utils.binary_analysis import identify_binary_format
+                    from ..utils.analysis.binary_analysis import identify_binary_format
                     binary_format = identify_binary_format(request.binary_path)
                     binary_info.append(f"Binary format: {binary_format}")
                 except (ImportError, AttributeError, OSError) as e:

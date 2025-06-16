@@ -145,7 +145,7 @@ class AnalysisStage(PipelineStage):
     
     def process(self, input_data: PipelineData) -> PipelineData:
         """Process binary analysis stage."""
-        from intellicrack.utils.binary_analysis import analyze_binary
+        from intellicrack.utils.analysis.binary_analysis import analyze_binary
         
         # Extract binary path
         if input_data.format == "text":

@@ -97,7 +97,7 @@ class VMDetector(BaseDetector):
 
             # Use base class detection loop to eliminate duplicate code
             base_results = self.run_detection_loop(aggressive, self.get_aggressive_methods())
-            
+
             # Copy base results
             results['detections'] = base_results['detections']
 
@@ -468,7 +468,7 @@ class VMDetector(BaseDetector):
         """Calculate how difficult it is to evade detection."""
         # Methods that are hard to evade
         hard_to_evade = ['cpuid', 'hardware_signatures', 'hypervisor_brand']
-        
+
         return self.calculate_detection_score(detections, hard_to_evade)
 
     def generate_evasion_code(self, target_vm: str = None) -> str:
@@ -514,11 +514,11 @@ if (IsRunningInVM()) {
 }
 """
         return code
-    
+
     def get_aggressive_methods(self) -> list:
         """Get list of method names that are considered aggressive."""
         return ['timing_attacks']
-    
+
     def get_detection_type(self) -> str:
         """Get the type of detection this class performs."""
         return 'virtual_machine'

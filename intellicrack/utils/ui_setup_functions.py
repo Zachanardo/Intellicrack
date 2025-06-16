@@ -23,10 +23,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any, Optional
 
 # Optional imports with graceful fallbacks
-from .common_imports import HAS_PYQT
+from .core.common_imports import HAS_PYQT
 
 if HAS_PYQT:
-    from .common_imports import (
+    from .core.common_imports import (
         QComboBox,
         QGroupBox,
         QHBoxLayout,

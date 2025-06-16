@@ -47,12 +47,12 @@ class ProcessHollowing(BaseWindowsPatcher):
     def __init__(self):
         if not AVAILABLE:
             raise RuntimeError("Process hollowing requires Windows and pefile")
-        
+
         # Set flag for base class to know we need ntdll
         self._requires_ntdll = True
         super().__init__()
         self.logger = get_logger(__name__)
-        
+
     def get_required_libraries(self) -> list:
         """Get list of required Windows libraries for this patcher."""
         return ['kernel32', 'ntdll']
@@ -76,17 +76,8 @@ class ProcessHollowing(BaseWindowsPatcher):
             # Parse payload PE
             payload_pe = pefile.PE(data=payload_data)
 
-            from ...utils.process_common import create_suspended_process_with_context
-
-            # Create process and get context using common function
-            result = create_suspended_process_with_context(
-                self._create_suspended_process,
-                self._get_thread_context,
-                target_exe,
-                logger
-            )
-
-            success, process_info, context = self.handle_suspended_process_result(result, logger)
+            # Create suspended process and handle result
+            success, process_info, context = self.create_and_handle_suspended_process(target_exe, logger)
             if not success:
                 return False
 
