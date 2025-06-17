@@ -1529,8 +1529,61 @@ def run_plugin_remotely(app, plugin_info: Dict[str, Any]) -> Optional[List[str]]
         return None
 
 
-# Export all plugin system functions
+class PluginSystem:
+    """
+    Main plugin system class that encapsulates all plugin functionality.
+    This class provides a unified interface for plugin management in Intellicrack.
+    """
+    
+    def __init__(self, plugin_dir: str = "plugins"):
+        """Initialize the plugin system."""
+        self.plugin_dir = plugin_dir
+        self.plugins = None
+        self.logger = logger
+        
+    def load_plugins(self) -> Dict[str, List[Dict[str, Any]]]:
+        """Load and initialize plugins from the plugin directory."""
+        self.plugins = load_plugins(self.plugin_dir)
+        return self.plugins
+    
+    def run_plugin(self, app, plugin_name: str) -> None:
+        """Run a built-in plugin."""
+        run_plugin(app, plugin_name)
+    
+    def run_custom_plugin(self, app, plugin_info: Dict[str, Any]) -> None:
+        """Run a custom plugin with the current binary."""
+        run_custom_plugin(app, plugin_info)
+    
+    def run_frida_plugin_from_file(self, app, plugin_path: str) -> None:
+        """Run a Frida plugin script from a file."""
+        run_frida_plugin_from_file(app, plugin_path)
+    
+    def run_ghidra_plugin_from_file(self, app, plugin_path: str) -> None:
+        """Run a Ghidra script on the current binary."""
+        run_ghidra_plugin_from_file(app, plugin_path)
+    
+    def create_sample_plugins(self) -> None:
+        """Create comprehensive sample plugin files for users to reference."""
+        create_sample_plugins(self.plugin_dir)
+    
+    @staticmethod
+    def create_plugin_template(plugin_name: str, template_type: str = "advanced") -> str:
+        """Generate a plugin template based on the specified type."""
+        return create_plugin_template(plugin_name, template_type)
+    
+    @staticmethod
+    def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> Optional[List[str]]:
+        """Run a plugin in a sandboxed process with resource limits."""
+        return run_plugin_in_sandbox(plugin_path, function_name, *args)
+    
+    def run_plugin_remotely(self, app, plugin_info: Dict[str, Any]) -> Optional[List[str]]:
+        """Run a plugin on a remote system."""
+        return run_plugin_remotely(app, plugin_info)
+
+
+# Export all plugin system functions and the PluginSystem class
 __all__ = [
+    'PluginSystem',
     'load_plugins',
     'run_plugin',
     'run_custom_plugin',

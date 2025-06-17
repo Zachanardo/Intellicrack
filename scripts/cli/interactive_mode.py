@@ -64,7 +64,7 @@ sys.path.insert(0, project_root)
 # Import Intellicrack modules
 try:
     from intellicrack.utils.analysis.binary_analysis import analyze_binary
-    from intellicrack.utils.runner_functions import (
+    from intellicrack.utils.runtime.runner_functions import (
         run_comprehensive_analysis,
         run_symbolic_execution,
         run_vulnerability_scan
@@ -2780,7 +2780,7 @@ Let's start by loading a binary file!""",
     def _export_html(self, output_path: str):
         """Export results as HTML."""
         try:
-            from intellicrack.utils.report_generator import ReportGenerator
+            from intellicrack.utils.reporting.report_generator import ReportGenerator
             
             generator = ReportGenerator()
             html_content = generator.generate_html_report(

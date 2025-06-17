@@ -70,7 +70,7 @@ REM This script sets up environment variables using dynamic path discovery
 echo Setting up tool paths using dynamic discovery...
 
 REM Run Python path discovery
-python -c "from intellicrack.utils.path_discovery import find_tool, get_cuda_path; import os; print('SET GHIDRA_PATH=' + (find_tool('ghidra') or '')); print('SET RADARE2_PATH=' + (find_tool('radare2') or '')); print('SET PYTHON_PATH=' + (find_tool('python') or '')); print('SET DOCKER_PATH=' + (find_tool('docker') or '')); print('SET GIT_PATH=' + (find_tool('git') or '')); print('SET WIRESHARK_PATH=' + (find_tool('wireshark') or '')); print('SET QEMU_PATH=' + (find_tool('qemu') or '')); print('SET WKHTMLTOPDF_PATH=' + (find_tool('wkhtmltopdf') or '')); print('SET CUDA_PATH=' + (get_cuda_path() or ''))" > %TEMP%\\paths.bat
+python -c "from intellicrack.utils.core.path_discovery import find_tool, get_cuda_path; import os; print('SET GHIDRA_PATH=' + (find_tool('ghidra') or '')); print('SET RADARE2_PATH=' + (find_tool('radare2') or '')); print('SET PYTHON_PATH=' + (find_tool('python') or '')); print('SET DOCKER_PATH=' + (find_tool('docker') or '')); print('SET GIT_PATH=' + (find_tool('git') or '')); print('SET WIRESHARK_PATH=' + (find_tool('wireshark') or '')); print('SET QEMU_PATH=' + (find_tool('qemu') or '')); print('SET WKHTMLTOPDF_PATH=' + (find_tool('wkhtmltopdf') or '')); print('SET CUDA_PATH=' + (get_cuda_path() or ''))" > %TEMP%\\paths.bat
 
 REM Execute the generated path settings
 call %TEMP%\\paths.bat

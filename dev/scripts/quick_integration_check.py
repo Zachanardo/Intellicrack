@@ -22,7 +22,7 @@ def test_core_imports():
         
         # Test critical exploitation modules
         modules_to_test = [
-            'c2_infrastructure', 
+            'c2', 
             'evasion',
             'post_exploitation',
             'vulnerability_research'
@@ -104,7 +104,7 @@ def test_basic_functionality():
     
     # Test 3: C2Manager (with graceful aiohttp handling)
     try:
-        from intellicrack.core.c2_infrastructure.c2_manager import C2Manager
+        from intellicrack.core.c2.c2_manager import C2Manager
         manager = C2Manager()
         print("  ✓ C2Manager instantiation")
         tests_passed += 1

@@ -1,0 +1,113 @@
+# .coveragerc for Intellicrack test coverage configuration
+
+[run]
+# Source packages
+source = intellicrack
+
+# Branch coverage
+branch = True
+
+# Parallel mode for multiprocessing
+parallel = True
+
+# Omit files from coverage
+omit =
+    */tests/*
+    */test_*.py
+    */__init__.py
+    */setup.py
+    */venv/*
+    */node_modules/*
+    */tools/*
+    */dependencies/*
+    */examples/*
+    */scripts/*
+    */dev/*
+    # UI files (often hard to test)
+    */ui/dialogs/*
+    */ui/widgets/*
+    # Generated files
+    */migrations/*
+    */_version.py
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug-only code
+    def __repr__
+    def __str__
+    
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    
+    # Don't complain about abstract methods
+    @abstractmethod
+    @abc.abstractmethod
+    
+    # Defensive programming
+    except ImportError
+    except ModuleNotFoundError
+    
+    # Platform-specific code
+    if sys.platform
+    if os.name
+    
+    # Logger configuration
+    logger.debug
+    logger.info
+    logger.warning
+    logger.error
+    logger.critical
+    
+    # Optional imports
+    try:
+    except.*ImportError
+    
+    # Unreachable code
+    if False:
+    if 0:
+
+# Ignore errors
+ignore_errors = True
+
+# Precision
+precision = 2
+
+# Show missing lines
+show_missing = True
+
+# Skip covered files in report
+skip_covered = False
+
+# Sort report by coverage percentage
+sort = -cover
+
+[html]
+# HTML report directory
+directory = htmlcov
+
+# HTML report title
+title = Intellicrack Coverage Report
+
+[xml]
+# XML report output
+output = coverage.xml
+
+[paths]
+# Paths to combine coverage data from different locations
+source =
+    intellicrack/
+    */site-packages/intellicrack
+
+[tool:coverage]
+# Additional coverage.py plugins
+plugins =
+    # Add any coverage plugins here

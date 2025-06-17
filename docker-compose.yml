@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  intellicrack:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: intellicrack:latest
+    container_name: intellicrack_app
+    volumes:
+      # Mount host directories
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+      - ./config:/app/config
+      - ./samples:/app/samples:ro  # Read-only samples
+      # X11 socket for GUI (Linux only)
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    environment:
+      # Display for GUI (Linux)
+      - DISPLAY=${DISPLAY}
+      # Config path
+      - INTELLICRACK_CONFIG_PATH=/app/config/intellicrack_config.json
+      # Enable debug logging
+      - INTELLICRACK_DEBUG=${INTELLICRACK_DEBUG:-false}
+    ports:
+      # Web UI port
+      - "8080:8080"
+      # Plugin system port
+      - "9999:9999"
+      # C2 server port
+      - "4444:4444"
+    networks:
+      - intellicrack_net
+    # Needed for GUI support
+    stdin_open: true
+    tty: true
+    # Security options
+    security_opt:
+      - seccomp:unconfined  # Needed for some analysis tools
+    cap_add:
+      - SYS_PTRACE  # Needed for debugging features
+
+  # Optional: Radare2 service
+  radare2:
+    image: radare/radare2:latest
+    container_name: intellicrack_radare2
+    volumes:
+      - ./samples:/samples:ro
+    networks:
+      - intellicrack_net
+    command: ["-"]
+
+  # Optional: Database for results
+  postgres:
+    image: postgres:15-alpine
+    container_name: intellicrack_db
+    environment:
+      POSTGRES_DB: intellicrack
+      POSTGRES_USER: intellicrack
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-intellicrack123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - intellicrack_net
+    ports:
+      - "5432:5432"
+
+  # Optional: Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: intellicrack_redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - intellicrack_net
+    ports:
+      - "6379:6379"
+
+networks:
+  intellicrack_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

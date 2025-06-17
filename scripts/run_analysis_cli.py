@@ -39,13 +39,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 try:
     from intellicrack.utils.analysis.binary_analysis import analyze_binary
-    from intellicrack.utils.runner_functions import (
+    from intellicrack.utils.runtime.runner_functions import (
         run_comprehensive_analysis,
         run_deep_license_analysis,
         run_detect_packing,
         run_vulnerability_scan
     )
-    from intellicrack.utils.report_generator import generate_report
+    from intellicrack.utils.reporting.report_generator import generate_report
     from intellicrack.config import CONFIG
 except ImportError as e:
     print(f"Error importing Intellicrack modules: {e}")

@@ -59,11 +59,11 @@ sys.path.insert(0, project_root)
 try:
     # Core imports - essential for CLI
     from intellicrack.utils.analysis.binary_analysis import analyze_binary
-    from intellicrack.utils.report_generator import generate_report
+    from intellicrack.utils.reporting.report_generator import generate_report
     from intellicrack.config import CONFIG
 
     # Import available runner functions
-    from intellicrack.utils.runner_functions import (
+    from intellicrack.utils.runtime.runner_functions import (
         run_comprehensive_analysis,
         run_deep_license_analysis,
         run_symbolic_execution,
@@ -74,7 +74,7 @@ try:
     )
 
     # Import additional runners from the correct location
-    from intellicrack.utils.additional_runners import (
+    from intellicrack.utils.runtime.additional_runners import (
         run_detect_packing,
         run_vulnerability_scan,
         run_cfg_analysis,
@@ -672,7 +672,7 @@ class IntellicrackCLI:
 
         if self.args.generate_license_key:
             logger.info("Generating license key...")
-            from intellicrack.utils.exploitation import generate_license_key
+            from intellicrack.utils.exploitation.exploitation import generate_license_key
             algorithm = self.args.license_algorithm or 'auto-detect'
             license_key = generate_license_key(
                 self.binary_path,

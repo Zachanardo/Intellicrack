@@ -26,7 +26,7 @@ try:
         NetworkTrafficAnalyzer,
         ProtocolFingerprinter
     )
-    from intellicrack.utils.report_generator import generate_report
+    from intellicrack.utils.reporting.report_generator import generate_report
     from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
     from intellicrack.config import CONFIG
 except ImportError as e:
@@ -122,7 +122,7 @@ def example_license_analysis():
 
     try:
         # Analyze for license mechanisms
-        from intellicrack.utils.runner_functions import run_deep_license_analysis, run_qiling_emulation, run_qemu_analysis
+        from intellicrack.utils.runtime.runner_functions import run_deep_license_analysis, run_qiling_emulation, run_qemu_analysis
 
         license_info = run_deep_license_analysis(binary_path)
 

@@ -27,7 +27,7 @@ _init_logger = logging.getLogger(__name__)
 
 # Import utility modules with error handling
 try:
-    from .binary_utils import (
+    from .binary.binary_utils import (
         analyze_binary_format,
         check_suspicious_pe_sections,
         compute_file_hash,
@@ -47,7 +47,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import logger: %s", e)
 
 try:
-    from .misc_utils import (
+    from .core.misc_utils import (
         ensure_directory_exists,
         format_bytes,
         get_file_extension,
@@ -63,7 +63,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import misc_utils: %s", e)
 
 try:
-    from .patch_utils import (
+    from .patching.patch_utils import (
         apply_patch,
         convert_rva_to_offset,
         create_nop_patch,
@@ -76,7 +76,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import patch_utils: %s", e)
 
 try:
-    from .protection_utils import (
+    from .protection.protection_utils import (
         analyze_protection,
         bypass_protection,
         detect_packing,
@@ -87,12 +87,12 @@ except ImportError as e:
     _init_logger.warning("Failed to import protection_utils: %s", e)
 
 try:
-    from .report_generator import ReportGenerator, export_report, generate_report
+    from .reporting.report_generator import ReportGenerator, export_report, generate_report
 except ImportError as e:
     _init_logger.warning("Failed to import report_generator: %s", e)
 
 try:
-    from .system_utils import (
+    from .system.system_utils import (
         check_admin_privileges,
         extract_executable_icon,
         get_process_list,
@@ -103,7 +103,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import system_utils: %s", e)
 
 try:
-    from .ui_utils import (
+    from .ui.ui_utils import (
         format_table_data,
         get_user_input,
         select_from_list,
@@ -136,8 +136,8 @@ except ImportError as e:
     _init_logger.warning("Failed to import entropy_utils: %s", e)
 
 try:
-    from .tool_wrappers import log_message as tool_log_message
-    from .tool_wrappers import (
+    from .tools.tool_wrappers import log_message as tool_log_message
+    from .tools.tool_wrappers import (
         run_ghidra_headless,
         wrapper_deep_license_analysis,
         wrapper_detect_protections,
@@ -153,7 +153,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import tool_wrappers: %s", e)
 
 try:
-    from .runner_functions import (
+    from .runtime.runner_functions import (
         process_ghidra_analysis_results,
         run_advanced_ghidra_analysis,
         run_ai_guided_patching,
@@ -194,7 +194,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import runner_functions: %s", e)
 
 try:
-    from .exception_utils import (
+    from .core.exception_utils import (
         create_sample_plugins,
         handle_exception,
         load_ai_model,
@@ -206,7 +206,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import exception_utils: %s", e)
 
 try:
-    from .protection_detection import (
+    from .protection.protection_detection import (
         detect_anti_debugging_techniques,
         detect_commercial_protections,
         detect_virtualization_protection,
@@ -216,7 +216,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import protection_detection: %s", e)
 
 try:
-    from .process_utils import (
+    from .system.process_utils import (
         compute_file_hash,
         detect_hardware_dongles,
         detect_tpm_protection,
@@ -228,7 +228,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import process_utils: %s", e)
 
 try:
-    from .patch_verification import (
+    from .patching.patch_verification import (
         apply_parsed_patch_instructions_with_validation,
         rewrite_license_functions_with_parsing,
         simulate_patch_and_verify,
@@ -255,7 +255,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import binary_analysis: %s", e)
 
 try:
-    from .security_analysis import (
+    from .analysis.security_analysis import (
         bypass_tpm_checks,
         check_buffer_overflow,
         check_for_memory_leaks,
@@ -268,7 +268,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import security_analysis: %s", e)
 
 try:
-    from .exploitation import (
+    from .exploitation.exploitation import (
         generate_bypass_script,
         generate_ca_certificate,
         generate_chains,
@@ -285,7 +285,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import exploitation: %s", e)
 
 try:
-    from .distributed_processing import (
+    from .runtime.distributed_processing import (
         extract_binary_info,
         process_binary_chunks,
         process_chunk,
@@ -302,7 +302,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import distributed_processing: %s", e)
 
 try:
-    from .additional_runners import (
+    from .runtime.additional_runners import (
         check_adobe_licensex_status,
         compute_file_hash,
         create_sample_plugins,
@@ -399,17 +399,17 @@ except ImportError as e:
 # internal_helpers imports are already included earlier in the file
 
 try:
-    from .ui_setup_functions import setup_dataset_tab, setup_memory_monitor, setup_training_tab
+    from .ui.ui_setup_functions import setup_dataset_tab, setup_memory_monitor, setup_training_tab
 except ImportError as e:
     _init_logger.warning("Failed to import ui_setup_functions: %s", e)
 
 try:
-    from .pcapy_compat import PCAP_AVAILABLE, create_pcap_reader, get_packet_capture_interface
+    from .tools.pcapy_compat import PCAP_AVAILABLE, create_pcap_reader, get_packet_capture_interface
 except ImportError as e:
     _init_logger.warning("Failed to import pcapy_compat: %s", e)
 
 try:
-    from .internal_helpers import (
+    from .core.internal_helpers import (
         _add_protocol_fingerprinter_results,
         _analyze_requests,
         _analyze_snapshot_differences,
@@ -429,7 +429,7 @@ except ImportError as e:
 
 # Import path discovery functions
 try:
-    from .path_discovery import (
+    from .core.path_discovery import (
         PathDiscovery,
         ensure_tool_available,
         find_tool,
@@ -441,7 +441,7 @@ except ImportError as e:
 
 # Import exploit common functions
 try:
-    from .exploit_common import (
+    from .exploitation.exploit_common import (
         create_analysis_button,
         handle_exploit_payload_generation,
         handle_exploit_strategy_generation,
@@ -451,13 +451,13 @@ except ImportError as e:
 
 # Import UI button common functions
 try:
-    from .ui_button_common import add_extra_buttons, get_button_style
+    from .ui.ui_button_common import add_extra_buttons, get_button_style
 except ImportError as e:
     _init_logger.warning("Failed to import ui_button_common functions: %s", e)
 
 # Import network API common functions
 try:
-    from .network_api_common import (
+    from .templates.network_api_common import (
         analyze_network_apis,
         get_network_api_categories,
         summarize_network_capabilities,
@@ -467,7 +467,7 @@ except ImportError as e:
 
 # Import common utility modules
 try:
-    from .windows_common import (
+    from .system.windows_common import (
         WINDOWS_AVAILABLE,
         WindowsConstants,
         get_windows_kernel32,
@@ -478,17 +478,17 @@ except ImportError as e:
     _init_logger.warning("Failed to import windows_common functions: %s", e)
 
 try:
-    from .pe_analysis_common import analyze_pe_imports, get_pe_sections_info
+    from .binary.pe_analysis_common import analyze_pe_imports, get_pe_sections_info
 except ImportError as e:
     _init_logger.warning("Failed to import pe_analysis_common functions: %s", e)
 
 try:
-    from .process_common import create_popen_safely, run_subprocess_safely
+    from .system.process_common import create_popen_safely, run_subprocess_safely
 except ImportError as e:
     _init_logger.warning("Failed to import process_common functions: %s", e)
 
 try:
-    from .certificate_common import create_certificate_builder
+    from .protection.certificate_common import create_certificate_builder
 except ImportError as e:
     _init_logger.warning("Failed to import certificate_common functions: %s", e)
 
@@ -502,7 +502,7 @@ except ImportError as e:
     _init_logger.warning("Failed to import pattern_search functions: %s", e)
 
 try:
-    from .severity_levels import (
+    from .analysis.severity_levels import (
         SecurityRelevance,
         SeverityLevel,
         VulnerabilityLevel,

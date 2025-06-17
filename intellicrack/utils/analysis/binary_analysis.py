@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 # Import performance optimizer
 try:
-    from .performance_optimizer import create_performance_optimizer
+    from .runtime.performance_optimizer import create_performance_optimizer
     PERFORMANCE_OPTIMIZER_AVAILABLE = True
 except ImportError:
     PERFORMANCE_OPTIMIZER_AVAILABLE = False
@@ -1164,7 +1164,7 @@ def _optimized_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
 
         if isinstance(data, bytes):
             # Extract strings efficiently
-            from .string_utils import extract_ascii_strings
+            from .core.string_utils import extract_ascii_strings
             strings = extract_ascii_strings(data)
 
             results["strings_found"] = len(strings)

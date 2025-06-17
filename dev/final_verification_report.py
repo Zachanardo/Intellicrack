@@ -184,7 +184,7 @@ def check_ghidra_ui_components():
 def check_ghidra_runner_functions():
     """Check Ghidra runner functions."""
     try:
-        from intellicrack.utils.runner_functions import run_advanced_ghidra_analysis
+        from intellicrack.utils.runtime.runner_functions import run_advanced_ghidra_analysis
         return True
     except ImportError:
         return False
@@ -192,7 +192,7 @@ def check_ghidra_runner_functions():
 def check_ghidra_core_implementation():
     """Check Ghidra core implementation."""
     try:
-        from intellicrack.utils.runner_functions import run_advanced_ghidra_analysis
+        from intellicrack.utils.runtime.runner_functions import run_advanced_ghidra_analysis
         # Test with None parameters to check error handling
         result = run_advanced_ghidra_analysis(None, None)
         return isinstance(result, dict) and "status" in result
@@ -207,7 +207,7 @@ def check_ghidra_scripts():
 def check_ghidra_error_handling():
     """Check Ghidra error handling."""
     try:
-        from intellicrack.utils.runner_functions import run_advanced_ghidra_analysis
+        from intellicrack.utils.runtime.runner_functions import run_advanced_ghidra_analysis
         result = run_advanced_ghidra_analysis(None, "/nonexistent/file.exe")
         return result.get("status") == "error"
     except Exception:
@@ -236,7 +236,7 @@ def check_qemu_ui_components():
 def check_qemu_runner_functions():
     """Check QEMU runner functions."""
     try:
-        from intellicrack.utils.runner_functions import run_qemu_analysis
+        from intellicrack.utils.runtime.runner_functions import run_qemu_analysis
         return True
     except ImportError:
         return False
@@ -272,7 +272,7 @@ def check_qemu_snapshot_management():
 def check_qemu_error_handling():
     """Check QEMU error handling."""
     try:
-        from intellicrack.utils.runner_functions import run_qemu_analysis
+        from intellicrack.utils.runtime.runner_functions import run_qemu_analysis
         result = run_qemu_analysis(None, None)
         return isinstance(result, dict) and "status" in result
     except Exception:
@@ -291,7 +291,7 @@ def check_frida_ui_components():
 def check_frida_runner_functions():
     """Check Frida runner functions."""
     try:
-        from intellicrack.utils.runner_functions import (
+        from intellicrack.utils.runtime.runner_functions import (
             run_frida_analysis, run_dynamic_instrumentation, run_frida_script
         )
         return True
@@ -301,7 +301,7 @@ def check_frida_runner_functions():
 def check_frida_wrapper_functions():
     """Check Frida wrapper functions."""
     try:
-        from intellicrack.utils.tool_wrappers import wrapper_run_frida_script
+        from intellicrack.utils.tools.tool_wrappers import wrapper_run_frida_script
         return True
     except ImportError:
         return False
@@ -330,7 +330,7 @@ def check_frida_script_content():
 def check_frida_error_handling():
     """Check Frida error handling."""
     try:
-        from intellicrack.utils.runner_functions import run_frida_script
+        from intellicrack.utils.runtime.runner_functions import run_frida_script
         result = run_frida_script(None, None)
         return result.get("status") == "error"
     except Exception:
@@ -339,7 +339,7 @@ def check_frida_error_handling():
 def verify_ghidra_workflow_chain():
     """Verify complete Ghidra workflow chain."""
     try:
-        from intellicrack.utils.runner_functions import run_advanced_ghidra_analysis
+        from intellicrack.utils.runtime.runner_functions import run_advanced_ghidra_analysis
 
         # Create mock app
         from unittest.mock import Mock
@@ -363,7 +363,7 @@ def verify_ghidra_workflow_chain():
 def verify_qemu_workflow_chain():
     """Verify complete QEMU workflow chain."""
     try:
-        from intellicrack.utils.runner_functions import run_qemu_analysis
+        from intellicrack.utils.runtime.runner_functions import run_qemu_analysis
 
         # Create mock app
         from unittest.mock import Mock
@@ -381,7 +381,7 @@ def verify_qemu_workflow_chain():
 def verify_frida_workflow_chain():
     """Verify complete Frida workflow chain."""
     try:
-        from intellicrack.utils.runner_functions import run_frida_analysis
+        from intellicrack.utils.runtime.runner_functions import run_frida_analysis
 
         # Create mock app
         from unittest.mock import Mock
@@ -400,7 +400,7 @@ def verify_integrated_workflow_chain():
     """Verify integrated workflow chain."""
     try:
         # Check if all runner functions can be imported together
-        from intellicrack.utils.runner_functions import (
+        from intellicrack.utils.runtime.runner_functions import (
             run_advanced_ghidra_analysis, run_qemu_analysis, run_frida_analysis
         )
         return True
@@ -422,7 +422,7 @@ def check_code_organization():
 def check_error_handling_robustness():
     """Check error handling robustness."""
     try:
-        from intellicrack.utils.runner_functions import (
+        from intellicrack.utils.runtime.runner_functions import (
             run_advanced_ghidra_analysis, run_qemu_analysis, run_frida_analysis
         )
 

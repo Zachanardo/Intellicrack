@@ -12,7 +12,7 @@ import shutil
 from unittest.mock import patch, MagicMock
 
 try:
-    from intellicrack.utils.binary_utils import (
+    from intellicrack.utils.binary.binary_utils import (
         is_pe_file,
         is_elf_file,
         is_macho_file,

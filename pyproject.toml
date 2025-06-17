@@ -6,11 +6,11 @@ build-backend = "setuptools.build_meta"
 name = "intellicrack"
 version = "0.1.0"
 authors = [
-  { name="Intellicrack Team", email="team@intellicrack.com" },
+  { name="Zachary Flint", email="zacharyflintbbaltd@gmail.com" },
 ]
 description = "Intellicrack: Advanced Binary Analysis and Security Research Framework"
 readme = "README.md"
-license = { text = "MIT" }
+license = { text = "GPL-3.0-or-later" }
 requires-python = ">=3.8"
 keywords = ["binary-analysis", "reverse-engineering", "security", "vulnerability-detection", "malware-analysis"]
 classifiers = [
@@ -21,7 +21,7 @@ classifiers = [
     "Topic :: Security",
     "Topic :: Software Development :: Disassemblers",
     "Topic :: Software Development :: Debuggers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -127,10 +127,10 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/intellicrack/intellicrack"
-"Bug Tracker" = "https://github.com/intellicrack/intellicrack/issues"
+"Homepage" = "https://github.com/zacharyflint/intellicrack"
+"Bug Tracker" = "https://github.com/zacharyflint/intellicrack/issues"
 "Documentation" = "https://intellicrack.readthedocs.io"
-"Source Code" = "https://github.com/intellicrack/intellicrack"
+"Source Code" = "https://github.com/zacharyflint/intellicrack"
 
 [project.scripts]
 intellicrack = "intellicrack.main:main"
@@ -141,7 +141,44 @@ intellicrack-gui = "intellicrack.ui.main_app:launch"
 
 # Tool configurations
 [tool.setuptools]
-packages = ["intellicrack"]
+packages = [
+    "intellicrack",
+    "intellicrack.ai",
+    "intellicrack.core",
+    "intellicrack.core.analysis",
+    "intellicrack.core.anti_analysis",
+    "intellicrack.core.c2",
+    "intellicrack.core.exploitation",
+    "intellicrack.core.frida_bypass_wizard",
+    "intellicrack.core.licensing",
+    "intellicrack.core.mitigation_bypass",
+    "intellicrack.core.network",
+    "intellicrack.core.patching",
+    "intellicrack.core.processing",
+    "intellicrack.core.protection_bypass",
+    "intellicrack.core.reporting",
+    "intellicrack.core.vulnerability_research",
+    "intellicrack.hexview",
+    "intellicrack.models",
+    "intellicrack.plugins",
+    "intellicrack.plugins.custom_modules",
+    "intellicrack.ui",
+    "intellicrack.ui.dialogs",
+    "intellicrack.ui.widgets",
+    "intellicrack.utils",
+    "intellicrack.utils.analysis",
+    "intellicrack.utils.binary",
+    "intellicrack.utils.core",
+    "intellicrack.utils.exploitation",
+    "intellicrack.utils.patching",
+    "intellicrack.utils.protection",
+    "intellicrack.utils.reporting",
+    "intellicrack.utils.runtime",
+    "intellicrack.utils.system",
+    "intellicrack.utils.templates",
+    "intellicrack.utils.tools",
+    "intellicrack.utils.ui",
+]
 include-package-data = true
 
 [tool.setuptools.package-data]
@@ -149,9 +186,10 @@ intellicrack = [
     "assets/*",
     "data/signatures/*",
     "data/templates/*",
-    "plugins/frida_scripts/*.js",
-    "plugins/ghidra_scripts/*.java",
     "plugins/custom_modules/*.py",
+    "models/*.pkl",
+    "models/*.joblib",
+    "config/*.json",
 ]
 
 [tool.pytest.ini_options]

@@ -32,7 +32,7 @@ from typing import Dict, List, Any
 
 # Import modules to test
 try:
-    from intellicrack.utils.radare2_utils import R2Session, R2Exception
+    from intellicrack.utils.tools.radare2_utils import R2Session, R2Exception
     from intellicrack.core.analysis.radare2_decompiler import R2Decompiler
     from intellicrack.core.analysis.radare2_esil import R2ESILEngine
     from intellicrack.core.analysis.radare2_strings import R2StringAnalyzer

@@ -96,7 +96,7 @@ def verify_paths():
         import intellicrack
         print("✅ intellicrack package imports successfully")
         
-        from intellicrack.utils.path_discovery import find_tool
+        from intellicrack.utils.core.path_discovery import find_tool
         print("✅ Path discovery module imports successfully")
         
         from intellicrack.config import get_config
@@ -110,7 +110,7 @@ def verify_paths():
     # Test dynamic path discovery
     print("\nTesting dynamic path discovery...")
     try:
-        from intellicrack.utils.path_discovery import find_tool
+        from intellicrack.utils.core.path_discovery import find_tool
         
         tools_to_test = ['python', 'git']
         for tool in tools_to_test:

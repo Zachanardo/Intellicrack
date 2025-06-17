@@ -294,7 +294,7 @@ class IntegrationVerifier:
             
             # Test 3: C2Manager can be imported
             try:
-                from intellicrack.core.c2_infrastructure.c2_manager import C2Manager
+                from intellicrack.core.c2.c2_manager import C2Manager
                 c2_manager = C2Manager()
                 cross_references_tested += 1
             except Exception as e:

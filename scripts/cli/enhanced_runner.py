@@ -47,7 +47,7 @@ from rich.tree import Tree
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
 from intellicrack.core.analysis.vulnerability_engine import VulnerabilityEngine
 from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
-from intellicrack.utils.protection_detection import detect_all_protections
+from intellicrack.utils.protection.protection_detection import detect_all_protections
 from scripts.cli.progress_manager import ProgressManager
 
 

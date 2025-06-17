@@ -17222,7 +17222,7 @@ def register():
                 """
                 try:
                     # Use self.compute_file_hash since it's bound to the instance
-                    from intellicrack.utils.binary_utils import compute_file_hash
+                    from intellicrack.utils.binary.binary_utils import compute_file_hash
                     computed_hash = compute_file_hash(model_path, algorithm=algorithm_lower, progress_signal=self.update_progress)
                     if computed_hash:
                         computed_hash = computed_hash.lower()
@@ -20425,7 +20425,7 @@ def register():
     def _run_vm_detection_thread(self):
         """Background thread for VM detection."""
         try:
-            from intellicrack.utils.protection_detection import detect_virtualization_protection
+            from intellicrack.utils.protection.protection_detection import detect_virtualization_protection
 
             results = detect_virtualization_protection(self.binary_path)
 
@@ -20475,7 +20475,7 @@ def register():
     def _run_anti_debug_detection_thread(self):
         """Background thread for anti-debug detection."""
         try:
-            from intellicrack.utils.protection_detection import detect_anti_debugging_techniques
+            from intellicrack.utils.protection.protection_detection import detect_anti_debugging_techniques
 
             results = detect_anti_debugging_techniques(self.binary_path)
 
@@ -20538,7 +20538,7 @@ def register():
     def _run_tpm_detection_thread(self):
         """Background thread for TPM detection."""
         try:
-            from intellicrack.utils.process_utils import detect_tpm_protection
+            from intellicrack.utils.system.process_utils import detect_tpm_protection
 
             results = detect_tpm_protection()
 
@@ -20656,7 +20656,7 @@ def register():
     def _run_checksum_detection_thread(self):
         """Background thread for checksum detection."""
         try:
-            from intellicrack.utils.protection_detection import detect_checksum_verification
+            from intellicrack.utils.protection.protection_detection import detect_checksum_verification
 
             results = detect_checksum_verification(self.binary_path)
 
@@ -20703,7 +20703,7 @@ def register():
     def _run_self_healing_detection_thread(self):
         """Background thread for self-healing detection."""
         try:
-            from intellicrack.utils.protection_detection import detect_self_healing_code
+            from intellicrack.utils.protection.protection_detection import detect_self_healing_code
 
             results = detect_self_healing_code(self.binary_path)
 
@@ -20750,7 +20750,7 @@ def register():
     def _run_commercial_protection_thread(self):
         """Background thread for commercial protection detection."""
         try:
-            from intellicrack.utils.protection_detection import detect_commercial_protections
+            from intellicrack.utils.protection.protection_detection import detect_commercial_protections
 
             results = detect_commercial_protections(self.binary_path)
 
@@ -25633,7 +25633,7 @@ if __name__ == "__main__":
     def check_dependencies_ui(self):
         """Check and display dependency status in UI."""
         try:
-            from intellicrack.utils.system_utils import check_dependencies
+            from intellicrack.utils.system.system_utils import check_dependencies
 
             # Core dependencies to check
             core_deps = {
@@ -25778,7 +25778,7 @@ if __name__ == "__main__":
                 ))
                 return
 
-            from intellicrack.utils.system_utils import extract_executable_icon
+            from intellicrack.utils.system.system_utils import extract_executable_icon
 
             # Choose output path
             output_path, _ = QFileDialog.getSaveFileName(
@@ -25822,7 +25822,7 @@ if __name__ == "__main__":
     def optimize_memory_usage_ui(self):
         """Optimize memory usage and display results."""
         try:
-            from intellicrack.utils.system_utils import optimize_memory_usage
+            from intellicrack.utils.system.system_utils import optimize_memory_usage
 
             self.update_output.emit(log_message("[Memory] Optimizing memory usage..."))
 
