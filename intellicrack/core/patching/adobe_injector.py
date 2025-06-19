@@ -49,6 +49,14 @@ from .kernel_injection import inject_via_kernel_driver
 from .process_hollowing import perform_process_hollowing
 from .syscalls import inject_using_syscalls
 
+# Import ctypes if available for Windows structures
+try:
+    import ctypes
+    CTYPES_AVAILABLE = True
+except ImportError:
+    ctypes = None
+    CTYPES_AVAILABLE = False
+
 # Initialize Windows API constants - this ensures they're always defined at module level
 KERNEL32 = None
 USER32 = None
@@ -78,7 +86,29 @@ THREAD_SET_CONTEXT = 0x0010
 THREAD_GET_CONTEXT = 0x0008
 THREAD_SUSPEND_RESUME = 0x0002
 THREAD_ALL_ACCESS = 0x1F03FF
+TH32CS_SNAPTHREAD = 0x00000004
+WM_KEYDOWN = 0x0100
+WM_MOUSEMOVE = 0x0200
+WM_NULL = 0x0000
 WINDOWS_API_AVAILABLE = False
+
+
+# Windows THREADENTRY32 structure
+if CTYPES_AVAILABLE and ctypes:
+    class THREADENTRY32(ctypes.Structure):
+        """Windows THREADENTRY32 structure for thread enumeration."""
+        _fields_ = [
+            ("dwSize", ctypes.c_ulong),
+            ("cntUsage", ctypes.c_ulong),
+            ("th32ThreadID", ctypes.c_ulong),
+            ("th32OwnerProcessID", ctypes.c_ulong),
+            ("tpBasePri", ctypes.c_long),
+            ("tpDeltaPri", ctypes.c_long),
+            ("dwFlags", ctypes.c_ulong)
+        ]
+else:
+    THREADENTRY32 = None
+
 
 # Windows API imports for process injection
 if sys.platform == 'win32':
@@ -1688,25 +1718,12 @@ for (let name of targets) {
 
                     # Get main thread ID
                     # Create thread snapshot
-                    TH32CS_SNAPTHREAD = 0x00000004
                     snapshot = KERNEL32.CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0)
 
                     if snapshot == -1:
                         continue
 
                     try:
-                        # Define THREADENTRY32 structure
-                        class THREADENTRY32(ctypes.Structure):
-                            _fields_ = [
-                                ("dwSize", ctypes.c_ulong),
-                                ("cntUsage", ctypes.c_ulong),
-                                ("th32ThreadID", ctypes.c_ulong),
-                                ("th32OwnerProcessID", ctypes.c_ulong),
-                                ("tpBasePri", ctypes.c_long),
-                                ("tpDeltaPri", ctypes.c_long),
-                                ("dwFlags", ctypes.c_ulong)
-                            ]
-
                         te32 = THREADENTRY32()
                         te32.dwSize = ctypes.sizeof(THREADENTRY32)
 
@@ -1781,15 +1798,12 @@ for (let name of targets) {
                 # Send message to trigger hook
                 if hook_type in [WH_KEYBOARD, WH_KEYBOARD_LL]:
                     # Send keyboard message
-                    WM_KEYDOWN = 0x0100
                     USER32.PostMessageW(window_handle, WM_KEYDOWN, 0x41, 0)  # 'A' key
                 elif hook_type in [WH_MOUSE, WH_MOUSE_LL]:
                     # Send mouse message
-                    WM_MOUSEMOVE = 0x0200
                     USER32.PostMessageW(window_handle, WM_MOUSEMOVE, 0, 0)
                 else:
                     # Send generic message
-                    WM_NULL = 0x0000
                     USER32.PostMessageW(window_handle, WM_NULL, 0, 0)
 
         except Exception as e:

@@ -61,9 +61,9 @@ try:
         QVBoxLayout,
         QWidget,
     )
-    PyQt5_available = True
+    PYQT5_AVAILABLE = True
 except ImportError:
-    PyQt5_available = False
+    PYQT5_AVAILABLE = False
     QDialog = object
     QThread = object
 
@@ -71,15 +71,15 @@ except ImportError:
 try:
     import torch
     import torch.nn as nn
-    torch_available = True
+    TORCH_AVAILABLE = True
 except ImportError:
-    torch_available = False
+    TORCH_AVAILABLE = False
 
 try:
     import tensorflow as tf
-    tensorflow_available = True
+    TENSORFLOW_AVAILABLE = True
 except ImportError:
-    tensorflow_available = False
+    TENSORFLOW_AVAILABLE = False
 
 try:
     from transformers import (
@@ -89,35 +89,35 @@ try:
         Trainer,
         TrainingArguments,
     )
-    transformers_available = True
+    TRANSFORMERS_AVAILABLE = True
 except ImportError:
-    transformers_available = False
+    TRANSFORMERS_AVAILABLE = False
 
 try:
     from peft import LoraConfig, TaskType, get_peft_model
-    peft_available = True
+    PEFT_AVAILABLE = True
 except ImportError:
-    peft_available = False
+    PEFT_AVAILABLE = False
 
 try:
     import numpy as np
-    numpy_available = True
+    NUMPY_AVAILABLE = True
 except ImportError:
-    numpy_available = False
+    NUMPY_AVAILABLE = False
 
 try:
     import nltk  # pylint: disable=import-error
     from nltk.corpus import wordnet
-    nltk_available = True
+    NLTK_AVAILABLE = True
 except ImportError:
-    nltk_available = False
+    NLTK_AVAILABLE = False
     nltk = None
 
 try:
     import matplotlib.pyplot as plt
-    matplotlib_available = True
+    MATPLOTLIB_AVAILABLE = True
 except ImportError:
-    matplotlib_available = False
+    MATPLOTLIB_AVAILABLE = False
 
 
 @dataclass
@@ -152,6 +152,7 @@ class AugmentationConfig:
     synonym_threshold: float = 0.5
 
     def __post_init__(self):
+        """Initialize DataAugmentationConfig after creation."""
         if self.techniques is None:
             self.techniques = ["synonym_replacement", "random_insertion"]
 
@@ -165,7 +166,7 @@ class TrainingThread(QThread):
         finished: Emitted when training completes
     """
 
-    progress_signal = pyqtSignal(dict) if PyQt5_available else None
+    progress_signal = pyqtSignal(dict) if PYQT5_AVAILABLE else None
 
     def __init__(self, config: TrainingConfig):
         """
@@ -174,7 +175,7 @@ class TrainingThread(QThread):
         Args:
             config: Training configuration parameters
         """
-        if PyQt5_available:
+        if PYQT5_AVAILABLE:
             super().__init__()
         self.config = config
         self.model = None
@@ -202,7 +203,7 @@ class TrainingThread(QThread):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Training failed: {e}", exc_info=True)
-            if PyQt5_available and self.progress_signal:
+            if PYQT5_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "error": str(e),
                     "step": -1
@@ -213,20 +214,20 @@ class TrainingThread(QThread):
         try:
             model_path = self.config.model_path
 
-            if transformers_available and self.config.model_format == "Transformers":
+            if TRANSFORMERS_AVAILABLE and self.config.model_format == "Transformers":
                 # Load using Transformers library
                 self.tokenizer = AutoTokenizer.from_pretrained(model_path)
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_path,
-                    torch_dtype=torch.float16 if torch_available else None,
-                    device_map="auto" if torch_available else None
+                    torch_dtype=torch.float16 if TORCH_AVAILABLE else None,
+                    device_map="auto" if TORCH_AVAILABLE else None
                 )
 
                 # Add padding token if needed
                 if self.tokenizer.pad_token is None:
                     self.tokenizer.pad_token = self.tokenizer.eos_token
 
-            elif torch_available and self.config.model_format == "PyTorch":
+            elif TORCH_AVAILABLE and self.config.model_format == "PyTorch":
                 # Load PyTorch model
                 if model_path.endswith('.bin') or model_path.endswith('.pt'):
                     checkpoint = torch.load(model_path, map_location='cpu')
@@ -240,7 +241,7 @@ class TrainingThread(QThread):
                 self.logger.warning("Creating dummy model for simulation")
                 self._create_dummy_model()
 
-            if PyQt5_available and self.progress_signal:
+            if PYQT5_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": "Model loaded successfully",
                     "step": 0
@@ -259,7 +260,7 @@ class TrainingThread(QThread):
         for actual fine-tuning experiments and testing.
         """
         try:
-            if torch_available:
+            if TORCH_AVAILABLE:
                 # Determine model architecture based on configuration
                 model_type = getattr(self.config, 'model_type', 'transformer').lower()
                 vocab_size = getattr(self.config, 'vocab_size', 32000)
@@ -784,7 +785,7 @@ class TrainingThread(QThread):
 
             def decode(self, token_ids, skip_special_tokens=True):
                 """Decode token IDs to text."""
-                if torch_available and torch.is_tensor(token_ids):
+                if TORCH_AVAILABLE and torch.is_tensor(token_ids):
                     token_ids = token_ids.tolist()
 
                 tokens = []
@@ -938,7 +939,7 @@ class TrainingThread(QThread):
                     # Convert to input/output format
                     data = [{"input": _line.strip(), "output": ""} for _line in lines if _line.strip()]
 
-            if PyQt5_available and self.progress_signal:
+            if PYQT5_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": f"Dataset loaded: {len(data)} samples",
                     "step": 1
@@ -953,9 +954,9 @@ class TrainingThread(QThread):
     def _setup_training(self, dataset):
         """Setup training configuration and prepare for training."""
         try:
-            if transformers_available and self.tokenizer:
+            if TRANSFORMERS_AVAILABLE and self.tokenizer:
                 # Setup LoRA if available
-                if peft_available and hasattr(self.model, 'config'):
+                if PEFT_AVAILABLE and hasattr(self.model, 'config'):
                     lora_config = LoraConfig(
                         task_type=TaskType.CAUSAL_LM,
                         r=self.config.lora_rank,
@@ -980,7 +981,7 @@ class TrainingThread(QThread):
                     report_to=None  # Disable wandb/tensorboard
                 )
 
-            if PyQt5_available and self.progress_signal:
+            if PYQT5_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": "Training setup complete",
                     "step": 2
@@ -1030,7 +1031,7 @@ class TrainingThread(QThread):
                     self.training_history.append(metrics)
 
                     # Emit progress signal
-                    if PyQt5_available and self.progress_signal:
+                    if PYQT5_AVAILABLE and self.progress_signal:
                         self.progress_signal.emit({
                             **metrics,
                             "status": f"Training epoch {_epoch+1}/{self.config.epochs}",
@@ -1040,7 +1041,7 @@ class TrainingThread(QThread):
                     # Simulate time delay
                     time.sleep(0.1)
 
-            if PyQt5_available and self.progress_signal:
+            if PYQT5_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": "Training completed",
                     "step": total_steps,
@@ -1125,7 +1126,7 @@ class ModelFinetuningDialog(QDialog):
         self.training_log = None
         self.validate_dataset_button = None
         self.visualization_label = None
-        if not PyQt5_available:
+        if not PYQT5_AVAILABLE:
             raise ImportError("PyQt5 is required for ModelFinetuningDialog")
 
         super().__init__(parent)
@@ -2161,14 +2162,14 @@ class ModelFinetuningDialog(QDialog):
         """Apply a specific augmentation technique to text."""
         words = text.split()
 
-        if technique == "synonym_replacement" and nltk_available:
+        if technique == "synonym_replacement" and NLTK_AVAILABLE:
             # Simple synonym replacement
             try:
                 # Download required NLTK data if needed
                 try:
                     wordnet.synsets('test')
                 except LookupError:
-                    if nltk_available:
+                    if NLTK_AVAILABLE:
                         nltk.download('wordnet', quiet=True)
                         nltk.download('punkt', quiet=True)
 
@@ -2294,7 +2295,7 @@ class ModelFinetuningDialog(QDialog):
     def _update_visualization(self, history: List[Dict[str, Any]]):
         """Update training visualization with loss curve."""
         try:
-            if not history or not matplotlib_available:
+            if not history or not MATPLOTLIB_AVAILABLE:
                 return
 
             # Create plot
@@ -2391,7 +2392,7 @@ class ModelFinetuningDialog(QDialog):
                 "PNG Files (*.png);;PDF Files (*.pdf);;All Files (*)"
             )
 
-            if save_path and matplotlib_available:
+            if save_path and MATPLOTLIB_AVAILABLE:
                 # Regenerate plot
                 history = self.training_thread.training_history
 
@@ -2524,7 +2525,7 @@ def create_model_finetuning_dialog(parent=None) -> Optional[ModelFinetuningDialo
     Returns:
         ModelFinetuningDialog instance or None if PyQt5 not available
     """
-    if not PyQt5_available:
+    if not PYQT5_AVAILABLE:
         logging.getLogger(__name__).warning("PyQt5 not available, cannot create dialog")
         return None
 

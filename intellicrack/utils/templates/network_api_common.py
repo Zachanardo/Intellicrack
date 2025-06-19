@@ -84,14 +84,14 @@ def get_scapy_layers(scapy_module) -> Optional[Tuple]:
     """
     try:
         # Try direct access first
-        IP = scapy_module.IP
-        TCP = scapy_module.TCP
-        return IP, TCP
+        ip_layer = scapy_module.IP
+        tcp_layer = scapy_module.TCP
+        return ip_layer, tcp_layer
     except AttributeError:
         # Fall back to scapy.layers if needed
         try:
-            from scapy.layers.inet import IP, TCP
-            return IP, TCP
+            from scapy.layers.inet import IP as ip_layer, TCP as tcp_layer
+            return ip_layer, tcp_layer
         except ImportError:
             # Unable to access IP/TCP layers
             return None

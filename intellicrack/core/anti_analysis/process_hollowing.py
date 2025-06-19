@@ -10,9 +10,91 @@ import logging
 import struct
 from typing import Any, Dict, Optional, Tuple
 
+try:
+    import ctypes.wintypes
+except ImportError:
+    # Create mock for non-Windows platforms
+    class MockWintypes:
+        DWORD = ctypes.c_ulong
+        LPWSTR = ctypes.c_wchar_p
+        WORD = ctypes.c_ushort
+        LPVOID = ctypes.c_void_p
+        HANDLE = ctypes.c_void_p
+    ctypes.wintypes = MockWintypes()
+
 from ...utils.windows_common import WindowsConstants
 
 logger = logging.getLogger(__name__)
+
+
+# Windows structures for process hollowing
+class STARTUPINFO(ctypes.Structure):
+    """Windows STARTUPINFO structure."""
+    _fields_ = [
+        ('cb', ctypes.wintypes.DWORD),
+        ('lpReserved', ctypes.wintypes.LPWSTR),
+        ('lpDesktop', ctypes.wintypes.LPWSTR),
+        ('lpTitle', ctypes.wintypes.LPWSTR),
+        ('dwX', ctypes.wintypes.DWORD),
+        ('dwY', ctypes.wintypes.DWORD),
+        ('dwXSize', ctypes.wintypes.DWORD),
+        ('dwYSize', ctypes.wintypes.DWORD),
+        ('dwXCountChars', ctypes.wintypes.DWORD),
+        ('dwYCountChars', ctypes.wintypes.DWORD),
+        ('dwFillAttribute', ctypes.wintypes.DWORD),
+        ('dwFlags', ctypes.wintypes.DWORD),
+        ('wShowWindow', ctypes.wintypes.WORD),
+        ('cbReserved2', ctypes.wintypes.WORD),
+        ('lpReserved2', ctypes.wintypes.LPVOID),
+        ('hStdInput', ctypes.wintypes.HANDLE),
+        ('hStdOutput', ctypes.wintypes.HANDLE),
+        ('hStdError', ctypes.wintypes.HANDLE)
+    ]
+
+
+class PROCESS_INFORMATION(ctypes.Structure):
+    """Windows PROCESS_INFORMATION structure."""
+    _fields_ = [
+        ('hProcess', ctypes.wintypes.HANDLE),
+        ('hThread', ctypes.wintypes.HANDLE),
+        ('dwProcessId', ctypes.wintypes.DWORD),
+        ('dwThreadId', ctypes.wintypes.DWORD)
+    ]
+
+
+class CONTEXT(ctypes.Structure):
+    """Windows CONTEXT structure for x86."""
+    _fields_ = [
+        ('ContextFlags', ctypes.c_ulong),
+        ('Dr0', ctypes.c_ulong),
+        ('Dr1', ctypes.c_ulong),
+        ('Dr2', ctypes.c_ulong),
+        ('Dr3', ctypes.c_ulong),
+        ('Dr6', ctypes.c_ulong),
+        ('Dr7', ctypes.c_ulong),
+        ('FloatSave', ctypes.c_byte * 112),
+        ('SegGs', ctypes.c_ulong),
+        ('SegFs', ctypes.c_ulong),
+        ('SegEs', ctypes.c_ulong),
+        ('SegDs', ctypes.c_ulong),
+        ('Edi', ctypes.c_ulong),
+        ('Esi', ctypes.c_ulong),
+        ('Ebx', ctypes.c_ulong),
+        ('Edx', ctypes.c_ulong),
+        ('Ecx', ctypes.c_ulong),
+        ('Eax', ctypes.c_ulong),
+        ('Ebp', ctypes.c_ulong),
+        ('Eip', ctypes.c_ulong),
+        ('SegCs', ctypes.c_ulong),
+        ('EFlags', ctypes.c_ulong),
+        ('Esp', ctypes.c_ulong),
+        ('SegSs', ctypes.c_ulong),
+        ('ExtendedRegisters', ctypes.c_byte * 512)
+    ]
+
+
+# Windows constants for context flags
+CONTEXT_FULL = 0x10007
 
 
 class ProcessHollowing:
@@ -150,40 +232,6 @@ class ProcessHollowing:
             if platform.system() != 'Windows':
                 return None
 
-            import ctypes.wintypes
-
-            # STARTUPINFO structure
-            class STARTUPINFO(ctypes.Structure):
-                _fields_ = [
-                    ('cb', ctypes.wintypes.DWORD),
-                    ('lpReserved', ctypes.wintypes.LPWSTR),
-                    ('lpDesktop', ctypes.wintypes.LPWSTR),
-                    ('lpTitle', ctypes.wintypes.LPWSTR),
-                    ('dwX', ctypes.wintypes.DWORD),
-                    ('dwY', ctypes.wintypes.DWORD),
-                    ('dwXSize', ctypes.wintypes.DWORD),
-                    ('dwYSize', ctypes.wintypes.DWORD),
-                    ('dwXCountChars', ctypes.wintypes.DWORD),
-                    ('dwYCountChars', ctypes.wintypes.DWORD),
-                    ('dwFillAttribute', ctypes.wintypes.DWORD),
-                    ('dwFlags', ctypes.wintypes.DWORD),
-                    ('wShowWindow', ctypes.wintypes.WORD),
-                    ('cbReserved2', ctypes.wintypes.WORD),
-                    ('lpReserved2', ctypes.wintypes.LPVOID),
-                    ('hStdInput', ctypes.wintypes.HANDLE),
-                    ('hStdOutput', ctypes.wintypes.HANDLE),
-                    ('hStdError', ctypes.wintypes.HANDLE)
-                ]
-
-            # PROCESS_INFORMATION structure
-            class PROCESS_INFORMATION(ctypes.Structure):
-                _fields_ = [
-                    ('hProcess', ctypes.wintypes.HANDLE),
-                    ('hThread', ctypes.wintypes.HANDLE),
-                    ('dwProcessId', ctypes.wintypes.DWORD),
-                    ('dwThreadId', ctypes.wintypes.DWORD)
-                ]
-
             kernel32 = ctypes.windll.kernel32
 
             # Initialize structures
@@ -240,37 +288,6 @@ class ProcessHollowing:
             h_thread = process_info['thread_handle']
 
             # Get thread context to find image base
-            CONTEXT_FULL = 0x10007
-
-            class CONTEXT(ctypes.Structure):
-                _fields_ = [
-                    ('ContextFlags', ctypes.c_ulong),
-                    ('Dr0', ctypes.c_ulong),
-                    ('Dr1', ctypes.c_ulong),
-                    ('Dr2', ctypes.c_ulong),
-                    ('Dr3', ctypes.c_ulong),
-                    ('Dr6', ctypes.c_ulong),
-                    ('Dr7', ctypes.c_ulong),
-                    ('FloatSave', ctypes.c_byte * 112),
-                    ('SegGs', ctypes.c_ulong),
-                    ('SegFs', ctypes.c_ulong),
-                    ('SegEs', ctypes.c_ulong),
-                    ('SegDs', ctypes.c_ulong),
-                    ('Edi', ctypes.c_ulong),
-                    ('Esi', ctypes.c_ulong),
-                    ('Ebx', ctypes.c_ulong),
-                    ('Edx', ctypes.c_ulong),
-                    ('Ecx', ctypes.c_ulong),
-                    ('Eax', ctypes.c_ulong),
-                    ('Ebp', ctypes.c_ulong),
-                    ('Eip', ctypes.c_ulong),
-                    ('SegCs', ctypes.c_ulong),
-                    ('EFlags', ctypes.c_ulong),
-                    ('Esp', ctypes.c_ulong),
-                    ('SegSs', ctypes.c_ulong),
-                    ('ExtendedRegisters', ctypes.c_byte * 512)
-                ]
-
             ctx = CONTEXT()
             ctx.ContextFlags = CONTEXT_FULL
 

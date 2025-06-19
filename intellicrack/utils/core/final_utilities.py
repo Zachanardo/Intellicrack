@@ -38,6 +38,12 @@ try:
 except ImportError:
     HAS_PSUTIL = False
 
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
+
 from .common_imports import HAS_NUMPY, HAS_PYQT
 
 if HAS_PYQT:
@@ -1107,12 +1113,6 @@ def _submit_to_remote_endpoint(report_data: Dict[str, Any], endpoint: str, repor
         # Try HTTP submission
         try:
             # Check if requests library is available
-            try:
-                import requests
-                REQUESTS_AVAILABLE = True
-            except ImportError:
-                REQUESTS_AVAILABLE = False
-
             if REQUESTS_AVAILABLE:
                 # Attempt real HTTP submission
                 logger.info("Submitting report to endpoint: %s", endpoint)

@@ -92,6 +92,16 @@ except ImportError as e:
     logger.warning("Failed to import console_widget: %s", e)
     ConsoleWidget = None
 
+# Import plugin editor
+try:
+    from .plugin_editor import PluginEditor, PluginValidator, PythonHighlighter, JavaScriptHighlighter
+except ImportError as e:
+    logger.warning("Failed to import plugin_editor: %s", e)
+    PluginEditor = None
+    PluginValidator = None
+    PythonHighlighter = None
+    JavaScriptHighlighter = None
+
 # Define common widget exports
 __all__ = [
     # Analysis widgets
@@ -119,6 +129,10 @@ __all__ = [
 # Add ConsoleWidget if available
 if ConsoleWidget is not None:
     __all__.append('ConsoleWidget')
+
+# Add Plugin Editor classes if available
+if PluginEditor is not None:
+    __all__.extend(['PluginEditor', 'PluginValidator', 'PythonHighlighter', 'JavaScriptHighlighter'])
 
 # Package metadata
 __version__ = "0.1.0"

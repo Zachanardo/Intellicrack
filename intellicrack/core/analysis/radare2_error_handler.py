@@ -685,15 +685,15 @@ class R2ErrorHandler:
 
 
 # Global error handler instance
-_global_error_handler = None
+_GLOBAL_ERROR_HANDLER = None
 
 
 def get_error_handler() -> R2ErrorHandler:
     """Get or create global error handler instance"""
-    global _global_error_handler
-    if _global_error_handler is None:
-        _global_error_handler = R2ErrorHandler()
-    return _global_error_handler
+    global _GLOBAL_ERROR_HANDLER
+    if _GLOBAL_ERROR_HANDLER is None:
+        _GLOBAL_ERROR_HANDLER = R2ErrorHandler()
+    return _GLOBAL_ERROR_HANDLER
 
 
 def handle_r2_error(error: Exception, operation_name: str, **context) -> bool:

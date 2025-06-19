@@ -765,14 +765,14 @@ def create_model_manager(models_dir: str = None, cache_size: int = 5) -> ModelMa
 
 
 # Global model manager instance
-_global_model_manager = None
+_GLOBAL_MODEL_MANAGER = None
 
 def get_global_model_manager() -> ModelManager:
     """Get the global model manager instance."""
-    global _global_model_manager  # pylint: disable=global-statement
-    if _global_model_manager is None:
-        _global_model_manager = create_model_manager()
-    return _global_model_manager
+    global _GLOBAL_MODEL_MANAGER  # pylint: disable=global-statement
+    if _GLOBAL_MODEL_MANAGER is None:
+        _GLOBAL_MODEL_MANAGER = create_model_manager()
+    return _GLOBAL_MODEL_MANAGER
 
 
 class ModelFineTuner:

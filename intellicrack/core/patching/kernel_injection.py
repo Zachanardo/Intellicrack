@@ -32,6 +32,29 @@ logger = get_logger(__name__)
 # Check Windows availability using common utility
 AVAILABLE = is_windows_available()
 
+# Windows Service control constants
+SC_MANAGER_ALL_ACCESS = 0xF003F
+SERVICE_ALL_ACCESS = 0xF01FF
+SERVICE_KERNEL_DRIVER = 0x00000001
+SERVICE_DEMAND_START = 0x00000003
+SERVICE_ERROR_NORMAL = 0x00000001
+SERVICE_CONTROL_STOP = 0x00000001
+
+# Device IO control codes
+FILE_DEVICE_UNKNOWN = 0x00000022
+METHOD_BUFFERED = 0
+FILE_ANY_ACCESS = 0
+
+
+# Injection structure for driver communication
+class INJECTION_INFO(ctypes.Structure):
+    """Structure for passing injection information to kernel driver."""
+    _fields_ = [
+        ("ProcessId", ctypes.c_ulong),
+        ("DllPath", ctypes.c_wchar * 260)
+    ]
+
+
 class KernelInjector:
     """Kernel-level injection using Windows driver"""
 
@@ -55,25 +78,12 @@ class KernelInjector:
             logger.error(f"Failed to load advapi32: {e}")
             raise RuntimeError("Failed to load advapi32")
 
-        # Service control constants
-        self.SC_MANAGER_ALL_ACCESS = 0xF003F
-        self.SERVICE_ALL_ACCESS = 0xF01FF
-        self.SERVICE_KERNEL_DRIVER = 0x00000001
-        self.SERVICE_DEMAND_START = 0x00000003
-        self.SERVICE_ERROR_NORMAL = 0x00000001
-        self.SERVICE_CONTROL_STOP = 0x00000001
-
-        # Device IO control codes
-        self.FILE_DEVICE_UNKNOWN = 0x00000022
-        self.METHOD_BUFFERED = 0
-        self.FILE_ANY_ACCESS = 0
-
         # Custom IOCTL codes
         self.IOCTL_INJECT_DLL = self._ctl_code(
-            self.FILE_DEVICE_UNKNOWN,
+            FILE_DEVICE_UNKNOWN,
             0x800,
-            self.METHOD_BUFFERED,
-            self.FILE_ANY_ACCESS
+            METHOD_BUFFERED,
+            FILE_ANY_ACCESS
         )
 
     def _ctl_code(self, device_type: int, function: int, method: int, access: int) -> int:
@@ -387,7 +397,7 @@ class KernelInjector:
             sc_manager = self.advapi32.OpenSCManagerW(
                 None,
                 None,
-                self.SC_MANAGER_ALL_ACCESS
+                SC_MANAGER_ALL_ACCESS
             )
 
             if not sc_manager:
@@ -401,10 +411,10 @@ class KernelInjector:
                     sc_manager,
                     self.service_name,
                     self.service_name,
-                    self.SERVICE_ALL_ACCESS,
-                    self.SERVICE_KERNEL_DRIVER,
-                    self.SERVICE_DEMAND_START,
-                    self.SERVICE_ERROR_NORMAL,
+                    SERVICE_ALL_ACCESS,
+                    SERVICE_KERNEL_DRIVER,
+                    SERVICE_DEMAND_START,
+                    SERVICE_ERROR_NORMAL,
                     self.driver_path,
                     None,
                     None,
@@ -421,7 +431,7 @@ class KernelInjector:
                         service = self.advapi32.OpenServiceW(
                             sc_manager,
                             self.service_name,
-                            self.SERVICE_ALL_ACCESS
+                            SERVICE_ALL_ACCESS
                         )
                         if not service:
                             logger.error("Failed to open existing service")
@@ -488,12 +498,6 @@ class KernelInjector:
                 return False
 
             # Prepare injection structure
-            class INJECTION_INFO(ctypes.Structure):
-                _fields_ = [
-                    ("ProcessId", ctypes.c_ulong),
-                    ("DllPath", ctypes.c_wchar * 260)
-                ]
-
             info = INJECTION_INFO()
             info.ProcessId = target_pid
             info.DllPath = dll_path
@@ -569,7 +573,7 @@ class KernelInjector:
                     service_status = ctypes.c_byte * 36
                     self.advapi32.ControlService(
                         service,
-                        self.SERVICE_CONTROL_STOP,
+                        SERVICE_CONTROL_STOP,
                         ctypes.byref(service_status())
                     )
 

@@ -36,6 +36,22 @@ from ...utils.protection_detection import (
 
 logger = get_logger(__name__)
 
+# Windows memory protection constants
+PAGE_NOACCESS = 0x01
+PAGE_READONLY = 0x02
+PAGE_READWRITE = 0x04
+PAGE_WRITECOPY = 0x08
+PAGE_EXECUTE = 0x10
+PAGE_EXECUTE_READ = 0x20
+PAGE_EXECUTE_READWRITE = 0x40
+PAGE_EXECUTE_WRITECOPY = 0x80
+PAGE_GUARD = 0x100
+
+# Linux ptrace constants
+PTRACE_ATTACH = 16
+PTRACE_DETACH = 17
+PTRACE_POKEDATA = 5
+
 
 def log_message(msg: str) -> str:
     """Helper function to format log messages consistently."""
@@ -423,16 +439,6 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
         import ctypes
         from ctypes import wintypes
 
-        # Windows memory protection constants
-        PAGE_NOACCESS = 0x01
-        PAGE_READONLY = 0x02
-        PAGE_READWRITE = 0x04
-        PAGE_WRITECOPY = 0x08
-        PAGE_EXECUTE = 0x10
-        PAGE_EXECUTE_READ = 0x20
-        PAGE_EXECUTE_READWRITE = 0x40
-        PAGE_EXECUTE_WRITECOPY = 0x80
-
         # Default to RWX if not specified
         if protection is None:
             protection = PAGE_EXECUTE_READWRITE
@@ -584,7 +590,6 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
 
         # Constants
         PROCESS_ALL_ACCESS = 0x1F0FFF
-        PAGE_EXECUTE_READWRITE = 0x40
 
         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
 
@@ -677,11 +682,6 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
         # Fallback to ptrace
         import ctypes
 
-        # ptrace constants
-        PTRACE_ATTACH = 16
-        PTRACE_DETACH = 17
-        PTRACE_POKEDATA = 5
-
         libc = ctypes.CDLL(None)
         ptrace = libc.ptrace
         ptrace.argtypes = [ctypes.c_long, ctypes.c_long, ctypes.c_void_p, ctypes.c_void_p]
@@ -762,13 +762,6 @@ def _handle_guard_pages_windows(address: int, size: int,
         from ctypes import wintypes
 
         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-
-        # Memory protection constants
-        PAGE_GUARD = 0x100
-        PAGE_NOACCESS = 0x01
-        PAGE_READONLY = 0x02
-        PAGE_READWRITE = 0x04
-        PAGE_EXECUTE_READWRITE = 0x40
 
         # MEMORY_BASIC_INFORMATION structure
         class MEMORY_BASIC_INFORMATION(ctypes.Structure):

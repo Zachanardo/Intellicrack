@@ -41,6 +41,7 @@ except ImportError:
     # Create a mock nx class for type annotations when not available
     class _MockNetworkX:
         class DiGraph:
+            """Mock DiGraph class for type annotations."""
             pass
     nx = _MockNetworkX()
 

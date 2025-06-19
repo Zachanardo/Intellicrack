@@ -109,6 +109,36 @@ except ImportError as e:
     logger.warning("Failed to import frida_manager_dialog: %s", e)
     FridaManagerDialog = None
 
+try:
+    from .plugin_creation_wizard import PluginCreationWizard
+except ImportError as e:
+    logger.warning("Failed to import plugin_creation_wizard: %s", e)
+    PluginCreationWizard = None
+
+try:
+    from .plugin_editor_dialog import PluginEditorDialog
+except ImportError as e:
+    logger.warning("Failed to import plugin_editor_dialog: %s", e)
+    PluginEditorDialog = None
+
+try:
+    from .test_generator_dialog import TestGeneratorDialog
+except ImportError as e:
+    logger.warning("Failed to import test_generator_dialog: %s", e)
+    TestGeneratorDialog = None
+
+try:
+    from .ci_cd_dialog import CICDDialog
+except ImportError as e:
+    logger.warning("Failed to import ci_cd_dialog: %s", e)
+    CICDDialog = None
+
+try:
+    from .debugger_dialog import DebuggerDialog
+except ImportError as e:
+    logger.warning("Failed to import debugger_dialog: %s", e)
+    DebuggerDialog = None
+
 # Define package exports - only include successfully imported items
 __all__ = []
 
@@ -148,6 +178,21 @@ if C2ManagementDialog is not None:
 
 if FridaManagerDialog is not None:
     __all__.append('FridaManagerDialog')
+
+if PluginCreationWizard is not None:
+    __all__.append('PluginCreationWizard')
+
+if PluginEditorDialog is not None:
+    __all__.append('PluginEditorDialog')
+
+if TestGeneratorDialog is not None:
+    __all__.append('TestGeneratorDialog')
+
+if CICDDialog is not None:
+    __all__.append('CICDDialog')
+
+if DebuggerDialog is not None:
+    __all__.append('DebuggerDialog')
 
 # Package metadata
 __version__ = "0.1.0"

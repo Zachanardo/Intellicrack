@@ -56,6 +56,9 @@ except ImportError:
 # Import common patterns from centralized module
 from ..utils.import_patterns import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs, ELFFile, pefile
 
+# Windows DWM constants
+DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+
 try:
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.preprocessing import StandardScaler
@@ -10519,6 +10522,414 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         # Add the tab widget to the main layout
         layout.addWidget(net_subtabs)
 
+    def create_help_button(self, help_topic):
+        """Create a help button that opens documentation"""
+        help_btn = QPushButton("?")
+        help_btn.setFixedSize(24, 24)
+        help_btn.setToolTip(f"Get help with {help_topic}")
+        help_btn.clicked.connect(lambda: self.open_plugin_documentation(help_topic))
+        return help_btn
+
+    def open_plugin_documentation(self, topic):
+        """Open plugin documentation for the specified topic"""
+        doc_path = os.path.join(os.path.dirname(__file__), 
+                               "..", "..", "docs", "development", "plugins.md")
+        if os.path.exists(doc_path):
+            # Open in system browser
+            QDesktopServices.openUrl(QUrl.fromLocalFile(doc_path))
+        else:
+            # Show embedded help dialog
+            self.show_embedded_help(topic)
+    
+    def show_embedded_help(self, topic):
+        """Show embedded help dialog for the specified topic"""
+        help_dialog = QDialog(self)
+        help_dialog.setWindowTitle(f"Help: {topic}")
+        help_dialog.setMinimumSize(600, 400)
+        
+        layout = QVBoxLayout(help_dialog)
+        
+        help_text = QTextBrowser()
+        help_text.setOpenExternalLinks(True)
+        
+        # Create help content based on topic
+        help_content = self.get_help_content_for_topic(topic)
+        help_text.setHtml(help_content)
+        
+        layout.addWidget(help_text)
+        
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(help_dialog.close)
+        layout.addWidget(close_btn)
+        
+        help_dialog.exec_()
+    
+    def get_help_content_for_topic(self, topic):
+        """Get help content HTML for the specified topic"""
+        help_topics = {
+            "Custom Python Plugins": """
+                <h2>Custom Python Plugins</h2>
+                <p>Custom Python plugins allow you to extend Intellicrack with your own analysis tools.</p>
+                <h3>Getting Started</h3>
+                <ul>
+                    <li><b>Create New Plugin:</b> Click "Create New Custom Plugin" to start from a template</li>
+                    <li><b>Import Plugin:</b> Import existing Python scripts as plugins</li>
+                    <li><b>Edit Plugin:</b> Use the built-in editor to modify plugin code</li>
+                    <li><b>Run Plugin:</b> Execute plugins on the currently loaded binary</li>
+                </ul>
+                <h3>Plugin Structure</h3>
+                <p>Plugins should implement the following interface:</p>
+                <pre>
+class Plugin:
+    def __init__(self):
+        self.name = "My Plugin"
+        self.description = "Plugin description"
+        self.version = "1.0"
+    
+    def run(self, binary_path, options=None):
+        # Plugin logic here
+        return results
+                </pre>
+            """,
+            "Frida Scripts": """
+                <h2>Frida Scripts</h2>
+                <p>Frida scripts enable dynamic instrumentation of running processes.</p>
+                <h3>Features</h3>
+                <ul>
+                    <li>Hook functions at runtime</li>
+                    <li>Modify function arguments and return values</li>
+                    <li>Trace execution flow</li>
+                    <li>Bypass security checks</li>
+                </ul>
+                <h3>Usage</h3>
+                <p>Select a target process and run Frida scripts to instrument it.</p>
+            """,
+            "Ghidra Scripts": """
+                <h2>Ghidra Scripts</h2>
+                <p>Ghidra scripts automate reverse engineering tasks using Ghidra's API.</p>
+                <h3>Capabilities</h3>
+                <ul>
+                    <li>Automated binary analysis</li>
+                    <li>Function identification</li>
+                    <li>Cross-reference analysis</li>
+                    <li>Decompiler integration</li>
+                </ul>
+            """,
+            "Built-in Quick Actions": """
+                <h2>Built-in Quick Actions</h2>
+                <p>Pre-configured plugins for common security research tasks:</p>
+                <ul>
+                    <li><b>HWID Spoofer:</b> Bypass hardware ID verification</li>
+                    <li><b>Anti-Debugger Bypass:</b> Disable debugger detection</li>
+                    <li><b>Time Bomb Defuser:</b> Remove time-based restrictions</li>
+                    <li><b>Telemetry Blocker:</b> Prevent data collection</li>
+                </ul>
+            """
+        }
+        
+        return help_topics.get(topic, f"<h2>{topic}</h2><p>No help available for this topic yet.</p>")
+
+    def get_plugin_icon(self, plugin_type, plugin_name):
+        """Get icon for plugin based on type and name"""
+        # Plugin type icons
+        if plugin_type == "frida":
+            return "🔧"  # Wrench for runtime instrumentation
+        elif plugin_type == "ghidra":
+            return "🔍"  # Magnifying glass for analysis
+        elif plugin_type == "custom":
+            return "🐍"  # Snake for Python plugins
+        
+        # Special icons for specific plugins
+        plugin_icons = {
+            "HWID Spoofer": "🆔",
+            "Anti-Debugger Bypass": "🛡️",
+            "Time Bomb Defuser": "⏰",
+            "Telemetry Blocker": "📡",
+            "License Finder": "🔑",
+            "String Decryptor": "🔓",
+            "Binary Patcher": "🔨"
+        }
+        
+        return plugin_icons.get(plugin_name, "📦")  # Default package icon
+
+    def populate_plugin_list_with_details(self, list_widget, plugin_type):
+        """Populate plugin list with rich information including descriptions"""
+        list_widget.clear()
+        
+        # Get plugins based on type
+        plugins = self.get_plugins_by_type(plugin_type)
+        
+        for plugin in plugins:
+            # Create custom widget for each plugin
+            item_widget = QWidget()
+            item_widget.setStyleSheet("""
+                QWidget {
+                    background-color: #f5f5f5;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                }
+                QWidget:hover {
+                    background-color: #e8e8e8;
+                    border-color: #bbb;
+                }
+            """)
+            item_layout = QVBoxLayout(item_widget)
+            item_layout.setContentsMargins(8, 8, 8, 8)
+            
+            # Plugin name and version with icon
+            name_layout = QHBoxLayout()
+            
+            # Add plugin type icon
+            icon_label = QLabel()
+            icon_text = self.get_plugin_icon(plugin_type, plugin.get('name', ''))
+            icon_label.setText(icon_text)
+            icon_label.setStyleSheet("font-size: 18px;")
+            name_layout.addWidget(icon_label)
+            
+            name_label = QLabel(f"<b>{plugin.get('name', 'Unknown Plugin')}</b>")
+            version_label = QLabel(f"v{plugin.get('version', '1.0')}")
+            version_label.setStyleSheet("color: #666;")
+            name_layout.addWidget(name_label)
+            name_layout.addWidget(version_label)
+            name_layout.addStretch()
+            
+            # Plugin description
+            desc_label = QLabel(plugin.get('description', 'No description available'))
+            desc_label.setWordWrap(True)
+            desc_label.setStyleSheet("color: #888; font-size: 11px;")
+            
+            # Add status indicator if available
+            if plugin.get('status'):
+                status_label = QLabel(f"[{plugin['status']}]")
+                status_color = "#4CAF50" if plugin['status'] == "Ready" else "#FF9800"
+                status_label.setStyleSheet(f"color: {status_color}; font-weight: bold;")
+                name_layout.addWidget(status_label)
+            
+            item_layout.addLayout(name_layout)
+            item_layout.addWidget(desc_label)
+            
+            # Create list widget item
+            list_item = QListWidgetItem()
+            list_item.setSizeHint(item_widget.sizeHint())
+            list_item.setData(Qt.UserRole, plugin)  # Store plugin data
+            
+            list_widget.addItem(list_item)
+            list_widget.setItemWidget(list_item, item_widget)
+    
+    def get_plugins_by_type(self, plugin_type):
+        """Get plugins based on type (frida, ghidra, custom)"""
+        # Mock data for demonstration - replace with actual plugin loading
+        if plugin_type == "frida":
+            return [
+                {
+                    "name": "HWID Spoofer",
+                    "version": "2.1",
+                    "description": "Spoofs hardware identifiers to bypass hardware-based license checks",
+                    "status": "Ready",
+                    "file": "hwid_spoofer.js"
+                },
+                {
+                    "name": "Anti-Debugger Bypass",
+                    "version": "1.5",
+                    "description": "Disables common anti-debugging techniques in target processes",
+                    "status": "Ready",
+                    "file": "anti_debugger.js"
+                },
+                {
+                    "name": "Time Bomb Defuser",
+                    "version": "1.2",
+                    "description": "Removes time-based expiration checks from applications",
+                    "status": "Ready",
+                    "file": "time_bomb_defuser.js"
+                }
+            ]
+        elif plugin_type == "ghidra":
+            return [
+                {
+                    "name": "License Finder",
+                    "version": "1.0",
+                    "description": "Automatically identifies license checking functions in binaries",
+                    "status": "Ready",
+                    "file": "license_finder.py"
+                },
+                {
+                    "name": "String Decryptor",
+                    "version": "1.3",
+                    "description": "Decrypts obfuscated strings in analyzed binaries",
+                    "status": "Ready",
+                    "file": "string_decryptor.py"
+                }
+            ]
+        elif plugin_type == "custom":
+            return [
+                {
+                    "name": "Binary Patcher",
+                    "version": "1.0",
+                    "description": "Custom binary patching framework with GUI integration",
+                    "status": "Ready",
+                    "file": "binary_patcher.py"
+                }
+            ]
+        return []
+    
+    def run_custom_plugin_from_list(self, list_widget):
+        """Run custom plugin from the rich list widget"""
+        current_item = list_widget.currentItem()
+        if current_item:
+            plugin_data = current_item.data(Qt.UserRole)
+            if plugin_data:
+                self.run_custom_plugin(plugin_data.get('file', ''))
+    
+    def edit_plugin_from_list(self, list_widget):
+        """Edit plugin from the rich list widget"""
+        current_item = list_widget.currentItem()
+        if current_item:
+            plugin_data = current_item.data(Qt.UserRole)
+            if plugin_data:
+                self.edit_plugin_file(plugin_data.get('file', ''))
+    
+    def run_frida_plugin_from_list(self, list_widget):
+        """Run Frida plugin from the rich list widget"""
+        current_item = list_widget.currentItem()
+        if current_item:
+            plugin_data = current_item.data(Qt.UserRole)
+            if plugin_data:
+                self.run_frida_plugin_from_file(plugin_data.get('file', ''))
+    
+    def run_ghidra_plugin_from_list(self, list_widget):
+        """Run Ghidra plugin from the rich list widget"""
+        current_item = list_widget.currentItem()
+        if current_item:
+            plugin_data = current_item.data(Qt.UserRole)
+            if plugin_data:
+                self.run_ghidra_plugin_from_file(plugin_data.get('file', ''))
+    
+    def filter_plugin_list(self, list_widget, search_text):
+        """Filter plugin list based on search text"""
+        search_text = search_text.lower()
+        
+        for i in range(list_widget.count()):
+            item = list_widget.item(i)
+            plugin_data = item.data(Qt.UserRole)
+            
+            if plugin_data:
+                # Search in name, description, and file
+                name = plugin_data.get('name', '').lower()
+                description = plugin_data.get('description', '').lower()
+                file_name = plugin_data.get('file', '').lower()
+                
+                # Show item if search text is found in any field
+                visible = (search_text in name or 
+                          search_text in description or 
+                          search_text in file_name or
+                          search_text == '')
+                
+                item.setHidden(not visible)
+    
+    def refresh_all_plugin_lists(self):
+        """Refresh all plugin lists"""
+        # Find all plugin lists in the UI
+        plugin_manager_tab = self.tools_plugins_tab.findChild(QWidget, "plugin_manager_tab")
+        if plugin_manager_tab:
+            # Find the tab widget
+            for widget in plugin_manager_tab.findChildren(QTabWidget):
+                for i in range(widget.count()):
+                    tab = widget.widget(i)
+                    # Find list widgets in each tab
+                    for list_widget in tab.findChildren(QListWidget):
+                        # Determine plugin type based on tab text
+                        tab_text = widget.tabText(i)
+                        if "Custom" in tab_text:
+                            self.populate_plugin_list_with_details(list_widget, "custom")
+                        elif "Frida" in tab_text:
+                            self.populate_plugin_list_with_details(list_widget, "frida")
+                        elif "Ghidra" in tab_text:
+                            self.populate_plugin_list_with_details(list_widget, "ghidra")
+        
+        self.update_output("[Plugins] All plugin lists refreshed")
+    
+    def open_plugin_settings(self):
+        """Open plugin system settings dialog"""
+        settings_dialog = QDialog(self)
+        settings_dialog.setWindowTitle("Plugin System Settings")
+        settings_dialog.setMinimumSize(400, 300)
+        
+        layout = QVBoxLayout(settings_dialog)
+        
+        # Plugin directories
+        dir_group = QGroupBox("Plugin Directories")
+        dir_layout = QVBoxLayout(dir_group)
+        
+        custom_dir_layout = QHBoxLayout()
+        custom_dir_layout.addWidget(QLabel("Custom Plugins:"))
+        custom_dir_edit = QLineEdit()
+        custom_dir_edit.setText(os.path.join(os.path.dirname(__file__), "..", "..", "plugins", "custom_modules"))
+        custom_dir_layout.addWidget(custom_dir_edit)
+        dir_layout.addLayout(custom_dir_layout)
+        
+        layout.addWidget(dir_group)
+        
+        # Development options
+        dev_group = QGroupBox("Development Options")
+        dev_layout = QVBoxLayout(dev_group)
+        
+        auto_reload_cb = QCheckBox("Auto-reload plugins on file change")
+        dev_layout.addWidget(auto_reload_cb)
+        
+        show_errors_cb = QCheckBox("Show detailed error messages")
+        show_errors_cb.setChecked(True)
+        dev_layout.addWidget(show_errors_cb)
+        
+        layout.addWidget(dev_group)
+        
+        # Buttons
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(settings_dialog.accept)
+        buttons.rejected.connect(settings_dialog.reject)
+        layout.addWidget(buttons)
+        
+        settings_dialog.exec_()
+    
+    def find_plugin_file(self, plugin_name):
+        """Find plugin file by name"""
+        # Search in common plugin directories
+        search_dirs = [
+            os.path.join(os.path.dirname(__file__), "..", "..", "plugins", "custom_modules"),
+            os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "frida"),
+            os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "ghidra"),
+            "plugins",
+            "scripts"
+        ]
+        
+        # Common extensions
+        extensions = ['.py', '.js', '.java']
+        
+        for dir_path in search_dirs:
+            if os.path.exists(dir_path):
+                for ext in extensions:
+                    file_path = os.path.join(dir_path, plugin_name)
+                    if os.path.exists(file_path):
+                        return file_path
+                    
+                    # Try with extension
+                    file_path_with_ext = file_path + ext
+                    if os.path.exists(file_path_with_ext):
+                        return file_path_with_ext
+                    
+                    # Try searching recursively
+                    for root, dirs, files in os.walk(dir_path):
+                        for file in files:
+                            if file == plugin_name or file == plugin_name + ext:
+                                return os.path.join(root, file)
+        
+        return None
+    
+    def on_plugin_created(self, plugin_data):
+        """Handle plugin creation completion from wizard"""
+        info = plugin_data['info']
+        self.update_output(f"[Plugins] Created plugin: {info['name']} v{info['version']}")
+        self.update_analysis_results(f"\n✅ Plugin '{info['name']}' created successfully!\n")
+
     def setup_tools_plugins_tab(self):
         """Sets up the Tools & Plugins tab with utility tools and plugin management features."""
         # Create main layout
@@ -10575,31 +10986,117 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         # 2. Plugin Manager sub-tab
         plugin_layout = QVBoxLayout(plugin_manager_tab)
+        
+        # Add a welcome message
+        welcome_label = QLabel("🚀 <b>Plugin Development Center</b>")
+        welcome_label.setStyleSheet("font-size: 16px; padding: 10px;")
+        plugin_layout.addWidget(welcome_label)
+        
+        # Add quick stats
+        stats_layout = QHBoxLayout()
+        stats_frame = QFrame()
+        stats_frame.setFrameShape(QFrame.StyledPanel)
+        stats_frame.setStyleSheet("background-color: #f0f0f0; padding: 10px; border-radius: 5px;")
+        stats_layout = QHBoxLayout(stats_frame)
+        
+        total_plugins_label = QLabel("📦 Total Plugins: 6")
+        active_plugins_label = QLabel("✅ Active: 6")
+        last_updated_label = QLabel("🕐 Last Updated: Today")
+        
+        stats_layout.addWidget(total_plugins_label)
+        stats_layout.addWidget(QLabel("|"))
+        stats_layout.addWidget(active_plugins_label)
+        stats_layout.addWidget(QLabel("|"))
+        stats_layout.addWidget(last_updated_label)
+        stats_layout.addStretch()
+        
+        plugin_layout.addWidget(stats_frame)
+        
+        # Add quick action buttons
+        quick_actions_layout = QHBoxLayout()
+        
+        new_plugin_btn = QPushButton("➕ New Plugin")
+        new_plugin_btn.setToolTip("Create a new plugin with the wizard")
+        new_plugin_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; padding: 6px 12px; border-radius: 4px; }")
+        new_plugin_btn.clicked.connect(lambda: self.create_new_plugin("custom"))
+        
+        refresh_btn = QPushButton("🔄 Refresh")
+        refresh_btn.setToolTip("Refresh plugin lists")
+        refresh_btn.clicked.connect(self.refresh_all_plugin_lists)
+        
+        settings_btn = QPushButton("⚙️ Settings")
+        settings_btn.setToolTip("Plugin system settings")
+        settings_btn.clicked.connect(self.open_plugin_settings)
+        
+        quick_actions_layout.addWidget(new_plugin_btn)
+        quick_actions_layout.addWidget(refresh_btn)
+        quick_actions_layout.addWidget(settings_btn)
+        quick_actions_layout.addStretch()
+        
+        plugin_layout.addLayout(quick_actions_layout)
 
         # Inner tabs for plugin types
         plugin_subtabs = QTabWidget()
+        plugin_subtabs.setToolTip("Organize plugins by type for easy management")
         plugin_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
         plugin_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
+        plugin_subtabs.setStyleSheet("""
+            QTabWidget::pane {
+                border: 1px solid #ccc;
+                background: white;
+            }
+            QTabBar::tab {
+                background: #f0f0f0;
+                padding: 8px 16px;
+                margin-right: 2px;
+            }
+            QTabBar::tab:selected {
+                background: white;
+                border-bottom: 2px solid #007ACC;
+            }
+        """)
 
         # Frida Scripts tab
         frida_scripts_tab = QWidget()
+        frida_scripts_tab.setToolTip("Manage and execute Frida instrumentation scripts")
         frida_layout = QVBoxLayout(frida_scripts_tab)
 
+        # Add header with help button
+        frida_header_layout = QHBoxLayout()
+        frida_header_label = QLabel("Frida Scripts")
+        frida_header_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+        frida_header_layout.addWidget(frida_header_label)
+        frida_header_layout.addStretch()
+        frida_help_btn = self.create_help_button("Frida Scripts")
+        frida_header_layout.addWidget(frida_help_btn)
+        frida_layout.addLayout(frida_header_layout)
+        
+        # Add search bar
+        frida_search = QLineEdit()
+        frida_search.setPlaceholderText("Search Frida scripts...")
+        frida_search.textChanged.connect(lambda text: self.filter_plugin_list(frida_list, text))
+        frida_layout.addWidget(frida_search)
+
         frida_list = QListWidget()
+        frida_list.setToolTip("Available Frida scripts for runtime instrumentation\nDouble-click to view script details")
         frida_layout.addWidget(frida_list)
 
         frida_buttons_layout = QHBoxLayout()
 
         run_frida_btn = QPushButton("Run Selected Frida Script")
-        run_frida_btn.clicked.connect(lambda: self.run_frida_plugin_from_file(frida_list.currentItem().text() if frida_list.currentItem() else ""))
+        run_frida_btn.setToolTip("Execute the selected Frida script on the target process")
+        run_frida_btn.clicked.connect(lambda: self.run_frida_plugin_from_list(frida_list))
 
         edit_frida_btn = QPushButton("Edit Selected Frida Script")
-        edit_frida_btn.clicked.connect(lambda: self.edit_plugin_file(frida_list.currentItem().text() if frida_list.currentItem() else ""))
+        edit_frida_btn.setToolTip("Open the Frida script in the code editor")
+        edit_frida_btn.clicked.connect(lambda: self.edit_plugin_from_list(frida_list))
 
         import_frida_btn = QPushButton("Import Frida Script...")
+        import_frida_btn.setToolTip("Import an existing Frida script from disk")
         import_frida_btn.clicked.connect(lambda: self.import_plugin("frida"))
 
         create_frida_btn = QPushButton("Create New Frida Script...")
+        create_frida_btn.setToolTip("Create a new Frida script from templates")
         create_frida_btn.clicked.connect(lambda: self.create_new_plugin("frida"))
 
         frida_buttons_layout.addWidget(run_frida_btn)
@@ -10608,26 +11105,51 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         frida_buttons_layout.addWidget(create_frida_btn)
 
         frida_layout.addLayout(frida_buttons_layout)
+        
+        # Populate the list with plugin details
+        self.populate_plugin_list_with_details(frida_list, "frida")
 
         # Ghidra Scripts tab
         ghidra_scripts_tab = QWidget()
+        ghidra_scripts_tab.setToolTip("Manage and execute Ghidra analysis scripts")
         ghidra_layout = QVBoxLayout(ghidra_scripts_tab)
 
+        # Add header with help button
+        ghidra_header_layout = QHBoxLayout()
+        ghidra_header_label = QLabel("Ghidra Scripts")
+        ghidra_header_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+        ghidra_header_layout.addWidget(ghidra_header_label)
+        ghidra_header_layout.addStretch()
+        ghidra_help_btn = self.create_help_button("Ghidra Scripts")
+        ghidra_header_layout.addWidget(ghidra_help_btn)
+        ghidra_layout.addLayout(ghidra_header_layout)
+        
+        # Add search bar
+        ghidra_search = QLineEdit()
+        ghidra_search.setPlaceholderText("Search Ghidra scripts...")
+        ghidra_search.textChanged.connect(lambda text: self.filter_plugin_list(ghidra_list, text))
+        ghidra_layout.addWidget(ghidra_search)
+
         ghidra_list = QListWidget()
+        ghidra_list.setToolTip("Available Ghidra scripts for automated analysis\nDouble-click to view script details")
         ghidra_layout.addWidget(ghidra_list)
 
         ghidra_buttons_layout = QHBoxLayout()
 
         run_ghidra_btn = QPushButton("Run Selected Ghidra Script")
-        run_ghidra_btn.clicked.connect(lambda: self.run_ghidra_plugin_from_file(ghidra_list.currentItem().text() if ghidra_list.currentItem() else ""))
+        run_ghidra_btn.setToolTip("Execute the selected Ghidra script on the current binary")
+        run_ghidra_btn.clicked.connect(lambda: self.run_ghidra_plugin_from_list(ghidra_list))
 
         edit_ghidra_btn = QPushButton("Edit Selected Ghidra Script")
-        edit_ghidra_btn.clicked.connect(lambda: self.edit_plugin_file(ghidra_list.currentItem().text() if ghidra_list.currentItem() else ""))
+        edit_ghidra_btn.setToolTip("Open the Ghidra script in the code editor")
+        edit_ghidra_btn.clicked.connect(lambda: self.edit_plugin_from_list(ghidra_list))
 
         import_ghidra_btn = QPushButton("Import Ghidra Script...")
+        import_ghidra_btn.setToolTip("Import an existing Ghidra script from disk")
         import_ghidra_btn.clicked.connect(lambda: self.import_plugin("ghidra"))
 
         create_ghidra_btn = QPushButton("Create New Ghidra Script...")
+        create_ghidra_btn.setToolTip("Create a new Ghidra script from templates")
         create_ghidra_btn.clicked.connect(lambda: self.create_new_plugin("ghidra"))
 
         ghidra_buttons_layout.addWidget(run_ghidra_btn)
@@ -10636,26 +11158,51 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         ghidra_buttons_layout.addWidget(create_ghidra_btn)
 
         ghidra_layout.addLayout(ghidra_buttons_layout)
+        
+        # Populate the list with plugin details
+        self.populate_plugin_list_with_details(ghidra_list, "ghidra")
 
         # Custom Python Plugins tab
         custom_plugins_tab = QWidget()
+        custom_plugins_tab.setToolTip("Create and manage personal Python analysis plugins")
         custom_layout = QVBoxLayout(custom_plugins_tab)
 
+        # Add header with help button
+        custom_header_layout = QHBoxLayout()
+        custom_header_label = QLabel("Custom Python Plugins")
+        custom_header_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+        custom_header_layout.addWidget(custom_header_label)
+        custom_header_layout.addStretch()
+        custom_help_btn = self.create_help_button("Custom Python Plugins")
+        custom_header_layout.addWidget(custom_help_btn)
+        custom_layout.addLayout(custom_header_layout)
+        
+        # Add search bar
+        custom_search = QLineEdit()
+        custom_search.setPlaceholderText("Search custom plugins...")
+        custom_search.textChanged.connect(lambda text: self.filter_plugin_list(custom_list, text))
+        custom_layout.addWidget(custom_search)
+
         custom_list = QListWidget()
+        custom_list.setToolTip("Your personal collection of custom analysis plugins\nDouble-click to view details")
         custom_layout.addWidget(custom_list)
 
         custom_buttons_layout = QHBoxLayout()
 
         run_custom_btn = QPushButton("Run Selected Custom Plugin")
-        run_custom_btn.clicked.connect(lambda: self.run_custom_plugin(custom_list.currentItem().text() if custom_list.currentItem() else ""))
+        run_custom_btn.setToolTip("Execute the selected plugin on the current binary")
+        run_custom_btn.clicked.connect(lambda: self.run_custom_plugin_from_list(custom_list))
 
         edit_custom_btn = QPushButton("Edit Selected Custom Plugin")
-        edit_custom_btn.clicked.connect(lambda: self.edit_plugin_file(custom_list.currentItem().text() if custom_list.currentItem() else ""))
+        edit_custom_btn.setToolTip("Open plugin source code in the built-in editor")
+        edit_custom_btn.clicked.connect(lambda: self.edit_plugin_from_list(custom_list))
 
         import_custom_btn = QPushButton("Import Custom Plugin...")
+        import_custom_btn.setToolTip("Import an existing plugin from your file system")
         import_custom_btn.clicked.connect(lambda: self.import_plugin("custom"))
 
         create_custom_btn = QPushButton("Create New Custom Plugin...")
+        create_custom_btn.setToolTip("Create a new plugin from professional templates")
         create_custom_btn.clicked.connect(lambda: self.create_new_plugin("custom"))
 
         custom_buttons_layout.addWidget(run_custom_btn)
@@ -10664,29 +11211,43 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         custom_buttons_layout.addWidget(create_custom_btn)
 
         custom_layout.addLayout(custom_buttons_layout)
+        
+        # Populate the list with plugin details
+        self.populate_plugin_list_with_details(custom_list, "custom")
 
         # Add plugin sub-tabs
-        # Note: Frida and Ghidra scripts are now managed independently via their own managers
-        # plugin_subtabs.addTab(frida_scripts_tab, "Frida Scripts")  # Removed - use Frida Manager
-        # plugin_subtabs.addTab(ghidra_scripts_tab, "Ghidra Scripts")  # Removed - use Ghidra Script Manager
-        plugin_subtabs.addTab(custom_plugins_tab, "Custom Python Plugins")
+        plugin_subtabs.addTab(custom_plugins_tab, "🐍 Custom Plugins")
+        plugin_subtabs.addTab(frida_scripts_tab, "🔧 Frida Scripts")
+        plugin_subtabs.addTab(ghidra_scripts_tab, "🔍 Ghidra Scripts")
 
         plugin_layout.addWidget(plugin_subtabs)
 
         # Built-in Quick Actions/Scripts section
         builtin_group = QGroupBox("Built-in Quick Actions/Scripts")
+        builtin_group.setToolTip("Pre-configured plugins for common security research tasks")
         builtin_layout = QVBoxLayout(builtin_group)
+        
+        # Add header with help button inside the group box
+        builtin_header_layout = QHBoxLayout()
+        builtin_header_layout.addStretch()
+        builtin_help_btn = self.create_help_button("Built-in Quick Actions")
+        builtin_header_layout.addWidget(builtin_help_btn)
+        builtin_layout.addLayout(builtin_header_layout)
 
         hwid_spoofer_btn = QPushButton("HWID Spoofer")
+        hwid_spoofer_btn.setToolTip("Bypass hardware ID checks by spoofing system identifiers")
         hwid_spoofer_btn.clicked.connect(lambda: self.run_plugin("HWID Spoofer"))
 
         anti_debugger_btn = QPushButton("Anti-Debugger Bypass")
+        anti_debugger_btn.setToolTip("Disable anti-debugging techniques in the target process")
         anti_debugger_btn.clicked.connect(lambda: self.run_plugin("Anti-Debugger"))
 
         time_bomb_btn = QPushButton("Time Bomb Defuser")
+        time_bomb_btn.setToolTip("Remove time-based expiration checks from applications")
         time_bomb_btn.clicked.connect(lambda: self.run_plugin("Time Bomb Defuser"))
 
         telemetry_btn = QPushButton("Telemetry Blocker")
+        telemetry_btn.setToolTip("Block telemetry and analytics data collection")
         telemetry_btn.clicked.connect(lambda: self.run_plugin("Telemetry Blocker"))
 
         builtin_layout.addWidget(hwid_spoofer_btn)
@@ -13593,6 +14154,26 @@ Description: {results.get('description', 'License bypass successful')}"""
     # Add stub methods for functions that don't exist but are referenced elsewhere
     def create_new_plugin(self, plugin_type):
         """Creates a new plugin file of the specified type with a template."""
+        # Try to use the new wizard first
+        try:
+            from .dialogs.plugin_creation_wizard import PluginCreationWizard
+            
+            wizard = PluginCreationWizard(self, plugin_type)
+            wizard.plugin_created.connect(self.on_plugin_created)
+            
+            if wizard.exec_():
+                self.update_output(f"[Plugins] New {plugin_type} plugin created successfully")
+                # Refresh the plugin list
+                self.refresh_all_plugin_lists()
+                return
+                
+        except ImportError:
+            # Fallback to simple creation
+            pass
+        except Exception as e:
+            self.update_output(f"[Plugins] Error with wizard: {e}")
+        
+        # Fallback to original implementation
         plugin_dir = "plugins"
 
         # Define templates for different plugin types
@@ -13752,6 +14333,24 @@ def register():
         if not os.path.exists(path):
             self.update_output.emit(log_message(f"File not found: {path}"))
             return
+
+        # Try to use enhanced editor first
+        try:
+            from .dialogs.plugin_editor_dialog import PluginEditorDialog
+            
+            # Open enhanced editor dialog
+            editor_dialog = PluginEditorDialog(self, path)
+            editor_dialog.plugin_saved.connect(lambda: self.refresh_all_plugin_lists())
+            editor_dialog.exec_()
+            
+            self.update_output(f"[Plugins] Edited plugin: {os.path.basename(path)}")
+            return
+            
+        except ImportError:
+            # Fallback to simple editor
+            pass
+        except Exception as e:
+            self.update_output(f"[Plugins] Error with enhanced editor: {e}")
 
         try:
             # Create a simple text editor dialog
@@ -14783,9 +15382,6 @@ def register():
             # Set window attributes back to default
             if os.name == 'nt':
                 try:
-                    # Define constants
-                    DWMWA_USE_IMMERSIVE_DARK_MODE = 20
-
                     # Get window handle
                     hwnd = int(self.winId())
 
@@ -21445,7 +22041,7 @@ def register():
 
             # Generate synthetic training data with realistic patterns
             np.random.seed(42)
-            X = []
+            x_data = []
             y = []
 
             for i in range(n_samples):
@@ -21633,20 +22229,20 @@ def register():
                 while len(features) < n_features:
                     features.append(0.0)
 
-                X.append(features)
+                x_data.append(features)
                 y.append(1 if is_vulnerable else 0)
 
             # Convert to numpy arrays
-            X = np.array(X)
+            x_data = np.array(x_data)
             y = np.array(y)
 
             # Add some noise to make it more realistic
-            X += np.random.normal(0, 0.01, X.shape)
+            x_data += np.random.normal(0, 0.01, x_data.shape)
 
             # Fit the scaler and model
             self.logger.info("Training ML model on synthetic dataset...")
-            X_scaled = scaler.fit_transform(X)
-            model.fit(X_scaled, y)
+            x_scaled = scaler.fit_transform(x_data)
+            model.fit(x_scaled, y)
 
             # Log training results
             if hasattr(model, 'oob_score_'):

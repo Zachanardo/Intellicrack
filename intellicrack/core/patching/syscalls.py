@@ -38,6 +38,32 @@ if sys.platform == 'win32':
 else:
     AVAILABLE = False
 
+# Windows memory constants
+MEM_COMMIT = 0x1000
+MEM_RESERVE = 0x2000
+PAGE_EXECUTE_READWRITE = 0x40
+PAGE_READWRITE = 0x04
+MEM_RELEASE = 0x8000
+
+# Thread information constants
+THREAD_BASIC_INFORMATION = 0
+
+
+# Windows structures
+if sys.platform == 'win32' and AVAILABLE:
+    class THREAD_BASIC_INFORMATION_32(ctypes.Structure):
+        """Thread basic information structure for 32-bit processes."""
+        _fields_ = [
+            ("ExitStatus", ctypes.c_ulong),
+            ("TebBaseAddress", ctypes.c_void_p),
+            ("ClientId", ctypes.c_ulonglong),
+            ("AffinityMask", ctypes.c_ulong),
+            ("Priority", ctypes.c_long),
+            ("BasePriority", ctypes.c_long)
+        ]
+else:
+    THREAD_BASIC_INFORMATION_32 = None
+
 class DirectSyscalls:
     """Direct syscall implementation to bypass usermode hooks"""
 
@@ -155,9 +181,6 @@ class DirectSyscalls:
 
                 # Allocate executable memory for shellcode
                 kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-                MEM_COMMIT = 0x1000
-                MEM_RESERVE = 0x2000
-                PAGE_EXECUTE_READWRITE = 0x40
 
                 shellcode_addr = kernel32.VirtualAlloc(
                     None, len(asm_code), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
@@ -167,7 +190,7 @@ class DirectSyscalls:
                     ctypes.memmove(shellcode_addr, asm_code, len(asm_code))
                     get_teb = ctypes.CFUNCTYPE(ctypes.c_void_p)(shellcode_addr)
                     teb_addr = get_teb()
-                    kernel32.VirtualFree(shellcode_addr, 0, 0x8000)  # MEM_RELEASE
+                    kernel32.VirtualFree(shellcode_addr, 0, MEM_RELEASE)
 
                     # Read WOW64Reserved from TEB
                     wow64_reserved = ctypes.c_void_p()
@@ -194,17 +217,6 @@ class DirectSyscalls:
                 teb_ptr = ctypes.c_void_p()
 
                 # Use NtQueryInformationThread to get TEB
-                THREAD_BASIC_INFORMATION = 0
-                class THREAD_BASIC_INFORMATION_32(ctypes.Structure):
-                    _fields_ = [
-                        ("ExitStatus", ctypes.c_ulong),
-                        ("TebBaseAddress", ctypes.c_void_p),
-                        ("ClientId", ctypes.c_ulonglong),
-                        ("AffinityMask", ctypes.c_ulong),
-                        ("Priority", ctypes.c_long),
-                        ("BasePriority", ctypes.c_long)
-                    ]
-
                 tbi = THREAD_BASIC_INFORMATION_32()
                 status = ntdll.NtQueryInformationThread(
                     kernel32.GetCurrentThread(),
@@ -406,9 +418,6 @@ class DirectSyscalls:
 
             # Allocate executable memory
             kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-            MEM_COMMIT = 0x1000
-            MEM_RESERVE = 0x2000
-            PAGE_EXECUTE_READWRITE = 0x40
 
             code_addr = kernel32.VirtualAlloc(
                 None, len(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
@@ -432,7 +441,7 @@ class DirectSyscalls:
 
             finally:
                 # Free allocated memory
-                kernel32.VirtualFree(code_addr, 0, 0x8000)  # MEM_RELEASE
+                kernel32.VirtualFree(code_addr, 0, MEM_RELEASE)
 
         except Exception as e:
             logger.debug(f"Failed to execute 64-bit syscall: {e}")
@@ -508,9 +517,6 @@ class DirectSyscalls:
 
             # Allocate executable memory
             kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-            MEM_COMMIT = 0x1000
-            MEM_RESERVE = 0x2000
-            PAGE_EXECUTE_READWRITE = 0x40
 
             code_addr = kernel32.VirtualAlloc(
                 None, len(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
@@ -534,7 +540,7 @@ class DirectSyscalls:
 
             finally:
                 # Free allocated memory
-                kernel32.VirtualFree(code_addr, 0, 0x8000)  # MEM_RELEASE
+                kernel32.VirtualFree(code_addr, 0, MEM_RELEASE)
 
         except Exception as e:
             logger.debug(f"Failed to execute 32-bit syscall: {e}")
@@ -584,10 +590,6 @@ def inject_using_syscalls(process_handle: int, dll_path: str) -> bool:
         path_size = len(dll_path_bytes)
 
         # Allocate memory using syscall
-        MEM_COMMIT = 0x1000
-        MEM_RESERVE = 0x2000
-        PAGE_READWRITE = 0x04
-
         status, remote_addr = syscalls.nt_allocate_virtual_memory(
             process_handle,
             0,  # Let system choose address

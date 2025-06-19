@@ -99,6 +99,7 @@ class BinaryFileWatcher(FileSystemEventHandler):
         self.debounce_delay = 1.0  # 1 second
 
     def on_modified(self, event):
+        """Handle file modification events."""
         if event.is_directory:
             return
 

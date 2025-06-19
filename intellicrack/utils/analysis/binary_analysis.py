@@ -64,6 +64,12 @@ try:
 except ImportError:
     MACHOLIB_AVAILABLE = False
 
+try:
+    import capstone
+    HAS_CAPSTONE = True
+except ImportError:
+    HAS_CAPSTONE = False
+
 
 def analyze_binary_optimized(binary_path: str, detailed: bool = True,
                             use_performance_optimizer: bool = True) -> Dict[str, Any]:
@@ -1340,12 +1346,6 @@ def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> List[
     """
     try:
         # Try to use capstone for disassembly
-        try:
-            import capstone
-            HAS_CAPSTONE = True
-        except ImportError:
-            HAS_CAPSTONE = False
-
         if not HAS_CAPSTONE:
             return _get_basic_disassembly_info(binary_path)
 

@@ -457,15 +457,15 @@ class ComprehensiveR2Integration:
 
 
 # Global integration instance
-_global_integration = None
+_GLOBAL_INTEGRATION = None
 
 
 def get_comprehensive_integration() -> ComprehensiveR2Integration:
     """Get or create global comprehensive integration instance"""
-    global _global_integration
-    if _global_integration is None:
-        _global_integration = ComprehensiveR2Integration()
-    return _global_integration
+    global _GLOBAL_INTEGRATION
+    if _GLOBAL_INTEGRATION is None:
+        _GLOBAL_INTEGRATION = ComprehensiveR2Integration()
+    return _GLOBAL_INTEGRATION
 
 
 def integrate_radare2_comprehensive(main_app) -> bool:
@@ -497,10 +497,10 @@ def get_integration_status() -> Dict[str, bool]:
 
 def cleanup_integration():
     """Cleanup all radare2 integrations"""
-    global _global_integration
-    if _global_integration:
-        _global_integration.cleanup()
-        _global_integration = None
+    global _GLOBAL_INTEGRATION
+    if _GLOBAL_INTEGRATION:
+        _GLOBAL_INTEGRATION.cleanup()
+        _GLOBAL_INTEGRATION = None
 
 
 __all__ = [

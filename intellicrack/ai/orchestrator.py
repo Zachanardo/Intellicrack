@@ -748,20 +748,20 @@ class AIOrchestrator:
 
 
 # Global orchestrator instance
-_orchestrator_instance = None
+_ORCHESTRATOR_INSTANCE = None
 
 
 def get_orchestrator() -> AIOrchestrator:
     """Get the global AI orchestrator instance."""
-    global _orchestrator_instance  # pylint: disable=global-statement
-    if _orchestrator_instance is None:
-        _orchestrator_instance = AIOrchestrator()
-    return _orchestrator_instance
+    global _ORCHESTRATOR_INSTANCE  # pylint: disable=global-statement
+    if _ORCHESTRATOR_INSTANCE is None:
+        _ORCHESTRATOR_INSTANCE = AIOrchestrator()
+    return _ORCHESTRATOR_INSTANCE
 
 
 def shutdown_orchestrator():
     """Shutdown the global orchestrator instance."""
-    global _orchestrator_instance  # pylint: disable=global-statement
-    if _orchestrator_instance:
-        _orchestrator_instance.shutdown()
-        _orchestrator_instance = None
+    global _ORCHESTRATOR_INSTANCE  # pylint: disable=global-statement
+    if _ORCHESTRATOR_INSTANCE:
+        _ORCHESTRATOR_INSTANCE.shutdown()
+        _ORCHESTRATOR_INSTANCE = None

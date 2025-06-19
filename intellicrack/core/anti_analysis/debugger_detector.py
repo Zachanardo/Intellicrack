@@ -16,6 +16,10 @@ from .base_detector import BaseDetector
 
 logger = logging.getLogger(__name__)
 
+# Linux ptrace constants
+PTRACE_TRACEME = 0
+PTRACE_DETACH = 17
+
 
 class DebuggerDetector(BaseDetector):
     """
@@ -402,7 +406,6 @@ class DebuggerDetector(BaseDetector):
 
             # Try to ptrace ourselves
             # If already being debugged, this will fail
-            PTRACE_TRACEME = 0
             result = libc.ptrace(PTRACE_TRACEME, 0, 0, 0)
 
             details['ptrace_result'] = result
@@ -411,7 +414,6 @@ class DebuggerDetector(BaseDetector):
                 return True, 0.9, details
             else:
                 # Detach if successful
-                PTRACE_DETACH = 17
                 libc.ptrace(PTRACE_DETACH, 0, 0, 0)
 
         except Exception as e:

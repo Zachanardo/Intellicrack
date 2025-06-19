@@ -659,20 +659,20 @@ def create_ollama_config(model_name: str, api_base: str = None, **kwargs) -> LLM
 
 
 # Global LLM manager instance
-_llm_manager = None
+_LLM_MANAGER = None
 
 
 def get_llm_manager() -> LLMManager:
     """Get the global LLM manager instance."""
-    global _llm_manager  # pylint: disable=global-statement
-    if _llm_manager is None:
-        _llm_manager = LLMManager()
-    return _llm_manager
+    global _LLM_MANAGER  # pylint: disable=global-statement
+    if _LLM_MANAGER is None:
+        _LLM_MANAGER = LLMManager()
+    return _LLM_MANAGER
 
 
 def shutdown_llm_manager():
     """Shutdown the global LLM manager."""
-    global _llm_manager  # pylint: disable=global-statement
-    if _llm_manager:
-        _llm_manager.shutdown()
-        _llm_manager = None
+    global _LLM_MANAGER  # pylint: disable=global-statement
+    if _LLM_MANAGER:
+        _LLM_MANAGER.shutdown()
+        _LLM_MANAGER = None
