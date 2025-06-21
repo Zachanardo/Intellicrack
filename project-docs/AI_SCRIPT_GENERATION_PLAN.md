@@ -8,6 +8,29 @@ This document outlines the implementation of a comprehensive AI-driven script ge
 1. All generated code MUST be real, functional, and immediately executable. NO placeholder, stub, mock, or simulated code is acceptable. 
 2. Every script must perform actual analysis or bypassing operations.
 3. All implementation code in this plan is also real and functional - no stubs or mocks.
+4. All new files created as part of this implementation MUST contain the proper Intellicrack GPL-3.0 licensing header at the top of the file. Example header:
+```python
+"""
+[Module Description]
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+```
 
 ## System Architecture
 
