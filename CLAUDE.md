@@ -444,6 +444,7 @@ The modular structure enables:
 4. **FOLLOW THE PLAN EXACTLY** - Implement according to the detailed specifications in AI_SCRIPT_GENERATION_PLAN.md
 5. **VERIFY EXISTING FEATURES FIRST** - Before creating new code, check if features already exist and enhance them
 6. **ADD GPL-3.0 HEADERS** - All new files must include proper licensing headers
+7. **CONSULT THE ACTUAL PLAN** - Frequently refer to `/project-docs/AI_SCRIPT_GENERATION_PLAN.md` for the most accurate and detailed implementation specifications. The checklist below is just for tracking progress - the actual plan document contains the complete technical details and code examples
 
 ### 📊 Implementation Progress Tracker
 
@@ -494,7 +495,6 @@ The modular structure enables:
 - [ ] Write user documentation
 - [ ] Create example workflows
 - [ ] Document API for developers
-- [ ] Create video tutorials
 
 #### Phase 9: Model Training Interface (Week 10)
 - [ ] Implement enhanced_training_interface.py improvements
