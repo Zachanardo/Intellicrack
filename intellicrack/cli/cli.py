@@ -39,14 +39,14 @@ except ImportError:
     C2Client = None
 from ..utils.analysis.binary_analysis import analyze_binary
 from ..utils.exploitation import exploit
-from ..utils.patch_generator import generate_patch
+from ..utils.patching.patch_generator import generate_patch
 
 # Import new exploitation modules
 try:
     from ..ai.vulnerability_research_integration import VulnerabilityResearchAI
     from ..core.c2.c2_manager import C2Manager
-    from ..core.exploitation.payload_engine import PayloadEngine as AdvancedPayloadEngine
     from ..core.exploitation.lateral_movement import LateralMovementManager
+    from ..core.exploitation.payload_engine import PayloadEngine as AdvancedPayloadEngine
     from ..core.exploitation.persistence_manager import PersistenceManager
     from ..core.exploitation.privilege_escalation import PrivilegeEscalationManager
     from ..core.vulnerability_research.research_manager import CampaignType, ResearchManager
@@ -62,8 +62,8 @@ logger = logging.getLogger("IntellicrackLogger.CLI")
 
 
 @click.group()
-@click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-@click.option('--quiet', '-q', is_flag=True, help='Suppress non-essential output')
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose output', envvar='INTELLICRACK_VERBOSE')
+@click.option('--quiet', '-q', is_flag=True, help='Suppress non-essential output', envvar='INTELLICRACK_QUIET')
 def cli(verbose: bool, quiet: bool):
     """Intellicrack - Advanced Binary Analysis and Exploitation Framework"""
     # Configure logging
@@ -128,7 +128,10 @@ def generate(payload_type: str, architecture: str, lhost: Optional[str],
         if encoding:
             options['encoding_schemes'] = list(encoding)
 
-        click.echo(f"Generating {payload_type} payload for {architecture}...")
+        # Add output format
+        options['output_format'] = output_format
+
+        click.echo(f"Generating {payload_type} payload for {architecture} (format: {output_format})...")
 
         # Generate payload
         result = engine.generate_payload(
@@ -154,7 +157,7 @@ def generate(payload_type: str, architecture: str, lhost: Optional[str],
                 click.get_binary_stream('stdout').write(result['payload'])
             else:
                 # Display hex dump for terminal
-                from ..utils.hex_utils import create_hex_dump
+                from ..utils.binary.hex_utils import create_hex_dump
                 click.echo("\nPayload hex dump:")
                 click.echo(create_hex_dump(result['payload']))
 
@@ -588,11 +591,12 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
             'lhost': lhost,
             'lport': lport,
             'encoding': encoding_mapping[encoding],
-            'evasion_level': evasion
+            'evasion_level': evasion,
+            'output_format': format
         }
 
         click.echo(f"Generating {payload_type} payload...")
-        click.echo(f"Target: {architecture}, Encoding: {encoding}, Evasion: {evasion}")
+        click.echo(f"Target: {architecture}, Encoding: {encoding}, Evasion: {evasion}, Format: {format}")
 
         result = engine.generate_payload(
             payload_type=payload_type_mapping[payload_type],
@@ -607,12 +611,24 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
                 with open(output, 'wb') as f:
                     f.write(payload_data)
                 click.echo(f"Payload saved to: {output}")
+                # Save metadata alongside if available
+                if metadata:
+                    metadata_file = output + '.metadata.json'
+                    import json
+                    with open(metadata_file, 'w') as f:
+                        json.dump(metadata, f, indent=2)
+                    click.echo(f"Metadata saved to: {metadata_file}")
             else:
                 # Display hex dump
                 hex_dump = payload_data[:256].hex()  # First 256 bytes
                 click.echo("\nPayload preview (first 256 bytes):")
                 for i in range(0, len(hex_dump), 32):
                     click.echo(hex_dump[i:i+32])
+                # Display metadata if available
+                if metadata:
+                    click.echo("\nPayload metadata:")
+                    for key, value in metadata.items():
+                        click.echo(f"  {key}: {value}")
 
         # Use common payload result handler
         if PayloadResultHandler:
@@ -737,7 +753,7 @@ def research():
 @click.option('--output', '-o', help='Output directory for results')
 @click.option('--timeout', type=int, default=3600, help='Analysis timeout (seconds)')
 @click.option('--use-ai', is_flag=True, help='Use AI-guided analysis')
-def analyze(target_path: str, campaign_type: str, output: Optional[str], timeout: int, use_ai: bool):
+def run(target_path: str, campaign_type: str, output: Optional[str], timeout: int, use_ai: bool):
     """Run vulnerability research analysis"""
     try:
         if not os.path.exists(target_path):
@@ -748,8 +764,47 @@ def analyze(target_path: str, campaign_type: str, output: Optional[str], timeout
             # Use AI-guided analysis
             ai_researcher = VulnerabilityResearchAI()
 
-            click.echo(f"Running AI-guided analysis on {target_path}...")
-            result = ai_researcher.analyze_target_with_ai(target_path)
+            click.echo(f"Running AI-guided analysis on {target_path} (timeout: {timeout}s)...")
+            # Set timeout for the analysis
+            import signal
+            import platform
+            
+            if platform.system() != 'Windows' and hasattr(signal, 'SIGALRM'):
+                def timeout_handler(signum, frame):
+                    raise TimeoutError(f"Analysis timed out after {timeout} seconds")
+
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(timeout)
+
+                try:
+                    result = ai_researcher.analyze_target_with_ai(target_path)
+                finally:
+                    signal.alarm(0)  # Cancel the alarm
+            else:
+                # Windows doesn't support SIGALRM, use threading timeout instead
+                import threading
+                
+                result = {'success': False, 'error': 'Timeout not implemented for Windows'}
+                exception_holder = [None]
+                
+                def run_analysis():
+                    try:
+                        nonlocal result
+                        result = ai_researcher.analyze_target_with_ai(target_path)
+                    except Exception as e:
+                        exception_holder[0] = e
+                
+                thread = threading.Thread(target=run_analysis)
+                thread.daemon = True
+                thread.start()
+                thread.join(timeout)
+                
+                if thread.is_alive():
+                    # Thread is still running, analysis timed out
+                    result = {'success': False, 'error': f'Analysis timed out after {timeout} seconds'}
+                elif exception_holder[0] is not None:
+                    exception_to_raise = exception_holder[0]
+                    raise exception_to_raise
 
             if result['success']:
                 click.echo("✓ AI analysis completed!")
@@ -791,12 +846,54 @@ def analyze(target_path: str, campaign_type: str, output: Optional[str], timeout
 
             click.echo(f"Running {campaign_type} analysis on {target_path}...")
 
-            # Run direct analysis
-            result = analyzer.analyze_vulnerability(
-                target_path=target_path,
-                analysis_method=AnalysisMethod.HYBRID,
-                vulnerability_types=None
-            )
+            # Run direct analysis with timeout
+            import signal
+            import platform
+            
+            if platform.system() != 'Windows' and hasattr(signal, 'SIGALRM'):
+                def timeout_handler(signum, frame):
+                    raise TimeoutError(f"Analysis timed out after {timeout} seconds")
+
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(timeout)
+
+                try:
+                    result = analyzer.analyze_vulnerability(
+                        target_path=target_path,
+                        analysis_method=AnalysisMethod.HYBRID,
+                        vulnerability_types=None
+                    )
+                finally:
+                    signal.alarm(0)  # Cancel the alarm
+            else:
+                # Windows doesn't support SIGALRM, use threading timeout instead
+                import threading
+                
+                result = {'success': False, 'error': 'Timeout not implemented for Windows'}
+                exception_holder = [None]
+                
+                def run_analysis():
+                    try:
+                        nonlocal result
+                        result = analyzer.analyze_vulnerability(
+                            target_path=target_path,
+                            analysis_method=AnalysisMethod.HYBRID,
+                            vulnerability_types=None
+                        )
+                    except Exception as e:
+                        exception_holder[0] = e
+                
+                thread = threading.Thread(target=run_analysis)
+                thread.daemon = True
+                thread.start()
+                thread.join(timeout)
+                
+                if thread.is_alive():
+                    # Thread is still running, analysis timed out
+                    result = {'success': False, 'error': f'Analysis timed out after {timeout} seconds'}
+                elif exception_holder[0] is not None:
+                    exception_to_raise = exception_holder[0]
+                    raise exception_to_raise
 
             if result['success']:
                 vulnerabilities = result['vulnerabilities']
@@ -1020,7 +1117,7 @@ def auto_exploit(target_path: str, lhost: str, lport: int, platform: str, output
 
 def main():
     """Main entry point for CLI"""
-    cli(prog_name='intellicrack')
+    cli()
 
 
 if __name__ == '__main__':

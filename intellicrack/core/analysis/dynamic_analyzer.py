@@ -1,5 +1,5 @@
 """
-Advanced Dynamic Analysis Module 
+Advanced Dynamic Analysis Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -25,7 +25,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from ...utils.import_checks import FRIDA_AVAILABLE, PSUTIL_AVAILABLE, frida, psutil
+from ...utils.core.import_checks import FRIDA_AVAILABLE, PSUTIL_AVAILABLE, frida, psutil
 from ...utils.logger import get_logger, log_message
 
 logger = get_logger(__name__)
@@ -458,11 +458,11 @@ class AdvancedDynamicAnalyzer:
             def on_message(message, _data):  # pylint: disable=unused-argument
                 """
                 Handle messages from the Frida script during dynamic analysis.
-                
+
                 Args:
                     message: Message dictionary from Frida containing 'type' and 'payload'
                     _data: Additional data (unused)
-                    
+
                 Processes different message types including analysis completion and
                 various activity tracking (file access, registry, network, licensing).
                 """
@@ -569,14 +569,14 @@ class AdvancedDynamicAnalyzer:
     def scan_memory_for_keywords(self, keywords: List[str], target_process: Optional[str] = None) -> Dict[str, Any]:
         """
         Scan process memory for specific keywords.
-        
+
         Performs real-time memory scanning of the target process or a specified process
         to find occurrences of license-related keywords, serial numbers, or other patterns.
-        
+
         Args:
             keywords: List of keywords to search for in memory
             target_process: Optional process name to scan (defaults to binary_path)
-            
+
         Returns:
             Dictionary containing scan results with matches, addresses, and context
         """
@@ -630,20 +630,20 @@ class AdvancedDynamicAnalyzer:
             const keywords = {keywords};
             const matches = [];
             let scanCount = 0;
-            
+
             function scanMemoryRegions() {{
                 try {{
                     const ranges = Process.enumerateRanges('r--');
-                    
+
                     ranges.forEach(function(range) {{
                         if (range.size > 0x1000000) return; // Skip very large regions
-                        
+
                         try {{
                             const memory = Memory.readByteArray(range.base, Math.min(range.size, 0x100000));
                             if (memory) {{
                                 const view = new Uint8Array(memory);
                                 const text = String.fromCharCode.apply(null, view);
-                                
+
                                 keywords.forEach(function(keyword) {{
                                     let index = 0;
                                     while ((index = text.toLowerCase().indexOf(keyword.toLowerCase(), index)) !== -1) {{
@@ -651,7 +651,7 @@ class AdvancedDynamicAnalyzer:
                                         const contextStart = Math.max(0, index - 50);
                                         const contextEnd = Math.min(text.length, index + keyword.length + 50);
                                         const context = text.substring(contextStart, contextEnd);
-                                        
+
                                         matches.push({{
                                             address: address.toString(),
                                             keyword: keyword,
@@ -660,7 +660,7 @@ class AdvancedDynamicAnalyzer:
                                             region_base: range.base.toString(),
                                             region_size: range.size
                                         }});
-                                        
+
                                         index += keyword.length;
                                     }}
                                 }});
@@ -669,16 +669,16 @@ class AdvancedDynamicAnalyzer:
                             // Skip inaccessible memory regions
                         }}
                     }});
-                    
+
                     send({{ type: 'scan_complete', matches: matches, scan_count: scanCount++ }});
                 }} catch (e) {{
                     send({{ type: 'error', message: e.toString() }});
                 }}
             }}
-            
+
             // Start scanning
             scanMemoryRegions();
-            
+
             // Schedule periodic re-scan (every 5 seconds for 30 seconds)
             const intervalId = setInterval(scanMemoryRegions, 5000);
             setTimeout(function() {{

@@ -1,5 +1,5 @@
 """
-Large File Optimization for Hex Viewer. 
+Large File Optimization for Hex Viewer.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -31,7 +31,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Import from common import checks
-from ..utils.import_checks import PSUTIL_AVAILABLE, psutil
+from ..utils.core.import_checks import PSUTIL_AVAILABLE, psutil
 
 try:
     from PyQt5.QtCore import QObject, QThread, QTimer, pyqtSignal

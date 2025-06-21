@@ -185,9 +185,9 @@ Provides license-focused decompilation using radare2's pdc/pdg commands.
 
 **Example:**
 ```python
-from intellicrack.core.analysis.radare2_decompiler import R2Decompiler
+from intellicrack.core.analysis.radare2_decompiler import R2DecompilationEngine
 
-decompiler = R2Decompiler('/path/to/binary')
+decompiler = R2DecompilationEngine('/path/to/binary')
 result = decompiler.analyze_license_functions()
 
 # Access decompiled functions

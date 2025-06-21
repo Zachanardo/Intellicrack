@@ -1,5 +1,5 @@
 """
-License Protocol Handler Base Class. 
+License Protocol Handler Base Class.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -46,7 +46,7 @@ class LicenseProtocolHandler(ABC):
         - Thread-safe operation with daemon threads
         - Configurable protocol-specific settings
         - Comprehensive logging and error handling
-        
+
     Security Note:
         By default, the proxy binds to localhost (127.0.0.1) only for security.
         To bind to all interfaces (0.0.0.0), explicitly set bind_host in config.
@@ -158,7 +158,7 @@ class LicenseProtocolHandler(ABC):
     def shutdown(self) -> None:
         """
         Shutdown the protocol handler completely.
-        
+
         This method stops the proxy server and cleans up all resources.
         """
         self.logger.info("Shutting down %s protocol handler", self.__class__.__name__)
@@ -367,7 +367,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
     def _handle_flexlm_client(self, client_socket, client_addr):
         """
         Handle individual FlexLM client connection.
-        
+
         Args:
             client_socket: Client socket connection
             client_addr: Client address tuple (ip, port)
@@ -537,7 +537,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
     def _handle_hasp_client(self, client_socket, client_addr):
         """
         Handle individual HASP client connection.
-        
+
         Args:
             client_socket: Client socket connection
             client_addr: Client address tuple (ip, port)
@@ -713,5 +713,13 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             return b"\xFF\xFF\xFF\xFF"  # Error response
 
 
+# Import generic implementation
+try:
+    from .generic_protocol_handler import GenericProtocolHandler
+except ImportError:
+    GenericProtocolHandler = None
+
 # Export main classes
 __all__ = ['LicenseProtocolHandler', 'FlexLMProtocolHandler', 'HASPProtocolHandler']
+if GenericProtocolHandler:
+    __all__.append('GenericProtocolHandler')

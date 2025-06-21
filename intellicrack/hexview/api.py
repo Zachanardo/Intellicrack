@@ -1,5 +1,5 @@
 """
-API for the enhanced hex viewer/editor. 
+API for the enhanced hex viewer/editor.
 
 Copyright (C) 2025 Zachary Flint
 

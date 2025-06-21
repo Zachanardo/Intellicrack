@@ -1,5 +1,5 @@
 """
-Distributed processing utility functions. 
+Distributed processing utility functions.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -28,7 +28,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from .analysis.entropy_utils import calculate_byte_entropy
+from ..analysis.entropy_utils import calculate_byte_entropy
 
 logger = logging.getLogger(__name__)
 
@@ -298,6 +298,11 @@ def run_distributed_entropy_analysis(binary_path: str,
 
         # Calculate entropy using shared utility
         entropy = calculate_byte_entropy(data)
+        
+        # Calculate byte frequency
+        freq = {}
+        for byte in data:
+            freq[byte] = freq.get(byte, 0) + 1
 
         return {
             "entropy": entropy,
@@ -366,7 +371,7 @@ def run_distributed_pattern_search(binary_path: str, patterns: Optional[List[byt
 
         for pattern in patterns:
             # Use common utility for pattern searching
-            from .binary.binary_io import find_all_pattern_offsets
+            from ..binary.binary_io import find_all_pattern_offsets
             offsets = find_all_pattern_offsets(data, pattern)
             for pos in offsets:
                 found_patterns.append({

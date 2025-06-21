@@ -1,5 +1,5 @@
 """
-Binary file utilities for the Intellicrack framework. 
+Binary file utilities for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -302,10 +302,10 @@ def get_file_entropy(file_path: Union[str, Path], block_size: int = 256) -> floa
 def check_suspicious_pe_sections(pe_obj) -> list:
     """
     Check for suspicious PE sections that are both writable and executable.
-    
+
     Args:
         pe_obj: A pefile PE object
-        
+
     Returns:
         list: List of suspicious section names
     """
@@ -327,13 +327,13 @@ def check_suspicious_pe_sections(pe_obj) -> list:
 def validate_binary_path(binary_path: str, logger_instance=None) -> bool:
     """
     Validate that a binary path exists and log appropriate error.
-    
+
     This is the common pattern extracted from duplicate code in analysis modules.
-    
+
     Args:
         binary_path: Path to binary file to validate
         logger_instance: Logger instance to use (optional)
-        
+
     Returns:
         bool: True if binary exists, False otherwise
     """

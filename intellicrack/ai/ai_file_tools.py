@@ -1,5 +1,5 @@
 """
-AI File System Tools 
+AI File System Tools
 
 Copyright (C) 2025 Zachary Flint
 

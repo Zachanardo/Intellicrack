@@ -1,5 +1,5 @@
 """
-LLM Configuration Dialog for Intellicrack 
+LLM Configuration Dialog for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -439,7 +439,7 @@ class LLMConfigDialog(QDialog):
 
         # Server URL
         self.ollama_url = QLineEdit()
-        self.ollama_url.setText("http://localhost:11434")
+        self.ollama_url.setText(os.environ.get('OLLAMA_API_BASE', 'http://localhost:11434'))
         layout.addRow("Server URL:", self.ollama_url)
 
         # Model name

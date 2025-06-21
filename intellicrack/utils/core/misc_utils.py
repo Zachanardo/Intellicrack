@@ -1,5 +1,5 @@
 """
-Miscellaneous utility functions for the Intellicrack framework. 
+Miscellaneous utility functions for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 

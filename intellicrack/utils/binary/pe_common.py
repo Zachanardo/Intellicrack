@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 def extract_pe_imports(pe_obj) -> List[str]:
     """
     Extract import function names from a PE object.
-    
+
     Args:
         pe_obj: A pefile PE object
-        
+
     Returns:
         List of import function names
     """
@@ -38,13 +38,13 @@ def extract_pe_imports(pe_obj) -> List[str]:
 def iterate_pe_imports_with_dll(pe_obj, callback, include_import_obj=False):
     """
     Iterate through PE imports with DLL names, calling callback for each.
-    
+
     Args:
         pe_obj: A pefile PE object
-        callback: Function to call for each import 
+        callback: Function to call for each import
                  (dll_name, func_name[, imp_obj]) -> Any
         include_import_obj: Whether to pass the import object as 3rd parameter
-        
+
     Yields:
         Results from callback function
     """
@@ -68,10 +68,10 @@ def iterate_pe_imports_with_dll(pe_obj, callback, include_import_obj=False):
 def analyze_pe_import_security(pe_obj) -> dict:
     """
     Analyze PE imports for security-related functions.
-    
+
     Args:
         pe_obj: A pefile PE object
-        
+
     Returns:
         Dictionary with security analysis results
     """

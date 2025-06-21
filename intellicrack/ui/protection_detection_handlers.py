@@ -1,5 +1,5 @@
 """
-Protection Detection Handlers for Intellicrack UI 
+Protection Detection Handlers for Intellicrack UI
 
 Copyright (C) 2025 Zachary Flint
 
@@ -102,7 +102,7 @@ class ProtectionDetectionHandlers:
             logger.info("Starting hardware dongle detection")
 
             # Run the detection
-            results = detect_hardware_dongles(self)
+            results = detect_hardware_dongles()
 
             # Format output
             output = "=== Hardware Dongle Detection Results ===\n\n"

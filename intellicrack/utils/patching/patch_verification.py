@@ -1,5 +1,5 @@
 """
-Patch verification and validation utilities for Intellicrack. 
+Patch verification and validation utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -27,22 +27,30 @@ import time
 import traceback
 from typing import Any, Dict, List
 
-# Import common patterns from centralized module
-from .core.import_patterns import (
-    CS_ARCH_X86,
-    CS_MODE_32,
-    CS_MODE_64,
-    Cs,
-    pefile,
-)
+# Import analysis dependencies with fallbacks
+try:
+    import capstone
+    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+    CAPSTONE_AVAILABLE = True
+except ImportError:
+    capstone = None
+    CS_ARCH_X86 = CS_MODE_32 = CS_MODE_64 = Cs = None
+    CAPSTONE_AVAILABLE = False
+
+try:
+    import pefile
+    PEFILE_AVAILABLE = True
+except ImportError:
+    pefile = None
+    PEFILE_AVAILABLE = False
 
 try:
     import keystone
 except ImportError:
     keystone = None
 
-from ..utils.exploitation import run_automated_patch_agent
-from ..utils.logger import log_message
+from ..exploitation.exploitation import run_automated_patch_agent
+from ..logger import log_message
 
 
 def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any]]) -> List[str]:
@@ -522,7 +530,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
     # --- Strategy 1: Deep License Analysis ---
     app.update_output.emit(log_message(
         "[License Rewrite] Running deep license analysis to find candidates..."))
-    from ..core.analysis.core_analysis import enhanced_deep_license_analysis
+    from ...core.analysis.core_analysis import enhanced_deep_license_analysis
     candidates = enhanced_deep_license_analysis(app.binary_path)
 
     if candidates:

@@ -25,7 +25,7 @@ from typing import Any, Dict
 
 def create_bypass_result() -> Dict[str, Any]:
     """Create standard bypass result structure.
-    
+
     Returns:
         dict: Standard result dictionary for bypass operations
     """
@@ -37,7 +37,7 @@ def create_bypass_result() -> Dict[str, Any]:
 
 def add_bypass_method(result: Dict[str, Any], method_name: str) -> None:
     """Add a successful bypass method to results.
-    
+
     Args:
         result: Bypass result dictionary
         method_name: Name of the bypass method
@@ -48,7 +48,7 @@ def add_bypass_method(result: Dict[str, Any], method_name: str) -> None:
 
 def add_bypass_error(result: Dict[str, Any], error: str) -> None:
     """Add an error to bypass results.
-    
+
     Args:
         result: Bypass result dictionary
         error: Error message
@@ -59,10 +59,10 @@ def add_bypass_error(result: Dict[str, Any], error: str) -> None:
 
 def finalize_bypass_result(result: Dict[str, Any]) -> Dict[str, Any]:
     """Finalize bypass result by setting success flag.
-    
+
     Args:
         result: Bypass result dictionary
-        
+
     Returns:
         dict: Finalized result dictionary
     """

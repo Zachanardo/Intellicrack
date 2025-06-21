@@ -33,6 +33,7 @@ from PyQt5.QtWidgets import (
     QTextEdit,
     QTreeWidget,
     QVBoxLayout,
+    QWidget,
 )
 
 from ...core.c2 import C2Server

@@ -94,7 +94,7 @@ except ImportError:
     class MockQtClass:
         """
         Mock class to stand in for PyQt5 classes when PyQt5 is not available.
-        
+
         Provides a no-op implementation that allows the code to run without
         PyQt5 installed, returning itself for any attribute access or calls.
         """
@@ -181,11 +181,11 @@ except ImportError:
     def pyqtSignal(*args, **kwargs):  # pylint: disable=unused-argument
         """
         Mock implementation of PyQt5's pyqtSignal when PyQt5 is not available.
-        
+
         Args:
             *args: Signal type arguments (ignored)
             **kwargs: Signal keyword arguments (ignored)
-            
+
         Returns:
             lambda: A no-op function that can be used as a signal attribute
         """

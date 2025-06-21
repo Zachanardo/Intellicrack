@@ -1,5 +1,5 @@
 """
-AI integration for the hex viewer/editor. 
+AI integration for the hex viewer/editor.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -1896,10 +1896,10 @@ class AIBinaryBridge:
     def analyze_binary_patterns(self, binary_path: str) -> Dict[str, Any]:
         """
         Analyze binary patterns in a file.
-        
+
         Args:
             binary_path: Path to the binary file to analyze
-            
+
         Returns:
             Dictionary containing pattern analysis results
         """

@@ -6,9 +6,9 @@ Provides common functionality for Windows patching operations.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Tuple, Any
+from typing import Any, Tuple
 
-from ...utils.windows_common import WindowsConstants, get_windows_kernel32, get_windows_ntdll
+from ...utils.system.windows_common import WindowsConstants, get_windows_kernel32, get_windows_ntdll
 
 
 class BaseWindowsPatcher(ABC):
@@ -19,6 +19,8 @@ class BaseWindowsPatcher(ABC):
 
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
+        # Optional flag that derived classes can set to require ntdll
+        self._requires_ntdll = False
         self._initialize_windows_libraries()
         self._initialize_windows_constants()
 
@@ -52,11 +54,11 @@ class BaseWindowsPatcher(ABC):
     def handle_suspended_process_result(self, result, logger_instance=None):
         """
         Common pattern for handling suspended process creation result.
-        
+
         Args:
             result: Result from create_suspended_process_with_context
             logger_instance: Logger instance to use (defaults to self.logger)
-            
+
         Returns:
             Tuple of (success, process_info, context) or (False, None, None)
         """
@@ -76,15 +78,15 @@ class BaseWindowsPatcher(ABC):
         """
         Create a suspended process and handle the result in one operation.
         Common pattern to eliminate duplication between early bird injection and process hollowing.
-        
+
         Args:
             target_exe: Path to target executable
             logger_instance: Optional logger instance to use
-            
+
         Returns:
             Tuple of (success, process_info, context) or (False, None, None)
         """
-        from ...utils.process_common import create_suspended_process_with_context
+        from ...utils.system.process_common import create_suspended_process_with_context
 
         if logger_instance is None:
             logger_instance = self.logger
@@ -102,4 +104,14 @@ class BaseWindowsPatcher(ABC):
     @abstractmethod
     def get_required_libraries(self) -> list:
         """Get list of required Windows libraries for this patcher."""
+        pass
+
+    @abstractmethod
+    def _create_suspended_process(self, target_exe: str):
+        """Create a suspended process."""
+        pass
+
+    @abstractmethod
+    def _get_thread_context(self, thread_handle):
+        """Get thread context."""
         pass

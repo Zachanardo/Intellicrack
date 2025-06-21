@@ -43,7 +43,7 @@ def generate_self_signed_cert(
 ) -> Optional[Tuple[bytes, bytes]]:
     """
     Generate a self-signed certificate for SSL/TLS operations.
-    
+
     Args:
         common_name: Common name for the certificate
         organization: Organization name
@@ -51,7 +51,7 @@ def generate_self_signed_cert(
         state: State or province
         locality: City or locality
         valid_days: Number of days the certificate should be valid
-        
+
     Returns:
         Tuple of (certificate_pem, private_key_pem) or None if generation fails
     """
@@ -89,7 +89,7 @@ def generate_self_signed_cert(
         )
 
         # Set validity dates
-        from .protection.certificate_common import get_certificate_validity_dates
+        from .certificate_common import get_certificate_validity_dates
         not_valid_before, not_valid_after = get_certificate_validity_dates(valid_days)
         cert = cert.not_valid_before(not_valid_before).not_valid_after(not_valid_after).add_extension(
             x509.SubjectAlternativeName([
@@ -135,10 +135,10 @@ def generate_self_signed_cert(
 def load_certificate_from_file(cert_path: str) -> Optional[x509.Certificate]:
     """
     Load certificate from PEM file.
-    
+
     Args:
         cert_path: Path to certificate file
-        
+
     Returns:
         Certificate object or None if loading fails
     """
@@ -164,10 +164,10 @@ def load_certificate_from_file(cert_path: str) -> Optional[x509.Certificate]:
 def verify_certificate_validity(cert: x509.Certificate) -> bool:
     """
     Verify if certificate is currently valid.
-    
+
     Args:
         cert: Certificate to verify
-        
+
     Returns:
         True if certificate is valid, False otherwise
     """
@@ -182,10 +182,10 @@ def verify_certificate_validity(cert: x509.Certificate) -> bool:
 def get_certificate_info(cert: x509.Certificate) -> dict:
     """
     Extract information from certificate.
-    
+
     Args:
         cert: Certificate to analyze
-        
+
     Returns:
         Dictionary containing certificate information
     """

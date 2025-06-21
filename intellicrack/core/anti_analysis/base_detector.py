@@ -26,11 +26,11 @@ class BaseDetector(ABC):
                           aggressive_methods: List[str] = None) -> Dict[str, Any]:
         """
         Run the detection loop for all configured methods.
-        
+
         Args:
             aggressive: Whether to run aggressive detection methods
             aggressive_methods: List of method names considered aggressive
-            
+
         Returns:
             Detection results dictionary
         """
@@ -91,7 +91,7 @@ class BaseDetector(ABC):
     def get_running_processes(self) -> Tuple[str, List[str]]:
         """
         Get list of running processes based on platform.
-        
+
         Returns:
             Tuple of (raw_output, process_list)
         """
@@ -133,12 +133,12 @@ class BaseDetector(ABC):
                                 medium_methods: List[str] = None) -> int:
         """
         Calculate detection score based on method difficulty.
-        
+
         Args:
             detections: Dictionary of detection results
             strong_methods: Methods that score 3 points
             medium_methods: Methods that score 2 points (optional)
-            
+
         Returns:
             Score capped at 10
         """

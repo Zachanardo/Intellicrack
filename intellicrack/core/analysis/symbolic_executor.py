@@ -1,5 +1,5 @@
 """
-Symbolic Execution Engine for Automatic Vulnerability Discovery 
+Symbolic Execution Engine for Automatic Vulnerability Discovery
 
 Copyright (C) 2025 Zachary Flint
 
@@ -83,7 +83,9 @@ class SymbolicExecutionEngine:
         if vulnerability_types is None:
             vulnerability_types = [
                 "buffer_overflow", "integer_overflow", "use_after_free",
-                "format_string", "command_injection", "path_traversal"
+                "format_string", "command_injection", "path_traversal",
+                "double_free", "null_pointer_deref", "race_condition",
+                "type_confusion", "heap_overflow", "stack_overflow"
             ]
 
         self.logger.info("Starting symbolic execution on %s", self.binary_path)
@@ -98,13 +100,33 @@ class SymbolicExecutionEngine:
             if "buffer_overflow" in vulnerability_types or "format_string" in vulnerability_types:
                 symbolic_args.append(claripy.BVS("arg1", 8 * 100))  # 100-byte symbolic buffer
 
-            # Create initial state with symbolic arguments
-            initial_state = project.factory.entry_state(args=[project.filename] + symbolic_args)
+            # Create initial state with symbolic arguments and enhanced options
+            initial_state = project.factory.entry_state(
+                args=[project.filename] + symbolic_args,
+                add_options={
+                    angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY,
+                    angr.options.ZERO_FILL_UNCONSTRAINED_REGISTERS,
+                    angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+                    angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS,
+                    angr.options.TRACK_MEMORY_ACTIONS,
+                    angr.options.TRACK_REGISTER_ACTIONS,
+                    angr.options.TRACK_JMP_ACTIONS,
+                    angr.options.TRACK_CONSTRAINT_ACTIONS
+                }
+            )
+            
+            # Set up memory tracking for use-after-free detection
+            if "use_after_free" in vulnerability_types:
+                self._setup_heap_tracking(initial_state)
+            
+            # Set up taint tracking for data flow analysis
+            if any(v in vulnerability_types for v in ["command_injection", "sql_injection", "path_traversal"]):
+                self._setup_taint_tracking(initial_state)
 
             # Set up exploration technique
             simgr = project.factory.simulation_manager(initial_state)
 
-            # Add exploration techniques
+            # Add advanced exploration techniques
             if "buffer_overflow" in vulnerability_types:
                 simgr.use_technique(angr.exploration_techniques.Spiller())
                 simgr.use_technique(angr.exploration_techniques.LengthLimiter(max_length=self.max_paths))
@@ -112,16 +134,40 @@ class SymbolicExecutionEngine:
                     simgr.use_technique(angr.exploration_techniques.MemoryLimiter(self.memory_limit))
                 else:
                     self.logger.warning("MemoryLimiter not available in this angr version")
+                    
+            # Add veritesting for path explosion mitigation
+            if hasattr(angr.exploration_techniques, 'Veritesting'):
+                simgr.use_technique(angr.exploration_techniques.Veritesting())
+                
+            # Add loop seer for infinite loop detection
+            if hasattr(angr.exploration_techniques, 'LoopSeer'):
+                simgr.use_technique(angr.exploration_techniques.LoopSeer(bound=10))
 
-            # Explore the program
-            self.logger.info("Exploring program paths...")
-            simgr.explore(timeout=self.timeout)
+            # Explore the program with custom find/avoid conditions
+            self.logger.info("Exploring program paths with enhanced techniques...")
+            
+            # Define vulnerability-specific exploration targets
+            find_addrs = []
+            avoid_addrs = []
+            
+            # Add addresses of dangerous functions as exploration targets
+            dangerous_funcs = ['strcpy', 'strcat', 'gets', 'sprintf', 'system', 'exec']
+            for func_name in dangerous_funcs:
+                if func_name in project.kb.functions:
+                    func = project.kb.functions[func_name]
+                    find_addrs.append(func.addr)
+                    
+            simgr.explore(
+                find=find_addrs if find_addrs else None,
+                avoid=avoid_addrs if avoid_addrs else None,
+                timeout=self.timeout
+            )
 
             # Analyze results with enhanced vulnerability detection
             vulnerabilities = []
 
             # Use enhanced vulnerability analysis
-            enhanced_vulns = self._analyze_vulnerable_paths(simgr, vulnerability_types)
+            enhanced_vulns = self._analyze_vulnerable_paths(simgr, vulnerability_types, project)
             vulnerabilities.extend(enhanced_vulns)
 
             # Check for integer overflows
@@ -135,7 +181,8 @@ class SymbolicExecutionEngine:
                                     "type": "integer_overflow",
                                     "address": hex(_state.addr),
                                     "description": "Potential integer overflow detected",
-                                    "constraint": str(_constraint)
+                                    "constraint": str(_constraint),
+                                    "severity": "high"
                                 }
                                 vulnerabilities.append(vuln)
 
@@ -147,9 +194,93 @@ class SymbolicExecutionEngine:
                             "type": "format_string",
                             "address": hex(_state.addr),
                             "description": "Potential format string vulnerability detected",
-                            "input": _state.posix.dumps(0) if hasattr(_state, "posix") else None
+                            "input": _state.posix.dumps(0) if hasattr(_state, "posix") else None,
+                            "severity": "high"
                         }
                         vulnerabilities.append(vuln)
+                        
+            # Check for use-after-free vulnerabilities
+            if "use_after_free" in vulnerability_types:
+                for _state in simgr.active + simgr.deadended + simgr.errored:
+                    if hasattr(_state, 'heap') and hasattr(_state.heap, '_freed_chunks'):
+                        # Check for accesses to freed memory
+                        for action in _state.history.actions:
+                            if action.type == 'mem' and action.action == 'read':
+                                addr = _state.solver.eval(action.addr)
+                                if addr in _state.heap._freed_chunks:
+                                    vuln = {
+                                        "type": "use_after_free",
+                                        "address": hex(_state.addr),
+                                        "description": f"Use-after-free detected: accessing freed memory at {hex(addr)}",
+                                        "freed_at": hex(_state.heap._freed_chunks[addr]['freed_at']),
+                                        "severity": "critical"
+                                    }
+                                    vulnerabilities.append(vuln)
+                                    
+            # Check for double-free vulnerabilities
+            if "double_free" in vulnerability_types:
+                for _state in simgr.active + simgr.deadended:
+                    if hasattr(_state, 'heap') and hasattr(_state.heap, '_freed_chunks'):
+                        # Check if any pointer was freed twice
+                        freed_ptrs = {}
+                        for ptr, info in _state.heap._freed_chunks.items():
+                            if ptr in freed_ptrs:
+                                vuln = {
+                                    "type": "double_free",
+                                    "address": hex(info['freed_at']),
+                                    "description": f"Double-free detected for pointer {hex(ptr)}",
+                                    "first_free": hex(freed_ptrs[ptr]),
+                                    "second_free": hex(info['freed_at']),
+                                    "severity": "critical"
+                                }
+                                vulnerabilities.append(vuln)
+                            freed_ptrs[ptr] = info['freed_at']
+                            
+            # Check for race conditions
+            if "race_condition" in vulnerability_types:
+                for _state in simgr.active + simgr.deadended:
+                    if self._check_race_condition(_state, project):
+                        vuln = {
+                            "type": "race_condition",
+                            "address": hex(_state.addr),
+                            "description": "Potential race condition: multi-threading without proper synchronization",
+                            "severity": "high"
+                        }
+                        vulnerabilities.append(vuln)
+                        
+            # Check for type confusion
+            if "type_confusion" in vulnerability_types:
+                for _state in simgr.active + simgr.deadended:
+                    if self._check_type_confusion(_state, project):
+                        vuln = {
+                            "type": "type_confusion",
+                            "address": hex(_state.addr),
+                            "description": "Potential type confusion vulnerability in C++ virtual function handling",
+                            "severity": "high"
+                        }
+                        vulnerabilities.append(vuln)
+                        
+            # Check for command injection via taint analysis
+            if "command_injection" in vulnerability_types and hasattr(initial_state, 'plugins') and 'taint' in initial_state.plugins:
+                for _state in simgr.active + simgr.deadended:
+                    # Check if tainted data reaches system/exec calls
+                    for func_name in ['system', 'exec', 'execve', 'popen']:
+                        if func_name in project.kb.functions:
+                            func = project.kb.functions[func_name]
+                            if _state.addr == func.addr:
+                                # Check if arguments are tainted
+                                arg_reg = 'rdi' if _state.arch.bits == 64 else 'eax'
+                                if hasattr(_state.regs, arg_reg):
+                                    arg_val = getattr(_state.regs, arg_reg)
+                                    if _state.plugins.taint.is_tainted(arg_val):
+                                        vuln = {
+                                            "type": "command_injection",
+                                            "address": hex(_state.addr),
+                                            "description": f"Command injection: tainted data reaches {func_name}",
+                                            "taint_source": _state.plugins.taint.get_taint_source(arg_val),
+                                            "severity": "critical"
+                                        }
+                                        vulnerabilities.append(vuln)
 
             self.logger.info("Symbolic execution completed. Found %d potential vulnerabilities.", len(vulnerabilities))
             return vulnerabilities
@@ -395,13 +526,14 @@ class SymbolicExecutionEngine:
             self.logger.warning("Error during buffer overflow check: %s", e, exc_info=False)
             return False
 
-    def _analyze_vulnerable_paths(self, simgr, vulnerability_types: List[str]) -> List[Dict[str, Any]]:
+    def _analyze_vulnerable_paths(self, simgr, vulnerability_types: List[str], project) -> List[Dict[str, Any]]:
         """
         Analyze simulation manager paths for vulnerabilities with enhanced detection.
 
         Args:
             simgr: Simulation manager
             vulnerability_types: Types of vulnerabilities to look for
+            project: Angr project
 
         Returns:
             list: Detected vulnerabilities with enhanced information
@@ -446,13 +578,13 @@ class SymbolicExecutionEngine:
     def _native_vulnerability_discovery(self, vulnerability_types: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         """
         Native vulnerability discovery implementation without angr dependency.
-        
+
         Performs comprehensive static and heuristic analysis to identify potential
         vulnerabilities using pattern matching, control flow analysis, and code inspection.
-        
+
         Args:
             vulnerability_types: List of vulnerability types to look for
-            
+
         Returns:
             List of discovered vulnerabilities with detailed information
         """
@@ -875,6 +1007,25 @@ class SymbolicExecutionEngine:
                 }
                 vulnerabilities.append(vuln)
 
+        # Analyze disassembly for command execution patterns
+        if disasm_info and 'instructions' in disasm_info:
+            for instruction in disasm_info['instructions']:
+                mnemonic = instruction.get('mnemonic', '')
+                op_str = instruction.get('op_str', '')
+
+                # Look for calls to dangerous functions
+                if mnemonic in ['call', 'jmp']:
+                    if any(func.lower() in op_str.lower() for func in dangerous_functions):
+                        vuln = {
+                            'type': 'command_injection',
+                            'severity': 'high',
+                            'address': hex(instruction.get('address', 0)),
+                            'description': f'Direct call to dangerous function in {op_str}',
+                            'instruction': f'{mnemonic} {op_str}',
+                            'detection_method': 'disassembly_analysis'
+                        }
+                        vulnerabilities.append(vuln)
+
         return vulnerabilities
 
     def _detect_use_after_free_patterns(self, binary_data: bytes, strings: List[Dict], disasm_info: Dict) -> List[Dict[str, Any]]:
@@ -994,7 +1145,14 @@ class SymbolicExecutionEngine:
         """Detect potential null pointer dereference vulnerabilities."""
         vulnerabilities = []
 
-        # Look for null checks and pointer operations
+        # Analyze strings for null pointer related error messages
+        null_related_strings = []
+        for string_entry in strings:
+            string_val = string_entry.get('string', '').lower()
+            if any(pattern in string_val for pattern in ['null', 'nullptr', 'invalid pointer', 'segmentation fault', 'access violation']):
+                null_related_strings.append(string_entry)
+
+        # Look for null checks and pointer operations in disassembly
         for instruction in disasm_info.get('instructions', []):
             # Look for comparisons with NULL (0)
             if instruction['mnemonic'] in ['cmp', 'test'] and '0' in instruction['op_str']:
@@ -1005,6 +1163,43 @@ class SymbolicExecutionEngine:
                     'description': f'Null pointer check: {instruction["mnemonic"]} {instruction["op_str"]}',
                     'instruction': f'{instruction["mnemonic"]} {instruction["op_str"]}',
                     'detection_method': 'instruction_analysis'
+                }
+                vulnerabilities.append(vuln)
+
+        # Search binary data for null pointer patterns
+        if binary_data:
+            # Look for patterns that might indicate null pointer vulnerabilities
+            pattern_null_check = b'\x83\x3d'  # cmp dword ptr, 0
+            pattern_positions = []
+            start = 0
+            while True:
+                pos = binary_data.find(pattern_null_check, start)
+                if pos == -1:
+                    break
+                pattern_positions.append(pos)
+                start = pos + 1
+
+            for pos in pattern_positions[:10]:  # Limit to first 10 matches
+                vuln = {
+                    'type': 'null_pointer_deref',
+                    'severity': 'low',
+                    'address': hex(pos),
+                    'description': f'Null comparison pattern found in binary at offset {hex(pos)}',
+                    'detection_method': 'binary_pattern_analysis',
+                    'pattern': 'null_comparison_opcode'
+                }
+                vulnerabilities.append(vuln)
+
+        # Add information about null-related strings found
+        if null_related_strings:
+            for string_entry in null_related_strings[:5]:  # Limit to first 5
+                vuln = {
+                    'type': 'null_pointer_deref',
+                    'severity': 'info',
+                    'address': hex(string_entry.get('vaddr', 0)),
+                    'description': f'Null-related string: "{string_entry.get("string", "")}"',
+                    'detection_method': 'string_analysis',
+                    'string_content': string_entry.get('string', '')
                 }
                 vulnerabilities.append(vuln)
 
@@ -1027,6 +1222,134 @@ class SymbolicExecutionEngine:
         unique_vulns.sort(key=lambda v: severity_order.get(v.get('severity', 'low'), 3))
 
         return unique_vulns
+    
+    def _setup_heap_tracking(self, state):
+        """Set up heap tracking for use-after-free detection."""
+        if not hasattr(state, 'heap'):
+            return
+            
+        # Track heap allocations and frees
+        state.heap._freed_chunks = {}
+        state.heap._allocation_sites = {}
+        
+        # Hook malloc/free functions
+        malloc_addr = state.project.loader.find_symbol('malloc')
+        free_addr = state.project.loader.find_symbol('free')
+        
+        if malloc_addr:
+            state.project.hook(malloc_addr.rebased_addr, self._malloc_hook, length=0)
+        if free_addr:
+            state.project.hook(free_addr.rebased_addr, self._free_hook, length=0)
+            
+    def _malloc_hook(self, state):
+        """Hook for malloc to track allocations."""
+        size = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
+        
+        # Perform the allocation
+        addr = state.heap._malloc(size)
+        
+        # Track the allocation
+        if hasattr(state.heap, '_allocation_sites'):
+            state.heap._allocation_sites[addr] = {
+                'size': size,
+                'call_site': state.addr,
+                'allocated_at': state.history.bbl_addrs[-1] if state.history.bbl_addrs else 0
+            }
+            
+        # Return the allocated address
+        state.regs.rax = addr
+        
+    def _free_hook(self, state):
+        """Hook for free to track deallocations and detect use-after-free."""
+        ptr = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
+        
+        # Check if already freed (double-free)
+        if hasattr(state.heap, '_freed_chunks') and ptr in state.heap._freed_chunks:
+            self.logger.warning(f"Double free detected at {hex(state.addr)} for ptr {hex(ptr)}")
+            
+        # Track the deallocation
+        if hasattr(state.heap, '_freed_chunks'):
+            state.heap._freed_chunks[ptr] = {
+                'freed_at': state.addr,
+                'call_site': state.history.bbl_addrs[-1] if state.history.bbl_addrs else 0
+            }
+            
+        # Perform the free
+        state.heap._free(ptr)
+        
+    def _setup_taint_tracking(self, state):
+        """Set up taint tracking for data flow analysis."""
+        # Initialize taint tracking plugin if available
+        if hasattr(state, 'plugins'):
+            state.register_plugin('taint', TaintTracker())
+            
+        # Mark user input as tainted
+        for i in range(len(state.solver.constraints)):
+            constraint = state.solver.constraints[i]
+            for var in constraint.variables:
+                if 'arg' in str(var) or 'stdin' in str(var):
+                    if hasattr(state.plugins, 'taint'):
+                        state.plugins.taint.add_taint(var, 'user_input')
+                        
+    def _check_race_condition(self, state, project) -> bool:
+        """Check for potential race conditions."""
+        try:
+            # Look for multi-threading indicators
+            threading_funcs = ['pthread_create', 'CreateThread', 'fork', 'clone']
+            for func in threading_funcs:
+                if func in project.kb.functions:
+                    # Check if shared resources are accessed without synchronization
+                    return self._analyze_synchronization(state, project)
+            return False
+        except Exception as e:
+            self.logger.debug(f"Race condition check failed: {e}")
+            return False
+            
+    def _analyze_synchronization(self, state, project) -> bool:
+        """Analyze synchronization primitives usage."""
+        # Look for mutex/lock usage
+        sync_funcs = ['pthread_mutex_lock', 'pthread_mutex_unlock', 'EnterCriticalSection', 'LeaveCriticalSection']
+        sync_count = sum(1 for f in sync_funcs if f in project.kb.functions)
+        
+        # If threading is used but few sync primitives, potential race condition
+        return sync_count < 2
+        
+    def _check_type_confusion(self, state, project) -> bool:
+        """Check for potential type confusion vulnerabilities."""
+        try:
+            # Look for virtual function tables
+            if hasattr(project.loader, 'main_object'):
+                # Check for C++ virtual tables
+                for section in project.loader.main_object.sections:
+                    if '.rdata' in section.name or '.rodata' in section.name:
+                        # Look for vtable patterns
+                        data = state.memory.load(section.vaddr, section.memsize)
+                        if state.solver.symbolic(data):
+                            return True
+            return False
+        except Exception as e:
+            self.logger.debug(f"Type confusion check failed: {e}")
+            return False
+
+
+class TaintTracker:
+    """Simple taint tracking plugin for symbolic execution."""
+    
+    def __init__(self):
+        self.tainted_data = {}
+        self.taint_propagation = {}
+        
+    def add_taint(self, data, source):
+        """Mark data as tainted from a specific source."""
+        self.tainted_data[str(data)] = source
+        
+    def is_tainted(self, data):
+        """Check if data is tainted."""
+        return str(data) in self.tainted_data
+        
+    def get_taint_source(self, data):
+        """Get the source of taint for data."""
+        return self.tainted_data.get(str(data), None)
 
 
 __all__ = ['SymbolicExecutionEngine']

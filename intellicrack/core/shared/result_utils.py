@@ -13,10 +13,10 @@ class ResultMixin:
     def init_result(self, **kwargs) -> Dict[str, Any]:
         """
         Initialize a standard result dictionary.
-        
+
         Args:
             **kwargs: Additional fields to include in the result
-            
+
         Returns:
             Initialized result dictionary with success=False and error=None
         """
@@ -31,10 +31,10 @@ class ResultMixin:
         """
         Create a standardized analysis result dictionary.
         Alias for init_result to maintain compatibility.
-        
+
         Args:
             **kwargs: Additional fields to include in the result
-            
+
         Returns:
             Standardized result dictionary
         """

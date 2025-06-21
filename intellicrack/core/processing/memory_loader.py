@@ -1,5 +1,5 @@
 """
-Memory-Optimized Binary Loader 
+Memory-Optimized Binary Loader
 
 Copyright (C) 2025 Zachary Flint
 
@@ -291,7 +291,7 @@ class MemoryOptimizedBinaryLoader:
         Returns:
             Human-readable size string
         """
-        from ...utils.string_utils import format_bytes
+        from ...utils.core.string_utils import format_bytes
         return format_bytes(size_bytes)
 
     def __enter__(self):

@@ -1,5 +1,5 @@
 """
-Final utility functions to complete the Intellicrack refactoring. 
+Final utility functions to complete the Intellicrack refactoring.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -321,14 +321,14 @@ def cache_analysis_results(key: str, results: Dict[str, Any],
 def get_captured_requests(limit: int = 100) -> List[Dict[str, Any]]:
     """
     Get recently captured network requests from all active capture sources.
-    
+
     This function aggregates network request data from multiple sources including
     protocol handlers, network interceptors, and cached capture data to provide
     a comprehensive view of recent network activity.
-    
+
     Args:
         limit: Maximum number of requests to return (default: 100)
-        
+
     Returns:
         List of captured request dictionaries with comprehensive metadata
     """
@@ -960,15 +960,15 @@ def submit_report(report_data: Dict[str, Any],
                  endpoint: Optional[str] = None) -> Dict[str, Any]:
     """
     Submit a comprehensive analysis report to an endpoint or save locally with full validation.
-    
+
     This function handles report submission with multiple delivery methods including
     REST API endpoints, email, local storage, and cloud services. It includes
     comprehensive validation, formatting, and error handling.
-    
+
     Args:
         report_data: Complete report data dictionary with analysis results
         endpoint: Optional endpoint URL for remote submission
-        
+
     Returns:
         Dict containing submission status, tracking ID, and delivery confirmation
     """
@@ -1482,14 +1482,14 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
 
                 # Create table if it doesn't exist
                 cursor.execute('''CREATE TABLE IF NOT EXISTS analysis_reports
-                               (id TEXT PRIMARY KEY, 
+                               (id TEXT PRIMARY KEY,
                                 timestamp REAL,
                                 report_data TEXT,
                                 metadata TEXT)''')
 
                 # Insert report
-                cursor.execute('''INSERT OR REPLACE INTO analysis_reports 
-                               (id, timestamp, report_data, metadata) 
+                cursor.execute('''INSERT OR REPLACE INTO analysis_reports
+                               (id, timestamp, report_data, metadata)
                                VALUES (?, ?, ?, ?)''',
                                (report_id,
                                 time.time(),
@@ -1539,10 +1539,10 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
                                 metadata JSONB)''')
 
                 # Insert report
-                cursor.execute('''INSERT INTO analysis_reports 
+                cursor.execute('''INSERT INTO analysis_reports
                                (id, timestamp, report_data, metadata)
                                VALUES (%s, to_timestamp(%s), %s, %s)
-                               ON CONFLICT (id) DO UPDATE 
+                               ON CONFLICT (id) DO UPDATE
                                SET timestamp = EXCLUDED.timestamp,
                                    report_data = EXCLUDED.report_data,
                                    metadata = EXCLUDED.metadata''',

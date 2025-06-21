@@ -25,10 +25,10 @@ logger = logging.getLogger(__name__)
 # Import tool modules with error handling
 try:
     from .plugin_test_generator import (
-        PluginTestGenerator,
-        TestCoverageAnalyzer,
         MockDataGenerator,
-        PluginTestRunner
+        PluginTestGenerator,
+        PluginTestRunner,
+        TestCoverageAnalyzer,
     )
 except ImportError as e:
     logger.warning("Failed to import plugin_test_generator: %s", e)
@@ -46,12 +46,12 @@ except ImportError as e:
 
 try:
     from .plugin_debugger import (
-        PluginDebugger,
-        DebuggerThread,
+        Breakpoint,
         BreakpointType,
         DebuggerState,
-        Breakpoint,
-        StackFrame
+        DebuggerThread,
+        PluginDebugger,
+        StackFrame,
     )
 except ImportError as e:
     logger.warning("Failed to import plugin_debugger: %s", e)

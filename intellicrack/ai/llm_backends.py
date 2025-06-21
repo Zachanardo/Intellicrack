@@ -1,5 +1,5 @@
 """
-LLM Backend Support for Intellicrack Agentic AI 
+LLM Backend Support for Intellicrack Agentic AI
 
 Copyright (C) 2025 Zachary Flint
 
@@ -414,7 +414,7 @@ class OllamaBackend(LLMBackend):
 
     def __init__(self, config: LLMConfig):
         super().__init__(config)
-        self.base_url = config.api_base or "http://localhost:11434"
+        self.base_url = config.api_base or os.environ.get('OLLAMA_API_BASE', 'http://localhost:11434')
 
     def initialize(self) -> bool:
         """Initialize Ollama connection."""

@@ -1,5 +1,5 @@
 """
-Dynamic Path Discovery System 
+Dynamic Path Discovery System
 
 Copyright (C) 2025 Zachary Flint
 
@@ -35,7 +35,7 @@ class PathDiscovery:
     def __init__(self, config_manager=None):
         """
         Initialize path discovery system.
-        
+
         Args:
             config_manager: Optional config manager for persistence
         """
@@ -308,11 +308,11 @@ class PathDiscovery:
     def find_tool(self, tool_name: str, required_executables: Optional[List[str]] = None) -> Optional[str]:
         """
         Find a tool using multiple discovery strategies.
-        
+
         Args:
             tool_name: Name of the tool to find
             required_executables: Optional list of specific executables to search for
-            
+
         Returns:
             Path to the tool executable or None if not found
         """
@@ -510,10 +510,10 @@ class PathDiscovery:
     def get_system_path(self, path_type: str) -> Optional[str]:
         """
         Get system paths dynamically.
-        
+
         Args:
             path_type: Type of system path (e.g., 'windows_system', 'program_files')
-            
+
         Returns:
             System path or None if not applicable
         """
@@ -681,11 +681,11 @@ class PathDiscovery:
     def ensure_tool_available(self, tool_name: str, parent_widget=None) -> Optional[str]:
         """
         Ensure a tool is available, prompting user if needed.
-        
+
         Args:
             tool_name: Name of the tool
             parent_widget: Optional Qt widget for GUI prompts
-            
+
         Returns:
             Path to tool or None
         """

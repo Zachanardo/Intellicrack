@@ -1,5 +1,5 @@
 """
-Intellicrack Core Reporting Package 
+Intellicrack Core Reporting Package
 
 Copyright (C) 2025 Zachary Flint
 

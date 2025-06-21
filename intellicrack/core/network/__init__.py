@@ -1,5 +1,5 @@
 """
-Network analysis and protocol handling for Intellicrack. 
+Network analysis and protocol handling for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

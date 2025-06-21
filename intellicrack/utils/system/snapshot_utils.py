@@ -14,11 +14,11 @@ def compare_snapshots(snapshot1: Dict[str, Any],
                      snapshot2: Dict[str, Any]) -> Dict[str, Any]:
     """
     Compare two system snapshots and return differences.
-    
+
     Args:
         snapshot1: First snapshot
         snapshot2: Second snapshot
-        
+
     Returns:
         Dictionary containing differences between snapshots
     """

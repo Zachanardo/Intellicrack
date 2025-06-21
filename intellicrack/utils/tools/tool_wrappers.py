@@ -1,5 +1,5 @@
 """
-Tool wrapper functions for Intellicrack. 
+Tool wrapper functions for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -598,7 +598,7 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
 
             # Method 5: Machine learning predictions (if available)
             try:
-                from ..ai.ml_predictor import predict_vulnerabilities
+                from ...ai.ml_predictor import predict_vulnerabilities
                 ml_result = predict_vulnerabilities(app_instance.binary_path)
                 if ml_result.get('vulnerabilities'):
                     ml_patches = _convert_vulnerabilities_to_patches(ml_result['vulnerabilities'])
@@ -768,7 +768,7 @@ def _try_pefile_import_analysis(binary_path: str) -> List[Dict[str, Any]]:
         pe = pefile.PE(binary_path)
 
         # Use common PE analysis utility
-        from .binary.pe_analysis_common import analyze_pe_imports
+        from ..binary.pe_analysis_common import analyze_pe_imports
         target_apis = {
             'system': ['GetSystemTime', 'GetLocalTime'],
             'registry': ['RegOpenKey', 'RegQueryValue'],
@@ -793,7 +793,7 @@ def _extract_import_patches(pe, detected_apis) -> List[Dict[str, Any]]:
     """Extract import patches from PE analysis."""
     patches = []
 
-    from .binary.pe_common import iterate_pe_imports_with_dll
+    from ..binary.pe_common import iterate_pe_imports_with_dll
 
     def check_import_patch(dll_name, func_name, imp):
         # Check if this function was detected
@@ -823,7 +823,7 @@ def _analyze_disassembly(binary_path: str) -> List[Dict[str, Any]]:
     patches = []
 
     try:
-        from ..utils.import_patterns import CAPSTONE_AVAILABLE, CS_ARCH_X86, CS_MODE_64, Cs
+        from ..core.import_patterns import CAPSTONE_AVAILABLE, CS_ARCH_X86, CS_MODE_64, Cs
 
         if CAPSTONE_AVAILABLE:
             with open(binary_path, 'rb') as f:
@@ -1235,7 +1235,7 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) ->
             }
 
         # Import directly from dynamic_analyzer to avoid cyclic import
-        from ..core.analysis.dynamic_analyzer import deep_runtime_monitoring as analyzer_drm
+        from ...core.analysis.dynamic_analyzer import deep_runtime_monitoring as analyzer_drm
 
         # Create monitoring config
         monitoring_config = {
@@ -1296,7 +1296,7 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
                          project_name: str = None, options: Dict[str, Any] = None) -> Dict[str, Any]:
     """
     Run comprehensive Ghidra headless analysis on a binary.
-    
+
     Args:
         binary_path: Path to the binary to analyze
         script_path: Optional path to Ghidra script to run post-analysis
@@ -1314,7 +1314,7 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
             - log_level: Logging level (INFO, DEBUG, ERROR)
             - max_ram: Maximum RAM usage for analysis
             - script_params: Parameters to pass to post-analysis script
-    
+
     Returns:
         Comprehensive analysis results including symbols, functions, strings, etc.
     """
@@ -1372,7 +1372,7 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
         # Use dynamic path discovery
         ghidra_executable = None
         try:
-            from ..utils.path_discovery import find_tool
+            from ...core.path_discovery import find_tool
             ghidra_base = find_tool("ghidra")
             if ghidra_base:
                 # Find analyzeHeadless relative to ghidra installation
@@ -1583,7 +1583,7 @@ if (exportSelection.contains("functions")) {
     exportFunctions()
 }
 
-// Export symbols  
+// Export symbols
 if (exportSelection.contains("symbols")) {
     exportSymbols()
 }
@@ -1615,7 +1615,7 @@ if (exportSelection.contains("segments")) {
 def exportFunctions() {
     def functions = []
     def functionIterator = listing.getFunctions(true)
-    
+
     while (functionIterator.hasNext()) {
         def function = functionIterator.next()
         def functionData = [
@@ -1632,14 +1632,14 @@ def exportFunctions() {
         ]
         functions.add(functionData)
     }
-    
+
     writeJsonFile("functions.json", functions)
 }
 
 def exportSymbols() {
     def symbols = []
     def symbolIterator = symbolTable.getAllSymbols(true)
-    
+
     while (symbolIterator.hasNext()) {
         def symbol = symbolIterator.next()
         def symbolData = [
@@ -1653,14 +1653,14 @@ def exportSymbols() {
         ]
         symbols.add(symbolData)
     }
-    
+
     writeJsonFile("symbols.json", symbols)
 }
 
 def exportStrings() {
     def strings = []
     def definedData = listing.getDefinedData(true)
-    
+
     while (definedData.hasNext()) {
         def data = definedData.next()
         if (data.hasStringValue()) {
@@ -1674,7 +1674,7 @@ def exportStrings() {
             strings.add(stringData)
         }
     }
-    
+
     writeJsonFile("strings.json", strings)
 }
 
@@ -1682,11 +1682,11 @@ def exportCrossReferences() {
     def references = []
     def allAddresses = memory.getAllInitializedAddressSet()
     def addressIterator = allAddresses.getAddresses(true)
-    
+
     while (addressIterator.hasNext()) {
         def address = addressIterator.next()
         def refsFrom = program.getReferenceManager().getReferencesFrom(address)
-        
+
         for (ref in refsFrom) {
             def refData = [
                 from_address: ref.getFromAddress().toString(),
@@ -1698,7 +1698,7 @@ def exportCrossReferences() {
             references.add(refData)
         }
     }
-    
+
     writeJsonFile("cross_references.json", references)
 }
 
@@ -1706,7 +1706,7 @@ def exportImports() {
     def imports = []
     def externalManager = program.getExternalManager()
     def externalNames = externalManager.getExternalLibraryNames()
-    
+
     for (libName in externalNames) {
         def extLocations = externalManager.getExternalLocations(libName)
         while (extLocations.hasNext()) {
@@ -1720,14 +1720,14 @@ def exportImports() {
             imports.add(importData)
         }
     }
-    
+
     writeJsonFile("imports.json", imports)
 }
 
 def exportExports() {
     def exports = []
     def entryPoints = symbolTable.getExternalEntryPointIterator()
-    
+
     while (entryPoints.hasNext()) {
         def entryPoint = entryPoints.next()
         def exportData = [
@@ -1737,14 +1737,14 @@ def exportExports() {
         ]
         exports.add(exportData)
     }
-    
+
     writeJsonFile("exports.json", exports)
 }
 
 def exportMemorySegments() {
     def segments = []
     def memoryBlocks = memory.getBlocks()
-    
+
     for (block in memoryBlocks) {
         def segmentData = [
             name: block.getName(),
@@ -1759,19 +1759,19 @@ def exportMemorySegments() {
         ]
         segments.add(segmentData)
     }
-    
+
     writeJsonFile("memory_segments.json", segments)
 }
 
 def getReferencesToAddress(address) {
     def refs = []
     def refIterator = program.getReferenceManager().getReferencesTo(address)
-    
+
     while (refIterator.hasNext()) {
         def ref = refIterator.next()
         refs.add(ref.getFromAddress().toString())
     }
-    
+
     return refs
 }
 

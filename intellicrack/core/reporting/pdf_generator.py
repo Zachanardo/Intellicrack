@@ -1,5 +1,5 @@
 """
-PDF Report Generator for comprehensive analysis findings. 
+PDF Report Generator for comprehensive analysis findings.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -58,7 +58,7 @@ except ImportError:
 from ...utils.core.common_imports import MATPLOTLIB_AVAILABLE, PDFKIT_AVAILABLE, pdfkit, plt
 
 # Import common patterns from centralized module
-from ...utils.import_patterns import PEFILE_AVAILABLE, pefile
+from ...utils.core.import_patterns import PEFILE_AVAILABLE, pefile
 
 try:
     from PyQt5.QtWidgets import QInputDialog, QMessageBox
@@ -581,7 +581,7 @@ class PDFReportGenerator:
             report_filename = f"report_{binary_name}_{timestamp}.html"
             report_path = os.path.join(self.output_dir, report_filename)
 
-            from ...utils.html_templates import close_html, get_report_html_template
+            from ...utils.reporting.html_templates import close_html, get_report_html_template
 
             # Start building HTML content using common template
             html_content = get_report_html_template(binary_name) + f"""
@@ -665,13 +665,13 @@ class PDFReportGenerator:
                        output_path: Optional[str] = None) -> bool:
         """
         Export analysis results in various formats.
-        
+
         Args:
             format_type: Export format ('pdf', 'html', 'json', 'xml', 'csv')
             binary_path: Path to analyzed binary
             analysis_results: Analysis results dictionary
             output_path: Output file path (optional)
-            
+
         Returns:
             bool: True if export successful, False otherwise
         """

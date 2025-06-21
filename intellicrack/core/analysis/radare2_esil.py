@@ -23,13 +23,13 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-from ...utils.radare2_utils import R2Exception, R2Session, r2_session
+from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 
 
 class ESILAnalysisEngine:
     """
     Advanced ESIL analysis engine for dynamic binary analysis and emulation.
-    
+
     Provides sophisticated emulation capabilities for:
     - License validation routine analysis
     - Vulnerability detection through dynamic analysis
@@ -41,7 +41,7 @@ class ESILAnalysisEngine:
     def __init__(self, binary_path: str, radare2_path: Optional[str] = None):
         """
         Initialize ESIL analysis engine.
-        
+
         Args:
             binary_path: Path to binary file
             radare2_path: Optional path to radare2 executable
@@ -54,10 +54,10 @@ class ESILAnalysisEngine:
     def initialize_esil_vm(self, r2: R2Session) -> bool:
         """
         Initialize ESIL virtual machine with optimal settings.
-        
+
         Args:
             r2: Active radare2 session
-            
+
         Returns:
             Success status
         """
@@ -84,11 +84,11 @@ class ESILAnalysisEngine:
     def emulate_function_execution(self, address: int, max_steps: int = 100) -> Dict[str, Any]:
         """
         Emulate function execution using ESIL.
-        
+
         Args:
             address: Function start address
             max_steps: Maximum execution steps
-            
+
         Returns:
             Comprehensive emulation results
         """
@@ -438,11 +438,11 @@ class ESILAnalysisEngine:
                                  max_steps_per_function: int = 50) -> Dict[str, Any]:
         """
         Emulate multiple functions and provide comparative analysis.
-        
+
         Args:
             function_addresses: List of function addresses to emulate
             max_steps_per_function: Maximum steps per function
-            
+
         Returns:
             Comparative emulation results
         """
@@ -527,13 +527,13 @@ def analyze_binary_esil(binary_path: str, radare2_path: Optional[str] = None,
                        function_limit: int = 10, max_steps: int = 100) -> Dict[str, Any]:
     """
     Perform comprehensive ESIL analysis on a binary.
-    
+
     Args:
         binary_path: Path to binary file
         radare2_path: Optional path to radare2 executable
         function_limit: Maximum number of functions to analyze
         max_steps: Maximum steps per function emulation
-        
+
     Returns:
         Complete ESIL analysis results
     """

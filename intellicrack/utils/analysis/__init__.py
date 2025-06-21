@@ -23,5 +23,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 from .binary_analysis import *
 from .entropy_utils import *
 from .pattern_search import *
+from .analysis_exporter import *
 
-__all__ = ['binary_analysis', 'entropy_utils', 'pattern_search']
+__all__ = ['binary_analysis', 'entropy_utils', 'pattern_search', 'analysis_exporter']

@@ -1,5 +1,5 @@
 """
-Text Editor Dialog for Intellicrack. 
+Text Editor Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

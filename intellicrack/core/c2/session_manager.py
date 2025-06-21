@@ -95,7 +95,7 @@ class Session:
 class SessionManager:
     """
     Advanced session manager for C2 infrastructure.
-    
+
     Handles session lifecycle, task management, file transfers,
     and persistent storage of session data.
     """
@@ -507,8 +507,8 @@ class SessionManager:
             cursor = conn.cursor()
 
             cursor.execute('''
-                INSERT OR REPLACE INTO sessions 
-                (session_id, connection_info, client_info, capabilities, 
+                INSERT OR REPLACE INTO sessions
+                (session_id, connection_info, client_info, capabilities,
                  created_at, last_seen, status, stats)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
@@ -535,7 +535,7 @@ class SessionManager:
             cursor = conn.cursor()
 
             cursor.execute('''
-                INSERT INTO tasks 
+                INSERT INTO tasks
                 (task_id, session_id, task_type, task_data, status, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
             ''', (
@@ -576,7 +576,7 @@ class SessionManager:
             cursor = conn.cursor()
 
             cursor.execute('''
-                UPDATE tasks 
+                UPDATE tasks
                 SET status = ?, result = ?, completed_at = ?
                 WHERE task_id = ?
             ''', (status, json.dumps(result), time.time(), task_id))
@@ -594,8 +594,8 @@ class SessionManager:
             cursor = conn.cursor()
 
             cursor.execute('''
-                INSERT INTO files 
-                (file_id, session_id, filename, file_path, file_size, 
+                INSERT INTO files
+                (file_id, session_id, filename, file_path, file_size,
                  file_hash, upload_time, file_type)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (

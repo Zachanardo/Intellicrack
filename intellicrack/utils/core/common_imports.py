@@ -70,6 +70,13 @@ try:
 except ImportError:
     FRIDA_AVAILABLE = False
 
+try:
+    import capstone
+    CAPSTONE_AVAILABLE = True
+except ImportError:
+    capstone = None
+    CAPSTONE_AVAILABLE = False
+
 # Visualization
 try:
     import matplotlib.pyplot as plt

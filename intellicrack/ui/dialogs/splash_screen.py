@@ -1,5 +1,5 @@
 """
-Splash screen dialog for Intellicrack application. 
+Splash screen dialog for Intellicrack application.
 
 Copyright (C) 2025 Zachary Flint
 

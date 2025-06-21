@@ -1,5 +1,5 @@
 """
-Enhanced AI Model Training Interface for Intellicrack 
+Enhanced AI Model Training Interface for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -254,7 +254,7 @@ class TrainingThread(QThread):
     def _create_dummy_model(self):
         """
         Create a comprehensive model architecture for testing and demonstration.
-        
+
         This function creates a realistic transformer model with proper initialization,
         multiple architecture options, and comprehensive configuration that can be used
         for actual fine-tuning experiments and testing.
@@ -311,7 +311,7 @@ class TrainingThread(QThread):
         class GPTModel(nn.Module):
             """
             GPT-style autoregressive transformer for language modeling.
-            
+
             This implementation includes causal attention masking, proper positional
             encoding, and layer normalization placement following GPT architecture.
             """
@@ -401,7 +401,7 @@ class TrainingThread(QThread):
         class BERTModel(nn.Module):
             """
             BERT-style bidirectional transformer for masked language modeling.
-            
+
             Includes proper token type embeddings, bidirectional attention,
             and masked language modeling head.
             """
@@ -485,7 +485,7 @@ class TrainingThread(QThread):
         class LlamaModel(nn.Module):
             """
             LLaMA-style transformer with RMSNorm and SwiGLU activation.
-            
+
             Implements the architectural improvements from the LLaMA paper including
             RMSNorm, SwiGLU activation, and rotary positional embeddings.
             """
@@ -582,7 +582,7 @@ class TrainingThread(QThread):
         class EnhancedTransformerModel(nn.Module):
             """
             Enhanced transformer model with modern architectural improvements.
-            
+
             Includes features like pre-norm, improved attention, better initialization,
             and optional techniques like gradient checkpointing support.
             """
@@ -683,7 +683,7 @@ class TrainingThread(QThread):
         class DummyTokenizer:
             """
             Functional tokenizer implementation for testing and demonstration.
-            
+
             Provides basic tokenization capabilities including encoding, decoding,
             special tokens, and padding functionality.
             """
@@ -893,10 +893,14 @@ class TrainingThread(QThread):
                 return []
 
             def train(self):
-                pass
+                # Implement basic training stub
+                self.training = True
+                return {"status": "training_not_implemented", "message": "PyTorch required for training"}
 
             def eval(self):
-                pass
+                # Implement basic evaluation stub
+                self.training = False
+                return {"status": "eval_not_implemented", "message": "PyTorch required for evaluation"}
 
         return FallbackModel()
 

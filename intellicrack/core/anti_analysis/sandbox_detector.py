@@ -94,10 +94,10 @@ class SandboxDetector(BaseDetector):
     def detect_sandbox(self, aggressive: bool = False) -> Dict[str, Any]:
         """
         Perform sandbox detection using multiple techniques.
-        
+
         Args:
             aggressive: Use aggressive detection that might affect analysis
-            
+
         Returns:
             Detection results with confidence scores
         """
@@ -152,8 +152,13 @@ class SandboxDetector(BaseDetector):
             computername = os.environ.get('COMPUTERNAME', socket.gethostname()).lower()
             details['computername'] = computername
 
-            suspicious_computers = ['sandbox', 'malware', 'virus', 'test', 'vmware',
-                                  'virtualbox', 'qemu', 'analysis']
+            # Get suspicious computer names from environment or use defaults
+            suspicious_computers_env = os.environ.get('SANDBOX_SUSPICIOUS_COMPUTERS', '')
+            if suspicious_computers_env:
+                suspicious_computers = [name.strip().lower() for name in suspicious_computers_env.split(',')]
+            else:
+                suspicious_computers = ['sandbox', 'malware', 'virus', 'test', 'vmware',
+                                      'virtualbox', 'qemu', 'analysis']
             if any(comp in computername for comp in suspicious_computers):
                 details['suspicious_env'].append(f'computername: {computername}')
 
@@ -595,7 +600,20 @@ class SandboxDetector(BaseDetector):
         try:
             if platform.system() == 'Windows':
                 import ctypes
-                from ctypes import wintypes
+                try:
+                    from ctypes import wintypes
+                    # Check if POINT is available
+                    if not hasattr(wintypes, 'POINT'):
+                        # Create mock POINT structure
+                        class MockPOINT(ctypes.Structure):
+                            _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
+                        wintypes.POINT = MockPOINT
+                except (ImportError, AttributeError):
+                    # Fallback if wintypes is not available
+                    class MockWintypes:
+                        class POINT(ctypes.Structure):
+                            _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
+                    wintypes = MockWintypes()
 
                 user32 = ctypes.windll.user32
 
@@ -706,11 +724,11 @@ bool IsSandbox() {
     // 1. Check username and computer name
     char username[256], computername[256];
     DWORD size = 256;
-    
+
     GetUserName(username, &size);
     size = 256;
     GetComputerName(computername, &size);
-    
+
     // Common sandbox names
     const char* bad_names[] = {"sandbox", "malware", "virus", "test", "analyst"};
     for (int i = 0; i < 5; i++) {
@@ -718,45 +736,45 @@ bool IsSandbox() {
             return true;
         }
     }
-    
+
     // 2. Check for user files
     WIN32_FIND_DATA findData;
     HANDLE hFind = FindFirstFile("C:\\\\Users\\\\*\\\\Documents\\\\*", &findData);
     int fileCount = 0;
-    
+
     if (hFind != INVALID_HANDLE_VALUE) {
         do {
             fileCount++;
         } while (FindNextFile(hFind, &findData) && fileCount < 10);
         FindClose(hFind);
     }
-    
+
     if (fileCount < 5) {
         return true;  // Too few user files
     }
-    
+
     // 3. Check system uptime
     DWORD uptime = GetTickCount64() / 1000;  // Seconds
     if (uptime < 300) {  // Less than 5 minutes
         return true;
     }
-    
+
     // 4. Mouse movement check
     POINT pt1, pt2;
     GetCursorPos(&pt1);
     Sleep(1000);
     GetCursorPos(&pt2);
-    
+
     if (pt1.x == pt2.x && pt1.y == pt2.y) {
         // No mouse movement
         return true;
     }
-    
+
     // 5. Check for sandbox artifacts
     if (GetModuleHandle("SbieDll.dll") != NULL) {  // Sandboxie
         return true;
     }
-    
+
     return false;
 }
 
@@ -764,10 +782,10 @@ bool IsSandbox() {
 if (IsSandbox()) {
     // Appear benign
     MessageBox(NULL, "This application is not compatible with your system", "Error", MB_OK);
-    
+
     // Sleep to waste sandbox time
     Sleep(120000);  // 2 minutes
-    
+
     ExitProcess(0);
 }
 

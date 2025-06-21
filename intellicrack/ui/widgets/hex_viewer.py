@@ -1,5 +1,5 @@
 """
-HexViewer Widget 
+HexViewer Widget
 
 Copyright (C) 2025 Zachary Flint
 
@@ -64,7 +64,7 @@ class BaseWidget:
 class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
     """
     Professional hex viewer widget for binary data analysis.
-    
+
     Provides:
     - Hexadecimal data display
     - Data editing capabilities
@@ -219,7 +219,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
     def load_data(self, data: bytes, file_path: Optional[str] = None):
         """
         Load binary data into the hex viewer.
-        
+
         Args:
             data: Binary data to display
             file_path: Optional file path for reference
@@ -309,7 +309,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
     def load_file(self, file_path: str):
         """
         Load a binary file.
-        
+
         Args:
             file_path: Path to the binary file
         """

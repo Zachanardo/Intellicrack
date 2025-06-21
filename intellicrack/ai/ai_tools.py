@@ -199,17 +199,17 @@ class AIAssistant:
             # Create analysis prompt
             prompt = f"""
             Analyze the following {language} code for security vulnerabilities, code quality issues, and provide suggestions:
-            
+
             ```{language}
             {code[:2000]}  # Limit to first 2000 chars
             ```
-            
+
             Please provide:
             1. Security vulnerabilities and risks
             2. Code quality observations
             3. Performance considerations
             4. Best practice recommendations
-            
+
             Focus on practical, actionable insights.
             """
 
@@ -419,7 +419,7 @@ class CodeAnalyzer:
         try:
             # Try to use pefile for PE analysis
             try:
-                from ..utils.import_patterns import PEFILE_AVAILABLE, pefile
+                from ..utils.core.import_patterns import PEFILE_AVAILABLE, pefile
                 if PEFILE_AVAILABLE:
                     pe = pefile.PE(file_path)
                     result["findings"].append("PE structure successfully parsed")
@@ -482,19 +482,19 @@ class CodeAnalyzer:
             # Create analysis prompt
             prompt = f"""
             Analyze this binary file for security implications:
-            
+
             File: {file_path}
             Format: {basic_result.get('metadata', {}).get('format', 'Unknown')}
             Size: {basic_result.get('file_size', 0)} bytes
-            
+
             Current findings: {'; '.join(basic_result.get('findings', []))}
-            
+
             Please provide:
             1. Potential security risks and vulnerabilities
             2. Likely protection mechanisms or obfuscation
             3. Recommendations for further analysis
             4. Assessment of whether this appears to be legitimate software
-            
+
             Focus on practical security analysis.
             """
 
@@ -614,17 +614,17 @@ class CodeAnalyzer:
             # Create assembly analysis prompt
             prompt = f"""
             Analyze this assembly code for security vulnerabilities and patterns:
-            
+
             ```assembly
             {assembly_code[:1500]}  # Limit to first 1500 chars
             ```
-            
+
             Please identify:
             1. Security vulnerabilities (buffer overflows, format strings, etc.)
             2. Interesting code patterns and techniques
             3. Potential malicious behavior indicators
             4. Recommendations for deeper analysis
-            
+
             Focus on actionable security insights.
             """
 
@@ -665,7 +665,11 @@ class CodeAnalyzer:
 
         # Custom line processor for list items
         def process_line(line: str, section: str) -> Optional[str]:
-            if line.startswith(('-', '*', '•')) or line.startswith(('1.', '2.', '3.', '4.', '5.')):
+            # Use section parameter to filter content based on section type
+            if section == 'vulnerabilities' and 'CVE' in line:
+                # Prioritize CVE references in vulnerability sections
+                return line.strip()
+            elif line.startswith(('-', '*', '•')) or line.startswith(('1.', '2.', '3.', '4.', '5.')):
                 item = line.lstrip('-*•0123456789. ')
                 if len(item) > 10:  # Only return valid items
                     return item
@@ -974,16 +978,16 @@ def _get_ai_code_explanation(code: str, language: str) -> str:
 
         prompt = f"""
         Explain this {language} code in simple terms:
-        
+
         ```{language}
         {code[:800]}  # Limit to 800 chars
         ```
-        
+
         Please provide a brief explanation of:
         1. What this code does
         2. Key functionality or algorithms
         3. Any notable patterns or techniques
-        
+
         Keep the explanation concise and accessible.
         """
 

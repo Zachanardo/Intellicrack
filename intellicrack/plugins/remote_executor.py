@@ -1,5 +1,5 @@
 """
-Remote Plugin Executor 
+Remote Plugin Executor
 
 Copyright (C) 2025 Zachary Flint
 
@@ -64,10 +64,10 @@ class RemotePluginExecutor:
     def _serialize_safe(self, data: Any) -> str:
         """
         Safely serialize data to JSON, with fallback to pickle for complex objects.
-        
+
         Args:
             data: Data to serialize
-            
+
         Returns:
             Base64-encoded serialized data
         """
@@ -84,11 +84,11 @@ class RemotePluginExecutor:
     def _deserialize_safe(self, encoded_data: str, expected_type: str = 'json') -> Any:
         """
         Safely deserialize data with validation.
-        
+
         Args:
             encoded_data: Base64-encoded data
             expected_type: Expected serialization type ('json' or 'pickle')
-            
+
         Returns:
             Deserialized data
         """

@@ -25,7 +25,7 @@ from typing import Dict
 def get_tooltip_definitions() -> Dict[str, str]:
     """
     Get comprehensive tooltip definitions for all UI elements.
-    
+
     Returns:
         Dictionary mapping button text to tooltip descriptions
     """
@@ -302,7 +302,7 @@ def get_tooltip_definitions() -> Dict[str, str]:
 def apply_tooltips_to_buttons(parent_widget):
     """
     Apply tooltips to all buttons in a widget hierarchy.
-    
+
     Args:
         parent_widget: The parent widget to search for buttons
     """
@@ -325,11 +325,11 @@ def apply_tooltips_to_buttons(parent_widget):
 def create_tooltip_with_shortcut(description: str, shortcut: str = None) -> str:
     """
     Create a formatted tooltip with optional keyboard shortcut.
-    
+
     Args:
         description: Main tooltip description
         shortcut: Optional keyboard shortcut
-        
+
     Returns:
         Formatted tooltip string
     """

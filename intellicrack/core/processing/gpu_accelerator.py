@@ -1,5 +1,5 @@
 """
-GPU Acceleration Module 
+GPU Acceleration Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -49,7 +49,7 @@ except ImportError:
     torch = None
     ipex = None
 
-from ...utils.import_checks import TENSORFLOW_AVAILABLE, tf
+from ...utils.core.import_checks import TENSORFLOW_AVAILABLE, tf
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -198,45 +198,169 @@ class GPUAccelerationManager:
         if not self.cl:
             return self._cpu_pattern_matching(data, patterns)
 
-        # Simple implementation - for production use would need more sophisticated OpenCL kernels
-        matches = []
-        for _pattern in patterns:
-            # Convert to numpy arrays for OpenCL processing
-            import numpy as np
+        import numpy as np
+
+        # OpenCL kernel for pattern matching
+        kernel_source = """
+        __kernel void pattern_match(
+            __global const uchar* data,
+            const int data_size,
+            __global const uchar* pattern,
+            const int pattern_size,
+            __global int* matches,
+            __global int* match_count
+        ) {
+            int gid = get_global_id(0);
+            
+            // Check if this position can fit the pattern
+            if (gid > data_size - pattern_size) {
+                return;
+            }
+            
+            // Check for pattern match at this position
+            int is_match = 1;
+            for (int i = 0; i < pattern_size; i++) {
+                if (data[gid + i] != pattern[i]) {
+                    is_match = 0;
+                    break;
+                }
+            }
+            
+            // If match found, atomically increment match count and store position
+            if (is_match) {
+                int idx = atomic_inc(match_count);
+                if (idx < 10000) {  // Max matches limit
+                    matches[idx] = gid;
+                }
+            }
+        }
+        """
+
+        # Build the OpenCL program
+        program = self.cl.Program(self.context, kernel_source).build()
+
+        all_matches = []
+
+        for pattern in patterns:
+            # Convert to numpy arrays
             data_array = np.frombuffer(data, dtype=np.uint8)
-            _pattern_array = np.frombuffer(_pattern, dtype=np.uint8)
+            pattern_array = np.frombuffer(pattern, dtype=np.uint8)
+
+            # Allocate result buffers
+            max_matches = 10000
+            matches_array = np.zeros(max_matches, dtype=np.int32)
+            match_count = np.zeros(1, dtype=np.int32)
 
             # Create OpenCL buffers
-            _data_buffer = cl.Buffer(self.context, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=data_array)
+            mf = self.cl.mem_flags
+            data_buffer = self.cl.Buffer(self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data_array)
+            pattern_buffer = self.cl.Buffer(self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=pattern_array)
+            matches_buffer = self.cl.Buffer(self.context, mf.WRITE_ONLY, matches_array.nbytes)
+            count_buffer = self.cl.Buffer(self.context, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=match_count)
 
-            # For now, fall back to CPU - implementing full OpenCL kernel is complex
-            pos = 0
-            while True:
-                pos = data.find(_pattern, pos)
-                if pos == -1:
-                    break
-                matches.append(pos)
-                pos += 1
+            # Execute kernel
+            global_size = (len(data_array),)
+            local_size = None  # Let OpenCL choose
 
-        return sorted(matches)
+            program.pattern_match(
+                self.queue, global_size, local_size,
+                data_buffer, np.int32(len(data_array)),
+                pattern_buffer, np.int32(len(pattern_array)),
+                matches_buffer, count_buffer
+            )
+
+            # Read results
+            self.cl.enqueue_copy(self.queue, matches_array, matches_buffer)
+            self.cl.enqueue_copy(self.queue, match_count, count_buffer)
+            self.queue.finish()
+
+            # Extract valid matches
+            num_matches = match_count[0]
+            if num_matches > 0:
+                all_matches.extend(matches_array[:min(num_matches, max_matches)].tolist())
+
+            self.logger.debug(f"OpenCL found {num_matches} matches for pattern of size {len(pattern)}")
+
+        return sorted(all_matches)
 
     def _cupy_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
         """CUDA-based pattern matching using CuPy."""
         if not cp:
             return self._cpu_pattern_matching(data, patterns)
 
-        # Simple implementation - for production would use custom CUDA kernels
-        matches = []
-        for _pattern in patterns:
-            pos = 0
-            while True:
-                pos = data.find(_pattern, pos)
-                if pos == -1:
-                    break
-                matches.append(pos)
-                pos += 1
+        import numpy as np
 
-        return sorted(matches)
+        # CUDA kernel for pattern matching
+        pattern_match_kernel = cp.RawKernel(r'''
+        extern "C" __global__
+        void pattern_match(
+            const unsigned char* data,
+            const int data_size,
+            const unsigned char* pattern,
+            const int pattern_size,
+            int* matches,
+            int* match_count
+        ) {
+            int tid = blockDim.x * blockIdx.x + threadIdx.x;
+            
+            // Check if this thread's position can fit the pattern
+            if (tid > data_size - pattern_size) {
+                return;
+            }
+            
+            // Check for pattern match at this position
+            bool is_match = true;
+            for (int i = 0; i < pattern_size; i++) {
+                if (data[tid + i] != pattern[i]) {
+                    is_match = false;
+                    break;
+                }
+            }
+            
+            // If match found, atomically increment match count and store position
+            if (is_match) {
+                int idx = atomicAdd(match_count, 1);
+                if (idx < 10000) {  // Max matches limit
+                    matches[idx] = tid;
+                }
+            }
+        }
+        ''', 'pattern_match')
+
+        all_matches = []
+
+        for pattern in patterns:
+            # Convert to GPU arrays
+            data_gpu = cp.asarray(np.frombuffer(data, dtype=np.uint8))
+            pattern_gpu = cp.asarray(np.frombuffer(pattern, dtype=np.uint8))
+
+            # Allocate result buffers
+            max_matches = 10000
+            matches_gpu = cp.zeros(max_matches, dtype=cp.int32)
+            match_count_gpu = cp.zeros(1, dtype=cp.int32)
+
+            # Calculate grid and block dimensions
+            threads_per_block = 256
+            blocks_per_grid = (len(data) + threads_per_block - 1) // threads_per_block
+
+            # Launch kernel
+            pattern_match_kernel(
+                (blocks_per_grid,), (threads_per_block,),
+                (data_gpu, len(data), pattern_gpu, len(pattern), matches_gpu, match_count_gpu)
+            )
+
+            # Synchronize and get results
+            cp.cuda.Stream.null.synchronize()
+
+            # Copy results back to CPU
+            num_matches = int(match_count_gpu.get()[0])
+            if num_matches > 0:
+                matches_cpu = matches_gpu[:min(num_matches, max_matches)].get()
+                all_matches.extend(matches_cpu.tolist())
+
+            self.logger.debug(f"CUDA found {num_matches} matches for pattern of size {len(pattern)}")
+
+        return sorted(all_matches)
 
 
 class GPUAccelerator:
@@ -574,14 +698,171 @@ class GPUAccelerator:
         return sorted(matches)
 
     def _opencl_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
-        """OpenCL pattern matching (simplified implementation)."""
-        # For now, fall back to CPU - full OpenCL implementation would require custom kernels
-        return self._cpu_pattern_matching(data, patterns)
+        """OpenCL pattern matching with custom kernels."""
+        if not self.opencl_context:
+            return self._cpu_pattern_matching(data, patterns)
+
+        import numpy as np
+
+        # OpenCL kernel for parallel pattern matching
+        kernel_code = """
+        __kernel void find_pattern(
+            __global const uchar* data,
+            const int data_size,
+            __global const uchar* pattern,
+            const int pattern_size,
+            __global int* results,
+            __global int* result_count
+        ) {
+            int gid = get_global_id(0);
+            
+            if (gid + pattern_size > data_size) {
+                return;
+            }
+            
+            // Check if pattern matches at this position
+            int match = 1;
+            for (int i = 0; i < pattern_size; i++) {
+                if (data[gid + i] != pattern[i]) {
+                    match = 0;
+                    break;
+                }
+            }
+            
+            if (match) {
+                int idx = atomic_inc(result_count);
+                if (idx < 10000) {  // Limit results
+                    results[idx] = gid;
+                }
+            }
+        }
+        """
+
+        try:
+            # Build program
+            program = cl.Program(self.opencl_context, kernel_code).build()
+
+            all_matches = []
+
+            for pattern in patterns:
+                # Convert to numpy arrays
+                data_np = np.frombuffer(data, dtype=np.uint8)
+                pattern_np = np.frombuffer(pattern, dtype=np.uint8)
+
+                # Allocate buffers
+                max_results = 10000
+                results_np = np.zeros(max_results, dtype=np.int32)
+                count_np = np.zeros(1, dtype=np.int32)
+
+                # Create OpenCL buffers
+                mf = cl.mem_flags
+                data_buf = cl.Buffer(self.opencl_context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data_np)
+                pattern_buf = cl.Buffer(self.opencl_context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=pattern_np)
+                results_buf = cl.Buffer(self.opencl_context, mf.WRITE_ONLY, results_np.nbytes)
+                count_buf = cl.Buffer(self.opencl_context, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=count_np)
+
+                # Execute kernel
+                global_size = (len(data_np),)
+                program.find_pattern(
+                    self.opencl_queue, global_size, None,
+                    data_buf, np.int32(len(data_np)),
+                    pattern_buf, np.int32(len(pattern_np)),
+                    results_buf, count_buf
+                )
+
+                # Get results
+                cl.enqueue_copy(self.opencl_queue, results_np, results_buf)
+                cl.enqueue_copy(self.opencl_queue, count_np, count_buf)
+                self.opencl_queue.finish()
+
+                # Extract matches
+                num_matches = count_np[0]
+                if num_matches > 0:
+                    all_matches.extend(results_np[:min(num_matches, max_results)].tolist())
+
+            return sorted(all_matches)
+
+        except Exception as e:
+            self.logger.error(f"OpenCL pattern matching failed: {e}")
+            return self._cpu_pattern_matching(data, patterns)
 
     def _cuda_pattern_matching(self, data: bytes, patterns: List[bytes]) -> List[int]:
-        """CUDA pattern matching (simplified implementation)."""
-        # For now, fall back to CPU - full CUDA implementation would require custom kernels
-        return self._cpu_pattern_matching(data, patterns)
+        """CUDA pattern matching with custom kernels."""
+        if not cp:
+            return self._cpu_pattern_matching(data, patterns)
+
+        import numpy as np
+
+        # CUDA kernel code
+        cuda_kernel = cp.RawKernel(r'''
+        extern "C" __global__
+        void find_pattern(
+            const unsigned char* data,
+            const int data_size,
+            const unsigned char* pattern,
+            const int pattern_size,
+            int* results,
+            int* result_count
+        ) {
+            int tid = blockDim.x * blockIdx.x + threadIdx.x;
+            
+            if (tid + pattern_size > data_size) {
+                return;
+            }
+            
+            // Check pattern match
+            bool match = true;
+            for (int i = 0; i < pattern_size; i++) {
+                if (data[tid + i] != pattern[i]) {
+                    match = false;
+                    break;
+                }
+            }
+            
+            if (match) {
+                int idx = atomicAdd(result_count, 1);
+                if (idx < 10000) {
+                    results[idx] = tid;
+                }
+            }
+        }
+        ''', 'find_pattern')
+
+        try:
+            all_matches = []
+
+            for pattern in patterns:
+                # Convert to GPU arrays
+                data_gpu = cp.asarray(np.frombuffer(data, dtype=np.uint8))
+                pattern_gpu = cp.asarray(np.frombuffer(pattern, dtype=np.uint8))
+
+                # Allocate results
+                max_results = 10000
+                results_gpu = cp.zeros(max_results, dtype=cp.int32)
+                count_gpu = cp.zeros(1, dtype=cp.int32)
+
+                # Launch kernel
+                threads = 256
+                blocks = (len(data) + threads - 1) // threads
+
+                cuda_kernel(
+                    (blocks,), (threads,),
+                    (data_gpu, len(data), pattern_gpu, len(pattern), results_gpu, count_gpu)
+                )
+
+                # Get results
+                cp.cuda.Stream.null.synchronize()
+                num_matches = int(count_gpu[0])
+
+                if num_matches > 0:
+                    matches = results_gpu[:min(num_matches, max_results)].get()
+                    all_matches.extend(matches.tolist())
+
+            return sorted(all_matches)
+
+        except Exception as e:
+            self.logger.error(f"CUDA pattern matching failed: {e}")
+            return self._cpu_pattern_matching(data, patterns)
 
     def accelerate_entropy_calculation(self, data: bytes) -> float:
         """

@@ -30,15 +30,15 @@ except ImportError:
     r2pipe = None
 
 from ...utils.logger import get_logger
-from .radare2_ai_integration import R2AIIntegration
+from .radare2_ai_integration import R2AIEngine
 from .radare2_binary_diff import R2BinaryDiff
 from .radare2_bypass_generator import R2BypassGenerator
-from .radare2_decompiler import R2Decompiler
+from .radare2_decompiler import R2DecompilationEngine
 from .radare2_error_handler import get_error_handler, r2_error_context
-from .radare2_esil import R2ESILEngine
-from .radare2_imports import R2ImportAnalyzer
+from .radare2_esil import ESILAnalysisEngine
+from .radare2_imports import R2ImportExportAnalyzer
 from .radare2_json_standardizer import standardize_r2_result
-from .radare2_scripting import R2ScriptEngine
+from .radare2_scripting import R2ScriptingEngine
 from .radare2_signatures import R2SignatureAnalyzer
 from .radare2_strings import R2StringAnalyzer
 from .radare2_vulnerability_engine import R2VulnerabilityEngine
@@ -51,7 +51,7 @@ class EnhancedR2Integration:
     """
     Enhanced radare2 integration with comprehensive error handling, recovery,
     performance optimization, and real-time capabilities.
-    
+
     This class provides:
     - Robust error handling and automatic recovery
     - Performance monitoring and optimization
@@ -96,16 +96,16 @@ class EnhancedR2Integration:
     def _initialize_components(self):
         """Initialize all analysis components with error handling"""
         component_classes = {
-            'decompiler': R2Decompiler,
-            'esil': R2ESILEngine,
+            'decompiler': R2DecompilationEngine,
+            'esil': ESILAnalysisEngine,
             'strings': R2StringAnalyzer,
             'signatures': R2SignatureAnalyzer,
-            'imports': R2ImportAnalyzer,
+            'imports': R2ImportExportAnalyzer,
             'vulnerability': R2VulnerabilityEngine,
-            'ai': R2AIIntegration,
+            'ai': R2AIEngine,
             'bypass': R2BypassGenerator,
             'diff': R2BinaryDiff,
-            'scripting': R2ScriptEngine
+            'scripting': R2ScriptingEngine
         }
 
         for name, component_class in component_classes.items():
@@ -124,10 +124,10 @@ class EnhancedR2Integration:
     def run_comprehensive_analysis(self, analysis_types: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         Run comprehensive analysis with error handling and recovery.
-        
+
         Args:
             analysis_types: List of analysis types to run, or None for all
-            
+
         Returns:
             Dict containing all analysis results
         """
@@ -504,11 +504,11 @@ class EnhancedR2Integration:
 def create_enhanced_r2_integration(binary_path: str, **config) -> EnhancedR2Integration:
     """
     Create enhanced radare2 integration instance.
-    
+
     Args:
         binary_path: Path to binary file
         **config: Configuration options
-        
+
     Returns:
         EnhancedR2Integration instance
     """

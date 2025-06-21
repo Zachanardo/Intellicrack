@@ -1,5 +1,5 @@
 """
-Qiling Binary Emulation Framework Integration. 
+Qiling Binary Emulation Framework Integration.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -430,10 +430,10 @@ class QilingEmulator:
         def apply_patches(ql: Qiling):
             """
             Apply memory patches to the emulated process.
-            
+
             Args:
                 ql: Qiling instance to apply patches to
-                
+
             Iterates through the patches list and writes the specified bytes
             to the given memory addresses in the emulated process.
             """

@@ -1,5 +1,5 @@
 """
-Performance Optimizer for Large Binary Analysis 
+Performance Optimizer for Large Binary Analysis
 
 Copyright (C) 2025 Zachary Flint
 
@@ -589,7 +589,7 @@ def example_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
                     current_string = ""
     else:
         # For byte data
-        from .core.string_utils import extract_ascii_strings
+        from ..core.string_utils import extract_ascii_strings
         strings = extract_ascii_strings(data)
 
     return {

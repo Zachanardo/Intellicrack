@@ -25,7 +25,7 @@ import struct
 import tempfile
 
 from ...utils.logger import get_logger
-from ...utils.windows_common import get_windows_kernel32, is_windows_available
+from ...utils.system.windows_common import get_windows_kernel32, is_windows_available
 
 logger = get_logger(__name__)
 
@@ -93,11 +93,11 @@ class KernelInjector:
     def inject_kernel_mode(self, target_pid: int, dll_path: str) -> bool:
         """
         Inject DLL using kernel driver
-        
+
         Args:
             target_pid: Target process ID
             dll_path: Path to DLL to inject
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -555,7 +555,7 @@ class KernelInjector:
             sc_manager = self.advapi32.OpenSCManagerW(
                 None,
                 None,
-                self.SC_MANAGER_ALL_ACCESS
+                SC_MANAGER_ALL_ACCESS
             )
 
             if not sc_manager:
@@ -565,7 +565,7 @@ class KernelInjector:
                 service = self.advapi32.OpenServiceW(
                     sc_manager,
                     self.service_name,
-                    self.SERVICE_ALL_ACCESS
+                    SERVICE_ALL_ACCESS
                 )
 
                 if service:
@@ -591,11 +591,11 @@ class KernelInjector:
 def inject_via_kernel_driver(target_pid: int, dll_path: str) -> bool:
     """
     Convenience function for kernel-level injection
-    
+
     Args:
         target_pid: Target process ID
         dll_path: Path to DLL
-        
+
     Returns:
         True if successful, False otherwise
     """

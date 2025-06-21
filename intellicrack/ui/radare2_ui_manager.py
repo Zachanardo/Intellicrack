@@ -43,7 +43,7 @@ logger = get_logger(__name__)
 class R2UIManager(QObject):
     """
     Comprehensive manager for all radare2 UI integrations.
-    
+
     This class handles the integration of all radare2 features into the main
     Intellicrack application, providing a unified interface for:
     - Analysis execution and monitoring
@@ -122,10 +122,10 @@ class R2UIManager(QObject):
     def integrate_with_application(self, main_app) -> bool:
         """
         Integrate all radare2 UI components with the main application.
-        
+
         Args:
             main_app: The main Intellicrack application instance
-            
+
         Returns:
             bool: True if integration successful, False otherwise
         """
@@ -380,16 +380,59 @@ class R2UIManager(QObject):
                 )
                 return False
 
-            # Use results viewer to export
+            # Use provided file_path or generate default
+            if file_path:
+                self.logger.info(f"Exporting results to specified path: {file_path}")
+                export_path = file_path
+            else:
+                # Generate default path based on binary name
+                if self.binary_path:
+                    base_name = os.path.splitext(os.path.basename(self.binary_path))[0]
+                    export_path = f"{base_name}_radare2_analysis.json"
+                else:
+                    export_path = "radare2_analysis.json"
+                self.logger.info(f"Using default export path: {export_path}")
+
+            # Use results viewer to export with specified path
             if 'results_viewer' in self.ui_components:
                 self.ui_components['results_viewer'].results_data = self.current_results
-                self.ui_components['results_viewer']._export_results()
+                
+                # Check if the results_viewer has a method to export to specific path
+                if hasattr(self.ui_components['results_viewer'], 'export_to_file'):
+                    self.ui_components['results_viewer'].export_to_file(export_path)
+                else:
+                    # Fallback: Set default path and use standard export
+                    self.ui_components['results_viewer'].default_export_path = export_path
+                    self.ui_components['results_viewer']._export_results()
+                
+                # Log export details
+                self.logger.info(f"Results exported to: {export_path}")
+                
+                # Update status
+                self.status_updated.emit(f"Results exported to {export_path}")
+                
+                # Track in history
+                self.analysis_history.append({
+                    'timestamp': self._get_timestamp(),
+                    'action': 'export',
+                    'file_path': export_path,
+                    'binary': self.binary_path,
+                    'results_count': len(self.current_results)
+                })
+                
+                return True
+            else:
+                # Direct export if no viewer available
+                import json
+                with open(export_path, 'w') as f:
+                    json.dump(self.current_results, f, indent=2)
+                
+                self.logger.info(f"Results exported directly to: {export_path}")
                 return True
 
-            return False
-
         except Exception as e:
-            self.logger.error(f"Failed to export results: {e}")
+            self.logger.error(f"Failed to export results to {file_path}: {e}")
+            self.status_updated.emit(f"Export failed: {str(e)}")
             return False
 
     def get_analysis_history(self) -> List[Dict[str, Any]]:
@@ -470,13 +513,13 @@ def create_r2_ui_manager(main_app=None) -> R2UIManager:
 def integrate_radare2_ui_comprehensive(main_app) -> R2UIManager:
     """
     Comprehensive integration of all radare2 UI features with main application.
-    
+
     This is the main entry point for integrating all radare2 functionality
     into an existing Intellicrack application.
-    
+
     Args:
         main_app: The main Intellicrack application instance
-        
+
     Returns:
         R2UIManager: Configured UI manager instance
     """

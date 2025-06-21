@@ -76,7 +76,7 @@ class PerformanceProfile:
 class R2PerformanceOptimizer:
     """
     Comprehensive performance optimizer for radare2 operations.
-    
+
     This class provides:
     - Automatic performance profiling and optimization
     - Memory usage monitoring and management
@@ -197,10 +197,10 @@ class R2PerformanceOptimizer:
     def optimize_for_binary(self, binary_path: str) -> Dict[str, Any]:
         """
         Create optimized configuration for specific binary.
-        
+
         Args:
             binary_path: Path to binary file
-            
+
         Returns:
             Dict containing optimized configuration
         """
@@ -664,10 +664,10 @@ def create_performance_optimizer(strategy: OptimizationStrategy = OptimizationSt
 def optimize_for_large_binary(binary_path: str) -> Dict[str, Any]:
     """
     Quick optimization for large binary files.
-    
+
     Args:
         binary_path: Path to binary file
-        
+
     Returns:
         Optimized configuration
     """

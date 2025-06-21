@@ -1,5 +1,5 @@
 """
-Advanced Payload Generation Module 
+Advanced Payload Generation Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -561,7 +561,7 @@ def generate_complete_api_hooking_script(app, hook_types=None) -> str:
             hooksInstalled['GetSystemTime'] = true;
         }
 
-        // Hook GetLocalTime  
+        // Hook GetLocalTime
         var getLocalTime = Module.findExportByName("kernel32.dll", "GetLocalTime");
         if (getLocalTime) {
             Interceptor.attach(getLocalTime, {

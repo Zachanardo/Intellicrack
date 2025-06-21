@@ -1,5 +1,5 @@
 """
-Windows Activation Module 
+Windows Activation Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 from ...utils.logger import get_logger
-from ...utils.system_utils import is_admin
+from ...utils.system.system_utils import is_admin
 
 logger = get_logger(__name__)
 
@@ -272,10 +272,10 @@ class WindowsActivator:
     def activate_office(self, office_version: str = "auto") -> Dict[str, any]:
         """
         Activate Microsoft Office using Office-specific activation methods.
-        
+
         Args:
             office_version: Office version ("2016", "2019", "2021", "365", "auto")
-        
+
         Returns:
             Dictionary with activation result
         """
@@ -331,7 +331,7 @@ class WindowsActivator:
     def _detect_office_version(self) -> str:
         """
         Detect installed Office version.
-        
+
         Returns:
             Detected Office version string or empty string if not found
         """
@@ -413,10 +413,10 @@ class WindowsActivator:
     def _activate_office_c2r(self, office_version: str) -> Dict[str, any]:
         """
         Activate Office using Click-to-Run (C2R) method.
-        
+
         Args:
             office_version: Office version to activate
-            
+
         Returns:
             Dictionary with activation result
         """
@@ -468,10 +468,10 @@ class WindowsActivator:
     def _activate_office_msi(self, office_version: str) -> Dict[str, any]:
         """
         Activate Office using MSI (Windows Installer) method.
-        
+
         Args:
             office_version: Office version to activate
-            
+
         Returns:
             Dictionary with activation result
         """
@@ -514,7 +514,7 @@ class WindowsActivator:
 
             logger.info("Installing Office product key for version %s", office_version)
 
-            from ...utils.subprocess_utils import run_subprocess_check
+            from ...utils.system.subprocess_utils import run_subprocess_check
             result = run_subprocess_check(install_cmd, timeout=60)
 
             if result.returncode != 0:
@@ -566,7 +566,7 @@ class WindowsActivator:
     def _get_office_status(self) -> Dict[str, str]:
         """
         Get Office activation status.
-        
+
         Returns:
             Dictionary with Office activation status
         """

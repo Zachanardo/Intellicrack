@@ -49,11 +49,11 @@ class APIObfuscator:
     def obfuscate_api_calls(self, code: str, method: str = 'hash_lookup') -> str:
         """
         Obfuscate API calls in code.
-        
+
         Args:
             code: Source code with API calls
             method: Obfuscation method to use
-            
+
         Returns:
             Obfuscated code
         """
@@ -80,12 +80,12 @@ class APIObfuscator:
     def resolve_api(self, dll_name: str, api_name: str, method: str = 'normal') -> Optional[int]:
         """
         Resolve API address using specified method.
-        
+
         Args:
             dll_name: DLL containing the API
             api_name: API function name
             method: Resolution method
-            
+
         Returns:
             API address or None
         """
@@ -289,20 +289,20 @@ DWORD Crc32(const char* str) {
 FARPROC ResolveApiHash(HMODULE hModule, DWORD hash) {
     PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)hModule;
     PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((BYTE*)hModule + dosHeader->e_lfanew);
-    PIMAGE_EXPORT_DIRECTORY exports = (PIMAGE_EXPORT_DIRECTORY)((BYTE*)hModule + 
+    PIMAGE_EXPORT_DIRECTORY exports = (PIMAGE_EXPORT_DIRECTORY)((BYTE*)hModule +
         ntHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
-    
+
     DWORD* names = (DWORD*)((BYTE*)hModule + exports->AddressOfNames);
     WORD* ordinals = (WORD*)((BYTE*)hModule + exports->AddressOfNameOrdinals);
     DWORD* functions = (DWORD*)((BYTE*)hModule + exports->AddressOfFunctions);
-    
+
     for (DWORD i = 0; i < exports->NumberOfNames; i++) {
         char* name = (char*)((BYTE*)hModule + names[i]);
         if (Crc32(name) == hash) {
             return (FARPROC)((BYTE*)hModule + functions[ordinals[i]]);
         }
     }
-    
+
     return NULL;
 }
 
@@ -333,12 +333,12 @@ char* DeobfuscateString(unsigned char* data) {
     unsigned char key = data[0];
     int len = strlen((char*)data + 1);
     char* result = (char*)malloc(len + 1);
-    
+
     for (int i = 0; i < len; i++) {
         result[i] = data[i + 1] ^ key;
     }
     result[len] = 0;
-    
+
     return result;
 }
 
@@ -351,7 +351,7 @@ char* BuildApiName(int index) {
             return DeobfuscateString(data);
         }
         case 1: {
-            // "CreateThread" obfuscated  
+            // "CreateThread" obfuscated
             unsigned char data[] = {0x55, 0x16, 0x27, 0x30, 0x34, 0x21, 0x30, 0x19, 0x23, 0x27, 0x30, 0x34, 0x31, 0x00};
             return DeobfuscateString(data);
         }
@@ -376,21 +376,21 @@ FARPROC GetApi(const char* dll, int apiIndex) {
             return g_apis[i].func;
         }
     }
-    
+
     // Resolve
     HMODULE hDll = GetModuleHandleA(dll);
     if (!hDll) hDll = LoadLibraryA(dll);
-    
+
     char* apiName = BuildApiName(apiIndex);
     FARPROC func = GetProcAddress(hDll, apiName);
-    
+
     // Cache
     if (func && g_apiCount < 10) {
         g_apis[g_apiCount].func = func;
         strcpy(g_apis[g_apiCount].name, apiName);
         g_apiCount++;
     }
-    
+
     free(apiName);
     return func;
 }

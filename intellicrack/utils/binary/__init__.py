@@ -18,3 +18,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
+# Import PE common functions
+from .pe_common import extract_pe_imports, iterate_pe_imports_with_dll
+
+__all__ = ['extract_pe_imports', 'iterate_pe_imports_with_dll']

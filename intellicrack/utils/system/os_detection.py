@@ -11,7 +11,7 @@ from typing import Any, Dict
 def detect_operating_system() -> str:
     """
     Detect and normalize operating system identifier.
-    
+
     Returns:
         Normalized OS identifier: 'windows', 'linux', or 'unknown'
     """
@@ -43,7 +43,7 @@ def is_unix_like() -> bool:
 def get_platform_details() -> Dict[str, Any]:
     """
     Get detailed platform information.
-    
+
     Returns:
         Dictionary with platform details
     """
@@ -61,7 +61,7 @@ def get_platform_details() -> Dict[str, Any]:
 def get_default_persistence_method() -> str:
     """
     Get default persistence method based on operating system.
-    
+
     Returns:
         Default persistence method for the current OS
     """
@@ -78,7 +78,7 @@ def get_default_persistence_method() -> str:
 def get_platform_specific_paths() -> Dict[str, str]:
     """
     Get platform-specific common paths.
-    
+
     Returns:
         Dictionary with common paths for the current platform
     """

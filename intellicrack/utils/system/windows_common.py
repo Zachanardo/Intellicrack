@@ -59,7 +59,7 @@ class WindowsConstants:
 def cleanup_process_handles(kernel32, process_info: dict, logger_instance=None) -> None:
     """
     Clean up Windows process handles.
-    
+
     Args:
         kernel32: Windows kernel32 library
         process_info: Dictionary containing process and thread handles

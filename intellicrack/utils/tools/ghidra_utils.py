@@ -20,7 +20,7 @@ def build_ghidra_command(ghidra_headless_path: str,
                         overwrite: bool = True) -> List[str]:
     """
     Build a standard Ghidra headless command.
-    
+
     Args:
         ghidra_headless_path: Path to analyzeHeadless script
         temp_dir: Temporary directory for Ghidra project
@@ -29,7 +29,7 @@ def build_ghidra_command(ghidra_headless_path: str,
         script_path: Directory containing the script
         script_name: Name of the script to run
         overwrite: Whether to overwrite existing project
-        
+
     Returns:
         List of command arguments
     """
@@ -51,7 +51,7 @@ def build_ghidra_command(ghidra_headless_path: str,
 def get_ghidra_headless_path() -> Optional[str]:
     """
     Find the Ghidra headless analyzer path.
-    
+
     Returns:
         Path to analyzeHeadless or None if not found
     """

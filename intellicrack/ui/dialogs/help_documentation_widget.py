@@ -1,5 +1,5 @@
 """
-Help and Documentation Widget 
+Help and Documentation Widget
 
 Copyright (C) 2025 Zachary Flint
 

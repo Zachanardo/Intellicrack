@@ -1,5 +1,5 @@
 """
-Virtualization Detection Bypass Module 
+Virtualization Detection Bypass Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -25,8 +25,8 @@ import platform
 from typing import Any, Dict, List, Optional
 
 # from ...utils.driver_utils import get_driver_path  # Removed unused import
-from ...utils.binary_io import analyze_binary_for_strings
-from ...utils.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
+from ...utils.binary.binary_io import analyze_binary_for_strings
+from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
 
 class VirtualizationDetectionBypass:
@@ -59,7 +59,7 @@ class VirtualizationDetectionBypass:
         Returns:
             dict: Results of the bypass attempt with success status and applied methods
         """
-        from ...utils.protection_helpers import create_bypass_result
+        from ...utils.protection.protection_helpers import create_bypass_result
         results = create_bypass_result()
 
         # Strategy 1: Hook VM detection APIs
@@ -453,9 +453,9 @@ class VirtualizationDetectionBypass:
                         onEnter: function(args) {
                             // Check if creating WMI locator
                             var clsid = args[0].readByteArray(16);
-                            var wbemLocatorClsid = [0x76, 0x96, 0x97, 0x4C, 0xD5, 0x99, 0xD0, 0x11, 
+                            var wbemLocatorClsid = [0x76, 0x96, 0x97, 0x4C, 0xD5, 0x99, 0xD0, 0x11,
                                                    0xA6, 0xD9, 0x00, 0xC0, 0x4F, 0xD8, 0x58, 0x26];
-                            
+
                             var isWbem = true;
                             for (var i = 0; i < 16; i++) {
                                 if (clsid[i] !== wbemLocatorClsid[i]) {
@@ -463,7 +463,7 @@ class VirtualizationDetectionBypass:
                                     break;
                                 }
                             }
-                            
+
                             if (isWbem) {
                                 console.log("[VM Bypass] Intercepted WMI creation");
                                 this.isWMI = true;
@@ -667,7 +667,7 @@ class VMDetector:
     def detect(self) -> Dict[str, Any]:
         """
         Detect if running in a VM/container environment.
-        
+
         Returns:
             dict: Detection results including VM type and confidence
         """
@@ -766,7 +766,7 @@ class VirtualizationAnalyzer:
     def analyze(self) -> Dict[str, Any]:
         """
         Analyze binary for VM detection routines.
-        
+
         Returns:
             dict: Analysis results
         """
@@ -838,7 +838,7 @@ class VirtualizationAnalyzer:
 def detect_virtualization() -> bool:
     """
     Quick check if running in a virtualized environment.
-    
+
     Returns:
         bool: True if virtualization detected
     """
@@ -850,10 +850,10 @@ def detect_virtualization() -> bool:
 def analyze_vm_protection(binary_path: str) -> Dict[str, Any]:
     """
     Analyze a binary for VM protection mechanisms.
-    
+
     Args:
         binary_path: Path to the binary to analyze
-        
+
     Returns:
         dict: Analysis results
     """

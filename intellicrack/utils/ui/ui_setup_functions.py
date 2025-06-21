@@ -1,5 +1,5 @@
 """
-UI setup functions for Intellicrack. 
+UI setup functions for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,10 +23,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any, Optional
 
 # Optional imports with graceful fallbacks
-from .core.common_imports import HAS_PYQT
+from ..core.common_imports import HAS_PYQT
 
 if HAS_PYQT:
-    from .core.common_imports import (
+    from ..core.common_imports import (
         QComboBox,
         QGroupBox,
         QHBoxLayout,

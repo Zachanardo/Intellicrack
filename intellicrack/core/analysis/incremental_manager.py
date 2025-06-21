@@ -1,5 +1,5 @@
 """
-Incremental Analysis Manager for avoiding reprocessing unchanged code. 
+Incremental Analysis Manager for avoiding reprocessing unchanged code.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -96,10 +96,10 @@ class IncrementalAnalysisManager:
     def _validate_cache_file(self, file_path: str) -> bool:
         """
         Validate cache file before loading.
-        
+
         Args:
             file_path: Path to the cache file
-            
+
         Returns:
             bool: True if file is safe to load
         """

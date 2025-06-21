@@ -85,7 +85,7 @@ class RecoveryAction:
 class R2ErrorHandler:
     """
     Comprehensive error handling and recovery system for radare2 operations.
-    
+
     This class provides:
     - Automatic error detection and classification
     - Intelligent recovery strategies
@@ -186,12 +186,12 @@ class R2ErrorHandler:
     def handle_error(self, error: Exception, operation_name: str, context: Dict[str, Any] = None) -> bool:
         """
         Main error handling entry point.
-        
+
         Args:
             error: The exception that occurred
             operation_name: Name of the operation that failed
             context: Additional context information
-            
+
         Returns:
             bool: True if error was handled successfully, False otherwise
         """
@@ -699,12 +699,12 @@ def get_error_handler() -> R2ErrorHandler:
 def handle_r2_error(error: Exception, operation_name: str, **context) -> bool:
     """
     Convenience function to handle radare2 errors.
-    
+
     Args:
         error: The exception that occurred
         operation_name: Name of the operation that failed
         **context: Additional context information
-        
+
     Returns:
         bool: True if error was handled successfully, False otherwise
     """

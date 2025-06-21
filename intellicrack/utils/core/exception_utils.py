@@ -1,5 +1,5 @@
 """
-Exception handling and error utilities for Intellicrack. 
+Exception handling and error utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -66,7 +66,7 @@ def _display_exception_dialog(exc_type, exc_value, exc_traceback) -> None:
 
     Args:
         exc_type: Exception type
-        exc_value: Exception value  
+        exc_value: Exception value
         exc_traceback: Exception traceback
     """
     if not QMessageBox or not QApplication.instance():

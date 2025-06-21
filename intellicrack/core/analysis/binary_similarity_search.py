@@ -1,5 +1,5 @@
 """
-Binary Similarity Search Engine 
+Binary Similarity Search Engine
 
 Copyright (C) 2025 Zachary Flint
 
@@ -36,7 +36,7 @@ __all__ = ['BinarySimilaritySearch']
 
 
 # Import shared entropy calculation
-from ...utils.protection_utils import calculate_entropy
+from ...utils.protection.protection_utils import calculate_entropy
 
 
 class BinarySimilaritySearch:
@@ -211,7 +211,7 @@ class BinarySimilaritySearch:
 
     def _extract_strings(self, data: bytes, min_length: int = 4) -> List[str]:
         """Extract ASCII strings from binary data using common utility."""
-        from ...utils.string_utils import extract_ascii_strings
+        from ...utils.core.string_utils import extract_ascii_strings
         return extract_ascii_strings(data, min_length)
 
     def search_similar_binaries(self, binary_path: str, threshold: float = 0.7) -> List[Dict[str, Any]]:

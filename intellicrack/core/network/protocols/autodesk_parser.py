@@ -178,10 +178,10 @@ class AutodeskLicensingParser:
     def parse_request(self, http_data: str) -> Optional[AutodeskRequest]:
         """
         Parse incoming Autodesk licensing HTTP request
-        
+
         Args:
             http_data: Raw HTTP request data
-            
+
         Returns:
             Parsed AutodeskRequest object or None if invalid
         """
@@ -362,10 +362,10 @@ class AutodeskLicensingParser:
     def generate_response(self, request: AutodeskRequest) -> AutodeskResponse:
         """
         Generate appropriate Autodesk response based on request
-        
+
         Args:
             request: Parsed Autodesk request
-            
+
         Returns:
             Autodesk response object
         """
@@ -843,10 +843,10 @@ class AutodeskLicensingParser:
     def serialize_response(self, response: AutodeskResponse) -> str:
         """
         Serialize Autodesk response to HTTP response
-        
+
         Args:
             response: Autodesk response object
-            
+
         Returns:
             HTTP response string
         """

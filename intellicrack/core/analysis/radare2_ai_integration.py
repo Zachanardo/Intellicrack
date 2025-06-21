@@ -30,7 +30,7 @@ from sklearn.ensemble import IsolationForest, RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import StandardScaler
 
-from ...utils.radare2_utils import R2Exception, r2_session
+from ...utils.tools.radare2_utils import R2Exception, r2_session
 from .radare2_imports import R2ImportExportAnalyzer
 from .radare2_strings import R2StringAnalyzer
 
@@ -38,7 +38,7 @@ from .radare2_strings import R2StringAnalyzer
 class R2AIEngine:
     """
     Advanced AI/ML engine for radare2 analysis with pattern recognition capabilities.
-    
+
     Provides AI-enhanced analysis for:
     - Automated license validation detection
     - Advanced vulnerability pattern recognition
@@ -803,11 +803,11 @@ class R2AIEngine:
 def analyze_binary_with_ai(binary_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Perform AI-enhanced analysis on a binary.
-    
+
     Args:
         binary_path: Path to binary file
         radare2_path: Optional path to radare2 executable
-        
+
     Returns:
         Complete AI analysis results
     """

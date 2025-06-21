@@ -6,13 +6,13 @@ Common report generation utilities to avoid code duplication.
 def generate_analysis_report(app, report_type, results_data, generator_func=None):
     """
     Common function to generate analysis reports.
-    
+
     Args:
         app: Application instance for UI dialogs
         report_type: Type of report (e.g., "ROP chain generation", "taint analysis")
         results_data: Data to include in the report
         generator_func: Optional function to generate the report content
-        
+
     Returns:
         str or None: Path to generated report file, or None if cancelled
     """
@@ -51,12 +51,12 @@ def generate_analysis_report(app, report_type, results_data, generator_func=None
 def _generate_default_report(filename, report_type, results_data):
     """
     Generate a default HTML report.
-    
+
     Args:
         filename: Output filename
         report_type: Type of analysis
         results_data: Results to include
-        
+
     Returns:
         str: Path to generated report
     """
@@ -94,10 +94,10 @@ def _generate_default_report(filename, report_type, results_data):
 def ensure_html_extension(filename):
     """
     Ensure filename has .html extension.
-    
+
     Args:
         filename: Input filename
-        
+
     Returns:
         str: Filename with .html extension
     """
@@ -109,12 +109,12 @@ def ensure_html_extension(filename):
 def handle_pyqt5_report_generation(app, report_type, generator):
     """
     Handle PyQt5 report generation workflow.
-    
+
     Args:
         app: Application instance for UI dialogs
         report_type: Type of report for dialog message
         generator: Object with generate_report method
-        
+
     Returns:
         str or None: Path to generated report file, or None if cancelled
     """
@@ -128,7 +128,7 @@ def handle_pyqt5_report_generation(app, report_type, generator):
     if not PYQT5_AVAILABLE:
         return None
 
-    from ..ui_helpers import ask_yes_no_question, show_file_dialog
+    from ..ui.ui_helpers import ask_yes_no_question, show_file_dialog
 
     generate_report = ask_yes_no_question(
         app,

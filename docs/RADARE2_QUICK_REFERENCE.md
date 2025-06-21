@@ -79,9 +79,9 @@ for s in result['license_strings']:
 
 ### Function Decompilation
 ```python
-from intellicrack.core.analysis.radare2_decompiler import R2Decompiler
+from intellicrack.core.analysis.radare2_decompiler import R2DecompilationEngine
 
-decomp = R2Decompiler('/path/to/binary')
+decomp = R2DecompilationEngine('/path/to/binary')
 result = decomp.analyze_license_functions()
 
 # Get decompiled code

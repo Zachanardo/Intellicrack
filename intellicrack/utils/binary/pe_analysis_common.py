@@ -12,24 +12,24 @@ logger = logging.getLogger(__name__)
 def analyze_pe_imports(pe, target_apis: Dict[str, List[str]]) -> Dict[str, List[str]]:
     """
     Analyze PE imports for specific API categories.
-    
+
     Args:
         pe: PE file object
         target_apis: Dictionary mapping categories to API lists
-        
+
     Returns:
         Dictionary mapping categories to detected APIs
     """
-    from .templates.network_api_common import analyze_network_apis
+    from ..network_api_common import analyze_network_apis
     return analyze_network_apis(pe, target_apis)
 
 def get_pe_sections_info(pe) -> List[Dict]:
     """
     Extract PE section information.
-    
+
     Args:
         pe: PE file object
-        
+
     Returns:
         List of section information dictionaries
     """

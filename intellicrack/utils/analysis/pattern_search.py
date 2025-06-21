@@ -12,13 +12,13 @@ def find_all_pattern_occurrences(binary_data: bytes, pattern: bytes,
     """
     Find all occurrences of a single pattern in binary data.
     Common pattern finding loop to eliminate code duplication.
-    
+
     Args:
         binary_data: Binary data to search in
         pattern: Byte pattern to search for
         base_address: Base address to add to found offsets
         max_results: Maximum number of results to return (None for no limit)
-        
+
     Returns:
         List of dictionaries containing found pattern information
     """
@@ -49,12 +49,12 @@ def search_patterns_in_binary(binary_data: bytes, patterns: List[bytes],
                             base_address: int = 0) -> List[Dict[str, Any]]:
     """
     Search for multiple patterns in binary data.
-    
+
     Args:
         binary_data: Binary data to search in
         patterns: List of byte patterns to search for
         base_address: Base address to add to found offsets
-        
+
     Returns:
         List of dictionaries containing found pattern information
     """
@@ -72,11 +72,11 @@ def search_patterns_in_binary(binary_data: bytes, patterns: List[bytes],
 def find_function_prologues(binary_data: bytes, base_address: int = 0) -> List[Dict[str, Any]]:
     """
     Find common function prologues in binary data.
-    
+
     Args:
         binary_data: Binary data to search in
         base_address: Base address to add to found offsets
-        
+
     Returns:
         List of found function prologues with their addresses
     """
@@ -103,13 +103,13 @@ def find_license_patterns(binary_data: bytes, base_address: int = 0x400000,
                          max_results: int = 20, context_size: int = 16) -> List[Dict[str, Any]]:
     """
     Find license and validation-related patterns in binary data.
-    
+
     Args:
         binary_data: Binary data to search in
         base_address: Base address to add to found offsets (default: 0x400000)
         max_results: Maximum number of results to return
         context_size: Number of bytes of context to include around matches
-        
+
     Returns:
         List of found license patterns with context and metadata
     """

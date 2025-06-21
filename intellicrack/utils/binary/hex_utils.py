@@ -5,7 +5,7 @@ Utility functions for hex manipulation and display.
 """
 
 import logging
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -15,12 +15,12 @@ def create_hex_dump(data: Union[bytes, bytearray],
                    start_offset: int = 0) -> str:
     """
     Create a formatted hex dump of binary data.
-    
+
     Args:
         data: Binary data to dump
         bytes_per_line: Number of bytes per line
         start_offset: Starting offset for display
-        
+
     Returns:
         Formatted hex dump string
     """
@@ -53,10 +53,10 @@ def create_hex_dump(data: Union[bytes, bytearray],
 def hex_to_bytes(hex_string: str) -> bytes:
     """
     Convert hex string to bytes, handling various formats.
-    
+
     Args:
         hex_string: Hex string (supports spaces, 0x prefix, \\x format)
-        
+
     Returns:
         Converted bytes
     """
@@ -80,12 +80,12 @@ def bytes_to_hex(data: bytes,
                 uppercase: bool = False) -> str:
     """
     Convert bytes to hex string in various formats.
-    
+
     Args:
         data: Binary data
         format_style: Output format ('plain', 'spaces', '0x', '\\x', 'c_array')
         uppercase: Use uppercase hex characters
-        
+
     Returns:
         Formatted hex string
     """
@@ -112,12 +112,12 @@ def bytes_to_hex(data: bytes,
 def find_pattern(data: bytes, pattern: bytes, max_results: int = None) -> List[int]:
     """
     Find all occurrences of a pattern in data.
-    
+
     Args:
         data: Data to search
         pattern: Pattern to find
         max_results: Maximum number of results to return
-        
+
     Returns:
         List of offsets where pattern was found
     """
@@ -141,11 +141,11 @@ def find_pattern(data: bytes, pattern: bytes, max_results: int = None) -> List[i
 def calculate_checksum(data: bytes, algorithm: str = 'sum8') -> int:
     """
     Calculate checksum of data.
-    
+
     Args:
         data: Binary data
         algorithm: Checksum algorithm ('sum8', 'sum16', 'xor')
-        
+
     Returns:
         Checksum value
     """
@@ -165,12 +165,12 @@ def calculate_checksum(data: bytes, algorithm: str = 'sum8') -> int:
 def patch_bytes(data: bytearray, offset: int, patch_data: bytes) -> bool:
     """
     Patch bytes at specified offset.
-    
+
     Args:
         data: Data to patch (modified in place)
         offset: Offset to patch at
         patch_data: Data to write
-        
+
     Returns:
         True if successful
     """
@@ -190,13 +190,13 @@ def patch_bytes(data: bytearray, offset: int, patch_data: bytes) -> bool:
 def nop_range(data: bytearray, start: int, end: int, arch: str = 'x86') -> bool:
     """
     Fill range with NOP instructions.
-    
+
     Args:
         data: Data to patch (modified in place)
         start: Start offset
         end: End offset
         arch: Architecture for NOP instruction
-        
+
     Returns:
         True if successful
     """
@@ -239,12 +239,12 @@ def nop_range(data: bytearray, start: int, end: int, arch: str = 'x86') -> bool:
 def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> List[Dict]:
     """
     Compare two byte sequences and find differences.
-    
+
     Args:
         data1: First data
         data2: Second data
         context: Number of context bytes to show
-        
+
     Returns:
         List of differences with context
     """
@@ -289,11 +289,11 @@ def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> List[Dict]:
 def format_address(address: int, width: int = 8) -> str:
     """
     Format address for display.
-    
+
     Args:
         address: Address value
         width: Width in hex digits
-        
+
     Returns:
         Formatted address string
     """
@@ -303,10 +303,10 @@ def format_address(address: int, width: int = 8) -> str:
 def is_printable_ascii(data: bytes) -> bool:
     """
     Check if data contains only printable ASCII characters.
-    
+
     Args:
         data: Data to check
-        
+
     Returns:
         True if all bytes are printable ASCII
     """
@@ -316,10 +316,10 @@ def is_printable_ascii(data: bytes) -> bool:
 def detect_encoding(data: bytes) -> Optional[str]:
     """
     Try to detect the encoding of data.
-    
+
     Args:
         data: Data to analyze
-        
+
     Returns:
         Detected encoding name or None
     """

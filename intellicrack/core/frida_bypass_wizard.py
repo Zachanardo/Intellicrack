@@ -15,7 +15,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Set
 
-from .frida_manager import FridaManager, ProtectionType
+from .frida_constants import ProtectionType
 from .frida_presets import WIZARD_CONFIGS, get_preset_by_software, get_scripts_for_protection
 
 logger = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ class BypassStrategy:
 class FridaBypassWizard:
     """Automated bypass wizard with intelligent decision making"""
 
-    def __init__(self, frida_manager: FridaManager):
+    def __init__(self, frida_manager):
         self.frida_manager = frida_manager
         self.state = WizardState.IDLE
         self.session_id = None
@@ -86,6 +86,7 @@ class FridaBypassWizard:
         self.applied_strategies = []
         self.successful_bypasses = set()
         self.failed_bypasses = set()
+        self.executed_bypasses = set()
 
         # Progress tracking
         self.progress = 0
@@ -232,7 +233,7 @@ class FridaBypassWizard:
         const modules = Process.enumerateModules();
         const imports = [];
         const strings = [];
-        
+
         // Enumerate modules
         send({
             type: 'analysis',
@@ -244,7 +245,7 @@ class FridaBypassWizard:
                 path: m.path
             }))
         });
-        
+
         // Analyze main module
         const mainModule = modules[0];
         if (mainModule) {
@@ -259,13 +260,13 @@ class FridaBypassWizard:
                     address: i.address ? i.address.toString() : null
                 }))
             });
-            
+
             // Search for protection-related strings
             const protectionKeywords = [
                 'license', 'trial', 'debug', 'protect', 'check',
                 'verify', 'validate', 'expire', 'crack', 'patch'
             ];
-            
+
             Memory.scan(mainModule.base, mainModule.size, '00 00', {
                 onMatch: function(address, size) {
                     try {
@@ -289,7 +290,7 @@ class FridaBypassWizard:
                 }
             });
         }
-        
+
         // Detect common protection patterns
         const protectionAPIs = {
             'IsDebuggerPresent': 'anti_debug',
@@ -301,7 +302,7 @@ class FridaBypassWizard:
             'RegQueryValueEx': 'registry',
             'InternetOpen': 'network'
         };
-        
+
         const detectedAPIs = [];
         for (let [api, category] of Object.entries(protectionAPIs)) {
             const addr = Module.findExportByName(null, api);
@@ -309,7 +310,7 @@ class FridaBypassWizard:
                 detectedAPIs.push({ api, category, found: true });
             }
         }
-        
+
         send({
             type: 'analysis',
             category: 'protection_apis',
@@ -508,6 +509,8 @@ class FridaBypassWizard:
                     self.failed_bypasses.add(strategy.protection_type)
                     strategy.success = False
 
+                # Track that this bypass was executed (regardless of success)
+                self.executed_bypasses.add(strategy.protection_type)
                 self.applied_strategies.append(strategy)
                 self.metrics['bypasses_attempted'] += 1
 
@@ -581,16 +584,368 @@ class FridaBypassWizard:
 
     async def _verify_bypass(self, protection_type: ProtectionType) -> bool:
         """Verify if a protection is still active"""
-        # This would check if the protection is still being triggered
-        # For now, return false (bypass successful) for demonstration
-        return False
+        # Check if the specific protection is still being triggered
+        logger.info(f"Verifying bypass for {protection_type.value}")
+
+        # Check if this protection type has been successfully bypassed
+        if protection_type in self.executed_bypasses:
+            # Verify based on protection type
+            if protection_type == ProtectionType.ANTI_DEBUG:
+                # Check for debugger detection
+                return await self._check_anti_debug_active()
+            elif protection_type == ProtectionType.ANTI_ATTACH:
+                # Check if attachment is blocked
+                return await self._check_anti_attach_active()
+            elif protection_type == ProtectionType.SSL_PINNING:
+                # Check if SSL pinning is enforced
+                return await self._check_ssl_pinning_active()
+            # Add more specific checks for other protection types
+
+        # For now, return false (bypass successful) if protection was executed
+        return protection_type not in self.executed_bypasses
+
+    async def _check_anti_debug_active(self) -> bool:
+        """Check if anti-debug protection is still active"""
+        try:
+            # Create detection script
+            detection_script = """
+            var detected = false;
+            
+            // Check for IsDebuggerPresent on Windows
+            if (Process.platform === 'windows') {
+                try {
+                    var isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
+                    if (isDebuggerPresent) {
+                        var result = new NativeFunction(isDebuggerPresent, 'bool', [])();
+                        if (result) detected = true;
+                    }
+                } catch(e) {}
+                
+                // Check PEB for debugger flag
+                try {
+                    var peb = Process.enumerateModules()[0].base;
+                    var beingDebugged = peb.add(0x02).readU8();
+                    if (beingDebugged) detected = true;
+                } catch(e) {}
+            }
+            
+            // Check for ptrace on Linux/Android
+            if (Process.platform === 'linux' || Process.platform === 'android') {
+                try {
+                    var ptrace = Module.findExportByName(null, 'ptrace');
+                    if (ptrace) {
+                        // Try PTRACE_TRACEME
+                        var ptraceFunc = new NativeFunction(ptrace, 'int', ['int', 'int', 'pointer', 'pointer']);
+                        var result = ptraceFunc(0, 0, NULL, NULL);
+                        if (result === -1) detected = true;
+                    }
+                } catch(e) {}
+            }
+            
+            // Check common anti-debug tricks
+            try {
+                // Timing checks
+                var start = Date.now();
+                for (var i = 0; i < 1000000; i++) {}
+                var elapsed = Date.now() - start;
+                if (elapsed > 100) detected = true;  // Suspiciously slow
+            } catch(e) {}
+            
+            send({type: 'detection', result: detected});
+            """
+            
+            # Run detection script
+            temp_script = Path("anti_debug_check.js")
+            with open(temp_script, 'w') as f:
+                f.write(detection_script)
+            
+            result = await self._run_detection_script(temp_script)
+            temp_script.unlink()
+            
+            return result.get('detected', False)
+            
+        except Exception as e:
+            logger.error(f"Anti-debug detection failed: {e}")
+            return False
+
+    async def _check_anti_attach_active(self) -> bool:
+        """Check if anti-attach protection is still active"""
+        try:
+            # Create attach detection script
+            detection_script = """
+            var detected = false;
+            
+            // Try to detect if we can attach to critical functions
+            try {
+                // Test hooking capability
+                var testTarget = Module.findExportByName(null, 'malloc');
+                if (testTarget) {
+                    Interceptor.attach(testTarget, {
+                        onEnter: function(args) {
+                            // If we can hook, anti-attach is not active
+                        }
+                    });
+                    Interceptor.detachAll();
+                }
+            } catch(e) {
+                // If attach fails, anti-attach is active
+                detected = true;
+            }
+            
+            // Check for hook detection mechanisms
+            if (Process.platform === 'windows') {
+                try {
+                    // Check for common anti-attach APIs
+                    var apis = [
+                        'DbgUiRemoteBreakin',
+                        'DbgBreakPoint',
+                        'RtlIsDebuggerPresent'
+                    ];
+                    
+                    apis.forEach(function(api) {
+                        var addr = Module.findExportByName('ntdll.dll', api);
+                        if (addr) {
+                            var bytes = addr.readByteArray(5);
+                            // Check for common hooks/patches
+                            if (bytes[0] === 0xE9 || bytes[0] === 0xFF) {
+                                detected = true;
+                            }
+                        }
+                    });
+                } catch(e) {}
+            }
+            
+            // Check process flags on Linux
+            if (Process.platform === 'linux') {
+                try {
+                    var status = File.readAllText('/proc/self/status');
+                    if (status.includes('TracerPid') && !status.includes('TracerPid:\t0')) {
+                        detected = true;
+                    }
+                } catch(e) {}
+            }
+            
+            send({type: 'detection', result: detected});
+            """
+            
+            # Run detection script
+            temp_script = Path("anti_attach_check.js")
+            with open(temp_script, 'w') as f:
+                f.write(detection_script)
+            
+            result = await self._run_detection_script(temp_script)
+            temp_script.unlink()
+            
+            return result.get('detected', False)
+            
+        except Exception as e:
+            logger.error(f"Anti-attach detection failed: {e}")
+            return False
+
+    async def _check_ssl_pinning_active(self) -> bool:
+        """Check if SSL pinning is still active"""
+        try:
+            # Create SSL pinning detection script
+            detection_script = """
+            var detected = false;
+            var sslHookActive = false;
+            
+            // Test if SSL pinning bypass is working
+            try {
+                // Android SSL pinning check
+                if (Process.platform === 'android') {
+                    // Check if common pinning methods are hooked
+                    var pinningClasses = [
+                        'com.android.org.conscrypt.TrustManagerImpl',
+                        'okhttp3.CertificatePinner',
+                        'com.squareup.okhttp.CertificatePinner',
+                        'com.android.org.conscrypt.Platform'
+                    ];
+                    
+                    pinningClasses.forEach(function(className) {
+                        try {
+                            var clazz = Java.use(className);
+                            // Check if methods are hooked
+                            if (clazz.checkServerTrusted && clazz.checkServerTrusted.implementation) {
+                                sslHookActive = true;
+                            }
+                        } catch(e) {}
+                    });
+                    
+                    // If no hooks are active, pinning is still enabled
+                    detected = !sslHookActive;
+                }
+                
+                // iOS SSL pinning check
+                if (Process.platform === 'darwin') {
+                    // Check SecTrust functions
+                    var secTrustEvaluate = Module.findExportByName('Security', 'SecTrustEvaluate');
+                    if (secTrustEvaluate) {
+                        try {
+                            Interceptor.attach(secTrustEvaluate, {
+                                onEnter: function() {
+                                    sslHookActive = true;
+                                }
+                            });
+                            Interceptor.detachAll();
+                        } catch(e) {
+                            // If we can't hook, pinning might be active
+                            detected = true;
+                        }
+                    }
+                }
+                
+                // Generic HTTPS test
+                if (!Process.platform === 'android' && !Process.platform === 'darwin') {
+                    // Check if SSL/TLS functions are hooked
+                    var sslFunctions = [
+                        'SSL_verify_client_post_handshake',
+                        'SSL_CTX_set_verify',
+                        'X509_verify_cert'
+                    ];
+                    
+                    sslFunctions.forEach(function(func) {
+                        var addr = Module.findExportByName(null, func);
+                        if (addr) {
+                            var bytes = addr.readByteArray(5);
+                            // Check for hooks
+                            if (bytes[0] === 0xE9 || bytes[0] === 0xFF) {
+                                sslHookActive = true;
+                            }
+                        }
+                    });
+                    
+                    detected = !sslHookActive;
+                }
+            } catch(e) {
+                // Error might indicate protection is active
+                detected = true;
+            }
+            
+            send({type: 'detection', result: detected});
+            """
+            
+            # Run detection script
+            temp_script = Path("ssl_pinning_check.js")
+            with open(temp_script, 'w') as f:
+                f.write(detection_script)
+            
+            result = await self._run_detection_script(temp_script)
+            temp_script.unlink()
+            
+            return result.get('detected', False)
+            
+        except Exception as e:
+            logger.error(f"SSL pinning detection failed: {e}")
+            return False
+    
+    async def _run_detection_script(self, script_path: Path) -> Dict[str, Any]:
+        """Run a detection script and collect results"""
+        result = {'detected': False}
+        
+        try:
+            # Set up message handler to receive results
+            def on_message(message, data):
+                if message['type'] == 'send':
+                    payload = message['payload']
+                    if payload.get('type') == 'detection':
+                        result['detected'] = payload.get('result', False)
+            
+            # Load and run script
+            script_loaded = self.frida_manager.load_script(
+                self.session_id,
+                str(script_path),
+                {"detection_mode": True}
+            )
+            
+            if script_loaded:
+                # Wait for detection to complete
+                await asyncio.sleep(0.5)
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Detection script execution failed: {e}")
+            return {'detected': False}
 
     async def _adaptive_retry(self, verification_results: Dict[ProtectionType, bool]):
-        """Adaptively retry failed bypasses"""
+        """Adaptively retry failed bypasses with alternative strategies"""
+        retry_count = 0
+        max_retries = 3
+        
         for prot_type, success in verification_results.items():
-            if not success:
+            if not success and retry_count < max_retries:
                 logger.info(f"Attempting adaptive retry for {prot_type.value}")
-                # Would implement adaptive retry logic here
+                
+                # Select alternative strategy based on protection type
+                alternative_strategy = self._get_alternative_strategy(prot_type)
+                
+                if alternative_strategy:
+                    try:
+                        # Apply alternative bypass
+                        retry_success = await self._apply_strategy(alternative_strategy)
+                        
+                        if retry_success:
+                            # Verify the alternative worked
+                            await asyncio.sleep(0.5)  # Give time for bypass to take effect
+                            verify_success = await self._verify_bypass(prot_type)
+                            
+                            if verify_success:
+                                logger.info(f"Alternative strategy successful for {prot_type.value}")
+                                self.metrics['retry_successes'] += 1
+                            else:
+                                logger.warning(f"Alternative strategy failed verification for {prot_type.value}")
+                                self.metrics['retry_failures'] += 1
+                        else:
+                            self.metrics['retry_failures'] += 1
+                            
+                    except Exception as e:
+                        logger.error(f"Adaptive retry failed for {prot_type.value}: {e}")
+                        self.metrics['retry_failures'] += 1
+                        
+                retry_count += 1
+    
+    def _get_alternative_strategy(self, protection_type: ProtectionType) -> Optional[BypassStrategy]:
+        """Get alternative bypass strategy for failed protection"""
+        alternative_strategies = {
+            ProtectionType.ANTI_DEBUG: BypassStrategy(
+                name="Alternative Anti-Debug Bypass",
+                protection_types=[ProtectionType.ANTI_DEBUG],
+                confidence=0.7,
+                script_path="alternatives/anti_debug_alt.js",
+                parameters={"use_kernel_bypass": True}
+            ),
+            ProtectionType.ANTI_ATTACH: BypassStrategy(
+                name="Alternative Anti-Attach Bypass",
+                protection_types=[ProtectionType.ANTI_ATTACH],
+                confidence=0.7,
+                script_path="alternatives/anti_attach_alt.js",
+                parameters={"hook_deeper": True}
+            ),
+            ProtectionType.SSL_PINNING: BypassStrategy(
+                name="Alternative SSL Pinning Bypass",
+                protection_types=[ProtectionType.SSL_PINNING],
+                confidence=0.8,
+                script_path="alternatives/ssl_pinning_alt.js",
+                parameters={"universal_bypass": True}
+            ),
+            ProtectionType.ROOT_DETECTION: BypassStrategy(
+                name="Alternative Root Detection Bypass",
+                protection_types=[ProtectionType.ROOT_DETECTION],
+                confidence=0.8,
+                script_path="alternatives/root_detection_alt.js",
+                parameters={"hide_all_traces": True}
+            ),
+            ProtectionType.INTEGRITY_CHECK: BypassStrategy(
+                name="Alternative Integrity Check Bypass",
+                protection_types=[ProtectionType.INTEGRITY_CHECK],
+                confidence=0.6,
+                script_path="alternatives/integrity_alt.js",
+                parameters={"patch_memory": True}
+            )
+        }
+        
+        return alternative_strategies.get(protection_type)
 
     def _generate_report(self) -> Dict[str, Any]:
         """Generate comprehensive wizard report"""
@@ -663,9 +1018,14 @@ class WizardPresetManager:
         logger.info(f"Applied preset for: {software_name}")
 
     @staticmethod
-    def create_custom_wizard(config: Dict[str, Any]) -> FridaBypassWizard:
+    def create_custom_wizard(config: Dict[str, Any]):
         """Create wizard with custom configuration"""
-        from .frida_manager import FridaManager
+        # Use lazy import to avoid cyclic import
+        from . import get_frida_manager
+
+        FridaManager = get_frida_manager()
+        if FridaManager is None:
+            raise ImportError("FridaManager not available")
 
         manager = FridaManager()
         wizard = FridaBypassWizard(manager)

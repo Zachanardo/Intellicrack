@@ -1,5 +1,5 @@
 """
-Script Generation Dialog for Intellicrack. 
+Script Generation Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -186,7 +186,8 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         self.target_function = None
         self.template_display = None
         self.test_btn = None
-        super().__init__(parent, binary_path)
+        super().__init__(parent)
+        self.binary_path = binary_path
         self.worker = None
         self.generated_scripts = {}
 

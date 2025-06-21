@@ -1,5 +1,5 @@
 """
-Intellicrack Models Package 
+Intellicrack Models Package
 
 Copyright (C) 2025 Zachary Flint
 

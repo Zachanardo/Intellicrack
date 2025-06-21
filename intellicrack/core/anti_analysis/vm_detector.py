@@ -77,10 +77,10 @@ class VMDetector(BaseDetector):
     def detect_vm(self, aggressive: bool = False) -> Dict[str, Any]:
         """
         Perform VM detection using multiple techniques.
-        
+
         Args:
             aggressive: Use more aggressive detection methods that might be detected
-            
+
         Returns:
             Detection results with confidence scores
         """
@@ -490,19 +490,19 @@ bool IsRunningInVM() {
     if ((cpuInfo[2] >> 31) & 1) {
         return true;
     }
-    
+
     // Check for VM files
     if (GetFileAttributes("C:\\\\Windows\\\\System32\\\\drivers\\\\vmmouse.sys") != INVALID_FILE_ATTRIBUTES) {
         return true;
     }
-    
+
     // Check registry
     HKEY hKey;
     if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\\\VMware, Inc.\\\\VMware Tools", 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
         RegCloseKey(hKey);
         return true;
     }
-    
+
     return false;
 }
 

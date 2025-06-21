@@ -1,5 +1,5 @@
 """
-Concolic Execution Engine for Precise Path Exploration 
+Concolic Execution Engine for Precise Path Exploration
 
 Copyright (C) 2025 Zachary Flint
 
@@ -50,7 +50,7 @@ except ImportError:
         class NativeConcolicState:
             """
             Native concolic execution state implementation.
-            
+
             Represents a single execution state in the concolic execution engine,
             maintaining both concrete and symbolic values for program variables.
             """
@@ -125,7 +125,7 @@ except ImportError:
         class Manticore:
             """
             Native concolic execution engine implementation.
-            
+
             This is a comprehensive implementation that provides concolic execution
             capabilities without requiring external dependencies like the Manticore framework.
             """
@@ -411,7 +411,7 @@ except ImportError:
         class Plugin:
             """
             Native plugin implementation for concolic execution.
-            
+
             Provides hooks and callbacks for monitoring and modifying
             the concolic execution process.
             """

@@ -24,13 +24,13 @@ import logging
 from difflib import SequenceMatcher
 from typing import Any, Dict, List, Optional, Set
 
-from ...utils.radare2_utils import R2Exception, r2_session
+from ...utils.tools.radare2_utils import R2Exception, r2_session
 
 
 class R2BinaryDiff:
     """
     Advanced binary comparison and diffing engine using radare2.
-    
+
     Provides comprehensive binary analysis including:
     - Function-level comparison
     - Instruction-level diffing
@@ -900,24 +900,61 @@ class R2BinaryDiff:
             return 'unknown_patch'
 
     def _assess_patch_impact(self, function_name: str, size_change: int) -> str:
-        """Assess impact of patch."""
+        """Assess impact of patch based on size change and function importance."""
+        # Base impact assessment from size change
         if abs(size_change) > 100:
-            return 'high'
+            base_impact = 'high'
         elif abs(size_change) > 20:
-            return 'medium'
+            base_impact = 'medium'
         else:
-            return 'low'
+            base_impact = 'low'
+
+        # Function name-based impact assessment
+        critical_functions = [
+            'main', 'wmain', 'DllMain', 'entry', 'start', '_start',
+            'license', 'activate', 'verify', 'check', 'validate',
+            'decrypt', 'encrypt', 'hash', 'sign', 'auth'
+        ]
+
+        security_functions = [
+            'malloc', 'free', 'strcpy', 'strcat', 'sprintf', 'scanf',
+            'gets', 'system', 'exec', 'CreateProcess', 'VirtualAlloc'
+        ]
+
+        # Upgrade impact if function is critical
+        function_lower = function_name.lower()
+        if any(critical in function_lower for critical in critical_functions):
+            if base_impact == 'low':
+                return 'medium'
+            elif base_impact == 'medium':
+                return 'high'
+            else:
+                return 'critical'
+
+        # Upgrade impact if function is security-sensitive
+        elif any(security in function_lower for security in security_functions):
+            if base_impact == 'low':
+                return 'medium'
+            else:
+                return 'high'
+
+        # Check for common vulnerability patterns in function name
+        vuln_patterns = ['overflow', 'buffer', 'format', 'injection', 'xss', 'sql']
+        if any(pattern in function_lower for pattern in vuln_patterns):
+            return 'high'
+
+        return base_impact
 
 
 def compare_binaries(binary1_path: str, binary2_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Perform comprehensive binary comparison.
-    
+
     Args:
         binary1_path: Path to first binary
         binary2_path: Path to second binary
         radare2_path: Optional path to radare2 executable
-        
+
     Returns:
         Complete binary comparison results
     """

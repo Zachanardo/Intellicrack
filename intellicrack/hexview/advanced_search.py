@@ -1,5 +1,5 @@
 """
-Advanced Search and Replace functionality for Hex Viewer. 
+Advanced Search and Replace functionality for Hex Viewer.
 
 Copyright (C) 2025 Zachary Flint
 

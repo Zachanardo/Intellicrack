@@ -1,5 +1,5 @@
 """
-Report Manager Dialog for Intellicrack. 
+Report Manager Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

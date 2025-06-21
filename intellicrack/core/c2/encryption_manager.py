@@ -86,11 +86,11 @@ class EncryptionManager:
     def encrypt(self, plaintext: str, session_id: str = None) -> bytes:
         """
         Encrypt plaintext using AES-256-CBC with HMAC authentication.
-        
+
         Args:
             plaintext: Data to encrypt
             session_id: Optional session ID for session-specific encryption
-            
+
         Returns:
             Encrypted data with IV and HMAC
         """
@@ -129,11 +129,11 @@ class EncryptionManager:
     def decrypt(self, encrypted_data: bytes, session_id: str = None) -> str:
         """
         Decrypt data using AES-256-CBC with HMAC verification.
-        
+
         Args:
             encrypted_data: Encrypted data to decrypt
             session_id: Optional session ID for session-specific decryption
-            
+
         Returns:
             Decrypted plaintext
         """
@@ -198,10 +198,10 @@ class EncryptionManager:
     def exchange_keys(self, client_public_key_pem: bytes) -> Dict[str, Any]:
         """
         Perform RSA key exchange with client.
-        
+
         Args:
             client_public_key_pem: Client's RSA public key in PEM format
-            
+
         Returns:
             Key exchange response with encrypted session key
         """
@@ -298,12 +298,12 @@ class EncryptionManager:
     def encrypt_file(self, file_path: str, output_path: str = None, session_id: str = None) -> str:
         """
         Encrypt a file using AES-256.
-        
+
         Args:
             file_path: Path to file to encrypt
             output_path: Output path for encrypted file
             session_id: Optional session ID
-            
+
         Returns:
             Path to encrypted file
         """
@@ -332,12 +332,12 @@ class EncryptionManager:
     def decrypt_file(self, encrypted_file_path: str, output_path: str = None, session_id: str = None) -> str:
         """
         Decrypt a file using AES-256.
-        
+
         Args:
             encrypted_file_path: Path to encrypted file
             output_path: Output path for decrypted file
             session_id: Optional session ID
-            
+
         Returns:
             Path to decrypted file
         """

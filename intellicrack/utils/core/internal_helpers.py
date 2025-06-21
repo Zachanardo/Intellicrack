@@ -1,5 +1,5 @@
 """
-Internal helper functions for Intellicrack. 
+Internal helper functions for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -31,8 +31,8 @@ import time
 from typing import Any, Callable, Dict, List, Optional
 
 # Import availability flags from common imports
-from .core.common_imports import HAS_TENSORFLOW, HAS_TORCH
-from .core.common_imports import PSUTIL_AVAILABLE as HAS_PSUTIL
+from .common_imports import HAS_TENSORFLOW, HAS_TORCH
+from .common_imports import PSUTIL_AVAILABLE as HAS_PSUTIL
 
 # Import actual modules when available
 if HAS_PSUTIL:
@@ -110,14 +110,14 @@ def _build_cm_packet(packet_type: str, data: bytes = b'') -> bytes:
 def _handle_check_license(request_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle license check request with comprehensive validation.
-    
+
     This function implements deterministic license validation by checking
     various aspects of the license request and generating appropriate responses
     based on input patterns and hash-based verification.
-    
+
     Args:
         request_data: License check request containing user, product, version info
-        
+
     Returns:
         Dict containing detailed license validation results
     """
@@ -282,10 +282,10 @@ def _handle_encrypt(data: bytes, key: bytes) -> bytes:
 def _handle_get_info() -> Dict[str, Any]:
     """
     Handle get info request with comprehensive server information.
-    
+
     Returns detailed information about the license server capabilities,
     supported protocols, and current status.
-    
+
     Returns:
         Dict containing comprehensive server information
     """
@@ -366,13 +366,13 @@ def _handle_get_info() -> Dict[str, Any]:
 def _handle_get_key(key_id: str) -> Optional[str]:
     """
     Handle get key request with comprehensive key generation.
-    
+
     This function generates realistic license keys based on the key ID,
     using multiple algorithms and formats to simulate different key types.
-    
+
     Args:
         key_id: Unique identifier for the key request
-        
+
     Returns:
         String containing the generated license key
     """
@@ -440,13 +440,13 @@ def _handle_get_key(key_id: str) -> Optional[str]:
 def _handle_get_license(license_id: str) -> Dict[str, Any]:
     """
     Handle get license request with comprehensive license information.
-    
+
     This function retrieves detailed license information based on the license ID,
     providing realistic license data including features, usage statistics, and metadata.
-    
+
     Args:
         license_id: Unique identifier for the license to retrieve
-        
+
     Returns:
         Dict containing detailed license information
     """
@@ -598,13 +598,13 @@ def _handle_get_license(license_id: str) -> Dict[str, Any]:
 def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
     Handle license query request with comprehensive license database functionality.
-    
+
     This function implements a license database query system, returning
     detailed license information based on the query parameters.
-    
+
     Args:
         query: Query parameters including filters, limits, and search criteria
-        
+
     Returns:
         List of license dictionaries matching the query criteria
     """
@@ -753,13 +753,13 @@ def _handle_license_query(query: Dict[str, Any]) -> List[Dict[str, Any]]:
 def _handle_license_release(license_id: str) -> Dict[str, Any]:
     """
     Handle license release request with comprehensive release processing.
-    
+
     This function processes license release requests, updating license status,
     calculating usage statistics, and generating detailed release information.
-    
+
     Args:
         license_id: Unique identifier for the license to release
-        
+
     Returns:
         Dict containing release confirmation and updated license information
     """
@@ -911,14 +911,14 @@ def _handle_logout(token: str) -> Dict[str, Any]:
 def _handle_read_memory(address: int, size: int) -> bytes:
     """
     Handle read memory request with memory content generation.
-    
-    This function generates appropriate memory content based on the memory 
+
+    This function generates appropriate memory content based on the memory
     address range being accessed, providing realistic data patterns for testing.
-    
+
     Args:
         address: Memory address to read from
         size: Number of bytes to read
-        
+
     Returns:
         Bytes representing the memory content at the specified address
     """
@@ -1041,13 +1041,13 @@ def _handle_request(request_type: str, data: Dict[str, Any]) -> Dict[str, Any]:
 def _handle_return_license(license_id: str) -> Dict[str, Any]:
     """
     Handle return license request.
-    
+
     This function is an alias for _handle_license_release to maintain
     API compatibility with different license management protocols.
-    
+
     Args:
         license_id: Unique identifier for the license to return
-        
+
     Returns:
         Dict containing release confirmation and updated license information
     """
@@ -1321,14 +1321,14 @@ def _build_knowledge_index(knowledge_base: List[Dict[str, Any]]) -> Dict[str, Li
 def _dump_memory_region(address: int, size: int) -> bytes:
     """
     Dump a memory region with comprehensive memory layout simulation.
-    
+
     This function provides a more sophisticated memory dump that includes
     realistic memory patterns, structures, and content based on the address range.
-    
+
     Args:
         address: Starting memory address to dump
         size: Number of bytes to dump
-        
+
     Returns:
         Bytes representing a realistic memory dump
     """
@@ -1522,7 +1522,7 @@ def _cuda_hash_calculation(data: bytes, algorithm: str = 'sha256') -> Optional[s
 
 def _gpu_entropy_calculation(data: bytes) -> float:
     """Calculate entropy using GPU acceleration."""
-    from .entropy_utils import safe_entropy_calculation
+    from ..analysis.entropy_utils import safe_entropy_calculation
 
     # GPU implementation would go here
     # Fallback to CPU calculation using shared entropy utilities
@@ -1547,7 +1547,7 @@ def _pytorch_entropy_calculation(data: bytes) -> float:
     try:
         # Use shared entropy calculation for consistency
         # PyTorch tensor operations can be added later for GPU acceleration
-        from .entropy_utils import calculate_byte_entropy
+        from ..analysis.entropy_utils import calculate_byte_entropy
         return calculate_byte_entropy(data)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("PyTorch entropy calculation failed: %s", e)
@@ -1606,14 +1606,14 @@ def _tensorflow_hash_calculation(data: bytes, algorithm: str = 'sha256') -> Opti
 def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> List[int]:
     """
     Advanced pattern matching using TensorFlow for high-performance binary analysis.
-    
+
     Uses TensorFlow's convolution operations to efficiently find pattern matches
     in binary data. Falls back to simple implementation if TensorFlow unavailable.
-    
+
     Args:
         data: Binary data to search
         pattern: Pattern to find
-        
+
     Returns:
         List of byte offsets where pattern matches occur
     """
@@ -1865,11 +1865,11 @@ def _write_gguf_tensor_info(file_handle: Any, tensors: List[Dict[str, Any]]) -> 
 def _write_dummy_tensor_data(file_handle: Any, tensors: List[Dict[str, Any]]) -> None:
     """
     Write realistic tensor data for ML model files instead of dummy zeros.
-    
+
     This function generates realistic tensor data based on the tensor specifications,
     including proper weight initialization patterns, data type handling, and
     memory-efficient writing for large tensors.
-    
+
     Args:
         file_handle: File handle to write tensor data to
         tensors: List of tensor specifications with dims, types, and names

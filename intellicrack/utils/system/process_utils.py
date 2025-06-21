@@ -1,5 +1,5 @@
 """
-Process and system utilities for Intellicrack. 
+Process and system utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -29,10 +29,113 @@ from typing import Any, Dict, List, Optional
 
 try:
     import psutil
+    PSUTIL_AVAILABLE = True
 except ImportError:
     psutil = None
+    PSUTIL_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
+
+# Consolidated process iteration utilities to avoid code duplication
+
+def find_process_by_name(process_name: str, exact_match: bool = False) -> Optional[int]:
+    """
+    Find process PID by name with unified logic.
+    
+    Args:
+        process_name: Name of process to find
+        exact_match: If True, require exact name match; if False, allow partial match
+        
+    Returns:
+        Process PID if found, None otherwise
+    """
+    if not PSUTIL_AVAILABLE:
+        logger.warning("psutil not available for process search")
+        return None
+
+    try:
+        target_name = process_name.lower()
+        for proc in psutil.process_iter(['pid', 'name']):
+            try:
+                if proc.info['name']:
+                    proc_name_lower = proc.info['name'].lower()
+                    if exact_match:
+                        if proc_name_lower == target_name:
+                            logger.info(f"Found exact process match: {process_name} with PID: {proc.info['pid']}")
+                            return proc.info['pid']
+                    else:
+                        if target_name in proc_name_lower:
+                            logger.info(f"Found process match: {process_name} with PID: {proc.info['pid']}")
+                            return proc.info['pid']
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except Exception as e:
+        logger.error(f"Error searching for process {process_name}: {e}")
+
+    return None
+
+
+def get_all_processes(fields: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+    """
+    Get list of all processes with unified logic.
+    
+    Args:
+        fields: List of fields to retrieve (default: ['pid', 'name', 'cpu_percent', 'memory_percent'])
+        
+    Returns:
+        List of process information dictionaries
+    """
+    if not PSUTIL_AVAILABLE:
+        logger.warning("psutil not available for process listing")
+        return []
+
+    if fields is None:
+        fields = ['pid', 'name', 'cpu_percent', 'memory_percent']
+
+    processes = []
+    try:
+        for proc in psutil.process_iter(fields):
+            try:
+                processes.append(proc.info)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except Exception as e:
+        logger.error(f"Error getting process list: {e}")
+
+    return processes
+
+
+def find_processes_matching_names(target_names: List[str]) -> List[str]:
+    """
+    Find all running processes that match any of the target names.
+    
+    Args:
+        target_names: List of process names to search for
+        
+    Returns:
+        List of running process names that match targets
+    """
+    if not PSUTIL_AVAILABLE:
+        logger.warning("psutil not available for process matching")
+        return []
+
+    try:
+        running_processes = [p.info['name'] for p in psutil.process_iter(['name']) if p.info['name']]
+        target_names_lower = [name.lower() for name in target_names]
+
+        matches = []
+        for proc_name in running_processes:
+            proc_name_lower = proc_name.lower()
+            for target in target_names_lower:
+                if target in proc_name_lower:
+                    matches.append(proc_name)
+                    break
+
+        return matches
+    except Exception as e:
+        logger.error(f"Error matching process names: {e}")
+        return []
 
 def _get_system_path(path_type: str) -> Optional[str]:
     """Get system path dynamically."""
@@ -64,18 +167,8 @@ def get_target_process_pid(process_name: str) -> Optional[int]:
         logger.warning("psutil not available - cannot get process PID")
         return None
 
-    try:
-        for proc in psutil.process_iter(['pid', 'name']):
-            if proc.info['name'] and process_name.lower() in proc.info['name'].lower():
-                logger.info(f"Found process {process_name} with PID: {proc.info['pid']}")
-                return proc.info['pid']
-
-        logger.warning("Process %s not found", process_name)
-        return None
-
-    except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error finding process %s: %s", process_name, e)
-        return None
+    # Use the consolidated process finding function
+    return find_process_by_name(process_name, exact_match=False)
 
 
 def compute_file_hash(file_path: str, algorithm: str = 'sha256') -> Optional[str]:
@@ -171,7 +264,9 @@ def detect_hardware_dongles(app=None) -> List[str]:
     if psutil:
         results.append("Checking for dongle service processes...")
         try:
-            running_processes = [p.info['name'] for p in psutil.process_iter(['name'])]
+            # Get all process names
+            all_processes = get_all_processes(['name'])
+            running_processes = [p['name'] for p in all_processes if p.get('name')]
 
             for dongle, processes in dongle_processes.items():
                 for process in processes:
@@ -180,7 +275,7 @@ def detect_hardware_dongles(app=None) -> List[str]:
                         logger.info("Found %s service process: %s", dongle, process)
                         results.append(f"Found {dongle} service process: {process}")
 
-        except (OSError, ValueError, RuntimeError) as e:
+        except Exception as e:
             logger.warning("Error checking dongle processes: %s", e)
             results.append(f"Error checking processes: {e}")
     else:

@@ -1,5 +1,5 @@
 """
-SSL/TLS Interception System for Encrypted License Verification 
+SSL/TLS Interception System for Encrypted License Verification
 
 Copyright (C) 2025 Zachary Flint
 
@@ -58,7 +58,7 @@ class SSLTLSInterceptor:
         self.logger = logging.getLogger(__name__)
 
         # Default configuration
-        from ...utils.windows_structures import COMMON_LICENSE_DOMAINS
+        from ...utils.system.windows_structures import COMMON_LICENSE_DOMAINS
         self.config = {
             'listen_ip': '127.0.0.1',
             'listen_port': 8443,
@@ -88,7 +88,7 @@ class SSLTLSInterceptor:
         """
         Load response templates for various license verification endpoints.
         """
-        from ...utils.license_response_templates import get_all_response_templates
+        from ...utils.templates.license_response_templates import get_all_response_templates
         self.response_templates = get_all_response_templates()
 
     def generate_ca_certificate(self) -> Tuple[Optional[bytes], Optional[bytes]]:
@@ -103,7 +103,7 @@ class SSLTLSInterceptor:
             return None, None
 
         try:
-            from ...utils.certificate_utils import generate_self_signed_cert
+            from ...utils.protection.certificate_utils import generate_self_signed_cert
 
             cert_result = generate_self_signed_cert(
                 common_name="Intellicrack Root CA",
@@ -297,7 +297,7 @@ def response(flow: http.HTTPFlow) -> None:
         Returns:
             str: Path to the executable, or None if not found
         """
-        from ...utils.path_discovery import find_tool
+        from ...utils.core.path_discovery import find_tool
 
         # Try to find using path_discovery first
         path = find_tool(executable)

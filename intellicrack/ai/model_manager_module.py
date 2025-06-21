@@ -1,5 +1,5 @@
 """
-AI Model Manager Module for Intellicrack. 
+AI Model Manager Module for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -716,7 +716,7 @@ class AsyncModelManager:
         def load_worker():
             """
             Worker function to load a model asynchronously.
-            
+
             Attempts to load the specified model and calls the callback with the result.
             On success, passes (True, model, None) to callback.
             On failure, passes (False, None, error_message) to callback.
@@ -739,7 +739,7 @@ class AsyncModelManager:
         def predict_worker():
             """
             Worker function to make predictions asynchronously.
-            
+
             Attempts to make predictions using the specified model and input data,
             then calls the callback with the result.
             On success, passes (True, prediction_result, None) to callback.
@@ -978,14 +978,14 @@ class ModelFineTuner:
             class ProgressCallback(tf.keras.callbacks.Callback):  # pylint: disable=no-member
                 """
                 Keras callback to report training progress to the parent callback.
-                
+
                 Inherits from tf.keras.callbacks.Callback to intercept training events
                 and forward progress information to the user-provided callback function.
                 """
                 def on_epoch_end(self, epoch, logs=None):
                     """
                     Called at the end of each training epoch.
-                    
+
                     Args:
                         epoch: Current epoch number (0-indexed)
                         logs: Dictionary containing training metrics (loss, val_loss, etc.)
@@ -1093,11 +1093,11 @@ def import_custom_model(model_path: str, model_type: str = None,
 def load_model(model_id: str, model_path: Optional[str] = None):
     """
     Load a model using the global model manager.
-    
+
     Args:
         model_id: ID of the model to load
         model_path: Optional path if model needs to be registered first
-        
+
     Returns:
         Loaded model object
     """
@@ -1131,12 +1131,12 @@ def load_model(model_id: str, model_path: Optional[str] = None):
 def save_model(model_id: str, save_path: str, model_format: str = "auto"):
     """
     Save a loaded model to disk.
-    
+
     Args:
         model_id: ID of the loaded model
         save_path: Path where to save the model
         model_format: Format to save in (auto-detected from extension)
-        
+
     Returns:
         Dict with save results
     """
@@ -1200,7 +1200,7 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto"):
 def list_available_models() -> Dict[str, Any]:
     """
     List all available models in the global manager.
-    
+
     Returns:
         Dict containing model information
     """
@@ -1235,11 +1235,11 @@ def list_available_models() -> Dict[str, Any]:
 def configure_ai_provider(provider_name: str, config: Dict[str, Any]) -> Dict[str, Any]:
     """
     Configure an AI provider for the model manager.
-    
+
     Args:
         provider_name: Name of the provider (openai, anthropic, local, etc.)
         config: Configuration dictionary
-        
+
     Returns:
         Configuration result
     """

@@ -31,7 +31,7 @@ try:
 except ImportError:
     R2PIPE_AVAILABLE = False
 
-from ..core.analysis.radare2_error_handler import get_error_handler, r2_error_context
+from ...core.analysis.radare2_error_handler import get_error_handler, r2_error_context
 
 error_handler = get_error_handler()
 
@@ -44,7 +44,7 @@ class R2Exception(Exception):
 class R2Session:
     """
     Advanced radare2 session manager with comprehensive analysis capabilities.
-    
+
     This class provides a production-grade interface to radare2, featuring:
     - Decompilation and pseudocode generation
     - ESIL emulation and analysis
@@ -57,7 +57,7 @@ class R2Session:
     def __init__(self, binary_path: str, radare2_path: Optional[str] = None):
         """
         Initialize radare2 session.
-        
+
         Args:
             binary_path: Path to binary file
             radare2_path: Optional path to radare2 executable
@@ -68,6 +68,7 @@ class R2Session:
         self.logger = logging.getLogger(__name__)
         self.is_connected = False
         self.analysis_cache = {}
+        self.analysis_level = "aaa"  # Default analysis level
 
         if not R2PIPE_AVAILABLE:
             raise R2Exception("r2pipe not available - please install radare2-r2pipe")
@@ -77,7 +78,7 @@ class R2Session:
         self.connect()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
         """Context manager exit."""
         self.disconnect()
 
@@ -124,11 +125,11 @@ class R2Session:
     def _execute_command(self, cmd: str, expect_json: bool = False) -> Union[str, Dict, List]:
         """
         Execute radare2 command with error handling.
-        
+
         Args:
             cmd: radare2 command
             expect_json: Whether to parse result as JSON
-            
+
         Returns:
             Command result
         """
@@ -156,7 +157,7 @@ class R2Session:
     def analyze_all(self, level: str = 'aaa') -> bool:
         """
         Perform comprehensive analysis.
-        
+
         Args:
             level: Analysis level (a, aa, aaa, aaaa)
         """
@@ -183,10 +184,10 @@ class R2Session:
     def decompile_function(self, address: Union[str, int]) -> str:
         """
         Decompile function to pseudocode.
-        
+
         Args:
             address: Function address
-            
+
         Returns:
             Decompiled pseudocode
         """
@@ -196,10 +197,10 @@ class R2Session:
     def get_function_graph(self, address: Union[str, int]) -> Dict[str, Any]:
         """
         Get function control flow graph with decompilation.
-        
+
         Args:
             address: Function address
-            
+
         Returns:
             Graph data with decompilation info
         """
@@ -215,10 +216,10 @@ class R2Session:
     def get_strings(self, min_length: int = 4) -> List[Dict[str, Any]]:
         """
         Get all strings from binary.
-        
+
         Args:
             min_length: Minimum string length
-            
+
         Returns:
             List of string entries with metadata
         """
@@ -231,10 +232,10 @@ class R2Session:
     def search_strings(self, pattern: str) -> List[Dict[str, Any]]:
         """
         Search for strings matching pattern.
-        
+
         Args:
             pattern: Search pattern
-            
+
         Returns:
             Matching strings with locations
         """
@@ -279,7 +280,7 @@ class R2Session:
     def analyze_api_calls(self) -> Dict[str, List[str]]:
         """
         Analyze API calls and categorize them.
-        
+
         Returns:
             Dictionary of API categories and their functions
         """
@@ -335,11 +336,11 @@ class R2Session:
     def step_esil(self, address: Union[str, int], steps: int = 1) -> str:
         """
         Step through ESIL instructions.
-        
+
         Args:
             address: Starting address
             steps: Number of steps to execute
-            
+
         Returns:
             ESIL execution result
         """
@@ -353,10 +354,10 @@ class R2Session:
     def emulate_function(self, address: Union[str, int]) -> Dict[str, Any]:
         """
         Emulate function execution using ESIL.
-        
+
         Args:
             address: Function address
-            
+
         Returns:
             Emulation results
         """
@@ -413,7 +414,7 @@ class R2Session:
     def detect_vulnerabilities(self) -> Dict[str, List[Dict[str, Any]]]:
         """
         Detect potential vulnerabilities using radare2 analysis.
-        
+
         Returns:
             Dictionary of vulnerability types and findings
         """
@@ -518,16 +519,57 @@ class R2Session:
 
         return vulns
 
+    def analyze_function_deeper(self, address: Union[str, int]) -> bool:
+        """
+        Perform deeper analysis on a specific function.
+        
+        Args:
+            address: Function address
+            
+        Returns:
+            True if analysis succeeded, False otherwise
+        """
+        addr = hex(address) if isinstance(address, int) else address
+        try:
+            # Perform function-specific analysis
+            self._execute_command(f'af @ {addr}')  # Analyze function
+            self._execute_command(f'afr @ {addr}')  # Analyze function references  
+            self._execute_command(f'afv @ {addr}')  # Analyze function variables
+            self._execute_command(f'aft @ {addr}')  # Analyze function types
+            return True
+        except R2Exception:
+            return False
+
+    def run_optimization_passes(self, address: Union[str, int]) -> bool:
+        """
+        Run optimization passes on a function for better decompilation.
+        
+        Args:
+            address: Function address
+            
+        Returns:
+            True if optimization succeeded, False otherwise
+        """
+        addr = hex(address) if isinstance(address, int) else address
+        try:
+            # Run radare2 optimization passes
+            self._execute_command(f'aaa @ {addr}')  # Deep analysis
+            self._execute_command(f'aac @ {addr}')  # Analyze function calls
+            self._execute_command(f'aar @ {addr}')  # Analyze references
+            return True
+        except R2Exception:
+            return False
+
 
 @contextmanager
 def r2_session(binary_path: str, radare2_path: Optional[str] = None):
     """
     Context manager for radare2 sessions.
-    
+
     Args:
         binary_path: Path to binary file
         radare2_path: Optional path to radare2 executable
-        
+
     Yields:
         R2Session instance
     """
@@ -545,7 +587,7 @@ class R2BinaryDiff:
     def __init__(self, binary1: str, binary2: str):
         """
         Initialize binary diff.
-        
+
         Args:
             binary1: Path to first binary
             binary2: Path to second binary
@@ -557,7 +599,7 @@ class R2BinaryDiff:
     def compare_functions(self) -> Dict[str, Any]:
         """
         Compare functions between two binaries.
-        
+
         Returns:
             Comparison results
         """
@@ -638,11 +680,11 @@ class R2BinaryDiff:
 def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Perform comprehensive radare2 analysis on a binary.
-    
+
     Args:
         binary_path: Path to binary file
         radare2_path: Optional path to radare2 executable
-        
+
     Returns:
         Complete analysis results
     """

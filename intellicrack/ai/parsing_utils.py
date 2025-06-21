@@ -19,12 +19,12 @@ class ResponseLineParser:
                               line_processor: Optional[Callable[[str, str], Optional[str]]] = None) -> Dict[str, List[str]]:
         """
         Parse response lines into sections based on keywords.
-        
+
         Args:
             response: Raw response text to parse
             section_keywords: Dictionary mapping section names to keyword lists
             line_processor: Optional function to process each line (line, section) -> processed_line
-            
+
         Returns:
             Dictionary mapping section names to lists of content
         """
@@ -64,12 +64,12 @@ class ResponseLineParser:
                                       default_category: str = 'other') -> Dict[str, List[str]]:
         """
         Parse response lines and categorize them based on content.
-        
+
         Args:
             response: Raw response text to parse
             category_keywords: Dictionary mapping categories to detection keywords
             default_category: Default category for unmatched lines
-            
+
         Returns:
             Dictionary mapping categories to lists of lines
         """
@@ -101,12 +101,12 @@ class ResponseLineParser:
                                  section_separators: Optional[List[str]] = None) -> List[Dict[str, str]]:
         """
         Extract structured content using regex patterns.
-        
+
         Args:
             response: Raw response text to parse
             patterns: List of regex patterns to match
             section_separators: Optional list of section separator patterns
-            
+
         Returns:
             List of dictionaries containing matched content
         """
@@ -147,11 +147,11 @@ class ResponseLineParser:
     def _detect_section(line: str, section_keywords: Dict[str, List[str]]) -> Optional[str]:
         """
         Detect which section a line belongs to based on keywords.
-        
+
         Args:
             line: Line to analyze
             section_keywords: Dictionary mapping section names to keyword lists
-            
+
         Returns:
             Section name if detected, None otherwise
         """
@@ -169,12 +169,12 @@ class ResponseLineParser:
                              filter_patterns: Optional[List[str]] = None) -> List[str]:
         """
         Clean and filter lines based on criteria.
-        
+
         Args:
             lines: List of lines to clean
             min_length: Minimum line length to keep
             filter_patterns: Optional regex patterns to filter out
-            
+
         Returns:
             List of cleaned and filtered lines
         """

@@ -38,11 +38,11 @@ def format_bytes(size_bytes: int) -> str:
 def extract_ascii_strings(data: Union[bytes, bytearray], min_length: int = 4) -> List[str]:
     """
     Extract printable ASCII strings from binary data.
-    
+
     Args:
         data: Binary data to extract strings from
         min_length: Minimum string length to include
-        
+
     Returns:
         List of extracted strings
     """

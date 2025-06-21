@@ -10,13 +10,13 @@ from typing import Dict, List, Optional, Tuple
 def parse_ai_response_sections(response: str, section_keywords: Dict[str, List[str]]) -> Dict[str, List[str]]:
     """
     Parse AI response into categorized sections.
-    
+
     Args:
         response: The AI response text to parse
         section_keywords: Dictionary mapping section names to keyword lists
                          e.g., {'insights': ['vulnerabilit', 'security', 'risk'],
                                'suggestions': ['recommend', 'suggest', 'should']}
-    
+
     Returns:
         Dictionary mapping section names to lists of extracted content
     """
@@ -29,10 +29,10 @@ def parse_ai_response_sections(response: str, section_keywords: Dict[str, List[s
 def parse_security_analysis_response(response: str) -> Tuple[List[str], List[str]]:
     """
     Parse AI response for security analysis insights and suggestions.
-    
+
     Args:
         response: AI response text
-        
+
     Returns:
         Tuple of (insights, suggestions) lists
     """
@@ -48,10 +48,10 @@ def parse_security_analysis_response(response: str) -> Tuple[List[str], List[str
 def parse_attack_vector_response(response: str) -> Tuple[List[str], List[str], List[str]]:
     """
     Parse AI response for attack vectors, vulnerabilities, and recommendations.
-    
+
     Args:
         response: AI response text
-        
+
     Returns:
         Tuple of (vulnerabilities, recommendations, attack_vectors) lists
     """
@@ -69,12 +69,12 @@ def parse_simple_response(response: str, finding_keywords: Optional[List[str]] =
                          recommendation_keywords: Optional[List[str]] = None) -> Tuple[List[str], List[str]]:
     """
     Simple response parser for findings and recommendations.
-    
+
     Args:
         response: The AI response text to parse
         finding_keywords: Keywords to identify findings (default: ['risk', 'vulnerability', 'threat', 'suspicious'])
         recommendation_keywords: Keywords to identify recommendations (default: ['recommend', 'suggest', 'should', 'analyze'])
-    
+
     Returns:
         Tuple of (findings, recommendations) lists
     """

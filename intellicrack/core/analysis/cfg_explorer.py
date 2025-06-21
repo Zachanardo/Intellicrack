@@ -1,5 +1,5 @@
 """
-Control Flow Graph (CFG) Explorer for Binary Analysis 
+Control Flow Graph (CFG) Explorer for Binary Analysis
 
 Copyright (C) 2025 Zachary Flint
 
@@ -51,8 +51,8 @@ try:
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
 
-from ...utils.import_checks import CAPSTONE_AVAILABLE, PEFILE_AVAILABLE, capstone, pefile
-from ...utils.radare2_utils import R2Exception, r2_session
+from ...utils.core.import_checks import CAPSTONE_AVAILABLE, PEFILE_AVAILABLE, capstone, pefile
+from ...utils.tools.radare2_utils import R2Exception, r2_session
 from .radare2_ai_integration import R2AIEngine
 
 # Import our advanced radare2 analysis engines
@@ -227,6 +227,20 @@ class CFGExplorer:
     def _create_enhanced_function_graph(self, graph_data: Dict[str, Any], r2, function_addr: int) -> nx.DiGraph:
         """Create enhanced function graph with comprehensive node data"""
         function_graph = nx.DiGraph()
+
+        # Add function-level metadata using r2 and function_addr
+        if r2 and function_addr:
+            try:
+                # Get function information from r2
+                func_info = r2.cmdj(f"afij @ {function_addr}")
+                if func_info:
+                    function_graph.graph['function_name'] = func_info[0].get('name', f'func_{function_addr:x}')
+                    function_graph.graph['function_size'] = func_info[0].get('realsz', 0)
+                    function_graph.graph['function_addr'] = function_addr
+            except Exception:
+                # Fallback if r2 command fails
+                function_graph.graph['function_addr'] = function_addr
+                function_graph.graph['function_name'] = f'func_{function_addr:x}'
 
         blocks = graph_data.get('blocks', [])
 
@@ -440,7 +454,13 @@ class CFGExplorer:
 
         # Simple structural similarity based on node/edge ratios
         node_ratio = min(graph1.number_of_nodes(), graph2.number_of_nodes()) / max(graph1.number_of_nodes(), graph2.number_of_nodes())
-        edge_ratio = min(graph1.number_of_edges(), graph2.number_of_edges()) / max(graph1.number_of_edges(), graph2.number_of_edges()) if max(graph1.number_of_edges(), graph2.number_of_edges()) > 0 else 1.0
+        
+        # Calculate edge ratio with safe division
+        max_edges = max(graph1.number_of_edges(), graph2.number_of_edges())
+        if max_edges > 0:
+            edge_ratio = min(graph1.number_of_edges(), graph2.number_of_edges()) / max_edges
+        else:
+            edge_ratio = 1.0
 
         # Calculate complexity similarity
         try:
@@ -916,7 +936,7 @@ class CFGExplorer:
             if not graph_data:
                 return False
 
-            from ...utils.html_templates import close_html, get_cfg_html_template
+            from ...utils.reporting.html_templates import close_html, get_cfg_html_template
 
             # Create the HTML content using common template
             html_content = get_cfg_html_template(function_name) + f"""
@@ -1141,7 +1161,8 @@ class CFGExplorer:
                         graph_data = self.get_graph_data()
                         if graph_data:
                             results['graph_data'] = graph_data
-                            results['graph_data']['selected_function'] = target_function
+                            if isinstance(results['graph_data'], dict):
+                                results['graph_data']['selected_function'] = target_function
             except Exception as e:
                 self.logger.debug("Error getting graph data: %s", e)
 

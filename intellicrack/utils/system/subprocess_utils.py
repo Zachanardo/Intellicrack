@@ -19,7 +19,7 @@ def run_subprocess(cmd: Union[str, List[str]],
                   env: Optional[dict] = None) -> Tuple[int, str, str]:
     """
     Run a subprocess command with standard error handling.
-    
+
     Args:
         cmd: Command to run (string or list)
         timeout: Timeout in seconds
@@ -27,7 +27,7 @@ def run_subprocess(cmd: Union[str, List[str]],
         text: Whether to return text instead of bytes
         cwd: Working directory
         env: Environment variables
-        
+
     Returns:
         Tuple of (returncode, stdout, stderr)
     """
@@ -66,16 +66,16 @@ def run_subprocess_check(cmd: Union[str, List[str]],
                         check: bool = False) -> subprocess.CompletedProcess:
     """
     Run subprocess with standard settings used in docker_container and qemu_emulator.
-    
+
     This is the common pattern extracted from duplicate code.
-    
+
     Args:
         cmd: Command to run
         timeout: Timeout in seconds (default 10)
         capture_output: Whether to capture output (default True)
-        text: Whether to return text (default True) 
+        text: Whether to return text (default True)
         check: Whether to check return code (default False)
-        
+
     Returns:
         CompletedProcess object
     """
@@ -104,14 +104,14 @@ def create_popen_with_encoding(cmd: List[str], encoding: str = "utf-8",
                               timeout: Optional[int] = None) -> Tuple[int, str, str]:
     """
     Create Popen process with encoding and error handling.
-    
+
     Common pattern for process creation with output capture and encoding.
-    
+
     Args:
         cmd: Command list to execute
         encoding: Text encoding for output (default: utf-8)
         timeout: Optional timeout in seconds
-        
+
     Returns:
         Tuple of (return_code, stdout, stderr)
     """

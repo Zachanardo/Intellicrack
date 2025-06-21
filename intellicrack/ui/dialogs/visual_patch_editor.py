@@ -1,5 +1,5 @@
 """
-Visual Patch Editor Dialog 
+Visual Patch Editor Dialog
 
 Copyright (C) 2025 Zachary Flint
 

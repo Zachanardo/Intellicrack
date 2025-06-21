@@ -1,5 +1,5 @@
 """
-Security analysis utility functions. 
+Security analysis utility functions.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 # Import availability checks from common module
-from .core.import_checks import (
+from ..core.common_imports import (
     CAPSTONE_AVAILABLE,
     PEFILE_AVAILABLE,
     PSUTIL_AVAILABLE,
@@ -78,11 +78,11 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
                 results["aslr_enabled"] = bool(dll_chars & 0x0040)  # IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
 
             # Check imports for vulnerable functions
-            from .binary.pe_common import extract_pe_imports
+            from ..binary.pe_common import extract_pe_imports
             imports = extract_pe_imports(pe)
 
             # Also need DLL names for detailed analysis
-            from .binary.pe_common import iterate_pe_imports_with_dll
+            from ..binary.pe_common import iterate_pe_imports_with_dll
 
             def check_vulnerable_function(dll_name, func_name):
                 if func_name.lower() in [f.lower() for f in unsafe_functions]:
@@ -162,11 +162,11 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
 def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
     """
     Analyze stack-based patterns using Capstone disassembly.
-    
+
     Args:
         binary_path: Path to the binary file
         data: Binary data
-        
+
     Returns:
         dict: Stack analysis results including patterns and canary detection
     """
@@ -264,10 +264,10 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
 def _analyze_patterns_without_disassembly(data: bytes) -> Dict[str, Any]:
     """
     Fallback analysis without disassembly when Capstone is not available.
-    
+
     Args:
         data: Binary data
-        
+
     Returns:
         dict: Analysis results with patterns and stack canary detection
     """
@@ -326,10 +326,10 @@ def _analyze_patterns_without_disassembly(data: bytes) -> Dict[str, Any]:
 def _detect_vulnerability_patterns(data: bytes) -> List[Dict[str, Any]]:
     """
     Detect specific vulnerability patterns in binary data.
-    
+
     Args:
         data: Binary data
-        
+
     Returns:
         list: Detected vulnerability patterns
     """
@@ -388,10 +388,10 @@ def _detect_vulnerability_patterns(data: bytes) -> List[Dict[str, Any]]:
 def _analyze_rop_gadgets(data: bytes) -> Dict[str, Any]:
     """
     Analyze ROP (Return Oriented Programming) gadgets.
-    
+
     Args:
         data: Binary data
-        
+
     Returns:
         dict: ROP gadget analysis results
     """
@@ -464,10 +464,10 @@ def _analyze_rop_gadgets(data: bytes) -> Dict[str, Any]:
 def _analyze_string_operations(data: bytes) -> List[Dict[str, Any]]:
     """
     Analyze string operations for potential buffer overflows.
-    
+
     Args:
         data: Binary data
-        
+
     Returns:
         list: Unsafe string operation patterns
     """
@@ -599,7 +599,7 @@ def check_for_memory_leaks(binary_path: str, process_pid: Optional[int] = None) 
             pe = pefile.PE(binary_path)
 
             # Use common utility function for PE import extraction
-            from .binary.pe_common import extract_pe_imports
+            from ..binary.pe_common import extract_pe_imports
             imports = extract_pe_imports(pe)
             for func_name in imports:
                 if any(alloc in func_name.lower() for alloc in [f.lower() for f in allocation_funcs]):

@@ -1,5 +1,5 @@
 """
-Dependency checking utilities for Intellicrack. 
+Dependency checking utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

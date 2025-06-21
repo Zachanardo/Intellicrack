@@ -105,7 +105,7 @@ class EmulatorStatusWidget(QWidget):
 def add_emulator_tooltips(widget_dict: Dict[str, QWidget]):
     """
     Add informative tooltips to emulator-dependent widgets.
-    
+
     Args:
         widget_dict: Dictionary mapping feature names to their widgets
     """
@@ -128,12 +128,12 @@ def add_emulator_tooltips(widget_dict: Dict[str, QWidget]):
 def show_emulator_warning(parent: QWidget, emulator_type: str, feature_name: str) -> bool:
     """
     Show a warning dialog when an emulator is required but not running.
-    
+
     Args:
         parent: Parent widget for the dialog
         emulator_type: Type of emulator (QEMU/Qiling)
         feature_name: Name of the feature requiring the emulator
-        
+
     Returns:
         True if user wants to proceed with auto-start, False otherwise
     """
@@ -171,7 +171,7 @@ def show_emulator_warning(parent: QWidget, emulator_type: str, feature_name: str
 class EmulatorRequiredDecorator:
     """
     Decorator to ensure emulators are running before executing functions.
-    
+
     Usage:
         @EmulatorRequiredDecorator.requires_qemu
         def my_qemu_function(self):

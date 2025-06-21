@@ -1,5 +1,5 @@
 """
-Plugin System Foundation for Intellicrack 
+Plugin System Foundation for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -411,7 +411,7 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
         f"[Plugin] Running Ghidra script from {plugin_path}..."))
 
     # Get Ghidra path from config or use path discovery
-    from ..utils.path_discovery import find_tool
+    from ..utils.core.path_discovery import find_tool
 
     ghidra_path = CONFIG.get("ghidra_path")
     if not ghidra_path:
@@ -498,7 +498,7 @@ def create_sample_plugins(plugin_dir: str = "plugins") -> None:
     # Ensure directories exist
     os.makedirs(plugin_dir, exist_ok=True)
     os.makedirs(os.path.join(plugin_dir, "custom_modules"), exist_ok=True)
-    
+
     # Note: Frida and Ghidra sample scripts are now managed by their respective managers
     # This function only creates Python custom module samples
 
@@ -521,6 +521,9 @@ import time
 from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 
+# Import plugin base class
+from ..plugin_base import BasePlugin, PluginMetadata
+
 # Plugin metadata constants
 PLUGIN_NAME = "Advanced Demo Plugin"
 PLUGIN_VERSION = "1.0.0"
@@ -531,10 +534,10 @@ PLUGIN_SUPPORTED_FORMATS = ["PE", "ELF", "Mach-O", "Raw"]
 PLUGIN_REQUIRES = ["hashlib", "struct"]
 PLUGIN_OPTIONAL = ["pefile", "lief"]
 
-class AdvancedDemoPlugin:
+class AdvancedDemoPlugin(BasePlugin):
     """
     Advanced plugin template demonstrating comprehensive integration with Intellicrack.
-    
+
     This plugin showcases:
     - Proper initialization and metadata
     - Multi-format binary analysis
@@ -545,19 +548,21 @@ class AdvancedDemoPlugin:
     - Security validation
     - Export capabilities
     """
-    
+
     def __init__(self):
         """Initialize the plugin with metadata and configuration."""
-        # Core plugin metadata
-        self.name = PLUGIN_NAME
-        self.version = PLUGIN_VERSION
-        self.author = PLUGIN_AUTHOR
-        self.description = PLUGIN_DESCRIPTION
-        self.categories = PLUGIN_CATEGORIES
-        self.supported_formats = PLUGIN_SUPPORTED_FORMATS
+        # Create metadata object
+        metadata = PluginMetadata(
+            name=PLUGIN_NAME,
+            version=PLUGIN_VERSION,
+            author=PLUGIN_AUTHOR,
+            description=PLUGIN_DESCRIPTION,
+            categories=PLUGIN_CATEGORIES,
+            supported_formats=PLUGIN_SUPPORTED_FORMATS
+        )
         
         # Plugin configuration
-        self.config = {
+        default_config = {
             'max_file_size': 100 * 1024 * 1024,  # 100MB limit
             'enable_caching': True,
             'cache_dir': 'plugin_cache',
@@ -566,27 +571,30 @@ class AdvancedDemoPlugin:
             'timeout_seconds': 30
         }
         
+        # Initialize base plugin
+        super().__init__(metadata, default_config)
+
         # Internal state
         self.cache = {}
         self.last_analysis = None
         self.analysis_count = 0
-        
+
         # Initialize cache directory
         self._init_cache()
-        
+
         # Check dependencies
         self.available_libs = self._check_dependencies()
-    
+
     def _init_cache(self) -> None:
         """Initialize cache directory if caching is enabled."""
         if self.config['enable_caching']:
             cache_path = Path(self.config['cache_dir'])
             cache_path.mkdir(exist_ok=True)
-    
+
     def _check_dependencies(self) -> Dict[str, bool]:
         """Check availability of optional dependencies."""
         deps = {}
-        
+
         # Check required dependencies
         for dep in PLUGIN_REQUIRES:
             try:
@@ -594,7 +602,7 @@ class AdvancedDemoPlugin:
                 deps[dep] = True
             except ImportError:
                 deps[dep] = False
-        
+
         # Check optional dependencies
         for dep in PLUGIN_OPTIONAL:
             try:
@@ -602,75 +610,54 @@ class AdvancedDemoPlugin:
                 deps[dep] = True
             except ImportError:
                 deps[dep] = False
-        
+
         return deps
-    
+
     def get_metadata(self) -> Dict[str, Any]:
         """Return comprehensive plugin metadata."""
-        return {
-            'name': self.name,
-            'version': self.version,
-            'author': self.author,
-            'description': self.description,
-            'categories': self.categories,
-            'supported_formats': self.supported_formats,
+        metadata = super().get_metadata()
+        # Add plugin-specific information
+        metadata.update({
             'requirements': PLUGIN_REQUIRES,
             'optional_deps': PLUGIN_OPTIONAL,
             'available_libs': self.available_libs,
-            'config': self.config,
             'analysis_count': self.analysis_count
-        }
-    
+        })
+        return metadata
+
     def validate_binary(self, binary_path: str) -> Tuple[bool, str]:
         """Validate binary file before analysis."""
         try:
             path = Path(binary_path)
-            
+
             # Check if file exists
             if not path.exists():
                 return False, f"File does not exist: {binary_path}"
-            
+
             # Check file size
             file_size = path.stat().st_size
             if file_size > self.config['max_file_size']:
                 return False, f"File too large: {file_size} bytes (max: {self.config['max_file_size']})"
-            
+
             # Check if file is readable
             if not os.access(binary_path, os.R_OK):
                 return False, f"File not readable: {binary_path}"
-            
+
             # Basic file format detection
             with open(binary_path, 'rb') as f:
                 header = f.read(4)
                 if len(header) < 4:
                     return False, "File too small to analyze"
-            
+
             return True, "File validation successful"
-            
+
         except Exception as e:
             return False, f"Validation error: {str(e)}"
-    
+
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of binary data."""
-        if not data:
-            return 0.0
-        
-        # Count byte frequencies
-        byte_counts = [0] * 256
-        for byte in data:
-            byte_counts[byte] += 1
-        
-        # Calculate entropy
-        entropy = 0.0
-        data_len = len(data)
-        
-        for count in byte_counts:
-            if count > 0:
-                probability = count / data_len
-                entropy -= probability * (probability.bit_length() - 1)
-        
-        return entropy
-    
+        return calculate_byte_entropy(data)
+
     def _detect_packer(self, binary_path: str) -> Dict[str, Any]:
         """Detect common packers and protectors."""
         packer_info = {
@@ -679,11 +666,11 @@ class AdvancedDemoPlugin:
             'confidence': 0.0,
             'signatures': []
         }
-        
+
         try:
             with open(binary_path, 'rb') as f:
                 header = f.read(8192)  # Read first 8KB
-                
+
                 # Common packer signatures
                 signatures = {
                     b'UPX!': ('UPX', 0.9),
@@ -694,7 +681,7 @@ class AdvancedDemoPlugin:
                     b'VMProtect': ('VMProtect', 0.9),
                     b'Armadillo': ('Armadillo', 0.8)
                 }
-                
+
                 for sig, (name, confidence) in signatures.items():
                     if sig in header:
                         packer_info['detected'] = True
@@ -702,16 +689,16 @@ class AdvancedDemoPlugin:
                         packer_info['confidence'] = confidence
                         packer_info['signatures'].append(name)
                         break
-                
+
         except Exception as e:
             packer_info['error'] = str(e)
-        
+
         return packer_info
-    
+
     def _extract_strings(self, binary_path: str, min_length: int = 4) -> List[str]:
         """Extract printable strings from binary."""
-        from ..utils.string_utils import extract_ascii_strings
-        
+        from ..utils.core.string_utils import extract_ascii_strings
+
         try:
             with open(binary_path, 'rb') as f:
                 data = f.read()
@@ -719,53 +706,53 @@ class AdvancedDemoPlugin:
                 return strings[:100]  # Limit to first 100 strings
         except Exception as e:
             return [f"Error extracting strings: {str(e)}"]
-    
+
     def _get_file_hashes(self, binary_path: str) -> Dict[str, str]:
         """Calculate multiple hash values for the file."""
         hashes = {}
-        
+
         try:
             with open(binary_path, 'rb') as f:
                 data = f.read()
-                
+
                 hashes['md5'] = hashlib.md5(data).hexdigest()
                 hashes['sha1'] = hashlib.sha1(data).hexdigest()
                 hashes['sha256'] = hashlib.sha256(data).hexdigest()
-                
+
         except Exception as e:
             hashes['error'] = str(e)
-        
+
         return hashes
-    
+
     def analyze(self, binary_path: str, progress_callback=None) -> List[str]:
         """
         Comprehensive binary analysis with progress reporting.
-        
+
         Args:
             binary_path: Path to the binary to analyze
             progress_callback: Optional callback for progress updates
-            
+
         Returns:
             List of strings with detailed analysis results
         """
         results = []
         start_time = time.time()
-        
+
         try:
             # Update analysis counter
             self.analysis_count += 1
-            
+
             # Progress tracking
             total_steps = 7
             current_step = 0
-            
+
             def update_progress(message: str):
                 nonlocal current_step
                 current_step += 1
                 if progress_callback:
                     progress_callback(current_step, total_steps, message)
                 results.append(f"[{current_step}/{total_steps}] {message}")
-            
+
             # Step 1: Validation
             update_progress("Validating binary file...")
             is_valid, validation_msg = self.validate_binary(binary_path)
@@ -773,14 +760,14 @@ class AdvancedDemoPlugin:
                 results.append(f"❌ Validation failed: {validation_msg}")
                 return results
             results.append(f"✅ {validation_msg}")
-            
+
             # Step 2: Basic file information
             update_progress("Gathering file information...")
             file_info = os.stat(binary_path)
             results.append(f"📁 File: {os.path.basename(binary_path)}")
             results.append(f"📏 Size: {file_info.st_size:,} bytes")
             results.append(f"📅 Modified: {time.ctime(file_info.st_mtime)}")
-            
+
             # Step 3: Hash calculation
             update_progress("Calculating file hashes...")
             hashes = self._get_file_hashes(binary_path)
@@ -788,7 +775,7 @@ class AdvancedDemoPlugin:
                 results.append("🔒 File Hashes:")
                 for hash_type, hash_value in hashes.items():
                     results.append(f"  {hash_type.upper()}: {hash_value}")
-            
+
             # Step 4: Entropy analysis
             update_progress("Analyzing entropy...")
             with open(binary_path, 'rb') as f:
@@ -799,7 +786,7 @@ class AdvancedDemoPlugin:
                 results.append("  ⚠️  High entropy - possibly packed/encrypted")
             elif entropy < 1.0:
                 results.append("  ℹ️  Low entropy - likely unprocessed data")
-            
+
             # Step 5: Packer detection
             update_progress("Detecting packers...")
             packer_info = self._detect_packer(binary_path)
@@ -807,14 +794,14 @@ class AdvancedDemoPlugin:
                 results.append(f"📦 Packer detected: {packer_info['packer_name']} (confidence: {packer_info['confidence']:.1%})")
             else:
                 results.append("📦 No common packers detected")
-            
+
             # Step 6: String extraction
             update_progress("Extracting strings...")
             strings = self._extract_strings(binary_path)
             results.append(f"📝 Extracted {len(strings)} strings (showing first 10):")
             for i, string in enumerate(strings[:10]):
                 results.append(f"  {i+1:2d}. {string[:50]}{'...' if len(string) > 50 else ''}")
-            
+
             # Step 7: Advanced analysis (if available)
             update_progress("Performing advanced analysis...")
             if self.available_libs.get('pefile', False) and binary_path.lower().endswith(('.exe', '.dll')):
@@ -823,7 +810,7 @@ class AdvancedDemoPlugin:
                 results.append("🔍 Advanced analysis available (LIEF installed)")
             else:
                 results.append("🔍 Advanced analysis unavailable (install pefile/lief for more features)")
-            
+
             # Analysis summary
             analysis_time = time.time() - start_time
             results.append("")
@@ -833,7 +820,7 @@ class AdvancedDemoPlugin:
             results.append(f"  📊 File entropy: {entropy:.2f}")
             results.append(f"  📦 Packer: {'Yes' if packer_info['detected'] else 'No'}")
             results.append(f"  📝 Strings found: {len(strings)}")
-            
+
             # Store last analysis
             self.last_analysis = {
                 'timestamp': time.time(),
@@ -842,26 +829,26 @@ class AdvancedDemoPlugin:
                 'entropy': entropy,
                 'packer_detected': packer_info['detected']
             }
-            
+
         except Exception as e:
             results.append(f"❌ Analysis error: {str(e)}")
             results.append("📋 This is a template - implement your custom analysis logic here")
-        
+
         return results
-    
+
     def patch(self, binary_path: str, patch_options: Optional[Dict] = None) -> List[str]:
         """
         Advanced binary patching with safety checks and backup.
-        
+
         Args:
             binary_path: Path to the binary to patch
             patch_options: Optional dictionary with patch configuration
-            
+
         Returns:
             List of strings with patching results
         """
         results = []
-        
+
         try:
             # Default patch options
             if patch_options is None:
@@ -870,22 +857,22 @@ class AdvancedDemoPlugin:
                     'verify_patch': True,
                     'dry_run': False
                 }
-            
+
             results.append(f"🔧 Starting patch operation on: {os.path.basename(binary_path)}")
-            
+
             # Validation
             is_valid, validation_msg = self.validate_binary(binary_path)
             if not is_valid:
                 results.append(f"❌ Cannot patch: {validation_msg}")
                 return results
-            
+
             # Create backup if requested
             if patch_options.get('create_backup', True):
                 backup_path = binary_path + f".backup_{int(time.time())}"
                 import shutil
                 shutil.copy2(binary_path, backup_path)
                 results.append(f"💾 Created backup: {os.path.basename(backup_path)}")
-            
+
             # Dry run mode
             if patch_options.get('dry_run', False):
                 results.append("🧪 Dry run mode - no actual changes will be made")
@@ -895,7 +882,7 @@ class AdvancedDemoPlugin:
                 results.append("  • Would update checksums")
                 results.append("✅ Dry run completed successfully")
                 return results
-            
+
             # Implement your actual patching logic here
             results.append("⚠️  This is a template - implement your patching logic here")
             results.append("🛠️  Suggested patch operations:")
@@ -904,24 +891,24 @@ class AdvancedDemoPlugin:
             results.append("  • Apply patches with proper alignment")
             results.append("  • Update checksums if needed")
             results.append("  • Verify patch integrity")
-            
+
             # Verification
             if patch_options.get('verify_patch', True):
                 results.append("🔍 Verifying patch integrity...")
                 results.append("✅ Patch verification completed")
-            
+
             results.append("✅ Patch operation completed successfully")
-            
+
         except Exception as e:
             results.append(f"❌ Patch error: {str(e)}")
-        
+
         return results
-    
+
     def export_results(self, output_path: str, format_type: str = 'json') -> bool:
         """Export analysis results to file."""
         if not self.last_analysis:
             return False
-        
+
         try:
             if format_type.lower() == 'json':
                 with open(output_path, 'w') as f:
@@ -931,11 +918,11 @@ class AdvancedDemoPlugin:
                     f.write("\n".join(self.last_analysis['results']))
             else:
                 return False
-            
+
             return True
         except Exception:
             return False
-    
+
     def configure(self, config_updates: Dict[str, Any]) -> bool:
         """Update plugin configuration."""
         try:
@@ -943,12 +930,12 @@ class AdvancedDemoPlugin:
             return True
         except Exception:
             return False
-    
+
     def get_capabilities(self) -> List[str]:
         """Return list of plugin capabilities."""
         return [
             "binary_analysis",
-            "entropy_calculation", 
+            "entropy_calculation",
             "packer_detection",
             "string_extraction",
             "hash_calculation",
@@ -963,22 +950,24 @@ class AdvancedDemoPlugin:
 def register():
     """
     Required function to register the plugin with Intellicrack.
-    
+
     Returns:
         Instance of the plugin class
     """
     return AdvancedDemoPlugin()
 
 # Plugin information (can be accessed without instantiating)
-PLUGIN_INFO = {
-    'name': PLUGIN_NAME,
-    'version': PLUGIN_VERSION,
-    'author': PLUGIN_AUTHOR,
-    'description': PLUGIN_DESCRIPTION,
-    'categories': PLUGIN_CATEGORIES,
-    'supported_formats': PLUGIN_SUPPORTED_FORMATS,
-    'entry_point': 'register'
-}
+from ..plugin_base import PluginMetadata, create_plugin_info
+
+_plugin_metadata = PluginMetadata(
+    name=PLUGIN_NAME,
+    version=PLUGIN_VERSION,
+    author=PLUGIN_AUTHOR,
+    description=PLUGIN_DESCRIPTION,
+    categories=PLUGIN_CATEGORIES,
+    supported_formats=PLUGIN_SUPPORTED_FORMATS
+)
+PLUGIN_INFO = create_plugin_info(_plugin_metadata, 'register')
 '''
 
     custom_path = os.path.join(plugin_dir, "custom_modules", "demo_plugin.py")
@@ -1007,17 +996,17 @@ class SimpleAnalysisPlugin:
         self.name = "Simple Analysis Plugin"
         self.version = "1.0.0"
         self.description = "Template for simple binary analysis tasks"
-    
+
     def analyze(self, binary_path):
         """Simple analysis implementation."""
         results = []
         results.append(f"Analyzing: {binary_path}")
-        
+
         # Your analysis code here
         import os
         file_size = os.path.getsize(binary_path)
         results.append(f"File size: {file_size:,} bytes")
-        
+
         return results
 
 def register():
@@ -1040,45 +1029,45 @@ class BinaryPatcherPlugin:
         self.version = "1.0.0"
         self.description = "Template for binary patching operations"
         self.supported_formats = ["PE", "ELF"]
-    
+
     def analyze(self, binary_path):
         """Analyze binary for patchable locations."""
         results = []
         results.append(f"Scanning for patch targets in: {binary_path}")
-        
+
         # Example: Find specific byte patterns
         try:
             with open(binary_path, 'rb') as f:
                 data = f.read()
-                
+
                 # Look for common patterns
                 if b'\\x90\\x90\\x90\\x90' in data:
                     results.append("Found NOP sled - potential patch location")
-                
+
                 if b'\\x55\\x8b\\xec' in data:
                     results.append("Found function prologue - patchable")
-                    
+
         except Exception as e:
             results.append(f"Analysis error: {e}")
-        
+
         return results
-    
+
     def patch(self, binary_path, patch_data=None):
         """Apply patches to the binary."""
         results = []
-        
+
         # Create backup
         backup_path = binary_path + ".backup"
         shutil.copy2(binary_path, backup_path)
         results.append(f"Created backup: {backup_path}")
-        
+
         # Apply your patches here
         results.append("Patch logic would go here")
         results.append("Remember to:")
         results.append("- Validate patch locations")
         results.append("- Check file integrity")
         results.append("- Update checksums if needed")
-        
+
         return results
 
 def register():
@@ -1101,40 +1090,40 @@ class NetworkAnalysisPlugin:
         self.version = "1.0.0"
         self.description = "Template for network traffic analysis"
         self.protocols = ["HTTP", "HTTPS", "TCP", "UDP"]
-    
+
     def analyze(self, binary_path):
         """Analyze binary for network-related functionality."""
         results = []
         results.append(f"Analyzing network capabilities of: {binary_path}")
-        
+
         # Check for network-related strings
         network_indicators = [
             b'http://', b'https://', b'ftp://',
             b'socket', b'connect', b'bind', b'listen',
             b'send', b'recv', b'WSAStartup'
         ]
-        
+
         try:
             with open(binary_path, 'rb') as f:
                 data = f.read()
-                
+
                 found_indicators = []
                 for indicator in network_indicators:
                     if indicator in data:
                         found_indicators.append(indicator.decode('utf-8', errors='ignore'))
-                
+
                 if found_indicators:
                     results.append("Network indicators found:")
                     for indicator in found_indicators:
                         results.append(f"  - {indicator}")
                 else:
                     results.append("No obvious network indicators found")
-                    
+
         except Exception as e:
             results.append(f"Analysis error: {e}")
-        
+
         return results
-    
+
     def monitor_traffic(self, target_process=None):
         """Monitor network traffic (placeholder)."""
         results = []
@@ -1163,7 +1152,7 @@ class MalwareAnalysisPlugin:
         self.version = "1.0.0"
         self.description = "Template for malware analysis and detection"
         self.ioc_patterns = self._load_ioc_patterns()
-    
+
     def _load_ioc_patterns(self) -> Dict[str, List[str]]:
         """Load Indicators of Compromise patterns."""
         return {
@@ -1181,12 +1170,12 @@ class MalwareAnalysisPlugin:
                 'HttpSendRequest', 'URLDownloadToFile', 'WinHttpOpen'
             ]
         }
-    
+
     def analyze(self, binary_path):
         """Comprehensive malware analysis."""
         results = []
         results.append(f"Malware analysis of: {binary_path}")
-        
+
         # Calculate file hash
         try:
             with open(binary_path, 'rb') as f:
@@ -1196,7 +1185,7 @@ class MalwareAnalysisPlugin:
         except Exception as e:
             results.append(f"Hash calculation error: {e}")
             return results
-        
+
         # Check for suspicious APIs
         suspicious_count = 0
         for category, apis in self.ioc_patterns.items():
@@ -1205,12 +1194,12 @@ class MalwareAnalysisPlugin:
                 if api.encode() in file_data:
                     found_apis.append(api)
                     suspicious_count += 1
-            
+
             if found_apis:
                 results.append(f"{category.replace('_', ' ').title()} found:")
                 for api in found_apis:
                     results.append(f"  - {api}")
-        
+
         # Risk assessment
         if suspicious_count > 10:
             results.append("⚠️ HIGH RISK: Many suspicious APIs detected")
@@ -1218,31 +1207,31 @@ class MalwareAnalysisPlugin:
             results.append("⚠️ MEDIUM RISK: Some suspicious APIs detected")
         else:
             results.append("✅ LOW RISK: Few suspicious indicators")
-        
+
         # Check for packed/encrypted sections
         entropy = self._calculate_entropy(file_data[:1024])
         if entropy > 7.5:
             results.append("⚠️ High entropy detected - possibly packed/encrypted")
-        
+
         return results
-    
+
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy."""
         if not data:
             return 0.0
-        
+
         byte_counts = [0] * 256
         for byte in data:
             byte_counts[byte] += 1
-        
+
         entropy = 0.0
         data_len = len(data)
-        
+
         for count in byte_counts:
             if count > 0:
                 probability = count / data_len
                 entropy -= probability * (probability.bit_length() - 1)
-        
+
         return entropy
 
 def register():
@@ -1269,11 +1258,11 @@ def register():
 def create_plugin_template(plugin_name: str, template_type: str = "advanced") -> str:
     """
     Generate a plugin template based on the specified type.
-    
+
     Args:
         plugin_name: Name for the plugin
         template_type: Type of template (simple, advanced, patcher, network, malware)
-    
+
     Returns:
         String containing the plugin template code
     """
@@ -1294,13 +1283,13 @@ class {class_name}:
         self.name = "{plugin_name}"
         self.version = "1.0.0"
         self.description = "Custom plugin: {plugin_name}"
-    
+
     def analyze(self, binary_path):
         results = []
         results.append(f"Analyzing with {plugin_name}: {{binary_path}}")
-        
+
         # Add your analysis logic here
-        
+
         return results
 
 def register():
@@ -1327,7 +1316,7 @@ class {class_name}:
             'max_file_size': 100 * 1024 * 1024,
             'detailed_analysis': True
         }}
-    
+
     def get_metadata(self) -> Dict[str, Any]:
         return {{
             'name': self.name,
@@ -1335,42 +1324,42 @@ class {class_name}:
             'description': self.description,
             'config': self.config
         }}
-    
+
     def validate_binary(self, binary_path: str) -> tuple:
         try:
             if not os.path.exists(binary_path):
                 return False, "File does not exist"
-            
+
             file_size = os.path.getsize(binary_path)
             if file_size > self.config['max_file_size']:
                 return False, f"File too large: {{file_size}} bytes"
-            
+
             return True, "Validation successful"
         except Exception as e:
             return False, f"Validation error: {{e}}"
-    
+
     def analyze(self, binary_path: str) -> List[str]:
         results = []
-        
+
         # Validation
         is_valid, msg = self.validate_binary(binary_path)
         if not is_valid:
             results.append(f"❌ {{msg}}")
             return results
-        
+
         results.append(f"✅ {{msg}}")
         results.append(f"🔍 Analyzing with {plugin_name}: {{binary_path}}")
-        
+
         # Add your comprehensive analysis logic here
-        
+
         return results
-    
+
     def patch(self, binary_path: str, options: Optional[Dict] = None) -> List[str]:
         results = []
         results.append(f"🔧 Patching with {plugin_name}: {{binary_path}}")
-        
+
         # Add your patching logic here
-        
+
         return results
 
 def register():
@@ -1422,7 +1411,7 @@ def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> Option
 
     Args:
         plugin_path: Path to the plugin file
-        function_name: Name of the function to execute  
+        function_name: Name of the function to execute
         *args: Arguments to pass to the function
 
     Returns:
@@ -1534,63 +1523,89 @@ class PluginSystem:
     Main plugin system class that encapsulates all plugin functionality.
     This class provides a unified interface for plugin management in Intellicrack.
     """
-    
+
     def __init__(self, plugin_dir: str = "plugins"):
         """Initialize the plugin system."""
         self.plugin_dir = plugin_dir
         self.plugins = None
         self.logger = logger
-        
+
     def load_plugins(self) -> Dict[str, List[Dict[str, Any]]]:
         """Load and initialize plugins from the plugin directory."""
         self.plugins = load_plugins(self.plugin_dir)
         return self.plugins
-    
+
     def run_plugin(self, app, plugin_name: str) -> None:
         """Run a built-in plugin."""
         run_plugin(app, plugin_name)
-    
+
     def run_custom_plugin(self, app, plugin_info: Dict[str, Any]) -> None:
         """Run a custom plugin with the current binary."""
         run_custom_plugin(app, plugin_info)
-    
+
     def run_frida_plugin_from_file(self, app, plugin_path: str) -> None:
         """Run a Frida plugin script from a file."""
         run_frida_plugin_from_file(app, plugin_path)
     
+    def find_plugin(self, plugin_name: str) -> Optional[str]:
+        """Find a plugin by name and return its path."""
+        # Check custom modules directory
+        custom_dir = os.path.join(self.plugin_dir, "custom_modules")
+        if os.path.exists(custom_dir):
+            plugin_file = os.path.join(custom_dir, f"{plugin_name}.py")
+            if os.path.exists(plugin_file):
+                return plugin_file
+        
+        # Check other plugin directories
+        for subdir in ["frida_scripts", "ghidra_scripts"]:
+            plugin_path = os.path.join(self.plugin_dir, subdir)
+            if os.path.exists(plugin_path):
+                for ext in [".js", ".py"]:
+                    plugin_file = os.path.join(plugin_path, f"{plugin_name}{ext}")
+                    if os.path.exists(plugin_file):
+                        return plugin_file
+        
+        return None
+
     def run_ghidra_plugin_from_file(self, app, plugin_path: str) -> None:
         """Run a Ghidra script on the current binary."""
         run_ghidra_plugin_from_file(app, plugin_path)
-    
+
     def create_sample_plugins(self) -> None:
         """Create comprehensive sample plugin files for users to reference."""
         create_sample_plugins(self.plugin_dir)
-    
+
     @staticmethod
     def create_plugin_template(plugin_name: str, template_type: str = "advanced") -> str:
         """Generate a plugin template based on the specified type."""
         return create_plugin_template(plugin_name, template_type)
-    
+
     @staticmethod
     def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> Optional[List[str]]:
         """Run a plugin in a sandboxed process with resource limits."""
         return run_plugin_in_sandbox(plugin_path, function_name, *args)
-    
+
     def run_plugin_remotely(self, app, plugin_info: Dict[str, Any]) -> Optional[List[str]]:
         """Run a plugin on a remote system."""
         return run_plugin_remotely(app, plugin_info)
 
 
 # Export all plugin system functions and the PluginSystem class
-__all__ = [
-    'PluginSystem',
-    'load_plugins',
-    'run_plugin',
-    'run_custom_plugin',
-    'run_frida_plugin_from_file',
-    'run_ghidra_plugin_from_file',
-    'create_sample_plugins',
-    'create_plugin_template',
-    'run_plugin_in_sandbox',
-    'run_plugin_remotely'
-]
+# Import shared exports to avoid duplication
+try:
+    from . import PLUGIN_SYSTEM_EXPORTS
+    __all__ = ['PluginSystem', 'create_plugin_template'] + PLUGIN_SYSTEM_EXPORTS
+except ImportError:
+    # Fallback in case of circular import issues
+    __all__ = [
+        'PluginSystem',
+        'load_plugins',
+        'run_plugin',
+        'run_custom_plugin',
+        'run_frida_plugin_from_file',
+        'run_ghidra_plugin_from_file',
+        'create_sample_plugins',
+        'create_plugin_template',
+        'run_plugin_in_sandbox',
+        'run_plugin_remotely'
+    ]

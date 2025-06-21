@@ -11,7 +11,7 @@ FRIDA_PRESETS = {
         "description": "Comprehensive bypass for Adobe CC applications",
         "target": "Adobe Photoshop, Illustrator, Premiere Pro, After Effects",
         "scripts": [
-            "adobe_bypass_frida",
+            "adobe_bypass",
             "cloud_licensing_bypass",
             "time_bomb_defuser",
             "registry_monitor"

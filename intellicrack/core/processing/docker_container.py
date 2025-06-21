@@ -1,5 +1,5 @@
 """
-Docker Container Management for Distributed Analysis. 
+Docker Container Management for Distributed Analysis.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -85,7 +85,7 @@ class DockerContainer(BaseSnapshotHandler):
             RuntimeError: If Docker is not available or accessible
         """
         try:
-            from ...utils.subprocess_utils import run_subprocess_check
+            from ...utils.system.subprocess_utils import run_subprocess_check
             result = run_subprocess_check(
                 ["docker", "--version"],
                 timeout=10,
@@ -165,7 +165,7 @@ class DockerContainer(BaseSnapshotHandler):
 
             # Start the container
             self.logger.info("Starting Docker container: %s", self.container_name)
-            from ...utils.subprocess_utils import run_subprocess_check
+            from ...utils.system.subprocess_utils import run_subprocess_check
             result = run_subprocess_check(docker_cmd, timeout=60)
 
             if result.returncode != 0:
@@ -448,11 +448,11 @@ class DockerContainer(BaseSnapshotHandler):
     def _perform_platform_specific_comparison(self, s1: Dict[str, Any], s2: Dict[str, Any]) -> Dict[str, Any]:
         """
         Perform Docker-specific snapshot comparison logic.
-        
+
         Args:
             s1: First snapshot data
             s2: Second snapshot data
-            
+
         Returns:
             Dictionary containing Docker-specific comparison results
         """

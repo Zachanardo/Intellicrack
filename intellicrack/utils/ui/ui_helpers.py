@@ -22,10 +22,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 def check_binary_path_and_warn(app_instance):
     """Check if binary path exists and show warning if not.
-    
+
     Args:
         app_instance: Application instance with binary_path and QMessageBox access
-        
+
     Returns:
         bool: True if binary path exists, False if missing
     """
@@ -41,7 +41,7 @@ def check_binary_path_and_warn(app_instance):
 
 def emit_log_message(app_instance, message):
     """Emit log message if app instance supports it.
-    
+
     Args:
         app_instance: Application instance
         message: Message to log
@@ -57,12 +57,12 @@ def emit_log_message(app_instance, message):
 
 def show_file_dialog(parent, title, file_filter="HTML Files (*.html);;All Files (*)"):
     """Show file save dialog and return filename.
-    
+
     Args:
         parent: Parent widget
         title: Dialog title
         file_filter: File filter string
-        
+
     Returns:
         str: Selected filename or empty string if cancelled
     """
@@ -75,12 +75,12 @@ def show_file_dialog(parent, title, file_filter="HTML Files (*.html);;All Files 
 
 def ask_yes_no_question(parent, title, question):
     """Show yes/no question dialog.
-    
+
     Args:
         parent: Parent widget
         title: Dialog title
         question: Question text
-        
+
     Returns:
         bool: True if Yes clicked, False otherwise
     """
@@ -95,20 +95,20 @@ def ask_yes_no_question(parent, title, question):
 
 def generate_exploit_payload_common(payload_type, target_path="target_software"):
     """Generate exploit payload of specified type.
-    
+
     This is the common implementation extracted from duplicate code
     in main_app.py and missing_methods.py.
-    
+
     Args:
         payload_type: Type of payload to generate ("License Bypass", "Function Hijack", "Buffer Overflow")
         target_path: Target path for license bypass payload
-        
+
     Returns:
         dict: Payload result with fields like 'method', 'payload_bytes', 'description', or 'error'
     """
     try:
-        from ..core.patching.payload_generator import generate_advanced_payload
-        from .exploitation.exploitation import generate_exploit, generate_license_bypass_payload
+        from ...core.patching.payload_generator import generate_advanced_payload
+        from ..exploitation.exploitation import generate_exploit, generate_license_bypass_payload
 
         if payload_type == "License Bypass":
             payload_result = generate_license_bypass_payload(target_path, "patch")
@@ -132,18 +132,18 @@ def generate_exploit_payload_common(payload_type, target_path="target_software")
 
 def generate_exploit_strategy_common(binary_path, vulnerability_type="buffer_overflow"):
     """Generate exploit strategy for given binary and vulnerability type.
-    
+
     This is the common implementation extracted from duplicate code.
-    
+
     Args:
         binary_path: Path to binary file
         vulnerability_type: Type of vulnerability to exploit
-        
+
     Returns:
         dict: Strategy result with 'strategy', 'automation_script' fields or 'error'
     """
     try:
-        from .exploitation.exploitation import generate_exploit_strategy
+        from ..exploitation.exploitation import generate_exploit_strategy
 
         strategy = generate_exploit_strategy(binary_path, vulnerability_type)
         return strategy

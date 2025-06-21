@@ -1,5 +1,5 @@
 """
-Runner functions for Intellicrack analysis engines. 
+Runner functions for Intellicrack analysis engines.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -30,8 +30,8 @@ import threading
 import traceback
 from typing import Any, Dict, List, Optional
 
-from .core.common_imports import PSUTIL_AVAILABLE
-from .core.misc_utils import log_message
+from ..core.common_imports import PSUTIL_AVAILABLE
+from ..core.misc_utils import log_message
 
 if PSUTIL_AVAILABLE:
     import psutil
@@ -418,7 +418,7 @@ def run_ai_guided_patching(app_instance=None, binary_path: Optional[str] = None,
 def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """Run advanced Ghidra analysis with optional script selection."""
     from ..config import CONFIG
-    from .tools.ghidra_script_manager import get_script_manager
+    from ..tools.ghidra_script_manager import get_script_manager
 
     try:
         logger.info("Starting advanced Ghidra analysis")
@@ -442,7 +442,7 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
         # Get Ghidra path from config or use path discovery
         ghidra_path = CONFIG.get("ghidra_path")
         if not ghidra_path:
-            from .core.path_discovery import find_tool
+            from ..core.path_discovery import find_tool
             ghidra_path = find_tool('ghidra')
 
         if app_instance:
@@ -456,7 +456,7 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
                     "[Ghidra Analysis] Please configure the correct path in Settings"))
 
                 # Use path_discovery to find Ghidra installation
-                from .core.path_discovery import find_tool
+                from ..core.path_discovery import find_tool
 
                 ghidra_path = find_tool('ghidra')
                 if ghidra_path:
@@ -490,7 +490,7 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
         # Create a temporary directory for the Ghidra project
         temp_dir = tempfile.mkdtemp(prefix="intellicrack_ghidra_")
         project_name = "temp_project"
-        
+
         # Make sure script directory exists (use temp directory for execution)
         temp_script_dir = os.path.join(temp_dir, "scripts")
         os.makedirs(temp_script_dir, exist_ok=True)
@@ -499,28 +499,28 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
         script_path = kwargs.get('script_path')
         script_name = None
         script_destination = None
-        
+
         if script_path and script_path != "__DEFAULT__":
             # Use custom script
             script_manager = get_script_manager()
             script = script_manager.get_script(script_path)
-            
+
             if not script:
                 return {"status": "error", "message": f"Script not found: {script_path}"}
-            
+
             if not script.is_valid:
                 return {"status": "error", "message": f"Invalid script: {', '.join(script.validation_errors)}"}
-            
+
             # Copy script to temp directory for execution
             script_destination = script_manager.copy_script_for_execution(script, temp_script_dir)
             script_name = script.filename
-            
+
             if app_instance:
                 app_instance.update_output.emit(log_message(
                     f"[Ghidra Analysis] Using custom script: {script.name} ({script.type})"))
                 app_instance.update_output.emit(log_message(
                     f"[Ghidra Analysis] Description: {script.description}"))
-        
+
         else:
             # Use default script from centralized location
             script_source = os.path.join("scripts", "ghidra", "default", "AdvancedAnalysis.java")
@@ -539,7 +539,7 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
                 return {"status": "error", "message": error_msg}
 
         # Build the command using common Ghidra utility
-        from .tools.ghidra_utils import build_ghidra_command, get_ghidra_headless_path
+        from ..tools.ghidra_utils import build_ghidra_command, get_ghidra_headless_path
 
         # Use dynamic path discovery or fallback
         analyze_headless = get_ghidra_headless_path()
@@ -864,7 +864,7 @@ def run_incremental_analysis(app_instance=None, binary_path: Optional[str] = Non
             }
         else:
             # Run new analysis and cache it
-            from ..utils.analysis.binary_analysis import analyze_binary
+            from ..analysis.binary_analysis import analyze_binary
             analysis_results = analyze_binary(binary_path)
             manager.cache_analysis("comprehensive", analysis_results)
 
@@ -1237,7 +1237,7 @@ def run_memory_analysis(app_instance=None, binary_path: Optional[str] = None, **
                 pe = pefile.PE(binary_path)
 
                 # Check section permissions
-                from .binary.binary_utils import check_suspicious_pe_sections
+                from ..binary.binary_utils import check_suspicious_pe_sections
                 suspicious_sections = check_suspicious_pe_sections(pe)
 
                 if suspicious_sections:
@@ -1372,7 +1372,7 @@ def run_network_analysis(app_instance=None, binary_path: Optional[str] = None, *
                 pe = pefile.PE(binary_path)
 
                 # Define network API categories
-                from .templates.network_api_common import analyze_network_apis
+                from ..templates.network_api_common import analyze_network_apis
 
                 network_apis = {
                     'basic': ['socket', 'connect', 'bind', 'listen', 'accept', 'send', 'recv'],
@@ -1382,7 +1382,7 @@ def run_network_analysis(app_instance=None, binary_path: Optional[str] = None, *
                 }
 
                 detected_apis = analyze_network_apis(pe, network_apis)
-                from .templates.network_api_common import process_network_api_results
+                from ..templates.network_api_common import process_network_api_results
 
                 api_results = process_network_api_results(detected_apis)
                 results["static_analysis"].update(api_results)
@@ -2248,13 +2248,13 @@ __all__ = [
 def run_autonomous_patching(app_instance=None, **kwargs) -> Dict[str, Any]:
     """
     Run autonomous patching analysis with AI-assisted vulnerability detection and automatic patch generation.
-    
+
     This function orchestrates a comprehensive autonomous patching workflow that:
     1. Analyzes the target binary for vulnerabilities and license checks
     2. Generates targeted patches using multiple analysis techniques
     3. Validates and applies patches with safety mechanisms
     4. Verifies patch effectiveness through testing
-    
+
     Args:
         app_instance: Main application instance for UI integration
         **kwargs: Additional parameters including:
@@ -2262,7 +2262,7 @@ def run_autonomous_patching(app_instance=None, **kwargs) -> Dict[str, Any]:
             - patch_strategy: Strategy for patching (aggressive, conservative, targeted)
             - backup_original: Whether to backup original binary
             - verify_patches: Whether to verify patch effectiveness
-            
+
     Returns:
         Dict containing autonomous patching results
     """

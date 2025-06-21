@@ -1,5 +1,5 @@
 """
-Intellicrack UI Dialogs Package 
+Intellicrack UI Dialogs Package
 
 Copyright (C) 2025 Zachary Flint
 
@@ -70,6 +70,13 @@ try:
 except ImportError as e:
     logger.warning("Failed to import similarity_search_dialog: %s", e)
     BinarySimilaritySearchDialog = None
+
+try:
+    from .base_dialog import BinarySelectionDialog, BaseTemplateDialog
+except ImportError as e:
+    logger.warning("Failed to import base_dialog: %s", e)
+    BinarySelectionDialog = None
+    BaseTemplateDialog = None
 
 try:
     from .splash_screen import SplashScreen
@@ -160,6 +167,9 @@ if ReportManagerDialog is not None:
 
 if BinarySimilaritySearchDialog is not None:
     __all__.append('BinarySimilaritySearchDialog')
+
+if BinarySelectionDialog is not None and BaseTemplateDialog is not None:
+    __all__.extend(['BinarySelectionDialog', 'BaseTemplateDialog'])
 
 if SplashScreen is not None:
     __all__.append('SplashScreen')

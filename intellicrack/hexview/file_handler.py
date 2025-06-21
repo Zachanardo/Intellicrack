@@ -1,5 +1,5 @@
 """
-Memory-efficient file handling for the hex viewer/editor. 
+Memory-efficient file handling for the hex viewer/editor.
 
 Copyright (C) 2025 Zachary Flint
 

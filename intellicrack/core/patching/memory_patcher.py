@@ -1,5 +1,5 @@
 """
-Memory Patching Module for Intellicrack 
+Memory Patching Module for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -28,7 +28,7 @@ from typing import Any, Optional
 from PyQt5.QtWidgets import QMessageBox
 
 from ...utils.logger import get_logger
-from ...utils.protection_detection import (
+from ...utils.protection.protection_detection import (
     detect_checksum_verification,
     detect_obfuscation,
     detect_self_healing_code,
@@ -401,12 +401,12 @@ def setup_memory_patching(app: Any) -> None:
 def bypass_memory_protection(address: int, size: int, protection: int = None) -> bool:
     """
     Bypass memory protection using VirtualProtect (Windows) or mprotect (Unix)
-    
+
     Args:
         address: Memory address to modify protection for
         size: Size of memory region in bytes
         protection: New protection flags (optional, defaults to RWX)
-        
+
     Returns:
         True if protection changed successfully, False otherwise
     """
@@ -426,18 +426,31 @@ def bypass_memory_protection(address: int, size: int, protection: int = None) ->
 def _bypass_memory_protection_windows(address: int, size: int, protection: int = None) -> bool:
     """
     Bypass memory protection on Windows using VirtualProtect
-    
+
     Args:
         address: Memory address to modify protection for
         size: Size of memory region in bytes
         protection: New protection flags (optional)
-        
+
     Returns:
         True if protection changed successfully, False otherwise
     """
     try:
         import ctypes
-        from ctypes import wintypes
+        try:
+            from ctypes import wintypes
+            HAS_WINTYPES = True
+        except ImportError:
+            # Create basic wintypes replacement
+            class MockWintypes:
+                class DWORD:
+                    def __init__(self):
+                        self.value = 0
+                class BOOL:
+                    def __init__(self):
+                        self.value = 0
+            wintypes = MockWintypes()
+            HAS_WINTYPES = False
 
         # Default to RWX if not specified
         if protection is None:
@@ -450,13 +463,13 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
         VirtualProtect.argtypes = [
             ctypes.c_void_p,     # lpAddress
             ctypes.c_size_t,     # dwSize
-            wintypes.DWORD,      # flNewProtect
-            ctypes.POINTER(wintypes.DWORD)  # lpflOldProtect
+            wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong,      # flNewProtect
+            ctypes.POINTER(wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong)  # lpflOldProtect
         ]
-        VirtualProtect.restype = wintypes.BOOL
+        VirtualProtect.restype = wintypes.BOOL if HAS_WINTYPES else ctypes.c_int
 
         # Store old protection
-        old_protection = wintypes.DWORD()
+        old_protection = wintypes.DWORD() if HAS_WINTYPES else ctypes.c_ulong()
 
         # Change memory protection
         success = VirtualProtect(
@@ -483,12 +496,12 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
 def _bypass_memory_protection_unix(address: int, size: int, protection: int = None) -> bool:
     """
     Bypass memory protection on Unix-like systems using mprotect
-    
+
     Args:
         address: Memory address to modify protection for
         size: Size of memory region in bytes
         protection: New protection flags (optional)
-        
+
     Returns:
         True if protection changed successfully, False otherwise
     """
@@ -550,12 +563,12 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
 def patch_memory_direct(process_id: int, address: int, data: bytes) -> bool:
     """
     Directly patch memory in a running process
-    
+
     Args:
         process_id: Process ID to patch
         address: Memory address to patch
         data: Bytes to write
-        
+
     Returns:
         True if patching successful, False otherwise
     """
@@ -575,18 +588,28 @@ def patch_memory_direct(process_id: int, address: int, data: bytes) -> bool:
 def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
     """
     Patch memory on Windows using WriteProcessMemory
-    
+
     Args:
         process_id: Process ID to patch
         address: Memory address to patch
         data: Bytes to write
-        
+
     Returns:
         True if patching successful, False otherwise
     """
     try:
         import ctypes
-        from ctypes import wintypes
+        try:
+            from ctypes import wintypes
+            HAS_WINTYPES = True
+        except ImportError:
+            # Create basic wintypes replacement
+            class MockWintypes:
+                class DWORD:
+                    def __init__(self):
+                        self.value = 0
+            wintypes = MockWintypes()
+            HAS_WINTYPES = False
 
         # Constants
         PROCESS_ALL_ACCESS = 0x1F0FFF
@@ -601,7 +624,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
 
         try:
             # Change memory protection to allow writing
-            old_protection = wintypes.DWORD()
+            old_protection = wintypes.DWORD() if HAS_WINTYPES else ctypes.c_ulong()
             success = kernel32.VirtualProtectEx(
                 process_handle,
                 ctypes.c_void_p(address),
@@ -653,12 +676,12 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
 def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
     """
     Patch memory on Unix-like systems using ptrace or /proc/pid/mem
-    
+
     Args:
         process_id: Process ID to patch
         address: Memory address to patch
         data: Bytes to write
-        
+
     Returns:
         True if patching successful, False otherwise
     """
@@ -722,12 +745,12 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
 def handle_guard_pages(address: int, size: int, process_handle: int = None) -> bool:
     """
     Handle PAGE_GUARD protected memory regions
-    
+
     Args:
         address: Memory address that may have guard pages
         size: Size of memory region
         process_handle: Process handle (None for current process)
-        
+
     Returns:
         True if guard pages handled successfully, False otherwise
     """
@@ -748,18 +771,28 @@ def _handle_guard_pages_windows(address: int, size: int,
                                 process_handle: int = None) -> bool:
     """
     Handle PAGE_GUARD on Windows
-    
+
     Args:
         address: Memory address
         size: Size of region
         process_handle: Process handle (None for current process)
-        
+
     Returns:
         True if successful, False otherwise
     """
     try:
         import ctypes
-        from ctypes import wintypes
+        try:
+            from ctypes import wintypes
+            HAS_WINTYPES = True
+        except ImportError:
+            # Create basic wintypes replacement
+            class MockWintypes:
+                class DWORD:
+                    def __init__(self):
+                        self.value = 0
+            wintypes = MockWintypes()
+            HAS_WINTYPES = False
 
         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
 
@@ -768,11 +801,11 @@ def _handle_guard_pages_windows(address: int, size: int,
             _fields_ = [
                 ("BaseAddress", ctypes.c_void_p),
                 ("AllocationBase", ctypes.c_void_p),
-                ("AllocationProtect", wintypes.DWORD),
+                ("AllocationProtect", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
                 ("RegionSize", ctypes.c_size_t),
-                ("State", wintypes.DWORD),
-                ("Protect", wintypes.DWORD),
-                ("Type", wintypes.DWORD)
+                ("State", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
+                ("Protect", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
+                ("Type", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong)
             ]
 
         mbi = MEMORY_BASIC_INFORMATION()
@@ -804,7 +837,7 @@ def _handle_guard_pages_windows(address: int, size: int,
             logger.info(f"PAGE_GUARD detected at {hex(address)}")
 
             # Remove PAGE_GUARD by changing protection
-            old_protection = wintypes.DWORD()
+            old_protection = wintypes.DWORD() if HAS_WINTYPES else ctypes.c_ulong()
             new_protection = mbi.Protect & ~PAGE_GUARD  # Remove guard flag
 
             if process_handle:
@@ -855,12 +888,12 @@ def _handle_guard_pages_unix(address: int, size: int,
                             process_handle: int = None) -> bool:
     """
     Handle guard pages on Unix-like systems
-    
+
     Args:
         address: Memory address
         size: Size of region
         process_handle: Process handle (not used on Unix)
-        
+
     Returns:
         True if successful, False otherwise
     """
@@ -949,12 +982,12 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
                                  size: int) -> bool:
     """
     Detect and bypass guard pages before memory operations
-    
+
     Args:
         process_handle: Handle to process
         address: Memory address to check
         size: Size of memory region
-        
+
     Returns:
         True if safe to proceed, False otherwise
     """
@@ -968,7 +1001,17 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
         import platform
         if platform.system() == 'Windows':
             import ctypes
-            from ctypes import wintypes
+            try:
+                from ctypes import wintypes
+                HAS_WINTYPES = True
+            except ImportError:
+                # Create basic wintypes replacement
+                class MockWintypes:
+                    class DWORD:
+                        def __init__(self):
+                            self.value = 0
+                wintypes = MockWintypes()
+                HAS_WINTYPES = False
 
             kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
 
@@ -977,11 +1020,11 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
                 _fields_ = [
                     ("BaseAddress", ctypes.c_void_p),
                     ("AllocationBase", ctypes.c_void_p),
-                    ("AllocationProtect", wintypes.DWORD),
+                    ("AllocationProtect", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
                     ("RegionSize", ctypes.c_size_t),
-                    ("State", wintypes.DWORD),
-                    ("Protect", wintypes.DWORD),
-                    ("Type", wintypes.DWORD)
+                    ("State", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
+                    ("Protect", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong),
+                    ("Type", wintypes.DWORD if HAS_WINTYPES else ctypes.c_ulong)
                 ]
 
             mbi = MEMORY_BASIC_INFORMATION()

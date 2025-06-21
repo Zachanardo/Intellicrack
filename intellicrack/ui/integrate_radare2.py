@@ -20,23 +20,23 @@ logger = get_logger(__name__)
 def add_radare2_to_intellicrack_app(app_instance) -> bool:
     """
     Add comprehensive radare2 functionality to existing IntellicrackApp instance.
-    
+
     This is the main entry point for users who want to add radare2 functionality
     to their existing Intellicrack application.
-    
+
     Usage:
         from intellicrack.ui.integrate_radare2 import add_radare2_to_intellicrack_app
-        
+
         # In your main application initialization:
         success = add_radare2_to_intellicrack_app(your_app_instance)
         if success:
             print("Radare2 integration successful!")
         else:
             print("Radare2 integration failed!")
-    
+
     Args:
         app_instance: The main IntellicrackApp instance
-        
+
     Returns:
         bool: True if integration successful, False otherwise
     """
@@ -92,10 +92,10 @@ def integrate_with_main_app():
     """
     Automatic integration function that tries to find and integrate with
     the main IntellicrackApp instance.
-    
+
     This function can be called from the main application module to
     automatically add radare2 functionality.
-    
+
     Returns:
         bool: True if integration successful, False otherwise
     """
@@ -144,10 +144,10 @@ def integrate_with_main_app():
 def create_standalone_radare2_app():
     """
     Create a standalone radare2 analysis application.
-    
+
     This creates a new application window with only radare2 functionality,
     useful for users who want a dedicated radare2 analysis tool.
-    
+
     Returns:
         tuple: (QApplication, main_window) or (None, None) if failed
     """
@@ -171,10 +171,10 @@ def create_standalone_radare2_app():
 def show_integration_status(app_instance=None) -> dict:
     """
     Show the current integration status.
-    
+
     Args:
         app_instance: Optional app instance to check
-        
+
     Returns:
         dict: Integration status information
     """
@@ -202,7 +202,7 @@ def show_integration_status(app_instance=None) -> dict:
 def example_manual_integration():
     """
     Example of manual integration with existing app.
-    
+
     This shows how to manually integrate radare2 with an existing app instance.
     """
     # This is just documentation - not meant to be run
@@ -224,7 +224,7 @@ def example_manual_integration():
 def example_automatic_integration():
     """
     Example of automatic integration.
-    
+
     This shows how to automatically integrate radare2 without knowing the app instance.
     """
     # This is just documentation - not meant to be run
@@ -243,7 +243,7 @@ def example_automatic_integration():
 def example_standalone_app():
     """
     Example of creating a standalone radare2 application.
-    
+
     This shows how to create a dedicated radare2 analysis application.
     """
     # This is just documentation - not meant to be run

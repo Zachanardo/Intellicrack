@@ -1,5 +1,5 @@
 """
-Network Traffic Analyzer for License Communications 
+Network Traffic Analyzer for License Communications
 
 Copyright (C) 2025 Zachary Flint
 
@@ -985,7 +985,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
     def stop_capture(self) -> bool:
         """
         Stop the packet capture process.
-        
+
         Returns:
             bool: True if capture was stopped successfully, False otherwise
         """
@@ -1041,7 +1041,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 timestamp = time.strftime('%Y%m%d_%H%M%S')
                 filename = f"{self.config['visualization_dir']}/license_report_{timestamp}.html"
 
-            from ...utils.html_templates import close_html, get_traffic_html_template
+            from ...utils.reporting.html_templates import close_html, get_traffic_html_template
 
             # Create HTML report using common template
             html = get_traffic_html_template() + f"""

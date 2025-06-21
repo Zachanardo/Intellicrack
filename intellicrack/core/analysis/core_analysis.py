@@ -1,5 +1,5 @@
 """
-Core analysis functions for Intellicrack. 
+Core analysis functions for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 # Import shared entropy calculation
-from ...utils.protection_utils import calculate_entropy
+from ...utils.protection.protection_utils import calculate_entropy
 
 
 def get_machine_type(machine: int) -> str:

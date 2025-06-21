@@ -1,5 +1,5 @@
 """
-AI Orchestrator for Intellicrack 
+AI Orchestrator for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -187,10 +187,10 @@ class AIEventBus:
                     def call_subscriber(sub):
                         """
                         Call a subscriber's callback function with event data.
-                        
+
                         Args:
                             sub: Subscriber dictionary containing 'callback' and 'component' keys
-                            
+
                         Executes the subscriber's callback with the event data and source component.
                         Catches and logs any errors that occur during callback execution.
                         """
@@ -594,7 +594,7 @@ class AIOrchestrator:
             try:
                 # Prepare reasoning messages
                 messages = [
-                    LLMMessage(role="system", content="""You are an expert binary analysis AI assistant integrated into Intellicrack. 
+                    LLMMessage(role="system", content="""You are an expert binary analysis AI assistant integrated into Intellicrack.
                     Analyze the provided data and provide detailed reasoning about binary security, vulnerabilities, and recommendations.
                     Be specific, actionable, and focus on practical security implications."""),
                     LLMMessage(role="user", content=f"Analyze this data and provide reasoning: {json.dumps(task.input_data, indent=2)}")

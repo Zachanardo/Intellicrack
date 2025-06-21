@@ -13,10 +13,13 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
-from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal, QRegExp
-from PyQt5.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
+if TYPE_CHECKING:
+    pass
+
+from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtWidgets import (
     QAction,
     QCheckBox,
@@ -44,8 +47,9 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from ...core.frida_manager import FridaManager, HookCategory, ProtectionType
+from ...core.frida_constants import HookCategory, ProtectionType
 from ..widgets.console_widget import ConsoleWidget
+from ..widgets.syntax_highlighters import JavaScriptHighlighter
 
 # Import preset configurations
 try:
@@ -87,7 +91,7 @@ class FridaWorker(QThread):
     error = pyqtSignal(str)
     operationComplete = pyqtSignal(str, bool)
 
-    def __init__(self, frida_manager: FridaManager):
+    def __init__(self, frida_manager):
         super().__init__()
         self.frida_manager = frida_manager
         self.operation = None
@@ -95,6 +99,10 @@ class FridaWorker(QThread):
 
     def run(self):
         try:
+            if self.frida_manager is None:
+                self.error.emit("FridaManager not available")
+                return
+
             if self.operation == 'attach':
                 pid = self.params.get('pid')
                 success = self.frida_manager.attach_to_process(pid)
@@ -125,7 +133,10 @@ class FridaManagerDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.frida_manager = FridaManager()
+        # Use lazy import from core module to avoid cyclic import
+        from ...core import get_frida_manager
+        FridaManager = get_frida_manager()
+        self.frida_manager = FridaManager() if FridaManager else None
         self.selected_process = None
         self.current_session = None
         self.monitoring_active = False
@@ -135,9 +146,18 @@ class FridaManagerDialog(QDialog):
         self.frida_worker = None
         self.monitor_worker = None
 
+        # Check if FridaManager is available
+        if self.frida_manager is None:
+            QMessageBox.warning(
+                self,
+                "Frida Not Available",
+                "Frida components are not available. Some features may be disabled."
+            )
+
         self.init_ui()
         self.load_presets()
-        self.start_monitoring()
+        if self.frida_manager is not None:
+            self.start_monitoring()
 
     def init_ui(self):
         """Initialize the user interface"""
@@ -952,17 +972,17 @@ class FridaManagerDialog(QDialog):
             "",
             "JavaScript Files (*.js);;All Files (*)"
         )
-        
+
         if not file_path:
             return
-        
+
         # Get scripts directory from FridaManager
         scripts_dir = self.frida_manager.script_dir
-        
+
         # Copy script to scripts directory
         source_path = Path(file_path)
         dest_path = scripts_dir / source_path.name
-        
+
         try:
             import shutil
             # Ask if should overwrite if exists
@@ -976,22 +996,22 @@ class FridaManagerDialog(QDialog):
                 )
                 if reply == QMessageBox.No:
                     return
-            
+
             # Copy the file
             shutil.copy2(file_path, dest_path)
-            
+
             # Log success
             self.log_console.append_output(
                 f"[SUCCESS] Added custom script: {source_path.name}"
             )
             self.status_label.setText(f"Added script: {source_path.name}")
-            
+
             # Reload script list to show new script
             self.reload_script_list()
-            
+
             # Show script preview dialog
             self.preview_script(dest_path)
-            
+
         except Exception as e:
             QMessageBox.critical(
                 self,
@@ -1007,39 +1027,39 @@ class FridaManagerDialog(QDialog):
         dialog = QDialog(self)
         dialog.setWindowTitle(f"Script Preview: {script_path.name}")
         dialog.resize(800, 600)
-        
+
         layout = QVBoxLayout()
-        
+
         # Script content viewer
         content_edit = QTextEdit()
         content_edit.setReadOnly(True)
         content_edit.setFont(QFont("Consolas", 10))
-        
+
         try:
             with open(script_path, 'r') as f:
                 content = f.read()
             content_edit.setPlainText(content)
-            
+
             # Simple syntax highlighting
-            highlighter = FridaScriptHighlighter(content_edit.document())
-            
+            highlighter = JavaScriptHighlighter(content_edit.document())
+
         except Exception as e:
             content_edit.setPlainText(f"Error reading script: {str(e)}")
-        
+
         layout.addWidget(QLabel(f"Location: {script_path}"))
         layout.addWidget(content_edit)
-        
+
         # Buttons
         btn_layout = QHBoxLayout()
-        
+
         edit_btn = QPushButton("Edit Script")
         edit_btn.clicked.connect(lambda: self.edit_script(script_path))
         btn_layout.addWidget(edit_btn)
-        
+
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(dialog.accept)
         btn_layout.addWidget(close_btn)
-        
+
         layout.addLayout(btn_layout)
         dialog.setLayout(layout)
         dialog.exec_()
@@ -1112,48 +1132,48 @@ class FridaManagerDialog(QDialog):
         item = self.scripts_list.itemAt(position)
         if not item:
             return
-        
+
         menu = QMenu()
-        
+
         # Load script
         load_action = QAction("Load Script", self)
         load_action.triggered.connect(self.load_selected_script)
         menu.addAction(load_action)
-        
+
         menu.addSeparator()
-        
+
         # Preview script
         preview_action = QAction("Preview Script", self)
         preview_action.triggered.connect(lambda: self.preview_script(
             Path(item.data(Qt.UserRole))
         ))
         menu.addAction(preview_action)
-        
+
         # Edit script
         edit_action = QAction("Edit Script", self)
         edit_action.triggered.connect(lambda: self.edit_script(
             Path(item.data(Qt.UserRole))
         ))
         menu.addAction(edit_action)
-        
+
         menu.addSeparator()
-        
+
         # Delete script
         delete_action = QAction("Delete Script", self)
         delete_action.triggered.connect(lambda: self.delete_script(item))
         menu.addAction(delete_action)
-        
+
         # Duplicate script
         duplicate_action = QAction("Duplicate Script", self)
         duplicate_action.triggered.connect(lambda: self.duplicate_script(item))
         menu.addAction(duplicate_action)
-        
+
         menu.exec_(self.scripts_list.mapToGlobal(position))
 
     def delete_script(self, item):
         """Delete a script after confirmation"""
         script_path = Path(item.data(Qt.UserRole))
-        
+
         reply = QMessageBox.question(
             self,
             "Delete Script",
@@ -1161,7 +1181,7 @@ class FridaManagerDialog(QDialog):
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
-        
+
         if reply == QMessageBox.Yes:
             try:
                 script_path.unlink()
@@ -1179,7 +1199,7 @@ class FridaManagerDialog(QDialog):
     def duplicate_script(self, item):
         """Duplicate a script with a new name"""
         script_path = Path(item.data(Qt.UserRole))
-        
+
         # Generate new name
         base_name = script_path.stem
         suffix = 1
@@ -1189,7 +1209,7 @@ class FridaManagerDialog(QDialog):
             if not new_path.exists():
                 break
             suffix += 1
-        
+
         try:
             import shutil
             shutil.copy2(script_path, new_path)
@@ -1197,10 +1217,10 @@ class FridaManagerDialog(QDialog):
             self.log_console.append_output(
                 f"[SUCCESS] Duplicated script: {script_path.name} → {new_name}"
             )
-            
+
             # Open for editing
             self.edit_script(new_path)
-            
+
         except Exception as e:
             QMessageBox.critical(
                 self,
@@ -1499,94 +1519,6 @@ class FridaManagerDialog(QDialog):
         event.accept()
 
 
-class FridaScriptHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for Frida JavaScript scripts"""
-    
-    def __init__(self, document):
-        super().__init__(document)
-        
-        # Define highlighting rules
-        self.highlighting_rules = []
-        
-        # Keywords
-        keyword_format = QTextCharFormat()
-        keyword_format.setForeground(QColor(86, 156, 214))  # Blue
-        keyword_format.setFontWeight(QFont.Bold)
-        keywords = [
-            'var', 'let', 'const', 'function', 'return', 'if', 'else',
-            'for', 'while', 'do', 'switch', 'case', 'break', 'continue',
-            'try', 'catch', 'finally', 'throw', 'new', 'this', 'typeof'
-        ]
-        for word in keywords:
-            pattern = QRegExp(f'\\b{word}\\b')
-            self.highlighting_rules.append((pattern, keyword_format))
-        
-        # Frida API
-        frida_format = QTextCharFormat()
-        frida_format.setForeground(QColor(156, 220, 254))  # Light blue
-        frida_api = [
-            'Interceptor', 'Module', 'Memory', 'Process', 'Thread',
-            'NativePointer', 'NativeFunction', 'send', 'recv', 'console'
-        ]
-        for api in frida_api:
-            pattern = QRegExp(f'\\b{api}\\b')
-            self.highlighting_rules.append((pattern, frida_format))
-        
-        # Strings
-        string_format = QTextCharFormat()
-        string_format.setForeground(QColor(206, 145, 120))  # Orange
-        self.highlighting_rules.append((QRegExp('"[^"]*"'), string_format))
-        self.highlighting_rules.append((QRegExp("'[^']*'"), string_format))
-        
-        # Comments
-        comment_format = QTextCharFormat()
-        comment_format.setForeground(QColor(106, 153, 85))  # Green
-        self.highlighting_rules.append((QRegExp('//[^\n]*'), comment_format))
-        
-        # Numbers
-        number_format = QTextCharFormat()
-        number_format.setForeground(QColor(181, 206, 168))  # Light green
-        self.highlighting_rules.append((QRegExp('\\b[0-9]+\\b'), number_format))
-        
-        # Functions
-        function_format = QTextCharFormat()
-        function_format.setForeground(QColor(220, 220, 170))  # Yellow
-        self.highlighting_rules.append((QRegExp('\\b[A-Za-z0-9_]+(?=\\()'), function_format))
-    
-    def highlightBlock(self, text):
-        """Apply syntax highlighting to a block of text"""
-        for pattern, format in self.highlighting_rules:
-            expression = QRegExp(pattern)
-            index = expression.indexIn(text)
-            while index >= 0:
-                length = expression.matchedLength()
-                self.setFormat(index, length, format)
-                index = expression.indexIn(text, index + length)
-        
-        # Multi-line comments
-        self.setCurrentBlockState(0)
-        
-        start_expression = QRegExp('/\\*')
-        end_expression = QRegExp('\\*/')
-        
-        comment_format = QTextCharFormat()
-        comment_format.setForeground(QColor(106, 153, 85))
-        
-        start_index = 0
-        if self.previousBlockState() != 1:
-            start_index = start_expression.indexIn(text)
-        
-        while start_index >= 0:
-            end_index = end_expression.indexIn(text, start_index)
-            
-            if end_index == -1:
-                self.setCurrentBlockState(1)
-                comment_length = len(text) - start_index
-            else:
-                comment_length = end_index - start_index + end_expression.matchedLength()
-            
-            self.setFormat(start_index, comment_length, comment_format)
-            start_index = start_expression.indexIn(text, start_index + comment_length)
 
 
 # Export the dialog

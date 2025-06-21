@@ -24,7 +24,7 @@ import struct
 from typing import Any, Optional
 
 from ...utils.logger import get_logger
-from ...utils.windows_common import is_windows_available
+from ...utils.system.windows_common import is_windows_available
 from .base_patcher import BaseWindowsPatcher
 
 logger = get_logger(__name__)
@@ -51,12 +51,12 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                          command_line: str = None) -> bool:
         """
         Perform Early Bird injection
-        
+
         Args:
             target_exe: Path to target executable
             dll_path: Path to DLL to inject
             command_line: Optional command line arguments
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -101,7 +101,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
             finally:
                 # Clean up handles
-                from ...utils.windows_common import cleanup_process_handles
+                from ...utils.system.windows_common import cleanup_process_handles
                 cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
@@ -112,12 +112,12 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                                    command_line: str = None) -> bool:
         """
         Inject shellcode using Early Bird technique
-        
+
         Args:
             target_exe: Path to target executable
             shellcode: Shellcode to inject
             command_line: Optional command line arguments
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -156,7 +156,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
             finally:
                 # Clean up handles
-                from ...utils.windows_common import cleanup_process_handles
+                from ...utils.system.windows_common import cleanup_process_handles
                 cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
@@ -167,12 +167,12 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                                       modify_entry_point: bool = True) -> bool:
         """
         Advanced Early Bird with entry point modification
-        
+
         Args:
             target_exe: Path to target executable
             dll_path: Path to DLL to inject
             modify_entry_point: Whether to modify entry point
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -230,7 +230,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
             finally:
                 # Clean up handles
-                from ...utils.windows_common import cleanup_process_handles
+                from ...utils.system.windows_common import cleanup_process_handles
                 cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
@@ -240,7 +240,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
     def _create_suspended_process(self, exe_path: str,
                                  command_line: str = None) -> Optional[dict]:
         """Create a process in suspended state"""
-        from ...utils.windows_structures import WindowsProcessStructures
+        from ...utils.system.windows_structures import WindowsProcessStructures
         structures = WindowsProcessStructures()
         return structures.create_suspended_process(exe_path, command_line)
 
@@ -354,19 +354,19 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
     def _get_thread_context(self, thread_handle: int) -> Optional[Any]:
         """Get thread context"""
-        from ...utils.windows_structures import WindowsContext
+        from ...utils.system.windows_structures import WindowsContext
         context_helper = WindowsContext()
         return context_helper.get_thread_context(thread_handle)
 
     def _set_thread_context(self, thread_handle: int, context: Any) -> bool:
         """Set thread context"""
-        from ...utils.windows_structures import WindowsContext
+        from ...utils.system.windows_structures import WindowsContext
         context_helper = WindowsContext()
         return context_helper.set_thread_context(thread_handle, context)
 
     def _get_entry_point(self, context: Any) -> int:
         """Get entry point from context"""
-        from ...utils.windows_structures import WindowsContext
+        from ...utils.system.windows_structures import WindowsContext
         context_helper = WindowsContext()
         return context_helper.get_entry_point(context)
 
@@ -452,12 +452,12 @@ def perform_early_bird_injection(target_exe: str, dll_path: str,
                                command_line: str = None) -> bool:
     """
     Convenience function to perform Early Bird injection
-    
+
     Args:
         target_exe: Path to target executable
         dll_path: Path to DLL to inject
         command_line: Optional command line arguments
-        
+
     Returns:
         True if successful, False otherwise
     """

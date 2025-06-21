@@ -1,5 +1,5 @@
 """
-Enhanced AI Model Training Interface 
+Enhanced AI Model Training Interface
 
 Copyright (C) 2025 Zachary Flint
 
@@ -813,11 +813,11 @@ class EnhancedTrainingInterface(QDialog):
         def create_colored_pixmap(color, size=16):
             """
             Create a solid-colored pixmap for use as a button icon.
-            
+
             Args:
                 color: Qt color to fill the pixmap with
                 size: Size of the square pixmap in pixels (default: 16)
-                
+
             Returns:
                 QPixmap: A square pixmap filled with the specified color
             """

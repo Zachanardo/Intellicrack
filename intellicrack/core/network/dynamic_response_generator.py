@@ -424,7 +424,7 @@ class AutodeskProtocolHandler:
 class DynamicResponseGenerator:
     """
     Dynamic response generator for license server protocols.
-    
+
     This class analyzes incoming license requests and generates appropriate
     responses based on the detected protocol and request content.
     """
@@ -459,10 +459,10 @@ class DynamicResponseGenerator:
     def generate_response(self, context: ResponseContext) -> GeneratedResponse:
         """
         Generate a response for the given context.
-        
+
         Args:
             context: Request context information
-            
+
         Returns:
             GeneratedResponse: Generated response data
         """
@@ -710,12 +710,13 @@ class DynamicResponseGenerator:
 
                 return json.dumps(response_dict).encode('utf-8')
 
-            # Fallback to simple text response
-            return b'OK'
+            # Fallback to more appropriate response based on context
+            return self._create_intelligent_fallback(context)
 
         except Exception as e:
             self.logger.debug(f"Response synthesis error: {e}")
-            return b'OK'
+            # Return context-aware fallback instead of just 'OK'
+            return self._create_intelligent_fallback(context)
 
     def _generate_generic_response(self, context: ResponseContext) -> bytes:
         """Generate generic response based on request characteristics"""
@@ -749,6 +750,66 @@ class DynamicResponseGenerator:
 
         except Exception as e:
             self.logger.error(f"Generic response generation error: {e}")
+            return b'OK'
+    
+    def _create_intelligent_fallback(self, context: ResponseContext) -> bytes:
+        """Create an intelligent fallback response based on context."""
+        try:
+            # Analyze request for protocol hints
+            request_str = context.request_data.decode('utf-8', errors='ignore')
+            
+            # Check content type from headers if available
+            content_type = context.headers.get('content-type', '').lower() if context.headers else ''
+            
+            # XML response pattern
+            if '<' in request_str and '>' in request_str or 'xml' in content_type:
+                return b'''<?xml version="1.0" encoding="UTF-8"?>
+<response>
+    <status>success</status>
+    <code>200</code>
+    <message>Request processed successfully</message>
+    <timestamp>''' + str(int(context.timestamp)).encode() + b'''</timestamp>
+</response>'''
+            
+            # JSON response pattern
+            elif '{' in request_str or 'json' in content_type:
+                response = {
+                    "status": "success",
+                    "code": 200,
+                    "message": "Request processed successfully",
+                    "timestamp": int(context.timestamp),
+                    "data": {}
+                }
+                return json.dumps(response).encode('utf-8')
+            
+            # License-specific patterns
+            elif any(word in request_str.lower() for word in ['license', 'auth', 'validate', 'verify']):
+                # Check if it looks like a product-specific request
+                if 'adobe' in request_str.lower():
+                    return b'ADOBE_LICENSE_VALID'
+                elif 'autodesk' in request_str.lower():
+                    return b'AUTODESK_LICENSE_VALID'
+                elif 'microsoft' in request_str.lower():
+                    return b'MICROSOFT_LICENSE_VALID'
+                else:
+                    return b'LICENSE_VALID'
+            
+            # HTTP-style response
+            elif context.protocol == 'HTTP':
+                return b'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nOK'
+            
+            # Binary protocol response
+            elif not request_str.isprintable():
+                # Return a structured binary response
+                return b'\x00\x01' + b'\x00\x00\x00\x08' + b'SUCCESS\x00'
+            
+            # Default fallback with more context
+            else:
+                return b'SUCCESS'
+                
+        except Exception as e:
+            self.logger.debug(f"Fallback generation error: {e}")
+            # Ultimate fallback
             return b'OK'
 
     def get_statistics(self) -> Dict[str, Any]:

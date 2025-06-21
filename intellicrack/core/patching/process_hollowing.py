@@ -24,7 +24,7 @@ import struct
 from typing import Any, Optional
 
 from ...utils.logger import get_logger
-from ...utils.windows_common import is_windows_available
+from ...utils.system.windows_common import is_windows_available
 from .base_patcher import BaseWindowsPatcher
 
 logger = get_logger(__name__)
@@ -65,11 +65,11 @@ class ProcessHollowing(BaseWindowsPatcher):
     def hollow_process(self, target_exe: str, payload_path: str) -> bool:
         """
         Perform process hollowing
-        
+
         Args:
             target_exe: Path to legitimate executable to hollow
             payload_path: Path to payload executable
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -194,7 +194,7 @@ class ProcessHollowing(BaseWindowsPatcher):
 
             finally:
                 # Clean up handles
-                from ...utils.windows_common import cleanup_process_handles
+                from ...utils.system.windows_common import cleanup_process_handles
                 cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
@@ -203,19 +203,19 @@ class ProcessHollowing(BaseWindowsPatcher):
 
     def _create_suspended_process(self, exe_path: str) -> Optional[dict]:
         """Create a process in suspended state"""
-        from ...utils.windows_structures import WindowsProcessStructures
+        from ...utils.system.windows_structures import WindowsProcessStructures
         structures = WindowsProcessStructures()
         return structures.create_suspended_process(exe_path)
 
     def _get_thread_context(self, thread_handle: int) -> Optional[Any]:
         """Get thread context"""
-        from ...utils.windows_structures import WindowsContext
+        from ...utils.system.windows_structures import WindowsContext
         context_helper = WindowsContext()
         return context_helper.get_thread_context(thread_handle)
 
     def _set_thread_context(self, thread_handle: int, context: Any) -> bool:
         """Set thread context"""
-        from ...utils.windows_structures import WindowsContext
+        from ...utils.system.windows_structures import WindowsContext
         context_helper = WindowsContext()
         return context_helper.set_thread_context(thread_handle, context)
 
@@ -437,11 +437,11 @@ class ProcessHollowing(BaseWindowsPatcher):
 def perform_process_hollowing(target_exe: str, payload_exe: str) -> bool:
     """
     Convenience function to perform process hollowing
-    
+
     Args:
         target_exe: Path to legitimate executable
         payload_exe: Path to payload executable
-        
+
     Returns:
         True if successful, False otherwise
     """

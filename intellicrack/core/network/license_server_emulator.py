@@ -1,5 +1,5 @@
 """
-Network License Server Emulator 
+Network License Server Emulator
 
 Copyright (C) 2025 Zachary Flint
 
@@ -75,15 +75,15 @@ class NetworkLicenseServerEmulator:
         """
         self.logger = logging.getLogger("IntellicrackLogger.NetworkEmulator")
 
-        # Default configuration
+        # Default configuration with environment variable support
         self.config = {
-            'listen_ip': '127.0.0.1',  # Bind only to localhost for security
-            'listen_ports': [1111, 1234, 1337, 8080, 8888, 27000, 27001],
-            'dns_redirect': True,
-            'ssl_intercept': True,
-            'record_traffic': True,
-            'auto_respond': True,
-            'response_delay': 0.1  # seconds
+            'listen_ip': os.environ.get('LICENSE_SERVER_BIND_IP', '0.0.0.0'),
+            'listen_ports': self._parse_ports(os.environ.get('LICENSE_SERVER_PORTS', '27000,27001,1111,1234,1337,8080,8888')),
+            'dns_redirect': os.environ.get('LICENSE_SERVER_DNS_REDIRECT', 'true').lower() == 'true',
+            'ssl_intercept': os.environ.get('LICENSE_SERVER_SSL_INTERCEPT', 'true').lower() == 'true',
+            'record_traffic': os.environ.get('LICENSE_SERVER_RECORD_TRAFFIC', 'true').lower() == 'true',
+            'auto_respond': os.environ.get('LICENSE_SERVER_AUTO_RESPOND', 'true').lower() == 'true',
+            'response_delay': float(os.environ.get('LICENSE_SERVER_RESPONSE_DELAY', '0.1'))  # seconds
         }
 
         # Update with provided configuration
@@ -92,7 +92,7 @@ class NetworkLicenseServerEmulator:
 
         # Set default port and protocol
         self.port = self.config['listen_ports'][0] if self.config['listen_ports'] else 27000
-        self.protocol = "FlexLM"  # Default protocol
+        self.protocol = os.environ.get('LICENSE_SERVER_DEFAULT_PROTOCOL', 'FlexLM')
 
         # Add handlers from the first implementation
         self.protocol_handlers: Dict[str, Any] = {}
@@ -123,6 +123,16 @@ class NetworkLicenseServerEmulator:
         # Load response templates
         self._load_response_templates()
 
+    def _parse_ports(self, port_string: str) -> List[int]:
+        """Parse comma-separated port list from string."""
+        ports = []
+        for port in port_string.split(','):
+            try:
+                ports.append(int(port.strip()))
+            except ValueError:
+                self.logger.warning(f"Invalid port value: {port}")
+        return ports if ports else [27000, 27001]
+
     def _initialize_enhanced_components(self):
         """Initialize enhanced traffic interception and response generation"""
         try:
@@ -145,7 +155,7 @@ class NetworkLicenseServerEmulator:
     def _handle_analyzed_traffic(self, traffic_data: Dict[str, Any]) -> None:
         """
         Handle analyzed traffic data from the traffic interception engine.
-        
+
         Args:
             traffic_data: Dictionary containing analyzed traffic information
         """
@@ -526,7 +536,7 @@ class NetworkLicenseServerEmulator:
     def _start_dns_server(self) -> None:
         """
         Start a DNS server for redirecting license server hostnames.
-        
+
         This DNS server intercepts license server DNS queries and redirects them
         to the local license server emulator, enabling license bypass.
         """
@@ -593,7 +603,7 @@ class NetworkLicenseServerEmulator:
     def _handle_dns_query(self, data: bytes, addr: tuple) -> None:
         """
         Handle individual DNS query.
-        
+
         Args:
             data: DNS query data
             addr: Client address (ip, port)
@@ -664,13 +674,13 @@ class NetworkLicenseServerEmulator:
                            ip_address: str, question_section: bytes) -> bytes:
         """
         Create a DNS A record response.
-        
+
         Args:
             transaction_id: DNS transaction ID
             query_name: Original query name
             ip_address: IP address to return
             question_section: Original question section
-            
+
         Returns:
             DNS response packet
         """
@@ -703,11 +713,11 @@ class NetworkLicenseServerEmulator:
     def _create_dns_error_response(self, transaction_id: int, question_section: bytes) -> bytes:
         """
         Create a DNS NXDOMAIN error response.
-        
+
         Args:
             transaction_id: DNS transaction ID
             question_section: Original question section
-            
+
         Returns:
             DNS error response packet
         """
@@ -980,7 +990,7 @@ class NetworkLicenseServerEmulator:
             def auto_save_thread() -> None:
                 """
                 Background thread to automatically save traffic logs at regular intervals.
-                
+
                 Runs continuously while the server is active, checking every save_interval
                 seconds whether traffic recording is enabled and saving logs if so.
                 """
@@ -1029,10 +1039,10 @@ def run_network_license_emulator(app: Any) -> None:
         def log_message(msg):
             """
             Fallback log message function when ui_utils is not available.
-            
+
             Args:
                 msg: Message to log
-                
+
             Returns:
                 str: The input message unchanged
             """

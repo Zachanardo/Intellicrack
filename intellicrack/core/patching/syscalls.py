@@ -571,11 +571,11 @@ def get_direct_syscalls() -> Optional[DirectSyscalls]:
 def inject_using_syscalls(process_handle: int, dll_path: str) -> bool:
     """
     Inject DLL using direct syscalls to bypass hooks
-    
+
     Args:
         process_handle: Handle to target process
         dll_path: Path to DLL to inject
-        
+
     Returns:
         True if successful, False otherwise
     """

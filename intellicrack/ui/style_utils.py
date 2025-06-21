@@ -10,14 +10,14 @@ def get_progress_bar_style(border_width: int = 1, border_color: str = "#444",
                           border_radius: int = 3) -> str:
     """
     Generate consistent progress bar stylesheet.
-    
+
     Args:
         border_width: Width of the progress bar border in pixels
         border_color: Color of the border
         background_color: Background color of the progress bar
         chunk_color: Color of the progress bar chunk (filled portion)
         border_radius: Border radius in pixels
-        
+
     Returns:
         Complete stylesheet string for QProgressBar
     """
@@ -39,7 +39,7 @@ def get_default_progress_bar_style() -> str:
     """
     Get the default Intellicrack progress bar style.
     Uses the common theme colors.
-    
+
     Returns:
         Default progress bar stylesheet
     """
@@ -50,7 +50,7 @@ def get_splash_progress_bar_style() -> str:
     """
     Get the splash screen specific progress bar style.
     Uses green color scheme for splash screen.
-    
+
     Returns:
         Splash screen progress bar stylesheet
     """

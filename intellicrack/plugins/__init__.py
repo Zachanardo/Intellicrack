@@ -1,5 +1,5 @@
 """
-Intellicrack Plugins Package 
+Intellicrack Plugins Package
 
 Copyright (C) 2025 Zachary Flint
 
@@ -97,7 +97,7 @@ except ImportError as e:
     def load_plugins(*args, **kwargs):
         """
         Fallback function for loading plugins when plugin system is not available.
-        
+
         Returns:
             dict: Empty dictionary
         """
@@ -147,7 +147,7 @@ except ImportError as e:
     def run_plugin(*args, **kwargs):
         """
         Fallback function for running plugins when plugin system is not available.
-        
+
         Does nothing when the actual plugin system cannot be imported.
         """
         logger.debug(f"Fallback run_plugin called with args: {args}, kwargs: {kwargs}")
@@ -155,7 +155,7 @@ except ImportError as e:
     def run_custom_plugin(*args, **kwargs):
         """
         Fallback function for running custom plugins when plugin system is not available.
-        
+
         Does nothing when the actual plugin system cannot be imported.
         """
         logger.debug(f"Fallback run_custom_plugin called with args: {args}, kwargs: {kwargs}")
@@ -163,7 +163,7 @@ except ImportError as e:
     def run_frida_plugin_from_file(*args, **kwargs):
         """
         Fallback function for running Frida plugins when plugin system is not available.
-        
+
         Does nothing when the actual plugin system cannot be imported.
         """
         logger.debug(f"Fallback run_frida_plugin_from_file called with args: {args}, kwargs: {kwargs}")
@@ -171,7 +171,7 @@ except ImportError as e:
     def run_ghidra_plugin_from_file(*args, **kwargs):
         """
         Fallback function for running Ghidra plugins when plugin system is not available.
-        
+
         Does nothing when the actual plugin system cannot be imported.
         """
         logger.debug(f"Fallback run_ghidra_plugin_from_file called with args: {args}, kwargs: {kwargs}")
@@ -179,7 +179,7 @@ except ImportError as e:
     def create_sample_plugins(*args, **kwargs):
         """
         Fallback function for creating sample plugins when plugin system is not available.
-        
+
         Does nothing when the actual plugin system cannot be imported.
         """
         logger.debug(f"Fallback create_sample_plugins called with args: {args}, kwargs: {kwargs}")
@@ -187,7 +187,7 @@ except ImportError as e:
     def run_plugin_in_sandbox(*args, **kwargs):
         """
         Fallback function for running plugins in sandbox when plugin system is not available.
-        
+
         Returns:
             None
         """
@@ -196,7 +196,7 @@ except ImportError as e:
     def run_plugin_remotely(*args, **kwargs):
         """
         Fallback function for running plugins remotely when plugin system is not available.
-        
+
         Returns:
             None
         """
@@ -210,6 +210,18 @@ except ImportError as e:
     logger.warning("Remote plugin executor not available: %s", e)
     RemotePluginExecutor = None
 
+# Shared plugin system function exports
+PLUGIN_SYSTEM_EXPORTS = [
+    'load_plugins',
+    'run_plugin',
+    'run_custom_plugin',
+    'run_frida_plugin_from_file',
+    'run_ghidra_plugin_from_file',
+    'create_sample_plugins',
+    'run_plugin_in_sandbox',
+    'run_plugin_remotely',
+]
+
 # Define package exports
 __all__ = [
     'load_plugin',
@@ -219,17 +231,8 @@ __all__ = [
     'CUSTOM_MODULES_DIR',
     'FRIDA_SCRIPTS_DIR',
     'GHIDRA_SCRIPTS_DIR',
-    # Plugin system functions
-    'load_plugins',
-    'run_plugin',
-    'run_custom_plugin',
-    'run_frida_plugin_from_file',
-    'run_ghidra_plugin_from_file',
-    'create_sample_plugins',
-    'run_plugin_in_sandbox',
-    'run_plugin_remotely',
     'RemotePluginExecutor',
-]
+] + PLUGIN_SYSTEM_EXPORTS
 
 # Package metadata
 __version__ = "0.1.0"

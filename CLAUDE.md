@@ -243,6 +243,7 @@ handler = LargeFileHandler("huge_file.bin", config=config)
 - **Keep code clean** without redundant explanations
 - **NEVER delete method bindings or function calls without thorough analysis.** If bindings reference functions that don't exist, CREATE THE MISSING FUNCTIONS instead of removing the bindings - they were written for a reason. Method bindings in this codebase serve important architectural purposes and removing them breaks functionality.
 - **ALL FIXES MUST MAINTAIN OR IMPROVE INTELLICRACK'S FUNCTIONALITY** - Never sacrifice functionality for cleaner code. Test fixes thoroughly to ensure they don't break existing workflows. When fixing linting errors, the goal is to make the code work better, not to disable features.
+- **🚫 ABSOLUTELY NO SIMULATION MODES 🚫** - Intellicrack is a REAL exploitation tool, not a simulator. Never implement "simulation modes", "realistic simulation", or any form of fake/mock exploitation. All exploitation techniques must be functional and perform real operations. Simulation modes completely defeat the purpose of this application and are strictly forbidden.
 
 ### Error Handling Protocol
 - **Use safe attribute access** with `getattr()` and `hasattr()`

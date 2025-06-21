@@ -26,24 +26,24 @@ from typing import List, Optional, Tuple
 def run_process_with_output(cmd: List[str], encoding: str = 'utf-8',
                           timeout: Optional[int] = None) -> Tuple[int, str, str]:
     """Run a process and capture stdout/stderr.
-    
+
     Args:
         cmd: Command list to execute
         encoding: Text encoding for output
         timeout: Optional timeout in seconds
-        
+
     Returns:
         tuple: (return_code, stdout, stderr)
     """
-    from .system.subprocess_utils import create_popen_with_encoding
+    from .subprocess_utils import create_popen_with_encoding
     return create_popen_with_encoding(cmd, encoding, timeout)
 
 def run_ghidra_process(cmd: List[str]) -> Tuple[int, str, str]:
     """Run Ghidra subprocess with standard configuration.
-    
+
     Args:
         cmd: Ghidra command list
-        
+
     Returns:
         tuple: (return_code, stdout, stderr)
     """

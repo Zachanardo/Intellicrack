@@ -1,5 +1,5 @@
 """
-AI Coordination Layer for Intellicrack 
+AI Coordination Layer for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
 
@@ -578,20 +578,20 @@ class AICoordinationLayer:
         # Build comprehensive prompt
         prompt = f"""
         Analyze the following binary file for security vulnerabilities and potential attack vectors:
-        
+
         Binary Path: {request.binary_path}
         Analysis Priority: {request.priority}
-        
+
         Binary Information:
         {chr(10).join(binary_info)}
-        
+
         Please provide a detailed security analysis including:
         1. Potential vulnerabilities (buffer overflows, format strings, etc.)
         2. Attack vectors and exploitation techniques
         3. Security mitigations present or missing
         4. Recommendations for further analysis
         5. Risk assessment and priority level
-        
+
         Format your response as a structured analysis with clear sections.
         """
 

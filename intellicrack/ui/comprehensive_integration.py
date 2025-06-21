@@ -34,7 +34,7 @@ logger = get_logger(__name__)
 class ComprehensiveR2Integration:
     """
     Comprehensive integration class that handles all radare2 UI features.
-    
+
     This class provides the main entry point for integrating all radare2
     functionality into any Intellicrack application variant.
     """
@@ -54,10 +54,10 @@ class ComprehensiveR2Integration:
     def integrate_with_application(self, main_app) -> bool:
         """
         Main integration method that handles all types of applications.
-        
+
         Args:
             main_app: The main application instance (any type)
-            
+
         Returns:
             bool: True if integration successful, False otherwise
         """
@@ -471,13 +471,13 @@ def get_comprehensive_integration() -> ComprehensiveR2Integration:
 def integrate_radare2_comprehensive(main_app) -> bool:
     """
     Main entry point for comprehensive radare2 integration.
-    
+
     This function provides the simplest way to integrate all radare2
     functionality into any Intellicrack application.
-    
+
     Args:
         main_app: The main application instance
-        
+
     Returns:
         bool: True if integration successful, False otherwise
     """

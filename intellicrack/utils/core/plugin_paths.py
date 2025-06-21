@@ -23,7 +23,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -31,7 +30,7 @@ from typing import Dict, List, Optional
 def get_project_root() -> Path:
     """
     Get the project root directory.
-    
+
     Returns:
         Path: Absolute path to the Intellicrack project root
     """
@@ -43,7 +42,7 @@ def get_project_root() -> Path:
 def get_scripts_dir() -> Path:
     """
     Get the scripts directory.
-    
+
     Returns:
         Path: Absolute path to the scripts directory
     """
@@ -53,7 +52,7 @@ def get_scripts_dir() -> Path:
 def get_frida_scripts_dir() -> Path:
     """
     Get the Frida scripts directory.
-    
+
     Returns:
         Path: Absolute path to the Frida scripts directory
     """
@@ -63,7 +62,7 @@ def get_frida_scripts_dir() -> Path:
 def get_ghidra_scripts_dir() -> Path:
     """
     Get the Ghidra scripts directory.
-    
+
     Returns:
         Path: Absolute path to the Ghidra scripts directory
     """
@@ -73,7 +72,7 @@ def get_ghidra_scripts_dir() -> Path:
 def get_plugin_modules_dir() -> Path:
     """
     Get the Python plugin modules directory.
-    
+
     Returns:
         Path: Absolute path to the custom plugin modules directory
     """
@@ -83,7 +82,7 @@ def get_plugin_modules_dir() -> Path:
 def get_config_dir() -> Path:
     """
     Get the configuration directory.
-    
+
     Returns:
         Path: Absolute path to the configuration directory
     """
@@ -93,7 +92,7 @@ def get_config_dir() -> Path:
 def get_main_config_file() -> Path:
     """
     Get the main configuration file path.
-    
+
     Returns:
         Path: Absolute path to intellicrack_config.json
     """
@@ -103,7 +102,7 @@ def get_main_config_file() -> Path:
 def get_tests_dir() -> Path:
     """
     Get the tests directory.
-    
+
     Returns:
         Path: Absolute path to the tests directory
     """
@@ -113,7 +112,7 @@ def get_tests_dir() -> Path:
 def list_frida_scripts() -> List[Path]:
     """
     List all available Frida scripts.
-    
+
     Returns:
         List[Path]: List of paths to Frida .js files
     """
@@ -126,7 +125,7 @@ def list_frida_scripts() -> List[Path]:
 def list_ghidra_scripts() -> List[Path]:
     """
     List all available Ghidra scripts.
-    
+
     Returns:
         List[Path]: List of paths to Ghidra .java and .py files
     """
@@ -141,7 +140,7 @@ def list_ghidra_scripts() -> List[Path]:
 def list_plugin_modules() -> List[Path]:
     """
     List all available Python plugin modules.
-    
+
     Returns:
         List[Path]: List of paths to Python plugin files
     """
@@ -154,36 +153,36 @@ def list_plugin_modules() -> List[Path]:
 def find_script_by_name(script_name: str, script_type: str = "auto") -> Optional[Path]:
     """
     Find a script by name across all script directories.
-    
+
     Args:
         script_name: Name of the script (with or without extension)
         script_type: Type of script ("frida", "ghidra", or "auto")
-        
+
     Returns:
         Path: Path to the script if found, None otherwise
     """
     # Remove extension if present
     base_name = Path(script_name).stem
-    
+
     if script_type in ("frida", "auto"):
         frida_path = get_frida_scripts_dir() / f"{base_name}.js"
         if frida_path.exists():
             return frida_path
-    
+
     if script_type in ("ghidra", "auto"):
         ghidra_dir = get_ghidra_scripts_dir()
         for ext in [".java", ".py"]:
             for script_path in ghidra_dir.rglob(f"{base_name}{ext}"):
                 if script_path.exists():
                     return script_path
-    
+
     return None
 
 
 def get_path_info() -> Dict[str, str]:
     """
     Get information about all configured paths.
-    
+
     Returns:
         Dict[str, str]: Dictionary mapping path names to their absolute paths
     """
@@ -211,7 +210,7 @@ def ensure_directories_exist() -> None:
         get_config_dir(),
         get_tests_dir()
     ]
-    
+
     for directory in directories:
         directory.mkdir(parents=True, exist_ok=True)
 
@@ -220,10 +219,10 @@ def ensure_directories_exist() -> None:
 def get_frida_script_path(script_name: str) -> Optional[str]:
     """
     Legacy function for getting Frida script paths.
-    
+
     Args:
         script_name: Name of the Frida script
-        
+
     Returns:
         str: Path to the script if found, None otherwise
     """
@@ -234,10 +233,10 @@ def get_frida_script_path(script_name: str) -> Optional[str]:
 def get_ghidra_script_path(script_name: str) -> Optional[str]:
     """
     Legacy function for getting Ghidra script paths.
-    
+
     Args:
         script_name: Name of the Ghidra script
-        
+
     Returns:
         str: Path to the script if found, None otherwise
     """
@@ -254,7 +253,7 @@ if __name__ == "__main__":
     for name, path in info.items():
         exists = "✓" if Path(path).exists() else "✗"
         print(f"{exists} {name}: {path}")
-    
+
     print("\nScript Counts:")
     print(f"  Frida scripts: {len(list_frida_scripts())}")
     print(f"  Ghidra scripts: {len(list_ghidra_scripts())}")

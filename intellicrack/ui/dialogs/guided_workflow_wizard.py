@@ -1,5 +1,5 @@
 """
-Guided Workflow Wizard 
+Guided Workflow Wizard
 
 Copyright (C) 2025 Zachary Flint
 
@@ -907,7 +907,7 @@ class GuidedWorkflowWizard(QWizard):
 
     def format_size(self, size_bytes: int) -> str:
         """Format a file size in bytes to a human-readable string."""
-        from ...utils.string_utils import format_bytes
+        from ...utils.core.string_utils import format_bytes
         return format_bytes(size_bytes)
 
     def on_finished(self, result: int) -> None:

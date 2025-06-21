@@ -1,5 +1,5 @@
 """
-System utilities for the Intellicrack framework. 
+System utilities for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -27,6 +27,9 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
+
+# Import consolidated process utilities
+from .process_utils import get_all_processes
 
 try:
     import psutil
@@ -233,24 +236,8 @@ def get_process_list() -> List[Dict[str, Any]]:
     Returns:
         list: List of process info dictionaries
     """
-    if psutil is None:
-        logger.error("psutil is not installed. Cannot get process list.")
-        return []
-
-    processes = []
-    try:
-        # Get comprehensive process info with error handling
-        for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
-            try:
-                # Collect process information
-                processes.append(proc.info)
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                # Skip processes that terminated or are inaccessible
-                continue
-    except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error getting process list: %s", e)
-
-    return processes
+    # Use the consolidated process listing function
+    return get_all_processes(['pid', 'name', 'cpu_percent', 'memory_percent'])
 
 
 def kill_process(pid: int, force: bool = False) -> bool:

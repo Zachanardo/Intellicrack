@@ -1,5 +1,5 @@
 """
-Configuration Management 
+Configuration Management
 
 Copyright (C) 2025 Zachary Flint
 
@@ -37,16 +37,16 @@ CONFIG_PATH = Path(__file__).parent.parent / "config" / "intellicrack_config.jso
 def find_tool(tool_name, required_executables=None):
     """
     Find tool executable path using the dynamic path discovery system.
-    
+
     Args:
         tool_name: Name of the tool to find (e.g., 'ghidra', 'radare2', 'frida')
         required_executables: Optional list of required executables for the tool
-        
+
     Returns:
         Path to the tool executable or None if not found
     """
     try:
-        from .utils.path_discovery import find_tool as path_discovery_find_tool
+        from .utils.core.path_discovery import find_tool as path_discovery_find_tool
         return path_discovery_find_tool(tool_name, required_executables)
     except ImportError:
         logger.warning("Path discovery module not available")
@@ -57,15 +57,15 @@ def find_tool(tool_name, required_executables=None):
 def get_system_path(path_type):
     """
     Get system-specific paths (e.g., desktop, documents, downloads).
-    
+
     Args:
         path_type: Type of system path to retrieve
-        
+
     Returns:
         Path string or None if not found
     """
     try:
-        from .utils.path_discovery import get_system_path as path_discovery_get_system_path
+        from .utils.core.path_discovery import get_system_path as path_discovery_get_system_path
         return path_discovery_get_system_path(path_type)
     except ImportError:
         logger.warning("Path discovery module not available")
@@ -81,31 +81,38 @@ def get_system_path(path_type):
             return tempfile.gettempdir()
         return None
 
+# Load environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # Default configuration structure
 DEFAULT_CONFIG = {
     # Paths and Directories
-    "log_dir": os.path.join(os.path.expanduser("~"), "intellicrack", "logs"),
-    "ghidra_path": None,  # Will be discovered dynamically
-    "radare2_path": None,  # Will be discovered dynamically
-    "frida_path": None,  # Will be discovered dynamically
-    "output_dir": os.path.join(os.path.expanduser("~"), "intellicrack", "output"),
-    "temp_dir": os.path.join(os.path.expanduser("~"), "intellicrack", "temp"),
-    "plugin_directory": "plugins",
-    "download_directory": "models/downloads",
+    "log_dir": os.environ.get('LOG_FILE_PATH', os.path.join(os.path.expanduser("~"), "intellicrack", "logs")),
+    "ghidra_path": os.environ.get('GHIDRA_PATH', None),  # Will be discovered dynamically
+    "radare2_path": os.environ.get('RADARE2_PATH', None),  # Will be discovered dynamically
+    "frida_path": os.environ.get('FRIDA_PATH', None),  # Will be discovered dynamically
+    "output_dir": os.environ.get('OUTPUT_DIR', os.path.join(os.path.expanduser("~"), "intellicrack", "output")),
+    "temp_dir": os.environ.get('TEMP_DIR', os.path.join(os.path.expanduser("~"), "intellicrack", "temp")),
+    "plugin_directory": os.environ.get('PLUGIN_DIR', "plugins"),
+    "download_directory": os.environ.get('MODEL_DOWNLOAD_PATH', "models/downloads"),
 
     # Analysis Settings
     "analysis": {
-        "default_timeout": 300,  # 5 minutes
-        "max_file_size": 100 * 1024 * 1024,  # 100 MB
-        "enable_deep_analysis": True,
-        "enable_symbolic_execution": False,  # Requires angr
+        "default_timeout": int(os.environ.get('WORKER_TIMEOUT', '300')),  # 5 minutes
+        "max_file_size": int(os.environ.get('MAX_FILE_SIZE', str(100 * 1024 * 1024))),  # 100 MB
+        "enable_deep_analysis": os.environ.get('FEATURE_AI_ANALYSIS', 'true').lower() == 'true',
+        "enable_symbolic_execution": os.environ.get('ENABLE_SYMBOLIC_EXECUTION', 'false').lower() == 'true',
         "enable_dynamic_analysis": True,
-        "enable_network_analysis": True,
+        "enable_network_analysis": os.environ.get('FEATURE_NETWORK_MONITOR', 'true').lower() == 'true',
         "detect_protections": True,
         "auto_detect_format": True,
-        "parallel_threads": 4,
+        "parallel_threads": int(os.environ.get('MAX_WORKERS', '4')),
         "cache_results": True,
-        "cache_ttl": 3600  # 1 hour
+        "cache_ttl": int(os.environ.get('CACHE_TTL', '3600'))  # 1 hour
     },
 
     # Patching Settings
@@ -122,11 +129,11 @@ DEFAULT_CONFIG = {
     # Network Settings
     "network": {
         "enable_ssl_interception": True,
-        "proxy_port": 8080,
-        "capture_interface": "any",
+        "proxy_port": int(os.environ.get('NETWORK_ANALYSIS_PORT', '8080')),
+        "capture_interface": os.environ.get('NETWORK_CAPTURE_INTERFACE', 'any'),
         "capture_filter": "",
         "save_captures": True,
-        "max_capture_size": 50 * 1024 * 1024  # 50 MB
+        "max_capture_size": int(os.environ.get('NETWORK_CAPTURE_BUFFER_SIZE', str(50 * 1024 * 1024)))  # 50 MB
     },
 
     # UI Settings
@@ -143,12 +150,12 @@ DEFAULT_CONFIG = {
 
     # Logging Settings
     "logging": {
-        "level": "INFO",
+        "level": os.environ.get('LOG_LEVEL', 'INFO'),
         "enable_file_logging": True,
         "enable_console_logging": True,
-        "max_log_size": 10 * 1024 * 1024,  # 10 MB
-        "log_rotation": 5,
-        "verbose_logging": False
+        "max_log_size": int(os.environ.get('LOG_MAX_SIZE', str(10 * 1024 * 1024))),  # 10 MB
+        "log_rotation": int(os.environ.get('LOG_BACKUP_COUNT', '5')),
+        "verbose_logging": os.environ.get('VERBOSE_LOGGING', 'false').lower() == 'true'
     },
 
     # Security Settings
@@ -162,9 +169,9 @@ DEFAULT_CONFIG = {
 
     # Performance Settings
     "performance": {
-        "max_memory_usage": 2048,  # MB
-        "enable_gpu_acceleration": True,
-        "cache_size": 100,  # MB
+        "max_memory_usage": int(os.environ.get('MEMORY_LIMIT', str(2048 * 1024 * 1024))) // (1024 * 1024),  # Convert to MB
+        "enable_gpu_acceleration": os.environ.get('GPU_ENABLED', 'true').lower() == 'true',
+        "cache_size": int(os.environ.get('CACHE_MAX_SIZE', '100')),  # MB
         "chunk_size": 4096,  # bytes
         "enable_multiprocessing": True
     },
@@ -182,7 +189,9 @@ DEFAULT_CONFIG = {
         "default_plugins": ["HWID Spoofer", "Anti-Debugger"],
         "auto_load": True,
         "check_updates": True,
-        "allow_third_party": True
+        "allow_third_party": os.environ.get('PLUGIN_VERIFY_SIGNATURES', 'true').lower() != 'true',
+        "plugin_repo_url": os.environ.get('PLUGIN_REPO_URL', 'https://plugins.intellicrack.com'),
+        "plugin_repo_api_key": os.environ.get('PLUGIN_REPO_API_KEY', '')
     },
 
     # General Settings
@@ -190,9 +199,11 @@ DEFAULT_CONFIG = {
         "first_run_completed": False,
         "auto_backup": True,
         "auto_save_results": True,
-        "check_for_updates": True,
-        "send_analytics": False,
-        "language": "en"
+        "check_for_updates": os.environ.get('UPDATE_CHECK_INTERVAL', '86400') != '0',
+        "send_analytics": os.environ.get('TELEMETRY_ENABLED', 'false').lower() == 'true',
+        "language": "en",
+        "update_server_url": os.environ.get('UPDATE_SERVER_URL', 'https://updates.intellicrack.com'),
+        "update_check_endpoint": os.environ.get('UPDATE_CHECK_ENDPOINT', '/api/v1/check')
     },
 
     # AI/ML Settings
@@ -224,13 +235,13 @@ DEFAULT_CONFIG = {
         },
         "openai": {
             "type": "openai",
-            "enabled": False,
-            "api_key": "",
-            "endpoint": "https://api.openai.com/v1",
-            "timeout": 60,
-            "proxy": "",
+            "enabled": os.environ.get('OPENAI_API_KEY', '') != '',
+            "api_key": os.environ.get('OPENAI_API_KEY', ''),
+            "endpoint": os.environ.get('OPENAI_API_ENDPOINT', 'https://api.openai.com/v1'),
+            "timeout": int(os.environ.get('API_TIMEOUT', '60')),
+            "proxy": os.environ.get('HTTP_PROXY', ''),
             "rate_limit": {
-                "requests_per_minute": 60,
+                "requests_per_minute": int(os.environ.get('RATE_LIMIT_REQUESTS_PER_MINUTE', '60')),
                 "requests_per_day": 1000
             }
         },
@@ -283,12 +294,58 @@ DEFAULT_CONFIG = {
             }
         }
     },
+    
+    # C2 (Command and Control) Settings
+    "c2": {
+        "https_enabled": os.environ.get('C2_HTTPS_ENABLED', 'false').lower() == 'true',
+        "https": {
+            "host": os.environ.get('C2_HTTPS_HOST', '0.0.0.0'),
+            "port": int(os.environ.get('C2_HTTPS_PORT', '443')),
+            "headers": {}
+        },
+        "dns_enabled": os.environ.get('C2_DNS_ENABLED', 'false').lower() == 'true',
+        "dns": {
+            "domain": os.environ.get('C2_DNS_DOMAIN', 'example.com'),
+            "host": os.environ.get('C2_DNS_HOST', '0.0.0.0'),
+            "port": int(os.environ.get('C2_DNS_PORT', '53'))
+        },
+        "tcp_enabled": os.environ.get('C2_TCP_ENABLED', 'true').lower() == 'true',
+        "tcp": {
+            "host": os.environ.get('C2_TCP_HOST', '0.0.0.0'),
+            "port": int(os.environ.get('C2_TCP_PORT', '4444'))
+        },
+        "encryption": {
+            "enabled": True,
+            "algorithm": "AES-256-GCM"
+        },
+        "beacon": {
+            "interval": 60,  # seconds
+            "jitter": 0.3   # 30% jitter
+        }
+    },
+    
     "api_cache": {
         "enabled": True,
-        "ttl": 3600,  # 1 hour
-        "max_size_mb": 100
+        "ttl": int(os.environ.get('CACHE_TTL', '3600')),  # 1 hour
+        "max_size_mb": int(os.environ.get('CACHE_MAX_SIZE', '100'))
     },
-    "verify_checksums": True
+    "verify_checksums": True,
+    
+    # External Services
+    "external_services": {
+        "virustotal_api_key": os.environ.get('VIRUSTOTAL_API_KEY', ''),
+        "hybrid_analysis_api_key": os.environ.get('HYBRID_ANALYSIS_API_KEY', ''),
+        "shodan_api_key": os.environ.get('SHODAN_API_KEY', ''),
+        "censys_api_key": os.environ.get('CENSYS_API_KEY', '')
+    },
+    
+    # API Configuration
+    "api": {
+        "base_url": os.environ.get('API_BASE_URL', 'https://api.intellicrack.com'),
+        "timeout": int(os.environ.get('API_TIMEOUT', '60')),
+        "retry_attempts": int(os.environ.get('API_RETRY_ATTEMPTS', '3')),
+        "retry_delay": int(os.environ.get('API_RETRY_DELAY', '1000'))
+    }
 }
 
 
@@ -467,7 +524,7 @@ class ConfigManager:
 
         # Try dynamic discovery
         try:
-            from .utils.path_discovery import find_tool as path_discovery_find_tool
+            from .utils.core.path_discovery import find_tool as path_discovery_find_tool
             discovered_path = path_discovery_find_tool("ghidra")
             if discovered_path:
                 self.config["ghidra_path"] = discovered_path
@@ -481,10 +538,10 @@ class ConfigManager:
     def get_tool_path(self, tool_name: str) -> Optional[str]:
         """
         Get path for any tool with dynamic discovery.
-        
+
         Args:
             tool_name: Name of the tool (e.g., 'ghidra', 'radare2', 'frida')
-            
+
         Returns:
             Path to tool or None if not found
         """
@@ -496,7 +553,7 @@ class ConfigManager:
 
         # Try dynamic discovery
         try:
-            from .utils.path_discovery import find_tool as path_discovery_find_tool
+            from .utils.core.path_discovery import find_tool as path_discovery_find_tool
             discovered_path = path_discovery_find_tool(tool_name)
             if discovered_path:
                 self.config[config_key] = discovered_path

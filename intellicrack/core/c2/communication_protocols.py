@@ -88,6 +88,7 @@ class HttpsProtocol(BaseProtocol):
         if not HAS_AIOHTTP:
             # Return a mock response for testing
             return {'body': body, 'status': status}
+        # Use the globally imported aiohttp
         return aiohttp.web.Response(body=body, status=status)
 
     async def start(self):
@@ -96,9 +97,8 @@ class HttpsProtocol(BaseProtocol):
             raise ImportError("aiohttp is required for HTTPS protocol support")
 
         try:
-            from aiohttp import web
-
-            app = web.Application()
+            # Use the globally imported aiohttp
+            app = aiohttp.web.Application()
 
             # Register endpoints
             for path, handler in self.endpoints.items():
@@ -148,6 +148,7 @@ class HttpsProtocol(BaseProtocol):
             return False
 
         try:
+            # Use the globally imported aiohttp
             connector = aiohttp.TCPConnector(ssl=self.ssl_verify)
             self.session = aiohttp.ClientSession(connector=connector)
 
@@ -220,7 +221,7 @@ class HttpsProtocol(BaseProtocol):
             self.connection_count += 1
             self.logger.debug(f"Reader stream ready: {reader is not None}")
 
-            if self.on_connection:
+            if self.on_connection and callable(self.on_connection):
                 await self.on_connection({
                     'remote_addr': client_addr,
                     'protocol': 'https',
@@ -237,7 +238,7 @@ class HttpsProtocol(BaseProtocol):
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            if self.on_message:
+            if self.on_message and callable(self.on_message):
                 session_id = message.get('session_id', 'unknown')
                 await self.on_message(session_id, message)
 
@@ -258,7 +259,7 @@ class HttpsProtocol(BaseProtocol):
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            if self.on_message:
+            if self.on_message and callable(self.on_message):
                 session_id = message.get('session_id', 'unknown')
                 await self.on_message(session_id, message)
 
@@ -278,7 +279,7 @@ class HttpsProtocol(BaseProtocol):
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            if self.on_message:
+            if self.on_message and callable(self.on_message):
                 session_id = message.get('session_id', 'unknown')
                 await self.on_message(session_id, message)
 
@@ -298,7 +299,7 @@ class HttpsProtocol(BaseProtocol):
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            if self.on_message:
+            if self.on_message and callable(self.on_message):
                 session_id = message.get('session_id', 'unknown')
                 await self.on_message(session_id, message)
 
@@ -458,14 +459,189 @@ class DnsProtocol(BaseProtocol):
 
     def _parse_dns_response(self, response: bytes) -> str:
         """Parse DNS response and extract data."""
-        # Simplified DNS response parser
+        import struct
+
         try:
             self.logger.debug(f"Parsing DNS response of {len(response)} bytes")
-            # Extract answer section (simplified)
-            # Real implementation would properly parse DNS packet structure
-            return "response_data_placeholder"
+
+            if len(response) < 12:
+                self.logger.warning("DNS response too short")
+                return ""
+
+            # Parse DNS header
+            header = struct.unpack('!HHHHHH', response[:12])
+            transaction_id, flags, questions, answer_rrs, authority_rrs, additional_rrs = header
+
+            self.logger.debug(f"DNS Response - ID: {transaction_id}, Answers: {answer_rrs}")
+
+            if answer_rrs == 0:
+                self.logger.debug("No answers in DNS response")
+                return ""
+
+            # Skip question section
+            offset = 12
+
+            # Parse question section to skip it
+            for _ in range(questions):
+                # Skip QNAME
+                while offset < len(response) and response[offset] != 0:
+                    length = response[offset]
+                    if length == 0:
+                        break
+                    if length > 63:  # Pointer
+                        offset += 2
+                        break
+                    offset += length + 1
+
+                if offset < len(response) and response[offset] == 0:
+                    offset += 1  # Skip null terminator
+
+                offset += 4  # Skip QTYPE and QCLASS
+
+            # Parse answer section
+            extracted_data = []
+
+            for _ in range(answer_rrs):
+                if offset >= len(response):
+                    break
+
+                # Skip NAME (could be pointer or full name)
+                if offset < len(response) and response[offset] & 0xC0 == 0xC0:
+                    offset += 2  # Pointer
+                else:
+                    # Full name
+                    while offset < len(response) and response[offset] != 0:
+                        length = response[offset]
+                        if length == 0:
+                            break
+                        if length & 0xC0 == 0xC0:  # Pointer
+                            offset += 2
+                            break
+                        offset += length + 1
+
+                    if offset < len(response) and response[offset] == 0:
+                        offset += 1
+
+                if offset + 10 > len(response):
+                    break
+
+                # Parse TYPE, CLASS, TTL, RDLENGTH
+                rr_type, rr_class, ttl, rdlength = struct.unpack('!HHIH', response[offset:offset+10])
+                offset += 10
+
+                if offset + rdlength > len(response):
+                    break
+
+                # Extract RDATA based on type
+                rdata = response[offset:offset+rdlength]
+
+                if rr_type == 1:  # A record
+                    if rdlength == 4:
+                        ip = '.'.join(str(b) for b in rdata)
+                        self.logger.debug(f"A record: {ip}")
+
+                        # Try to extract encoded data from IP octets
+                        try:
+                            # Convert IP octets to base64-encoded string
+                            data_chunk = ''.join(chr(b) for b in rdata if 32 <= b <= 126)
+                            if data_chunk:
+                                extracted_data.append(data_chunk)
+                        except:
+                            pass
+
+                elif rr_type == 16:  # TXT record
+                    # TXT records store our data directly
+                    txt_data = ""
+                    txt_offset = 0
+                    while txt_offset < len(rdata):
+                        if txt_offset >= len(rdata):
+                            break
+                        length = rdata[txt_offset]
+                        txt_offset += 1
+                        if txt_offset + length <= len(rdata):
+                            txt_chunk = rdata[txt_offset:txt_offset + length].decode('utf-8', errors='ignore')
+                            txt_data += txt_chunk
+                            txt_offset += length
+                        else:
+                            break
+
+                    if txt_data:
+                        self.logger.debug(f"TXT record data: {txt_data[:50]}...")
+                        extracted_data.append(txt_data)
+
+                elif rr_type == 5:  # CNAME record
+                    # Parse CNAME and extract data from subdomain
+                    cname = self._parse_domain_name(rdata, response)
+                    if cname:
+                        self.logger.debug(f"CNAME: {cname}")
+                        # Extract data from subdomain part
+                        parts = cname.split('.')
+                        if len(parts) > 0:
+                            data_part = parts[0]
+                            # Decode base64-safe characters
+                            data_part = data_part.replace('-', '+').replace('_', '/')
+                            try:
+                                # Pad base64 if needed
+                                missing_padding = len(data_part) % 4
+                                if missing_padding:
+                                    data_part += '=' * (4 - missing_padding)
+
+                                decoded = base64.b64decode(data_part).decode('utf-8', errors='ignore')
+                                if decoded:
+                                    extracted_data.append(decoded)
+                            except:
+                                extracted_data.append(data_part)
+
+                offset += rdlength
+
+            # Combine all extracted data
+            result = ''.join(extracted_data)
+            self.logger.debug(f"Extracted {len(result)} bytes of data from DNS response")
+
+            return result
+
         except Exception as e:
             self.logger.error(f"Error parsing DNS response: {e}")
+            return ""
+
+    def _parse_domain_name(self, data: bytes, packet: bytes, offset: int = 0) -> str:
+        """Parse domain name from DNS data, handling compression pointers."""
+        labels = []
+        original_offset = offset
+        jumped = False
+
+        try:
+            while offset < len(data):
+                length = data[offset]
+
+                if length == 0:
+                    break
+
+                if length & 0xC0 == 0xC0:  # Compression pointer
+                    if not jumped:
+                        original_offset = offset + 2
+                        jumped = True
+
+                    # Extract pointer offset
+                    pointer = ((length & 0x3F) << 8) | data[offset + 1]
+                    if pointer < len(packet):
+                        offset = pointer
+                        data = packet
+                    else:
+                        break
+                else:
+                    offset += 1
+                    if offset + length <= len(data):
+                        label = data[offset:offset + length].decode('utf-8', errors='ignore')
+                        labels.append(label)
+                        offset += length
+                    else:
+                        break
+
+            return '.'.join(labels)
+
+        except Exception as e:
+            self.logger.error(f"Error parsing domain name: {e}")
             return ""
 
     def _combine_dns_responses(self, responses: List[str]) -> str:
@@ -503,7 +679,7 @@ class DnsProtocol(BaseProtocol):
                 # Extract C2 data from subdomain
                 c2_data = self._extract_c2_data_from_domain(domain)
 
-                if c2_data and self.on_message:
+                if c2_data and self.on_message and callable(self.on_message):
                     # Decrypt and process message
                     try:
                         decrypted = self.encryption_manager.decrypt(base64.b64decode(c2_data))
@@ -730,7 +906,7 @@ class TcpProtocol(BaseProtocol):
             self.client_connections[session_id] = writer
             self.connection_count += 1
 
-            if self.on_connection:
+            if self.on_connection and callable(self.on_connection):
                 await self.on_connection({
                     'session_id': session_id,
                     'remote_addr': client_addr,
@@ -765,7 +941,7 @@ class TcpProtocol(BaseProtocol):
                 decrypted = self.encryption_manager.decrypt(encrypted_data)
                 message = json.loads(decrypted)
 
-                if self.on_message:
+                if self.on_message and callable(self.on_message):
                     await self.on_message(session_id, message)
 
                 # Send acknowledgment
@@ -780,9 +956,9 @@ class TcpProtocol(BaseProtocol):
 
         except asyncio.IncompleteReadError:
             # Client disconnected
-            if self.on_disconnection:
+            if self.on_disconnection and callable(self.on_disconnection):
                 await self.on_disconnection(session_id)
         except Exception as e:
             self.logger.error(f"Error handling client messages: {e}")
-            if self.on_error:
+            if self.on_error and callable(self.on_error):
                 await self.on_error('tcp', e)

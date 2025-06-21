@@ -1,5 +1,5 @@
 """
-Inject Frida script into the specified Adobe process. 
+Inject Frida script into the specified Adobe process.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -43,10 +43,10 @@ injected = set()
 def inject(target_name):
     """
     Inject Frida script into the specified Adobe process.
-    
+
     Args:
         target_name: Name of the process to inject into
-        
+
     Attempts to attach to the process, load the Frida script, and mark
     the process as injected. Fails silently to maintain stealth.
     """
@@ -65,10 +65,10 @@ def inject(target_name):
 def get_running_adobe_apps():
     """
     Get list of currently running Adobe applications that haven't been injected yet.
-    
+
     Returns:
         list: Names of Adobe processes that are running but not yet injected
-        
+
     Scans running processes and filters for Adobe applications listed in
     ADOBE_PROCESSES that haven't already been marked as injected.
     """
@@ -85,7 +85,7 @@ def get_running_adobe_apps():
 def monitor_loop():
     """
     Continuously monitor for Adobe applications and inject them as they appear.
-    
+
     Runs an infinite loop that checks for new Adobe processes every 2 seconds
     and injects the Frida script into any newly detected processes.
     """

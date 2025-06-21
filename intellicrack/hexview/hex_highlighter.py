@@ -1,5 +1,5 @@
 """
-Hex data highlighting module for the hex viewer/editor. 
+Hex data highlighting module for the hex viewer/editor.
 
 Copyright (C) 2025 Zachary Flint
 

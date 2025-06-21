@@ -25,13 +25,13 @@ import subprocess
 import tempfile
 from typing import Any, Dict, List, Optional
 
-from ...utils.radare2_utils import R2Exception, r2_session
+from ...utils.tools.radare2_utils import R2Exception, r2_session
 
 
 class R2ScriptingEngine:
     """
     Advanced radare2 scripting integration engine.
-    
+
     Provides comprehensive scripting capabilities including:
     - r2pipe script execution
     - Custom r2 command sequences
@@ -923,11 +923,11 @@ class R2ScriptingEngine:
 def execute_license_analysis_script(binary_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Execute license analysis workflow on a binary.
-    
+
     Args:
         binary_path: Path to binary file
         radare2_path: Optional path to radare2 executable
-        
+
     Returns:
         License analysis results
     """
@@ -938,11 +938,11 @@ def execute_license_analysis_script(binary_path: str, radare2_path: Optional[str
 def execute_vulnerability_analysis_script(binary_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Execute vulnerability analysis workflow on a binary.
-    
+
     Args:
         binary_path: Path to binary file
         radare2_path: Optional path to radare2 executable
-        
+
     Returns:
         Vulnerability analysis results
     """

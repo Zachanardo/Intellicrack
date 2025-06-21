@@ -193,10 +193,10 @@ class CodeMeterProtocolParser:
     def parse_request(self, data: bytes) -> Optional[CodeMeterRequest]:
         """
         Parse incoming CodeMeter request
-        
+
         Args:
             data: Raw CodeMeter request data
-            
+
         Returns:
             Parsed CodeMeterRequest object or None if invalid
         """
@@ -363,10 +363,10 @@ class CodeMeterProtocolParser:
     def generate_response(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """
         Generate appropriate CodeMeter response based on request
-        
+
         Args:
             request: Parsed CodeMeter request
-            
+
         Returns:
             CodeMeter response object
         """
@@ -754,10 +754,10 @@ class CodeMeterProtocolParser:
     def serialize_response(self, response: CodeMeterResponse) -> bytes:
         """
         Serialize CodeMeter response to bytes
-        
+
         Args:
             response: CodeMeter response object
-            
+
         Returns:
             Serialized response bytes
         """

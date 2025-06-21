@@ -25,7 +25,7 @@ class BaseC2:
                            encryption_manager: Any) -> None:
         """
         Initialize communication protocols with error handling.
-        
+
         Args:
             protocols_config: List of protocol configurations
             encryption_manager: Encryption manager instance
@@ -77,10 +77,10 @@ class BaseC2:
     def prepare_start(self, component_name: str) -> bool:
         """
         Common start preparation for C2 components.
-        
+
         Args:
             component_name: Name of the component (e.g., "C2 client", "C2 server")
-            
+
         Returns:
             True if start should proceed, False if already running
         """

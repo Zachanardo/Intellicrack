@@ -16,39 +16,17 @@ import threading
 import time
 from collections import defaultdict, deque
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Set, Union
 
-import frida
-import psutil
+# Import availability checks from shared utility
+from ..utils.core.import_checks import FRIDA_AVAILABLE, frida, psutil
 
 logger = logging.getLogger(__name__)
 
 
-class ProtectionType(Enum):
-    """Classification of protection techniques"""
-    ANTI_DEBUG = "Anti-Debugging"
-    ANTI_VM = "Anti-VM/Sandbox"
-    PACKING = "Packing/Obfuscation"
-    LICENSE = "License Verification"
-    INTEGRITY = "Code Integrity"
-    HARDWARE = "Hardware Binding"
-    CLOUD = "Cloud Verification"
-    TIME = "Time-based Protection"
-    MEMORY = "Memory Protection"
-    KERNEL = "Kernel-mode Protection"
-    BEHAVIOR = "Behavioral Analysis"
-    UNKNOWN = "Unknown Protection"
-
-
-class HookCategory(Enum):
-    """Categories for hook batching"""
-    CRITICAL = "critical"      # Must hook immediately
-    HIGH = "high"             # Hook soon
-    MEDIUM = "medium"         # Can batch
-    LOW = "low"              # Batch aggressively
-    MONITORING = "monitoring" # Passive monitoring hooks
+# Import constants from separate module to avoid cyclic imports
+from .frida_constants import HookCategory, ProtectionType
 
 
 class FridaOperationLogger:
@@ -355,6 +333,19 @@ class ProtectionDetector:
                     self.detected_protections[prot_type].add(f"{module}!{function}")
                     break
 
+        # Analyze function arguments for additional protection indicators
+        if args:
+            for arg in args:
+                if isinstance(arg, str):
+                    # Check for protection-related strings in arguments
+                    arg_protections = self.analyze_string(arg)
+                    detected.update(arg_protections)
+                elif isinstance(arg, (int, float)) and arg > 0:
+                    # Analyze numeric arguments for suspicious patterns
+                    if function.lower() in ['virtualprotect', 'ntprotectvirtualmemory'] and arg in [0x40, 0x20, 0x04]:
+                        detected.add(ProtectionType.MEMORY_PROTECTION)
+                        self.detected_protections[ProtectionType.MEMORY_PROTECTION].add(f"Memory protection flag: {hex(arg)}")
+
         return detected
 
     def analyze_string(self, string_data: str) -> Set[ProtectionType]:
@@ -531,7 +522,7 @@ class FridaPerformanceOptimizer:
         cache_code = """
         const _cache = new Map();
         const _cacheTimeout = 1000; // 1 second
-        
+
         function cachedCall(key, fn) {
             const cached = _cache.get(key);
             if (cached && Date.now() - cached.time < _cacheTimeout) {
@@ -548,7 +539,7 @@ class FridaPerformanceOptimizer:
         batch_code = """
         const _sendBuffer = [];
         const _sendInterval = 50; // 50ms
-        
+
         function batchedSend(data) {
             _sendBuffer.push(data);
             if (_sendBuffer.length === 1) {
@@ -626,6 +617,9 @@ class FridaManager:
     """Main Frida management class with all advanced features"""
 
     def __init__(self, log_dir: str = None, script_dir: str = None):
+        if not FRIDA_AVAILABLE:
+            raise ImportError("Frida is not available. Please install frida-tools: pip install frida-tools")
+
         self.logger = FridaOperationLogger(log_dir)
         self.detector = ProtectionDetector()
         self.batcher = HookBatcher()
@@ -634,7 +628,7 @@ class FridaManager:
         self.device = None
         self.sessions = {}
         self.scripts = {}
-        
+
         # Use consistent absolute path for scripts
         if script_dir:
             self.script_dir = Path(script_dir)
@@ -644,7 +638,7 @@ class FridaManager:
             package_dir = Path(intellicrack.__file__).parent
             root_dir = package_dir.parent
             self.script_dir = root_dir / "scripts" / "frida"
-        
+
         # Ensure script directory exists
         self.script_dir.mkdir(parents=True, exist_ok=True)
 
@@ -670,6 +664,10 @@ class FridaManager:
 
     def attach_to_process(self, process_identifier: Union[int, str]) -> bool:
         """Attach to a process with comprehensive logging"""
+        if not FRIDA_AVAILABLE:
+            logger.error("Frida is not available")
+            return False
+
         try:
             start_time = time.time()
 
@@ -721,24 +719,24 @@ class FridaManager:
 
     def add_custom_script(self, script_content: str, script_name: str) -> Path:
         """Add a custom Frida script to the scripts directory
-        
+
         Args:
             script_content: JavaScript code for the script
             script_name: Name for the script (without extension)
-            
+
         Returns:
             Path to the created script file
         """
         # Ensure script name ends with .js
         if not script_name.endswith('.js'):
             script_name += '.js'
-        
+
         # Create script path
         script_path = self.script_dir / script_name
-        
+
         # Write script content
         script_path.write_text(script_content, encoding='utf-8')
-        
+
         # Log operation
         self.logger.log_operation(
             "add_custom_script",
@@ -749,34 +747,34 @@ class FridaManager:
             },
             success=True
         )
-        
+
         return script_path
 
     def list_available_scripts(self) -> List[Dict[str, Any]]:
         """List all available Frida scripts
-        
+
         Returns:
             List of script information dictionaries
         """
         scripts = []
-        
+
         if self.script_dir.exists():
             for script_file in self.script_dir.glob("*.js"):
                 try:
                     # Get script info
                     stat = script_file.stat()
-                    
+
                     # Try to extract metadata from script
                     content = script_file.read_text(encoding='utf-8')
                     protection_type = "UNKNOWN"
-                    
+
                     # Look for protection type in script
                     if "PROTECTION_TYPE" in content:
                         import re
                         match = re.search(r'PROTECTION_TYPE\s*=\s*["\'](\w+)["\']', content)
                         if match:
                             protection_type = match.group(1)
-                    
+
                     scripts.append({
                         'name': script_file.stem,
                         'path': str(script_file),
@@ -784,10 +782,10 @@ class FridaManager:
                         'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
                         'protection_type': protection_type
                     })
-                    
+
                 except Exception as e:
                     logger.error(f"Error reading script {script_file}: {e}")
-        
+
         return scripts
 
     def load_script(self, session_id: str, script_name: str,
@@ -871,29 +869,29 @@ class FridaManager:
         // Intellicrack Frida Instrumentation
         const _scriptName = '{script_name}';
         const _startTime = Date.now();
-        
+
         // Hook tracking
         const _hookedFunctions = new Set();
         const _hookStats = new Map();
-        
+
         // Wrap Interceptor.attach for logging
         const _originalAttach = Interceptor.attach;
         Interceptor.attach = function(target, callbacks) {{
             const moduleName = target.module || 'unknown';
             const functionName = target.name || target.toString();
             const hookId = `${{moduleName}}!${{functionName}}`;
-            
+
             _hookedFunctions.add(hookId);
-            
+
             // Wrap callbacks for stats
             const wrappedCallbacks = {{}};
-            
+
             if (callbacks.onEnter) {{
                 wrappedCallbacks.onEnter = function(args) {{
                     const start = Date.now();
                     const result = callbacks.onEnter.call(this, args);
                     const elapsed = Date.now() - start;
-                    
+
                     // Track performance
                     if (!_hookStats.has(hookId)) {{
                         _hookStats.set(hookId, {{ count: 0, totalTime: 0 }});
@@ -901,7 +899,7 @@ class FridaManager:
                     const stats = _hookStats.get(hookId);
                     stats.count++;
                     stats.totalTime += elapsed;
-                    
+
                     // Send hook event
                     send({{
                         type: 'hook',
@@ -910,15 +908,15 @@ class FridaManager:
                         phase: 'enter',
                         elapsed: elapsed
                     }});
-                    
+
                     return result;
                 }};
             }}
-            
+
             if (callbacks.onLeave) {{
                 wrappedCallbacks.onLeave = function(retval) {{
                     const result = callbacks.onLeave.call(this, retval);
-                    
+
                     send({{
                         type: 'hook',
                         function: functionName,
@@ -926,14 +924,14 @@ class FridaManager:
                         phase: 'leave',
                         modified: retval !== result
                     }});
-                    
+
                     return result;
                 }};
             }}
-            
+
             return _originalAttach.call(this, target, wrappedCallbacks);
         }};
-        
+
         // Protection detection helpers
         function detectProtection(type, evidence) {{
             send({{
@@ -943,7 +941,7 @@ class FridaManager:
                 timestamp: Date.now()
             }});
         }}
-        
+
         // Performance reporting
         setInterval(function() {{
             const stats = [];
@@ -954,7 +952,7 @@ class FridaManager:
                     avgTime: value.totalTime / value.count
                 }});
             }});
-            
+
             send({{
                 type: 'performance_report',
                 uptime: Date.now() - _startTime,
@@ -962,16 +960,52 @@ class FridaManager:
                 stats: stats
             }});
         }}, 5000); // Every 5 seconds
-        
+
         """
 
         return instrumentation + "\n" + script_code
 
     def _on_script_message(self, session_id: str, script_name: str,
                           message: Dict, data: Any):
-        """Handle messages from Frida scripts"""
+        """Handle messages from Frida scripts including binary data"""
         msg_type = message.get('type')
         payload = message.get('payload', {})
+        
+        # Handle binary data if present
+        if data is not None:
+            # Log that we received binary data
+            self.logger.log_operation(
+                f"script_data:{script_name}",
+                {
+                    'session_id': session_id,
+                    'data_size': len(data) if hasattr(data, '__len__') else 'unknown',
+                    'data_type': type(data).__name__
+                },
+                success=True
+            )
+            
+            # Process binary data based on payload type
+            if isinstance(payload, dict):
+                data_type = payload.get('data_type', 'unknown')
+                
+                if data_type == 'memory_dump':
+                    # Handle memory dump data
+                    self._handle_memory_dump(session_id, script_name, data, payload)
+                elif data_type == 'screenshot':
+                    # Handle screenshot data
+                    self._handle_screenshot_data(session_id, script_name, data, payload)
+                elif data_type == 'file_content':
+                    # Handle file content
+                    self._handle_file_content(session_id, script_name, data, payload)
+                elif data_type == 'network_packet':
+                    # Handle network packet data
+                    self._handle_network_packet(session_id, script_name, data, payload)
+                elif data_type == 'encrypted_data':
+                    # Handle encrypted data that was intercepted
+                    self._handle_encrypted_data(session_id, script_name, data, payload)
+                else:
+                    # Generic binary data handling
+                    self._handle_generic_binary_data(session_id, script_name, data, payload)
 
         if msg_type == 'send':
             # Handle different message types
@@ -1252,6 +1286,391 @@ class FridaManager:
             {'method': 'usermode_emulation'}
         )
 
+    def _handle_memory_dump(self, session_id: str, script_name: str, 
+                           data: Any, payload: Dict[str, Any]):
+        """Handle memory dump data from Frida scripts"""
+        # Extract metadata from payload
+        address = payload.get('address', '0x0')
+        size = payload.get('size', len(data) if hasattr(data, '__len__') else 0)
+        process_name = payload.get('process_name', 'unknown')
+        
+        # Log the memory dump event
+        self.logger.log_operation(
+            f"memory_dump:{script_name}",
+            {
+                'session_id': session_id,
+                'address': address,
+                'size': size,
+                'process': process_name
+            },
+            success=True
+        )
+        
+        # Store memory dump for analysis
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        dump_file = self.logger.log_dir / f"memory_dump_{process_name}_{address}_{timestamp}.bin"
+        
+        try:
+            # Write binary data to file
+            if isinstance(data, (bytes, bytearray)):
+                with open(dump_file, 'wb') as f:
+                    f.write(data)
+            else:
+                # Convert to bytes if necessary
+                with open(dump_file, 'wb') as f:
+                    f.write(bytes(data))
+                    
+            # Analyze memory dump for patterns
+            self._analyze_memory_dump(data, payload)
+            
+        except Exception as e:
+            logger.error(f"Failed to save memory dump: {e}")
+
+    def _handle_screenshot_data(self, session_id: str, script_name: str,
+                               data: Any, payload: Dict[str, Any]):
+        """Handle screenshot data from Frida scripts"""
+        # Extract metadata
+        window_title = payload.get('window_title', 'unknown')
+        capture_time = payload.get('capture_time', datetime.now().isoformat())
+        format_type = payload.get('format', 'png')
+        
+        # Log screenshot event
+        self.logger.log_operation(
+            f"screenshot:{script_name}",
+            {
+                'session_id': session_id,
+                'window': window_title,
+                'time': capture_time,
+                'format': format_type
+            },
+            success=True
+        )
+        
+        # Save screenshot
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        screenshot_file = self.logger.log_dir / f"screenshot_{window_title}_{timestamp}.{format_type}"
+        
+        try:
+            with open(screenshot_file, 'wb') as f:
+                f.write(data if isinstance(data, bytes) else bytes(data))
+                
+            # Perform OCR or pattern detection if needed
+            if payload.get('analyze', False):
+                self._analyze_screenshot(data, payload)
+                
+        except Exception as e:
+            logger.error(f"Failed to save screenshot: {e}")
+
+    def _handle_file_content(self, session_id: str, script_name: str,
+                            data: Any, payload: Dict[str, Any]):
+        """Handle file content intercepted by Frida scripts"""
+        # Extract file information
+        file_path = payload.get('file_path', 'unknown')
+        operation = payload.get('operation', 'read')  # read/write
+        file_size = payload.get('size', len(data) if hasattr(data, '__len__') else 0)
+        
+        # Log file operation
+        self.logger.log_operation(
+            f"file_{operation}:{script_name}",
+            {
+                'session_id': session_id,
+                'file_path': file_path,
+                'size': file_size,
+                'operation': operation
+            },
+            success=True
+        )
+        
+        # Analyze file content for patterns
+        if operation == 'read':
+            # Check for license files, config files, etc.
+            if any(pattern in file_path.lower() for pattern in ['license', 'key', 'config', 'serial']):
+                self._analyze_license_file(data, file_path, payload)
+        elif operation == 'write':
+            # Monitor for persistence or modification attempts
+            self._analyze_file_write(data, file_path, payload)
+
+    def _handle_network_packet(self, session_id: str, script_name: str,
+                              data: Any, payload: Dict[str, Any]):
+        """Handle network packet data from Frida scripts"""
+        # Extract packet information
+        direction = payload.get('direction', 'unknown')  # send/recv
+        protocol = payload.get('protocol', 'tcp')
+        src_addr = payload.get('src_addr', '')
+        dst_addr = payload.get('dst_addr', '')
+        src_port = payload.get('src_port', 0)
+        dst_port = payload.get('dst_port', 0)
+        
+        # Log network event
+        self.logger.log_operation(
+            f"network_{direction}:{script_name}",
+            {
+                'session_id': session_id,
+                'protocol': protocol,
+                'src': f"{src_addr}:{src_port}",
+                'dst': f"{dst_addr}:{dst_port}",
+                'size': len(data) if hasattr(data, '__len__') else 0
+            },
+            success=True
+        )
+        
+        # Analyze packet content
+        if protocol.lower() in ['http', 'https']:
+            self._analyze_http_traffic(data, payload)
+        elif any(port in [dst_port, src_port] for port in [443, 8443, 8080]):
+            # Potential license server communication
+            self._analyze_license_traffic(data, payload)
+
+    def _handle_encrypted_data(self, session_id: str, script_name: str,
+                              data: Any, payload: Dict[str, Any]):
+        """Handle encrypted data intercepted by Frida scripts"""
+        # Extract encryption information
+        algorithm = payload.get('algorithm', 'unknown')
+        operation = payload.get('operation', 'unknown')  # encrypt/decrypt
+        key_info = payload.get('key_info', {})
+        iv = payload.get('iv', None)
+        
+        # Log encryption event
+        self.logger.log_operation(
+            f"crypto_{operation}:{script_name}",
+            {
+                'session_id': session_id,
+                'algorithm': algorithm,
+                'operation': operation,
+                'data_size': len(data) if hasattr(data, '__len__') else 0,
+                'has_key': bool(key_info),
+                'has_iv': bool(iv)
+            },
+            success=True
+        )
+        
+        # Store encrypted/decrypted data for analysis
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        crypto_file = self.logger.log_dir / f"crypto_{operation}_{algorithm}_{timestamp}.bin"
+        
+        try:
+            with open(crypto_file, 'wb') as f:
+                f.write(data if isinstance(data, bytes) else bytes(data))
+                
+            # If we have decrypted data, analyze it
+            if operation == 'decrypt':
+                self._analyze_decrypted_data(data, payload)
+                
+        except Exception as e:
+            logger.error(f"Failed to save crypto data: {e}")
+
+    def _handle_generic_binary_data(self, session_id: str, script_name: str,
+                                   data: Any, payload: Dict[str, Any]):
+        """Handle generic binary data from Frida scripts"""
+        # Extract any available metadata
+        data_type = payload.get('data_type', 'binary')
+        description = payload.get('description', 'Generic binary data')
+        
+        # Log the event
+        self.logger.log_operation(
+            f"binary_data:{script_name}",
+            {
+                'session_id': session_id,
+                'type': data_type,
+                'description': description,
+                'size': len(data) if hasattr(data, '__len__') else 0
+            },
+            success=True
+        )
+        
+        # Save the data for later analysis
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        data_file = self.logger.log_dir / f"binary_data_{script_name}_{timestamp}.bin"
+        
+        try:
+            with open(data_file, 'wb') as f:
+                f.write(data if isinstance(data, bytes) else bytes(data))
+        except Exception as e:
+            logger.error(f"Failed to save binary data: {e}")
+
+    def _analyze_memory_dump(self, data: Any, payload: Dict[str, Any]):
+        """Analyze memory dump for interesting patterns"""
+        # Convert to bytes if necessary
+        if not isinstance(data, bytes):
+            data = bytes(data)
+            
+        # Look for common patterns
+        patterns = {
+            'license_key': [b'LICENSE', b'KEY', b'SERIAL', b'ACTIVATION'],
+            'crypto_keys': [b'RSA', b'AES', b'-----BEGIN', b'-----END'],
+            'urls': [b'http://', b'https://', b'ftp://'],
+            'registry': [b'HKEY_', b'SOFTWARE\\', b'CurrentVersion'],
+            'interesting_strings': [b'trial', b'expired', b'registered', b'cracked']
+        }
+        
+        findings = {}
+        for category, pattern_list in patterns.items():
+            for pattern in pattern_list:
+                if pattern in data:
+                    if category not in findings:
+                        findings[category] = []
+                    # Find context around the pattern
+                    idx = data.find(pattern)
+                    context_start = max(0, idx - 50)
+                    context_end = min(len(data), idx + 100)
+                    context = data[context_start:context_end]
+                    findings[category].append({
+                        'pattern': pattern.decode('utf-8', errors='ignore'),
+                        'offset': idx,
+                        'context': context.hex()
+                    })
+        
+        if findings:
+            self.logger.log_operation(
+                "memory_analysis",
+                {
+                    'findings': findings,
+                    'source': payload
+                },
+                success=True
+            )
+
+    def _analyze_screenshot(self, data: Any, payload: Dict[str, Any]):
+        """Analyze screenshot for UI elements or text"""
+        # This would integrate with OCR or image analysis
+        # For now, just log that analysis was requested
+        self.logger.log_operation(
+            "screenshot_analysis",
+            {
+                'requested': True,
+                'window': payload.get('window_title', 'unknown')
+            },
+            success=True
+        )
+
+    def _analyze_license_file(self, data: Any, file_path: str, payload: Dict[str, Any]):
+        """Analyze potential license file content"""
+        try:
+            # Try to decode as text
+            if isinstance(data, bytes):
+                text_content = data.decode('utf-8', errors='ignore')
+            else:
+                text_content = str(data)
+                
+            # Look for license patterns
+            license_indicators = ['expiry', 'trial', 'activation', 'serial', 'key', 'license']
+            found_indicators = [ind for ind in license_indicators if ind in text_content.lower()]
+            
+            if found_indicators:
+                self.logger.log_operation(
+                    "license_file_detected",
+                    {
+                        'file_path': file_path,
+                        'indicators': found_indicators,
+                        'size': len(data)
+                    },
+                    success=True
+                )
+                
+                # Notify protection detector
+                self.detector.notify_protection_detected(
+                    ProtectionType.LICENSE,
+                    {
+                        'evidence': f"License file accessed: {file_path}",
+                        'indicators': found_indicators
+                    }
+                )
+                
+        except Exception as e:
+            logger.debug(f"Failed to analyze license file: {e}")
+
+    def _analyze_file_write(self, data: Any, file_path: str, payload: Dict[str, Any]):
+        """Analyze file write operations for suspicious activity"""
+        # Check for persistence mechanisms
+        persistence_paths = ['startup', 'autorun', 'scheduled tasks', 'services']
+        if any(path in file_path.lower() for path in persistence_paths):
+            self.logger.log_operation(
+                "persistence_attempt",
+                {
+                    'file_path': file_path,
+                    'size': len(data) if hasattr(data, '__len__') else 0
+                },
+                success=True
+            )
+
+    def _analyze_http_traffic(self, data: Any, payload: Dict[str, Any]):
+        """Analyze HTTP/HTTPS traffic for license checks"""
+        try:
+            if isinstance(data, bytes):
+                text_data = data.decode('utf-8', errors='ignore')
+            else:
+                text_data = str(data)
+                
+            # Look for license-related endpoints
+            license_endpoints = ['activate', 'verify', 'license', 'validate', 'auth']
+            for endpoint in license_endpoints:
+                if endpoint in text_data.lower():
+                    self.logger.log_operation(
+                        "license_communication",
+                        {
+                            'endpoint_type': endpoint,
+                            'protocol': payload.get('protocol', 'http')
+                        },
+                        success=True
+                    )
+                    break
+                    
+        except Exception as e:
+            logger.debug(f"Failed to analyze HTTP traffic: {e}")
+
+    def _analyze_license_traffic(self, data: Any, payload: Dict[str, Any]):
+        """Analyze potential license server communication"""
+        self.logger.log_operation(
+            "license_server_communication",
+            {
+                'dst_addr': payload.get('dst_addr', ''),
+                'dst_port': payload.get('dst_port', 0),
+                'size': len(data) if hasattr(data, '__len__') else 0
+            },
+            success=True
+        )
+        
+        # Notify protection detector
+        self.detector.notify_protection_detected(
+            ProtectionType.CLOUD,
+            {
+                'evidence': f"License server communication to {payload.get('dst_addr', 'unknown')}",
+                'port': payload.get('dst_port', 0)
+            }
+        )
+
+    def _analyze_decrypted_data(self, data: Any, payload: Dict[str, Any]):
+        """Analyze decrypted data for interesting content"""
+        try:
+            # Try to interpret as text
+            if isinstance(data, bytes):
+                text_data = data.decode('utf-8', errors='ignore')
+                
+                # Check if it looks like structured data
+                if text_data.strip().startswith('{') or text_data.strip().startswith('['):
+                    # Possible JSON
+                    self.logger.log_operation(
+                        "decrypted_json_detected",
+                        {
+                            'algorithm': payload.get('algorithm', 'unknown'),
+                            'size': len(data)
+                        },
+                        success=True
+                    )
+                elif text_data.strip().startswith('<?xml'):
+                    # Possible XML
+                    self.logger.log_operation(
+                        "decrypted_xml_detected",
+                        {
+                            'algorithm': payload.get('algorithm', 'unknown'),
+                            'size': len(data)
+                        },
+                        success=True
+                    )
+                    
+        except Exception as e:
+            logger.debug(f"Failed to analyze decrypted data: {e}")
+
     def create_selective_instrumentation(self, target_apis: List[str],
                                       analysis_requirements: Dict[str, Any]) -> str:
         """Create selective instrumentation based on analysis requirements"""
@@ -1329,7 +1748,7 @@ class FridaManager:
         return """
         // Memory Monitoring
         const memoryWatches = new Map();
-        
+
         Interceptor.attach(Module.findExportByName('kernel32.dll', 'VirtualAlloc'), {
             onLeave: function(retval) {
                 if (retval) {
@@ -1339,7 +1758,7 @@ class FridaManager:
                         size: size,
                         timestamp: Date.now()
                     });
-                    
+
                     send({
                         type: 'memory_alloc',
                         address: addr.toString(),
@@ -1348,14 +1767,14 @@ class FridaManager:
                 }
             }
         });
-        
+
         Interceptor.attach(Module.findExportByName('kernel32.dll', 'VirtualFree'), {
             onEnter: function(args) {
                 const addr = args[0];
                 if (memoryWatches.has(addr.toString())) {
                     const info = memoryWatches.get(addr.toString());
                     memoryWatches.delete(addr.toString());
-                    
+
                     send({
                         type: 'memory_free',
                         address: addr.toString(),
@@ -1377,7 +1796,7 @@ class FridaManager:
             'GetTickCount': 'timing',
             'CryptHashData': 'integrity'
         };
-        
+
         Object.keys(protectionAPIs).forEach(api => {
             const target = Module.findExportByName(null, api);
             if (target) {

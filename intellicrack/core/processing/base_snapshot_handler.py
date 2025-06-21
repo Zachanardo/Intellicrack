@@ -23,15 +23,15 @@ class BaseSnapshotHandler(ABC):
     def compare_snapshots_base(self, snapshot1: str, snapshot2: str) -> Dict[str, Any]:
         """
         Perform base snapshot comparison that's common between platforms.
-        
+
         Args:
             snapshot1: First snapshot name
             snapshot2: Second snapshot name
-            
+
         Returns:
             Dictionary containing base comparison results or error
         """
-        from ...utils.snapshot_common import start_snapshot_comparison
+        from ...utils.system.snapshot_common import start_snapshot_comparison
 
         success, snapshot_data, error_msg = start_snapshot_comparison(
             self.snapshots, snapshot1, snapshot2, self.logger
@@ -67,11 +67,11 @@ class BaseSnapshotHandler(ABC):
     def _perform_platform_specific_comparison(self, s1: Dict[str, Any], s2: Dict[str, Any]) -> Dict[str, Any]:
         """
         Perform platform-specific snapshot comparison logic.
-        
+
         Args:
             s1: First snapshot data
             s2: Second snapshot data
-            
+
         Returns:
             Dictionary containing platform-specific comparison results
         """

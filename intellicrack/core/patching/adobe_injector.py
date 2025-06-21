@@ -1,5 +1,5 @@
 """
-Adobe License Bypass Module 
+Adobe License Bypass Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -140,7 +140,7 @@ console.log("[*] Adobe license patch injected.");
 
 const targets = [
     "IsActivated",
-    "IsLicenseValid", 
+    "IsLicenseValid",
     "GetLicenseStatus",
     "GetSerialNumber",
     "CheckSubscription"
@@ -253,10 +253,10 @@ for (let name of targets) {
     def _get_process_handle(self, process_name: str) -> Optional[int]:
         """
         Get process handle by name using Windows API
-        
+
         Args:
             process_name: Name of the process
-            
+
         Returns:
             Process handle or None if not found
         """
@@ -278,11 +278,11 @@ for (let name of targets) {
     def _inject_into_process(self, process_handle: int, dll_path: str) -> bool:
         """
         Inject DLL into process using Windows API
-        
+
         Args:
             process_handle: Handle to the target process
             dll_path: Path to the DLL to inject
-            
+
         Returns:
             True if injection successful, False otherwise
         """
@@ -360,12 +360,12 @@ for (let name of targets) {
     def _create_remote_thread(self, process_handle: int, start_address: int, parameter: int = 0) -> bool:
         """
         Create a remote thread in the target process
-        
+
         Args:
             process_handle: Handle to the target process
             start_address: Address of the function to execute
             parameter: Parameter to pass to the function
-            
+
         Returns:
             True if thread created successfully, False otherwise
         """
@@ -413,11 +413,11 @@ for (let name of targets) {
     def inject_dll_windows_api(self, target_name: str, dll_path: str) -> bool:
         """
         Inject DLL using Windows API instead of Frida
-        
+
         Args:
             target_name: Name of the target process
             dll_path: Path to the DLL to inject
-            
+
         Returns:
             True if injection successful, False otherwise
         """
@@ -443,11 +443,11 @@ for (let name of targets) {
     def manual_map_dll(self, target_name: str, dll_path: str) -> bool:
         """
         Manual map DLL without using LoadLibrary - avoids detection
-        
+
         Args:
             target_name: Name of the target process
             dll_path: Path to the DLL to inject
-            
+
         Returns:
             True if injection successful, False otherwise
         """
@@ -788,10 +788,10 @@ for (let name of targets) {
     def is_process_64bit(self, process_handle: int) -> Optional[bool]:
         """
         Check if a process is 64-bit
-        
+
         Args:
             process_handle: Handle to the process
-            
+
         Returns:
             True if 64-bit, False if 32-bit, None if error
         """
@@ -824,10 +824,10 @@ for (let name of targets) {
     def is_dll_64bit(self, dll_path: str) -> Optional[bool]:
         """
         Check if a DLL is 64-bit
-        
+
         Args:
             dll_path: Path to the DLL
-            
+
         Returns:
             True if 64-bit, False if 32-bit, None if error
         """
@@ -853,11 +853,11 @@ for (let name of targets) {
     def inject_wow64(self, target_name: str, dll_path: str) -> bool:
         """
         Cross-architecture injection with WOW64 support
-        
+
         Args:
             target_name: Name of the target process
             dll_path: Path to the DLL to inject
-            
+
         Returns:
             True if injection successful, False otherwise
         """
@@ -909,11 +909,11 @@ for (let name of targets) {
     def _inject_wow64_32bit(self, process_handle: int, dll_path: str) -> bool:
         """
         Inject into 32-bit process from 64-bit injector
-        
+
         Args:
             process_handle: Handle to 32-bit process
             dll_path: Path to 32-bit DLL
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -998,11 +998,11 @@ for (let name of targets) {
     def _inject_heavens_gate_64bit(self, process_handle: int, dll_path: str) -> bool:
         """
         Inject into 64-bit process from 32-bit injector using Heaven's Gate
-        
+
         Args:
             process_handle: Handle to 64-bit process
             dll_path: Path to 64-bit DLL
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -1344,12 +1344,12 @@ for (let name of targets) {
                         check_hooks: bool = True) -> Dict[str, Any]:
         """
         Verify that DLL was successfully injected and hooks are active
-        
+
         Args:
             target_name: Name of the target process
             dll_name: Name of the DLL to check (optional)
             check_hooks: Whether to verify hooks are active
-            
+
         Returns:
             Dictionary with verification results
         """
@@ -1634,12 +1634,12 @@ for (let name of targets) {
                                hook_type: int = None) -> bool:
         """
         Inject DLL using SetWindowsHookEx - bypasses some AV solutions
-        
+
         Args:
             target_name: Name of target process
             dll_path: Path to the DLL to inject
             hook_type: Type of hook (WH_KEYBOARD, WH_MOUSE, etc.)
-            
+
         Returns:
             True if injection successful, False otherwise
         """
@@ -1827,12 +1827,12 @@ for (let name of targets) {
         """
         Inject DLL using APC (Asynchronous Procedure Call) queue
         More stealthy than CreateRemoteThread
-        
+
         Args:
             target_name: Name of target process
             dll_path: Path to DLL to inject
             wait_for_alertable: Wait for thread to become alertable
-            
+
         Returns:
             True if injection successful, False otherwise
         """
@@ -2037,11 +2037,11 @@ for (let name of targets) {
     def inject_direct_syscall(self, target_name: str, dll_path: str) -> bool:
         """
         Inject DLL using direct syscalls to bypass API hooks
-        
+
         Args:
             target_name: Name of target process
             dll_path: Path to DLL to inject
-            
+
         Returns:
             True if injection successful, False otherwise
         """
@@ -2076,11 +2076,11 @@ for (let name of targets) {
     def inject_reflective_dll(self, target_name: str, dll_data: bytes) -> bool:
         """
         Reflective DLL injection - inject DLL from memory without file on disk
-        
+
         Args:
             target_name: Name of target process
             dll_data: Raw DLL data in memory
-            
+
         Returns:
             True if injection successful, False otherwise
         """
@@ -2577,11 +2577,11 @@ for (let name of targets) {
     def inject_reflective_dll_from_file(self, target_name: str, dll_path: str) -> bool:
         """
         Reflective DLL injection from file path
-        
+
         Args:
             target_name: Name of target process
             dll_path: Path to DLL file
-            
+
         Returns:
             True if injection successful, False otherwise
         """
@@ -2600,11 +2600,11 @@ for (let name of targets) {
     def unlink_dll_from_peb(self, target_name: str, dll_name: str) -> bool:
         """
         Unlink DLL from PEB to hide it from process module list
-        
+
         Args:
             target_name: Name of target process
             dll_name: Name of DLL to hide
-            
+
         Returns:
             True if unlinking successful, False otherwise
         """
@@ -2907,11 +2907,11 @@ for (let name of targets) {
     def inject_process_hollowing(self, target_exe: str, payload_exe: str) -> bool:
         """
         Use process hollowing injection technique
-        
+
         Args:
             target_exe: Path to legitimate executable to hollow
             payload_exe: Path to payload executable
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -2939,11 +2939,11 @@ for (let name of targets) {
     def inject_kernel_driver(self, target_pid: int, dll_path: str) -> bool:
         """
         Use kernel driver injection technique
-        
+
         Args:
             target_pid: Target process ID
             dll_path: Path to DLL to inject
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -2972,12 +2972,12 @@ for (let name of targets) {
                          command_line: str = None) -> bool:
         """
         Use Early Bird injection technique
-        
+
         Args:
             target_exe: Path to target executable
             dll_path: Path to DLL to inject
             command_line: Optional command line arguments
-            
+
         Returns:
             True if successful, False otherwise
         """

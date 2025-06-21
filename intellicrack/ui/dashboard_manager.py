@@ -1,5 +1,5 @@
 """
-Dashboard Manager for Intellicrack application. 
+Dashboard Manager for Intellicrack application.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -32,7 +32,7 @@ import logging
 import os
 from typing import Any, Dict, List, Union
 
-from ..utils.string_utils import format_bytes
+from ..utils.core.string_utils import format_bytes
 
 
 class DashboardManager:

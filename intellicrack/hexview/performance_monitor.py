@@ -1,5 +1,5 @@
 """
-Performance Monitor for Hex Viewer Large File Operations. 
+Performance Monitor for Hex Viewer Large File Operations.
 
 Copyright (C) 2025 Zachary Flint
 

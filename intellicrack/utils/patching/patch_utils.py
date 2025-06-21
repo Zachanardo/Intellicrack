@@ -1,5 +1,5 @@
 """
-Patching utilities for the Intellicrack framework. 
+Patching utilities for the Intellicrack framework.
 
 Copyright (C) 2025 Zachary Flint
 

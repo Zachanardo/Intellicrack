@@ -23,13 +23,13 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from ...utils.radare2_utils import R2Exception, R2Session, r2_session
+from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 
 
 class R2StringAnalyzer:
     """
     Advanced string analysis engine using radare2's comprehensive string detection.
-    
+
     Provides sophisticated string analysis for:
     - License key and validation string detection
     - Crypto constants and algorithm identifiers
@@ -42,7 +42,7 @@ class R2StringAnalyzer:
     def __init__(self, binary_path: str, radare2_path: Optional[str] = None):
         """
         Initialize string analyzer.
-        
+
         Args:
             binary_path: Path to binary file
             radare2_path: Optional path to radare2 executable
@@ -55,11 +55,11 @@ class R2StringAnalyzer:
     def analyze_all_strings(self, min_length: int = 4, encoding: str = 'auto') -> Dict[str, Any]:
         """
         Perform comprehensive string analysis on the binary.
-        
+
         Args:
             min_length: Minimum string length to consider
             encoding: String encoding ('auto', 'ascii', 'utf8', 'utf16')
-            
+
         Returns:
             Complete string analysis results
         """
@@ -143,20 +143,38 @@ class R2StringAnalyzer:
                         filtered_strings.append(string_data)
                 all_strings = filtered_strings
 
-            # Get wide character strings (UTF-16)
-            try:
-                wide_strings = r2._execute_command('izwj', expect_json=True)
-                if isinstance(wide_strings, list):
-                    # Mark wide strings
-                    for ws in wide_strings:
-                        ws['encoding'] = 'utf-16'
-                        ws['is_wide'] = True
-                    existing_addrs = {s.get('vaddr', 0) for s in all_strings}
-                    for wide_string in wide_strings:
-                        if wide_string.get('vaddr', 0) not in existing_addrs:
-                            all_strings.append(wide_string)
-            except R2Exception:
-                pass
+            # Apply encoding-specific string extraction
+            if encoding == 'auto' or encoding == 'utf16':
+                # Get wide character strings (UTF-16)
+                try:
+                    wide_strings = r2._execute_command('izwj', expect_json=True)
+                    if isinstance(wide_strings, list):
+                        # Mark wide strings
+                        for ws in wide_strings:
+                            ws['encoding'] = 'utf-16'
+                            ws['is_wide'] = True
+                        existing_addrs = {s.get('vaddr', 0) for s in all_strings}
+                        for wide_string in wide_strings:
+                            if wide_string.get('vaddr', 0) not in existing_addrs:
+                                all_strings.append(wide_string)
+                except R2Exception:
+                    pass
+
+            # For specific encodings, filter strings accordingly
+            if encoding in ['ascii', 'utf8'] and encoding != 'auto':
+                filtered_strings = []
+                for string_data in all_strings:
+                    string_content = string_data.get('string', '')
+                    try:
+                        if encoding == 'ascii':
+                            string_content.encode('ascii')
+                        elif encoding == 'utf8':
+                            string_content.encode('utf-8')
+                        string_data['encoding'] = encoding
+                        filtered_strings.append(string_data)
+                    except UnicodeEncodeError:
+                        continue
+                all_strings = filtered_strings
 
             # Clean and normalize string data
             normalized_strings = []
@@ -692,12 +710,12 @@ def analyze_binary_strings(binary_path: str, radare2_path: Optional[str] = None,
                           min_length: int = 4) -> Dict[str, Any]:
     """
     Perform comprehensive string analysis on a binary.
-    
+
     Args:
         binary_path: Path to binary file
         radare2_path: Optional path to radare2 executable
         min_length: Minimum string length to analyze
-        
+
     Returns:
         Complete string analysis results
     """

@@ -1,5 +1,5 @@
 """
-Protocol Fingerprinting for Proprietary License Protocols 
+Protocol Fingerprinting for Proprietary License Protocols
 
 Copyright (C) 2025 Zachary Flint
 
@@ -30,7 +30,7 @@ from collections import Counter
 from typing import Any, Dict, List, Optional, Union
 
 # Import shared entropy calculation
-from ...utils.protection_utils import calculate_entropy
+from ...utils.protection.protection_utils import calculate_entropy
 
 
 class ProtocolFingerprinter:

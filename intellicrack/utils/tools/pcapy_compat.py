@@ -1,5 +1,5 @@
 """
-Compatibility module for pcapy functionality. 
+Compatibility module for pcapy functionality.
 
 Copyright (C) 2025 Zachary Flint
 

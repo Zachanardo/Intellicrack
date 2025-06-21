@@ -1,5 +1,5 @@
 """
-Data Inspector for Hex Viewer. 
+Data Inspector for Hex Viewer.
 
 Copyright (C) 2025 Zachary Flint
 

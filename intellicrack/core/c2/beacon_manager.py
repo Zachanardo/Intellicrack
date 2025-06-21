@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class BeaconManager:
     """
     Advanced beacon management system for C2 infrastructure.
-    
+
     Handles session health monitoring, beacon scheduling,
     and adaptive communication intervals.
     """

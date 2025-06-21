@@ -83,7 +83,7 @@ from .base_network_analyzer import BaseNetworkAnalyzer
 class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     """
     Real-time traffic interception engine for license server communications.
-    
+
     This engine intercepts actual network traffic to and from license servers,
     analyzes the protocols, and enables real-time response generation.
     """
@@ -91,7 +91,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     def __init__(self, bind_interface: str = "127.0.0.1"):
         """
         Initialize the traffic interception engine.
-        
+
         Args:
             bind_interface: Network interface to bind to
         """
@@ -230,10 +230,10 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     def start_interception(self, ports: List[int] = None) -> bool:
         """
         Start traffic interception on specified ports.
-        
+
         Args:
             ports: List of ports to monitor, or None for all license ports
-            
+
         Returns:
             bool: True if started successfully
         """

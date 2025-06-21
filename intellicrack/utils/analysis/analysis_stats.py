@@ -18,12 +18,12 @@ class AnalysisStatsGenerator:
     def safe_stats_generation(stats_func, *args, **kwargs) -> Dict[str, Any]:
         """
         Safely execute statistics generation with error handling.
-        
+
         Args:
             stats_func: Function to execute for statistics generation
             *args: Arguments to pass to the function
             **kwargs: Keyword arguments to pass to the function
-            
+
         Returns:
             Statistics dictionary or empty dict on error
         """
@@ -39,12 +39,12 @@ class AnalysisStatsGenerator:
                           default_value: str = 'unknown') -> Dict[str, int]:
         """
         Count items by a specific attribute.
-        
+
         Args:
             items: List of items to count
             attribute: Attribute name to count by
             default_value: Default value for missing attributes
-            
+
         Returns:
             Dictionary with counts by attribute value
         """
@@ -58,12 +58,12 @@ class AnalysisStatsGenerator:
     def safe_recommendation_generation(rec_func, *args, **kwargs) -> List[str]:
         """
         Safely execute recommendation generation with error handling.
-        
+
         Args:
             rec_func: Function to execute for recommendation generation
             *args: Arguments to pass to the function
             **kwargs: Keyword arguments to pass to the function
-            
+
         Returns:
             List of recommendations or empty list on error
         """

@@ -219,10 +219,10 @@ class HASPSentinelParser:
     def parse_request(self, data: bytes) -> Optional[HASPRequest]:
         """
         Parse incoming HASP request
-        
+
         Args:
             data: Raw HASP request data
-            
+
         Returns:
             Parsed HASPRequest object or None if invalid
         """
@@ -356,10 +356,10 @@ class HASPSentinelParser:
     def generate_response(self, request: HASPRequest) -> HASPResponse:
         """
         Generate appropriate HASP response based on request
-        
+
         Args:
             request: Parsed HASP request
-            
+
         Returns:
             HASP response object
         """
@@ -729,10 +729,10 @@ class HASPSentinelParser:
     def serialize_response(self, response: HASPResponse) -> bytes:
         """
         Serialize HASP response to bytes
-        
+
         Args:
             response: HASP response object
-            
+
         Returns:
             Serialized response bytes
         """

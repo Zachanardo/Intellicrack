@@ -1,5 +1,5 @@
 """
-Protection detection utilities for Intellicrack. 
+Protection detection utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -248,7 +248,9 @@ def run_comprehensive_protection_scan(binary_path: str) -> Dict[str, Any]:
 
         # Run TPM detection
         try:
-            from intellicrack.utils.system.process_utils import detect_tpm_protection as detect_system_tpm
+            from intellicrack.utils.system.process_utils import (
+                detect_tpm_protection as detect_system_tpm,
+            )
             tmp_results = detect_system_tpm()
             results["scan_results"]["tmp"] = tmp_results
         except ImportError:

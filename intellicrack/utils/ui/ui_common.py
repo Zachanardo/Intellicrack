@@ -35,11 +35,11 @@ except ImportError:
 def ask_open_report(parent: Any, report_path: str) -> bool:
     """
     Ask user if they want to open a generated report.
-    
+
     Args:
         parent: Parent widget
         report_path: Path to the report file
-        
+
     Returns:
         True if report was opened
     """
@@ -70,13 +70,13 @@ def get_save_filename(parent: Any, caption: str = "Save File",
                      default_suffix: str = ".html") -> Optional[str]:
     """
     Show file save dialog and get filename.
-    
+
     Args:
         parent: Parent widget
         caption: Dialog caption
         filter_str: File filter string
         default_suffix: Default file suffix to add if missing
-        
+
     Returns:
         Selected filename or None
     """
@@ -105,13 +105,13 @@ def create_binary_selection_header(parent_layout: Any,
                                  extra_buttons: Optional[List[Tuple[str, Callable]]] = None) -> dict:
     """
     Create a standard binary selection header widget.
-    
+
     Args:
         parent_layout: Layout to add the header to
         binary_path: Initial binary path
         show_label: Whether to show "Binary Path:" label
         extra_buttons: List of (button_text, callback) tuples for additional buttons
-        
+
     Returns:
         Dictionary with widget references: {
             'group': QGroupBox,
@@ -144,7 +144,7 @@ def create_binary_selection_header(parent_layout: Any,
 
     # Add any extra buttons
     if extra_buttons:
-        from .ui.ui_button_common import add_extra_buttons
+        from .ui_button_common import add_extra_buttons
         buttons = add_extra_buttons(header_layout, extra_buttons, widgets)
         widgets['extra_buttons'].update(buttons)
 

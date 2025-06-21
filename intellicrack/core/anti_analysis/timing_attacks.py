@@ -32,11 +32,11 @@ class TimingAttackDefense:
     def secure_sleep(self, duration: float, callback: Callable = None) -> bool:
         """
         Sleep with protection against acceleration.
-        
+
         Args:
             duration: Sleep duration in seconds
             callback: Optional callback to execute during sleep
-            
+
         Returns:
             True if sleep completed normally, False if accelerated
         """
@@ -104,7 +104,7 @@ class TimingAttackDefense:
     def stalling_code(self, min_duration: float, max_duration: float) -> None:
         """
         Execute computationally intensive stalling code.
-        
+
         Args:
             min_duration: Minimum stall duration
             max_duration: Maximum stall duration
@@ -141,11 +141,11 @@ class TimingAttackDefense:
     def time_bomb(self, trigger_time: float, action: Callable) -> threading.Thread:
         """
         Create a time bomb that triggers after specific duration.
-        
+
         Args:
             trigger_time: Time in seconds until trigger
             action: Function to execute when triggered
-            
+
         Returns:
             Thread handle for the time bomb
         """
@@ -172,7 +172,7 @@ class TimingAttackDefense:
     def execution_delay(self, check_environment: bool = True) -> None:
         """
         Delay execution to evade automated analysis.
-        
+
         Args:
             check_environment: Perform environment checks during delay
         """
@@ -211,7 +211,7 @@ class TimingAttackDefense:
     def rdtsc_timing_check(self) -> bool:
         """
         Use RDTSC instruction for precise timing checks.
-        
+
         Returns:
             True if timing is normal, False if anomaly detected
         """
@@ -248,7 +248,7 @@ class TimingAttackDefense:
     def anti_acceleration_loop(self, duration: float) -> None:
         """
         Loop that resists sleep acceleration attempts.
-        
+
         Args:
             duration: Total duration to loop
         """
@@ -335,28 +335,28 @@ bool SecureSleep(DWORD milliseconds) {
     DWORD startTick = GetTickCount64();
     unsigned __int64 startTsc = GetRDTSC();
     clock_t startClock = clock();
-    
+
     // Split sleep into chunks
     DWORD chunkSize = min(100, milliseconds / 10);
     DWORD remaining = milliseconds;
-    
+
     while (remaining > 0) {
         DWORD sleepTime = min(chunkSize, remaining);
         Sleep(sleepTime);
-        
+
         // Check timing sources
         DWORD elapsedTick = GetTickCount64() - startTick;
         clock_t elapsedClock = clock() - startClock;
-        
+
         // Detect acceleration
         DWORD expectedElapsed = milliseconds - remaining + sleepTime;
         if (abs((int)(elapsedTick - expectedElapsed)) > 50) {
             return false;  // Timing anomaly
         }
-        
+
         remaining -= sleepTime;
     }
-    
+
     return true;
 }
 
@@ -364,9 +364,9 @@ bool SecureSleep(DWORD milliseconds) {
 void StallExecution(DWORD milliseconds) {
     unsigned __int64 startTsc = GetRDTSC();
     DWORD startTick = GetTickCount64();
-    
+
     volatile unsigned int result = 0;
-    
+
     while ((GetTickCount64() - startTick) < milliseconds) {
         // CPU-intensive operations
         for (int i = 0; i < 10000; i++) {
@@ -375,11 +375,11 @@ void StallExecution(DWORD milliseconds) {
             result ^= (result >> 17);
             result ^= (result << 5);
         }
-        
+
         // Check for timing anomalies
         unsigned __int64 tscElapsed = GetRDTSC() - startTsc;
         DWORD tickElapsed = GetTickCount64() - startTick;
-        
+
         // TSC should increase much faster than tick count
         if (tscElapsed < tickElapsed * 1000000) {
             // Possible virtualization/acceleration
@@ -393,20 +393,20 @@ void ExecutionDelay() {
     // Random delay 30-120 seconds
     srand(GetTickCount());
     DWORD delay = 30000 + (rand() % 90000);
-    
+
     DWORD elapsed = 0;
     while (elapsed < delay) {
         // Check for debugger
         if (IsDebuggerPresent()) {
             delay += 60000;  // Add 1 minute
         }
-        
+
         // Secure sleep with verification
         if (!SecureSleep(5000)) {
             // Acceleration detected, use stalling
             StallExecution(10000);
         }
-        
+
         elapsed += 5000;
     }
 }

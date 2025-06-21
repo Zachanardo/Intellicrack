@@ -1,5 +1,5 @@
 """
-Additional runner functions for Intellicrack. 
+Additional runner functions for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -70,10 +70,10 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
 
     # Import required modules
     try:
-        from .binary_analysis import analyze_binary, analyze_patterns
-        from .runtime.distributed_processing import run_distributed_entropy_analysis
-        from .protection.protection_detection import run_comprehensive_protection_scan
-        from .analysis.security_analysis import check_buffer_overflow, scan_protectors
+        from ..analysis.security_analysis import check_buffer_overflow, scan_protectors
+        from ..binary.binary_analysis import analyze_binary, analyze_patterns
+        from ..protection.protection_detection import run_comprehensive_protection_scan
+        from .distributed_processing import run_distributed_entropy_analysis
     except ImportError as e:
         logger.error("Import error: %s", e)
         results["error"] = f"Missing dependencies: {e}"
@@ -96,7 +96,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
 
             elif analysis == "string_extraction":
                 # Use distributed processing for strings
-                from .runtime.distributed_processing import _distributed_string_extraction
+                from .distributed_processing import _distributed_string_extraction
                 results["analyses"]["strings"] = _distributed_string_extraction(
                     binary_path, {"min_length": 4}
                 )
@@ -157,8 +157,8 @@ def run_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
 
     try:
         # Import required modules
-        from ..core.analysis.core_analysis import enhanced_deep_license_analysis
-        from .binary_analysis import analyze_patterns
+        from ...core.analysis.core_analysis import enhanced_deep_license_analysis
+        from ..binary.binary_analysis import analyze_patterns
 
         # Use existing deep license analysis
         deep_results = enhanced_deep_license_analysis(binary_path)
@@ -204,7 +204,7 @@ def run_detect_packing(binary_path: str) -> Dict[str, Any]:
     """
     try:
         from ..core.analysis.core_analysis import detect_packing
-        from .runtime.distributed_processing import run_distributed_entropy_analysis
+        from .distributed_processing import run_distributed_entropy_analysis
 
         results = {
             "binary": binary_path,
@@ -283,7 +283,7 @@ def run_autonomous_crack(binary_path: str, target_type: Optional[str] = None) ->
 
         # Phase 2: Generate patches
         logger.info("Phase 2: Generating patches...")
-        from .exploitation.exploitation import run_automated_patch_agent
+        from ..exploitation.exploitation import run_automated_patch_agent
 
         if target_type == "license":
             patches = run_automated_patch_agent(binary_path, "remove_license")
@@ -296,7 +296,7 @@ def run_autonomous_crack(binary_path: str, target_type: Optional[str] = None) ->
 
         # Phase 3: Apply patches (simulation only for safety)
         if patches.get("suggested_patches"):
-            from .exploitation.exploitation import run_simulate_patch
+            from ..exploitation.exploitation import run_simulate_patch
             simulation = run_simulate_patch(binary_path, patches["suggested_patches"])
             results["patching_phase"]["simulation"] = simulation
 
@@ -350,7 +350,7 @@ def run_full_autonomous_mode(binary_path: str, config: Optional[Dict[str, Any]] 
 
         # Phase 2: Protection removal
         if results["phases"]["analysis"].get("analyses", {}).get("protection_scan", {}).get("protections_found"):
-            from .analysis.security_analysis import run_tpm_bypass, run_vm_bypass
+            from ..analysis.security_analysis import run_tpm_bypass, run_vm_bypass
 
             results["phases"]["protection_removal"] = {
                 "vm_bypass": run_vm_bypass(binary_path),
@@ -439,7 +439,7 @@ def run_incremental_analysis_ui(binary_path: str, cache_dir: Optional[str] = Non
         Dict containing incremental analysis results
     """
     try:
-        from .runtime.distributed_processing import run_incremental_analysis
+        from .distributed_processing import run_incremental_analysis
 
         # Run incremental analysis
         results = run_incremental_analysis(binary_path, cache_dir)
@@ -1366,7 +1366,7 @@ def detect_local_tpm_protection(binary_path: str) -> Dict[str, Any]:
         Dict containing TPM detection results
     """
     try:
-        from .protection.protection_detection import detect_tpm_protection as tpm_detect
+        from ..protection.protection_detection import detect_tpm_protection as tpm_detect
         return tpm_detect(binary_path)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error detecting TPM protection: %s", e)
@@ -1433,10 +1433,10 @@ def _determine_target_type(analysis: Dict[str, Any]) -> str:
 def _verify_crack(binary_path: str) -> Dict[str, Any]:
     """
     Verify if crack was successful using multiple verification methods.
-    
+
     Args:
         binary_path: Path to the patched binary to verify
-        
+
     Returns:
         Dict containing verification results
     """
@@ -1903,7 +1903,7 @@ def _find_ghidra_installation() -> Optional[str]:
     """Find Ghidra installation path."""
     # Try dynamic path discovery first
     try:
-        from .core.path_discovery import find_tool
+        from ..core.path_discovery import find_tool
         ghidra_path = find_tool("ghidra")
         if ghidra_path:
             return ghidra_path
@@ -1930,13 +1930,13 @@ def _find_ghidra_installation() -> Optional[str]:
 def _is_license_check_pattern(cfg: Dict[str, Any]) -> bool:
     """
     Check if CFG contains license check patterns.
-    
+
     Analyzes control flow graph structures to identify patterns commonly
     associated with license verification routines.
-    
+
     Args:
         cfg: Control flow graph data dictionary
-        
+
     Returns:
         bool: True if license check patterns are detected
     """

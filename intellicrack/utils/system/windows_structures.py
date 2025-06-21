@@ -210,7 +210,7 @@ class WindowsProcessStructures:
                 ("dwFlags", ctypes.wintypes.DWORD),
                 ("wShowWindow", ctypes.wintypes.WORD),
                 ("cbReserved2", ctypes.wintypes.WORD),
-                ("lpReserved2", ctypes.wintypes.LPBYTE),
+                ("lpReserved2", ctypes.POINTER(ctypes.c_ubyte)),
                 ("hStdInput", ctypes.wintypes.HANDLE),
                 ("hStdOutput", ctypes.wintypes.HANDLE),
                 ("hStdError", ctypes.wintypes.HANDLE)

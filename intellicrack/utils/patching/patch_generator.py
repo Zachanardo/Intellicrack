@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 def generate_patch(target_binary: str, patch_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Generate a patch for the specified binary.
-    
+
     Args:
         target_binary: Path to the target binary
         patch_config: Configuration options for patch generation
-        
+
     Returns:
         Dictionary containing patch generation results
     """

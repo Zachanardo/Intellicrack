@@ -1,5 +1,5 @@
 """
-Core utility functions for Intellicrack. 
+Core utility functions for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -136,7 +136,7 @@ def run_gui_mode(args) -> int:
     try:
         from PyQt5.QtWidgets import QApplication
 
-        from ..ui.main_app import launch
+        from ...ui.main_app import launch
 
         # Create Qt application
         app = QApplication(sys.argv)
@@ -171,7 +171,7 @@ def run_cli_mode(args) -> int:
         return 1
 
     try:
-        from ..utils.additional_runners import run_autonomous_crack, run_comprehensive_analysis
+        from ..runtime.additional_runners import run_autonomous_crack, run_comprehensive_analysis
 
         results = {}
 
@@ -320,7 +320,7 @@ def register_default_tools():
     """Register all default tools in the registry."""
     try:
         # Import all tool wrapper functions (moved inside function to avoid cyclic import)
-        from ..tool_wrappers import (
+        from ..tools.tool_wrappers import (
             wrapper_apply_confirmed_patch,
             wrapper_attach_target,
             wrapper_deep_license_analysis,
@@ -522,7 +522,7 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: Optional[Dic
     """
     try:
         # Use the standalone deep_runtime_monitoring function from dynamic_analyzer
-        from ..core.analysis.dynamic_analyzer import deep_runtime_monitoring as analyzer_drm
+        from ...core.analysis.dynamic_analyzer import deep_runtime_monitoring as analyzer_drm
 
         # Extract timeout from config if provided
         timeout = 30000  # Default 30 seconds

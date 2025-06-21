@@ -1,5 +1,5 @@
 """
-Main Application Window 
+Main Application Window
 
 Copyright (C) 2025 Zachary Flint
 
@@ -55,7 +55,7 @@ logger = get_logger(__name__)
 
 class IntellicrackMainWindow(QMainWindow):
     """
-    Main application window for Intellicrack - a comprehensive reverse engineering 
+    Main application window for Intellicrack - a comprehensive reverse engineering
     and security analysis framework.
 
     This class provides the primary user interface with multiple tabs for different

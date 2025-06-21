@@ -24,13 +24,13 @@ class AnalysisExporter:
                        format: str = 'json', analysis_type: str = 'generic') -> bool:
         """
         Export analysis results to file in specified format.
-        
+
         Args:
             result: Analysis results dictionary
             output_file: Output file path
             format: Export format ('json', 'html', 'csv', 'text')
             analysis_type: Type of analysis for specialized formatting
-            
+
         Returns:
             True if export successful, False otherwise
         """
@@ -182,7 +182,7 @@ class AnalysisExporter:
         <h1>Vulnerability Analysis Report</h1>
         <p>Generated: {timestamp}</p>
     </div>
-    
+
     <div class="stats">
         <h2>Summary Statistics</h2>
         <ul>
@@ -192,7 +192,7 @@ class AnalysisExporter:
             <li>Low Severity: {low_count}</li>
         </ul>
     </div>
-    
+
     <h2>Vulnerabilities</h2>
     {vulnerability_list}
 </body>
@@ -256,7 +256,7 @@ class AnalysisExporter:
         <h1>Binary Diff Analysis Report</h1>
         <p>Generated: {timestamp}</p>
     </div>
-    
+
     <div class="stats">
         <h2>Summary Statistics</h2>
         <ul>
@@ -266,7 +266,7 @@ class AnalysisExporter:
             <li>Functions Modified: {modified_count}</li>
         </ul>
     </div>
-    
+
     <h2>Differences</h2>
     {difference_list}
 </body>
@@ -327,7 +327,7 @@ class AnalysisExporter:
         <h1>Analysis Report</h1>
         <p>Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}</p>
     </div>
-    
+
     <h2>Results</h2>
     <pre>{json.dumps(result, indent=2, default=str)}</pre>
 </body>

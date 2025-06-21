@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 def get_driver_path(driver_name: str) -> str:
     """
     Get the full path to a Windows driver.
-    
+
     Args:
         driver_name: Name of the driver file
-        
+
     Returns:
         Full path to the driver
     """

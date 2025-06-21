@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def create_certificate_builder():
     """
     Create a certificate builder with common settings.
-    
+
     Returns:
         Certificate builder object or None if cryptography not available
     """
@@ -22,7 +22,7 @@ def create_certificate_builder():
         from cryptography.hazmat.primitives import hashes
         from cryptography.x509.oid import NameOID
 
-        return x509.CertificateBuilder().subject_name(
+        builder = x509.CertificateBuilder().subject_name(
             x509.Name([
                 x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
                 x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
@@ -45,6 +45,8 @@ def create_certificate_builder():
         # Set validity dates
         not_valid_before, not_valid_after = get_certificate_validity_dates(365)
         builder = builder.not_valid_before(not_valid_before).not_valid_after(not_valid_after)
+        
+        return builder
     except ImportError:
         logger.warning("cryptography library not available for certificate generation")
         return None
@@ -53,10 +55,10 @@ def create_certificate_builder():
 def get_certificate_validity_dates(valid_days: int = 365) -> Tuple[datetime.datetime, datetime.datetime]:
     """
     Get certificate validity dates.
-    
+
     Args:
         valid_days: Number of days the certificate should be valid
-        
+
     Returns:
         Tuple of (not_valid_before, not_valid_after) datetimes
     """

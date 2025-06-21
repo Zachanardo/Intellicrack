@@ -1,5 +1,5 @@
 """
-Intellicrack UI Widgets Package 
+Intellicrack UI Widgets Package
 
 Copyright (C) 2025 Zachary Flint
 
@@ -94,7 +94,12 @@ except ImportError as e:
 
 # Import plugin editor
 try:
-    from .plugin_editor import PluginEditor, PluginValidator, PythonHighlighter, JavaScriptHighlighter
+    from .plugin_editor import (
+        JavaScriptHighlighter,
+        PluginEditor,
+        PluginValidator,
+        PythonHighlighter,
+    )
 except ImportError as e:
     logger.warning("Failed to import plugin_editor: %s", e)
     PluginEditor = None

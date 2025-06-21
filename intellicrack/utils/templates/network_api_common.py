@@ -9,12 +9,12 @@ from typing import Any, Dict, List, Optional, Tuple
 def analyze_network_apis(pe_binary, network_apis, logger_func=None):
     """
     Common function to analyze network APIs in a PE binary.
-    
+
     Args:
         pe_binary: Parsed PE binary object
         network_apis: Dictionary mapping API categories to API lists
         logger_func: Optional function to log detected APIs
-        
+
     Returns:
         dict: Dictionary of category -> list of detected APIs
     """
@@ -42,10 +42,10 @@ def analyze_network_apis(pe_binary, network_apis, logger_func=None):
 def process_network_api_results(detected_apis: Dict[str, List[str]]) -> Dict[str, Any]:
     """
     Process detected network API results into analysis format.
-    
+
     Args:
         detected_apis: Dictionary mapping categories to detected API lists
-        
+
     Returns:
         Dictionary with processed results including counts and security checks
     """
@@ -73,12 +73,12 @@ def process_network_api_results(detected_apis: Dict[str, List[str]]) -> Dict[str
 def get_scapy_layers(scapy_module) -> Optional[Tuple]:
     """
     Get IP and TCP layers from scapy module with proper error handling.
-    
+
     This handles different scapy import scenarios across versions.
-    
+
     Args:
         scapy_module: The imported scapy module
-        
+
     Returns:
         Tuple of (IP, TCP) classes or None if import failed
     """
@@ -90,7 +90,8 @@ def get_scapy_layers(scapy_module) -> Optional[Tuple]:
     except AttributeError:
         # Fall back to scapy.layers if needed
         try:
-            from scapy.layers.inet import IP as ip_layer, TCP as tcp_layer
+            from scapy.layers.inet import IP as ip_layer
+            from scapy.layers.inet import TCP as tcp_layer
             return ip_layer, tcp_layer
         except ImportError:
             # Unable to access IP/TCP layers
@@ -100,12 +101,12 @@ def get_scapy_layers(scapy_module) -> Optional[Tuple]:
 def detect_network_apis(pe_binary, network_apis, logger_func=None):
     """
     Alias for analyze_network_apis for backward compatibility.
-    
+
     Args:
         pe_binary: Parsed PE binary object
         network_apis: Dictionary mapping API categories to API lists
         logger_func: Optional function to log detected APIs
-        
+
     Returns:
         dict: Dictionary of category -> list of detected APIs
     """
@@ -115,7 +116,7 @@ def detect_network_apis(pe_binary, network_apis, logger_func=None):
 def get_network_api_categories():
     """
     Get standard network API categories.
-    
+
     Returns:
         dict: Dictionary of category -> list of API names
     """
@@ -130,10 +131,10 @@ def get_network_api_categories():
 def summarize_network_capabilities(detected_apis):
     """
     Summarize network capabilities based on detected APIs.
-    
+
     Args:
         detected_apis: Dictionary of category -> list of APIs
-        
+
     Returns:
         dict: Summary statistics
     """

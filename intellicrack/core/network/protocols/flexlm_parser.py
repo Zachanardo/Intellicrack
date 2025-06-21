@@ -182,10 +182,10 @@ class FlexLMProtocolParser:
     def parse_request(self, data: bytes) -> Optional[FlexLMRequest]:
         """
         Parse incoming FlexLM request
-        
+
         Args:
             data: Raw FlexLM request data
-            
+
         Returns:
             Parsed FlexLMRequest object or None if invalid
         """
@@ -325,10 +325,10 @@ class FlexLMProtocolParser:
     def generate_response(self, request: FlexLMRequest) -> FlexLMResponse:
         """
         Generate appropriate FlexLM response based on request
-        
+
         Args:
             request: Parsed FlexLM request
-            
+
         Returns:
             FlexLM response object
         """
@@ -565,10 +565,10 @@ class FlexLMProtocolParser:
     def serialize_response(self, response: FlexLMResponse) -> bytes:
         """
         Serialize FlexLM response to bytes
-        
+
         Args:
             response: FlexLM response object
-            
+
         Returns:
             Serialized response bytes
         """

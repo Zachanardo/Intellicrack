@@ -1,5 +1,5 @@
 """
-Enhanced AI Assistant for Intellicrack. 
+Enhanced AI Assistant for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -589,11 +589,11 @@ What would you like to learn about?"""
     def analyze_binary_complex(self, binary_path: str, ml_results: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Perform complex binary analysis using AI reasoning.
-        
+
         Args:
             binary_path: Path to the binary to analyze
             ml_results: Optional ML analysis results to incorporate
-            
+
         Returns:
             Dictionary containing complex analysis results
         """
@@ -641,10 +641,10 @@ What would you like to learn about?"""
     def analyze_license_patterns(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Analyze license patterns using AI reasoning.
-        
+
         Args:
             input_data: Input data containing patterns to analyze
-            
+
         Returns:
             Dictionary containing license pattern analysis
         """
@@ -708,10 +708,10 @@ What would you like to learn about?"""
     def perform_reasoning(self, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Perform AI reasoning on given task data.
-        
+
         Args:
             task_data: Data to reason about
-            
+
         Returns:
             Dictionary containing reasoning results
         """
@@ -799,7 +799,7 @@ def create_ai_assistant_widget():
     def send_message():
         """
         Send a message to the AI assistant and display the response.
-        
+
         Retrieves the text from the input area, sends it to the assistant,
         displays both the user message and assistant response in the chat display,
         then clears the input area for the next message.

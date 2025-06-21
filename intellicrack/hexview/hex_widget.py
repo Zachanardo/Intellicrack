@@ -1,5 +1,5 @@
 """
-Hex viewer widget for displaying and editing binary data. 
+Hex viewer widget for displaying and editing binary data.
 
 Copyright (C) 2025 Zachary Flint
 

@@ -1,5 +1,5 @@
 """
-Binary analysis utility functions. 
+Binary analysis utility functions.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -23,6 +23,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import os
 import struct
+import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -667,7 +668,10 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
     try:
         # Try using scapy first (more common)
         if 'scapy' in sys.modules or _try_import_scapy():
-            from scapy.all import IP, TCP, UDP, rdpcap, sniff
+            try:
+                from scapy.all import IP, TCP, UDP, rdpcap, sniff
+            except ImportError:
+                return {'network_connections': [], 'protocols': [], 'error': 'scapy not available'}
 
             packets = []
             if pcap_file and os.path.exists(pcap_file):
@@ -1170,7 +1174,7 @@ def _optimized_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
 
         if isinstance(data, bytes):
             # Extract strings efficiently
-            from .core.string_utils import extract_ascii_strings
+            from ..core.string_utils import extract_ascii_strings
             strings = extract_ascii_strings(data)
 
             results["strings_found"] = len(strings)
@@ -1336,11 +1340,11 @@ def _optimized_pattern_analysis(data, chunk_info=None) -> Dict[str, Any]:
 def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> List[str]:
     """
     Get quick disassembly of binary entry point for UI display.
-    
+
     Args:
         binary_path: Path to binary file
         max_instructions: Maximum number of instructions to disassemble
-        
+
     Returns:
         List of disassembly lines
     """
@@ -1452,13 +1456,13 @@ def disassemble_with_objdump(binary_path: str, extra_args: Optional[List[str]] =
                            timeout: int = 30, parse_func=None) -> Optional[List[Any]]:
     """
     Common objdump disassembly fallback function.
-    
+
     Args:
         binary_path: Path to binary file
         extra_args: Additional objdump arguments (e.g., ['--no-show-raw-insn'])
         timeout: Command timeout in seconds
         parse_func: Function to parse objdump output (should accept stdout string)
-        
+
     Returns:
         List of parsed instructions or None if objdump fails
     """

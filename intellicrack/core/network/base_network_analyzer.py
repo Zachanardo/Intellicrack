@@ -22,12 +22,12 @@ class BaseNetworkAnalyzer:
                             process_packet_func: Callable[[Any, Any, Any], None]) -> Callable:
         """
         Create a packet handler function with common functionality.
-        
+
         Args:
             scapy_module: The scapy module instance
             is_running_check: Function to check if capture should continue
             process_packet_func: Function to process valid packets
-            
+
         Returns:
             Packet handler function
         """
@@ -38,7 +38,7 @@ class BaseNetworkAnalyzer:
 
             try:
                 # Check if it's a TCP packet with IP layer
-                from ...utils.network_api_common import get_scapy_layers
+                from ...utils.templates.network_api_common import get_scapy_layers
 
                 layers = get_scapy_layers(scapy_module)
                 if not layers:

@@ -20,14 +20,42 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-def get_common_license_response():
-    """Get a common license response template used across modules."""
+def get_common_license_response(user_id=None, days_valid=365, features=None):
+    """Get a common license response template used across modules.
+    
+    Args:
+        user_id: Optional user ID, defaults to system username
+        days_valid: Number of days the license is valid for
+        features: List of features to include, defaults to FULL_SUITE
+    
+    Returns:
+        dict: License response with dynamic values
+    """
+    import datetime
+    import getpass
+    import os
+    
+    # Dynamic user ID - use system username or provided value
+    if user_id is None:
+        user_id = os.environ.get('LICENSE_USER_ID', getpass.getuser())
+    
+    # Dynamic expiry date
+    current_time = datetime.datetime.now()
+    expiry_date = current_time + datetime.timedelta(days=days_valid)
+    expires_str = expiry_date.strftime('%Y-%m-%d')
+    
+    # Dynamic features
+    if features is None:
+        features = os.environ.get('LICENSE_FEATURES', 'FULL_SUITE').split(',')
+    
     return {
         'valid': True,
         'status': 'ACTIVE',
-        'expires': '2099-12-31',
-        'features': ['FULL_SUITE'],
-        'user_id': 'licensed_user'
+        'expires': expires_str,
+        'features': features,
+        'user_id': user_id,
+        'generated_at': current_time.isoformat(),
+        'days_remaining': days_valid
     }
 
 

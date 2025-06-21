@@ -74,10 +74,10 @@ class DebuggerDetector(BaseDetector):
     def detect_debugger(self, aggressive: bool = False) -> Dict[str, Any]:
         """
         Perform debugger detection using multiple techniques.
-        
+
         Args:
             aggressive: Use more aggressive detection methods
-            
+
         Returns:
             Detection results with details
         """
@@ -535,19 +535,19 @@ class DebuggerDetector(BaseDetector):
 
 bool IsBeingDebugged() {
     // Multiple detection methods
-    
+
     // 1. IsDebuggerPresent
     if (IsDebuggerPresent()) {
         return true;
     }
-    
+
     // 2. CheckRemoteDebuggerPresent
     BOOL debuggerPresent = FALSE;
     CheckRemoteDebuggerPresent(GetCurrentProcess(), &debuggerPresent);
     if (debuggerPresent) {
         return true;
     }
-    
+
     // 3. PEB->BeingDebugged flag
     __asm {
         mov eax, fs:[30h]  // PEB
@@ -555,41 +555,41 @@ bool IsBeingDebugged() {
         test eax, eax
         jnz debugger_found
     }
-    
+
     // 4. NtQueryInformationProcess (ProcessDebugPort)
     typedef NTSTATUS (WINAPI *NtQueryInformationProcess_t)(
         HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
-    
-    NtQueryInformationProcess_t NtQueryInformationProcess = 
+
+    NtQueryInformationProcess_t NtQueryInformationProcess =
         (NtQueryInformationProcess_t)GetProcAddress(
             GetModuleHandle("ntdll.dll"), "NtQueryInformationProcess");
-    
+
     DWORD debugPort = 0;
     NtQueryInformationProcess(GetCurrentProcess(), 7, &debugPort, sizeof(debugPort), NULL);
     if (debugPort != 0) {
         return true;
     }
-    
+
     // 5. Timing check
     LARGE_INTEGER start, end, freq;
     QueryPerformanceFrequency(&freq);
     QueryPerformanceCounter(&start);
-    
+
     // Simple operation that should be fast
     __asm {
         xor eax, eax
         cpuid
     }
-    
+
     QueryPerformanceCounter(&end);
     double elapsed = (double)(end.QuadPart - start.QuadPart) / freq.QuadPart;
-    
+
     if (elapsed > 0.001) {  // Should be microseconds
         return true;
     }
-    
+
     return false;
-    
+
 debugger_found:
     return true;
 }
@@ -599,13 +599,13 @@ if (IsBeingDebugged()) {
     // Multiple responses:
     // 1. Exit silently
     ExitProcess(0);
-    
+
     // 2. Crash the debugger
     __asm {
         xor eax, eax
         mov dword ptr [eax], 0
     }
-    
+
     // 3. Infinite loop
     while(1) { Sleep(1000); }
 }

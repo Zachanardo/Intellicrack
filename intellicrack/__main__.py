@@ -1,5 +1,5 @@
 """
-Entry point for running Intellicrack as a module. 
+Entry point for running Intellicrack as a module.
 
 Copyright (C) 2025 Zachary Flint
 

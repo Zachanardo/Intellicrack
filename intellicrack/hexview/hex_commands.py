@@ -1,5 +1,5 @@
 """
-Command system for hex editor operations with undo/redo support. 
+Command system for hex editor operations with undo/redo support.
 
 Copyright (C) 2025 Zachary Flint
 

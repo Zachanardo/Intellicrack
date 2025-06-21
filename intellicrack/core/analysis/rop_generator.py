@@ -1,5 +1,5 @@
 """
-ROP Chain Generator Module 
+ROP Chain Generator Module
 
 Copyright (C) 2025 Zachary Flint
 
@@ -29,7 +29,7 @@ try:
 except ImportError:
     PYQT5_AVAILABLE = False
 
-from ...utils.ui_common import ask_open_report
+from ...utils.ui.ui_common import ask_open_report
 
 
 class ROPChainGenerator:
@@ -54,7 +54,7 @@ class ROPChainGenerator:
 
     def set_binary(self, binary_path: str) -> bool:
         """Set the binary to analyze"""
-        from ...utils.binary_utils import validate_binary_path
+        from ...utils.binary.binary_utils import validate_binary_path
 
         if not validate_binary_path(binary_path, self.logger):
             return False
@@ -141,7 +141,7 @@ class ROPChainGenerator:
     def _find_real_rop_gadgets(self) -> None:
         """
         Find actual ROP gadgets in the binary using real analysis.
-        
+
         This implementation uses binary analysis to find real instruction sequences
         ending in 'ret' or equivalent control transfer instructions.
         """
@@ -189,7 +189,7 @@ class ROPChainGenerator:
     def _disassemble_binary(self, binary_data: bytes) -> List[Dict[str, Any]]:
         """
         Disassemble binary using available disassembly engines.
-        
+
         Returns:
             List of instruction dictionaries
         """
@@ -296,7 +296,7 @@ class ROPChainGenerator:
 
     def _parse_objdump_output(self, objdump_output: str) -> List[Dict[str, Any]]:
         """Parse objdump disassembly output."""
-        from ...utils.windows_structures import parse_objdump_line
+        from ...utils.system.windows_structures import parse_objdump_line
         instructions = []
 
         for line in objdump_output.split('\n'):
@@ -527,7 +527,7 @@ class ROPChainGenerator:
     def _generate_real_rop_chains(self) -> None:
         """
         Generate real ROP chains for target functions using constraint solving.
-        
+
         This implementation uses proper ROP chain construction techniques,
         analyzing gadget dependencies and creating working exploit chains.
         """
@@ -551,10 +551,10 @@ class ROPChainGenerator:
     def _build_rop_chain_for_target(self, target: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Build a specific ROP chain for a target function using real analysis.
-        
+
         Args:
             target: Target function information
-            
+
         Returns:
             Dictionary containing the constructed ROP chain or None if failed
         """
@@ -926,7 +926,7 @@ class ROPChainGenerator:
             return None
 
         # Generate HTML report
-        from ...utils.html_templates import get_base_html_template
+        from ...utils.reporting.html_templates import get_base_html_template
 
         custom_css = """
             .gadget { font-family: monospace; }
@@ -1002,7 +1002,7 @@ class ROPChainGenerator:
             </pre>
             """
 
-        from ...utils.html_templates import close_html
+        from ...utils.reporting.html_templates import close_html
         html += close_html()
 
         # Save to file if filename provided
@@ -1166,7 +1166,7 @@ def run_rop_chain_generator(app: Any) -> None:
 
                 # Handle report generation if PyQt5 is available
                 if PYQT5_AVAILABLE:
-                    from ...utils.report_common import handle_pyqt5_report_generation
+                    from ...utils.reporting.report_common import handle_pyqt5_report_generation
 
                     report_path = handle_pyqt5_report_generation(
                         app,

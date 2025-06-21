@@ -1,5 +1,5 @@
 """
-Core analysis and processing modules for Intellicrack. 
+Core analysis and processing modules for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -37,19 +37,46 @@ except ImportError as e:
     vulnerability_research = None
     EXPLOITATION_MODULES_AVAILABLE = False
 
-# Import Frida modules
-try:
-    from .frida_bypass_wizard import FridaBypassWizard
-    from .frida_manager import FridaManager
-    from .frida_presets import FRIDA_PRESETS
-    FRIDA_MODULES_AVAILABLE = True
-except ImportError as e:
-    import logging
-    logging.getLogger(__name__).warning(f"Frida modules not available: {e}")
-    FridaManager = None
-    FRIDA_PRESETS = None
-    FridaBypassWizard = None
-    FRIDA_MODULES_AVAILABLE = False
+# Frida modules - lazy import to avoid cycles
+FRIDA_MODULES_AVAILABLE = False
+FridaManager = None
+FRIDA_PRESETS = None
+FridaBypassWizard = None
+
+def get_frida_manager():
+    """Get FridaManager with lazy import to avoid cycles."""
+    global FridaManager, FRIDA_MODULES_AVAILABLE
+    if FridaManager is None:
+        try:
+            from .frida_manager import FridaManager as _FridaManager
+            FridaManager = _FridaManager
+            FRIDA_MODULES_AVAILABLE = True
+        except ImportError as e:
+            import logging
+            logging.getLogger(__name__).warning(f"FridaManager not available: {e}")
+    return FridaManager
+
+def get_frida_presets():
+    """Get FRIDA_PRESETS with lazy import."""
+    global FRIDA_PRESETS
+    if FRIDA_PRESETS is None:
+        try:
+            from .frida_presets import FRIDA_PRESETS as _PRESETS
+            FRIDA_PRESETS = _PRESETS
+        except ImportError:
+            pass
+    return FRIDA_PRESETS
+
+def get_frida_bypass_wizard():
+    """Get FridaBypassWizard with lazy import."""
+    global FridaBypassWizard
+    if FridaBypassWizard is None:
+        try:
+            from .frida_bypass_wizard import FridaBypassWizard as _Wizard
+            FridaBypassWizard = _Wizard
+        except ImportError:
+            pass
+    return FridaBypassWizard
 
 __all__ = [
     'analysis',
@@ -61,8 +88,8 @@ __all__ = [
     'exploitation',
     'vulnerability_research',
     'EXPLOITATION_MODULES_AVAILABLE',
-    'FridaManager',
-    'FRIDA_PRESETS',
-    'FridaBypassWizard',
+    'get_frida_manager',
+    'get_frida_presets',
+    'get_frida_bypass_wizard',
     'FRIDA_MODULES_AVAILABLE'
 ]

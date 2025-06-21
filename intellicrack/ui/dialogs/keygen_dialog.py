@@ -1,5 +1,5 @@
 """
-Professional Keygen Dialog for Intellicrack. 
+Professional Keygen Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -170,7 +170,8 @@ class KeygenDialog(BinarySelectionDialog):
         self.key_display = None
         self.results_display = None
         self.save_single_btn = None
-        super().__init__(parent, binary_path)
+        super().__init__(parent)
+        self.binary_path = binary_path
         self.worker = None
         self.generated_keys = []
         self.current_analysis = {}

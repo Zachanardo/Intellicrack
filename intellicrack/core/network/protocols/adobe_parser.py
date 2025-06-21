@@ -150,10 +150,10 @@ class AdobeLicensingParser:
     def parse_request(self, http_data: str) -> Optional[AdobeRequest]:
         """
         Parse incoming Adobe licensing HTTP request
-        
+
         Args:
             http_data: Raw HTTP request data
-            
+
         Returns:
             Parsed AdobeRequest object or None if invalid
         """
@@ -290,10 +290,10 @@ class AdobeLicensingParser:
     def generate_response(self, request: AdobeRequest) -> AdobeResponse:
         """
         Generate appropriate Adobe response based on request
-        
+
         Args:
             request: Parsed Adobe request
-            
+
         Returns:
             Adobe response object
         """
@@ -638,10 +638,10 @@ class AdobeLicensingParser:
     def serialize_response(self, response: AdobeResponse) -> str:
         """
         Serialize Adobe response to HTTP response
-        
+
         Args:
             response: Adobe response object
-            
+
         Returns:
             HTTP response string
         """

@@ -1,5 +1,5 @@
 """
-Distributed Processing Manager 
+Distributed Processing Manager
 
 Copyright (C) 2025 Zachary Flint
 

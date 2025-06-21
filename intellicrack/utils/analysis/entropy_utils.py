@@ -11,10 +11,10 @@ from typing import Dict, Union
 def calculate_entropy(data: Union[bytes, str]) -> float:
     """
     Calculate Shannon entropy of data.
-    
+
     Args:
         data: Input data (bytes or string)
-        
+
     Returns:
         Shannon entropy value
     """
@@ -41,10 +41,10 @@ def calculate_entropy(data: Union[bytes, str]) -> float:
 def calculate_byte_entropy(data: bytes) -> float:
     """
     Calculate Shannon entropy specifically for byte data.
-    
+
     Args:
         data: Input byte data
-        
+
     Returns:
         Shannon entropy value
     """
@@ -54,10 +54,10 @@ def calculate_byte_entropy(data: bytes) -> float:
 def calculate_string_entropy(data: str) -> float:
     """
     Calculate Shannon entropy specifically for string data.
-    
+
     Args:
         data: Input string data
-        
+
     Returns:
         Shannon entropy value
     """
@@ -67,11 +67,11 @@ def calculate_string_entropy(data: str) -> float:
 def safe_entropy_calculation(data: bytes, max_entropy: float = None) -> float:
     """
     Safe entropy calculation with optional maximum cap.
-    
+
     Args:
         data: Input byte data
         max_entropy: Optional maximum entropy value to cap result
-        
+
     Returns:
         Shannon entropy value (optionally capped)
     """
@@ -89,10 +89,10 @@ def safe_entropy_calculation(data: bytes, max_entropy: float = None) -> float:
 def calculate_frequency_distribution(data: Union[bytes, str]) -> Dict:
     """
     Calculate frequency distribution of data.
-    
+
     Args:
         data: Input data (bytes or string)
-        
+
     Returns:
         Dictionary with frequency distribution
     """
@@ -119,11 +119,11 @@ def calculate_frequency_distribution(data: Union[bytes, str]) -> Dict:
 def is_high_entropy(data: Union[bytes, str], threshold: float = 7.0) -> bool:
     """
     Check if data has high entropy (likely encrypted/compressed).
-    
+
     Args:
         data: Input data to analyze
         threshold: Entropy threshold (default 7.0 for binary data)
-        
+
     Returns:
         True if entropy is above threshold
     """
@@ -134,11 +134,11 @@ def is_high_entropy(data: Union[bytes, str], threshold: float = 7.0) -> bool:
 def analyze_entropy_sections(data: bytes, block_size: int = 256) -> Dict:
     """
     Analyze entropy across different sections of data.
-    
+
     Args:
         data: Input byte data
         block_size: Size of each block to analyze
-        
+
     Returns:
         Dictionary with entropy analysis
     """

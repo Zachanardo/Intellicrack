@@ -1,5 +1,5 @@
 """
-Integration between enhanced hex viewer/editor and Intellicrack. 
+Integration between enhanced hex viewer/editor and Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -42,7 +42,7 @@ except ImportError:
     def wrapper_ai_binary_analyze(*args, **kwargs):
         """
         Fallback function for AI binary analysis when AI bridge is not available.
-        
+
         Returns:
             dict: Error message indicating AI bridge is not available
         """
@@ -51,7 +51,7 @@ except ImportError:
     def wrapper_ai_binary_pattern_search(*args, **kwargs):
         """
         Fallback function for AI pattern search when AI bridge is not available.
-        
+
         Returns:
             dict: Error message indicating AI bridge is not available
         """
@@ -60,7 +60,7 @@ except ImportError:
     def wrapper_ai_binary_edit_suggest(*args, **kwargs):
         """
         Fallback function for AI edit suggestions when AI bridge is not available.
-        
+
         Returns:
             dict: Error message indicating AI bridge is not available
         """
@@ -359,11 +359,11 @@ def hex_viewer_ai_tool(func):
     def wrapper(app_instance, parameters):
         """
         Wrapper function that adds error handling and logging to hex viewer AI tools.
-        
+
         Args:
             app_instance: The application instance
             parameters: Parameters to pass to the wrapped function
-            
+
         Returns:
             Result from the wrapped function or error dictionary on failure
         """

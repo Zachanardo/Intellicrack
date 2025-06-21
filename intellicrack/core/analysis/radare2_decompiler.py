@@ -24,13 +24,13 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from ...utils.radare2_utils import R2Exception, R2Session, r2_session
+from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 
 
 class R2DecompilationEngine:
     """
     Advanced decompilation engine using radare2's pdc and pdg commands.
-    
+
     Provides sophisticated pseudocode generation and analysis capabilities
     specifically tailored for license analysis and vulnerability detection.
     """
@@ -38,7 +38,7 @@ class R2DecompilationEngine:
     def __init__(self, binary_path: str, radare2_path: Optional[str] = None):
         """
         Initialize decompilation engine.
-        
+
         Args:
             binary_path: Path to binary file
             radare2_path: Optional path to radare2 executable
@@ -51,11 +51,11 @@ class R2DecompilationEngine:
     def decompile_function(self, address: int, optimize: bool = True) -> Dict[str, Any]:
         """
         Decompile a single function with advanced analysis.
-        
+
         Args:
             address: Function address
             optimize: Whether to apply optimization passes
-            
+
         Returns:
             Comprehensive decompilation results
         """
@@ -84,6 +84,11 @@ class R2DecompilationEngine:
                 if not func_info:
                     result['error'] = f"Function not found at address {hex(address)}"
                     return result
+
+                # Apply optimization passes if requested
+                if optimize:
+                    r2.analyze_function_deeper(address)
+                    r2.run_optimization_passes(address)
 
                 # Generate pseudocode
                 pseudocode = r2.decompile_function(address)
@@ -126,10 +131,10 @@ class R2DecompilationEngine:
     def decompile_all_functions(self, limit: Optional[int] = None) -> Dict[str, Any]:
         """
         Decompile all functions in the binary.
-        
+
         Args:
             limit: Optional limit on number of functions to decompile
-            
+
         Returns:
             Dictionary of function addresses to decompilation results
         """
@@ -341,6 +346,24 @@ class R2DecompilationEngine:
             if any(keyword in line_lower for keyword in ['while', 'for', 'do']):
                 metrics['number_of_loops'] += 1
 
+        # Use graph data for additional complexity metrics
+        if graph_data and isinstance(graph_data, dict):
+            nodes = graph_data.get('nodes', [])
+            edges = graph_data.get('edges', [])
+
+            # Graph-based complexity metrics
+            metrics['control_flow_nodes'] = len(nodes)
+            metrics['control_flow_edges'] = len(edges)
+
+            # Calculate graph complexity (edges - nodes + 2)
+            if len(nodes) > 0:
+                metrics['graph_complexity'] = max(0, len(edges) - len(nodes) + 2)
+
+            # Enhanced complexity calculation with graph data
+            if len(nodes) > 1:
+                metrics['cyclomatic_complexity'] = max(metrics['cyclomatic_complexity'],
+                                                     len(edges) - len(nodes) + 2)
+
         # Cognitive complexity (simplified calculation)
         metrics['cognitive_complexity'] = (
             metrics['cyclomatic_complexity'] +
@@ -454,10 +477,10 @@ class R2DecompilationEngine:
     def generate_license_bypass_suggestions(self, function_results: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Generate bypass suggestions based on decompilation analysis.
-        
+
         Args:
             function_results: Results from decompile_function
-            
+
         Returns:
             List of bypass suggestions
         """
@@ -505,14 +528,165 @@ class R2DecompilationEngine:
 
         return suggestions
 
+    def analyze_license_functions(self) -> Dict[str, Any]:
+        """
+        Analyze all functions in the binary to identify license-related functions.
+        
+        Returns:
+            Dictionary containing license functions and their analysis results
+        """
+        result = {
+            'license_functions': [],
+            'decompiled_functions': {},
+            'total_functions_analyzed': 0,
+            'license_patterns_summary': {},
+            'high_confidence_targets': [],
+            'error': None
+        }
+        
+        try:
+            with r2_session(self.binary_path, self.radare2_path) as r2:
+                # Get all functions in the binary
+                functions = r2.get_functions()
+                result['total_functions_analyzed'] = len(functions)
+                
+                license_keywords = [
+                    'license', 'licens', 'registration', 'register', 'activation', 
+                    'activate', 'serial', 'key', 'trial', 'demo', 'valid', 
+                    'validate', 'verification', 'verify', 'expire', 'expiration',
+                    'authentic', 'auth', 'dongle', 'hwid', 'crack', 'pirate'
+                ]
+                
+                pattern_counts = {}
+                
+                for func in functions:
+                    func_name = func.get('name', '')
+                    func_addr = func.get('offset')
+                    
+                    if not func_addr:
+                        continue
+                    
+                    # Check if function name suggests license-related functionality
+                    is_license_function = any(keyword in func_name.lower() for keyword in license_keywords)
+                    
+                    if is_license_function or self._should_analyze_function(func_name):
+                        # Decompile the function for deeper analysis
+                        decompilation_result = self.decompile_function(func_addr, optimize=True)
+                        
+                        if decompilation_result.get('error'):
+                            self.logger.warning(f"Failed to decompile function {func_name} at {hex(func_addr)}")
+                            continue
+                        
+                        license_patterns = decompilation_result.get('license_patterns', [])
+                        
+                        # If function has license patterns or name suggests license functionality
+                        if license_patterns or is_license_function:
+                            license_func_info = {
+                                'name': func_name,
+                                'address': hex(func_addr),
+                                'size': func.get('size', 0),
+                                'license_patterns': license_patterns,
+                                'confidence_score': self._calculate_license_confidence(func_name, license_patterns),
+                                'api_calls': decompilation_result.get('api_calls', []),
+                                'string_references': decompilation_result.get('string_references', []),
+                                'complexity_metrics': decompilation_result.get('complexity_metrics', {}),
+                                'pseudocode_preview': decompilation_result.get('pseudocode', '')[:500] + '...' if len(decompilation_result.get('pseudocode', '')) > 500 else decompilation_result.get('pseudocode', '')
+                            }
+                            
+                            result['license_functions'].append(license_func_info)
+                            result['decompiled_functions'][hex(func_addr)] = decompilation_result
+                            
+                            # Count pattern types
+                            for pattern in license_patterns:
+                                pattern_type = pattern.get('type', 'unknown')
+                                pattern_counts[pattern_type] = pattern_counts.get(pattern_type, 0) + 1
+                            
+                            # High confidence targets (score > 0.8)
+                            if license_func_info['confidence_score'] > 0.8:
+                                result['high_confidence_targets'].append({
+                                    'name': func_name,
+                                    'address': hex(func_addr),
+                                    'confidence': license_func_info['confidence_score'],
+                                    'reason': self._get_confidence_reason(func_name, license_patterns)
+                                })
+                
+                result['license_patterns_summary'] = pattern_counts
+                
+                # Sort by confidence score (highest first)
+                result['license_functions'].sort(key=lambda x: x['confidence_score'], reverse=True)
+                result['high_confidence_targets'].sort(key=lambda x: x['confidence'], reverse=True)
+                
+                self.logger.info(f"Found {len(result['license_functions'])} license-related functions")
+                
+        except R2Exception as e:
+            result['error'] = str(e)
+            self.logger.error(f"License function analysis failed: {e}")
+        
+        return result
+    
+    def _should_analyze_function(self, func_name: str) -> bool:
+        """Determine if a function should be analyzed for license patterns."""
+        # Analyze functions with suspicious names even if they don't contain license keywords
+        suspicious_patterns = [
+            r'^check_',
+            r'^validate_',
+            r'^verify_',
+            r'^auth_',
+            r'^is_valid',
+            r'^get_.*key',
+            r'^decrypt_',
+            r'_check$',
+            r'_valid$',
+            r'_auth$'
+        ]
+        
+        return any(re.search(pattern, func_name.lower()) for pattern in suspicious_patterns)
+    
+    def _calculate_license_confidence(self, func_name: str, license_patterns: List[Dict[str, Any]]) -> float:
+        """Calculate confidence score for license-related function."""
+        score = 0.0
+        
+        # Name-based scoring
+        license_name_keywords = ['license', 'registration', 'activation', 'serial', 'key', 'trial', 'demo', 'valid']
+        for keyword in license_name_keywords:
+            if keyword in func_name.lower():
+                score += 0.3
+        
+        # Pattern-based scoring
+        for pattern in license_patterns:
+            if pattern.get('type') == 'license_validation':
+                score += pattern.get('confidence', 0.5)
+            elif pattern.get('type') == 'license_keyword':
+                score += pattern.get('confidence', 0.3) * 0.5
+        
+        # Cap at 1.0
+        return min(score, 1.0)
+    
+    def _get_confidence_reason(self, func_name: str, license_patterns: List[Dict[str, Any]]) -> str:
+        """Get human-readable reason for high confidence."""
+        reasons = []
+        
+        if any(keyword in func_name.lower() for keyword in ['license', 'registration', 'activation']):
+            reasons.append("Function name contains license keywords")
+        
+        validation_patterns = [p for p in license_patterns if p.get('type') == 'license_validation']
+        if validation_patterns:
+            reasons.append(f"Contains {len(validation_patterns)} license validation patterns")
+        
+        keyword_patterns = [p for p in license_patterns if p.get('type') == 'license_keyword']
+        if keyword_patterns:
+            reasons.append(f"Contains {len(keyword_patterns)} license-related keywords")
+        
+        return "; ".join(reasons) if reasons else "Multiple license indicators detected"
+
     def export_analysis_report(self, output_path: str, analysis_results: Dict[str, Any]) -> bool:
         """
         Export comprehensive analysis report.
-        
+
         Args:
             output_path: Path to save report
             analysis_results: Analysis results to export
-            
+
         Returns:
             Success status
         """
@@ -544,12 +718,12 @@ def analyze_binary_decompilation(binary_path: str, radare2_path: Optional[str] =
                                 function_limit: Optional[int] = 20) -> Dict[str, Any]:
     """
     Perform comprehensive decompilation analysis of a binary.
-    
+
     Args:
         binary_path: Path to binary file
         radare2_path: Optional path to radare2 executable
         function_limit: Maximum number of functions to analyze
-        
+
     Returns:
         Complete decompilation analysis results
     """

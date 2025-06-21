@@ -1,5 +1,5 @@
 """
-Intellicrack Utils Package 
+Intellicrack Utils Package
 
 Copyright (C) 2025 Zachary Flint
 

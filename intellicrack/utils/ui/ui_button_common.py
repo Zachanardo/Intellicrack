@@ -12,12 +12,12 @@ except ImportError:
 def add_extra_buttons(header_layout, extra_buttons, widget_refs=None):
     """
     Add extra buttons to a header layout with consistent styling.
-    
+
     Args:
         header_layout: Qt layout to add buttons to
         extra_buttons: List of (button_text, callback) tuples
         widget_refs: Optional dict to store button references
-        
+
     Returns:
         dict: Dictionary of button text -> button widget
     """
@@ -50,10 +50,10 @@ def add_extra_buttons(header_layout, extra_buttons, widget_refs=None):
 def get_button_style(button_text):
     """
     Get the appropriate style for a button based on its text.
-    
+
     Args:
         button_text: Text of the button
-        
+
     Returns:
         str: Style sheet string
     """

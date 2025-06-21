@@ -1,5 +1,5 @@
 """
-Advanced binary analysis engines for Intellicrack. 
+Advanced binary analysis engines for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

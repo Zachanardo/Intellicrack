@@ -7,6 +7,7 @@ encryption, and session management.
 
 import asyncio
 import logging
+import os
 import time
 from typing import Any, Callable, Dict, List, Optional
 
@@ -68,9 +69,13 @@ class C2Server(BaseC2):
         # HTTPS Protocol
         if self.config.get('https_enabled', True):
             https_config = self.config.get('https', {})
+            # Use environment variables with fallback to config values
+            https_host = os.environ.get('C2_HTTPS_HOST', https_config.get('host', '0.0.0.0'))
+            https_port = int(os.environ.get('C2_HTTPS_PORT', https_config.get('port', 443)))
+            
             protocols_config.append({
                 'type': 'https',
-                'server_url': f"https://{https_config.get('host', '0.0.0.0')}:{https_config.get('port', 443)}",
+                'server_url': f"https://{https_host}:{https_port}",
                 'headers': https_config.get('headers', {}),
                 'priority': 1
             })
@@ -78,20 +83,29 @@ class C2Server(BaseC2):
         # DNS Protocol
         if self.config.get('dns_enabled', False):
             dns_config = self.config.get('dns', {})
+            # Use environment variables with fallback to config values
+            dns_domain = os.environ.get('C2_DNS_DOMAIN', dns_config.get('domain', 'example.com'))
+            dns_host = os.environ.get('C2_DNS_HOST', dns_config.get('host', '0.0.0.0'))
+            dns_port = int(os.environ.get('C2_DNS_PORT', dns_config.get('port', 53)))
+            
             protocols_config.append({
                 'type': 'dns',
-                'domain': dns_config.get('domain', 'example.com'),
-                'dns_server': f"{dns_config.get('host', '0.0.0.0')}:{dns_config.get('port', 53)}",
+                'domain': dns_domain,
+                'dns_server': f"{dns_host}:{dns_port}",
                 'priority': 2
             })
 
         # TCP Protocol
         if self.config.get('tcp_enabled', False):
             tcp_config = self.config.get('tcp', {})
+            # Use environment variables with fallback to config values
+            tcp_host = os.environ.get('C2_TCP_HOST', tcp_config.get('host', '0.0.0.0'))
+            tcp_port = int(os.environ.get('C2_TCP_PORT', tcp_config.get('port', 4444)))
+            
             protocols_config.append({
                 'type': 'tcp',
-                'host': tcp_config.get('host', '0.0.0.0'),
-                'port': tcp_config.get('port', 4444),
+                'host': tcp_host,
+                'port': tcp_port,
                 'priority': 3
             })
 
@@ -461,6 +475,47 @@ class C2Server(BaseC2):
             'data': command_data or {}
         }
         await self.command_queue.put(command)
+
+    def send_command_to_session(self, session_id: str, command: Dict[str, Any]) -> bool:
+        """Send command to specific session (synchronous version for UI usage)."""
+        try:
+            # Validate session exists
+            session = self.session_manager.get_session(session_id)
+            if not session:
+                self.logger.warning(f"Cannot send command to unknown session: {session_id}")
+                return False
+
+            # Extract command details
+            command_type = command.get('type', 'unknown')
+            command_data = command.copy()
+            
+            # Remove type from data to avoid duplication
+            if 'type' in command_data:
+                del command_data['type']
+
+            # Create task using asyncio in a thread-safe way
+            loop = None
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                # No event loop in current thread, create one
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            # Schedule the async command
+            if loop.is_running():
+                # If loop is running, schedule as a task
+                asyncio.create_task(self.send_command(session_id, command_type, command_data))
+            else:
+                # If loop is not running, run until complete
+                loop.run_until_complete(self.send_command(session_id, command_type, command_data))
+
+            self.logger.info(f"Command '{command_type}' queued for session {session_id}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to send command to session {session_id}: {e}")
+            return False
 
     def add_event_handler(self, event_type: str, handler: Callable):
         """Add event handler for specific event type."""

@@ -1,5 +1,5 @@
 """
-Dialog for the Hex Viewer/Editor. 
+Dialog for the Hex Viewer/Editor.
 
 Copyright (C) 2025 Zachary Flint
 

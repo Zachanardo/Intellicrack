@@ -140,6 +140,7 @@ class R2AnalysisWorker(QThread):
             try:
                 self.status_updated.emit(f"Running {name} analysis...")
 
+                result = None  # Initialize result
                 if name == 'decompiler':
                     result = engine.analyze_license_functions()
                 elif name == 'vulnerability':
@@ -154,6 +155,8 @@ class R2AnalysisWorker(QThread):
                     result = engine.analyze_cfg()
                 elif name == 'scripting':
                     result = engine.execute_license_analysis_workflow()
+                else:
+                    result = f"Unknown analysis component: {name}"
 
                 results['components'][name] = result
 

@@ -1,5 +1,5 @@
 """
-Intellicrack Core Processing Package 
+Intellicrack Core Processing Package
 
 Copyright (C) 2025 Zachary Flint
 

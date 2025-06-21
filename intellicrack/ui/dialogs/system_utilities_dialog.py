@@ -1,5 +1,5 @@
 """
-System Utilities Dialog for Intellicrack. 
+System Utilities Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -59,18 +59,18 @@ except ImportError:
     class QDialog:
         """
         Stub class for QDialog when PyQt5 is not available.
-        
+
         Provides a placeholder to prevent import errors in non-GUI environments.
         """
         pass
     def pyqtSignal(*args, **kwargs):
         """
         Stub function for pyqtSignal when PyQt5 is not available.
-        
+
         Args:
             *args: Signal type arguments (ignored)
             **kwargs: Signal keyword arguments (ignored)
-            
+
         Returns:
             lambda: A no-op function
         """
@@ -110,7 +110,7 @@ class SystemUtilitiesWorker(QThread):
     def _extract_icon(self):
         """Extract icon from executable."""
         try:
-            from ...utils.system_utils import extract_executable_icon
+            from ...utils.system.system_utils import extract_executable_icon
 
             file_path = self.kwargs.get('file_path', '')
             output_path = self.kwargs.get('output_path', '')
@@ -128,7 +128,7 @@ class SystemUtilitiesWorker(QThread):
     def _get_system_info(self):
         """Get comprehensive system information."""
         try:
-            from ...utils.system_utils import get_system_info
+            from ...utils.system.system_utils import get_system_info
 
             self.progress_updated.emit(50, "Gathering system information...")
 
@@ -143,7 +143,7 @@ class SystemUtilitiesWorker(QThread):
     def _check_dependencies(self):
         """Check system dependencies."""
         try:
-            from ...utils.system_utils import check_dependencies
+            from ...utils.system.system_utils import check_dependencies
 
             self.progress_updated.emit(30, "Checking dependencies...")
 
@@ -164,7 +164,7 @@ class SystemUtilitiesWorker(QThread):
     def _get_process_list(self):
         """Get running process list."""
         try:
-            from ...utils.system_utils import get_process_list
+            from ...utils.system.system_utils import get_process_list
 
             self.progress_updated.emit(50, "Enumerating processes...")
 
@@ -179,7 +179,7 @@ class SystemUtilitiesWorker(QThread):
     def _optimize_memory(self):
         """Optimize system memory usage."""
         try:
-            from ...utils.system_utils import optimize_memory_usage
+            from ...utils.system.system_utils import optimize_memory_usage
 
             self.progress_updated.emit(50, "Optimizing memory usage...")
 
@@ -815,7 +815,7 @@ class SystemUtilitiesDialog(QDialog):
 
             if reply == QMessageBox.Yes:
                 try:
-                    from ...utils.system_utils import kill_process
+                    from ...utils.system.system_utils import kill_process
                     result = kill_process(int(pid))
 
                     if result:

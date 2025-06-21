@@ -46,7 +46,7 @@ except ImportError:
 class EmulatorManager(QObject):
     """
     Manages automatic launching and lifecycle of emulators.
-    
+
     This class ensures that required emulators are started automatically
     when features need them, and provides status tracking.
     """
@@ -73,11 +73,11 @@ class EmulatorManager(QObject):
     def ensure_qemu_running(self, binary_path: str, config: Optional[Dict[str, Any]] = None) -> bool:
         """
         Ensure QEMU is running for the given binary.
-        
+
         Args:
             binary_path: Path to binary that needs QEMU
             config: Optional QEMU configuration
-            
+
         Returns:
             True if QEMU is running or successfully started
         """
@@ -156,10 +156,10 @@ class EmulatorManager(QObject):
     def ensure_qiling_ready(self, binary_path: str) -> Optional[QilingEmulator]:
         """
         Ensure Qiling is ready for the given binary.
-        
+
         Args:
             binary_path: Path to binary to emulate
-            
+
         Returns:
             QilingEmulator instance if successful, None otherwise
         """
@@ -217,12 +217,12 @@ def run_with_qemu(binary_path: str, analysis_func: Callable,
                   config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Run an analysis function with QEMU automatically started.
-    
+
     Args:
         binary_path: Binary to analyze
         analysis_func: Function to run once QEMU is ready
         config: Optional QEMU configuration
-        
+
     Returns:
         Analysis results or error dictionary
     """
@@ -247,11 +247,11 @@ def run_with_qemu(binary_path: str, analysis_func: Callable,
 def run_with_qiling(binary_path: str, analysis_func: Callable) -> Dict[str, Any]:
     """
     Run an analysis function with Qiling automatically initialized.
-    
+
     Args:
         binary_path: Binary to analyze
         analysis_func: Function to run with Qiling instance
-        
+
     Returns:
         Analysis results or error dictionary
     """

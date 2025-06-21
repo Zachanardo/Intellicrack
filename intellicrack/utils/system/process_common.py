@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 def run_subprocess_safely(cmd: List[str], timeout: int = 30, capture_output: bool = True) -> subprocess.CompletedProcess:
     """
     Run a subprocess with common safety patterns.
-    
+
     Args:
         cmd: Command and arguments list
         timeout: Timeout in seconds
         capture_output: Whether to capture stdout/stderr
-        
+
     Returns:
         CompletedProcess result
     """
@@ -41,11 +41,11 @@ def run_subprocess_safely(cmd: List[str], timeout: int = 30, capture_output: boo
 def create_popen_safely(cmd: List[str], **kwargs) -> subprocess.Popen:
     """
     Create a Popen process with common patterns.
-    
+
     Args:
         cmd: Command and arguments list
         **kwargs: Additional Popen arguments
-        
+
     Returns:
         Popen process object
     """
@@ -63,13 +63,13 @@ def create_suspended_process_with_context(create_func, get_context_func, target_
                                         logger_instance=None) -> Dict[str, Any]:
     """
     Common pattern for creating suspended process and getting thread context.
-    
+
     Args:
         create_func: Function to create suspended process
         get_context_func: Function to get thread context
         target_exe: Target executable path
         logger_instance: Optional logger instance
-        
+
     Returns:
         dict: Contains process_info and context, or error info
     """

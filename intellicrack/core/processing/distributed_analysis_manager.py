@@ -1,5 +1,5 @@
 """
-Distributed Analysis Manager 
+Distributed Analysis Manager
 
 Copyright (C) 2025 Zachary Flint
 

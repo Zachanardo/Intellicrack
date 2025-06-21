@@ -33,7 +33,7 @@ from typing import Dict, List, Any
 # Import modules to test
 try:
     from intellicrack.utils.tools.radare2_utils import R2Session, R2Exception
-    from intellicrack.core.analysis.radare2_decompiler import R2Decompiler
+    from intellicrack.core.analysis.radare2_decompiler import R2DecompilationEngine
     from intellicrack.core.analysis.radare2_esil import R2ESILEngine
     from intellicrack.core.analysis.radare2_strings import R2StringAnalyzer
     from intellicrack.core.analysis.radare2_signatures import R2SignatureAnalyzer
@@ -262,7 +262,7 @@ class TestRadare2Decompiler(unittest.TestCase):
         mock_r2 = MagicMock()
         mock_r2pipe.return_value = mock_r2
         
-        decompiler = R2Decompiler(self.test_binary)
+        decompiler = R2DecompilationEngine(self.test_binary)
         self.assertEqual(decompiler.binary_path, self.test_binary)
         self.assertIsNotNone(decompiler.logger)
     
@@ -284,7 +284,7 @@ class TestRadare2Decompiler(unittest.TestCase):
         mock_r2pipe.return_value.__enter__ = lambda self: mock_r2
         mock_r2pipe.return_value.__exit__ = lambda self, *args: None
         
-        decompiler = R2Decompiler(self.test_binary)
+        decompiler = R2DecompilationEngine(self.test_binary)
         result = decompiler.analyze_license_functions()
         
         self.assertIn('license_functions', result)

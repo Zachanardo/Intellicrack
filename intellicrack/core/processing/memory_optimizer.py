@@ -1,5 +1,5 @@
 """
-Memory Optimizer 
+Memory Optimizer
 
 Copyright (C) 2025 Zachary Flint
 
@@ -280,7 +280,7 @@ class MemoryOptimizer:
     def _optimize_data_structures(self) -> None:
         """
         Optimize data structures for memory efficiency.
-        
+
         This implementation performs actual optimization of memory-heavy data structures
         in the application context, including list compression, reference cleanup,
         and intelligent caching strategies.

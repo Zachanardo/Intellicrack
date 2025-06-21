@@ -22,7 +22,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 from typing import Any, Dict, List, Optional
 
-from ...utils.radare2_utils import R2Exception, r2_session
+from ...utils.tools.radare2_utils import R2Exception, r2_session
 from .radare2_ai_integration import R2AIEngine
 from .radare2_decompiler import R2DecompilationEngine
 from .radare2_vulnerability_engine import R2VulnerabilityEngine
@@ -31,7 +31,7 @@ from .radare2_vulnerability_engine import R2VulnerabilityEngine
 class R2BypassGenerator:
     """
     Advanced automated license bypass generation system using radare2 analysis.
-    
+
     Provides comprehensive bypass generation through:
     - Automated patch generation
     - Multi-strategy bypass approaches
@@ -684,13 +684,44 @@ class R2BypassGenerator:
         }
 
     def _generate_registry_bypass_implementation(self, license_analysis: Dict[str, Any]) -> Dict[str, str]:
-        """Generate registry bypass implementation."""
+        """Generate registry bypass implementation based on license analysis."""
+        # Extract registry-related patterns from license analysis
+        registry_patterns = license_analysis.get('registry_patterns', [])
+        license_keys = license_analysis.get('license_keys', [])
+        validation_methods = license_analysis.get('validation_methods', [])
+
+        # Determine specific registry manipulation strategy
+        if 'HKLM' in str(registry_patterns):
+            target_hive = 'HKEY_LOCAL_MACHINE'
+            scope = 'system-wide license bypass'
+        elif 'HKCU' in str(registry_patterns):
+            target_hive = 'HKEY_CURRENT_USER'
+            scope = 'user-specific license bypass'
+        else:
+            target_hive = 'Unknown registry hive'
+            scope = 'generic registry bypass'
+
+        # Generate specific instructions based on found patterns
+        specific_instructions = []
+        if license_keys:
+            key_names = [key.get('name', 'unknown') for key in license_keys[:3]]
+            specific_instructions.append(f"Target license keys: {', '.join(key_names)}")
+
+        if 'time_based' in validation_methods:
+            specific_instructions.append("Modify expiration date values in registry")
+        if 'key_validation' in validation_methods:
+            specific_instructions.append("Replace license key validation with valid key")
+        if 'activation_check' in validation_methods:
+            specific_instructions.append("Set activation status flags to activated state")
+
         return {
             'method': 'registry_manipulation',
-            'target': 'Registry operations',
+            'target': f'Registry operations in {target_hive}',
             'patch_type': 'registry_redirection',
-            'instructions': 'Create fake registry entries or redirect registry access',
-            'tools': 'Registry editor or API hooking'
+            'scope': scope,
+            'instructions': '; '.join(specific_instructions) if specific_instructions else 'Create fake registry entries or redirect registry access',
+            'tools': 'Registry editor or API hooking',
+            'confidence': len(registry_patterns) * 0.2 + len(license_keys) * 0.15
         }
 
     def _create_binary_patch(self, r2, func_info: Dict[str, Any], bypass_point: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -763,14 +794,44 @@ class R2BypassGenerator:
             return 0.3  # Unknown algorithms
 
     def _predict_registry_path(self, reg_op: Dict[str, Any]) -> str:
-        """Predict registry path for license storage."""
-        # Common license registry paths
-        common_paths = [
-            r'HKEY_CURRENT_USER\Software\{AppName}\License',
-            r'HKEY_LOCAL_MACHINE\Software\{AppName}\Registration',
-            r'HKEY_CURRENT_USER\Software\{AppName}\Serial'
-        ]
-        return common_paths[0]  # Return most common
+        """Predict registry path for license storage based on registry operation analysis."""
+        # Extract information from registry operation
+        reg_key = reg_op.get('key', '')
+        reg_value = reg_op.get('value', '')
+        access_type = reg_op.get('access_type', 'read')
+        data_type = reg_op.get('data_type', 'string')
+
+        # Analyze operation to predict likely license path
+        if 'license' in reg_key.lower() or 'license' in reg_value.lower():
+            if 'HKLM' in reg_key or access_type == 'system_write':
+                return rf'HKEY_LOCAL_MACHINE\Software\{reg_op.get("app_name", "UnknownApp")}\License'
+            else:
+                return rf'HKEY_CURRENT_USER\Software\{reg_op.get("app_name", "UnknownApp")}\License'
+
+        elif any(keyword in reg_key.lower() or keyword in reg_value.lower()
+                for keyword in ['serial', 'key', 'activation']):
+            if data_type == 'binary' or 'encrypted' in str(reg_op):
+                return rf'HKEY_LOCAL_MACHINE\Software\{reg_op.get("app_name", "UnknownApp")}\Registration\Key'
+            else:
+                return rf'HKEY_CURRENT_USER\Software\{reg_op.get("app_name", "UnknownApp")}\Serial'
+
+        elif any(keyword in reg_key.lower() or keyword in reg_value.lower()
+                for keyword in ['trial', 'expire', 'date']):
+            return rf'HKEY_CURRENT_USER\Software\{reg_op.get("app_name", "UnknownApp")}\TrialInfo'
+
+        else:
+            # Default based on access pattern
+            common_paths = [
+                rf'HKEY_CURRENT_USER\Software\{reg_op.get("app_name", "UnknownApp")}\License',
+                rf'HKEY_LOCAL_MACHINE\Software\{reg_op.get("app_name", "UnknownApp")}\Registration',
+                rf'HKEY_CURRENT_USER\Software\{reg_op.get("app_name", "UnknownApp")}\Serial'
+            ]
+
+            # Choose based on access type
+            if access_type == 'system_write':
+                return common_paths[1]  # HKLM for system-wide
+            else:
+                return common_paths[0]  # HKCU for user-specific
 
     def _generate_license_value(self) -> str:
         """Generate fake license value."""
@@ -786,14 +847,43 @@ class R2BypassGenerator:
         return '-'.join(segments)
 
     def _predict_license_file_path(self, file_op: Dict[str, Any]) -> str:
-        """Predict license file path."""
-        common_paths = [
-            'license.dat',
-            'registration.key',
-            'license.lic',
-            'serial.txt'
-        ]
-        return common_paths[0]
+        """Predict license file path based on file operation patterns."""
+        # Extract file operation information
+        file_path = file_op.get('path', '')
+        file_type = file_op.get('type', '')
+        access_pattern = file_op.get('access_pattern', '')
+
+        # Customize path based on operation patterns
+        if 'license' in file_path.lower():
+            base_name = 'license'
+        elif 'registration' in file_path.lower() or 'reg' in file_path.lower():
+            base_name = 'registration'
+        elif 'serial' in file_path.lower():
+            base_name = 'serial'
+        elif 'key' in file_path.lower():
+            base_name = 'key'
+        else:
+            base_name = 'license'
+
+        # Choose extension based on file type or access pattern
+        if file_type == 'binary' or 'binary' in access_pattern:
+            extension = '.dat'
+        elif file_type == 'text' or 'text' in access_pattern:
+            extension = '.txt'
+        elif 'encrypted' in str(file_op):
+            extension = '.key'
+        else:
+            extension = '.lic'
+
+        # Consider directory structure from original path
+        if file_path and '\\' in file_path:
+            directory = file_path.rsplit('\\', 1)[0]
+            return f"{directory}\\{base_name}{extension}"
+        elif file_path and '/' in file_path:
+            directory = file_path.rsplit('/', 1)[0]
+            return f"{directory}/{base_name}{extension}"
+
+        return f"{base_name}{extension}"
 
     def _generate_license_file_content(self) -> str:
         """Generate fake license file content."""
@@ -813,35 +903,159 @@ Valid=True"""
             return '00' * 16
 
     def _generate_patch_bytes(self, func_info: Dict[str, Any]) -> str:
-        """Generate patch bytes for function."""
-        # Simple patch: replace first instruction with return 1 (mov eax, 1; ret)
-        # This is architecture-specific, simplified for x86
-        return 'b8010000c3'  # mov eax, 1; ret
+        """Generate patch bytes for function based on function characteristics."""
+        # Extract function information
+        func_name = func_info.get('function', {}).get('name', '')
+        func_size = func_info.get('function', {}).get('size', 0)
+        func_type = func_info.get('function', {}).get('type', '')
+
+        # Customize patch based on function characteristics
+        if 'license' in func_name.lower() or 'check' in func_name.lower():
+            # For license check functions, return success (1)
+            return 'b8010000c3'  # mov eax, 1; ret
+        elif 'validate' in func_name.lower() or 'verify' in func_name.lower():
+            # For validation functions, return success (1)
+            return 'b8010000c3'  # mov eax, 1; ret
+        elif 'trial' in func_name.lower() or 'expire' in func_name.lower():
+            # For trial/expiration functions, return false (0)
+            return 'b8000000c3'  # mov eax, 0; ret
+        elif func_size and func_size < 10:
+            # For small functions, use simple NOP
+            return '90' * min(func_size, 5)  # NOP padding
+        elif func_type == 'bool' or 'bool' in func_name.lower():
+            # For boolean functions, return true
+            return 'b8010000c3'  # mov eax, 1; ret
+        else:
+            # Default: return success for unknown functions
+            return 'b8010000c3'  # mov eax, 1; ret
 
     def _generate_registry_hook_code(self, reg_op: Dict[str, Any]) -> str:
-        """Generate registry hook code."""
-        return '''
-// Registry Hook Implementation
-LONG WINAPI HookedRegQueryValueEx(HKEY hKey, LPCSTR lpValueName, ...) {
-    if (strstr(lpValueName, "License") || strstr(lpValueName, "Serial")) {
-        // Return fake license data
-        strcpy(lpData, "VALID-LICENSE-KEY");
+        """Generate registry hook code customized for specific registry operation."""
+        # Extract registry operation details
+        reg_key = reg_op.get('key', 'License')
+        reg_value = reg_op.get('value', 'Serial')
+        data_type = reg_op.get('data_type', 'string')
+        app_name = reg_op.get('app_name', 'Application')
+
+        # Customize hook based on operation specifics
+        value_checks = []
+        if 'license' in reg_key.lower() or 'license' in reg_value.lower():
+            value_checks.append('strstr(lpValueName, "License")')
+        if 'serial' in reg_key.lower() or 'serial' in reg_value.lower():
+            value_checks.append('strstr(lpValueName, "Serial")')
+        if 'key' in reg_key.lower() or 'key' in reg_value.lower():
+            value_checks.append('strstr(lpValueName, "Key")')
+        if 'activation' in reg_key.lower() or 'activation' in reg_value.lower():
+            value_checks.append('strstr(lpValueName, "Activation")')
+
+        # Default checks if none found
+        if not value_checks:
+            value_checks = ['strstr(lpValueName, "License")', 'strstr(lpValueName, "Serial")']
+
+        check_condition = ' || '.join(value_checks)
+
+        # Generate appropriate fake data based on data type
+        if data_type == 'binary':
+            fake_data = 'memcpy(lpData, fakeBinaryKey, sizeof(fakeBinaryKey));'
+            fake_size = '*lpcbData = sizeof(fakeBinaryKey);'
+        elif data_type == 'dword':
+            fake_data = '*(DWORD*)lpData = 0x12345678;  // Valid license flag'
+            fake_size = '*lpcbData = sizeof(DWORD);'
+        else:
+            fake_data = f'strcpy((char*)lpData, "{app_name.upper()}-VALID-LICENSE-KEY");'
+            fake_size = f'*lpcbData = strlen("{app_name.upper()}-VALID-LICENSE-KEY") + 1;'
+
+        return f'''
+// Registry Hook Implementation for {app_name}
+LONG WINAPI HookedRegQueryValueEx(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, 
+                                  LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData) {{
+    if ({check_condition}) {{
+        // Return fake license data for {app_name}
+        if (lpData && lpcbData) {{
+            {fake_data}
+            {fake_size}
+        }}
+        if (lpType) *lpType = {'REG_BINARY' if data_type == 'binary' else 'REG_DWORD' if data_type == 'dword' else 'REG_SZ'};
         return ERROR_SUCCESS;
-    }
-    return OriginalRegQueryValueEx(hKey, lpValueName, ...);
-}'''
+    }}
+    return OriginalRegQueryValueEx(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
+}}'''
 
     def _generate_file_hook_code(self, file_op: Dict[str, Any]) -> str:
-        """Generate file hook code."""
-        return '''
-// File Hook Implementation
-HANDLE WINAPI HookedCreateFile(LPCSTR lpFileName, ...) {
-    if (strstr(lpFileName, "license") || strstr(lpFileName, ".lic")) {
-        // Redirect to fake license file
-        return OriginalCreateFile("fake_license.dat", ...);
-    }
-    return OriginalCreateFile(lpFileName, ...);
-}'''
+        """Generate file hook code customized for specific file operation."""
+        # Extract file operation details
+        file_path = file_op.get('path', 'license')
+        file_type = file_op.get('type', 'text')
+        access_pattern = file_op.get('access_pattern', 'read')
+        app_name = file_op.get('app_name', 'Application')
+
+        # Build file pattern checks based on operation
+        file_checks = []
+        if 'license' in file_path.lower():
+            file_checks.append('strstr(lpFileName, "license")')
+        if '.lic' in file_path.lower():
+            file_checks.append('strstr(lpFileName, ".lic")')
+        if '.key' in file_path.lower():
+            file_checks.append('strstr(lpFileName, ".key")')
+        if 'serial' in file_path.lower():
+            file_checks.append('strstr(lpFileName, "serial")')
+        if 'registration' in file_path.lower():
+            file_checks.append('strstr(lpFileName, "registration")')
+
+        # Default checks if none found
+        if not file_checks:
+            file_checks = ['strstr(lpFileName, "license")', 'strstr(lpFileName, ".lic")']
+
+        check_condition = ' || '.join(file_checks)
+
+        # Determine fake file name based on file type and operation
+        if file_type == 'binary':
+            fake_file = f"fake_{app_name.lower()}_license.dat"
+        elif 'key' in file_path.lower():
+            fake_file = f"fake_{app_name.lower()}_key.key"
+        elif 'serial' in file_path.lower():
+            fake_file = f"fake_{app_name.lower()}_serial.txt"
+        else:
+            fake_file = f"fake_{app_name.lower()}_license.lic"
+
+        # Add additional parameters based on access pattern
+        if access_pattern == 'write':
+            additional_params = '''DWORD dwDesiredAccess, DWORD dwShareMode, 
+                            LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, 
+                            DWORD dwFlagsAndAttributes, HANDLE hTemplateFile'''
+            call_params = '''dwDesiredAccess, dwShareMode, lpSecurityAttributes, 
+                         dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile'''
+        else:
+            additional_params = '''DWORD dwDesiredAccess, DWORD dwShareMode, 
+                            LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, 
+                            DWORD dwFlagsAndAttributes, HANDLE hTemplateFile'''
+            call_params = '''GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 
+                         FILE_ATTRIBUTE_NORMAL, NULL'''
+
+        return f'''
+// File Hook Implementation for {app_name}
+HANDLE WINAPI HookedCreateFile(LPCSTR lpFileName, {additional_params}) {{
+    if ({check_condition}) {{
+        // Redirect to fake license file for {app_name}
+        // Create fake file if it doesn't exist
+        char fakePath[MAX_PATH];
+        GetTempPath(MAX_PATH, fakePath);
+        strcat(fakePath, "{fake_file}");
+        
+        // Ensure fake file exists with valid content
+        HANDLE hFake = CreateFile(fakePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
+                                 FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hFake != INVALID_HANDLE_VALUE) {{
+            char fakeContent[] = "Licensed=1\\nSerial={app_name.upper()}-VALID-KEY\\nValid=True\\n";
+            DWORD written;
+            WriteFile(hFake, fakeContent, strlen(fakeContent), &written, NULL);
+            CloseHandle(hFake);
+        }}
+        
+        return OriginalCreateFile(fakePath, {call_params});
+    }}
+    return OriginalCreateFile(lpFileName, {additional_params});
+}}'''
 
     def _generate_bypass_steps(self, step: Dict[str, Any]) -> List[str]:
         """Generate step-by-step bypass instructions."""
@@ -887,14 +1101,64 @@ HANDLE WINAPI HookedCreateFile(LPCSTR lpFileName, ...) {
         return tool_map.get(method, ['Disassembler', 'Hex Editor'])
 
     def _get_success_indicators(self, step: Dict[str, Any]) -> List[str]:
-        """Get success indicators for bypass."""
-        return [
-            'Application launches without license prompt',
+        """Get success indicators for bypass based on step characteristics."""
+        # Extract step information
+        method = step.get('recommended_approach', '')
+        target_type = step.get('target_type', '')
+        bypass_method = step.get('bypass_method', '')
+
+        # Base success indicators
+        indicators = ['Application launches without license prompt']
+
+        # Customize indicators based on bypass method
+        if method == 'direct_patching' or bypass_method == 'direct_patching':
+            indicators.extend([
+                'Patched binary executes without errors',
+                'License check functions return success',
+                'No integrity check failures'
+            ])
+        elif method == 'registry_manipulation':
+            indicators.extend([
+                'Registry keys contain valid license data',
+                'License validation reads fake registry values',
+                'No registry access denied errors'
+            ])
+        elif method == 'crypto_bypass':
+            indicators.extend([
+                'Cryptographic checks return valid results',
+                'Key validation functions bypassed',
+                'No encryption/decryption errors'
+            ])
+        elif method == 'network_interception':
+            indicators.extend([
+                'Network license checks return positive response',
+                'Offline activation successful',
+                'No network connectivity errors'
+            ])
+        elif method == 'time_manipulation':
+            indicators.extend([
+                'Trial period appears unlimited',
+                'Expiration dates modified successfully',
+                'System time changes not detected'
+            ])
+
+        # Add target-specific indicators
+        if target_type == 'license_check':
+            indicators.append('License validation always returns true')
+        elif target_type == 'trial_limitation':
+            indicators.append('Trial features work without time restrictions')
+        elif target_type == 'activation_check':
+            indicators.append('Software appears fully activated')
+
+        # Always add general success indicators
+        indicators.extend([
             'Full functionality available',
             'No trial limitations',
             'No expiration warnings',
             'Professional/registered version features accessible'
-        ]
+        ])
+
+        return list(set(indicators))  # Remove duplicates
 
     def _generate_patch_instruction(self, bypass_method: str) -> str:
         """Generate patch instruction based on method."""
@@ -927,11 +1191,11 @@ def generate_key(hardware_id):
     # Create hash of hardware ID
     hash_obj = hashlib.{algorithm.lower()}()
     hash_obj.update(hardware_id.encode())
-    
+
     # Format as license key
     raw_hash = hash_obj.hexdigest()
     formatted_key = '-'.join([raw_hash[i:i+4].upper() for i in range(0, 16, 4)])
-    
+
     return formatted_key
 '''
 
@@ -946,12 +1210,12 @@ def generate_key(user_info):
     # Derive AES key from user information
     key_material = f"{user_info}SALT".encode()
     key = hashlib.sha256(key_material).digest()[:16]
-    
+
     # Encrypt license data
     cipher = AES.new(key, AES.MODE_ECB)
     license_data = b"VALID_LICENSE_12"
     encrypted = cipher.encrypt(license_data)
-    
+
     return encrypted.hex().upper()
 '''
 
@@ -968,7 +1232,7 @@ def generate_key():
     for _ in range(4):
         segment = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
         segments.append(segment)
-    
+
     return '-'.join(segments)
 '''
 
@@ -1026,40 +1290,171 @@ def generate_key():
         return guide
 
     def _assess_bypass_risks(self, result: Dict[str, Any]) -> Dict[str, Any]:
-        """Assess risks associated with bypass methods."""
+        """Assess risks associated with bypass methods based on result analysis."""
+        # Extract information from result
+        strategies = result.get('bypass_strategies', [])
+        mechanisms = result.get('license_mechanisms', {})
+        binary_file = result.get('binary_file', '')
+
+        # Base risk assessment
+        legal_risks = [
+            'Software license violation',
+            'Copyright infringement',
+            'Terms of service violation'
+        ]
+
+        technical_risks = [
+            'Binary corruption',
+            'Application instability'
+        ]
+
+        detection_risks = [
+            'Signature-based detection',
+            'Behavioral analysis detection'
+        ]
+
+        mitigation_strategies = [
+            'Use virtual machines for testing',
+            'Backup original binary',
+            'Test thoroughly before deployment'
+        ]
+
+        # Customize risks based on strategies found
+        for strategy in strategies:
+            method = strategy.get('strategy', '')
+
+            if method == 'direct_patching':
+                technical_risks.extend([
+                    'Binary integrity check failures',
+                    'Code section corruption',
+                    'Digital signature invalidation'
+                ])
+                detection_risks.extend([
+                    'Hash-based detection',
+                    'Binary diff detection'
+                ])
+                mitigation_strategies.extend([
+                    'Use stealthy patching techniques',
+                    'Preserve digital signatures when possible'
+                ])
+
+            elif method == 'registry_manipulation':
+                technical_risks.extend([
+                    'Registry corruption',
+                    'Permission denied errors'
+                ])
+                detection_risks.extend([
+                    'Registry monitoring detection',
+                    'Unusual registry access patterns'
+                ])
+                mitigation_strategies.extend([
+                    'Use registry redirection',
+                    'Clear registry traces after testing'
+                ])
+
+            elif method == 'crypto_bypass':
+                technical_risks.extend([
+                    'Cryptographic validation failures',
+                    'Key generation errors'
+                ])
+                detection_risks.extend([
+                    'Crypto API monitoring',
+                    'Invalid key pattern detection'
+                ])
+                mitigation_strategies.extend([
+                    'Use hardware-based key generation',
+                    'Implement realistic crypto patterns'
+                ])
+
+            elif method == 'network_interception':
+                technical_risks.extend([
+                    'Network connectivity issues',
+                    'SSL/TLS validation failures'
+                ])
+                detection_risks.extend([
+                    'Network traffic analysis',
+                    'Server-side validation bypass detection'
+                ])
+                mitigation_strategies.extend([
+                    'Use proxy servers',
+                    'Implement realistic network responses'
+                ])
+
+        # Adjust risks based on protection mechanisms found
+        if mechanisms.get('crypto_operations'):
+            detection_risks.append('Advanced cryptographic analysis')
+            legal_risks.append('Cryptographic circumvention violation')
+
+        if mechanisms.get('hardware_checks'):
+            technical_risks.append('Hardware fingerprint mismatch')
+            mitigation_strategies.append('Use hardware ID spoofing tools')
+
+        if mechanisms.get('network_operations'):
+            technical_risks.append('Online validation failures')
+            mitigation_strategies.append('Implement offline activation mode')
+
+        # Add file-specific risks
+        if binary_file:
+            if '.exe' in binary_file.lower():
+                technical_risks.append('Windows executable modification risks')
+            elif '.dll' in binary_file.lower():
+                technical_risks.append('Dynamic library dependency issues')
+
         return {
-            'legal_risks': [
-                'Software license violation',
-                'Copyright infringement',
-                'Terms of service violation'
-            ],
-            'technical_risks': [
-                'Binary corruption',
-                'Application instability',
-                'Detection by anti-tamper mechanisms'
-            ],
-            'detection_risks': [
-                'Signature-based detection',
-                'Behavioral analysis detection',
-                'Online validation bypass detection'
-            ],
-            'mitigation_strategies': [
-                'Use virtual machines for testing',
-                'Backup original binary',
-                'Test thoroughly before deployment',
-                'Use stealthy patching techniques'
-            ]
+            'legal_risks': list(set(legal_risks)),
+            'technical_risks': list(set(technical_risks)),
+            'detection_risks': list(set(detection_risks)),
+            'mitigation_strategies': list(set(mitigation_strategies)),
+            'overall_risk_level': self._calculate_risk_level(strategies, mechanisms),
+            'recommended_precautions': self._get_recommended_precautions(strategies)
         }
+
+    def _calculate_risk_level(self, strategies: list, mechanisms: dict) -> str:
+        """Calculate overall risk level based on strategies and mechanisms."""
+        risk_score = 0
+
+        # Base risk from number of strategies
+        risk_score += len(strategies) * 10
+
+        # Add risk based on complexity of mechanisms
+        if mechanisms.get('crypto_operations'):
+            risk_score += 30
+        if mechanisms.get('hardware_checks'):
+            risk_score += 20
+        if mechanisms.get('network_operations'):
+            risk_score += 25
+
+        if risk_score < 30:
+            return 'LOW'
+        elif risk_score < 60:
+            return 'MEDIUM'
+        else:
+            return 'HIGH'
+
+    def _get_recommended_precautions(self, strategies: list) -> list:
+        """Get recommended precautions based on strategies."""
+        precautions = ['Always backup original files']
+
+        for strategy in strategies:
+            method = strategy.get('strategy', '')
+            if method == 'direct_patching':
+                precautions.append('Verify patch compatibility before applying')
+            elif method == 'registry_manipulation':
+                precautions.append('Export registry keys before modification')
+            elif method == 'network_interception':
+                precautions.append('Test network bypasses in isolated environment')
+
+        return list(set(precautions))
 
 
 def generate_license_bypass(binary_path: str, radare2_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Generate comprehensive license bypass for a binary.
-    
+
     Args:
         binary_path: Path to binary file
         radare2_path: Optional path to radare2 executable
-        
+
     Returns:
         Complete bypass generation results
     """

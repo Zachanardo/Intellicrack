@@ -4,13 +4,13 @@ Common Ghidra plugin execution utilities to avoid code duplication.
 
 import os
 
-from .logger import log_message
+from ..core.misc_utils import log_message
 
 
 def run_ghidra_plugin(ghidra_path, temp_dir, project_name, binary_path, plugin_dir, plugin_file, app=None, overwrite=True):
     """
     Common function to run a Ghidra plugin.
-    
+
     Args:
         ghidra_path: Path to Ghidra executable
         temp_dir: Temporary directory for project
@@ -20,7 +20,7 @@ def run_ghidra_plugin(ghidra_path, temp_dir, project_name, binary_path, plugin_d
         plugin_file: Plugin filename
         app: Optional app instance for UI updates
         overwrite: Whether to overwrite existing project
-        
+
     Returns:
         tuple: (returncode, stdout, stderr)
     """
@@ -29,7 +29,7 @@ def run_ghidra_plugin(ghidra_path, temp_dir, project_name, binary_path, plugin_d
             "[Plugin] Setting up Ghidra project..."))
 
     # Build the command
-    from .tools.ghidra_utils import build_ghidra_command
+    from .ghidra_utils import build_ghidra_command
     cmd = build_ghidra_command(
         ghidra_path,
         temp_dir,
@@ -58,13 +58,13 @@ def run_ghidra_plugin(ghidra_path, temp_dir, project_name, binary_path, plugin_d
 def get_ghidra_output_messages(returncode, stdout, stderr, app=None):
     """
     Process and format Ghidra output messages.
-    
+
     Args:
         returncode: Process return code
         stdout: Standard output
         stderr: Standard error
         app: Optional app instance for UI updates
-        
+
     Returns:
         list: List of formatted messages
     """

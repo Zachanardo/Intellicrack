@@ -1,5 +1,5 @@
 """
-Multi-format binary analyzer for various executable formats. 
+Multi-format binary analyzer for various executable formats.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 # Import common patterns from centralized module
-from ...utils.import_patterns import (
+from ...utils.core.import_patterns import (
     LIEF_AVAILABLE,
     MACHOLIB_AVAILABLE,
     PEFILE_AVAILABLE,
@@ -36,7 +36,7 @@ from ...utils.import_patterns import (
     lief,
     pefile,
 )
-from ...utils.protection_utils import calculate_entropy
+from ...utils.protection.protection_utils import calculate_entropy
 
 
 class MultiFormatBinaryAnalyzer:

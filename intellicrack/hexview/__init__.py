@@ -1,5 +1,5 @@
 """
-Enhanced Hex Viewer/Editor module for Intellicrack. 
+Enhanced Hex Viewer/Editor module for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
