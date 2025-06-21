@@ -172,6 +172,35 @@ intellicrack_error.log
 *.backup
 *.orig
 
+# Environment files (should not be in repo)
+.env.example
+.env.production
+.env.local
+.env.*
+
+# Development analysis and temp files
+analyze_stubs.py
+stub_analysis_report.txt
+COMPLETE_IMPLEMENTATION_TODO.md
+PRODUCTION_REFACTORING_REPORT.md
+SCRIPT_ENHANCEMENT_PLAN.md
+
+# Dev folder reports and scripts
+dev/*.py
+dev/*.md
+dev/comprehensive_*
+dev/duplicate_*
+
+# Project docs temporary files
+project-docs/*AUDIT*
+project-docs/*MOCK*
+project-docs/*TODO*
+project-docs/SPECIFIC_*
+
+# Windows specific artifacts
+nul
+ClaudeCode.ps1
+
 # Local-specific files and development artifacts
 CLAUDE.md
 .claude/
@@ -213,6 +242,10 @@ conversation_history/
 *.optimized
 *.analysis_result
 *.workflow_result
+*_analysis_results.md
+*_scan.py
+*_fixer.py
+*_patterns.md
 
 # Development tools
 lint.ps1
