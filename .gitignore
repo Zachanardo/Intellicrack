@@ -199,10 +199,10 @@ project-docs/SPECIFIC_*
 
 # Windows specific artifacts
 nul
-ClaudeCode.ps1
 
 # Local-specific files and development artifacts
 CLAUDE.md
+ClaudeCode.ps1
 .claude/
 docs/CLAUDE.md
 docs/verification/
