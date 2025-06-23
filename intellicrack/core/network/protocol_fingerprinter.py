@@ -29,6 +29,8 @@ import traceback
 from collections import Counter
 from typing import Any, Dict, List, Optional, Union
 
+import pkg_resources
+
 # Import shared entropy calculation
 from ...utils.protection.protection_utils import calculate_entropy
 
@@ -56,7 +58,7 @@ class ProtocolFingerprinter:
             'max_fingerprints': 100,
             'learning_mode': True,
             'analysis_depth': 3,
-            'signature_db_path': 'protocol_signatures.json'
+            'signature_db_path': pkg_resources.resource_filename('intellicrack', 'data/protocol_signatures.json')
         }
 
         # Update with provided configuration

@@ -9,6 +9,7 @@ Compatibility: Intellicrack 1.0+
 """
 
 import hashlib
+import logging
 import os
 import time
 from pathlib import Path
@@ -70,6 +71,9 @@ class DemoPlugin(BasePlugin):
         self.analysis_count = 0
         self.last_analysis_time = None
 
+        # Initialize logger
+        self.logger = logging.getLogger(f"IntellicrackLogger.{self.__class__.__name__}")
+
         # Analysis patterns - these are standard file signatures
         self.file_signatures = {
             'pe_signature': b'MZ',
@@ -79,10 +83,10 @@ class DemoPlugin(BasePlugin):
             'pdf_signature': b'%PDF',
             'java_signature': b'\xca\xfe\xba\xbe'
         }
-        
+
         # Common system library names for detection
         self.system_libraries = self._load_system_libraries()
-        
+
         # Initialize demo patterns that were missing
         self.demo_patterns = self.file_signatures  # Use file_signatures as demo_patterns for backward compatibility
 
@@ -140,11 +144,11 @@ class DemoPlugin(BasePlugin):
                 }
                 return file_types.get(sig_name, "Unknown")
         return "Unknown/Generic Binary"
-    
+
     def _load_system_libraries(self) -> List[bytes]:
         """Load system library names based on platform."""
         import platform
-        
+
         if platform.system() == 'Windows':
             return [
                 b'kernel32.dll', b'ntdll.dll', b'user32.dll', b'advapi32.dll',
@@ -303,11 +307,11 @@ class DemoPlugin(BasePlugin):
     def patch(self, binary_path: str, options: Optional[Dict] = None) -> List[str]:
         """Enhanced patching demonstration with safety features."""
         results = []
-        
+
         # Use options to configure patch behavior
         if options is None:
             options = {}
-        
+
         # Extract configuration from options
         create_backup = options.get('create_backup', True)
         patch_mode = options.get('mode', 'analysis')  # 'analysis', 'apply', 'simulate'
@@ -364,7 +368,7 @@ class DemoPlugin(BasePlugin):
                 results.append(f"\n🎯 Targeting specific offset: 0x{target_offset:08x}")
                 if patch_bytes:
                     results.append(f"📝 Patch bytes: {patch_bytes.hex() if isinstance(patch_bytes, bytes) else patch_bytes}")
-                
+
                 # Apply patch at specific offset if mode is 'apply'
                 if patch_mode == 'apply':
                     success = self._apply_patch_at_offset(binary_path, target_offset, patch_bytes, options)
@@ -375,10 +379,10 @@ class DemoPlugin(BasePlugin):
                 elif patch_mode == 'simulate':
                     results.append("🔄 Simulating patch at target offset...")
                     results.append(f"   Would write {len(patch_bytes) if patch_bytes else 0} bytes")
-            
+
             # Demonstrate various patch scenarios based on patch_type
             patch_opportunities = []
-            
+
             # Filter opportunities based on patch_type option
             if patch_type in ['auto', 'nop']:
                 # Look for NOP instructions (safe to patch)
@@ -451,7 +455,7 @@ class DemoPlugin(BasePlugin):
                 display_count = min(len(patch_results["patchable_locations"]), options.get('display_limit', 3))
                 for i, location in enumerate(patch_results["patchable_locations"][:display_count], 1):
                     results.append(f"  {i}. Offset 0x{location['offset']:08x}: {location['description']}")
-                
+
                 if len(patch_results["patchable_locations"]) > display_count:
                     results.append(f"  ... and {len(patch_results['patchable_locations']) - display_count} more")
 
@@ -459,7 +463,7 @@ class DemoPlugin(BasePlugin):
                 results.append("  • Binary modification support verified")
                 results.append("  • Checksum update capability available")
                 results.append("  • Backup and restore functionality ready")
-                
+
                 # Show mode-specific status
                 if patch_mode == 'apply':
                     results.append("  • ✅ Ready to apply patches")
@@ -485,11 +489,11 @@ class DemoPlugin(BasePlugin):
         """Perform real but safe binary patch analysis."""
         if options is None:
             options = {}
-            
+
         patch_type_filter = options.get('patch_type', 'auto')
         max_results = options.get('max_results', 10)
         scan_depth = options.get('scan_depth', 8192)
-        
+
         try:
             with open(binary_path, 'rb') as f:
                 data = f.read(min(scan_depth, os.path.getsize(binary_path)))
@@ -569,7 +573,7 @@ class DemoPlugin(BasePlugin):
                 "error": str(e),
                 "patchable_locations": []
             }
-    
+
     def _apply_patch_at_offset(self, binary_path: str, offset: int, patch_bytes: bytes, options: Dict[str, Any]) -> bool:
         """Apply patch at specific offset in binary."""
         try:
@@ -577,12 +581,12 @@ class DemoPlugin(BasePlugin):
             verify_bytes = options.get('verify_original_bytes', None)
             update_checksum = options.get('update_checksum', False)
             patch_method = options.get('patch_method', 'direct')  # 'direct', 'temporary', 'memory_mapped'
-            
+
             # Read current bytes at offset for verification
             with open(binary_path, 'rb') as f:
                 f.seek(offset)
                 original_bytes = f.read(len(patch_bytes))
-            
+
             # Verify original bytes if requested
             if verify_bytes and original_bytes != verify_bytes:
                 self.logger.warning(f"Original bytes mismatch at offset 0x{offset:08x}")
@@ -590,7 +594,7 @@ class DemoPlugin(BasePlugin):
                     self.logger.info("Forcing patch despite mismatch (force_patch=True)")
                 else:
                     return False
-            
+
             # Apply patch based on method
             if patch_method == 'direct':
                 # Direct file modification
@@ -599,8 +603,8 @@ class DemoPlugin(BasePlugin):
                     f.write(patch_bytes)
             elif patch_method == 'temporary':
                 # Create temporary file first
-                import tempfile
                 import shutil
+                import tempfile
                 with tempfile.NamedTemporaryFile(mode='wb', delete=False) as tmp:
                     with open(binary_path, 'rb') as src:
                         # Copy up to offset
@@ -620,20 +624,20 @@ class DemoPlugin(BasePlugin):
                 with open(binary_path, 'r+b') as f:
                     with mmap.mmap(f.fileno(), 0) as mm:
                         mm[offset:offset + len(patch_bytes)] = patch_bytes
-            
+
             # Update PE checksum if requested and applicable
             if update_checksum and binary_path.lower().endswith('.exe'):
                 try:
                     self._update_pe_checksum(binary_path)
                 except Exception as e:
                     self.logger.warning(f"Failed to update PE checksum: {e}")
-            
+
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Failed to apply patch: {e}")
             return False
-    
+
     def _update_pe_checksum(self, binary_path: str):
         """Update PE file checksum after patching."""
         # This is a placeholder - real implementation would calculate proper PE checksum
@@ -677,26 +681,26 @@ class DemoPlugin(BasePlugin):
     def run(self, *args, **kwargs) -> Dict[str, Any]:
         """
         Main plugin execution method required by BasePlugin.
-        
+
         Routes to appropriate method based on operation type.
-        
+
         Args:
             *args: Variable arguments
             **kwargs: Keyword arguments including 'operation' and 'target'
-        
+
         Returns:
             Dictionary containing execution results
         """
         operation = kwargs.get('operation', 'analyze')
         target = kwargs.get('target') or (args[0] if args else None)
-        
+
         if not target:
             return {
                 'success': False,
                 'error': 'No target specified',
                 'results': []
             }
-        
+
         try:
             if operation == 'analyze':
                 results = self.analyze(target)

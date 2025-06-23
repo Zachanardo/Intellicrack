@@ -72,7 +72,7 @@ except ImportError as e:
     BinarySimilaritySearchDialog = None
 
 try:
-    from .base_dialog import BinarySelectionDialog, BaseTemplateDialog
+    from .base_dialog import BaseTemplateDialog, BinarySelectionDialog
 except ImportError as e:
     logger.warning("Failed to import base_dialog: %s", e)
     BinarySelectionDialog = None
@@ -146,6 +146,18 @@ except ImportError as e:
     logger.warning("Failed to import debugger_dialog: %s", e)
     DebuggerDialog = None
 
+try:
+    from .program_selector_dialog import (
+        ProgramSelectorDialog,
+        show_program_selector,
+        show_smart_program_selector,
+    )
+except ImportError as e:
+    logger.warning("Failed to import program_selector_dialog: %s", e)
+    ProgramSelectorDialog = None
+    show_program_selector = None
+    show_smart_program_selector = None
+
 # Define package exports - only include successfully imported items
 __all__ = []
 
@@ -203,6 +215,9 @@ if CICDDialog is not None:
 
 if DebuggerDialog is not None:
     __all__.append('DebuggerDialog')
+
+if ProgramSelectorDialog is not None:
+    __all__.extend(['ProgramSelectorDialog', 'show_program_selector', 'show_smart_program_selector'])
 
 # Package metadata
 __version__ = "0.1.0"

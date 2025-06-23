@@ -54,6 +54,7 @@ class PayloadGenerationThread(QThread):
         self.config = config
 
     def run(self):
+        """Execute the payload generation process in a separate thread."""
         try:
             self.progress.emit("Starting payload generation...")
 

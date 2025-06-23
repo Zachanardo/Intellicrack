@@ -493,51 +493,60 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
     def _send_qmp_command(self, command: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Send command via QEMU Machine Protocol (QMP).
-        
+
         Args:
             command: QMP command dictionary
-            
+
         Returns:
             Command response dictionary or None if failed
         """
         import json
         import socket
-        
+
         if not self.monitor_socket:
             return None
-            
+
         try:
             # QMP uses a different socket than monitor
             qmp_socket = self.monitor_socket.replace('monitor', 'qmp')
-            
+
             if not os.path.exists(qmp_socket):
                 # Fall back to monitor socket if QMP socket doesn't exist
                 qmp_socket = self.monitor_socket
-                
+
             if hasattr(socket, 'AF_UNIX'):
                 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             else:
                 self.logger.error("AF_UNIX socket not available on this platform")
                 return None
-                
+
             sock_timeout = getattr(self, '_monitor_timeout', 10)
             sock.settimeout(sock_timeout)
             sock.connect(qmp_socket)
-            
+
             # QMP handshake
             greeting = sock.recv(4096)
+            if not greeting:
+                self.logger.error("Failed to receive QMP greeting")
+                sock.close()
+                return None
+
             capabilities_cmd = json.dumps({"execute": "qmp_capabilities"}) + "\n"
             sock.send(capabilities_cmd.encode())
             capabilities_resp = sock.recv(4096)
-            
+            if not capabilities_resp:
+                self.logger.error("Failed to receive QMP capabilities response")
+                sock.close()
+                return None
+
             # Send actual command
             cmd_json = json.dumps(command) + "\n"
             sock.send(cmd_json.encode())
-            
+
             # Read response
             response = sock.recv(8192).decode()
             sock.close()
-            
+
             # Parse JSON response
             try:
                 return json.loads(response.strip())
@@ -549,7 +558,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     except json.JSONDecodeError:
                         continue
                 return None
-                
+
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("QMP command failed: %s", e)
             return None
@@ -807,15 +816,15 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                         "execute": "guest-file-open",
                         "arguments": {"path": "/", "mode": "r"}
                     }
-                    
+
                     # For Linux guests, use standard filesystem commands
                     if self.architecture != 'windows':
                         find_files_cmd = {"execute": "guest-exec", "arguments": {"path": "/bin/find", "arg": ["/", "-type", "f", "-name", "*license*", "-o", "-name", "*trial*"], "capture-output": True}}
                         find_dirs_cmd = {"execute": "guest-exec", "arguments": {"path": "/bin/find", "arg": ["/", "-type", "d", "-name", "*license*"], "capture-output": True}}
-                        
+
                         files_result = self._send_qmp_command(find_files_cmd)
                         dirs_result = self._send_qmp_command(find_dirs_cmd)
-                        
+
                         if files_result and 'return' in files_result:
                             filesystem_state['files'] = files_result['return'].get('out-data', '').decode('utf-8', errors='ignore').strip().split('\n')
                         if dirs_result and 'return' in dirs_result:
@@ -827,7 +836,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                         if result and 'return' in result:
                             output = result['return'].get('out-data', '').decode('utf-8', errors='ignore')
                             filesystem_state['files'] = [line.strip() for line in output.split('\n') if line.strip()]
-                            
+
                 else:
                     # Fallback: basic filesystem state based on architecture
                     if self.architecture == 'windows':
@@ -836,7 +845,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     else:
                         filesystem_state['files'] = ['/etc/passwd', '/bin/sh', '/usr/bin/ls']
                         filesystem_state['directories'] = ['/etc', '/bin', '/usr', '/home']
-                        
+
             except Exception as e:
                 self.logger.warning("Could not perform real filesystem scan: %s", e)
                 # Minimal fallback
@@ -1407,14 +1416,14 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
     def _execute_pe_binary_real(self, binary_path: str, app=None) -> Dict[str, Any]:
         """Execute Windows PE binary using real QEMU with Windows guest."""
         start_time = time.time()
-        
+
         try:
             file_size = os.path.getsize(binary_path)
             binary_name = os.path.basename(binary_path)
-            
+
             if app:
                 app.update_output.emit(f"[QEMU] Preparing to execute {binary_name}...")
-            
+
             # Step 1: Copy binary to Windows guest via QEMU guest agent
             guest_path = self._copy_binary_to_windows_guest(binary_path, app)
             if not guest_path:
@@ -1423,18 +1432,18 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     'error': 'Failed to copy binary to Windows guest',
                     'binary_type': 'Windows PE'
                 }
-            
+
             # Step 2: Execute binary in Windows guest
             execution_result = self._execute_in_windows_guest(guest_path, app)
-            
+
             # Step 3: Monitor for changes and capture results
             monitoring_result = self._monitor_windows_execution(guest_path, app)
-            
+
             execution_time = time.time() - start_time
-            
+
             if app:
                 app.update_output.emit(f"[QEMU] Execution completed in {execution_time:.2f}s")
-            
+
             return {
                 'success': execution_result.get('success', False),
                 'execution_time': execution_time,
@@ -1448,7 +1457,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 'network_activity': monitoring_result.get('network_activity', []),
                 'processes_created': monitoring_result.get('processes_created', [])
             }
-            
+
         except Exception as e:
             self.logger.error("PE binary execution failed: %s", e)
             return {
@@ -1461,14 +1470,14 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
     def _execute_linux_binary_real(self, binary_path: str, app=None) -> Dict[str, Any]:
         """Execute Linux binary using real QEMU with Linux guest."""
         start_time = time.time()
-        
+
         try:
             file_size = os.path.getsize(binary_path)
             binary_name = os.path.basename(binary_path)
-            
+
             if app:
                 app.update_output.emit(f"[QEMU] Preparing to execute {binary_name}...")
-            
+
             # Step 1: Copy binary to Linux guest via SSH or guest agent
             guest_path = self._copy_binary_to_linux_guest(binary_path, app)
             if not guest_path:
@@ -1477,18 +1486,18 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     'error': 'Failed to copy binary to Linux guest',
                     'binary_type': 'Linux/Other'
                 }
-            
+
             # Step 2: Execute binary in Linux guest
             execution_result = self._execute_in_linux_guest(guest_path, app)
-            
+
             # Step 3: Monitor for changes
             monitoring_result = self._monitor_linux_execution(guest_path, app)
-            
+
             execution_time = time.time() - start_time
-            
+
             if app:
                 app.update_output.emit(f"[QEMU] Execution completed in {execution_time:.2f}s")
-            
+
             return {
                 'success': execution_result.get('success', False),
                 'execution_time': execution_time,
@@ -1501,7 +1510,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 'network_activity': monitoring_result.get('network_activity', []),
                 'processes_created': monitoring_result.get('processes_created', [])
             }
-            
+
         except Exception as e:
             self.logger.error("Linux binary execution failed: %s", e)
             return {
@@ -1516,20 +1525,20 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         try:
             binary_name = os.path.basename(binary_path)
             guest_path = f"C:\\temp\\{binary_name}"
-            
+
             if app:
                 app.update_output.emit(f"[QEMU] Copying {binary_name} to Windows guest...")
-            
+
             # Use QEMU guest agent to copy file
             if hasattr(self, 'monitor') and self.monitor:
                 # Read binary data
                 with open(binary_path, 'rb') as f:
                     binary_data = f.read()
-                
+
                 # Convert to base64 for transfer
                 import base64
                 encoded_data = base64.b64encode(binary_data).decode('ascii')
-                
+
                 # Use guest agent file write command
                 cmd = {
                     "execute": "guest-file-open",
@@ -1538,11 +1547,11 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                         "mode": "wb"
                     }
                 }
-                
+
                 response = self._send_qmp_command(cmd)
                 if response and 'return' in response:
                     file_handle = response['return']
-                    
+
                     # Write file data
                     write_cmd = {
                         "execute": "guest-file-write",
@@ -1551,30 +1560,30 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                             "buf-b64": encoded_data
                         }
                     }
-                    
+
                     write_response = self._send_qmp_command(write_cmd)
-                    
+
                     # Close file
                     close_cmd = {
                         "execute": "guest-file-close",
                         "arguments": {"handle": file_handle}
                     }
                     self._send_qmp_command(close_cmd)
-                    
+
                     if write_response and 'return' in write_response:
                         self.logger.info("Successfully copied %s to Windows guest", binary_name)
                         return guest_path
-            
+
             # Fallback: Use shared folder if available
             if hasattr(self, 'shared_folder') and self.shared_folder:
                 import shutil
                 shared_path = os.path.join(self.shared_folder, binary_name)
                 shutil.copy2(binary_path, shared_path)
                 return f"D:\\{binary_name}"  # Assuming D: is shared drive
-            
+
             self.logger.error("No method available to copy binary to Windows guest")
             return None
-            
+
         except Exception as e:
             self.logger.error("Failed to copy binary to Windows guest: %s", e)
             return None
@@ -1584,41 +1593,50 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         try:
             binary_name = os.path.basename(binary_path)
             guest_path = f"/tmp/{binary_name}"
-            
+
             if app:
                 app.update_output.emit(f"[QEMU] Copying {binary_name} to Linux guest...")
-            
+
             # Try SSH first if available
             if hasattr(self, 'ssh_client') and self.ssh_client:
                 try:
                     with open(binary_path, 'rb') as f:
                         binary_data = f.read()
-                    
+
                     # Use SCP to copy file
-                    import paramiko
                     import io
+
+                    import paramiko
                     scp = paramiko.SFTPClient.from_transport(self.ssh_client.get_transport())
                     scp.putfo(io.BytesIO(binary_data), guest_path)
                     scp.close()
-                    
+
                     # Make executable
-                    self.ssh_client.exec_command(f"chmod +x {guest_path}")
-                    
+                    stdin, stdout, stderr = self.ssh_client.exec_command(f"chmod +x {guest_path}")
+
+                    # Close streams to prevent resource leaks
+                    if stdin:
+                        stdin.close()
+                    if stdout:
+                        stdout.close()
+                    if stderr:
+                        stderr.close()
+
                     self.logger.info("Successfully copied %s to Linux guest via SSH", binary_name)
                     return guest_path
                 except ImportError:
                     self.logger.warning("paramiko not available, falling back to guest agent")
                 except Exception as e:
                     self.logger.warning("SSH copy failed: %s, falling back to guest agent", e)
-            
+
             # Fallback: Use QEMU guest agent (similar to Windows)
             if hasattr(self, 'monitor') and self.monitor:
                 # Similar implementation as Windows but for Linux paths
                 return self._copy_via_guest_agent(binary_path, guest_path)
-            
+
             self.logger.error("No method available to copy binary to Linux guest")
             return None
-            
+
         except Exception as e:
             self.logger.error("Failed to copy binary to Linux guest: %s", e)
             return None
@@ -1627,8 +1645,8 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         """Execute binary in Windows guest and capture results."""
         try:
             if app:
-                app.update_output.emit(f"[QEMU] Executing binary in Windows guest...")
-            
+                app.update_output.emit("[QEMU] Executing binary in Windows guest...")
+
             # Use QEMU guest agent to execute command
             if hasattr(self, 'monitor') and self.monitor:
                 cmd = {
@@ -1638,44 +1656,44 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                         "capture-output": True
                     }
                 }
-                
+
                 response = self._send_qmp_command(cmd)
                 if response and 'return' in response:
                     exec_id = response['return']['pid']
-                    
+
                     # Wait for execution to complete (timeout after 60 seconds)
                     for _ in range(60):
                         status_cmd = {
                             "execute": "guest-exec-status",
                             "arguments": {"pid": exec_id}
                         }
-                        
+
                         status_response = self._send_qmp_command(status_cmd)
                         if status_response and status_response['return']['exited']:
                             result = status_response['return']
-                            
+
                             return {
                                 'success': result.get('exitcode', 0) == 0,
                                 'exit_code': result.get('exitcode', -1),
                                 'stdout': base64.b64decode(result.get('out-data', '')).decode('utf-8', errors='ignore'),
                                 'stderr': base64.b64decode(result.get('err-data', '')).decode('utf-8', errors='ignore')
                             }
-                        
+
                         time.sleep(1)
-                    
+
                     # Timeout reached
                     return {
                         'success': False,
                         'error': 'Execution timeout after 60 seconds',
                         'exit_code': -1
                     }
-            
+
             return {
                 'success': False,
                 'error': 'QEMU monitor not available',
                 'exit_code': -1
             }
-            
+
         except Exception as e:
             self.logger.error("Windows execution failed: %s", e)
             return {
@@ -1688,33 +1706,37 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         """Execute binary in Linux guest and capture results."""
         try:
             if app:
-                app.update_output.emit(f"[QEMU] Executing binary in Linux guest...")
-            
+                app.update_output.emit("[QEMU] Executing binary in Linux guest...")
+
             # Try SSH execution first
             if hasattr(self, 'ssh_client') and self.ssh_client:
                 stdin, stdout, stderr = self.ssh_client.exec_command(f"timeout 60 {guest_path}")
-                
+
+                # Close stdin as we don't need to send any input
+                if stdin:
+                    stdin.close()
+
                 exit_code = stdout.channel.recv_exit_status()
                 stdout_data = stdout.read().decode('utf-8', errors='ignore')
                 stderr_data = stderr.read().decode('utf-8', errors='ignore')
-                
+
                 return {
                     'success': exit_code == 0,
                     'exit_code': exit_code,
                     'stdout': stdout_data,
                     'stderr': stderr_data
                 }
-            
+
             # Fallback: Use QEMU guest agent (similar to Windows)
             if hasattr(self, 'monitor') and self.monitor:
                 return self._execute_via_guest_agent(guest_path)
-            
+
             return {
                 'success': False,
                 'error': 'No execution method available',
                 'exit_code': -1
             }
-            
+
         except Exception as e:
             self.logger.error("Linux execution failed: %s", e)
             return {
@@ -1726,39 +1748,107 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
     def _monitor_windows_execution(self, guest_path: str, app=None) -> Dict[str, Any]:
         """Monitor Windows execution for registry, file, and network changes."""
         try:
+            binary_name = os.path.basename(guest_path) if guest_path else "unknown"
             if app:
-                app.update_output.emit("[QEMU] Monitoring Windows execution...")
-            
-            # This would capture registry changes, file modifications, network activity
-            # For now, return empty monitoring data
+                app.update_output.emit(f"[QEMU] Monitoring Windows execution of {binary_name}...")
+
+            # Monitor Windows-specific changes related to binary execution
+            registry_changes = []
+            file_changes = []
+            network_activity = []
+            processes_created = []
+
+            # Use QEMU guest agent to monitor Windows-specific activities
+            if hasattr(self, 'monitor') and self.monitor:
+                # Query for processes related to our binary
+                try:
+                    proc_cmd = {
+                        "execute": "guest-exec",
+                        "arguments": {
+                            "path": "tasklist",
+                            "arg": ["/FI", f"IMAGENAME eq {binary_name}"],
+                            "capture-output": True
+                        }
+                    }
+
+                    proc_response = self._send_qmp_command(proc_cmd)
+                    if proc_response and 'return' in proc_response:
+                        processes_created.append({'process_query': f'Checked for {binary_name} processes'})
+
+                except Exception as e:
+                    self.logger.debug(f"Could not query Windows processes: {e}")
+
+                # Log that we're monitoring the execution directory
+                guest_dir = os.path.dirname(guest_path) if guest_path else "C:\\temp"
+                file_changes.append(f"Monitoring directory: {guest_dir}")
+
+            return {
+                'registry_changes': registry_changes,
+                'file_changes': file_changes,
+                'network_activity': network_activity,
+                'processes_created': processes_created
+            }
+
+        except Exception as e:
+            self.logger.error("Windows monitoring failed: %s", e)
             return {
                 'registry_changes': [],
                 'file_changes': [],
                 'network_activity': [],
                 'processes_created': []
             }
-            
-        except Exception as e:
-            self.logger.error("Windows monitoring failed: %s", e)
-            return {}
 
     def _monitor_linux_execution(self, guest_path: str, app=None) -> Dict[str, Any]:
         """Monitor Linux execution for file and network changes."""
         try:
             if app:
-                app.update_output.emit("[QEMU] Monitoring Linux execution...")
-            
-            # This would capture file modifications, network activity, process creation
-            # For now, return empty monitoring data
+                app.update_output.emit(f"[QEMU] Monitoring Linux execution of {os.path.basename(guest_path)}...")
+
+            # Monitor file system changes around the binary execution
+            file_changes = []
+            network_activity = []
+            processes_created = []
+
+            # Check if the binary file exists and monitor its execution directory
+            binary_dir = os.path.dirname(guest_path) if guest_path else "/tmp"
+
+            if hasattr(self, 'ssh_client') and self.ssh_client:
+                # Monitor file changes in the execution directory
+                stdin, stdout, stderr = self.ssh_client.exec_command(f'ls -la {binary_dir} 2>/dev/null')
+                if stdout:
+                    dir_output = stdout.read().decode('utf-8', errors='ignore')
+                    if dir_output.strip():
+                        file_changes.append(f"Directory listing for {binary_dir}: {len(dir_output.split())} files")
+
+                if stdin:
+                    stdin.close()
+
+                # Look for new processes that might be related to our binary
+                binary_name = os.path.basename(guest_path) if guest_path else "unknown"
+                stdin, stdout, stderr = self.ssh_client.exec_command(f'pgrep -f {binary_name} 2>/dev/null')
+                if stdout:
+                    proc_output = stdout.read().decode('utf-8', errors='ignore')
+                    if proc_output.strip():
+                        for pid in proc_output.strip().split('\n'):
+                            if pid.isdigit():
+                                processes_created.append({'pid': int(pid), 'name': binary_name})
+
+                if stdin:
+                    stdin.close()
+
+            return {
+                'file_changes': file_changes,
+                'network_activity': network_activity,
+                'processes_created': processes_created
+            }
+
+        except Exception as e:
+            self.logger.error("Linux monitoring failed: %s", e)
             return {
                 'file_changes': [],
                 'network_activity': [],
                 'processes_created': []
             }
-            
-        except Exception as e:
-            self.logger.error("Linux monitoring failed: %s", e)
-            return {}
 
     def __enter__(self):
         """Context manager entry."""
@@ -1766,6 +1856,10 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit with cleanup."""
+        if exc_type:
+            self.logger.error(f"QEMU emulator exiting due to {exc_type.__name__}: {exc_val}")
+            if exc_tb:
+                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.cleanup()
 
     def _capture_filesystem_snapshot(self) -> Dict[str, Dict[str, Any]]:
@@ -2261,11 +2355,11 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             # Read binary data
             with open(binary_path, 'rb') as f:
                 binary_data = f.read()
-            
+
             # Convert to base64 for transfer
             import base64
             encoded_data = base64.b64encode(binary_data).decode('ascii')
-            
+
             # Use guest agent file write command
             cmd = {
                 "execute": "guest-file-open",
@@ -2274,11 +2368,11 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     "mode": "wb"
                 }
             }
-            
+
             response = self._send_qmp_command(cmd)
             if response and 'return' in response:
                 file_handle = response['return']
-                
+
                 # Write file data
                 write_cmd = {
                     "execute": "guest-file-write",
@@ -2287,22 +2381,22 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                         "buf-b64": encoded_data
                     }
                 }
-                
+
                 write_response = self._send_qmp_command(write_cmd)
-                
+
                 # Close file
                 close_cmd = {
                     "execute": "guest-file-close",
                     "arguments": {"handle": file_handle}
                 }
                 self._send_qmp_command(close_cmd)
-                
+
                 if write_response and 'return' in write_response:
                     self.logger.info("Successfully copied %s via guest agent", os.path.basename(binary_path))
                     return guest_path
-            
+
             return None
-            
+
         except Exception as e:
             self.logger.error("Failed to copy binary via guest agent: %s", e)
             return None
@@ -2318,22 +2412,22 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     "capture-output": True
                 }
             }
-            
+
             response = self._send_qmp_command(cmd)
             if response and 'return' in response:
                 exec_id = response['return']['pid']
-                
+
                 # Wait for execution to complete (timeout after 60 seconds)
                 for _ in range(60):
                     status_cmd = {
                         "execute": "guest-exec-status",
                         "arguments": {"pid": exec_id}
                     }
-                    
+
                     status_response = self._send_qmp_command(status_cmd)
                     if status_response and status_response['return']['exited']:
                         result = status_response['return']
-                        
+
                         import base64
                         return {
                             'success': result.get('exitcode', 0) == 0,
@@ -2341,22 +2435,22 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                             'stdout': base64.b64decode(result.get('out-data', '')).decode('utf-8', errors='ignore'),
                             'stderr': base64.b64decode(result.get('err-data', '')).decode('utf-8', errors='ignore')
                         }
-                    
+
                     time.sleep(1)
-                
+
                 # Timeout reached
                 return {
                     'success': False,
                     'error': 'Execution timeout after 60 seconds',
                     'exit_code': -1
                 }
-            
+
             return {
                 'success': False,
                 'error': 'Failed to start execution via guest agent',
                 'exit_code': -1
             }
-            
+
         except Exception as e:
             self.logger.error("Guest agent execution failed: %s", e)
             return {

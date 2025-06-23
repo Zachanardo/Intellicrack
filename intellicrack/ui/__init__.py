@@ -52,17 +52,17 @@ except ImportError as e:
     def integrate_radare2_comprehensive(main_app):
         """Fallback for radare2 comprehensive integration."""
         logger.error("Radare2 integration not available")
-        
+
         # Use main_app to show error message if possible
         if main_app:
             # Update status bar if available
             if hasattr(main_app, 'status_bar'):
                 main_app.status_bar.showMessage("Radare2 integration module not available", 5000)
-            
+
             # Log to output if available
             if hasattr(main_app, 'update_output'):
                 main_app.update_output.emit("[Error] Radare2 comprehensive integration module not found")
-            
+
             # Show message box if Qt is available
             try:
                 from PyQt5.QtWidgets import QMessageBox
@@ -74,12 +74,12 @@ except ImportError as e:
                 )
             except ImportError:
                 pass
-            
+
             # Try to disable radare2-related UI elements
             if hasattr(main_app, 'radare2_action'):
                 main_app.radare2_action.setEnabled(False)
                 main_app.radare2_action.setText("Radare2 (Not Available)")
-            
+
             # Track failed integration attempt
             if hasattr(main_app, 'integration_attempts'):
                 main_app.integration_attempts.append({
@@ -87,7 +87,7 @@ except ImportError as e:
                     'status': 'failed',
                     'reason': 'Module not available'
                 })
-        
+
         return False
 
     def get_comprehensive_integration():

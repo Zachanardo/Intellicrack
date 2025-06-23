@@ -55,6 +55,7 @@ class C2ServerThread(QThread):
         self.running = False
 
     def run(self):
+        """Run the C2 server thread."""
         try:
             # Create and start C2 server
             self.server = C2Server(self.server_config)

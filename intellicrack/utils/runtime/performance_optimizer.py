@@ -525,6 +525,7 @@ class PerformanceOptimizer:
     def _run_standard_analysis(self, file_path: str, analysis_func: callable,
                               strategy: Dict[str, Any]) -> Dict[str, Any]:
         """Run standard analysis on entire file."""
+        _ = strategy
         try:
             # Use memory mapping for large files
             with open(file_path, 'rb') as f:
@@ -573,6 +574,15 @@ def create_performance_optimizer(max_memory_mb: int = 2048, cache_dir: str = "ca
 # Example analysis functions for testing
 def example_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
     """Example string analysis function."""
+    # Include chunk information in results for comprehensive analysis
+    result_metadata = {}
+    if chunk_info:
+        result_metadata = {
+            "chunk_id": chunk_info.get("id", "unknown"),
+            "chunk_offset": chunk_info.get("offset", 0),
+            "chunk_size": chunk_info.get("size", len(data) if hasattr(data, '__len__') else 0)
+        }
+
     if isinstance(data, mmap.mmap):
         # For memory-mapped files, read in chunks
         strings = []
@@ -592,15 +602,29 @@ def example_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
         from ..core.string_utils import extract_ascii_strings
         strings = extract_ascii_strings(data)
 
-    return {
+    result = {
         "status": "success",
         "findings": strings[:100],  # Limit to first 100 strings
         "total_strings": len(strings)
     }
 
+    # Include chunk metadata in result
+    result.update(result_metadata)
+    return result
+
 
 def example_entropy_analysis(data, chunk_info=None) -> Dict[str, Any]:
     """Example entropy analysis function."""
+    # Include chunk information in entropy analysis for position-aware results
+    result_metadata = {}
+    if chunk_info:
+        result_metadata = {
+            "chunk_id": chunk_info.get("id", "unknown"),
+            "chunk_offset": chunk_info.get("offset", 0),
+            "chunk_size": chunk_info.get("size", len(data) if hasattr(data, '__len__') else 0),
+            "analysis_region": f"Offset {chunk_info.get('offset', 0)} - {chunk_info.get('end_offset', 'unknown')}"
+        }
+
     if isinstance(data, mmap.mmap):
         # Sample entropy calculation for memory-mapped data
         sample_size = min(1024*1024, len(data))
@@ -622,9 +646,13 @@ def example_entropy_analysis(data, chunk_info=None) -> Dict[str, Any]:
             p = _count / len(sample_data)
             entropy -= p * (p.bit_length() - 1)
 
-    return {
+    result = {
         "status": "success",
         "entropy": entropy,
         "sample_size": len(sample_data),
         "findings": [f"Entropy: {entropy:.2f}"]
     }
+
+    # Include chunk metadata in result for positional context
+    result.update(result_metadata)
+    return result

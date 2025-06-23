@@ -12,8 +12,6 @@ import threading
 import time
 from typing import Callable, Optional
 
-logger = logging.getLogger(__name__)
-
 
 class TimingAttackDefense:
     """
@@ -46,7 +44,6 @@ class TimingAttackDefense:
             # Use multiple timing sources
             start_time = time.time()
             start_perf = time.perf_counter()
-            start_thread = threading.current_thread()
 
             # Platform-specific timing
             if hasattr(time, 'thread_time'):
@@ -77,6 +74,23 @@ class TimingAttackDefense:
                 # Check for timing anomalies
                 elapsed_real = time.time() - start_time
                 elapsed_perf = time.perf_counter() - start_perf
+
+                # Check thread time if available
+                if start_thread_time is not None and hasattr(time, 'thread_time'):
+                    elapsed_thread = time.thread_time() - start_thread_time
+                    thread_drift = abs(elapsed_thread - elapsed_perf)
+                    if thread_drift > 0.1:
+                        self.logger.warning(f"Thread timing anomaly detected: {thread_drift:.3f}s drift")
+                        return False
+
+                # Check tick count if available
+                if start_tick is not None:
+                    current_tick = self._get_tick_count()
+                    tick_elapsed = (current_tick - start_tick) / 1000.0  # Convert to seconds
+                    tick_drift = abs(tick_elapsed - elapsed_perf)
+                    if tick_drift > 0.1:
+                        self.logger.warning(f"Tick count timing anomaly detected: {tick_drift:.3f}s drift")
+                        return False
 
                 # Check if time is accelerated
                 drift = abs(elapsed_real - elapsed_perf)
@@ -234,6 +248,9 @@ class TimingAttackDefense:
 
             elapsed_ns = end - start
             expected_ns = 1000000  # 1ms in nanoseconds
+
+            # Use total to ensure computation isn't optimized away
+            self.logger.debug(f"RDTSC check completed with total: {total}")
 
             # Check if execution was too fast (accelerated)
             if elapsed_ns < expected_ns * 0.1:  # 10x faster than expected

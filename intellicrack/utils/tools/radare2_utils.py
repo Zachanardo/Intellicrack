@@ -25,6 +25,8 @@ import time
 from contextlib import contextmanager
 from typing import Any, Dict, List, Optional, Union
 
+logger = logging.getLogger(__name__)
+
 try:
     import r2pipe
     R2PIPE_AVAILABLE = True
@@ -78,8 +80,12 @@ class R2Session:
         self.connect()
         return self
 
-    def __exit__(self, _exc_type, _exc_val, _exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
+        if exc_type:
+            logger.error(f"Radare2 session exiting due to {exc_type.__name__}: {exc_val}")
+            if exc_tb:
+                logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.disconnect()
 
     def connect(self) -> bool:
@@ -522,10 +528,10 @@ class R2Session:
     def analyze_function_deeper(self, address: Union[str, int]) -> bool:
         """
         Perform deeper analysis on a specific function.
-        
+
         Args:
             address: Function address
-            
+
         Returns:
             True if analysis succeeded, False otherwise
         """
@@ -533,7 +539,7 @@ class R2Session:
         try:
             # Perform function-specific analysis
             self._execute_command(f'af @ {addr}')  # Analyze function
-            self._execute_command(f'afr @ {addr}')  # Analyze function references  
+            self._execute_command(f'afr @ {addr}')  # Analyze function references
             self._execute_command(f'afv @ {addr}')  # Analyze function variables
             self._execute_command(f'aft @ {addr}')  # Analyze function types
             return True
@@ -543,10 +549,10 @@ class R2Session:
     def run_optimization_passes(self, address: Union[str, int]) -> bool:
         """
         Run optimization passes on a function for better decompilation.
-        
+
         Args:
             address: Function address
-            
+
         Returns:
             True if optimization succeeded, False otherwise
         """
@@ -660,7 +666,7 @@ class R2BinaryDiff:
                     strings2 = {s['string']: s for s in r2_2.get_strings()}
 
                     # Compare strings
-                    for string, data1 in strings1.items():
+                    for string, _ in strings1.items():
                         if string in strings2:
                             results['common_strings'].append(string)
                         else:

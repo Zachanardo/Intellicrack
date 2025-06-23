@@ -396,7 +396,7 @@ class R2UIManager(QObject):
             # Use results viewer to export with specified path
             if 'results_viewer' in self.ui_components:
                 self.ui_components['results_viewer'].results_data = self.current_results
-                
+
                 # Check if the results_viewer has a method to export to specific path
                 if hasattr(self.ui_components['results_viewer'], 'export_to_file'):
                     self.ui_components['results_viewer'].export_to_file(export_path)
@@ -404,13 +404,13 @@ class R2UIManager(QObject):
                     # Fallback: Set default path and use standard export
                     self.ui_components['results_viewer'].default_export_path = export_path
                     self.ui_components['results_viewer']._export_results()
-                
+
                 # Log export details
                 self.logger.info(f"Results exported to: {export_path}")
-                
+
                 # Update status
                 self.status_updated.emit(f"Results exported to {export_path}")
-                
+
                 # Track in history
                 self.analysis_history.append({
                     'timestamp': self._get_timestamp(),
@@ -419,14 +419,14 @@ class R2UIManager(QObject):
                     'binary': self.binary_path,
                     'results_count': len(self.current_results)
                 })
-                
+
                 return True
             else:
                 # Direct export if no viewer available
                 import json
                 with open(export_path, 'w') as f:
                     json.dump(self.current_results, f, indent=2)
-                
+
                 self.logger.info(f"Results exported directly to: {export_path}")
                 return True
 

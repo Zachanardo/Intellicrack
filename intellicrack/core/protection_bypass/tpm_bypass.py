@@ -207,6 +207,15 @@ class TPMProtectionBypass:
         size = int.from_bytes(command_data[2:6], 'big')
         command = int.from_bytes(command_data[6:10], 'big')
 
+        # Validate TPM command structure
+        if tag not in [0x8001, 0x8002]:  # Valid TPM tag values
+            self.logger.warning(f"Invalid TPM tag: 0x{tag:04X}")
+
+        if size != len(command_data):
+            self.logger.debug(f"TPM command size mismatch: expected {size}, got {len(command_data)}")
+            # Use actual command data length for processing
+            size = len(command_data)
+
         # Common TPM 2.0 commands and responses
         tpm_responses = {
             0x00000144: self._tpm_get_capability,      # TPM2_GetCapability
@@ -416,7 +425,7 @@ class TPMProtectionBypass:
 
         try:
             # Try to use stored key for signing
-            if hasattr(self, '_tmp_keys') and key_handle_bytes in self._tpm_keys:
+            if hasattr(self, '_tpm_keys') and key_handle_bytes in self._tpm_keys:
                 private_key = self._tpm_keys[key_handle_bytes]
                 from cryptography.hazmat.primitives import hashes
                 from cryptography.hazmat.primitives.asymmetric import padding
@@ -924,6 +933,11 @@ class TPMAnalyzer:
         results["uses_tpm"] = len(found_strings) > 0
         results["confidence"] = string_analysis["confidence"] / 100.0
 
+        # Store indicators for later analysis
+        self.tpm_indicators = found_strings.copy()
+        for indicator in found_strings:
+            self.logger.debug(f"TPM indicator found: {indicator}")
+
         # Detect TPM version with separate check
         try:
             with open(self.binary_path, 'rb') as f:
@@ -931,8 +945,13 @@ class TPMAnalyzer:
 
             if b"TPM 2.0" in data or b"TPM2" in data:
                 results["tpm_version"] = "2.0"
+                self.tpm_indicators.append("TPM 2.0 version detected")
             elif b"TPM 1.2" in data:
                 results["tpm_version"] = "1.2"
+                self.tpm_indicators.append("TPM 1.2 version detected")
+
+            # Add additional indicators to our collection
+            results["indicators"] = self.tpm_indicators
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Error analyzing TPM usage: {str(e)}")

@@ -59,6 +59,7 @@ class IntellicrackAIAssistant:
     """Enhanced AI Assistant with Claude Code-like functionality."""
 
     def __init__(self, cli_interface=None):
+        """Initialize AI assistant with CLI interface and tools."""
         self.cli_interface = cli_interface
         self.file_tools = get_ai_file_tools(cli_interface)
         self.tools = self._initialize_tools()
@@ -354,14 +355,43 @@ Remember: Your goal is to help users understand binary protection mechanisms and
             return "protection"
         return "auto"
 
-    def _extract_topic(self, message: str) -> str:  # pylint: disable=unused-argument
+    def _extract_topic(self, message: str) -> str:
         """Extract help topic from message."""
-        # Simple extraction logic
-        return "general"
+        # Analyze message to determine help topic
+        message_lower = message.lower()
 
-    def _extract_aspect(self, message: str) -> str:  # pylint: disable=unused-argument
+        if any(keyword in message_lower for keyword in ['binary', 'pe', 'elf', 'analysis']):
+            return "binary_analysis"
+        elif any(keyword in message_lower for keyword in ['network', 'traffic', 'protocol']):
+            return "network_analysis"
+        elif any(keyword in message_lower for keyword in ['patch', 'modify', 'crack']):
+            return "patching"
+        elif any(keyword in message_lower for keyword in ['hex', 'bytes', 'dump']):
+            return "hex_editing"
+        elif any(keyword in message_lower for keyword in ['license', 'protection', 'bypass']):
+            return "license_bypass"
+        elif any(keyword in message_lower for keyword in ['frida', 'script', 'hook']):
+            return "scripting"
+        else:
+            return "general"
+
+    def _extract_aspect(self, message: str) -> str:
         """Extract network aspect from message."""
-        return "protocol"
+        # Analyze message to determine network analysis aspect
+        message_lower = message.lower()
+
+        if any(keyword in message_lower for keyword in ['protocol', 'http', 'tcp', 'udp']):
+            return "protocol"
+        elif any(keyword in message_lower for keyword in ['traffic', 'capture', 'packet']):
+            return "traffic"
+        elif any(keyword in message_lower for keyword in ['license', 'server', 'validation']):
+            return "license_server"
+        elif any(keyword in message_lower for keyword in ['firewall', 'security', 'filter']):
+            return "security"
+        elif any(keyword in message_lower for keyword in ['dns', 'domain', 'resolution']):
+            return "dns"
+        else:
+            return "protocol"
 
     def _generate_response(self, intent: Dict[str, Any], message: str) -> Dict[str, Any]:
         """Generate response based on intent."""
@@ -409,9 +439,38 @@ Remember: Your goal is to help users understand binary protection mechanisms and
 
         return f"Based on my analysis, I can suggest patches for {target} mechanisms. However, I need your confirmation before applying any modifications.\n\nWould you like me to:\n1. Show suggested patches\n2. Explain how the patches work\n3. Create a backup before patching"
 
-    def _handle_explanation_intent(self, intent: Dict[str, Any]) -> str:  # pylint: disable=unused-argument
+    def _handle_explanation_intent(self, intent: Dict[str, Any]) -> str:
         """Handle explanation intent."""
-        return """I can help you understand:
+        topic = intent.get("topic", "general")
+
+        if topic == "binary_analysis":
+            return """**Binary Analysis**: Understanding how executables work:
+
+• **Static Analysis**: Examining file structure, imports, strings without execution
+• **Dynamic Analysis**: Running the program and monitoring behavior
+• **Hybrid Approaches**: Combining both methods for comprehensive understanding
+
+Would you like me to analyze a specific binary?"""
+        elif topic == "patching":
+            return """**Patching Techniques**: Methods to modify binary behavior:
+
+• **NOP Patches**: Replace instructions with no-operation codes
+• **Jump Patches**: Redirect execution flow around checks
+• **Value Patches**: Modify constants and validation values
+• **Function Hooking**: Intercept and modify function calls
+
+What type of patching are you interested in?"""
+        elif topic == "license_bypass":
+            return """**License Bypass Methods**: Common approaches to software licensing:
+
+• **Trial Extension**: Modify time checks and expiration logic
+• **Key Validation**: Bypass or patch license key verification
+• **Hardware Checks**: Circumvent dongle and hardware fingerprinting
+• **Server Communication**: Block or redirect license server calls
+
+Which protection mechanism are you analyzing?"""
+        else:
+            return """I can help you understand:
 
 1. **Binary Protection Mechanisms**: How software protections work
 2. **License Validation**: Common licensing schemes and checks
@@ -420,9 +479,39 @@ Remember: Your goal is to help users understand binary protection mechanisms and
 
 What would you like to learn about?"""
 
-    def _handle_network_intent(self, intent: Dict[str, Any]) -> str:  # pylint: disable=unused-argument
+    def _handle_network_intent(self, intent: Dict[str, Any]) -> str:
         """Handle network intent."""
-        return "I can analyze network communications, including:\n- Protocol identification\n- License server communication\n- SSL/TLS traffic\n\nWould you like me to start network analysis?"
+        aspect = intent.get("aspect", "protocol")
+
+        if aspect == "license_server":
+            return """I can analyze license server communications:
+
+• **Server Discovery**: Identify license validation endpoints
+• **Protocol Analysis**: Decode license request/response formats
+• **Traffic Interception**: Monitor and modify license communications
+• **Offline Simulation**: Create local license server responses
+
+Would you like me to start license server analysis?"""
+        elif aspect == "traffic":
+            return """I can perform network traffic analysis:
+
+• **Packet Capture**: Monitor all network communications
+• **Protocol Identification**: Detect HTTP, TCP, UDP, and custom protocols
+• **Data Extraction**: Extract license keys, certificates, and validation data
+• **Flow Analysis**: Understand communication patterns and timing
+
+Shall I begin traffic capture?"""
+        elif aspect == "security":
+            return """I can analyze network security measures:
+
+• **SSL/TLS Analysis**: Examine certificate validation and encryption
+• **Firewall Detection**: Identify network restrictions and bypasses
+• **VPN Analysis**: Analyze virtual private network configurations
+• **Authentication**: Study network-based authentication mechanisms
+
+What security aspect interests you?"""
+        else:
+            return "I can analyze network communications, including:\n- Protocol identification\n- License server communication\n- SSL/TLS traffic\n\nWould you like me to start network analysis?"
 
     def _handle_general_intent(self, message: str) -> str:
         """Handle general intent."""
@@ -455,10 +544,30 @@ What would you like to learn about?"""
             )
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _suggest_patches(self, binary_path: str, target: str = "auto") -> Dict[str, Any]:  # pylint: disable=unused-argument
+    def _suggest_patches(self, binary_path: str, target: str = "auto") -> Dict[str, Any]:
         """Suggest patches for the binary."""
         if self.cli_interface:
-            return self.cli_interface.suggest_patches(binary_path)
+            # Use target parameter to focus patch suggestions
+            if target == "license":
+                return self.cli_interface.execute_command(
+                    [binary_path, "--suggest-patches", "--focus", "license", "--format", "json"],
+                    "Generating license bypass patches",
+                    "Analyzing license validation routines and suggesting bypass strategies"
+                )
+            elif target == "trial":
+                return self.cli_interface.execute_command(
+                    [binary_path, "--suggest-patches", "--focus", "trial", "--format", "json"],
+                    "Generating trial extension patches",
+                    "Analyzing time-based restrictions and suggesting extension strategies"
+                )
+            elif target == "protection":
+                return self.cli_interface.execute_command(
+                    [binary_path, "--suggest-patches", "--focus", "protection", "--format", "json"],
+                    "Generating protection bypass patches",
+                    "Analyzing protection mechanisms and suggesting bypass strategies"
+                )
+            else:
+                return self.cli_interface.suggest_patches(binary_path)
         return {"status": "error", "message": "CLI interface not available"}
 
     def _apply_patch(self, binary_path: str, patch_definition: Dict[str, Any]) -> Dict[str, Any]:
@@ -510,21 +619,83 @@ What would you like to learn about?"""
             )
         return {"status": "error", "message": "CLI interface not available"}
 
-    def _view_hex(self, binary_path: str, address: str, size: int = 64) -> Dict[str, Any]:  # pylint: disable=unused-argument
+    def _view_hex(self, binary_path: str, address: str, size: int = 64) -> Dict[str, Any]:
         """View hex dump at specific address."""
-        # This would integrate with the hex viewer
-        return {
-            "status": "info",
-            "message": f"Hex view at {address} for {size} bytes would be displayed here"
-        }
+        try:
+            from ..hexview import LargeFileHandler
 
-    def _disassemble(self, binary_path: str, address: str, count: int = 20) -> Dict[str, Any]:  # pylint: disable=unused-argument
+            # Load the binary file
+            handler = LargeFileHandler(binary_path)
+
+            # Parse address (hex or decimal)
+            if address.startswith('0x'):
+                addr_int = int(address, 16)
+            else:
+                addr_int = int(address)
+
+            # Read bytes at the specified address
+            data = handler.read(addr_int, size)
+
+            # Format as hex dump
+            hex_lines = []
+            for i in range(0, len(data), 16):
+                chunk = data[i:i+16]
+                hex_part = ' '.join(f'{b:02x}' for b in chunk)
+                ascii_part = ''.join(chr(b) if 32 <= b <= 126 else '.' for b in chunk)
+                hex_lines.append(f'{addr_int + i:08x}: {hex_part:<48} {ascii_part}')
+
+            return {
+                "status": "success",
+                "address": address,
+                "size": len(data),
+                "hex_dump": '\n'.join(hex_lines),
+                "raw_data": data.hex()
+            }
+
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Error reading hex at {address}: {str(e)}"
+            }
+
+    def _disassemble(self, binary_path: str, address: str, count: int = 20) -> Dict[str, Any]:
         """Disassemble code at address."""
-        # This would integrate with disassembly tools
-        return {
-            "status": "info",
-            "message": f"Disassembly at {address} for {count} instructions would be displayed here"
-        }
+        if self.cli_interface:
+            # Use CLI interface for disassembly
+            return self.cli_interface.execute_command(
+                [binary_path, "--disassemble", "--address", address, "--count", str(count), "--format", "json"],
+                f"Disassembling {count} instructions",
+                f"Disassembling code at {address} in {binary_path}"
+            )
+        else:
+            # Fallback: basic disassembly attempt
+            try:
+                from ..hexview import LargeFileHandler
+
+                # Load the binary file
+                handler = LargeFileHandler(binary_path)
+
+                # Parse address
+                if address.startswith('0x'):
+                    addr_int = int(address, 16)
+                else:
+                    addr_int = int(address)
+
+                # Read some bytes for basic analysis
+                data = handler.read(addr_int, count * 16)  # Assume avg 16 bytes per instruction
+
+                return {
+                    "status": "partial",
+                    "message": f"Raw bytes at {address}: {data[:64].hex()}",
+                    "note": "Full disassembly requires CLI interface",
+                    "raw_data": data.hex()
+                }
+
+            except Exception as e:
+                return {
+                    "status": "error",
+                    "message": f"Error disassembling at {address}: {str(e)}"
+                }
 
     # File System Tool Methods
     def _search_license_files(self, search_path: str, custom_patterns: List[str] = None) -> Dict[str, Any]:

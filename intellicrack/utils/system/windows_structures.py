@@ -55,6 +55,7 @@ class WindowsContext:
         try:
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
                 class CONTEXT(ctypes.Structure):
+                    """Windows 64-bit thread context structure."""
                     _fields_ = [
                         ("P1Home", ctypes.c_ulonglong),
                         ("P2Home", ctypes.c_ulonglong),
@@ -98,6 +99,7 @@ class WindowsContext:
                 CONTEXT_FULL = 0x10000B
             else:  # 32-bit
                 class CONTEXT(ctypes.Structure):
+                    """Windows 32-bit thread context structure."""
                     _fields_ = [
                         ("ContextFlags", ctypes.wintypes.DWORD),
                         ("Dr0", ctypes.wintypes.DWORD),
@@ -195,6 +197,7 @@ class WindowsProcessStructures:
             return None
 
         class STARTUPINFO(ctypes.Structure):
+            """Windows process startup information structure."""
             _fields_ = [
                 ("cb", ctypes.wintypes.DWORD),
                 ("lpReserved", ctypes.wintypes.LPWSTR),
@@ -224,6 +227,7 @@ class WindowsProcessStructures:
             return None
 
         class PROCESS_INFORMATION(ctypes.Structure):
+            """Windows process information structure containing process and thread handles."""
             _fields_ = [
                 ("hProcess", ctypes.wintypes.HANDLE),
                 ("hThread", ctypes.wintypes.HANDLE),

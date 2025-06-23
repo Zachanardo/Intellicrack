@@ -27,14 +27,12 @@ import tempfile
 import traceback
 from typing import Any, Dict, List, Optional, Tuple
 
+import pkg_resources
+
 # Optional cryptography dependencies - graceful fallback if not available
 try:
-    from cryptography import x509
-    from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.asymmetric import rsa
-    from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
-    from cryptography.x509.oid import NameOID
-    CRYPTOGRAPHY_AVAILABLE = True
+    import importlib.util
+    CRYPTOGRAPHY_AVAILABLE = importlib.util.find_spec("cryptography") is not None
 except ImportError:
     CRYPTOGRAPHY_AVAILABLE = False
 
@@ -63,8 +61,8 @@ class SSLTLSInterceptor:
             'listen_ip': '127.0.0.1',
             'listen_port': 8443,
             'target_hosts': COMMON_LICENSE_DOMAINS,
-            'ca_cert_path': os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'ssl_certificates', 'ca.crt'),
-            'ca_key_path': os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'ssl_certificates', 'ca.key'),
+            'ca_cert_path': pkg_resources.resource_filename('intellicrack', 'ssl_certificates/ca.crt'),
+            'ca_key_path': pkg_resources.resource_filename('intellicrack', 'ssl_certificates/ca.key'),
             'record_traffic': True,
             'auto_respond': True
         }

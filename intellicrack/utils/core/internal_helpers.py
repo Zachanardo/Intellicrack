@@ -31,7 +31,7 @@ import time
 from typing import Any, Callable, Dict, List, Optional
 
 # Import availability flags from common imports
-from .common_imports import HAS_TENSORFLOW, HAS_TORCH
+from .common_imports import HAS_OPENCL, HAS_TENSORFLOW, HAS_TORCH
 from .common_imports import PSUTIL_AVAILABLE as HAS_PSUTIL
 
 # Import actual modules when available
@@ -40,21 +40,18 @@ if HAS_PSUTIL:
 else:
     psutil = None
 
-if HAS_TORCH:
+try:
     import torch
-else:
+    HAS_TORCH = True
+except ImportError:
     torch = None
+    HAS_TORCH = False
 
 if HAS_TENSORFLOW:
     import tensorflow as tf  # pylint: disable=import-error
 else:
     tf = None
 
-try:
-    import pyopencl as cl
-    HAS_OPENCL = True
-except ImportError:
-    HAS_OPENCL = False
 
 from ..utils.logger import setup_logger
 
@@ -1056,6 +1053,7 @@ def _handle_return_license(license_id: str) -> Dict[str, Any]:
 
 def _handle_write_memory(address: int, data: bytes) -> bool:
     """Handle write memory request (simulation)."""
+    _ = address, data
     # Simulate successful write
     return True
 
@@ -1982,8 +1980,6 @@ def _generate_weight_data(dims: List[int], data_type: str, total_elements: int) 
         fan_in = dims[-2] if len(dims) > 1 else dims[0]
         fan_out = dims[-1]
 
-        # Xavier/Glorot initialization
-        xavier_std = math.sqrt(2.0 / (fan_in + fan_out))
         # He initialization (better for ReLU)
         he_std = math.sqrt(2.0 / fan_in)
 
@@ -2025,6 +2021,7 @@ def _generate_weight_data(dims: List[int], data_type: str, total_elements: int) 
 
 def _generate_bias_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
     """Generate realistic bias vector data."""
+    _ = dims
     import random
 
     data = bytearray()
@@ -2119,6 +2116,7 @@ def _generate_attention_data(dims: List[int], data_type: str, total_elements: in
 
 def _generate_generic_tensor_data(dims: List[int], data_type: str, total_elements: int) -> bytes:
     """Generate generic realistic tensor data."""
+    _ = dims
     import random
 
     data = bytearray()

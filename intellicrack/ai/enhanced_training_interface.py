@@ -93,7 +93,7 @@ class TrainingConfiguration:
     model_name: str = "intellicrack_model"
     model_type: str = "vulnerability_classifier"
     dataset_path: str = ""
-    output_directory: str = "models/trained"
+    output_directory: str = os.path.join(os.path.dirname(__file__), "..", "models", "trained")
 
     # Training parameters
     learning_rate: float = 0.001

@@ -43,12 +43,18 @@ class C2Manager:
         try:
             self.server = C2Server(config)
             result = self.server.start()
+
+            # Check if server started successfully
+            if not result or not result.get('success', True):
+                raise Exception(f"Server failed to start: {result.get('error', 'Unknown error') if result else 'No response'}")
+
             return {
                 'success': True,
                 'server_info': {
                     'protocol': config.get('protocol', 'tcp'),
                     'port': config.get('port', 4444),
-                    'interface': config.get('interface', '0.0.0.0')
+                    'interface': config.get('interface', '0.0.0.0'),
+                    'startup_result': result
                 }
             }
         except Exception as e:
@@ -83,13 +89,13 @@ class C2Manager:
         try:
             import time
             start_time = time.time()
-            
+
             self.logger.info(f"Waiting for callback from session {session_id or 'any'} with timeout {timeout}s")
-            
+
             while time.time() - start_time < timeout:
                 # Check for active sessions
                 active_sessions = self.sessions.get_active_sessions() if hasattr(self.sessions, 'get_active_sessions') else []
-                
+
                 if session_id:
                     # Wait for specific session
                     for session in active_sessions:
@@ -109,28 +115,28 @@ class C2Manager:
                             'session_info': active_sessions[0],
                             'wait_time': time.time() - start_time
                         }
-                
+
                 time.sleep(1)  # Check every second
-            
+
             return {
                 'success': False,
                 'error': f'No callback received within {timeout} seconds',
                 'wait_time': timeout
             }
-            
+
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
     def establish_session(self, target_info: Dict[str, Any], payload_info: Dict[str, Any]) -> Dict[str, Any]:
         """Establish a C2 session with a target."""
         try:
-            import uuid
             import time
-            
+            import uuid
+
             session_id = str(uuid.uuid4())
-            
+
             self.logger.info(f"Establishing C2 session {session_id} with target {target_info.get('target_ip', 'unknown')}")
-            
+
             # Create session info
             session_info = {
                 'id': session_id,
@@ -141,16 +147,16 @@ class C2Manager:
                 'established_at': time.time(),
                 'status': 'establishing'
             }
-            
+
             # Try to establish connection
             if self.server:
                 # Add session to active sessions
                 if hasattr(self.sessions, 'add_session'):
                     self.sessions.add_session(session_info)
-                
+
                 # Wait for initial callback
                 callback_result = self.wait_for_callback(session_id, timeout=60)
-                
+
                 if callback_result['success']:
                     session_info['status'] = 'established'
                     return {
@@ -168,6 +174,6 @@ class C2Manager:
                     }
             else:
                 return {'success': False, 'error': 'C2 server not running'}
-                
+
         except Exception as e:
             return {'success': False, 'error': str(e)}

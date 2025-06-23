@@ -25,13 +25,12 @@ from typing import Optional
 
 try:
     from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-    from PyQt5.QtGui import QFont, QFontMetrics
+    from PyQt5.QtGui import QFont
     from PyQt5.QtWidgets import (
         QFrame,
         QHBoxLayout,
         QLabel,
         QPushButton,
-        QScrollArea,
         QSplitter,
         QTextEdit,
         QVBoxLayout,

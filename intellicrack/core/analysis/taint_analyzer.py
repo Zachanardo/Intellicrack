@@ -21,11 +21,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import logging
-from typing import Any, Dict, List, Optional
+import re
+from typing import Any, Dict, List, Optional, Set
 
 try:
-    from PyQt5.QtWidgets import QFileDialog, QMessageBox
-    PYQT5_AVAILABLE = True
+    import importlib.util
+    PYQT5_AVAILABLE = importlib.util.find_spec("PyQt5") is not None
 except ImportError:
     PYQT5_AVAILABLE = False
 
@@ -37,7 +38,7 @@ class AdvancedTaintTracker:
     Advanced taint tracking with inter-procedural analysis and transformation tracking.
     """
 
-    def __init__(self, cfg: Dict[int, List[int]], data_flow_graph: Dict[int, Dict[str, Any]], 
+    def __init__(self, cfg: Dict[int, List[int]], data_flow_graph: Dict[int, Dict[str, Any]],
                  register_state_map: Dict[int, Dict[str, Any]]):
         """Initialize advanced taint tracker with program analysis data."""
         self.cfg = cfg
@@ -53,7 +54,7 @@ class AdvancedTaintTracker:
         """Add a new taint source and return its ID."""
         self.taint_id_counter += 1
         taint_id = self.taint_id_counter
-        
+
         self.taint_sources[taint_id] = {
             'instruction': source_instr,
             'address': source_instr['address'],
@@ -61,7 +62,7 @@ class AdvancedTaintTracker:
             'tainted_registers': self._get_output_registers(source_instr),
             'tainted_memory': self._get_output_memory(source_instr)
         }
-        
+
         self.logger.debug(f"Added taint source {taint_id} at {hex(source_instr['address'])}")
         return taint_id
 
@@ -70,28 +71,28 @@ class AdvancedTaintTracker:
         propagation_paths = []
         visited = set()
         max_depth = 100
-        
+
         # Initialize taint state
         initial_taint_state = {
             'registers': self._get_output_registers(source),
             'memory': self._get_output_memory(source),
             'transformations': []
         }
-        
+
         # Depth-first search with taint tracking
-        def dfs_propagate(addr: int, current_path: List[Dict[str, Any]], 
+        def dfs_propagate(addr: int, current_path: List[Dict[str, Any]],
                          taint_state: Dict[str, Any], depth: int):
             if depth > max_depth or addr in visited:
                 return
-                
+
             visited.add(addr)
-            
+
             # Check if we've reached a sink
             for sink in sinks:
                 if sink['address'] == addr:
                     # Calculate confidence based on transformations
                     confidence = self._calculate_confidence(taint_state['transformations'])
-                    
+
                     propagation_paths.append({
                         'source': source,
                         'sink': sink,
@@ -101,26 +102,26 @@ class AdvancedTaintTracker:
                         'transformations': taint_state['transformations'].copy()
                     })
                     return
-            
+
             # Get data flow information for current address
             flow_info = self.data_flow_graph.get(addr, {})
-            
+
             # Propagate through successors
             successors = self.cfg.get(addr, [])
             for next_addr in successors:
                 # Update taint state based on data flow
                 new_taint_state = self._update_taint_state(taint_state, flow_info, next_addr)
-                
+
                 # Only continue if taint is still present
                 if new_taint_state['registers'] or new_taint_state['memory']:
                     new_path = current_path + [{'address': next_addr}]
                     dfs_propagate(next_addr, new_path, new_taint_state, depth + 1)
-            
+
             visited.remove(addr)  # Allow revisiting for different paths
-        
+
         # Start propagation from source
         dfs_propagate(source['address'], [source], initial_taint_state, 0)
-        
+
         return propagation_paths
 
     def _get_output_registers(self, instr: Dict[str, Any]) -> Set[str]:
@@ -128,9 +129,9 @@ class AdvancedTaintTracker:
         # Simplified register tracking - in real implementation would parse instruction
         mnemonic = instr.get('mnemonic', '').lower()
         op_str = instr.get('op_str', '').lower()
-        
+
         tainted_regs = set()
-        
+
         # Common patterns for register outputs
         if mnemonic in ['mov', 'lea', 'add', 'sub', 'xor', 'or', 'and']:
             # First operand is usually destination
@@ -143,7 +144,7 @@ class AdvancedTaintTracker:
             # Function calls typically taint return register
             tainted_regs.add('eax')  # x86
             tainted_regs.add('rax')  # x64
-        
+
         return tainted_regs
 
     def _get_output_memory(self, instr: Dict[str, Any]) -> Set[str]:
@@ -151,9 +152,9 @@ class AdvancedTaintTracker:
         # Simplified memory tracking
         mnemonic = instr.get('mnemonic', '').lower()
         op_str = instr.get('op_str', '').lower()
-        
+
         tainted_mem = set()
-        
+
         # Memory write patterns
         if mnemonic in ['mov', 'movs', 'stos'] and '[' in op_str:
             # Extract memory operand
@@ -163,10 +164,10 @@ class AdvancedTaintTracker:
                     if '[' in part and ']' in part:
                         mem_ref = part[part.find('['):part.find(']')+1]
                         tainted_mem.add(mem_ref)
-        
+
         return tainted_mem
 
-    def _update_taint_state(self, taint_state: Dict[str, Any], flow_info: Dict[str, Any], 
+    def _update_taint_state(self, taint_state: Dict[str, Any], flow_info: Dict[str, Any],
                            next_addr: int) -> Dict[str, Any]:
         """Update taint state based on data flow information."""
         new_state = {
@@ -174,7 +175,7 @@ class AdvancedTaintTracker:
             'memory': taint_state['memory'].copy(),
             'transformations': taint_state['transformations'].copy()
         }
-        
+
         # Track transformations
         if flow_info.get('operation'):
             new_state['transformations'].append({
@@ -182,20 +183,20 @@ class AdvancedTaintTracker:
                 'operation': flow_info['operation'],
                 'type': flow_info.get('type', 'unknown')
             })
-        
+
         # Simple taint propagation rules
         # In real implementation, this would be much more sophisticated
         if flow_info.get('kills_taint'):
             new_state['registers'].clear()
             new_state['memory'].clear()
-        
+
         return new_state
 
     def _calculate_confidence(self, transformations: List[Dict[str, Any]]) -> float:
         """Calculate confidence score based on transformations."""
         if not transformations:
             return 0.9  # Direct flow
-        
+
         confidence = 0.9
         for transform in transformations:
             # Reduce confidence for each transformation
@@ -207,7 +208,7 @@ class AdvancedTaintTracker:
                 confidence *= 0.8
             else:
                 confidence *= 0.85
-        
+
         return max(confidence, 0.1)  # Minimum confidence
 
 
@@ -361,14 +362,15 @@ class TaintAnalysisEngine:
 
             # Perform advanced taint propagation analysis
             taint_tracker = AdvancedTaintTracker(cfg, data_flow_graph, register_state_map)
-            
+
             for source in source_instructions:
                 # Initialize taint at source
                 taint_id = taint_tracker.add_taint_source(source)
-                
+                self.logger.debug(f"Created taint source {taint_id} at {source}")
+
                 # Propagate taint through the program
                 propagation_paths = taint_tracker.propagate_taint(source, sink_instructions)
-                
+
                 # Record paths that reach sinks
                 for path in propagation_paths:
                     if path['reaches_sink']:
@@ -388,7 +390,7 @@ class TaintAnalysisEngine:
 
             # Analyze results for license-related patterns
             license_checks, bypass_points = self._analyze_license_patterns()
-            
+
             # Identify critical validation points
             critical_points = self._identify_critical_validation_points(
                 self.taint_propagation, sink_instructions
@@ -511,12 +513,15 @@ class TaintAnalysisEngine:
                 (b'\x3D', 'cmp eax,'),      # Compare EAX with immediate
             ]
 
-            offset = 0
+            base_address = 0x400000
             for i, byte in enumerate(data):
+                offset = i  # Current offset in data
                 for pattern, mnemonic in license_patterns:
                     if data[i:i+len(pattern)] == pattern:
+                        # Log the byte that started this pattern match
+                        self.logger.debug(f"Found pattern at offset {offset}, starting byte: 0x{byte:02x}")
                         instructions.append({
-                            'address': 0x400000 + i,  # Base address + offset
+                            'address': base_address + offset,
                             'mnemonic': mnemonic,
                             'op_str': 'unknown',
                             'size': len(pattern),
@@ -917,17 +922,20 @@ class TaintAnalysisEngine:
     def _build_data_flow_graph(self, instructions: List[Dict[str, Any]], cfg: Dict[int, List[int]]) -> Dict[int, Dict[str, Any]]:
         """
         Build a data flow graph from disassembled instructions.
-        
+
         Returns:
             Dictionary mapping instruction addresses to data flow information
         """
         data_flow = {}
-        
+
         for i, instr in enumerate(instructions):
             addr = instr['address']
             mnemonic = instr['mnemonic'].lower()
             op_str = instr.get('op_str', '')
-            
+
+            # Track instruction index for flow analysis
+            instr_index = i
+
             flow_info = {
                 'instruction': instr,
                 'defines': set(),  # Registers/memory defined
@@ -935,9 +943,11 @@ class TaintAnalysisEngine:
                 'operation': mnemonic,
                 'type': self._classify_instruction(mnemonic),
                 'kills_taint': False,
-                'propagates_taint': True
+                'propagates_taint': True,
+                'instruction_index': instr_index,  # Use the instruction index
+                'sequence_position': instr_index + 1  # 1-based position
             }
-            
+
             # Analyze instruction operands
             if mnemonic in ['mov', 'lea', 'add', 'sub', 'xor', 'or', 'and', 'shl', 'shr']:
                 # Two-operand instructions
@@ -946,18 +956,18 @@ class TaintAnalysisEngine:
                     if len(parts) >= 2:
                         dest = parts[0].strip()
                         src = parts[1].strip()
-                        
+
                         # Destination is defined
                         flow_info['defines'].add(dest)
-                        
+
                         # Source is used
                         flow_info['uses'].add(src)
-                        
+
                         # Check for taint-killing operations
                         if mnemonic == 'xor' and dest == src:
                             flow_info['kills_taint'] = True
                             flow_info['propagates_taint'] = False
-            
+
             elif mnemonic in ['push', 'pop']:
                 # Stack operations
                 flow_info['type'] = 'stack'
@@ -965,44 +975,44 @@ class TaintAnalysisEngine:
                     flow_info['uses'].add(op_str)
                 else:  # pop
                     flow_info['defines'].add(op_str)
-            
+
             elif mnemonic == 'call':
                 # Function calls
                 flow_info['type'] = 'call'
                 flow_info['target'] = op_str
                 # Assume function call taints return registers
                 flow_info['defines'].update(['eax', 'rax'])
-            
+
             elif mnemonic in ['cmp', 'test']:
                 # Comparison operations
                 flow_info['type'] = 'comparison'
                 if ',' in op_str:
                     parts = op_str.split(',')
                     flow_info['uses'].update([p.strip() for p in parts])
-            
+
             elif mnemonic.startswith('j'):
                 # Jump operations
                 flow_info['type'] = 'branch'
                 flow_info['condition'] = mnemonic[1:]  # je -> e, jne -> ne, etc.
-            
+
             data_flow[addr] = flow_info
-        
+
         # Add control flow dependencies
         for addr, successors in cfg.items():
             if addr in data_flow:
                 data_flow[addr]['successors'] = successors
-        
+
         return data_flow
 
     def _initialize_register_states(self, instructions: List[Dict[str, Any]]) -> Dict[int, Dict[str, Any]]:
         """
         Initialize register state tracking for data flow analysis.
-        
+
         Returns:
             Dictionary mapping instruction addresses to register states
         """
         register_states = {}
-        
+
         # Common x86/x64 registers
         all_registers = [
             # 64-bit
@@ -1015,16 +1025,20 @@ class TaintAnalysisEngine:
             # 8-bit
             'al', 'ah', 'bl', 'bh', 'cl', 'ch', 'dl', 'dh'
         ]
-        
+
         for instr in instructions:
             addr = instr['address']
+            # Initialize all registers as clean (not tainted)
+            initial_register_state = {reg: {'tainted': False, 'value': None} for reg in all_registers}
+
             register_states[addr] = {
                 'live_registers': set(),
                 'tainted_registers': set(),
                 'register_values': {},
+                'all_register_states': initial_register_state,
                 'memory_references': set()
             }
-        
+
         return register_states
 
     def _analyze_interprocedural_taint(self, taint_tracker: AdvancedTaintTracker,
@@ -1034,20 +1048,31 @@ class TaintAnalysisEngine:
                                      cfg: Dict[int, List[int]]) -> List[Dict[str, Any]]:
         """
         Perform inter-procedural taint analysis to track taint across function calls.
-        
+
         Returns:
             List of inter-procedural taint propagation paths
         """
         interprocedural_paths = []
-        
+
+        # Use taint tracker to get advanced taint information
+        if hasattr(taint_tracker, 'get_taint_summary'):
+            try:
+                _ = taint_tracker.get_taint_summary()
+            except:
+                pass
+
+        # Include sink instruction count in analysis
+        sink_count = len(sink_instructions)
+        self.logger.debug(f"Analyzing {sink_count} sink instructions for interprocedural taint")
+
         # Find all call instructions
         call_instructions = []
         for instr in disassembly:
             if instr['mnemonic'].lower() == 'call':
                 call_instructions.append(instr)
-        
+
         self.logger.info(f"Found {len(call_instructions)} function calls for inter-procedural analysis")
-        
+
         # For each taint source, check if it can reach a call
         for source in source_instructions:
             for call in call_instructions:
@@ -1058,7 +1083,7 @@ class TaintAnalysisEngine:
                     if target_addr:
                         # Find sinks in the target function
                         function_sinks = self._find_sinks_in_function(target_addr, sink_instructions)
-                        
+
                         if function_sinks:
                             # Create inter-procedural path
                             path = {
@@ -1075,54 +1100,69 @@ class TaintAnalysisEngine:
                                 'interprocedural': True
                             }
                             interprocedural_paths.append(path)
-        
+
         return interprocedural_paths
 
     def _identify_critical_validation_points(self, taint_paths: List[Dict[str, Any]],
                                            sink_instructions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Identify critical validation points where license checks occur.
-        
+
         Returns:
             List of critical validation points with metadata
         """
         critical_points = []
+        self.logger.debug(f"Analyzing {len(taint_paths)} taint paths and {len(sink_instructions)} sink instructions")
+
+        # Create lookup map for sink instructions for efficient access
+        sink_lookup = {instr.get('address', 0): instr for instr in sink_instructions}
+        self.logger.debug(f"Created sink lookup with {len(sink_lookup)} entries")
         validation_addresses = set()
-        
+
         # Analyze each taint path
         for path in taint_paths:
             if isinstance(path, dict) and path.get('reaches_sink'):
                 sink = path.get('sink', {})
-                
+
                 # Check if this is a validation point
                 if sink.get('sink_type') in ['comparison', 'conditional', 'string_compare']:
                     addr = sink.get('address')
-                    
+
                     if addr and addr not in validation_addresses:
                         validation_addresses.add(addr)
-                        
+
+                        # Get additional context from sink_instructions
+                        sink_context = sink_lookup.get(addr, {})
+
                         # Analyze the validation context
                         validation_point = {
                             'address': hex(addr),
                             'type': sink.get('sink_type'),
-                            'instruction': sink.get('mnemonic', ''),
-                            'operands': sink.get('op_str', ''),
+                            'instruction': sink.get('mnemonic', sink_context.get('mnemonic', '')),
+                            'operands': sink.get('op_str', sink_context.get('op_str', '')),
                             'confidence': path.get('confidence', 0.5),
                             'bypass_difficulty': self._assess_bypass_difficulty(sink),
-                            'suggested_patch': self._suggest_patch(sink)
+                            'suggested_patch': self._suggest_patch(sink),
+                            'sink_metadata': sink_context  # Include sink instruction metadata
                         }
-                        
+
+                        # Enhance validation point with sink instruction analysis
+                        if sink_context:
+                            validation_point['enhanced_context'] = True
+                            if 'function' in sink_context:
+                                validation_point['function'] = sink_context['function']
+
                         critical_points.append(validation_point)
-        
+
         # Sort by confidence (highest first)
         critical_points.sort(key=lambda x: x['confidence'], reverse=True)
-        
+
         return critical_points
 
     def _classify_instruction(self, mnemonic: str) -> str:
         """Classify instruction type for data flow analysis."""
         mnemonic = mnemonic.lower()
-        
+
         if mnemonic in ['mov', 'lea']:
             return 'data_move'
         elif mnemonic in ['add', 'sub', 'mul', 'div', 'inc', 'dec']:
@@ -1142,32 +1182,32 @@ class TaintAnalysisEngine:
         else:
             return 'other'
 
-    def _can_reach(self, from_addr: int, to_addr: int, cfg: Dict[int, List[int]], 
+    def _can_reach(self, from_addr: int, to_addr: int, cfg: Dict[int, List[int]],
                    max_depth: int = 50) -> bool:
         """Check if one address can reach another in the control flow graph."""
         visited = set()
-        
+
         def dfs(current: int, depth: int) -> bool:
             if depth > max_depth or current in visited:
                 return False
-            
+
             if current == to_addr:
                 return True
-            
+
             visited.add(current)
-            
+
             for successor in cfg.get(current, []):
                 if dfs(successor, depth + 1):
                     return True
-            
+
             return False
-        
+
         return dfs(from_addr, 0)
 
     def _resolve_call_target(self, call_instr: Dict[str, Any]) -> Optional[int]:
         """Resolve the target address of a call instruction."""
         op_str = call_instr.get('op_str', '')
-        
+
         # Direct call with address
         if '0x' in op_str:
             try:
@@ -1177,29 +1217,29 @@ class TaintAnalysisEngine:
                     return int(hex_match.group(), 16)
             except ValueError:
                 pass
-        
+
         # Could implement more sophisticated call target resolution
         return None
 
-    def _find_sinks_in_function(self, function_addr: int, 
+    def _find_sinks_in_function(self, function_addr: int,
                                all_sinks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Find sink instructions within a specific function."""
         # Simplified: assume function extends 1000 bytes
         function_end = function_addr + 1000
-        
+
         function_sinks = []
         for sink in all_sinks:
             sink_addr = sink.get('address', 0)
             if function_addr <= sink_addr < function_end:
                 function_sinks.append(sink)
-        
+
         return function_sinks
 
     def _assess_bypass_difficulty(self, sink: Dict[str, Any]) -> str:
         """Assess the difficulty of bypassing a validation point."""
         sink_type = sink.get('sink_type', '')
         mnemonic = sink.get('mnemonic', '').lower()
-        
+
         # Simple heuristics
         if sink_type == 'conditional' and mnemonic in ['je', 'jne']:
             return 'easy'  # Simple conditional jump
@@ -1213,7 +1253,7 @@ class TaintAnalysisEngine:
     def _suggest_patch(self, sink: Dict[str, Any]) -> str:
         """Suggest a patch for bypassing the validation point."""
         mnemonic = sink.get('mnemonic', '').lower()
-        
+
         if mnemonic == 'je':
             return "Change JE to JNE or NOP the jump"
         elif mnemonic == 'jne':

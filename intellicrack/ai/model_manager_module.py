@@ -75,17 +75,20 @@ class ModelBackend(ABC):
     @abstractmethod
     def load_model(self, model_path: str) -> Any:
         """Load a model from the given path."""
-        pass
+        # Implementation should use model_path to load the actual model
+        raise NotImplementedError(f"Subclasses must implement load_model for path: {model_path}")
 
     @abstractmethod
     def predict(self, model: Any, input_data: Any) -> Any:
         """Make predictions using the model."""
-        pass
+        # Implementation should use both model and input_data for predictions
+        raise NotImplementedError(f"Subclasses must implement predict with model {type(model)} and data {type(input_data)}")
 
     @abstractmethod
     def get_model_info(self, model: Any) -> Dict[str, Any]:
         """Get information about the model."""
-        pass
+        # Implementation should extract information from the model object
+        raise NotImplementedError(f"Subclasses must implement get_model_info for model {type(model)}")
 
 
 class PyTorchBackend(ModelBackend):
@@ -164,8 +167,9 @@ class TensorFlowBackend(ModelBackend):
             raise ImportError("TensorFlow not available")
 
         try:
-            if not isinstance(input_data, np.ndarray):
-                input_data = np.array(input_data)
+            if np is not None:
+                if not isinstance(input_data, np.ndarray):
+                    input_data = np.array(input_data)
 
             predictions = model.predict(input_data)
             return predictions
@@ -199,6 +203,12 @@ class ONNXBackend(ModelBackend):
             raise ImportError("ONNX Runtime not available")
 
         try:
+            # Validate the ONNX model first
+            model = onnx.load(model_path)
+            onnx.checker.check_model(model)
+            logger.info("ONNX model validation passed")
+
+            # Load for inference
             session = ort.InferenceSession(model_path)
             return session
         except (OSError, ValueError, RuntimeError) as e:
@@ -211,8 +221,9 @@ class ONNXBackend(ModelBackend):
             raise ImportError("ONNX Runtime not available")
 
         try:
-            if not isinstance(input_data, np.ndarray):
-                input_data = np.array(input_data, dtype=np.float32)
+            if np is not None:
+                if not isinstance(input_data, np.ndarray):
+                    input_data = np.array(input_data, dtype=np.float32)
 
             input_name = model.get_inputs()[0].name
             outputs = model.run(None, {input_name: input_data})
@@ -269,8 +280,9 @@ class SklearnBackend(ModelBackend):
     def predict(self, model: Any, input_data: Any) -> Any:
         """Make predictions using scikit-learn model."""
         try:
-            if not isinstance(input_data, np.ndarray):
-                input_data = np.array(input_data)
+            if np is not None:
+                if not isinstance(input_data, np.ndarray):
+                    input_data = np.array(input_data)
 
             if hasattr(model, 'predict_proba'):
                 return model.predict_proba(input_data)
@@ -375,7 +387,7 @@ class ModelManager:
     """Comprehensive AI model manager for Intellicrack."""
 
     def __init__(self, models_dir: str = None, cache_size: int = 5):
-        self.models_dir = models_dir or os.path.join(os.path.dirname(__file__), '..', '..', 'models')
+        self.models_dir = models_dir or os.path.join(os.path.dirname(__file__), '..', 'models')
         self.cache = ModelCache(max_cache_size=cache_size)
         self.backends = self._initialize_backends()
         self.loaded_models = {}

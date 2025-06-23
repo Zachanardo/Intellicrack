@@ -40,24 +40,27 @@ except ImportError:
 # Import subprocess for objdump fallback
 import subprocess
 
-# Import binary analysis libraries from common imports
-from ..core.common_imports import LIEF_AVAILABLE, PEFILE_AVAILABLE, PYELFTOOLS_AVAILABLE
-
-# Import the actual modules when available
-if PEFILE_AVAILABLE:
+# Import binary analysis libraries with proper error handling
+try:
     import pefile
-else:
+    PEFILE_AVAILABLE = True
+except ImportError:
     pefile = None
+    PEFILE_AVAILABLE = False
 
-if LIEF_AVAILABLE:
+try:
     import lief
-else:
+    LIEF_AVAILABLE = True
+except ImportError:
     lief = None
+    LIEF_AVAILABLE = False
 
-if PYELFTOOLS_AVAILABLE:
+try:
     from elftools.elf.elffile import ELFFile
-else:
+    PYELFTOOLS_AVAILABLE = True
+except ImportError:
     ELFFile = None
+    PYELFTOOLS_AVAILABLE = False
 
 try:
     from macholib.MachO import MachO
@@ -147,7 +150,7 @@ def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> Dic
         return analyze_binary(binary_path, detailed)
 
 
-def analyze_binary(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
+def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integration: bool = True) -> Dict[str, Any]:
     """
     Main binary analysis orchestrator.
 
@@ -156,6 +159,7 @@ def analyze_binary(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
     Args:
         binary_path: Path to the binary file
         detailed: Whether to perform detailed analysis
+        enable_ai_integration: Whether to enable AI script generation integration
 
     Returns:
         Dict containing analysis results
@@ -178,17 +182,259 @@ def analyze_binary(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
 
     # Route to appropriate analyzer
     if binary_format == 'PE':
-        return analyze_pe(binary_path, detailed)
+        results = analyze_pe(binary_path, detailed)
     elif binary_format == 'ELF':
-        return analyze_elf(binary_path, detailed)
+        results = analyze_elf(binary_path, detailed)
     elif binary_format == 'MACHO':
-        return analyze_macho(binary_path, detailed)
+        results = analyze_macho(binary_path, detailed)
     else:
-        return {
+        results = {
             "format": binary_format,
             "error": f"Unsupported format: {binary_format}",
             "basic_info": get_basic_file_info(binary_path)
         }
+
+    # AI Integration: Trigger AI script generation workflow if enabled
+    if enable_ai_integration and not results.get("error"):
+        results = _integrate_ai_script_generation(results, binary_path)
+
+    return results
+
+
+def _integrate_ai_script_generation(analysis_results: Dict[str, Any], binary_path: str) -> Dict[str, Any]:
+    """
+    Integrate AI script generation workflow with binary analysis results.
+
+    Args:
+        analysis_results: Results from binary analysis
+        binary_path: Path to the analyzed binary
+
+    Returns:
+        Enhanced analysis results with AI script generation suggestions
+    """
+    try:
+        # Import AI components
+        from ...ai.orchestrator import get_orchestrator
+
+        logger.info(f"Integrating AI script generation for {binary_path}")
+
+        # Get AI orchestrator
+        orchestrator = get_orchestrator()
+        if not orchestrator:
+            logger.warning("AI orchestrator not available for script generation")
+            return analysis_results
+
+        # Analyze binary characteristics to determine script generation strategy
+        ai_suggestions = _generate_ai_script_suggestions(analysis_results, binary_path)
+
+        # Add AI integration results to analysis
+        analysis_results["ai_integration"] = {
+            "enabled": True,
+            "script_suggestions": ai_suggestions,
+            "recommended_actions": _get_recommended_ai_actions(analysis_results),
+            "auto_generation_candidates": _identify_auto_generation_candidates(analysis_results)
+        }
+
+        # Trigger autonomous script generation for high-confidence cases
+        if ai_suggestions.get("auto_generate_confidence", 0) > 0.8:
+            logger.info("High confidence detected - triggering autonomous script generation")
+            _trigger_autonomous_script_generation(orchestrator, analysis_results, binary_path)
+
+        logger.info("AI script generation integration completed successfully")
+
+    except Exception as e:
+        logger.error(f"Error in AI script generation integration: {e}")
+        # Add error info but don't fail the analysis
+        analysis_results["ai_integration"] = {
+            "enabled": False,
+            "error": str(e)
+        }
+
+    return analysis_results
+
+
+def _generate_ai_script_suggestions(analysis_results: Dict[str, Any], binary_path: str) -> Dict[str, Any]:
+    """Generate AI script suggestions based on analysis results."""
+    logger.debug(f"Generating AI script suggestions for binary: {binary_path}")
+    suggestions = {
+        "frida_scripts": [],
+        "ghidra_scripts": [],
+        "auto_generate_confidence": 0.0,
+        "priority_targets": []
+    }
+
+    try:
+        # Analyze for license protection patterns
+        if "license_checks" in analysis_results or "protection" in analysis_results:
+            suggestions["frida_scripts"].append({
+                "type": "license_bypass",
+                "description": "License validation bypass script",
+                "confidence": 0.9,
+                "complexity": "advanced"
+            })
+            suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.85)
+            suggestions["priority_targets"].append("license_validation")
+
+        # Analyze for anti-debugging features
+        if analysis_results.get("anti_debug", False) or "debugger" in str(analysis_results).lower():
+            suggestions["frida_scripts"].append({
+                "type": "anti_debug_bypass",
+                "description": "Anti-debugging bypass script",
+                "confidence": 0.8,
+                "complexity": "moderate"
+            })
+            suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.75)
+            suggestions["priority_targets"].append("anti_debugging")
+
+        # Analyze for network validation
+        network_indicators = ["wininet", "urlmon", "ws2_32", "socket", "connect"]
+        if any(indicator in str(analysis_results).lower() for indicator in network_indicators):
+            suggestions["frida_scripts"].append({
+                "type": "network_bypass",
+                "description": "Network validation bypass script",
+                "confidence": 0.7,
+                "complexity": "advanced"
+            })
+            suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.65)
+            suggestions["priority_targets"].append("network_validation")
+
+        # Analyze for cryptographic functions
+        crypto_indicators = ["crypto", "encrypt", "decrypt", "hash", "aes", "rsa"]
+        if any(indicator in str(analysis_results).lower() for indicator in crypto_indicators):
+            suggestions["ghidra_scripts"].append({
+                "type": "crypto_analysis",
+                "description": "Cryptographic function analysis script",
+                "confidence": 0.8,
+                "complexity": "advanced"
+            })
+            suggestions["priority_targets"].append("cryptographic_functions")
+
+        # Check for trial/time-based restrictions
+        trial_indicators = ["trial", "expire", "time", "date", "demo"]
+        if any(indicator in str(analysis_results).lower() for indicator in trial_indicators):
+            suggestions["frida_scripts"].append({
+                "type": "trial_bypass",
+                "description": "Trial/time restriction bypass script",
+                "confidence": 0.85,
+                "complexity": "moderate"
+            })
+            suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.8)
+            suggestions["priority_targets"].append("trial_restrictions")
+
+    except Exception as e:
+        logger.error(f"Error generating AI script suggestions: {e}")
+
+    return suggestions
+
+
+def _get_recommended_ai_actions(analysis_results: Dict[str, Any]) -> List[str]:
+    """Get recommended AI actions based on analysis results."""
+    actions = []
+
+    try:
+        # Basic recommendations
+        actions.append("Generate comprehensive Frida hooks for key functions")
+        actions.append("Create Ghidra scripts for static analysis automation")
+
+        # Format-specific recommendations
+        binary_format = analysis_results.get("format", "").upper()
+        if binary_format == "PE":
+            actions.append("Analyze PE imports and exports for bypass opportunities")
+            actions.append("Generate IAT (Import Address Table) hook scripts")
+        elif binary_format == "ELF":
+            actions.append("Analyze ELF symbols and dynamic linking")
+            actions.append("Generate GOT (Global Offset Table) manipulation scripts")
+
+        # Protection-specific recommendations
+        if analysis_results.get("protection"):
+            actions.append("Generate multi-layer protection bypass strategy")
+            actions.append("Create adaptive bypass scripts with fallback mechanisms")
+
+    except Exception as e:
+        logger.error(f"Error getting recommended AI actions: {e}")
+
+    return actions
+
+
+def _identify_auto_generation_candidates(analysis_results: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Identify candidates for automatic script generation."""
+    candidates = []
+
+    try:
+        # High-confidence automatic generation candidates
+        if analysis_results.get("imports"):
+            # Common license/protection function patterns
+            protection_apis = [
+                "GetTickCount", "GetSystemTime", "RegOpenKey", "RegQueryValue",
+                "CreateMutex", "FindWindow", "IsDebuggerPresent", "CheckRemoteDebuggerPresent"
+            ]
+
+            for api in protection_apis:
+                if any(api.lower() in str(imp).lower() for imp in analysis_results["imports"]):
+                    candidates.append({
+                        "target": api,
+                        "type": "api_hook",
+                        "confidence": 0.9,
+                        "script_type": "frida",
+                        "description": f"Automatic {api} bypass hook"
+                    })
+
+        # Entropy-based candidates (packed/encrypted sections)
+        if analysis_results.get("entropy") and analysis_results["entropy"] > 7.5:
+            candidates.append({
+                "target": "unpacking",
+                "type": "dynamic_unpacker",
+                "confidence": 0.8,
+                "script_type": "frida",
+                "description": "Automatic unpacking assistance script"
+            })
+
+    except Exception as e:
+        logger.error(f"Error identifying auto-generation candidates: {e}")
+
+    return candidates
+
+
+def _trigger_autonomous_script_generation(orchestrator, analysis_results: Dict[str, Any], binary_path: str):
+    """Trigger autonomous script generation for high-confidence scenarios."""
+    try:
+        from ...ai.autonomous_agent import AutonomousAgent
+
+        # Create autonomous agent
+        agent = AutonomousAgent(orchestrator=orchestrator, cli_interface=None)
+
+        # Build autonomous generation request
+        suggestions = analysis_results["ai_integration"]["script_suggestions"]
+        priority_targets = suggestions.get("priority_targets", [])
+
+        if priority_targets:
+            target_description = ", ".join(priority_targets)
+            autonomous_request = (
+                f"Automatically generate bypass scripts for {binary_path}. "
+                f"Priority targets: {target_description}. "
+                f"Use autonomous mode with testing and refinement."
+            )
+
+            logger.info(f"Triggering autonomous script generation: {autonomous_request}")
+
+            # Process request in background (non-blocking)
+            import threading
+            thread = threading.Thread(
+                target=agent.process_request,
+                args=(autonomous_request,),
+                daemon=True
+            )
+            thread.start()
+
+            # Update analysis results to indicate autonomous generation started
+            analysis_results["ai_integration"]["autonomous_generation"] = {
+                "started": True,
+                "request": autonomous_request,
+                "targets": priority_targets
+            }
+
+    except Exception as e:
+        logger.error(f"Error triggering autonomous script generation: {e}")
 
 
 def identify_binary_format(binary_path: str) -> str:
@@ -252,6 +498,7 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
     Returns:
         Dict containing PE analysis results
     """
+    _ = detailed
     if not PEFILE_AVAILABLE:
         return {
             "format": "PE",
@@ -360,6 +607,7 @@ def analyze_elf(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
     Returns:
         Dict containing ELF analysis results
     """
+    _ = detailed
     # Try LIEF first, then pyelftools
     if LIEF_AVAILABLE:
         return analyze_elf_with_lief(binary_path, detailed)
@@ -375,6 +623,7 @@ def analyze_elf(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
 
 def analyze_elf_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
     """Analyze ELF using LIEF library."""
+    _ = detailed
     try:
         if hasattr(lief, 'parse'):
             binary = lief.parse(binary_path)
@@ -384,7 +633,7 @@ def analyze_elf_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
         info = {
             "format": "ELF",
             "machine": binary.header.machine_type.name if hasattr(binary.header.machine_type, 'name') else str(binary.header.machine_type),
-            "class": "64-bit" if binary.header.identity_class == lief.ELF.ELF_CLASS.CLASS64 else "32-bit",
+            "class": "64-bit" if str(binary.header.identity_class) == "CLASS.ELF64" else "32-bit",
             "type": binary.header.file_type.name if hasattr(binary.header.file_type, 'name') else str(binary.header.file_type),
             "entry_point": hex(binary.entrypoint),
             "sections": [],
@@ -431,6 +680,7 @@ def analyze_elf_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
 
 def analyze_elf_with_pyelftools(binary_path: str, detailed: bool) -> Dict[str, Any]:
     """Analyze ELF using pyelftools."""
+    _ = detailed
     try:
         with open(binary_path, 'rb') as f:
             elf = ELFFile(f)
@@ -473,6 +723,7 @@ def analyze_macho(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
     Returns:
         Dict containing Mach-O analysis results
     """
+    _ = detailed
     if LIEF_AVAILABLE:
         return analyze_macho_with_lief(binary_path, detailed)
     elif MACHOLIB_AVAILABLE:
@@ -487,6 +738,7 @@ def analyze_macho(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
 
 def analyze_macho_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
     """Analyze Mach-O using LIEF library."""
+    _ = detailed
     try:
         if hasattr(lief, 'parse'):
             binary = lief.parse(binary_path)
@@ -538,6 +790,7 @@ def analyze_macho_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
 
 def analyze_macho_with_macholib(binary_path: str, detailed: bool) -> Dict[str, Any]:
     """Analyze Mach-O using macholib."""
+    _ = detailed
     try:
         macho = MachO(binary_path)
 
@@ -657,6 +910,7 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
     Returns:
         Dict containing traffic analysis results
     """
+    _ = duration
     results = {
         "source": pcap_file or interface or "unknown",
         "packets_analyzed": 0,
@@ -750,7 +1004,10 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
 
         # Try pyshark as fallback
         elif 'pyshark' in sys.modules or _try_import_pyshark():
-            import pyshark
+            try:
+                import pyshark
+            except ImportError:
+                pyshark = None
 
             if pcap_file and os.path.exists(pcap_file):
                 cap = pyshark.FileCapture(pcap_file)

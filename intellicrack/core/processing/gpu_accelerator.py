@@ -211,12 +211,12 @@ class GPUAccelerationManager:
             __global int* match_count
         ) {
             int gid = get_global_id(0);
-            
+
             // Check if this position can fit the pattern
             if (gid > data_size - pattern_size) {
                 return;
             }
-            
+
             // Check for pattern match at this position
             int is_match = 1;
             for (int i = 0; i < pattern_size; i++) {
@@ -225,7 +225,7 @@ class GPUAccelerationManager:
                     break;
                 }
             }
-            
+
             // If match found, atomically increment match count and store position
             if (is_match) {
                 int idx = atomic_inc(match_count);
@@ -302,12 +302,12 @@ class GPUAccelerationManager:
             int* match_count
         ) {
             int tid = blockDim.x * blockIdx.x + threadIdx.x;
-            
+
             // Check if this thread's position can fit the pattern
             if (tid > data_size - pattern_size) {
                 return;
             }
-            
+
             // Check for pattern match at this position
             bool is_match = true;
             for (int i = 0; i < pattern_size; i++) {
@@ -316,7 +316,7 @@ class GPUAccelerationManager:
                     break;
                 }
             }
-            
+
             // If match found, atomically increment match count and store position
             if (is_match) {
                 int idx = atomicAdd(match_count, 1);
@@ -715,11 +715,11 @@ class GPUAccelerator:
             __global int* result_count
         ) {
             int gid = get_global_id(0);
-            
+
             if (gid + pattern_size > data_size) {
                 return;
             }
-            
+
             // Check if pattern matches at this position
             int match = 1;
             for (int i = 0; i < pattern_size; i++) {
@@ -728,7 +728,7 @@ class GPUAccelerator:
                     break;
                 }
             }
-            
+
             if (match) {
                 int idx = atomic_inc(result_count);
                 if (idx < 10000) {  // Limit results
@@ -805,11 +805,11 @@ class GPUAccelerator:
             int* result_count
         ) {
             int tid = blockDim.x * blockIdx.x + threadIdx.x;
-            
+
             if (tid + pattern_size > data_size) {
                 return;
             }
-            
+
             // Check pattern match
             bool match = true;
             for (int i = 0; i < pattern_size; i++) {
@@ -818,7 +818,7 @@ class GPUAccelerator:
                     break;
                 }
             }
-            
+
             if (match) {
                 int idx = atomicAdd(result_count, 1);
                 if (idx < 10000) {

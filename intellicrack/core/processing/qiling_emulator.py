@@ -471,8 +471,10 @@ def run_qiling_emulation(binary_path: str, options: Dict[str, Any] = None) -> Di
 
     try:
         # Detect OS and architecture
-
-        import pefile
+        try:
+            import pefile
+        except ImportError:
+            pefile = None
 
         ostype = 'windows'  # Default
         arch = 'x86_64'     # Default

@@ -34,8 +34,6 @@ try:
         QDoubleSpinBox,
         QFileDialog,
         QFormLayout,
-        QFrame,
-        QGroupBox,
         QHBoxLayout,
         QLabel,
         QLineEdit,
@@ -62,14 +60,12 @@ try:
     from ...ai.llm_backends import (
         LLMConfig,
         LLMManager,
-        LLMProvider,
         create_anthropic_config,
         create_gguf_config,
         create_ollama_config,
         create_openai_config,
         get_llm_manager,
     )
-    from ...ai.orchestrator import get_orchestrator
     from ...utils.logger import get_logger
 except ImportError:
     LLMManager = None

@@ -258,7 +258,167 @@ def export_report(report_data: Dict[str, Any], format: str = 'pdf') -> Optional[
     Returns:
         Optional[str]: Path to exported file
     """
-    logger.warning("Export to %s format not yet implemented", format)
+    try:
+        import json
+        import tempfile
+
+        # Generate timestamp for unique filename
+        from datetime import datetime
+        from pathlib import Path
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Validate report_data structure
+        if not isinstance(report_data, dict):
+            logger.error("Invalid report data format - expected dictionary")
+            return None
+
+        if not report_data:
+            logger.warning("Empty report data provided")
+            return None
+
+        # Create output directory
+        output_dir = Path(tempfile.gettempdir()) / "intellicrack_reports"
+        output_dir.mkdir(exist_ok=True)
+
+        # Generate filename based on report content
+        report_title = report_data.get('title', 'intellicrack_report')
+        safe_title = "".join(c for c in report_title if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        filename = f"{safe_title}_{timestamp}"
+
+        if format.lower() == 'pdf':
+            # For now, export as HTML that can be converted to PDF
+            output_file = output_dir / f"{filename}.html"
+            html_content = _generate_html_report(report_data)
+
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+
+            logger.info("Report exported as HTML (ready for PDF conversion): %s", output_file)
+
+        elif format.lower() == 'json':
+            output_file = output_dir / f"{filename}.json"
+
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(report_data, f, indent=2, default=str)
+
+            logger.info("Report exported as JSON: %s", output_file)
+
+        elif format.lower() == 'txt':
+            output_file = output_dir / f"{filename}.txt"
+            text_content = _generate_text_report(report_data)
+
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write(text_content)
+
+            logger.info("Report exported as text: %s", output_file)
+
+        else:
+            logger.warning("Export format '%s' not supported, exporting as JSON", format)
+            output_file = output_dir / f"{filename}.json"
+
+            with open(output_file, 'w', encoding='utf-8') as f:
+                json.dump(report_data, f, indent=2, default=str)
+
+        return str(output_file)
+
+    except Exception as e:
+        logger.error("Failed to export report: %s", e)
+        return None
+
+
+def _generate_html_report(report_data: Dict[str, Any]) -> str:
+    """Generate HTML report from report data"""
+    html_parts = [
+        "<html><head><title>Intellicrack Analysis Report</title>",
+        "<style>body{font-family:Arial,sans-serif;margin:40px;}",
+        "h1{color:#2c3e50;}h2{color:#34495e;border-bottom:1px solid #bdc3c7;}",
+        ".finding{margin:10px 0;padding:10px;border-left:4px solid #3498db;}",
+        ".high{border-color:#e74c3c;}.medium{border-color:#f39c12;}.low{border-color:#27ae60;}",
+        "</style></head><body>"
+    ]
+
+    # Title and metadata
+    html_parts.append(f"<h1>{report_data.get('title', 'Analysis Report')}</h1>")
+
+    if 'metadata' in report_data:
+        metadata = report_data['metadata']
+        html_parts.append("<h2>Report Metadata</h2>")
+        html_parts.append(f"<p><strong>Target:</strong> {metadata.get('target', 'Unknown')}</p>")
+        html_parts.append(f"<p><strong>Timestamp:</strong> {metadata.get('timestamp', 'Unknown')}</p>")
+        html_parts.append(f"<p><strong>Analysis Type:</strong> {metadata.get('analysis_type', 'Unknown')}</p>")
+
+    # Executive Summary
+    if 'summary' in report_data:
+        html_parts.append("<h2>Executive Summary</h2>")
+        html_parts.append(f"<p>{report_data['summary']}</p>")
+
+    # Findings
+    if 'findings' in report_data:
+        html_parts.append("<h2>Findings</h2>")
+        for finding in report_data['findings']:
+            severity = finding.get('severity', 'low').lower()
+            html_parts.append(f"<div class='finding {severity}'>")
+            html_parts.append(f"<h3>{finding.get('title', 'Finding')}</h3>")
+            html_parts.append(f"<p><strong>Severity:</strong> {finding.get('severity', 'Unknown')}</p>")
+            html_parts.append(f"<p>{finding.get('description', 'No description')}</p>")
+            if 'recommendation' in finding:
+                html_parts.append(f"<p><strong>Recommendation:</strong> {finding['recommendation']}</p>")
+            html_parts.append("</div>")
+
+    html_parts.append("</body></html>")
+    return '\n'.join(html_parts)
+
+
+def _generate_text_report(report_data: Dict[str, Any]) -> str:
+    """Generate plain text report from report data"""
+    text_parts = [
+        "=" * 60,
+        f"  {report_data.get('title', 'INTELLICRACK ANALYSIS REPORT')}",
+        "=" * 60,
+        ""
+    ]
+
+    # Metadata
+    if 'metadata' in report_data:
+        metadata = report_data['metadata']
+        text_parts.extend([
+            "REPORT METADATA",
+            "-" * 40,
+            f"Target: {metadata.get('target', 'Unknown')}",
+            f"Timestamp: {metadata.get('timestamp', 'Unknown')}",
+            f"Analysis Type: {metadata.get('analysis_type', 'Unknown')}",
+            ""
+        ])
+
+    # Summary
+    if 'summary' in report_data:
+        text_parts.extend([
+            "EXECUTIVE SUMMARY",
+            "-" * 40,
+            report_data['summary'],
+            ""
+        ])
+
+    # Findings
+    if 'findings' in report_data:
+        text_parts.extend([
+            "FINDINGS",
+            "-" * 40
+        ])
+
+        for i, finding in enumerate(report_data['findings'], 1):
+            text_parts.extend([
+                f"{i}. {finding.get('title', 'Finding')}",
+                f"   Severity: {finding.get('severity', 'Unknown')}",
+                f"   Description: {finding.get('description', 'No description')}"
+            ])
+
+            if 'recommendation' in finding:
+                text_parts.append(f"   Recommendation: {finding['recommendation']}")
+
+            text_parts.append("")
+
+    return '\n'.join(text_parts)
 
 
 def format_findings(findings: List[Dict[str, Any]], include_remediation: bool = True) -> str:

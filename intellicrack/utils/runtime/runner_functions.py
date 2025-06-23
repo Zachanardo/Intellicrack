@@ -30,6 +30,8 @@ import threading
 import traceback
 from typing import Any, Dict, List, Optional
 
+import pkg_resources
+
 from ..core.common_imports import PSUTIL_AVAILABLE
 from ..core.misc_utils import log_message
 
@@ -44,16 +46,51 @@ logger = logging.getLogger(__name__)
 def run_network_license_server(app_instance=None, **kwargs) -> Dict[str, Any]:
     """Run the network license server emulator."""
     try:
-        logger.info("Starting network license server")
+        # Configure server based on kwargs
+        port = kwargs.get('port', 27000)
+        host = kwargs.get('host', 'localhost')
+        debug_mode = kwargs.get('debug', False)
+
+        logger.info("Starting network license server on %s:%s", host, port)
+
+        # Update app instance if provided
+        if app_instance and hasattr(app_instance, 'update_output'):
+            if hasattr(app_instance.update_output, 'emit'):
+                app_instance.update_output.emit(f"Starting license server on {host}:{port}")
+            elif callable(app_instance.update_output):
+                app_instance.update_output(f"Starting license server on {host}:{port}")
 
         # Try to use existing network license server
         try:
             from intellicrack.core.network.license_server_emulator import (
                 NetworkLicenseServerEmulator,
             )
-            server = NetworkLicenseServerEmulator()
+            config = {
+                'listen_ip': host,
+                'listen_ports': [port],
+                'dns_redirect': True,
+                'ssl_intercept': True,
+                'record_traffic': debug_mode,
+                'auto_respond': True,
+                'response_delay': 0.1
+            }
+            server = NetworkLicenseServerEmulator(config)
             server.start()
-            return {"status": "success", "message": "Network license server started"}
+
+            result = {
+                "status": "success",
+                "message": f"Network license server started on {host}:{port}",
+                "server_config": {"host": host, "port": port, "debug": debug_mode}
+            }
+
+            # Update app instance with success
+            if app_instance and hasattr(app_instance, 'update_output'):
+                if hasattr(app_instance.update_output, 'emit'):
+                    app_instance.update_output.emit("License server started successfully")
+                elif callable(app_instance.update_output):
+                    app_instance.update_output("License server started successfully")
+
+            return result
         except ImportError:
             logger.warning("NetworkLicenseServerEmulator not available")
             return {"status": "error", "message": "Network license server not available"}
@@ -66,13 +103,52 @@ def run_network_license_server(app_instance=None, **kwargs) -> Dict[str, Any]:
 def run_ssl_tls_interceptor(app_instance=None, **kwargs) -> Dict[str, Any]:
     """Run the SSL/TLS interceptor."""
     try:
-        logger.info("Starting SSL/TLS interceptor")
+        # Configure interceptor based on kwargs
+        target_host = kwargs.get('target_host', None)
+        target_port = kwargs.get('target_port', 443)
+        certificate_path = kwargs.get('certificate_path', None)
+
+        logger.info("Starting SSL/TLS interceptor for %s:%s", target_host or "any", target_port)
+
+        # Update app instance if provided
+        if app_instance and hasattr(app_instance, 'update_output'):
+            message = f"Starting SSL/TLS interceptor (target: {target_host or 'any'}:{target_port})"
+            if hasattr(app_instance.update_output, 'emit'):
+                app_instance.update_output.emit(message)
+            elif callable(app_instance.update_output):
+                app_instance.update_output(message)
 
         try:
             from intellicrack.core.network.ssl_interceptor import SSLTLSInterceptor
-            interceptor = SSLTLSInterceptor()
+            config = {}
+            if target_host:
+                config['target_hosts'] = [target_host] if isinstance(target_host, str) else target_host
+            if target_port:
+                config['listen_port'] = target_port
+            if certificate_path:
+                config['ca_cert_path'] = certificate_path
+            interceptor = SSLTLSInterceptor(config=config)
             interceptor.start()
-            return {"status": "success", "message": "SSL/TLS interceptor started"}
+
+            result = {
+                "status": "success",
+                "message": f"SSL/TLS interceptor started for {target_host or 'any'}:{target_port}",
+                "interceptor_config": {
+                    "target_host": target_host,
+                    "target_port": target_port,
+                    "certificate_path": certificate_path
+                }
+            }
+
+            # Update app instance with success
+            if app_instance and hasattr(app_instance, 'update_output'):
+                success_message = "SSL/TLS interceptor started successfully"
+                if hasattr(app_instance.update_output, 'emit'):
+                    app_instance.update_output.emit(success_message)
+                elif callable(app_instance.update_output):
+                    app_instance.update_output(success_message)
+
+            return result
         except ImportError:
             logger.warning("SSLTLSInterceptor not available")
             return {"status": "error", "message": "SSL/TLS interceptor not available"}
@@ -85,13 +161,70 @@ def run_ssl_tls_interceptor(app_instance=None, **kwargs) -> Dict[str, Any]:
 def run_protocol_fingerprinter(app_instance=None, **kwargs) -> Dict[str, Any]:
     """Run the protocol fingerprinter."""
     try:
-        logger.info("Starting protocol fingerprinter")
+        # Configure fingerprinter based on kwargs
+        traffic_data = kwargs.get('traffic_data', None)
+        interface = kwargs.get('interface', 'eth0')
+        timeout = kwargs.get('timeout', 30)
+
+        logger.info("Starting protocol fingerprinter on interface %s", interface)
+
+        # Update app instance if provided
+        if app_instance and hasattr(app_instance, 'update_output'):
+            message = f"Starting protocol fingerprinter (interface: {interface}, timeout: {timeout}s)"
+            if hasattr(app_instance.update_output, 'emit'):
+                app_instance.update_output.emit(message)
+            elif callable(app_instance.update_output):
+                app_instance.update_output(message)
 
         try:
             from intellicrack.core.network.protocol_fingerprinter import ProtocolFingerprinter
-            _ = ProtocolFingerprinter()  # Instance created but not used yet
-            # Would need traffic data to analyze
-            return {"status": "success", "message": "Protocol fingerprinter ready"}
+
+            # Create config dict with interface and timeout parameters
+            config = {
+                'interface': interface,
+                'timeout': timeout,
+                'analysis_depth': 'full',
+                'output_format': 'detailed'
+            }
+            fingerprinter = ProtocolFingerprinter(config)
+
+            # If traffic data provided, analyze it; otherwise use NetworkTrafficAnalyzer for capture
+            if traffic_data:
+                analysis_result = fingerprinter.analyze_traffic(traffic_data)
+                result_message = f"Analyzed {len(traffic_data)} traffic samples"
+            else:
+                # Use NetworkTrafficAnalyzer for actual capture since ProtocolFingerprinter doesn't have start_capture
+                from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
+                analyzer_config = {
+                    'interface': interface,
+                    'timeout': timeout,
+                    'packet_count': 1000,
+                    'output_file': None
+                }
+                analyzer = NetworkTrafficAnalyzer(analyzer_config)
+                analyzer.start_capture()
+                analysis_result = {"capture_started": True, "interface": interface}
+                result_message = f"Started traffic capture on {interface}"
+
+            result = {
+                "status": "success",
+                "message": result_message,
+                "fingerprinter_config": {
+                    "interface": interface,
+                    "timeout": timeout,
+                    "has_traffic_data": traffic_data is not None
+                },
+                "analysis_result": analysis_result
+            }
+
+            # Update app instance with success
+            if app_instance and hasattr(app_instance, 'update_output'):
+                if hasattr(app_instance.update_output, 'emit'):
+                    app_instance.update_output.emit("Protocol fingerprinter ready")
+                elif callable(app_instance.update_output):
+                    app_instance.update_output("Protocol fingerprinter ready")
+
+            return result
         except ImportError:
             logger.warning("ProtocolFingerprinter not available")
             return {"status": "error", "message": "Protocol fingerprinter not available"}
@@ -104,12 +237,60 @@ def run_protocol_fingerprinter(app_instance=None, **kwargs) -> Dict[str, Any]:
 def run_cloud_license_hooker(app_instance=None, **kwargs) -> Dict[str, Any]:
     """Run the cloud license response generator."""
     try:
-        logger.info("Starting cloud license hooker")
+        # Configure cloud license hooker based on kwargs
+        target_url = kwargs.get('target_url', None)
+        response_template = kwargs.get('response_template', None)
+        hook_mode = kwargs.get('hook_mode', 'intercept')
+
+        logger.info("Starting cloud license hooker (mode: %s)", hook_mode)
+
+        # Update app instance if provided
+        if app_instance and hasattr(app_instance, 'update_output'):
+            message = f"Starting cloud license hooker (mode: {hook_mode}, target: {target_url or 'any'})"
+            if hasattr(app_instance.update_output, 'emit'):
+                app_instance.update_output.emit(message)
+            elif callable(app_instance.update_output):
+                app_instance.update_output(message)
 
         try:
             from intellicrack.core.network.cloud_license_hooker import CloudLicenseResponseGenerator
-            _ = CloudLicenseResponseGenerator()  # Instance created but not used yet
-            return {"status": "success", "message": "Cloud license hooker ready"}
+
+            # Create config dict with target_url, response_template, and hook_mode parameters
+            config = {
+                'target_url': target_url,
+                'response_template': response_template,
+                'hook_mode': hook_mode,
+                'enable_logging': True,
+                'auto_respond': True
+            }
+            hooker = CloudLicenseResponseGenerator(config)
+
+            # CloudLicenseResponseGenerator doesn't have a start() method
+            # It's configured and ready to use once instantiated
+            
+            # Store the hooker instance for later use
+            if app_instance and hasattr(app_instance, 'cloud_license_hooker'):
+                app_instance.cloud_license_hooker = hooker
+
+            result = {
+                "status": "success",
+                "message": f"Cloud license hooker ready (mode: {hook_mode})",
+                "hooker_instance": hooker,
+                "hooker_config": {
+                    "target_url": target_url,
+                    "hook_mode": hook_mode,
+                    "has_template": response_template is not None
+                }
+            }
+
+            # Update app instance with success
+            if app_instance and hasattr(app_instance, 'update_output'):
+                if hasattr(app_instance.update_output, 'emit'):
+                    app_instance.update_output.emit("Cloud license hooker ready")
+                elif callable(app_instance.update_output):
+                    app_instance.update_output("Cloud license hooker ready")
+
+            return result
         except ImportError:
             logger.warning("CloudLicenseResponseGenerator not available")
             return {"status": "error", "message": "Cloud license hooker not available"}
@@ -121,6 +302,7 @@ def run_cloud_license_hooker(app_instance=None, **kwargs) -> Dict[str, Any]:
 
 def run_cfg_explorer(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """Run the control flow graph explorer."""
+    logger.debug(f"CFG explorer called with {len(kwargs)} kwargs")
     try:
         logger.info("Starting CFG explorer")
 
@@ -147,6 +329,7 @@ def run_cfg_explorer(app_instance=None, binary_path: Optional[str] = None, **kwa
 
 def run_concolic_execution(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """Run concolic execution analysis."""
+    logger.debug(f"Concolic execution called with {len(kwargs)} kwargs")
     try:
         logger.info("Starting concolic execution")
 
@@ -172,6 +355,7 @@ def run_concolic_execution(app_instance=None, binary_path: Optional[str] = None,
 
 def run_enhanced_protection_scan(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """Run enhanced protection scanning."""
+    logger.debug(f"Enhanced protection scan called with {len(kwargs)} kwargs")
     try:
         logger.info("Starting enhanced protection scan")
 
@@ -208,7 +392,10 @@ def run_enhanced_protection_scan(app_instance=None, binary_path: Optional[str] =
 
 def run_visual_network_traffic_analyzer(app_instance=None, **kwargs) -> Dict[str, Any]:
     """Run visual network traffic analyzer."""
+    logger.debug(f"Visual network analyzer called with {len(kwargs)} kwargs")
     try:
+        if app_instance:
+            logger.debug(f"Using app instance: {type(app_instance)}")
         logger.info("Starting visual network traffic analyzer")
 
         try:
@@ -227,6 +414,7 @@ def run_visual_network_traffic_analyzer(app_instance=None, **kwargs) -> Dict[str
 
 def run_multi_format_analysis(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """Run multi-format binary analysis."""
+    logger.debug(f"Multi-format analysis called with {len(kwargs)} kwargs")
     try:
         logger.info("Starting multi-format analysis")
 
@@ -252,7 +440,10 @@ def run_multi_format_analysis(app_instance=None, binary_path: Optional[str] = No
 
 def run_distributed_processing(app_instance=None, **kwargs) -> Dict[str, Any]:
     """Run distributed processing analysis."""
+    logger.debug(f"Distributed processing called with {len(kwargs)} kwargs")
     try:
+        if app_instance:
+            logger.debug(f"Using app instance: {type(app_instance)}")
         logger.info("Starting distributed processing")
 
         try:
@@ -273,6 +464,7 @@ def run_distributed_processing(app_instance=None, **kwargs) -> Dict[str, Any]:
 
 def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> Dict[str, Any]:
     """Run comprehensive GPU-accelerated analysis demonstrating all features."""
+    logger.debug(f"GPU accelerated analysis called with {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         logger.info("Starting GPU-accelerated analysis")
 
@@ -397,6 +589,7 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> Dict[str, Any]:
 
 def run_ai_guided_patching(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """Run AI-guided patching analysis."""
+    logger.debug(f"AI guided patching called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         logger.info("Starting AI-guided patching analysis")
 
@@ -523,7 +716,7 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: Optional[str] =
 
         else:
             # Use default script from centralized location
-            script_source = os.path.join("scripts", "ghidra", "default", "AdvancedAnalysis.java")
+            script_source = pkg_resources.resource_filename('intellicrack', 'plugins/ghidra_scripts/default/AdvancedAnalysis.java')
             script_destination = os.path.join(temp_script_dir, "AdvancedAnalysis.java")
             script_name = "AdvancedAnalysis.java"
 
@@ -775,7 +968,8 @@ def run_symbolic_execution(app_instance=None, binary_path: Optional[str] = None,
     Returns:
         Dict with analysis results
     """
-    from ..core.analysis.symbolic_executor import SymbolicExecutionEngine
+    logger.debug(f"Symbolic execution called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
+    from ...core.analysis.symbolic_executor import SymbolicExecutionEngine
 
     try:
         binary_path = binary_path or (app_instance.binary_path if app_instance else None)
@@ -839,7 +1033,8 @@ def run_incremental_analysis(app_instance=None, binary_path: Optional[str] = Non
     Returns:
         Dict with analysis results
     """
-    from ..core.analysis.incremental_manager import IncrementalAnalysisManager
+    logger.debug(f"Incremental analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
+    from ...core.analysis.incremental_manager import IncrementalAnalysisManager
 
     try:
         binary_path = binary_path or (app_instance.binary_path if app_instance else None)
@@ -892,7 +1087,8 @@ def run_memory_optimized_analysis(app_instance=None, binary_path: Optional[str] 
     Returns:
         Dict with analysis results
     """
-    from ..core.processing.memory_loader import MemoryOptimizedBinaryLoader
+    logger.debug(f"Memory optimized analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
+    from ...core.processing.memory_loader import MemoryOptimizedBinaryLoader
 
     try:
         binary_path = binary_path or (app_instance.binary_path if app_instance else None)
@@ -956,7 +1152,8 @@ def run_taint_analysis(app_instance=None, binary_path: Optional[str] = None, **k
     Returns:
         Dict with analysis results
     """
-    from ..core.analysis.taint_analyzer import TaintAnalysisEngine
+    logger.debug(f"Taint analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
+    from ...core.analysis.taint_analyzer import TaintAnalysisEngine
 
     try:
         binary_path = binary_path or (app_instance.binary_path if app_instance else None)
@@ -1000,9 +1197,10 @@ def run_rop_chain_generator(app_instance=None, binary_path: Optional[str] = None
     Returns:
         Dict with analysis results
     """
+    logger.debug(f"ROP chain generator called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         # Import the comprehensive implementation from rop_generator
-        from ..core.analysis.rop_generator import run_rop_chain_generator as rop_runner
+        from intellicrack.core.analysis.rop_generator import run_rop_chain_generator as rop_runner
 
         # Call the comprehensive implementation
         rop_runner(app_instance)
@@ -1034,7 +1232,7 @@ def run_qemu_analysis(app_instance=None, binary_path: Optional[str] = None, **kw
         logger.info("Running QEMU analysis on %s", binary_path)
 
         # Use the working implementation from qemu_emulator.py
-        from ..core.processing.qemu_emulator import run_qemu_analysis as qemu_run
+        from intellicrack.core.processing.qemu_emulator import run_qemu_analysis as qemu_run
 
         # Get architecture from kwargs or detect from binary
         architecture = kwargs.get('architecture', 'x86_64')
@@ -1076,8 +1274,8 @@ def run_qiling_emulation(app_instance=None, binary_path: Optional[str] = None, *
             return {"status": "error", "message": "No binary path provided"}
 
         # Use Qiling emulator
-        from ..core.processing.qiling_emulator import QILING_AVAILABLE
-        from ..core.processing.qiling_emulator import run_qiling_emulation as qiling_run
+        from ...core.processing.qiling_emulator import QILING_AVAILABLE
+        from ...core.processing.qiling_emulator import run_qiling_emulation as qiling_run
 
         if not QILING_AVAILABLE:
             return {"status": "error", "message": "Qiling framework not installed"}
@@ -1212,6 +1410,7 @@ def run_memory_analysis(app_instance=None, binary_path: Optional[str] = None, **
     Returns:
         Dict with memory analysis results
     """
+    logger.debug(f"Memory analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         import pefile
     except ImportError:
@@ -1341,6 +1540,7 @@ def run_network_analysis(app_instance=None, binary_path: Optional[str] = None, *
     Returns:
         Dict with network analysis results
     """
+    logger.debug(f"Network analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     import re
     import socket
     try:
@@ -1437,7 +1637,7 @@ def run_network_analysis(app_instance=None, binary_path: Optional[str] = None, *
                     if hasattr(app_instance.dynamic_analyzer, 'get_target_pid'):
                         pid = app_instance.dynamic_analyzer.get_target_pid()
 
-                    if pid:
+                    if pid and PSUTIL_AVAILABLE:
                         process = psutil.Process(pid)
                         connections = process.connections()
 
@@ -1535,8 +1735,8 @@ def run_ghidra_plugin_from_file(app, plugin_path):
                 "[Plugin] Setting up Ghidra project..."))
 
         # Use the common Ghidra plugin runner
-        from .tools.ghidra_common import run_ghidra_plugin
-        return_code, stdout, stderr = run_ghidra_plugin(
+        from ..tools.ghidra_common import run_ghidra_plugin
+        _, _, _ = run_ghidra_plugin(
             ghidra_path,
             temp_dir,
             project_name,
@@ -1588,7 +1788,7 @@ def _run_ghidra_thread(app, cmd, temp_dir):
 
     try:
         # Run Ghidra
-        from .system.process_helpers import run_ghidra_process
+        from ..system.process_helpers import run_ghidra_process
         returncode, stdout, stderr = run_ghidra_process(cmd)
 
         if returncode != 0:
@@ -1663,6 +1863,7 @@ def _run_ghidra_thread(app, cmd, temp_dir):
 
 def run_deep_license_analysis(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """Run deep license analysis on a binary file."""
+    logger.debug(f"Deep license analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         logger.info("Starting deep license analysis")
 
@@ -1770,13 +1971,13 @@ def run_frida_analysis(app_instance=None, binary_path: Optional[str] = None, **k
 
         if not frida_available:
             # Use wrapper function as fallback
-            from ..utils.tool_wrappers import wrapper_run_frida_script
+            from ..tool_wrappers import wrapper_run_frida_script
 
             # Try to find a suitable Frida script
             script_options = [
-                "scripts/frida/registry_monitor.js",
-                "scripts/frida/anti_debugger.js",
-                "C:/Intellicrack/scripts/frida/registry_monitor.js"
+                pkg_resources.resource_filename('intellicrack', 'plugins/frida_scripts/registry_monitor.js'),
+                pkg_resources.resource_filename('intellicrack', 'plugins/frida_scripts/anti_debugger.js'),
+                pkg_resources.resource_filename('intellicrack', 'plugins/frida_scripts/registry_monitor.js')
             ]
 
             script_path = None
@@ -1879,6 +2080,7 @@ def run_frida_analysis(app_instance=None, binary_path: Optional[str] = None, **k
         api_calls = []
         def on_message(message, data):
             """Handle messages from Frida script."""
+            logger.debug(f"Frida message received with data length: {len(data) if data else 0}")
             if message.get('type') == 'send' and message.get('payload', {}).get('type') == 'api_calls':
                 api_calls.extend(message['payload']['data'])
             if app_instance:
@@ -1954,8 +2156,8 @@ def run_dynamic_instrumentation(app_instance=None, binary_path: Optional[str] = 
         if not script_path:
             # Default to registry monitor script
             script_candidates = [
-                "scripts/frida/registry_monitor.js",
-                "C:/Intellicrack/scripts/frida/registry_monitor.js"
+                pkg_resources.resource_filename('intellicrack', 'plugins/frida_scripts/registry_monitor.js'),
+                pkg_resources.resource_filename('intellicrack', 'plugins/frida_scripts/registry_monitor.js')
             ]
 
             for candidate in script_candidates:
@@ -1974,7 +2176,7 @@ def run_dynamic_instrumentation(app_instance=None, binary_path: Optional[str] = 
                 f"[Dynamic Instrumentation] Using script: {script_path}"))
 
         # Use the wrapper function for consistent execution
-        from ..utils.tool_wrappers import wrapper_run_frida_script
+        from ..tool_wrappers import wrapper_run_frida_script
 
         result = wrapper_run_frida_script(app_instance, {
             "script_path": script_path,
@@ -2013,8 +2215,9 @@ def run_comprehensive_analysis(app_instance=None, binary_path: Optional[str] = N
 
     This is a wrapper that calls the comprehensive analysis from additional_runners.
     """
+    logger.debug(f"Comprehensive analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
-        from .runtime.additional_runners import run_comprehensive_analysis as comprehensive_analysis
+        from .additional_runners import run_comprehensive_analysis as comprehensive_analysis
 
         if not binary_path and app_instance:
             binary_path = getattr(app_instance, 'binary_path', None)
@@ -2033,6 +2236,7 @@ def run_ghidra_analysis(app_instance=None, binary_path: Optional[str] = None, **
     """
     Run basic Ghidra analysis (delegates to advanced Ghidra analysis).
     """
+    logger.debug(f"Ghidra analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     return run_advanced_ghidra_analysis(app_instance, binary_path, **kwargs)
 
 
@@ -2040,6 +2244,7 @@ def run_radare2_analysis(app_instance=None, binary_path: Optional[str] = None, *
     """
     Run Radare2 analysis on a binary.
     """
+    logger.debug(f"Radare2 analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         logger.info("Starting Radare2 analysis")
 
@@ -2132,6 +2337,8 @@ def run_frida_script(app_instance=None, binary_path: Optional[str] = None,
     Run a Frida script on a binary or process.
     """
     try:
+        if app_instance:
+            logger.debug(f"Using app instance: {type(app_instance)}")
         logger.info("Running Frida script")
 
         if not script_path:
@@ -2266,6 +2473,7 @@ def run_autonomous_patching(app_instance=None, **kwargs) -> Dict[str, Any]:
     Returns:
         Dict containing autonomous patching results
     """
+    logger.debug(f"Autonomous patching called with app_instance: {app_instance is not None}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         logger.info("Starting autonomous patching analysis")
 
@@ -2404,11 +2612,12 @@ def _autonomous_analyze_binary(target_binary: str) -> Dict[str, Any]:
 
 def _autonomous_detect_targets(target_binary: str, analysis_result: Dict[str, Any]) -> Dict[str, Any]:
     """Detect patching targets (license checks, vulnerabilities)."""
+    logger.debug(f"Detecting targets for {target_binary} with analysis result keys: {list(analysis_result.keys())}")
     result = {"targets_found": [], "license_checks": [], "vulnerabilities": []}
 
     try:
         # Use existing vulnerability detection
-        from ..core.analysis.vulnerability_engine import VulnerabilityEngine
+        from ...core.analysis.vulnerability_engine import VulnerabilityEngine
 
         vuln_engine = VulnerabilityEngine()
         vulns = vuln_engine.scan_binary(target_binary)
@@ -2438,6 +2647,7 @@ def _autonomous_detect_targets(target_binary: str, analysis_result: Dict[str, An
 
 def _autonomous_generate_patches(target_binary: str, detection_result: Dict[str, Any], strategy: str) -> Dict[str, Any]:
     """Generate patches based on detected targets."""
+    logger.debug(f"Generating patches for {target_binary} with strategy: {strategy}, detection keys: {list(detection_result.keys())}")
     result = {"patches": [], "patch_count": 0}
 
     try:
@@ -2550,6 +2760,7 @@ def _autonomous_apply_patches(target_binary: str, patches: List[Dict[str, Any]],
 
 def _apply_single_patch(target_binary: str, patch: Dict[str, Any], strategy: str) -> Dict[str, Any]:
     """Apply a single patch to the binary."""
+    logger.debug(f"Applying single patch to {target_binary} with strategy: {strategy}, patch type: {patch.get('type', 'unknown')}")
     result = {"success": False, "message": ""}
 
     try:
@@ -2578,7 +2789,7 @@ def _autonomous_verify_patches(target_binary: str) -> Dict[str, Any]:
 
     try:
         # Use existing verification functionality
-        from .runtime.additional_runners import _verify_crack
+        from .additional_runners import _verify_crack
 
         verification_result = _verify_crack(target_binary)
         result["verification_passed"] = verification_result.get("verified", False)

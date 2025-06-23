@@ -36,15 +36,29 @@ from ...utils.protection.protection_detection import (
 
 logger = get_logger(__name__)
 
+
+def _get_wintypes():
+    """Get wintypes module or create a mock replacement."""
+    try:
+        from ctypes import wintypes
+        return wintypes, True
+    except ImportError:
+        # Create basic wintypes replacement
+        class MockWintypes:
+            """Mock Windows types for cross-platform compatibility."""
+            class DWORD:
+                """Mock DWORD type."""
+                def __init__(self):
+                    self.value = 0
+            class BOOL:
+                """Mock BOOL type."""
+                def __init__(self):
+                    self.value = 0
+        return MockWintypes(), False
+
 # Windows memory protection constants
 PAGE_NOACCESS = 0x01
-PAGE_READONLY = 0x02
-PAGE_READWRITE = 0x04
-PAGE_WRITECOPY = 0x08
-PAGE_EXECUTE = 0x10
-PAGE_EXECUTE_READ = 0x20
 PAGE_EXECUTE_READWRITE = 0x40
-PAGE_EXECUTE_WRITECOPY = 0x80
 PAGE_GUARD = 0x100
 
 # Linux ptrace constants
@@ -93,8 +107,9 @@ def generate_launcher_script(app: Any, patching_strategy: str = "memory") -> Opt
     app.update_output.emit(log_message(
         f"[Launcher] Generating launcher script: {launcher_path}"))
 
-    # Convert patches to string for embedding
-    patches_str = str(app.potential_patches)
+    # Convert patches to string for embedding - escape braces to avoid format conflicts
+    import json
+    patches_str = json.dumps(app.potential_patches, default=str)
 
     # Create launcher script content
     script_content = '''#!/usr/bin/env python3
@@ -141,7 +156,7 @@ def create_frida_script():
     console.log('[+] Base address: ' + baseAddr);
 
     // Apply patches
-    var patches = %s;
+    var patches = {patches_js};
 
     patches.forEach(function(patch, index) {
         try {
@@ -150,7 +165,7 @@ def create_frida_script():
             var description = patch.description || 'Patch ' + index;
 
             // Calculate actual address
-            var patchAddr = baseAddr.add(address - %s);
+            var patchAddr = baseAddr.add(address - {base_address});
 
             // Make memory writable
             Memory.protect(patchAddr, newBytes.length, 'rwx');
@@ -245,7 +260,9 @@ if __name__ == "__main__":
         timestamp=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         binary_path=app.binary_path,
         patching_strategy=patching_strategy,
-        patches_str=patches_str
+        patches_str=patches_str,
+        patches_js=patches_str,
+        base_address=0x400000  # Default base address for PE files
     )
 
     # Handle patches format conversion
@@ -437,20 +454,7 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
     """
     try:
         import ctypes
-        try:
-            from ctypes import wintypes
-            HAS_WINTYPES = True
-        except ImportError:
-            # Create basic wintypes replacement
-            class MockWintypes:
-                class DWORD:
-                    def __init__(self):
-                        self.value = 0
-                class BOOL:
-                    def __init__(self):
-                        self.value = 0
-            wintypes = MockWintypes()
-            HAS_WINTYPES = False
+        wintypes, HAS_WINTYPES = _get_wintypes()
 
         # Default to RWX if not specified
         if protection is None:
@@ -518,6 +522,10 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
         # Default to RWX if not specified
         if protection is None:
             protection = PROT_READ | PROT_WRITE | PROT_EXEC
+
+        # Validate protection value (must not be PROT_NONE for bypass operations)
+        if protection == PROT_NONE:
+            raise ValueError("Cannot bypass memory protection with PROT_NONE (no access)")
 
         # Load libc
         libc = ctypes.CDLL(None)
@@ -599,17 +607,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
     """
     try:
         import ctypes
-        try:
-            from ctypes import wintypes
-            HAS_WINTYPES = True
-        except ImportError:
-            # Create basic wintypes replacement
-            class MockWintypes:
-                class DWORD:
-                    def __init__(self):
-                        self.value = 0
-            wintypes = MockWintypes()
-            HAS_WINTYPES = False
+        wintypes, HAS_WINTYPES = _get_wintypes()
 
         # Constants
         PROCESS_ALL_ACCESS = 0x1F0FFF
@@ -782,22 +780,13 @@ def _handle_guard_pages_windows(address: int, size: int,
     """
     try:
         import ctypes
-        try:
-            from ctypes import wintypes
-            HAS_WINTYPES = True
-        except ImportError:
-            # Create basic wintypes replacement
-            class MockWintypes:
-                class DWORD:
-                    def __init__(self):
-                        self.value = 0
-            wintypes = MockWintypes()
-            HAS_WINTYPES = False
+        wintypes, HAS_WINTYPES = _get_wintypes()
 
         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
 
         # MEMORY_BASIC_INFORMATION structure
         class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+            """Windows MEMORY_BASIC_INFORMATION structure for memory queries."""
             _fields_ = [
                 ("BaseAddress", ctypes.c_void_p),
                 ("AllocationBase", ctypes.c_void_p),
@@ -1001,22 +990,13 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
         import platform
         if platform.system() == 'Windows':
             import ctypes
-            try:
-                from ctypes import wintypes
-                HAS_WINTYPES = True
-            except ImportError:
-                # Create basic wintypes replacement
-                class MockWintypes:
-                    class DWORD:
-                        def __init__(self):
-                            self.value = 0
-                wintypes = MockWintypes()
-                HAS_WINTYPES = False
+            wintypes, HAS_WINTYPES = _get_wintypes()
 
             kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
 
             # Check if memory is committed
             class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+                """Memory basic information structure for allocation checking."""
                 _fields_ = [
                     ("BaseAddress", ctypes.c_void_p),
                     ("AllocationBase", ctypes.c_void_p),
@@ -1042,7 +1022,6 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int,
                     return False
 
                 # Check for NO_ACCESS
-                PAGE_NOACCESS = 0x01
                 if mbi.Protect == PAGE_NOACCESS:
                     logger.error("Memory has PAGE_NOACCESS protection")
                     return False

@@ -41,7 +41,6 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
         super().__init__()
         self.logger = get_logger(__name__)
-        self.THREAD_GET_CONTEXT = 0x0008
 
     def get_required_libraries(self) -> list:
         """Get list of required Windows libraries for this patcher."""
@@ -197,7 +196,6 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
                 if modify_entry_point:
                     # Modify entry point to our stub
-                    original_entry = self._get_entry_point(context)
                     self._set_entry_point(context, stub_addr)
 
                     # Set thread context

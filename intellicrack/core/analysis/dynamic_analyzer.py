@@ -605,9 +605,10 @@ class AdvancedDynamicAnalyzer:
 
             # Find the target process
             session = None
-            for proc in frida.enumerate_processes():
+            device = frida.get_local_device()
+            for proc in device.enumerate_processes():
                 if process_name.lower() in proc.name.lower():
-                    session = frida.attach(proc.pid)
+                    session = device.attach(proc.pid)
                     break
 
             if not session:

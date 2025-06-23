@@ -20,15 +20,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 try:
-    from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-    from PyQt5.QtGui import QBrush, QColor, QIcon, QPainter, QPalette, QPixmap
     from PyQt5.QtWidgets import (
         QHBoxLayout,
         QLabel,
         QMessageBox,
-        QPushButton,
-        QStyle,
-        QToolTip,
         QWidget,
     )
 except ImportError:

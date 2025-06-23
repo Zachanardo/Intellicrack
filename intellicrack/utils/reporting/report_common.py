@@ -120,8 +120,8 @@ def handle_pyqt5_report_generation(app, report_type, generator):
     """
     try:
         # Check if PyQt5 is available
-        import PyQt5
-        PYQT5_AVAILABLE = True
+        import importlib.util
+        PYQT5_AVAILABLE = importlib.util.find_spec("PyQt5") is not None
     except ImportError:
         PYQT5_AVAILABLE = False
 

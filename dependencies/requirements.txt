@@ -139,7 +139,7 @@ loguru>=0.7.0
 
 # Optional but referenced in try/except blocks
 # pcapy>=0.11.4  # Alternative packet capture - DISABLED: incompatible with Python 3.11+ (missing distutils._init_posix)
-pypcap>=1.2.3  # Modern replacement for pcapy - Python packet capture library
+# pypcap>=1.2.3  # DISABLED: using scapy instead for packet capture
 # manticore>=0.3.7  # Alternative to angr (optional - installed separately if compatible)
 
 # Additional specialized tools  

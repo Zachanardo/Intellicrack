@@ -60,6 +60,20 @@ class TestNetworkTrafficAnalyzer(unittest.TestCase):
         self.assertTrue(self.analyzer.is_capturing)
 
     @unittest.skipIf(NetworkTrafficAnalyzer is None, "NetworkTrafficAnalyzer not available")
+    @patch('intellicrack.core.network.traffic_analyzer.scapy')
+    def test_start_capture_with_scapy(self, mock_scapy):
+        """Test starting packet capture with Scapy."""
+        # Mock Scapy functions
+        mock_scapy.sniff = MagicMock()
+        
+        # Start capture
+        result = self.analyzer.start_capture(interface='eth0', use_pyshark=False)
+
+        # Verify
+        self.assertTrue(result)
+        self.assertTrue(self.analyzer.is_capturing)
+
+    @unittest.skipIf(NetworkTrafficAnalyzer is None, "NetworkTrafficAnalyzer not available")
     def test_stop_capture(self):
         """Test stopping packet capture."""
         # Set up analyzer as if capture is running

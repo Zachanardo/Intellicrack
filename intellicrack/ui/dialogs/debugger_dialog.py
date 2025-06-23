@@ -21,7 +21,7 @@ import os
 import queue
 from typing import Any, Dict, List
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSize
+from PyQt5.QtCore import QSize, Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QColor, QFont, QTextCursor, QTextFormat
 from PyQt5.QtWidgets import (
     QDialog,
@@ -625,7 +625,7 @@ class DebuggerDialog(QDialog):
         })
 
         # Add to UI
-        item = QTreeWidgetItem(self.watch_tree, [expr, "<not evaluated>"])
+        QTreeWidgetItem(self.watch_tree, [expr, "<not evaluated>"])
 
         # Clear input
         self.watch_input.clear()
@@ -701,8 +701,10 @@ class CodeEditorWidget(QTextEdit):
         space = 3 + self.fontMetrics().horizontalAdvance('9') * (digits + 1)
         return space
 
-    def update_line_number_area_width(self, _):
+    def update_line_number_area_width(self, new_block_count):
         """Update line number area width"""
+        # Log block count changes for debugging
+        self.logger.debug(f"Updating line number area width for {new_block_count} blocks")
         self.setViewportMargins(self.line_number_area_width(), 0, 0, 0)
 
     def update_line_number_area(self, rect, dy):

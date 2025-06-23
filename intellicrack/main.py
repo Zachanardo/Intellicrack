@@ -24,6 +24,15 @@ import sys
 if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:
     os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
+# Configure Qt font handling for Windows
+if os.name == 'nt':
+    if 'QT_QPA_FONTDIR' not in os.environ:
+        windir = os.environ.get('WINDIR', 'C:\\Windows')
+        os.environ['QT_QPA_FONTDIR'] = os.path.join(windir, 'Fonts')
+
+    # Suppress Qt font warnings
+    os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.fonts=false'
+
 # Comprehensive logging disabled for Qt compatibility
 # The comprehensive logging system interferes with Qt's window display mechanisms
 

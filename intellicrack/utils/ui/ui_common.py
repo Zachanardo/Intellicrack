@@ -10,7 +10,6 @@ from typing import Any, Callable, List, Optional, Tuple
 
 try:
     from PyQt5.QtWidgets import (
-        QApplication,
         QFileDialog,
         QGroupBox,
         QHBoxLayout,
@@ -24,7 +23,6 @@ except ImportError:
     HAS_PYQT = False
     QMessageBox = None
     QFileDialog = None
-    QApplication = None
     QGroupBox = None
     QHBoxLayout = None
     QLineEdit = None

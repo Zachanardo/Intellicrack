@@ -24,10 +24,11 @@ import logging
 from typing import Any, Dict, List, Optional
 
 try:
-    from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
+    from PyQt5.QtWidgets import QInputDialog
     PYQT5_AVAILABLE = True
 except ImportError:
     PYQT5_AVAILABLE = False
+    QInputDialog = None
 
 from ...utils.ui.ui_common import ask_open_report
 
@@ -210,6 +211,8 @@ class ROPChainGenerator:
                 # Start disassembly from likely code sections
                 base_address = self._get_code_base_address(binary_data)
                 code_sections = self._extract_code_sections(binary_data)
+
+                self.logger.info(f"Base address: 0x{base_address:x}")
 
                 for section_data, section_base in code_sections:
                     for insn in md.disasm(section_data, section_base):

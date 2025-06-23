@@ -91,24 +91,43 @@ def show_message(message: str, msg_type: MessageType = MessageType.INFO,
         message: Message text to display
         msg_type: Type of message (affects styling/icon)
         title: Optional title for the message
-        parent: Optional parent widget/window
+        parent: Optional parent widget/window for proper dialog positioning
     """
     if title is None:
         title = msg_type.value.capitalize()
 
+    # Log the message with context if parent is provided
+    parent_context = ""
+    if parent and hasattr(parent, 'objectName'):
+        parent_name = parent.objectName()
+        if parent_name:
+            parent_context = f" (from {parent_name})"
+    elif parent and hasattr(parent, '__class__'):
+        parent_context = f" (from {parent.__class__.__name__})"
+
     # Log the message
     if msg_type == MessageType.ERROR:
-        logger.error("%s: %s", title, message)
+        logger.error("%s: %s%s", title, message, parent_context)
     elif msg_type == MessageType.WARNING:
-        logger.warning("%s: %s", title, message)
+        logger.warning("%s: %s%s", title, message, parent_context)
     elif msg_type == MessageType.DEBUG:
-        logger.debug("%s: %s", title, message)
+        logger.debug("%s: %s%s", title, message, parent_context)
     else:
-        logger.info("%s: %s", title, message)
+        logger.info("%s: %s%s", title, message, parent_context)
 
     # In a real UI implementation, this would show a dialog
-    # For now, we just print to console
-    print(f"[{msg_type.value.upper()}] {title}: {message}")
+    # For now, we print to console with parent context
+    parent_info = f" (Parent: {parent.__class__.__name__})" if parent else ""
+    print(f"[{msg_type.value.upper()}] {title}: {message}{parent_info}")
+
+    # Store message in parent if it has a message history
+    if parent and hasattr(parent, 'message_history'):
+        parent.message_history.append({
+            'type': msg_type.value,
+            'title': title,
+            'message': message,
+            'timestamp': str(type(logger).__module__)  # Simple timestamp placeholder
+        })
 
 
 def get_user_input(prompt: str, default: str = "",
@@ -120,27 +139,51 @@ def get_user_input(prompt: str, default: str = "",
         prompt: Prompt text to display
         default: Default value
         title: Dialog title
-        parent: Optional parent widget
+        parent: Optional parent widget for context and positioning
 
     Returns:
         Optional[str]: User input or None if cancelled
     """
+    # Log the input request with parent context
+    parent_context = ""
+    if parent and hasattr(parent, 'objectName'):
+        parent_name = parent.objectName()
+        if parent_name:
+            parent_context = f" (from {parent_name})"
+    elif parent and hasattr(parent, '__class__'):
+        parent_context = f" (from {parent.__class__.__name__})"
+
+    logger.info("User input requested: %s%s", title, parent_context)
+
     # In a real UI implementation, this would show an input dialog
-    # For now, we use console input
+    # For now, we use console input with parent information
     try:
         # Sanitize prompt to prevent injection
         safe_prompt = prompt.replace('\n', ' ').replace('\r', ' ')
         safe_default = default.replace('\n', ' ').replace('\r', ' ') if default else ""
 
+        # Display context if parent is available
+        context_info = f" [{parent.__class__.__name__}]" if parent else ""
+
         if safe_default:
-            user_input = input(f"{safe_prompt} [{safe_default}]: ").strip()  # User input is sanitized below
+            user_input = input(f"{title}{context_info} - {safe_prompt} [{safe_default}]: ").strip()
             # Sanitize user input - remove null bytes and newlines
             sanitized = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
-            return sanitized if sanitized else safe_default
+            result = sanitized if sanitized else safe_default
         else:
-            user_input = input(f"{safe_prompt}: ").strip()  # User input is sanitized below
+            user_input = input(f"{title}{context_info} - {safe_prompt}: ").strip()
             # Sanitize user input - remove null bytes and newlines
-            return user_input.replace('\0', '').replace('\n', '').replace('\r', '')
+            result = user_input.replace('\0', '').replace('\n', '').replace('\r', '')
+
+        # Store input history in parent if available
+        if parent and hasattr(parent, 'input_history'):
+            parent.input_history.append({
+                'prompt': prompt,
+                'result': result,
+                'title': title
+            })
+
+        return result
     except (KeyboardInterrupt, EOFError):
         return None
 
@@ -179,7 +222,8 @@ def confirm_action(message: str, title: str = "Confirm Action",
         bool: True if confirmed, False otherwise
     """
     # In a real UI implementation, this would show a confirmation dialog
-    # For now, we use console input
+    # For now, we use console input (parent parameter reserved for future GUI integration)
+    logger.debug(f"Console confirmation dialog (parent: {parent is not None})")
     try:
         # Sanitize title and message to prevent injection
         safe_title = title.replace('\n', ' ').replace('\r', ' ')
@@ -210,7 +254,8 @@ def select_from_list(items: List[str], prompt: str = "Select an item",
     if not items:
         return None
 
-    # Console implementation
+    # Console implementation (parent parameter reserved for future GUI integration)
+    logger.debug(f"Console selection dialog (parent: {parent is not None})")
     print(f"\n{title}: {prompt}")
     for i, item in enumerate(items, 1):
         print(f"  {i}. {item}")

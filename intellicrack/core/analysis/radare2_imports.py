@@ -628,29 +628,29 @@ class R2ImportExportAnalyzer:
     def _parse_plt_data(self, plt_data: str, imports: List[Dict[str, Any]]):
         """Parse PLT data and add to imports."""
         import re
-        
+
         # PLT entries typically have format like:
         # 0x00401000 plt.function_name
         # or
         # vaddr=0x00401000 paddr=0x00001000 type=FUNC name=plt.function_name
         plt_pattern = r'(?:vaddr=)?0x([0-9a-fA-F]+).*?(?:name=)?plt\.([a-zA-Z_][a-zA-Z0-9_]*)'
-        
+
         seen_functions = set()
-        
+
         for line in plt_data.split('\n'):
             match = re.search(plt_pattern, line)
             if match:
                 address = int(match.group(1), 16)
                 function_name = match.group(2)
-                
+
                 # Skip if we've already seen this function
                 if function_name in seen_functions:
                     continue
                 seen_functions.add(function_name)
-                
+
                 # Determine library based on function name
                 lib_name = self._guess_library_from_function(function_name)
-                
+
                 # Add to imports
                 imports.append({
                     'name': function_name,
@@ -660,7 +660,7 @@ class R2ImportExportAnalyzer:
                     'source': 'PLT section',
                     'calling_convention': 'cdecl'  # Default for PLT
                 })
-                
+
     def _guess_library_from_function(self, function_name: str) -> str:
         """Guess the library name based on the function name."""
         # Common function to library mappings
@@ -681,24 +681,24 @@ class R2ImportExportAnalyzer:
             'getpid': 'libc.so.6',
             'fork': 'libc.so.6',
             'execve': 'libc.so.6',
-            
+
             # libpthread functions
             'pthread_create': 'libpthread.so.0',
             'pthread_join': 'libpthread.so.0',
             'pthread_mutex_lock': 'libpthread.so.0',
             'pthread_mutex_unlock': 'libpthread.so.0',
-            
+
             # libdl functions
             'dlopen': 'libdl.so.2',
             'dlsym': 'libdl.so.2',
             'dlclose': 'libdl.so.2',
-            
+
             # libm functions
             'sin': 'libm.so.6',
             'cos': 'libm.so.6',
             'sqrt': 'libm.so.6',
             'pow': 'libm.so.6',
-            
+
             # Windows API functions (for cross-platform analysis)
             'CreateFileA': 'kernel32.dll',
             'CreateFileW': 'kernel32.dll',
@@ -711,37 +711,37 @@ class R2ImportExportAnalyzer:
             'LoadLibraryA': 'kernel32.dll',
             'LoadLibraryW': 'kernel32.dll',
             'GetProcAddress': 'kernel32.dll',
-            
+
             'MessageBoxA': 'user32.dll',
             'MessageBoxW': 'user32.dll',
             'CreateWindowExA': 'user32.dll',
             'CreateWindowExW': 'user32.dll',
-            
+
             'RegOpenKeyExA': 'advapi32.dll',
             'RegOpenKeyExW': 'advapi32.dll',
             'CryptAcquireContextA': 'advapi32.dll',
             'CryptAcquireContextW': 'advapi32.dll'
         }
-        
+
         # Check direct mapping
         if function_name in function_library_map:
             return function_library_map[function_name]
-        
+
         # Check for common patterns
         func_lower = function_name.lower()
-        
+
         # C runtime functions
         if func_lower.startswith('_') or func_lower in ['main', 'atexit', 'signal']:
             return 'libc.so.6'
-        
+
         # Thread-related
         if 'thread' in func_lower or 'mutex' in func_lower:
             return 'libpthread.so.0'
-        
+
         # Math functions
         if func_lower in ['exp', 'log', 'tan', 'atan', 'ceil', 'floor']:
             return 'libm.so.6'
-        
+
         # Default to libc for unknown functions
         return 'libc.so.6'
 
@@ -897,10 +897,10 @@ class R2ImportExportAnalyzer:
     def _identify_file_access_type(self, api_name: str) -> str:
         """Identify file access type based on API name."""
         name_lower = api_name.lower()
-        
+
         # Analyze API name for access patterns
         access_types = []
-        
+
         # Read access patterns
         read_patterns = [
             'readfile', 'getfileattributes', 'getfilesize', 'findfirst', 'findnext',
@@ -908,7 +908,7 @@ class R2ImportExportAnalyzer:
             'openfile', 'createfile.*generic_read', '_read', 'fread', 'fgets',
             'getprivateprofilestring', 'loadlibrary', 'loadimage'
         ]
-        
+
         # Write access patterns
         write_patterns = [
             'writefile', 'setfileattributes', 'setendoffile', 'createfile.*generic_write',
@@ -916,36 +916,36 @@ class R2ImportExportAnalyzer:
             'setprivateprofilestring', 'copyfile', 'movefile', 'deletefile',
             'createfile.*file_write', 'flushfilebuffers'
         ]
-        
+
         # Execute access patterns
         execute_patterns = [
             'createprocess', 'shellexecute', 'winexec', 'loadlibrary',
             'createfile.*file_execute', 'mapviewoffile.*file_map_execute'
         ]
-        
+
         # Modify/Delete patterns
         modify_patterns = [
             'setfilepointer', 'setfiletime', 'setfilevaliddata',
             'deletefile', 'removedirectory', 'movefileex', 'replaceifle',
             'truncatefile', 'setfileinformationbyhandle'
         ]
-        
+
         # Check for read access
         if any(pattern in name_lower for pattern in read_patterns):
             access_types.append('Read')
-            
+
         # Check for write access
         if any(pattern in name_lower for pattern in write_patterns):
             access_types.append('Write')
-            
+
         # Check for execute access
         if any(pattern in name_lower for pattern in execute_patterns):
             access_types.append('Execute')
-            
+
         # Check for modify/delete access
         if any(pattern in name_lower for pattern in modify_patterns):
             access_types.append('Modify')
-        
+
         # Check for specific access flags in CreateFile
         if 'createfile' in name_lower:
             # Parse for specific access flags
@@ -960,7 +960,7 @@ class R2ImportExportAnalyzer:
             elif 'generic_execute' in name_lower or 'file_execute' in name_lower:
                 if 'Execute' not in access_types:
                     access_types.append('Execute')
-        
+
         # Check for file mapping operations
         if 'mapviewoffile' in name_lower:
             if 'file_map_read' in name_lower:
@@ -971,12 +971,12 @@ class R2ImportExportAnalyzer:
                     access_types.append('Write')
             elif 'file_map_all_access' in name_lower:
                 access_types = ['Read', 'Write', 'Execute']
-        
+
         # Check for directory operations
         if any(pattern in name_lower for pattern in ['createdirectory', 'removedirectory', 'findfirstfile']):
             if 'Directory' not in access_types:
                 access_types.append('Directory')
-        
+
         # Default if no specific pattern matches
         if not access_types:
             # Try to make an educated guess based on common patterns
@@ -988,7 +988,7 @@ class R2ImportExportAnalyzer:
                 access_types.append('Write')
             else:
                 access_types.append('Unknown')
-        
+
         # Format the result
         if len(access_types) == 1:
             return access_types[0]
@@ -1011,92 +1011,92 @@ class R2ImportExportAnalyzer:
     def _identify_registry_usage(self, api_name: str) -> str:
         """Identify typical registry usage based on API name."""
         name_lower = api_name.lower()
-        
+
         # Analyze registry API patterns for specific usage types
-        
+
         # License/Activation patterns
         license_patterns = [
             'software\\microsoft\\windows\\currentversion\\uninstall',
             'software\\licenses', 'software\\registration', 'activation',
             'serial', 'productkey', 'licensekey', 'trial', 'evaluation'
         ]
-        
+
         # Configuration/Settings patterns
         config_patterns = [
             'software\\microsoft\\windows\\currentversion\\run',
             'software\\policies', 'settings', 'preferences', 'configuration',
             'options', 'parameters', 'software\\classes'
         ]
-        
+
         # Security/Permission patterns
         security_patterns = [
             'sam\\sam', 'security\\policy', 'system\\currentcontrolset\\control\\lsa',
             'software\\microsoft\\windows\\currentversion\\policies',
             'privileges', 'accesscontrol', 'permissions'
         ]
-        
+
         # System Information patterns
         system_patterns = [
             'hardware\\description\\system', 'system\\currentcontrolset\\control',
             'software\\microsoft\\windows nt\\currentversion',
             'processor', 'bios', 'systeminfo'
         ]
-        
+
         # Persistence/Autostart patterns
         persistence_patterns = [
             'run', 'runonce', 'runonceex', 'startup', 'services',
             'software\\microsoft\\windows\\currentversion\\explorer\\shell folders',
             'userinit', 'winlogon', 'bootexecute'
         ]
-        
+
         # Network Configuration patterns
         network_patterns = [
             'system\\currentcontrolset\\services\\tcpip',
             'software\\microsoft\\windows\\currentversion\\internet settings',
             'networkaddress', 'proxy', 'dns'
         ]
-        
+
         # User/Account patterns
         user_patterns = [
             'software\\microsoft\\windows\\currentversion\\explorer',
             'identities', 'profilelist', 'userdata', 'accounts'
         ]
-        
+
         # Software Installation patterns
         install_patterns = [
             'uninstall', 'installer', 'components', 'setup',
             'software\\microsoft\\windows\\currentversion\\installer',
             'installdate', 'displayversion'
         ]
-        
+
         # Check for specific usage patterns
         usage_types = []
-        
+
         # Check against all pattern categories
         if any(pattern in name_lower for pattern in license_patterns):
             usage_types.append('License/Activation management')
-            
+
         if any(pattern in name_lower for pattern in config_patterns):
             usage_types.append('Configuration/Settings management')
-            
+
         if any(pattern in name_lower for pattern in security_patterns):
             usage_types.append('Security/Permission configuration')
-            
+
         if any(pattern in name_lower for pattern in system_patterns):
             usage_types.append('System information retrieval')
-            
+
         if any(pattern in name_lower for pattern in persistence_patterns):
             usage_types.append('Persistence/Autostart configuration')
-            
+
         if any(pattern in name_lower for pattern in network_patterns):
             usage_types.append('Network configuration')
-            
+
         if any(pattern in name_lower for pattern in user_patterns):
             usage_types.append('User profile management')
-            
+
         if any(pattern in name_lower for pattern in install_patterns):
             usage_types.append('Software installation tracking')
-        
+
         # Check for specific registry operations
         if 'regqueryvalue' in name_lower or 'reggetvalue' in name_lower:
             if not usage_types:
@@ -1113,7 +1113,7 @@ class R2ImportExportAnalyzer:
         elif 'regopenkeyex' in name_lower:
             if not usage_types:
                 usage_types.append('Registry access')
-        
+
         # Check for specific hive references
         if 'hkey_local_machine' in name_lower or 'hklm' in name_lower:
             if 'System-wide configuration' not in usage_types:
@@ -1124,7 +1124,7 @@ class R2ImportExportAnalyzer:
         elif 'hkey_classes_root' in name_lower or 'hkcr' in name_lower:
             if 'File association management' not in usage_types:
                 usage_types.append('File association management')
-        
+
         # Default if no specific pattern matches
         if not usage_types:
             # Make educated guess based on operation type
@@ -1136,7 +1136,7 @@ class R2ImportExportAnalyzer:
                 usage_types.append('Registry cleanup')
             else:
                 usage_types.append('General registry operation')
-        
+
         # Format the result
         if len(usage_types) == 1:
             return usage_types[0]
@@ -1271,10 +1271,10 @@ class R2ImportExportAnalyzer:
         anti_analysis_count = len(result.get('anti_analysis_apis', []))
         crypto_count = len(result.get('crypto_apis', []))
 
-        # Determine overall risk level
-        if suspicious_count > 5 or anti_analysis_count > 3:
+        # Determine overall risk level including crypto usage
+        if suspicious_count > 5 or anti_analysis_count > 3 or crypto_count > 10:
             assessment['risk_level'] = 'high'
-        elif suspicious_count > 2 or anti_analysis_count > 1:
+        elif suspicious_count > 2 or anti_analysis_count > 1 or crypto_count > 5:
             assessment['risk_level'] = 'medium'
 
         # Add security concerns
@@ -1282,6 +1282,8 @@ class R2ImportExportAnalyzer:
             assessment['security_concerns'].append(f'Contains {suspicious_count} suspicious API calls')
         if anti_analysis_count > 0:
             assessment['security_concerns'].append(f'Contains {anti_analysis_count} anti-analysis techniques')
+        if crypto_count > 0:
+            assessment['security_concerns'].append(f'Uses {crypto_count} cryptographic APIs - potential license protection')
 
         return assessment
 

@@ -12,8 +12,6 @@ import struct
 import zlib
 from typing import Any, Optional
 
-logger = logging.getLogger(__name__)
-
 
 class APIObfuscator:
     """
@@ -207,18 +205,25 @@ class APIObfuscator:
 
             # Shuffle and unshuffle
             indices = list(range(len(dll_chars)))
+            api_indices = list(range(len(api_chars)))
             random.shuffle(indices)
+            random.shuffle(api_indices)
 
             shuffled_dll = ''.join(dll_chars[i] for i in indices)
+            shuffled_api = ''.join(api_chars[i] for i in api_indices)
 
             # Reconstruct
             reconstructed_dll = [''] * len(dll_chars)
+            reconstructed_api = [''] * len(api_chars)
             for i, idx in enumerate(indices):
                 reconstructed_dll[idx] = shuffled_dll[i]
+            for i, idx in enumerate(api_indices):
+                reconstructed_api[idx] = shuffled_api[i]
             reconstructed_dll = ''.join(reconstructed_dll)
+            reconstructed_api = ''.join(reconstructed_api)
 
             # Now resolve normally
-            return self._normal_resolve(reconstructed_dll, api_name)
+            return self._normal_resolve(reconstructed_dll, reconstructed_api)
 
         except Exception as e:
             self.logger.debug(f"Dynamic resolution failed: {e}")

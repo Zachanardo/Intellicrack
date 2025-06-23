@@ -775,7 +775,7 @@ class {plugin_name.replace(' ', '')}Plugin:
         self.description = "Auto-generated {plugin_type.lower()}"
         self.author = "{author}"
         self.categories = ["{plugin_type.lower()}"]
-        
+
         # Plugin state
         self.app = None
         self.cache = {{}}
@@ -801,29 +801,29 @@ class {plugin_name.replace(' ', '')}Plugin:
         except Exception as e:
             logger.error(f"Failed to initialize {{self.name}} plugin: {{e}}")
             return False
-    
+
     def validate_binary(self, binary_path: str) -> tuple[bool, str]:
         \"\"\"
         Validate binary file before analysis.
-        
+
         Args:
             binary_path: Path to binary file
-            
+
         Returns:
             Tuple of (is_valid, error_message)
         \"\"\"
         if not binary_path:
             return False, "No binary path provided"
-        
+
         if not os.path.exists(binary_path):
             return False, f"File does not exist: {{binary_path}}"
-        
+
         if not os.path.isfile(binary_path):
             return False, f"Path is not a file: {{binary_path}}"
-        
+
         if not os.access(binary_path, os.R_OK):
             return False, f"File is not readable: {{binary_path}}"
-        
+
         # Check file size (100MB limit by default)
         max_size = 100 * 1024 * 1024
         try:
@@ -832,41 +832,41 @@ class {plugin_name.replace(' ', '')}Plugin:
                 return False, f"File too large: {{file_size}} bytes (max: {{max_size}})"
         except OSError as e:
             return False, f"Could not get file size: {{str(e)}}"
-        
+
         return True, "Valid"
-    
+
     def _perform_analysis(self, binary_path: str, *args, **kwargs) -> Dict[str, Any]:
         \"\"\"
         Perform the actual analysis based on plugin type.
-        
+
         Args:
             binary_path: Path to binary file
             *args: Additional arguments
             **kwargs: Additional keyword arguments
-            
+
         Returns:
             Analysis results dictionary
         \"\"\"
         start_time = time.time()
-        
+
         # Check cache
         if binary_path and binary_path in self.cache:
             cached_result = self.cache[binary_path]
             cached_result['from_cache'] = True
             return cached_result
-        
+
         results = {{
             'plugin_type': '{plugin_type.lower()}',
             'analysis_timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
             'findings': []
         }}
-        
+
         try:
             if binary_path:
                 # Basic file analysis
                 file_info = self._analyze_file_info(binary_path)
                 results['file_info'] = file_info
-                
+
                 # Plugin-type specific analysis
                 if '{plugin_type.lower()}' == 'analysis':
                     results['analysis'] = self._perform_binary_analysis(binary_path)
@@ -885,50 +885,50 @@ class {plugin_name.replace(' ', '')}Plugin:
                         'contains_pe_header': b'MZ' in header[:2],
                         'contains_elf_header': header[:4] == b'\\x7fELF'
                     }}
-                
+
                 # Update cache
                 if binary_path:
                     self.cache[binary_path] = results.copy()
-            
+
             # Process any additional arguments
             if args:
                 results['additional_args'] = list(args)
             if kwargs:
                 results['additional_kwargs'] = dict(kwargs)
-            
+
         except Exception as e:
             results['error'] = str(e)
             results['traceback'] = traceback.format_exc()
             logger.error(f"Analysis failed: {{e}}")
-        
+
         # Calculate execution time
         execution_time = time.time() - start_time
         results['execution_time'] = execution_time
-        
+
         # Update statistics
         self.analysis_count += 1
         self.last_analysis = time.time()
-        
+
         return results
-    
+
     def _analyze_file_info(self, file_path: str) -> Dict[str, Any]:
         \"\"\"Get basic file information.\"\"\"
         path = Path(file_path)
         stat = path.stat()
-        
+
         # Calculate file hash
         sha256_hash = hashlib.sha256()
         with open(file_path, 'rb') as f:
             for chunk in iter(lambda: f.read(8192), b''):
                 sha256_hash.update(chunk)
-        
+
         return {{
             'name': path.name,
             'size': stat.st_size,
             'modified': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stat.st_mtime)),
             'sha256': sha256_hash.hexdigest()
         }}
-    
+
     def _perform_binary_analysis(self, binary_path: str) -> Dict[str, Any]:
         \"\"\"Perform binary analysis.\"\"\"
         # Placeholder for actual analysis
@@ -937,7 +937,7 @@ class {plugin_name.replace(' ', '')}Plugin:
             'status': 'completed',
             'findings': ['Analysis placeholder - implement actual analysis logic']
         }}
-    
+
     def _detect_packers(self, binary_path: str) -> Dict[str, Any]:
         \"\"\"Detect packers and protectors.\"\"\"
         packer_signatures = {{
@@ -946,19 +946,19 @@ class {plugin_name.replace(' ', '')}Plugin:
             b'PECompact': 'PECompact',
             b'Themida': 'Themida'
         }}
-        
+
         detected = []
         with open(binary_path, 'rb') as f:
             header = f.read(8192)
             for sig, name in packer_signatures.items():
                 if sig in header:
                     detected.append(name)
-        
+
         return {{
             'detected': len(detected) > 0,
             'packers': detected
         }}
-    
+
     def _analyze_network_behavior(self, binary_path: str) -> Dict[str, Any]:
         \"\"\"Analyze potential network behavior.\"\"\"
         # Placeholder for network analysis
@@ -967,7 +967,7 @@ class {plugin_name.replace(' ', '')}Plugin:
             'status': 'completed',
             'findings': ['Network analysis placeholder']
         }}
-    
+
     def _scan_vulnerabilities(self, binary_path: str) -> List[Dict[str, Any]]:
         \"\"\"Scan for potential vulnerabilities.\"\"\"
         # Placeholder for vulnerability scanning
@@ -995,7 +995,7 @@ class {plugin_name.replace(' ', '')}Plugin:
                 binary_path = kwargs['binary_path']
             elif 'file_path' in kwargs:
                 binary_path = kwargs['file_path']
-            
+
             # Validate binary if provided
             if binary_path:
                 is_valid, error_msg = self.validate_binary(binary_path)
@@ -1005,10 +1005,10 @@ class {plugin_name.replace(' ', '')}Plugin:
                         'message': f'Binary validation failed: {{error_msg}}',
                         'data': {{}}
                     }}
-            
+
             # Perform actual analysis
             analysis_results = self._perform_analysis(binary_path, *args, **kwargs)
-            
+
             result = {{
                 'status': 'success',
                 'message': f'{{self.name}} executed successfully',
@@ -1028,34 +1028,34 @@ class {plugin_name.replace(' ', '')}Plugin:
                 'data': {{}},
                 'traceback': traceback.format_exc()
             }}
-    
+
     def analyze(self, binary_path: str) -> List[str]:
         \"\"\"
         Analyze method for compatibility with plugin system.
-        
+
         Args:
             binary_path: Path to binary file
-            
+
         Returns:
             List of analysis results as strings
         \"\"\"
         result = self.execute(binary_path)
-        
+
         if result['status'] == 'success':
             output = [f"Analysis completed for: {{binary_path}}"]
             data = result.get('data', {{}})
-            
+
             # Format file info
             if 'file_info' in data:
                 info = data['file_info']
                 output.append(f"File: {{info['name']}} ({{info['size']}} bytes)")
                 output.append(f"SHA256: {{info['sha256']}}")
-            
+
             # Format analysis results
             for key, value in data.items():
                 if key not in ['file_info', 'execution_time', 'analysis_timestamp']:
                     output.append(f"{{key}}: {{value}}")
-            
+
             output.append(f"Execution time: {{data.get('execution_time', 0):.2f}}s")
             return output
         else:
@@ -1078,11 +1078,11 @@ class {plugin_name.replace(' ', '')}Plugin:
                         self.temp_files.remove(temp_file)
                 except Exception as e:
                     logger.warning(f"Failed to remove temp file {{temp_file}}: {{e}}")
-            
+
             # Clear cache
             self.cache.clear()
             logger.debug(f"Cleared {{self.name}} plugin cache")
-            
+
             # Close any open handles
             for handle in self.open_handles[:]:
                 try:
@@ -1090,11 +1090,11 @@ class {plugin_name.replace(' ', '')}Plugin:
                     self.open_handles.remove(handle)
                 except Exception as e:
                     logger.warning(f"Failed to close handle: {{e}}")
-            
+
             # Reset statistics
             self.analysis_count = 0
             self.last_analysis = None
-            
+
             logger.info(f"{{self.name}} plugin cleaned up successfully")
             return True
         except Exception as e:
@@ -1129,27 +1129,27 @@ if __name__ == '__main__':
     print(f"Description: {{plugin.description}}")
     print(f"Author: {{plugin.author}}")
     print(f"\\nTesting plugin functionality...")
-    
+
     # Test with a dummy file
     import tempfile
     with tempfile.NamedTemporaryFile(delete=False, suffix='.bin') as tf:
         tf.write(b'MZ' + b'\\x00' * 100)  # Simple PE header
         test_file = tf.name
-    
+
     # Test validation
     is_valid, msg = plugin.validate_binary(test_file)
     print(f"Validation: {{is_valid}} - {{msg}}")
-    
+
     # Test execution
     result = plugin.execute(test_file)
     print(f"Execution status: {{result['status']}}")
     print(f"Message: {{result['message']}}")
-    
+
     # Test analyze method
     analysis = plugin.analyze(test_file)
     for line in analysis:
         print(f"  {{line}}")
-    
+
     # Cleanup
     plugin.cleanup()
     os.unlink(test_file)

@@ -18,8 +18,13 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 # Import all functions from the patching patch_verification module
-from .patching.patch_verification import *
+from .patching.patch_verification import (
+    verify_patches,
+    simulate_patch_and_verify,
+    apply_parsed_patch_instructions_with_validation,
+    rewrite_license_functions_with_parsing
+)
 
-__all__ = ['verify_patches', 'simulate_patch_and_verify', 
-           'apply_parsed_patch_instructions_with_validation', 
+__all__ = ['verify_patches', 'simulate_patch_and_verify',
+           'apply_parsed_patch_instructions_with_validation',
            'rewrite_license_functions_with_parsing']

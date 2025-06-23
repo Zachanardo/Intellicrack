@@ -9,13 +9,12 @@ for various binary analysis tasks.
 import os
 import sys
 import json
-from pathlib import Path
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 try:
-    from intellicrack.utils.analysis.binary_analysis import analyze_binary, identify_binary_format
+    from intellicrack.utils.analysis.binary_analysis import analyze_binary
     from intellicrack.core.analysis import (
         VulnerabilityEngine,
         SymbolicExecutionEngine,
@@ -28,7 +27,6 @@ try:
     )
     from intellicrack.utils.reporting.report_generator import generate_report
     from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
-    from intellicrack.config import CONFIG
 except ImportError as e:
     print(f"Error importing Intellicrack modules: {e}")
     print("Please ensure Intellicrack is properly installed.")
@@ -122,7 +120,7 @@ def example_license_analysis():
 
     try:
         # Analyze for license mechanisms
-        from intellicrack.utils.runtime.runner_functions import run_deep_license_analysis, run_qiling_emulation, run_qemu_analysis
+        from intellicrack.utils.runtime.runner_functions import run_deep_license_analysis, run_qiling_emulation
 
         license_info = run_deep_license_analysis(binary_path)
 
@@ -167,8 +165,7 @@ def manual_network_capture(traffic_analyzer):
     """
     import subprocess
     import platform
-    import json
-    
+
     captured_data = {
         'total_packets': 0,
         'total_connections': 0,
@@ -176,25 +173,25 @@ def manual_network_capture(traffic_analyzer):
         'license_servers': [],
         'license_conn_details': []
     }
-    
+
     system = platform.system()
-    
+
     print("\nAttempting manual capture methods...")
-    
+
     # Method 1: Try netstat to find active connections
     try:
         print("  - Checking active network connections...")
-        
+
         if system == "Windows":
             cmd = ["netstat", "-an", "-p", "TCP"]
         else:
             cmd = ["netstat", "-tn"]
-            
+
         result = subprocess.run(cmd, capture_output=True, text=True)
-        
+
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')
-            
+
             # Parse netstat output
             for line in lines:
                 # Look for established connections to known license ports
@@ -203,7 +200,7 @@ def manual_network_capture(traffic_analyzer):
                     if len(parts) >= 4:
                         local_addr = parts[1]
                         remote_addr = parts[2]
-                        
+
                         # Check if remote port matches license ports
                         if ':' in remote_addr:
                             remote_ip, remote_port = remote_addr.rsplit(':', 1)
@@ -212,7 +209,7 @@ def manual_network_capture(traffic_analyzer):
                                 if port in traffic_analyzer.license_ports:
                                     captured_data['license_connections'] += 1
                                     captured_data['license_servers'].append(remote_ip)
-                                    
+
                                     # Add connection details
                                     conn_detail = {
                                         'src_ip': local_addr.split(':')[0],
@@ -230,23 +227,23 @@ def manual_network_capture(traffic_analyzer):
                                 pass
     except Exception as e:
         print(f"    Failed: {str(e)}")
-    
+
     # Method 2: Check DNS cache for license-related domains
     try:
         print("  - Checking DNS cache for license domains...")
-        
+
         if system == "Windows":
             cmd = ["ipconfig", "/displaydns"]
         else:
             # Try various methods on Unix
             cmd = ["getent", "hosts"]
-            
+
         result = subprocess.run(cmd, capture_output=True, text=True)
-        
+
         if result.returncode == 0:
             # Look for license-related domains
             license_keywords = ['license', 'activation', 'auth', 'validate', 'flexlm', 'hasp', 'sentinel']
-            
+
             for line in result.stdout.split('\n'):
                 for keyword in license_keywords:
                     if keyword in line.lower():
@@ -259,21 +256,21 @@ def manual_network_capture(traffic_analyzer):
                                 print(f"    Found license domain: {domain}")
     except Exception as e:
         print(f"    DNS check failed: {str(e)}")
-    
+
     # Method 3: Check for license-related processes
     try:
         print("  - Checking for license-related processes...")
-        
+
         if system == "Windows":
             cmd = ["tasklist", "/FO", "CSV"]
         else:
             cmd = ["ps", "aux"]
-            
+
         result = subprocess.run(cmd, capture_output=True, text=True)
-        
+
         if result.returncode == 0:
             license_processes = ['flexlm', 'lmgrd', 'hasp', 'sentinel', 'license', 'activation']
-            
+
             for line in result.stdout.split('\n'):
                 for proc in license_processes:
                     if proc in line.lower():
@@ -281,13 +278,13 @@ def manual_network_capture(traffic_analyzer):
                         captured_data['license_connections'] += 1
     except Exception as e:
         print(f"    Process check failed: {str(e)}")
-    
+
     # Method 4: Analyze system proxy settings
     try:
         print("  - Checking proxy settings...")
-        
+
         proxy_servers = []
-        
+
         if system == "Windows":
             # Check Windows proxy settings
             try:
@@ -295,12 +292,12 @@ def manual_network_capture(traffic_analyzer):
                 key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, 
                                    r"Software\Microsoft\Windows\CurrentVersion\Internet Settings")
                 proxy_enable, _ = winreg.QueryValueEx(key, "ProxyEnable")
-                
+
                 if proxy_enable:
                     proxy_server, _ = winreg.QueryValueEx(key, "ProxyServer")
                     proxy_servers.append(proxy_server)
                     print(f"    Found proxy: {proxy_server}")
-                    
+
                 winreg.CloseKey(key)
             except (OSError, WindowsError, Exception):
                 pass
@@ -312,21 +309,21 @@ def manual_network_capture(traffic_analyzer):
                 if proxy:
                     proxy_servers.append(proxy)
                     print(f"    Found proxy: {proxy}")
-        
+
         # Proxies might be used for license validation
         if proxy_servers:
             captured_data['license_servers'].extend(proxy_servers)
-            
+
     except Exception as e:
         print(f"    Proxy check failed: {str(e)}")
-    
+
     # Update totals
     captured_data['total_connections'] = len(captured_data['license_conn_details'])
     captured_data['total_packets'] = captured_data['total_connections'] * 10  # Estimate
-    
+
     # Remove duplicates from license servers
     captured_data['license_servers'] = list(set(captured_data['license_servers']))
-    
+
     return captured_data
 
 
@@ -346,14 +343,14 @@ def example_network_analysis():
         )
         traffic_analyzer.config['max_packets'] = 5000
         traffic_analyzer.config['auto_analyze'] = True
-        
+
         # Start real network capture
         print("Starting network capture...")
         print("Note: This requires administrator/root privileges for packet capture")
         print("Run your licensed application now...")
-        
+
         capture_started = traffic_analyzer.start_capture()
-        
+
         if not capture_started:
             print("\nFailed to start capture. Trying fallback method...")
             # Attempt manual capture with different methods
@@ -361,52 +358,52 @@ def example_network_analysis():
         else:
             # Let capture run for 30 seconds or until stopped
             print("\nCapturing packets... (Press Ctrl+C to stop)")
-            
+
             try:
                 import time
                 capture_duration = 30  # seconds
                 start_time = time.time()
-                
+
                 while time.time() - start_time < capture_duration:
                     time.sleep(1)
                     # Check capture progress
                     packet_count = len(traffic_analyzer.packets)
                     conn_count = len(traffic_analyzer.connections)
                     license_count = len(traffic_analyzer.license_connections)
-                    
+
                     print(f"\rPackets: {packet_count} | Connections: {conn_count} | "
                           f"License: {license_count}", end='', flush=True)
-                    
+
                     # Stop if we've captured enough license traffic
                     if license_count >= 5:
                         print("\n\nSufficient license traffic captured!")
                         break
-                        
+
             except KeyboardInterrupt:
                 print("\n\nCapture interrupted by user")
-            
+
             # Stop capture
             traffic_analyzer.stop_capture()
-            
+
             # Get captured data
             capture_data = traffic_analyzer.analyze_traffic()
-        
+
         # Display analysis results
         if capture_data:
             print("\n" + "="*60)
             print("NETWORK TRAFFIC ANALYSIS RESULTS")
             print("="*60)
-            
+
             print(f"\nTotal Packets Captured: {capture_data.get('total_packets', 0)}")
             print(f"Total Connections: {capture_data.get('total_connections', 0)}")
             print(f"License-Related Connections: {capture_data.get('license_connections', 0)}")
-            
+
             # Display license servers
             if capture_data.get('license_servers'):
                 print("\nDetected License Servers:")
                 for server in capture_data['license_servers']:
                     print(f"  - {server}")
-            
+
             # Display license connection details
             if capture_data.get('license_conn_details'):
                 print("\nLicense Connection Details:")
@@ -417,10 +414,10 @@ def example_network_analysis():
                     print(f"    Bytes Sent: {conn['bytes_sent']}")
                     print(f"    Bytes Received: {conn['bytes_received']}")
                     print(f"    Duration: {conn['duration']:.2f}s")
-                    
+
                     if conn.get('patterns'):
                         print(f"    License Patterns Found: {', '.join(conn['patterns'])}")
-            
+
             # Generate report
             report_generated = traffic_analyzer.generate_report()
             if report_generated:
@@ -432,7 +429,7 @@ def example_network_analysis():
             print("  - Firewall or security software blocking capture")
 
         # Use protocol fingerprinter
-        fingerprinter = ProtocolFingerprinter()
+        ProtocolFingerprinter()
 
         # Analyze protocol (simulated)
         protocol_info = {

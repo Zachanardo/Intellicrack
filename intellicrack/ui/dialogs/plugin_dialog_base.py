@@ -84,4 +84,5 @@ class PluginDialogBase(QDialog):
 
     def on_plugin_loaded(self, plugin_path: str):
         """Called when a plugin is loaded - to be overridden by subclasses"""
+        self.logger.debug(f"Plugin loaded from: {plugin_path}")
         pass

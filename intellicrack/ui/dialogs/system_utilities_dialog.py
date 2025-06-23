@@ -26,27 +26,21 @@ import time
 
 try:
     from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
-    from PyQt5.QtGui import QColor, QFont, QIcon, QPixmap
+    from PyQt5.QtGui import QColor, QFont, QPixmap
     from PyQt5.QtWidgets import (
         QCheckBox,
         QComboBox,
         QDialog,
         QFileDialog,
-        QFrame,
         QGridLayout,
         QGroupBox,
         QHBoxLayout,
         QHeaderView,
         QLabel,
         QLineEdit,
-        QListWidget,
-        QListWidgetItem,
         QMessageBox,
         QProgressBar,
         QPushButton,
-        QScrollArea,
-        QSpinBox,
-        QSplitter,
         QTableWidget,
         QTableWidgetItem,
         QTabWidget,
@@ -74,6 +68,7 @@ except ImportError:
         Returns:
             lambda: A no-op function
         """
+        _ = args, kwargs
         return lambda: None
     Qt = None
 

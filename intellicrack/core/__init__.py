@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 
 # Import all core modules
 from . import analysis, network, patching, processing, protection_bypass, reporting
@@ -31,7 +32,6 @@ try:
     )
     EXPLOITATION_MODULES_AVAILABLE = True
 except ImportError as e:
-    import logging
     logging.getLogger(__name__).warning(f"Exploitation modules not available: {e}")
     exploitation = None
     vulnerability_research = None
@@ -52,7 +52,6 @@ def get_frida_manager():
             FridaManager = _FridaManager
             FRIDA_MODULES_AVAILABLE = True
         except ImportError as e:
-            import logging
             logging.getLogger(__name__).warning(f"FridaManager not available: {e}")
     return FridaManager
 

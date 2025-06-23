@@ -67,8 +67,6 @@ class PipelineThread(QThread):
         """Run the pipeline"""
         try:
             # Override pipeline methods to emit signals
-            original_run_stage = self.pipeline.run_validate_stage
-
             def run_stage_wrapper(stage_name, original_method):
                 def wrapper():
                     self.stage_started.emit(stage_name)
@@ -416,6 +414,7 @@ class CICDDialog(PluginDialogBase):
 
     def on_config_changed(self, item: QTreeWidgetItem, column: int):
         """Handle configuration change"""
+        _ = item
         if column == 1:  # Value column
             # Mark as modified
             self.setWindowTitle("CI/CD Pipeline *")

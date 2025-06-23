@@ -183,6 +183,18 @@ class R2BypassGenerator:
         pseudocode = decompiled.get('pseudocode', '')
         license_patterns = decompiled.get('license_patterns', [])
 
+        # Analyze pseudocode for additional bypass opportunities
+        if pseudocode:
+            # Look for key validation patterns in pseudocode
+            if 'checksum' in pseudocode.lower() or 'hash' in pseudocode.lower():
+                validation_info['checksum_validation'] = True
+            if 'expir' in pseudocode.lower() or 'date' in pseudocode.lower():
+                validation_info['time_based'] = True
+            if 'serial' in pseudocode.lower() or 'key' in pseudocode.lower():
+                validation_info['serial_validation'] = True
+            if 'network' in pseudocode.lower() or 'connect' in pseudocode.lower():
+                validation_info['network_validation'] = True
+
         # Determine validation type
         if any('crypt' in pattern.get('line', '').lower() for pattern in license_patterns):
             validation_info['validation_type'] = 'cryptographic'
@@ -738,13 +750,32 @@ class R2BypassGenerator:
             target_line = bypass_point.get('line_number', 0)
             bypass_method = bypass_point.get('bypass_method', 'nop_instruction')
 
+            # Parse disassembly to find exact instruction address and bytes
+            target_addr = None
+            original_bytes = None
+            if disasm and target_line > 0:
+                disasm_lines = disasm.split('\n')
+                if target_line < len(disasm_lines):
+                    line = disasm_lines[target_line]
+                    # Extract address and bytes from radare2 disasm format
+                    if '0x' in line:
+                        parts = line.split()
+                        target_addr = parts[0] if parts[0].startswith('0x') else None
+                        # Look for hex bytes pattern
+                        for part in parts:
+                            if len(part) > 2 and all(c in '0123456789abcdefABCDEF' for c in part):
+                                original_bytes = part
+                                break
+
             patch = {
                 'function': func_info['function']['name'],
                 'address': hex(func_addr),
+                'target_address': target_addr,
                 'target_line': target_line,
                 'bypass_method': bypass_method,
                 'patch_description': f'Patch {bypass_method} at line {target_line}',
                 'original_instruction': bypass_point.get('instruction', ''),
+                'original_bytes': original_bytes,
                 'patch_instruction': self._generate_patch_instruction(bypass_method),
                 'patch_bytes': self._generate_patch_bytes_for_method(bypass_method)
             }
@@ -1041,7 +1072,7 @@ HANDLE WINAPI HookedCreateFile(LPCSTR lpFileName, {additional_params}) {{
         char fakePath[MAX_PATH];
         GetTempPath(MAX_PATH, fakePath);
         strcat(fakePath, "{fake_file}");
-        
+
         // Ensure fake file exists with valid content
         HANDLE hFake = CreateFile(fakePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 
                                  FILE_ATTRIBUTE_NORMAL, NULL);
@@ -1051,7 +1082,7 @@ HANDLE WINAPI HookedCreateFile(LPCSTR lpFileName, {additional_params}) {{
             WriteFile(hFake, fakeContent, strlen(fakeContent), &written, NULL);
             CloseHandle(hFake);
         }}
-        
+
         return OriginalCreateFile(fakePath, {call_params});
     }}
     return OriginalCreateFile(lpFileName, {additional_params});

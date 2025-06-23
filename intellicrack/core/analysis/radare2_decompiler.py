@@ -489,6 +489,26 @@ class R2DecompilationEngine:
         license_patterns = function_results.get('license_patterns', [])
         pseudocode = function_results.get('pseudocode', '')
 
+        # Analyze pseudocode for additional patterns
+        if pseudocode:
+            # Look for conditional structures in pseudocode that may indicate license checks
+            conditional_patterns = [
+                'if (', 'switch (', 'while (', 'for ('
+            ]
+            for i, line in enumerate(pseudocode.split('\n')):
+                line_lower = line.lower()
+                if any(pattern in line_lower for pattern in conditional_patterns):
+                    # Check if this conditional might be license-related
+                    license_keywords = ['license', 'trial', 'expir', 'valid', 'check', 'key']
+                    if any(keyword in line_lower for keyword in license_keywords):
+                        license_patterns.append({
+                            'type': 'conditional_license_check',
+                            'line': line.strip(),
+                            'line_number': i + 1,
+                            'confidence': 0.7,
+                            'context': 'pseudocode_analysis'
+                        })
+
         for pattern in license_patterns:
             if pattern['type'] == 'license_validation':
                 line_content = pattern['line'].lower()
@@ -531,7 +551,7 @@ class R2DecompilationEngine:
     def analyze_license_functions(self) -> Dict[str, Any]:
         """
         Analyze all functions in the binary to identify license-related functions.
-        
+
         Returns:
             Dictionary containing license functions and their analysis results
         """
@@ -543,42 +563,42 @@ class R2DecompilationEngine:
             'high_confidence_targets': [],
             'error': None
         }
-        
+
         try:
             with r2_session(self.binary_path, self.radare2_path) as r2:
                 # Get all functions in the binary
                 functions = r2.get_functions()
                 result['total_functions_analyzed'] = len(functions)
-                
+
                 license_keywords = [
-                    'license', 'licens', 'registration', 'register', 'activation', 
-                    'activate', 'serial', 'key', 'trial', 'demo', 'valid', 
+                    'license', 'licens', 'registration', 'register', 'activation',
+                    'activate', 'serial', 'key', 'trial', 'demo', 'valid',
                     'validate', 'verification', 'verify', 'expire', 'expiration',
                     'authentic', 'auth', 'dongle', 'hwid', 'crack', 'pirate'
                 ]
-                
+
                 pattern_counts = {}
-                
+
                 for func in functions:
                     func_name = func.get('name', '')
                     func_addr = func.get('offset')
-                    
+
                     if not func_addr:
                         continue
-                    
+
                     # Check if function name suggests license-related functionality
                     is_license_function = any(keyword in func_name.lower() for keyword in license_keywords)
-                    
+
                     if is_license_function or self._should_analyze_function(func_name):
                         # Decompile the function for deeper analysis
                         decompilation_result = self.decompile_function(func_addr, optimize=True)
-                        
+
                         if decompilation_result.get('error'):
                             self.logger.warning(f"Failed to decompile function {func_name} at {hex(func_addr)}")
                             continue
-                        
+
                         license_patterns = decompilation_result.get('license_patterns', [])
-                        
+
                         # If function has license patterns or name suggests license functionality
                         if license_patterns or is_license_function:
                             license_func_info = {
@@ -592,15 +612,15 @@ class R2DecompilationEngine:
                                 'complexity_metrics': decompilation_result.get('complexity_metrics', {}),
                                 'pseudocode_preview': decompilation_result.get('pseudocode', '')[:500] + '...' if len(decompilation_result.get('pseudocode', '')) > 500 else decompilation_result.get('pseudocode', '')
                             }
-                            
+
                             result['license_functions'].append(license_func_info)
                             result['decompiled_functions'][hex(func_addr)] = decompilation_result
-                            
+
                             # Count pattern types
                             for pattern in license_patterns:
                                 pattern_type = pattern.get('type', 'unknown')
                                 pattern_counts[pattern_type] = pattern_counts.get(pattern_type, 0) + 1
-                            
+
                             # High confidence targets (score > 0.8)
                             if license_func_info['confidence_score'] > 0.8:
                                 result['high_confidence_targets'].append({
@@ -609,21 +629,21 @@ class R2DecompilationEngine:
                                     'confidence': license_func_info['confidence_score'],
                                     'reason': self._get_confidence_reason(func_name, license_patterns)
                                 })
-                
+
                 result['license_patterns_summary'] = pattern_counts
-                
+
                 # Sort by confidence score (highest first)
                 result['license_functions'].sort(key=lambda x: x['confidence_score'], reverse=True)
                 result['high_confidence_targets'].sort(key=lambda x: x['confidence'], reverse=True)
-                
+
                 self.logger.info(f"Found {len(result['license_functions'])} license-related functions")
-                
+
         except R2Exception as e:
             result['error'] = str(e)
             self.logger.error(f"License function analysis failed: {e}")
-        
+
         return result
-    
+
     def _should_analyze_function(self, func_name: str) -> bool:
         """Determine if a function should be analyzed for license patterns."""
         # Analyze functions with suspicious names even if they don't contain license keywords
@@ -639,44 +659,44 @@ class R2DecompilationEngine:
             r'_valid$',
             r'_auth$'
         ]
-        
+
         return any(re.search(pattern, func_name.lower()) for pattern in suspicious_patterns)
-    
+
     def _calculate_license_confidence(self, func_name: str, license_patterns: List[Dict[str, Any]]) -> float:
         """Calculate confidence score for license-related function."""
         score = 0.0
-        
+
         # Name-based scoring
         license_name_keywords = ['license', 'registration', 'activation', 'serial', 'key', 'trial', 'demo', 'valid']
         for keyword in license_name_keywords:
             if keyword in func_name.lower():
                 score += 0.3
-        
+
         # Pattern-based scoring
         for pattern in license_patterns:
             if pattern.get('type') == 'license_validation':
                 score += pattern.get('confidence', 0.5)
             elif pattern.get('type') == 'license_keyword':
                 score += pattern.get('confidence', 0.3) * 0.5
-        
+
         # Cap at 1.0
         return min(score, 1.0)
-    
+
     def _get_confidence_reason(self, func_name: str, license_patterns: List[Dict[str, Any]]) -> str:
         """Get human-readable reason for high confidence."""
         reasons = []
-        
+
         if any(keyword in func_name.lower() for keyword in ['license', 'registration', 'activation']):
             reasons.append("Function name contains license keywords")
-        
+
         validation_patterns = [p for p in license_patterns if p.get('type') == 'license_validation']
         if validation_patterns:
             reasons.append(f"Contains {len(validation_patterns)} license validation patterns")
-        
+
         keyword_patterns = [p for p in license_patterns if p.get('type') == 'license_keyword']
         if keyword_patterns:
             reasons.append(f"Contains {len(keyword_patterns)} license-related keywords")
-        
+
         return "; ".join(reasons) if reasons else "Multiple license indicators detected"
 
     def export_analysis_report(self, output_path: str, analysis_results: Dict[str, Any]) -> bool:

@@ -247,6 +247,21 @@ conversation_history/
 *_fixer.py
 *_patterns.md
 
+# Pylint and error analysis files
+pylint_errors*.txt
+*_errors.txt
+error_analysis.txt
+combined_errors.txt
+full_pylint_errors.txt
+core_errors.txt
+scripts_errors.txt
+all_errors_found.txt
+missing_*_list.txt
+
+# Project reorganization files
+PROJECT_STRUCTURE_REORGANIZATION_DETAILED.md
+MissingMethods.md
+
 # Development tools
 lint.ps1
 format.ps1
@@ -254,8 +269,10 @@ dev_scripts/
 
 # Output directories
 logs/
+logs/*
 output/
 temp/
+temp_venv/
 cache/
 reports/
 

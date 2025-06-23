@@ -71,6 +71,13 @@ class AITaskType(Enum):
     NETWORK_ANALYSIS = "network_analysis"
     PATCHING = "patching"
     REASONING = "reasoning"
+    # Script Generation Tasks
+    FRIDA_SCRIPT_GENERATION = "frida_script_generation"
+    GHIDRA_SCRIPT_GENERATION = "ghidra_script_generation"
+    UNIFIED_SCRIPT_GENERATION = "unified_script_generation"
+    SCRIPT_TESTING = "script_testing"
+    SCRIPT_REFINEMENT = "script_refinement"
+    AUTONOMOUS_WORKFLOW = "autonomous_workflow"
 
 
 @dataclass
@@ -232,6 +239,10 @@ class AIOrchestrator:
         self.task_queue = queue.PriorityQueue()
         self.active_tasks = {}
         self.is_running = False
+
+        # Progress tracking
+        self.task_progress = {}
+        self.progress_callbacks = {}
 
         # Initialize AI components
         self._initialize_components()
@@ -405,30 +416,75 @@ class AIOrchestrator:
         try:
             logger.info("Executing task %s (type: %s, complexity: %s)", task.task_id, task.task_type, task.complexity)
 
+            # Initialize progress tracking
+            self.update_task_progress(task.task_id, 0, "Starting task execution...")
+
             # Route task based on type and complexity
+            self.update_task_progress(task.task_id, 10, "Routing task to appropriate component...")
+
             if task.task_type == AITaskType.VULNERABILITY_SCAN:
+                self.update_task_progress(task.task_id, 20, "Executing vulnerability scan...")
                 result_data, components_used, confidence = self._execute_vulnerability_scan(task)
                 success = True
 
             elif task.task_type == AITaskType.LICENSE_ANALYSIS:
+                self.update_task_progress(task.task_id, 20, "Analyzing license patterns...")
                 result_data, components_used, confidence = self._execute_license_analysis(task)
                 success = True
 
             elif task.task_type == AITaskType.BINARY_ANALYSIS:
+                self.update_task_progress(task.task_id, 20, "Performing binary analysis...")
                 result_data, components_used, confidence = self._execute_binary_analysis(task)
                 success = True
 
             elif task.task_type == AITaskType.REASONING:
+                self.update_task_progress(task.task_id, 20, "Processing reasoning task...")
                 result_data, components_used, confidence = self._execute_reasoning_task(task)
                 success = True
 
+            elif task.task_type == AITaskType.FRIDA_SCRIPT_GENERATION:
+                self.update_task_progress(task.task_id, 20, "Generating Frida script...")
+                result_data, components_used, confidence = self._execute_frida_script_generation(task)
+                success = True
+
+            elif task.task_type == AITaskType.GHIDRA_SCRIPT_GENERATION:
+                self.update_task_progress(task.task_id, 20, "Generating Ghidra script...")
+                result_data, components_used, confidence = self._execute_ghidra_script_generation(task)
+                success = True
+
+            elif task.task_type == AITaskType.UNIFIED_SCRIPT_GENERATION:
+                self.update_task_progress(task.task_id, 20, "Generating unified scripts...")
+                result_data, components_used, confidence = self._execute_unified_script_generation(task)
+                success = True
+
+            elif task.task_type == AITaskType.SCRIPT_TESTING:
+                self.update_task_progress(task.task_id, 20, "Testing generated scripts...")
+                result_data, components_used, confidence = self._execute_script_testing(task)
+                success = True
+
+            elif task.task_type == AITaskType.SCRIPT_REFINEMENT:
+                self.update_task_progress(task.task_id, 20, "Refining script quality...")
+                result_data, components_used, confidence = self._execute_script_refinement(task)
+                success = True
+
+            elif task.task_type == AITaskType.AUTONOMOUS_WORKFLOW:
+                self.update_task_progress(task.task_id, 20, "Executing autonomous workflow...")
+                result_data, components_used, confidence = self._execute_autonomous_workflow(task)
+                success = True
+
             else:
+                self.update_task_progress(task.task_id, 0, f"Error: Unknown task type {task.task_type}")
                 errors.append(f"Unknown task type: {task.task_type}")
                 logger.warning("Unknown task type: %s", task.task_type)
 
         except (OSError, ValueError, RuntimeError) as e:
             errors.append(str(e))
             logger.error("Error executing task %s: %s", task.task_id, e)
+            self.update_task_progress(task.task_id, 0, f"Error: {str(e)}")
+
+        # Update progress to completion
+        if success:
+            self.update_task_progress(task.task_id, 90, "Finalizing results...")
 
         # Create result
         processing_time = (datetime.now() - start_time).total_seconds()
@@ -443,6 +499,12 @@ class AIOrchestrator:
             errors=errors
         )
 
+        # Mark task as completed
+        if success:
+            self.update_task_progress(task.task_id, 100, "Task completed successfully!")
+        else:
+            self.update_task_progress(task.task_id, 0, "Task failed with errors")
+
         # Emit completion event
         self.event_bus.emit("task_complete", {
             "task_id": task.task_id,
@@ -456,6 +518,14 @@ class AIOrchestrator:
                 task.callback(result)
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in task callback: %s", e)
+
+        # Clear progress tracking after short delay (keep for UI feedback)
+        def clear_progress():
+            import time
+            time.sleep(5)  # Keep progress visible for 5 seconds
+            self.clear_task_progress(task.task_id)
+
+        threading.Thread(target=clear_progress, daemon=True).start()
 
         return result
 
@@ -655,6 +725,297 @@ class AIOrchestrator:
 
         return recommendations[:5]  # Limit to top 5 recommendations
 
+    def _execute_frida_script_generation(self, task: AITask) -> tuple:
+        """Execute Frida script generation task."""
+        components_used = []
+        result_data = {}
+        confidence = 0.0
+
+        try:
+            # Import AI script generator
+            from .ai_script_generator import AIScriptGenerator
+
+            # Create script generator if not available
+            script_generator = AIScriptGenerator(self)
+            components_used.append("ai_script_generator")
+
+            # Extract task parameters
+            binary_path = task.input_data.get("binary_path", "unknown")
+            analysis_data = task.input_data.get("analysis_data", {})
+
+            # Generate Frida script
+            generated_script = script_generator.generate_frida_script(analysis_data)
+
+            if generated_script:
+                result_data["script"] = generated_script.content
+                result_data["metadata"] = {
+                    "script_id": generated_script.metadata.script_id,
+                    "script_type": generated_script.metadata.script_type.value,
+                    "target_binary": generated_script.metadata.target_binary,
+                    "protection_types": [p.value for p in generated_script.metadata.protection_types],
+                    "success_probability": generated_script.metadata.success_probability,
+                    "entry_point": generated_script.entry_point,
+                    "dependencies": generated_script.dependencies,
+                    "hooks": generated_script.hooks,
+                    "patches": generated_script.patches
+                }
+                confidence = generated_script.metadata.success_probability
+
+                logger.info("Generated Frida script for %s with %d%% confidence",
+                          binary_path, int(confidence * 100))
+            else:
+                result_data["error"] = "Failed to generate Frida script"
+                confidence = 0.0
+
+        except Exception as e:
+            logger.error("Frida script generation failed: %s", e)
+            result_data["error"] = str(e)
+            confidence = 0.0
+
+        return result_data, components_used, confidence
+
+    def _execute_ghidra_script_generation(self, task: AITask) -> tuple:
+        """Execute Ghidra script generation task."""
+        components_used = []
+        result_data = {}
+        confidence = 0.0
+
+        try:
+            # Import AI script generator
+            from .ai_script_generator import AIScriptGenerator
+
+            # Create script generator if not available
+            script_generator = AIScriptGenerator(self)
+            components_used.append("ai_script_generator")
+
+            # Extract task parameters
+            binary_path = task.input_data.get("binary_path", "unknown")
+            analysis_data = task.input_data.get("analysis_data", {})
+
+            # Generate Ghidra script
+            generated_script = script_generator.generate_ghidra_script(analysis_data)
+
+            if generated_script:
+                result_data["script"] = generated_script.content
+                result_data["metadata"] = {
+                    "script_id": generated_script.metadata.script_id,
+                    "script_type": generated_script.metadata.script_type.value,
+                    "target_binary": generated_script.metadata.target_binary,
+                    "protection_types": [p.value for p in generated_script.metadata.protection_types],
+                    "success_probability": generated_script.metadata.success_probability,
+                    "entry_point": generated_script.entry_point,
+                    "dependencies": generated_script.dependencies,
+                    "hooks": generated_script.hooks,
+                    "patches": generated_script.patches
+                }
+                confidence = generated_script.metadata.success_probability
+
+                logger.info("Generated Ghidra script for %s with %d%% confidence",
+                          binary_path, int(confidence * 100))
+            else:
+                result_data["error"] = "Failed to generate Ghidra script"
+                confidence = 0.0
+
+        except Exception as e:
+            logger.error("Ghidra script generation failed: %s", e)
+            result_data["error"] = str(e)
+            confidence = 0.0
+
+        return result_data, components_used, confidence
+
+    def _execute_unified_script_generation(self, task: AITask) -> tuple:
+        """Execute unified script generation task (both Frida and Ghidra)."""
+        components_used = []
+        result_data = {}
+        confidence = 0.0
+
+        try:
+            # Import AI script generator
+            from .ai_script_generator import AIScriptGenerator
+
+            # Create script generator if not available
+            script_generator = AIScriptGenerator(self)
+            components_used.append("ai_script_generator")
+
+            # Extract task parameters
+            binary_path = task.input_data.get("binary_path", "unknown")
+            analysis_data = task.input_data.get("analysis_data", {})
+
+            # Generate both scripts
+            frida_script = script_generator.generate_frida_script(analysis_data)
+            ghidra_script = script_generator.generate_ghidra_script(analysis_data)
+
+            scripts = {}
+            confidences = []
+
+            if frida_script:
+                scripts["frida"] = {
+                    "script": frida_script.content,
+                    "metadata": {
+                        "script_id": frida_script.metadata.script_id,
+                        "success_probability": frida_script.metadata.success_probability,
+                        "entry_point": frida_script.entry_point,
+                        "dependencies": frida_script.dependencies,
+                        "hooks": frida_script.hooks
+                    }
+                }
+                confidences.append(frida_script.metadata.success_probability)
+
+            if ghidra_script:
+                scripts["ghidra"] = {
+                    "script": ghidra_script.content,
+                    "metadata": {
+                        "script_id": ghidra_script.metadata.script_id,
+                        "success_probability": ghidra_script.metadata.success_probability,
+                        "entry_point": ghidra_script.entry_point,
+                        "dependencies": ghidra_script.dependencies,
+                        "patches": ghidra_script.patches
+                    }
+                }
+                confidences.append(ghidra_script.metadata.success_probability)
+
+            result_data["scripts"] = scripts
+            confidence = max(confidences) if confidences else 0.0
+
+            logger.info("Generated unified scripts for %s with %d%% max confidence",
+                      binary_path, int(confidence * 100))
+
+        except Exception as e:
+            logger.error("Unified script generation failed: %s", e)
+            result_data["error"] = str(e)
+            confidence = 0.0
+
+        return result_data, components_used, confidence
+
+    def _execute_script_testing(self, task: AITask) -> tuple:
+        """Execute script testing task."""
+        components_used = []
+        result_data = {}
+        confidence = 0.0
+
+        try:
+            # Import QEMU test manager
+            from .qemu_test_manager import QEMUTestManager
+
+            # Create test manager
+            test_manager = QEMUTestManager()
+            components_used.append("qemu_test_manager")
+
+            # Extract task parameters
+            script_content = task.input_data.get("script_content", "")
+            script_type = task.input_data.get("script_type", "frida")
+            binary_path = task.input_data.get("binary_path", "unknown")
+
+            # Create QEMU snapshot
+            snapshot_id = test_manager.create_snapshot(binary_path)
+
+            # Test script based on type
+            if script_type.lower() == "frida":
+                test_result = test_manager.test_frida_script(snapshot_id, script_content, binary_path)
+            else:
+                test_result = test_manager.test_ghidra_script(snapshot_id, script_content, binary_path)
+
+            result_data["test_result"] = {
+                "success": test_result.success,
+                "output": test_result.output,
+                "error": test_result.error,
+                "exit_code": test_result.exit_code,
+                "runtime_ms": test_result.runtime_ms,
+                "snapshot_id": snapshot_id
+            }
+
+            confidence = 0.9 if test_result.success else 0.3
+
+            # Cleanup snapshot
+            test_manager.cleanup_snapshot(snapshot_id)
+
+            logger.info("Script testing completed for %s: %s",
+                      binary_path, "SUCCESS" if test_result.success else "FAILED")
+
+        except Exception as e:
+            logger.error("Script testing failed: %s", e)
+            result_data["error"] = str(e)
+            confidence = 0.0
+
+        return result_data, components_used, confidence
+
+    def _execute_script_refinement(self, task: AITask) -> tuple:
+        """Execute script refinement task."""
+        components_used = []
+        result_data = {}
+        confidence = 0.0
+
+        try:
+            # Import AI script generator
+            from .ai_script_generator import AIScriptGenerator
+
+            # Create script generator
+            script_generator = AIScriptGenerator(self)
+            components_used.append("ai_script_generator")
+
+            # Extract task parameters
+            original_script = task.input_data.get("original_script", "")
+            test_results = task.input_data.get("test_results", {})
+            analysis_data = task.input_data.get("analysis_data", {})
+
+            # Refine script based on test results
+            refined_script = script_generator.refine_script(original_script, test_results, analysis_data)
+
+            if refined_script:
+                result_data["refined_script"] = refined_script.content
+                result_data["improvements"] = getattr(refined_script.metadata, "improvements", [])
+                confidence = refined_script.metadata.success_probability
+
+                logger.info("Script refinement completed with %d%% confidence",
+                          int(confidence * 100))
+            else:
+                result_data["error"] = "Failed to refine script"
+                confidence = 0.0
+
+        except Exception as e:
+            logger.error("Script refinement failed: %s", e)
+            result_data["error"] = str(e)
+            confidence = 0.0
+
+        return result_data, components_used, confidence
+
+    def _execute_autonomous_workflow(self, task: AITask) -> tuple:
+        """Execute autonomous workflow task."""
+        components_used = []
+        result_data = {}
+        confidence = 0.0
+
+        try:
+            # Import autonomous agent
+            from .autonomous_agent import AutonomousAgent
+
+            # Create autonomous agent
+            agent = AutonomousAgent(orchestrator=self, cli_interface=None)
+            components_used.append("autonomous_agent")
+
+            # Extract task parameters
+            user_request = task.input_data.get("user_request", "")
+
+            # Process request autonomously
+            workflow_result = agent.process_request(user_request)
+
+            result_data.update(workflow_result)
+
+            if workflow_result.get("status") == "success":
+                confidence = 0.9
+                scripts = workflow_result.get("scripts", [])
+                logger.info("Autonomous workflow completed successfully with %d scripts", len(scripts))
+            else:
+                confidence = 0.3
+                logger.warning("Autonomous workflow failed: %s", workflow_result.get("message", "Unknown error"))
+
+        except Exception as e:
+            logger.error("Autonomous workflow failed: %s", e)
+            result_data["error"] = str(e)
+            confidence = 0.0
+
+        return result_data, components_used, confidence
+
     def submit_task(self, task: AITask) -> str:
         """Submit a task for processing."""
         # Add to priority queue (negative priority for max-heap behavior)
@@ -730,6 +1091,70 @@ class AIOrchestrator:
             "queue_size": self.task_queue.qsize(),
             "is_processing": self.is_running
         }
+
+    def register_progress_callback(self, task_id: str, callback: Callable[[str, int, str], None]) -> None:
+        """
+        Register a progress callback for a specific task.
+
+        Args:
+            task_id: Task identifier
+            callback: Function that takes (task_id, progress_percent, status_message)
+        """
+        self.progress_callbacks[task_id] = callback
+        logger.debug(f"Registered progress callback for task {task_id}")
+
+    def update_task_progress(self, task_id: str, progress: int, status: str = "") -> None:
+        """
+        Update progress for a specific task and notify callbacks.
+
+        Args:
+            task_id: Task identifier
+            progress: Progress percentage (0-100)
+            status: Status message
+        """
+        self.task_progress[task_id] = {
+            "progress": progress,
+            "status": status,
+            "timestamp": datetime.now()
+        }
+
+        # Emit progress event
+        self.event_bus.emit("task_progress", {
+            "task_id": task_id,
+            "progress": progress,
+            "status": status
+        }, "orchestrator")
+
+        # Call registered callback if exists
+        if task_id in self.progress_callbacks:
+            try:
+                self.progress_callbacks[task_id](task_id, progress, status)
+            except Exception as e:
+                logger.error(f"Error calling progress callback for {task_id}: {e}")
+
+        logger.debug(f"Task {task_id} progress: {progress}% - {status}")
+
+    def get_task_progress(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get current progress for a task.
+
+        Args:
+            task_id: Task identifier
+
+        Returns:
+            Progress information or None if not found
+        """
+        return self.task_progress.get(task_id)
+
+    def get_all_task_progress(self) -> Dict[str, Dict[str, Any]]:
+        """Get progress information for all tasks."""
+        return self.task_progress.copy()
+
+    def clear_task_progress(self, task_id: str) -> None:
+        """Clear progress information for a completed task."""
+        self.task_progress.pop(task_id, None)
+        self.progress_callbacks.pop(task_id, None)
+        logger.debug(f"Cleared progress tracking for task {task_id}")
 
     def shutdown(self):
         """Shutdown the orchestrator and all components."""

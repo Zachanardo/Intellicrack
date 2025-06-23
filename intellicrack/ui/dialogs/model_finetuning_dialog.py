@@ -33,7 +33,6 @@ from typing import Any, Dict, List, Optional
 
 try:
     from PyQt5.QtCore import Qt, QThread, pyqtSignal
-    from PyQt5.QtGui import QFont
     from PyQt5.QtWidgets import (
         QApplication,
         QCheckBox,
@@ -76,17 +75,9 @@ except ImportError:
     TORCH_AVAILABLE = False
 
 try:
-    import tensorflow as tf
-    TENSORFLOW_AVAILABLE = True
-except ImportError:
-    TENSORFLOW_AVAILABLE = False
-
-try:
     from transformers import (
         AutoModelForCausalLM,
         AutoTokenizer,
-        DataCollatorForLanguageModeling,
-        Trainer,
         TrainingArguments,
     )
     TRANSFORMERS_AVAILABLE = True
@@ -99,11 +90,6 @@ try:
 except ImportError:
     PEFT_AVAILABLE = False
 
-try:
-    import numpy as np
-    NUMPY_AVAILABLE = True
-except ImportError:
-    NUMPY_AVAILABLE = False
 
 try:
     import nltk  # pylint: disable=import-error
@@ -340,6 +326,7 @@ class TrainingThread(QThread):
             def _create_gpt_block(self, hidden_size, num_heads):
                 """Create a single GPT transformer block."""
                 class GPTBlock(nn.Module):
+                    """A single GPT transformer block with attention and feed-forward layers."""
                     def __init__(self, hidden_size, num_heads):
                         super().__init__()
                         self.attention = nn.MultiheadAttention(
@@ -355,6 +342,7 @@ class TrainingThread(QThread):
                         self.ln2 = nn.LayerNorm(hidden_size)
 
                     def forward(self, x, attention_mask=None):
+                        """Forward pass through the GPT block."""
                         # Pre-norm attention
                         normed_x = self.ln1(x)
                         attn_out, _ = self.attention(normed_x, normed_x, normed_x,
@@ -371,6 +359,7 @@ class TrainingThread(QThread):
                 return GPTBlock(hidden_size, num_heads)
 
             def forward(self, input_ids, attention_mask=None):
+                """Forward pass through the model."""
                 seq_len = input_ids.size(1)
                 position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
 
@@ -438,6 +427,7 @@ class TrainingThread(QThread):
                 self.pooler = nn.Linear(hidden_size, hidden_size)
 
             def forward(self, input_ids, token_type_ids=None, attention_mask=None):
+                """Forward pass through the BERT model."""
                 seq_len = input_ids.size(1)
                 position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
 
@@ -509,12 +499,14 @@ class TrainingThread(QThread):
             def _create_rms_norm(self, hidden_size):
                 """Create RMSNorm layer."""
                 class RMSNorm(nn.Module):
+                    """RMS normalization layer for transformer models."""
                     def __init__(self, hidden_size, eps=1e-6):
                         super().__init__()
                         self.weight = nn.Parameter(torch.ones(hidden_size))
                         self.eps = eps
 
                     def forward(self, x):
+                        """Apply RMS normalization to input tensor."""
                         variance = x.pow(2).mean(-1, keepdim=True)
                         x = x * torch.rsqrt(variance + self.eps)
                         return self.weight * x
@@ -524,6 +516,7 @@ class TrainingThread(QThread):
             def _create_llama_layer(self, hidden_size, num_heads):
                 """Create a single LLaMA transformer layer."""
                 class LlamaLayer(nn.Module):
+                    """Single layer of a LLaMA transformer model."""
                     def __init__(self, hidden_size, num_heads):
                         super().__init__()
                         self.attention_norm = parent._create_rms_norm(hidden_size)
@@ -538,6 +531,7 @@ class TrainingThread(QThread):
                         self.down_proj = nn.Linear(hidden_size * 4, hidden_size, bias=False)
 
                     def forward(self, x, attention_mask=None):
+                        """Forward pass through LLaMA layer with attention and SwiGLU FFN."""
                         # Attention with residual
                         normed_x = self.attention_norm(x)
                         attn_out, _ = self.attention(normed_x, normed_x, normed_x,
@@ -557,6 +551,7 @@ class TrainingThread(QThread):
                 return LlamaLayer(hidden_size, num_heads)
 
             def forward(self, input_ids, attention_mask=None):
+                """Forward pass through the LLaMA model."""
                 x = self.token_embedding(input_ids)
 
                 # Create causal mask
@@ -611,6 +606,7 @@ class TrainingThread(QThread):
             def _create_enhanced_layer(self, hidden_size, num_heads):
                 """Create enhanced transformer layer with modern improvements."""
                 class EnhancedTransformerLayer(nn.Module):
+                    """Enhanced transformer layer with modern improvements and optimizations."""
                     def __init__(self, hidden_size, num_heads):
                         super().__init__()
                         # Pre-norm attention
@@ -631,9 +627,10 @@ class TrainingThread(QThread):
                         )
 
                     def forward(self, x, attention_mask=None):
+                        """Forward pass through enhanced transformer layer."""
                         # Pre-norm attention with residual
                         normed_x = self.attention_norm(x)
-                        attn_out, attn_weights = self.attention(
+                        attn_out, _ = self.attention(
                             normed_x, normed_x, normed_x,
                             attn_mask=attention_mask, is_causal=True
                         )
@@ -650,7 +647,8 @@ class TrainingThread(QThread):
                 return EnhancedTransformerLayer(hidden_size, num_heads)
 
             def forward(self, input_ids, attention_mask=None, return_attention=False):
-                batch_size, seq_len = input_ids.shape
+                """Forward pass through the enhanced transformer model."""
+                _, seq_len = input_ids.shape
 
                 # Embeddings
                 positions = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
@@ -885,19 +883,24 @@ class TrainingThread(QThread):
                 }
 
             def forward(self, *args, **kwargs):
+                """Fallback forward pass when PyTorch is unavailable."""
+                _ = args, kwargs
                 logger = logging.getLogger(__name__)
                 logger.warning("PyTorch not available - cannot perform forward pass")
                 return {"error": "PyTorch not available", "status": "fallback_mode"}
 
             def parameters(self):
+                """Return empty parameters list for fallback model."""
                 return []
 
             def train(self):
+                """Fallback training method when PyTorch is unavailable."""
                 # Implement basic training stub
                 self.training = True
                 return {"status": "training_not_implemented", "message": "PyTorch required for training"}
 
             def eval(self):
+                """Fallback evaluation method when PyTorch is unavailable."""
                 # Implement basic evaluation stub
                 self.training = False
                 return {"status": "eval_not_implemented", "message": "PyTorch required for evaluation"}
@@ -956,6 +959,7 @@ class TrainingThread(QThread):
             raise
 
     def _setup_training(self, dataset):
+        _ = dataset
         """Setup training configuration and prepare for training."""
         try:
             if TRANSFORMERS_AVAILABLE and self.tokenizer:

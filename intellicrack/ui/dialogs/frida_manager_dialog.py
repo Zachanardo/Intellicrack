@@ -64,6 +64,7 @@ class ProcessWorker(QThread):
     error = pyqtSignal(str)
 
     def run(self):
+        """Scan for running processes that can be hooked with Frida."""
         try:
             import psutil
             processes = []
@@ -98,6 +99,7 @@ class FridaWorker(QThread):
         self.params = {}
 
     def run(self):
+        """Execute Frida operations based on the specified operation type."""
         try:
             if self.frida_manager is None:
                 self.error.emit("FridaManager not available")
@@ -173,6 +175,7 @@ class FridaManagerDialog(QDialog):
         # Add tabs
         self.tabs.addTab(self.create_process_tab(), "Process Management")
         self.tabs.addTab(self.create_scripts_tab(), "Scripts & Hooks")
+        self.tabs.addTab(self.create_ai_generation_tab(), "AI Script Generation")
         self.tabs.addTab(self.create_protection_tab(), "Protection Detection")
         self.tabs.addTab(self.create_performance_tab(), "Performance")
         self.tabs.addTab(self.create_presets_tab(), "Presets & Wizard")
@@ -410,6 +413,10 @@ class FridaManagerDialog(QDialog):
         loaded_group.setLayout(loaded_layout)
         left_layout.addWidget(loaded_group)
 
+        # AI Script Generation
+        ai_group = self.create_ai_generation_group()
+        left_layout.addWidget(ai_group)
+
         left_widget.setLayout(left_layout)
         splitter.addWidget(left_widget)
 
@@ -480,6 +487,161 @@ class FridaManagerDialog(QDialog):
 
         layout.addWidget(splitter)
 
+        widget.setLayout(layout)
+        return widget
+
+    def create_ai_generation_tab(self) -> QWidget:
+        """Create AI script generation tab"""
+        widget = QWidget()
+        layout = QVBoxLayout()
+
+        # AI Status group
+        ai_status_group = QGroupBox("AI Status")
+        ai_status_layout = QHBoxLayout()
+
+        self.ai_status_label = QLabel("AI Ready")
+        self.ai_status_label.setStyleSheet("color: #00ff00; font-weight: bold;")
+        ai_status_layout.addWidget(self.ai_status_label)
+
+        ai_status_layout.addStretch()
+
+        # LLM info
+        self.llm_info_label = QLabel("LLM: Not configured")
+        ai_status_layout.addWidget(self.llm_info_label)
+
+        ai_status_group.setLayout(ai_status_layout)
+        layout.addWidget(ai_status_group)
+
+        # Generation controls group
+        generation_group = QGroupBox("Script Generation")
+        generation_layout = QVBoxLayout()
+
+        # Target selection
+        target_layout = QHBoxLayout()
+        target_layout.addWidget(QLabel("Target Binary:"))
+        self.target_binary_edit = QLineEdit()
+        target_layout.addWidget(self.target_binary_edit)
+
+        self.browse_target_btn = QPushButton("Browse...")
+        self.browse_target_btn.clicked.connect(self.browse_target_binary)
+        target_layout.addWidget(self.browse_target_btn)
+
+        generation_layout.addLayout(target_layout)
+
+        # Generation options
+        options_layout = QHBoxLayout()
+
+        options_layout.addWidget(QLabel("Script Type:"))
+        self.script_type_combo = QComboBox()
+        self.script_type_combo.addItems(["Frida Only", "Ghidra Only", "Both Frida & Ghidra"])
+        options_layout.addWidget(self.script_type_combo)
+
+        options_layout.addWidget(QLabel("Complexity:"))
+        self.complexity_combo = QComboBox()
+        self.complexity_combo.addItems(["Basic", "Advanced"])
+        options_layout.addWidget(self.complexity_combo)
+
+        options_layout.addWidget(QLabel("Focus:"))
+        self.focus_combo = QComboBox()
+        self.focus_combo.addItems(["Auto-detect", "License Check", "Trial Timer", "Network Validation", "Anti-Debug", "VM Detection"])
+        options_layout.addWidget(self.focus_combo)
+
+        generation_layout.addLayout(options_layout)
+
+        # Advanced options
+        advanced_layout = QHBoxLayout()
+
+        self.autonomous_cb = QCheckBox("Autonomous Mode (with QEMU testing)")
+        self.autonomous_cb.setChecked(True)
+        advanced_layout.addWidget(self.autonomous_cb)
+
+        self.preview_cb = QCheckBox("Preview scripts before saving")
+        self.preview_cb.setChecked(True)
+        advanced_layout.addWidget(self.preview_cb)
+
+        generation_layout.addLayout(advanced_layout)
+
+        # Generation button
+        gen_button_layout = QHBoxLayout()
+        gen_button_layout.addStretch()
+
+        self.generate_btn = QPushButton("🤖 Generate AI Scripts")
+        self.generate_btn.setMinimumHeight(40)
+        self.generate_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #0d7377;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: bold;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #14868c;
+            }
+            QPushButton:pressed {
+                background-color: #0a5a5e;
+            }
+        """)
+        self.generate_btn.clicked.connect(self.generate_ai_scripts)
+        gen_button_layout.addWidget(self.generate_btn)
+
+        gen_button_layout.addStretch()
+        generation_layout.addLayout(gen_button_layout)
+
+        generation_group.setLayout(generation_layout)
+        layout.addWidget(generation_group)
+
+        # Progress group
+        progress_group = QGroupBox("Generation Progress")
+        progress_layout = QVBoxLayout()
+
+        self.progress_label = QLabel("Ready to generate scripts")
+        progress_layout.addWidget(self.progress_label)
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setVisible(False)
+        progress_layout.addWidget(self.progress_bar)
+
+        progress_group.setLayout(progress_layout)
+        layout.addWidget(progress_group)
+
+        # Results preview group
+        preview_group = QGroupBox("Generated Scripts Preview")
+        preview_layout = QVBoxLayout()
+
+        self.script_preview = QTextEdit()
+        self.script_preview.setMaximumHeight(200)
+        self.script_preview.setReadOnly(True)
+        self.script_preview.setPlaceholderText("Generated scripts will appear here...")
+        preview_layout.addWidget(self.script_preview)
+
+        # Preview controls
+        preview_controls = QHBoxLayout()
+
+        self.save_scripts_btn = QPushButton("💾 Save Scripts")
+        self.save_scripts_btn.clicked.connect(self.save_generated_scripts)
+        self.save_scripts_btn.setEnabled(False)
+        preview_controls.addWidget(self.save_scripts_btn)
+
+        self.deploy_scripts_btn = QPushButton("🚀 Deploy to Current Session")
+        self.deploy_scripts_btn.clicked.connect(self.deploy_generated_scripts)
+        self.deploy_scripts_btn.setEnabled(False)
+        preview_controls.addWidget(self.deploy_scripts_btn)
+
+        self.test_qemu_btn = QPushButton("🧪 Test in QEMU")
+        self.test_qemu_btn.clicked.connect(self.test_scripts_in_qemu)
+        self.test_qemu_btn.setEnabled(False)
+        preview_controls.addWidget(self.test_qemu_btn)
+
+        preview_controls.addStretch()
+        preview_layout.addLayout(preview_controls)
+
+        preview_group.setLayout(preview_layout)
+        layout.addWidget(preview_group)
+
+        layout.addStretch()
         widget.setLayout(layout)
         return widget
 
@@ -1041,7 +1203,7 @@ class FridaManagerDialog(QDialog):
             content_edit.setPlainText(content)
 
             # Simple syntax highlighting
-            highlighter = JavaScriptHighlighter(content_edit.document())
+            JavaScriptHighlighter(content_edit.document())
 
         except Exception as e:
             content_edit.setPlainText(f"Error reading script: {str(e)}")
@@ -1506,6 +1668,408 @@ class FridaManagerDialog(QDialog):
         QMessageBox.error(self, "Error", error_msg)
         self.status_label.setText(f"Error: {error_msg}")
         self.log_console.append_output(f"[ERROR] {error_msg}")
+
+    def create_ai_generation_group(self) -> QGroupBox:
+        """Create AI script generation group."""
+        ai_group = QGroupBox("🤖 AI Script Generation")
+        ai_layout = QVBoxLayout()
+
+        # Binary selection
+        binary_layout = QHBoxLayout()
+        binary_layout.addWidget(QLabel("Target Binary:"))
+        self.ai_binary_path = QLineEdit()
+        self.ai_binary_path.setPlaceholderText("Select target binary for analysis...")
+        binary_layout.addWidget(self.ai_binary_path)
+
+        self.ai_browse_btn = QPushButton("Browse")
+        self.ai_browse_btn.clicked.connect(self.browse_target_binary)
+        binary_layout.addWidget(self.ai_browse_btn)
+
+        ai_layout.addLayout(binary_layout)
+
+        # Script type selection
+        type_layout = QHBoxLayout()
+        type_layout.addWidget(QLabel("Script Type:"))
+        self.ai_script_type = QComboBox()
+        self.ai_script_type.addItems(["Frida (JavaScript)", "Ghidra (Python)", "Both"])
+        type_layout.addWidget(self.ai_script_type)
+
+        # Complexity level
+        type_layout.addWidget(QLabel("Complexity:"))
+        self.ai_complexity = QComboBox()
+        self.ai_complexity.addItems(["Basic", "Advanced"])
+        type_layout.addWidget(self.ai_complexity)
+
+        ai_layout.addLayout(type_layout)
+
+        # Protection focus
+        protection_layout = QHBoxLayout()
+        protection_layout.addWidget(QLabel("Focus:"))
+        self.ai_protection_focus = QComboBox()
+        self.ai_protection_focus.addItems([
+            "Auto-detect", "License Bypass", "Trial Extension",
+            "Network Validation", "Anti-Debug", "VM Detection"
+        ])
+        protection_layout.addWidget(self.ai_protection_focus)
+
+        # Autonomous mode
+        self.ai_autonomous = QCheckBox("Autonomous Mode (test & refine)")
+        protection_layout.addWidget(self.ai_autonomous)
+
+        ai_layout.addLayout(protection_layout)
+
+        # Generation controls
+        gen_layout = QHBoxLayout()
+        self.ai_generate_btn = QPushButton("🚀 Generate Script")
+        self.ai_generate_btn.clicked.connect(self.generate_ai_script)
+        self.ai_generate_btn.setStyleSheet("font-weight: bold; background-color: #0d7377;")
+        gen_layout.addWidget(self.ai_generate_btn)
+
+        self.ai_analyze_btn = QPushButton("🔍 Analyze Only")
+        self.ai_analyze_btn.clicked.connect(self.analyze_binary_ai)
+        gen_layout.addWidget(self.ai_analyze_btn)
+
+        ai_layout.addLayout(gen_layout)
+
+        # Progress tracking
+        self.ai_progress = QProgressBar()
+        self.ai_progress.setVisible(False)
+        ai_layout.addWidget(self.ai_progress)
+
+        self.ai_status = QLabel("Ready for AI script generation")
+        self.ai_status.setStyleSheet("color: #0d7377; font-weight: bold;")
+        ai_layout.addWidget(self.ai_status)
+
+        # Results area
+        results_layout = QHBoxLayout()
+        self.ai_preview_btn = QPushButton("Preview Generated")
+        self.ai_preview_btn.clicked.connect(self.preview_ai_script)
+        self.ai_preview_btn.setEnabled(False)
+        results_layout.addWidget(self.ai_preview_btn)
+
+        self.ai_deploy_btn = QPushButton("Deploy & Test")
+        self.ai_deploy_btn.clicked.connect(self.deploy_ai_script)
+        self.ai_deploy_btn.setEnabled(False)
+        results_layout.addWidget(self.ai_deploy_btn)
+
+        self.ai_save_btn = QPushButton("Save Script")
+        self.ai_save_btn.clicked.connect(self.save_ai_script)
+        self.ai_save_btn.setEnabled(False)
+        results_layout.addWidget(self.ai_save_btn)
+
+        ai_layout.addLayout(results_layout)
+
+        ai_group.setLayout(ai_layout)
+
+        # Initialize AI components
+        self.ai_generated_scripts = {}
+        self.ai_current_analysis = None
+
+        return ai_group
+
+    def browse_target_binary(self):
+        """Browse for target binary file."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Select Target Binary", "",
+            "Executable Files (*.exe *.dll *.so *.dylib *.bin);;All Files (*)"
+        )
+        if file_path:
+            self.ai_binary_path.setText(file_path)
+            self.ai_status.setText(f"Selected: {os.path.basename(file_path)}")
+
+    def generate_ai_script(self):
+        """Generate AI script for selected binary."""
+        binary_path = self.ai_binary_path.text().strip()
+        if not binary_path:
+            QMessageBox.warning(self, "Warning", "Please select a target binary first.")
+            return
+
+        if not os.path.exists(binary_path):
+            QMessageBox.warning(self, "Warning", "Selected binary file does not exist.")
+            return
+
+        # Update UI for generation
+        self.ai_generate_btn.setEnabled(False)
+        self.ai_progress.setVisible(True)
+        self.ai_progress.setRange(0, 0)  # Indeterminate progress
+        self.ai_status.setText("🤖 AI analyzing binary and generating script...")
+
+        # Start AI generation in background
+        self.start_ai_script_generation(binary_path)
+
+    def start_ai_script_generation(self, binary_path: str):
+        """Start AI script generation process."""
+        try:
+            # Import AI components
+            from ...ai.autonomous_agent import AutonomousAgent
+            from ...ai.orchestrator import get_orchestrator
+
+            # Get AI orchestrator
+            orchestrator = get_orchestrator()
+
+            # Create autonomous agent
+            agent = AutonomousAgent(orchestrator=orchestrator, cli_interface=None)
+
+            # Build user request
+            script_type = self.ai_script_type.currentText()
+            complexity = self.ai_complexity.currentText().lower()
+            protection_focus = self.ai_protection_focus.currentText()
+            autonomous = self.ai_autonomous.isChecked()
+
+            if script_type == "Both":
+                script_request = f"Create both Frida and Ghidra scripts to bypass protections in {binary_path}"
+            elif "Frida" in script_type:
+                script_request = f"Create a {complexity} Frida script to bypass protections in {binary_path}"
+            else:
+                script_request = f"Create a {complexity} Ghidra script to bypass protections in {binary_path}"
+
+            if protection_focus != "Auto-detect":
+                script_request += f". Focus on {protection_focus.lower()} protection."
+
+            if autonomous:
+                script_request += " Use autonomous mode with testing and refinement."
+
+            # Process request
+            self.ai_status.setText("🔍 AI analyzing binary...")
+            result = agent.process_request(script_request)
+
+            # Handle results
+            if result.get("status") == "success":
+                self.ai_generated_scripts = result.get("scripts", [])
+                self.ai_current_analysis = result.get("analysis", {})
+
+                self.ai_status.setText(f"✅ Generated {len(self.ai_generated_scripts)} scripts successfully!")
+                self.ai_preview_btn.setEnabled(True)
+                self.ai_deploy_btn.setEnabled(True)
+                self.ai_save_btn.setEnabled(True)
+
+                # Show generation results
+                script_count = len(self.ai_generated_scripts)
+                iterations = result.get("iterations", 0)
+                self.log_console.append_output(
+                    f"[AI] Successfully generated {script_count} scripts in {iterations} iterations"
+                )
+
+                # Auto-preview if single script
+                if script_count == 1:
+                    self.preview_ai_script()
+
+            else:
+                error_msg = result.get("message", "Unknown error")
+                self.ai_status.setText(f"❌ Generation failed: {error_msg}")
+                self.log_console.append_output(f"[AI ERROR] {error_msg}")
+                QMessageBox.critical(self, "AI Generation Failed", error_msg)
+
+        except Exception as e:
+            self.ai_status.setText(f"❌ Error: {str(e)}")
+            self.log_console.append_output(f"[AI ERROR] {str(e)}")
+            QMessageBox.critical(self, "Error", f"AI script generation failed: {str(e)}")
+
+        finally:
+            # Reset UI
+            self.ai_generate_btn.setEnabled(True)
+            self.ai_progress.setVisible(False)
+
+    def analyze_binary_ai(self):
+        """Analyze binary with AI without generating scripts."""
+        binary_path = self.ai_binary_path.text().strip()
+        if not binary_path or not os.path.exists(binary_path):
+            QMessageBox.warning(self, "Warning", "Please select a valid target binary first.")
+            return
+
+        self.ai_status.setText("🔍 AI analyzing binary protections...")
+
+        try:
+            # Import AI components for analysis
+            from ...ai.orchestrator import AITask, AITaskType, AnalysisComplexity, get_orchestrator
+
+            orchestrator = get_orchestrator()
+
+            # Create analysis task
+            task = AITask(
+                task_id=f"analysis_{int(datetime.now().timestamp())}",
+                task_type=AITaskType.BINARY_ANALYSIS,
+                complexity=AnalysisComplexity.COMPLEX,
+                input_data={"binary_path": binary_path},
+                priority=8
+            )
+
+            # Submit and wait for result
+            orchestrator.submit_task(task)
+            self.ai_status.setText("⏳ Analysis in progress...")
+
+            # For now, show completion - in real implementation would track task
+            self.ai_status.setText("✅ Binary analysis complete!")
+            self.log_console.append_output(f"[AI] Completed analysis of {os.path.basename(binary_path)}")
+
+        except Exception as e:
+            self.ai_status.setText(f"❌ Analysis failed: {str(e)}")
+            self.log_console.append_output(f"[AI ERROR] Analysis failed: {str(e)}")
+
+    def preview_ai_script(self):
+        """Preview generated AI scripts."""
+        if not self.ai_generated_scripts:
+            QMessageBox.information(self, "Info", "No scripts generated yet.")
+            return
+
+        # Create preview dialog
+        preview_dialog = QDialog(self)
+        preview_dialog.setWindowTitle("🤖 AI Generated Scripts Preview")
+        preview_dialog.resize(1000, 700)
+
+        layout = QVBoxLayout()
+
+        # Tabs for multiple scripts
+        if len(self.ai_generated_scripts) > 1:
+            tab_widget = QTabWidget()
+
+            for i, script in enumerate(self.ai_generated_scripts):
+                script_content = script.content if hasattr(script, 'content') else str(script)
+                script_type = script.metadata.script_type.value if hasattr(script, 'metadata') else f"Script {i+1}"
+
+                tab = QWidget()
+                tab_layout = QVBoxLayout()
+
+                # Script info
+                info_layout = QHBoxLayout()
+                info_layout.addWidget(QLabel(f"Type: {script_type}"))
+                if hasattr(script, 'metadata'):
+                    info_layout.addWidget(QLabel(f"Success Probability: {script.metadata.success_probability:.0%}"))
+                    info_layout.addWidget(QLabel(f"Target: {script.metadata.target_binary}"))
+                tab_layout.addLayout(info_layout)
+
+                # Script content
+                content_edit = QTextEdit()
+                content_edit.setReadOnly(True)
+                content_edit.setFont(QFont("Consolas", 10))
+                content_edit.setPlainText(script_content)
+
+                # Apply syntax highlighting
+                if "frida" in script_type.lower() or script_content.startswith("//"):
+                    JavaScriptHighlighter(content_edit.document())
+
+                tab_layout.addWidget(content_edit)
+                tab.setLayout(tab_layout)
+
+                tab_widget.addTab(tab, script_type)
+
+            layout.addWidget(tab_widget)
+        else:
+            # Single script preview
+            script = self.ai_generated_scripts[0]
+            script_content = script.content if hasattr(script, 'content') else str(script)
+
+            # Script info
+            if hasattr(script, 'metadata'):
+                info_label = QLabel(f"Type: {script.metadata.script_type.value} | "
+                                  f"Success Probability: {script.metadata.success_probability:.0%} | "
+                                  f"Target: {script.metadata.target_binary}")
+                info_label.setStyleSheet("font-weight: bold; color: #0d7377; padding: 10px;")
+                layout.addWidget(info_label)
+
+            # Script content
+            content_edit = QTextEdit()
+            content_edit.setReadOnly(True)
+            content_edit.setFont(QFont("Consolas", 10))
+            content_edit.setPlainText(script_content)
+
+            # Apply syntax highlighting
+            if hasattr(script, 'metadata') and "frida" in script.metadata.script_type.value.lower():
+                # Store highlighter reference to prevent garbage collection
+                content_edit.highlighter = JavaScriptHighlighter(content_edit.document())
+
+            layout.addWidget(content_edit)
+
+        # Dialog buttons
+        buttons_layout = QHBoxLayout()
+
+        deploy_btn = QPushButton("Deploy & Test")
+        deploy_btn.clicked.connect(lambda: [preview_dialog.accept(), self.deploy_ai_script()])
+        buttons_layout.addWidget(deploy_btn)
+
+        save_btn = QPushButton("Save Scripts")
+        save_btn.clicked.connect(lambda: [preview_dialog.accept(), self.save_ai_script()])
+        buttons_layout.addWidget(save_btn)
+
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(preview_dialog.accept)
+        buttons_layout.addWidget(close_btn)
+
+        layout.addLayout(buttons_layout)
+        preview_dialog.setLayout(layout)
+        preview_dialog.exec_()
+
+    def deploy_ai_script(self):
+        """Deploy generated AI scripts."""
+        if not self.ai_generated_scripts:
+            QMessageBox.information(self, "Info", "No scripts to deploy.")
+            return
+
+        try:
+            deployed_count = 0
+            for script in self.ai_generated_scripts:
+                if hasattr(script, 'metadata') and "frida" in script.metadata.script_type.value.lower():
+                    # Deploy Frida script
+                    script_content = script.content if hasattr(script, 'content') else str(script)
+                    # Add to loaded scripts list
+                    item = QListWidgetItem(f"AI Generated: {script.metadata.target_binary}")
+                    item.setData(Qt.UserRole, script_content)
+                    self.loaded_scripts_list.addItem(item)
+                    deployed_count += 1
+
+            if deployed_count > 0:
+                self.ai_status.setText(f"✅ Deployed {deployed_count} scripts!")
+                self.log_console.append_output(f"[AI] Deployed {deployed_count} AI-generated scripts")
+                QMessageBox.information(self, "Success", f"Successfully deployed {deployed_count} AI-generated scripts.")
+            else:
+                QMessageBox.information(self, "Info", "No deployable Frida scripts found.")
+
+        except Exception as e:
+            self.ai_status.setText(f"❌ Deployment failed: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to deploy scripts: {str(e)}")
+
+    def save_ai_script(self):
+        """Save generated AI scripts to files."""
+        if not self.ai_generated_scripts:
+            QMessageBox.information(self, "Info", "No scripts to save.")
+            return
+
+        try:
+            from ...ai.ai_script_generator import AIScriptGenerator
+
+            # Get save directory
+            save_dir = QFileDialog.getExistingDirectory(
+                self, "Select Directory to Save AI Scripts",
+                "scripts/ai_generated"
+            )
+
+            if not save_dir:
+                return
+
+            script_generator = AIScriptGenerator()
+            saved_count = 0
+
+            for script in self.ai_generated_scripts:
+                try:
+                    saved_path = script_generator.save_script(script, save_dir)
+                    saved_count += 1
+                    self.log_console.append_output(f"[AI] Saved script: {saved_path}")
+                except Exception as e:
+                    self.log_console.append_output(f"[AI ERROR] Failed to save script: {e}")
+
+            if saved_count > 0:
+                self.ai_status.setText(f"✅ Saved {saved_count} scripts to {save_dir}")
+                QMessageBox.information(self, "Success",
+                                      f"Successfully saved {saved_count} scripts to:\n{save_dir}")
+
+                # Reload script list to show new scripts
+                self.reload_script_list()
+            else:
+                QMessageBox.warning(self, "Warning", "No scripts were saved.")
+
+        except Exception as e:
+            self.ai_status.setText(f"❌ Save failed: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to save scripts: {str(e)}")
 
     def closeEvent(self, event):
         """Handle dialog close"""

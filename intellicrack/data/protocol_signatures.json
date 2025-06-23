@@ -1,0 +1,13 @@
+{
+  "flexlm": {
+    "name": "FlexLM",
+    "description": "Flexible License Manager by Flexera",
+    "ports": [
+      27000,
+      27001,
+      1101
+    ],
+    "patterns": [
+      {
+        "offset": 0,
+        "bytes": 

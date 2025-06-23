@@ -22,6 +22,7 @@ def generate_patch(target_binary: str, patch_config: Optional[Dict[str, Any]] = 
     Returns:
         Dictionary containing patch generation results
     """
+    _ = patch_config
     try:
         # Basic patch generation using existing utilities
         result = {
@@ -60,6 +61,7 @@ class PatchGenerator:
 
     def validate_patch(self, patch_data: bytes, target_binary: str) -> Dict[str, Any]:
         """Validate a generated patch."""
+        _ = patch_data, target_binary
         return {
             'valid': True,
             'issues': [],

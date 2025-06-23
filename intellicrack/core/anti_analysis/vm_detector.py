@@ -13,8 +13,6 @@ from typing import Any, Dict, Tuple
 
 from .base_detector import BaseDetector
 
-logger = logging.getLogger(__name__)
-
 
 class VMDetector(BaseDetector):
     """
@@ -164,6 +162,7 @@ class VMDetector(BaseDetector):
                     for vm_type, signatures in self.vm_signatures.items():
                         if vm_type in product:
                             details['brand'] = product
+                            details['detected_signatures'] = signatures  # Use the signatures
                             return True, 0.9, details
 
         except Exception as e:
@@ -232,12 +231,14 @@ class VMDetector(BaseDetector):
         try:
             # Get process list using base class method
             processes, process_list = self.get_running_processes()
+            self.logger.debug(f"Scanning {len(process_list)} processes for VM indicators")
 
             # Check for VM processes
             for vm_type, sigs in self.vm_signatures.items():
                 for process in sigs.get('processes', []):
                     if process.lower() in processes:
                         details['detected_processes'].append(process)
+                        details['vm_type'] = vm_type  # Use vm_type to indicate which VM was detected
 
             if details['detected_processes']:
                 return True, 0.7, details
@@ -255,7 +256,7 @@ class VMDetector(BaseDetector):
             return False, 0.0, details
 
         try:
-            import winreg
+            import winreg  # pylint: disable=E0401
 
             # Check for VM registry keys
             for vm_type, sigs in self.vm_signatures.items():
@@ -267,6 +268,7 @@ class VMDetector(BaseDetector):
 
                         with winreg.OpenKey(hive, subkey):
                             details['detected_keys'].append(key_path)
+                            details['vm_type'] = vm_type  # Use vm_type
                     except:
                         pass
 
@@ -288,6 +290,7 @@ class VMDetector(BaseDetector):
                 for file_path in sigs.get('files', []):
                     if os.path.exists(file_path):
                         details['detected_files'].append(file_path)
+                        details['vm_type'] = vm_type  # Use vm_type
 
             if details['detected_files']:
                 return True, 0.7, details
@@ -361,6 +364,7 @@ class VMDetector(BaseDetector):
                     for prefix in sigs.get('mac_prefixes', []):
                         if mac_prefix.lower().startswith(prefix.lower()):
                             details['detected_macs'].append(mac_prefix)
+                            details['vm_type'] = vm_type  # Use vm_type
 
             if details['detected_macs']:
                 return True, 0.8, details
@@ -453,6 +457,7 @@ class VMDetector(BaseDetector):
         for method, result in detections.items():
             if result['detected']:
                 details_str = str(result['details']).lower()
+                self.logger.debug(f"VM detection method '{method}' found evidence")
 
                 for vm_type in self.vm_signatures:
                     if vm_type in details_str:

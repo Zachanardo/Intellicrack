@@ -42,6 +42,21 @@ if HAS_PYQT:
         QVBoxLayout,
         QWidget,
     )
+else:
+    # Define fallback classes when PyQt5 is not available
+    class MockQtClass:
+        """Mock Qt class for when PyQt5 is not available."""
+        def __init__(self, *args, **kwargs):
+            pass
+        def __getattr__(self, name):
+            return MockQtClass
+        def __call__(self, *args, **kwargs):
+            return MockQtClass()
+
+    # Set all Qt classes to the mock
+    QWidget = QVBoxLayout = QHBoxLayout = QLabel = QComboBox = MockQtClass
+    QPushButton = QGroupBox = QTableWidget = QProgressBar = QTimer = MockQtClass
+    QSpinBox = QSplitter = Qt = QPlainTextEdit = MockQtClass
 
 try:
     import matplotlib
@@ -63,7 +78,7 @@ def setup_dataset_tab(parent: Any) -> Optional[Any]:
         logger.warning("PyQt5 not available, cannot create dataset tab")
         return None
 
-    tab = QWidget()
+    tab = QWidget(parent)  # Set parent for proper widget hierarchy
     layout = QVBoxLayout()
 
     # Dataset controls
@@ -171,7 +186,7 @@ def setup_memory_monitor(parent: Any) -> Optional[Any]:
         logger.warning("PyQt5 not available, cannot create memory monitor")
         return None
 
-    widget = QWidget()
+    widget = QWidget(parent)  # Set parent for proper widget hierarchy
     layout = QVBoxLayout()
 
     # Memory stats
@@ -268,7 +283,7 @@ def setup_training_tab(parent: Any) -> Optional[Any]:
         logger.warning("PyQt5 not available, cannot create training tab")
         return None
 
-    tab = QWidget()
+    tab = QWidget(parent)  # Set parent for proper widget hierarchy
     layout = QVBoxLayout()
 
     # Model selection

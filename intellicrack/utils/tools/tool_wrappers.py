@@ -126,6 +126,7 @@ def wrapper_list_relevant_files(app_instance, parameters: Dict[str, Any]) -> Dic
         dict: List of relevant files
     """
     try:
+        logger.debug(f"Listing relevant files with parameters: {parameters}")
         app_instance.update_output.emit(log_message("[Tool] Listing relevant files"))
         logger.info("Listing relevant files")
 
@@ -260,6 +261,7 @@ def wrapper_run_static_analysis(app_instance, parameters: Dict[str, Any]) -> Dic
     Returns:
         dict: Static analysis results
     """
+    logger.debug(f"Running static analysis with parameters: {parameters}")
     try:
         app_instance.update_output.emit(log_message("[Tool] Running static analysis"))
         logger.info("Running static analysis")
@@ -289,6 +291,7 @@ def wrapper_deep_license_analysis(app_instance, parameters: Dict[str, Any]) -> D
     Returns:
         dict: License analysis results
     """
+    logger.debug(f"Running deep license analysis with parameters: {parameters}")
     try:
         app_instance.update_output.emit(log_message("[Tool] Running deep license analysis"))
         logger.info("Running deep license analysis")
@@ -317,6 +320,7 @@ def wrapper_detect_protections(app_instance, parameters: Dict[str, Any]) -> Dict
     Returns:
         dict: Protection detection results
     """
+    logger.debug(f"Detecting protections with parameters: {parameters}")
     try:
         app_instance.update_output.emit(log_message("[Tool] Detecting protections"))
         logger.info("Detecting protections")
@@ -437,6 +441,7 @@ def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
     Returns:
         dict: Launch status and process information
     """
+    logger.debug(f"Launching target with parameters: {parameters}")
     try:
         app_instance.update_output.emit(log_message("[Tool] Launching target process"))
         logger.info("Launching target process")
@@ -538,6 +543,7 @@ def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         dict: Detach status
     """
+    logger.debug(f"Detaching with parameters: {parameters}")
     try:
         app_instance.update_output.emit(log_message("[Tool] Detaching from target process"))
         logger.info("Detaching from target process")
@@ -564,6 +570,7 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
     Returns:
         dict: Proposed patches
     """
+    logger.debug(f"Proposing patches with parameters: {parameters}")
     try:
         app_instance.update_output.emit(log_message("[Tool] Proposing patches"))
         logger.info("Proposing patches")
@@ -797,7 +804,7 @@ def _extract_import_patches(pe, detected_apis) -> List[Dict[str, Any]]:
 
     def check_import_patch(dll_name, func_name, imp):
         # Check if this function was detected
-        for category, funcs in detected_apis.items():
+        for _, funcs in detected_apis.items():
             if func_name in funcs:
                 return {
                     'type': 'import_hook',
@@ -938,6 +945,7 @@ def _assess_patch_risk(patch: Dict[str, Any]) -> int:
 
 def _assess_compatibility(patch: Dict[str, Any], binary_path: str) -> str:
     """Assess patch compatibility."""
+    logger.debug(f"Assessing patch compatibility for binary: {binary_path}")
     # Simple compatibility assessment
     if patch.get('type') in ['conditional_bypass', 'string_modification']:
         return 'high'
@@ -1022,21 +1030,50 @@ def wrapper_get_proposed_patches(app_instance, parameters: Dict[str, Any]) -> Di
     Wrapper for tool_get_proposed_patches.
     Gets the list of currently proposed patches.
 
+    Parameters:
+        filter_type (str, optional): Filter patches by type ('license', 'bypass', 'all')
+        include_metadata (bool, optional): Include detailed metadata in results
+
     Returns:
         dict: List of proposed patches
     """
     try:
-        app_instance.update_output.emit(log_message("[Tool] Getting proposed patches"))
-        logger.info("Getting proposed patches")
+        # Parse parameters for filtering and options
+        filter_type = parameters.get("filter_type", "all")
+        include_metadata = parameters.get("include_metadata", True)
+
+        app_instance.update_output.emit(log_message(f"[Tool] Getting proposed patches (filter: {filter_type})"))
+        logger.info("Getting proposed patches with filter: %s", filter_type)
 
         # Get patches from app instance if available
-        patches = getattr(app_instance, 'potential_patches', [])
+        all_patches = getattr(app_instance, 'potential_patches', [])
+
+        # Filter patches based on parameters
+        if filter_type != "all":
+            filtered_patches = [
+                patch for patch in all_patches
+                if patch.get('type', '').lower() == filter_type.lower()
+            ]
+        else:
+            filtered_patches = all_patches
+
+        # Include metadata if requested
+        if include_metadata:
+            result_patches = filtered_patches
+        else:
+            result_patches = [
+                {k: v for k, v in patch.items() if k in ['address', 'description', 'type']}
+                for patch in filtered_patches
+            ]
 
         return {
             "status": "success",
-            "patches": patches,
-            "count": len(patches),
-            "message": f"Retrieved {len(patches)} proposed patches"
+            "patches": result_patches,
+            "count": len(result_patches),
+            "total_patches": len(all_patches),
+            "filter_applied": filter_type,
+            "metadata_included": include_metadata,
+            "message": f"Retrieved {len(result_patches)} patches (filter: {filter_type})"
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -1560,6 +1597,7 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
 def _create_comprehensive_analysis_script(output_dir: str, export_format: str,
                                          export_selection: list, params: dict) -> str:
     """Create a comprehensive Ghidra analysis script."""
+    logger.debug(f"Creating analysis script with format: {export_format}, selection: {export_selection}, params: {list(params.keys())}")
     script_content = '''
 // Comprehensive Ghidra Analysis Script
 import ghidra.program.model.listing.*;
@@ -1834,6 +1872,7 @@ def _parse_ghidra_output(results: dict, output: str) -> dict:
 
 def _load_analysis_exports(results: dict, output_dir: str, export_format: str) -> dict:
     """Load exported analysis results from files."""
+    logger.debug(f"Loading analysis exports from {output_dir} with format: {export_format}")
     export_files = [
         "functions.json", "symbols.json", "strings.json",
         "cross_references.json", "imports.json", "exports.json",

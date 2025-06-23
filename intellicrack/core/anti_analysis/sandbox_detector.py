@@ -16,8 +16,6 @@ from typing import Any, Dict, List, Tuple
 
 from .base_detector import BaseDetector
 
-logger = logging.getLogger(__name__)
-
 
 class SandboxDetector(BaseDetector):
     """
@@ -261,7 +259,6 @@ class SandboxDetector(BaseDetector):
 
             # Check disk space
             if platform.system() == 'Windows':
-                import ctypes
                 free_bytes = ctypes.c_ulonglong(0)
                 total_bytes = ctypes.c_ulonglong(0)
                 ctypes.windll.kernel32.GetDiskFreeSpaceExW(
@@ -311,7 +308,7 @@ class SandboxDetector(BaseDetector):
                 for sandbox_type, sigs in self.sandbox_signatures.items():
                     for network in sigs.get('network', []):
                         if self._ip_in_network(local_ip, network):
-                            details['network_anomalies'].append(f'Sandbox network: {network}')
+                            details['network_anomalies'].append(f'Sandbox network: {network} ({sandbox_type})')
 
             except:
                 pass
@@ -367,13 +364,16 @@ class SandboxDetector(BaseDetector):
             }
 
             browser_found = False
+            found_browsers = []
             for browser, path in browser_paths.items():
                 if os.path.exists(path):
                     browser_found = True
-                    break
+                    found_browsers.append(browser)
 
             if not browser_found:
                 details['interaction_signs'].append('No browser data found')
+            else:
+                details['found_browsers'] = found_browsers
 
             # Check for running user applications
             user_apps = ['chrome.exe', 'firefox.exe', 'outlook.exe', 'spotify.exe',
@@ -465,9 +465,6 @@ class SandboxDetector(BaseDetector):
             # Check for injected DLLs (Windows)
             if platform.system() == 'Windows':
                 try:
-                    # Check running processes using base class method
-                    processes, process_list = self.get_running_processes()
-
                     # Check for sandbox monitoring processes
                     sandbox_processes = ['procmon', 'dbgview', 'filemon', 'regmon',
                                        'wireshark', 'tcpdump', 'netmon', 'apimonitor']
@@ -505,8 +502,6 @@ class SandboxDetector(BaseDetector):
 
         try:
             # Measure time drift
-            import time
-
             # Get initial time
             start_real = time.time()
             start_perf = time.perf_counter()
@@ -599,21 +594,25 @@ class SandboxDetector(BaseDetector):
 
         try:
             if platform.system() == 'Windows':
-                import ctypes
                 try:
                     from ctypes import wintypes
                     # Check if POINT is available
                     if not hasattr(wintypes, 'POINT'):
                         # Create mock POINT structure
                         class MockPOINT(ctypes.Structure):
+                            """Mock POINT structure for Windows API compatibility."""
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
                         wintypes.POINT = MockPOINT
                 except (ImportError, AttributeError):
                     # Fallback if wintypes is not available
                     class MockWintypes:
+                        """Mock wintypes implementation for compatibility."""
                         class POINT(ctypes.Structure):
+                            """Mock POINT structure definition."""
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
-                    wintypes = MockWintypes()
+                    from types import SimpleNamespace
+                    wintypes = SimpleNamespace()
+                    wintypes.POINT = MockWintypes.POINT
 
                 user32 = ctypes.windll.user32
 
@@ -675,6 +674,7 @@ class SandboxDetector(BaseDetector):
         for method, result in detections.items():
             if result['detected']:
                 details_str = str(result['details']).lower()
+                self.logger.debug(f"Analyzing sandbox type from method: {method}")
 
                 # Check for sandbox signatures
                 for sandbox_type, sigs in self.sandbox_signatures.items():

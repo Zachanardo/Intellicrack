@@ -42,11 +42,11 @@ logger = logging.getLogger(__name__)
 def find_process_by_name(process_name: str, exact_match: bool = False) -> Optional[int]:
     """
     Find process PID by name with unified logic.
-    
+
     Args:
         process_name: Name of process to find
         exact_match: If True, require exact name match; if False, allow partial match
-        
+
     Returns:
         Process PID if found, None otherwise
     """
@@ -79,10 +79,10 @@ def find_process_by_name(process_name: str, exact_match: bool = False) -> Option
 def get_all_processes(fields: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """
     Get list of all processes with unified logic.
-    
+
     Args:
         fields: List of fields to retrieve (default: ['pid', 'name', 'cpu_percent', 'memory_percent'])
-        
+
     Returns:
         List of process information dictionaries
     """
@@ -109,10 +109,10 @@ def get_all_processes(fields: Optional[List[str]] = None) -> List[Dict[str, Any]
 def find_processes_matching_names(target_names: List[str]) -> List[str]:
     """
     Find all running processes that match any of the target names.
-    
+
     Args:
         target_names: List of process names to search for
-        
+
     Returns:
         List of running process names that match targets
     """
@@ -208,13 +208,21 @@ def detect_hardware_dongles(app=None) -> List[str]:
     Supports detection of SafeNet, HASP, CodeMeter, and other common dongles.
 
     Args:
-        app: Application instance (for compatibility)
+        app: Application instance (for real-time updates)
 
     Returns:
         List of detection results
     """
     logger.info("Starting hardware dongle detection.")
     results = []
+
+    # Update app instance with progress if provided
+    if app and hasattr(app, 'update_output'):
+        progress_message = "Starting hardware dongle detection..."
+        if hasattr(app.update_output, 'emit'):
+            app.update_output.emit(progress_message)
+        elif callable(app.update_output):
+            app.update_output(progress_message)
 
     # Known hardware dongle drivers and DLLs
     dongle_drivers = {
@@ -251,7 +259,15 @@ def detect_hardware_dongles(app=None) -> List[str]:
                     found_dongles.add(dongle)
                     driver_path = os.path.join(dir_path, file)
                     logger.info("Found %s driver: %s", dongle, driver_path)
-                    results.append(f"Found {dongle} dongle driver: {driver_path}")
+                    detection_message = f"Found {dongle} dongle driver: {driver_path}"
+                    results.append(detection_message)
+
+                    # Update app instance with real-time detection
+                    if app and hasattr(app, 'update_output'):
+                        if hasattr(app.update_output, 'emit'):
+                            app.update_output.emit(f"DETECTED: {detection_message}")
+                        elif callable(app.update_output):
+                            app.update_output(f"DETECTED: {detection_message}")
 
     # Check running processes for dongle service processes
     dongle_processes = {

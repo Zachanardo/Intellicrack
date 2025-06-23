@@ -44,6 +44,7 @@ class FileApprovalDialog(QDialog):
     """Dialog for requesting user approval for AI file operations."""
 
     def __init__(self, operation_type: str, details: str, parent=None):
+        """Initialize file operation confirmation dialog."""
         super().__init__(parent)
         self.setWindowTitle(f"AI File {operation_type} Request")
         self.setMinimumSize(600, 400)
@@ -95,6 +96,7 @@ class FileSearchTool:
     """Tool for AI to search the file system for licensing-related files."""
 
     def __init__(self, app_instance=None):
+        """Initialize file search tool with app instance."""
         self.app_instance = app_instance
         self.common_license_patterns = [
             "*license*", "*licensing*", "*lic*", "*auth*", "*activation*",
@@ -199,6 +201,7 @@ class FileReadTool:
     """Tool for AI to read files with user approval."""
 
     def __init__(self, app_instance=None):
+        """Initialize file read tool with app instance."""
         self.app_instance = app_instance
         self.max_file_size = 10 * 1024 * 1024  # 10MB limit
 
@@ -339,6 +342,7 @@ class AIFileTools:
     """Main class providing file system tools for AI analysis."""
 
     def __init__(self, app_instance=None):
+        """Initialize AI file tools with app instance."""
         self.app_instance = app_instance
         self.search_tool = FileSearchTool(app_instance)
         self.read_tool = FileReadTool(app_instance)

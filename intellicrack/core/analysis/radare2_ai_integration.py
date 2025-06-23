@@ -23,12 +23,45 @@ import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
-import joblib
-import numpy as np
-from sklearn.cluster import DBSCAN
-from sklearn.ensemble import IsolationForest, RandomForestClassifier
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import StandardScaler
+# Safe ML dependencies with comprehensive fallbacks
+try:
+    # Use safe import system
+    from ...utils.dependency_fallbacks import (
+        safe_import_numpy,
+        safe_import_sklearn,
+    )
+
+    np = safe_import_numpy()
+    sklearn = safe_import_sklearn()
+
+    # Try to get specific sklearn components
+    try:
+        import joblib
+        from sklearn.cluster import DBSCAN
+        from sklearn.ensemble import IsolationForest, RandomForestClassifier
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from sklearn.preprocessing import StandardScaler
+        SKLEARN_AVAILABLE = True
+    except:
+        # Use fallback implementations
+        DBSCAN = sklearn.cluster.DBSCAN
+        IsolationForest = None
+        RandomForestClassifier = sklearn.ensemble.RandomForestClassifier
+        TfidfVectorizer = None
+        StandardScaler = sklearn.preprocessing.StandardScaler
+        joblib = None
+        SKLEARN_AVAILABLE = False
+
+except Exception:
+    # Complete fallback
+    np = None
+    DBSCAN = None
+    IsolationForest = None
+    RandomForestClassifier = None
+    TfidfVectorizer = None
+    StandardScaler = None
+    joblib = None
+    SKLEARN_AVAILABLE = False
 
 from ...utils.tools.radare2_utils import R2Exception, r2_session
 from .radare2_imports import R2ImportExportAnalyzer
@@ -60,9 +93,13 @@ class R2AIEngine:
         self.function_clusterer = None
         self.anomaly_detector = None
 
-        # Feature extractors
-        self.text_vectorizer = TfidfVectorizer(max_features=1000, stop_words='english')
-        self.scaler = StandardScaler()
+        # Feature extractors (only if sklearn available)
+        if SKLEARN_AVAILABLE:
+            self.text_vectorizer = TfidfVectorizer(max_features=1000, stop_words='english')
+            self.scaler = StandardScaler()
+        else:
+            self.text_vectorizer = None
+            self.scaler = None
 
         # Model paths
         self.model_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'models', 'radare2')
@@ -317,6 +354,15 @@ class R2AIEngine:
 
     def _ai_license_detection(self, features: Dict[str, Any]) -> Dict[str, Any]:
         """AI-based license validation detection."""
+        if not SKLEARN_AVAILABLE:
+            return {
+                'has_license_validation': False,
+                'confidence': 0.0,
+                'license_mechanisms': [],
+                'detection_method': 'fallback_rule_based',
+                'error': 'sklearn not available'
+            }
+
         # Load or train license detection model
         model_path = os.path.join(self.model_dir, 'license_detector.joblib')
 
@@ -346,6 +392,14 @@ class R2AIEngine:
 
     def _ai_vulnerability_prediction(self, features: Dict[str, Any]) -> Dict[str, Any]:
         """AI-based vulnerability prediction."""
+        if not SKLEARN_AVAILABLE:
+            return {
+                'vulnerability_types': [],
+                'confidence_scores': {},
+                'risk_level': 'unknown',
+                'error': 'sklearn not available'
+            }
+
         # Load or train vulnerability classifier
         model_path = os.path.join(self.model_dir, 'vulnerability_classifier.joblib')
 
@@ -387,6 +441,13 @@ class R2AIEngine:
 
     def _function_clustering_analysis(self, features: Dict[str, Any]) -> Dict[str, Any]:
         """Perform function clustering analysis."""
+        if not SKLEARN_AVAILABLE:
+            return {
+                'clusters': {},
+                'cluster_quality': 0.0,
+                'error': 'sklearn not available'
+            }
+
         function_features = features.get('function_features', [])
 
         if len(function_features) < 5:
@@ -441,6 +502,14 @@ class R2AIEngine:
 
     def _anomaly_detection_analysis(self, features: Dict[str, Any]) -> Dict[str, Any]:
         """Perform anomaly detection analysis."""
+        if not SKLEARN_AVAILABLE:
+            return {
+                'is_anomalous': False,
+                'anomaly_score': 0.0,
+                'anomaly_indicators': [],
+                'error': 'sklearn not available'
+            }
+
         # Combine all features into a single vector
         combined_features = []
 

@@ -519,6 +519,11 @@ class MemoryOptimizer:
             # 3. Memory usage trend analysis
             current_memory, total_memory, usage_percentage = self.get_current_memory_usage()
 
+            # Check for high memory usage relative to system
+            if usage_percentage > 80:
+                critical_issues.append(f"High memory usage: {usage_percentage:.1f}%")
+                leak_details.append(f"Using {current_memory:.1f}MB of {total_memory:.1f}MB available")
+
             # Track memory growth over time
             self._memory_history.append(current_memory)
             if len(self._memory_history) > 10:
@@ -533,6 +538,10 @@ class MemoryOptimizer:
                 if growth_rate > 20:  # More than 20% growth
                     critical_issues.append(f"Memory growth: {growth_rate:.1f}%")
                     leak_details.append(f"Memory trend: {older_avg:.1f}MB → {recent_avg:.1f}MB")
+
+                    # Add system context to growth analysis
+                    if usage_percentage > 60:
+                        leak_details.append(f"Growth is concerning given {usage_percentage:.1f}% system usage")
 
             # 4. Large object detection
             large_objects = self._find_large_objects()
@@ -867,6 +876,10 @@ class MemoryOptimizer:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
+        if exc_type:
+            self.logger.error(f"Memory optimizer exiting due to {exc_type.__name__}: {exc_val}")
+            if exc_tb:
+                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.disable()
 
 

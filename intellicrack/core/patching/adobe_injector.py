@@ -49,13 +49,7 @@ from .kernel_injection import inject_via_kernel_driver
 from .process_hollowing import perform_process_hollowing
 from .syscalls import inject_using_syscalls
 
-# Import ctypes if available for Windows structures
-try:
-    import ctypes
-    CTYPES_AVAILABLE = True
-except ImportError:
-    ctypes = None
-    CTYPES_AVAILABLE = False
+# Windows API availability check will be done later with Windows-specific imports
 
 # Initialize Windows API constants - this ensures they're always defined at module level
 KERNEL32 = None
@@ -93,33 +87,60 @@ WM_NULL = 0x0000
 WINDOWS_API_AVAILABLE = False
 
 
-# Windows THREADENTRY32 structure
-if CTYPES_AVAILABLE and ctypes:
-    class THREADENTRY32(ctypes.Structure):
-        """Windows THREADENTRY32 structure for thread enumeration."""
-        _fields_ = [
-            ("dwSize", ctypes.c_ulong),
-            ("cntUsage", ctypes.c_ulong),
-            ("th32ThreadID", ctypes.c_ulong),
-            ("th32OwnerProcessID", ctypes.c_ulong),
-            ("tpBasePri", ctypes.c_long),
-            ("tpDeltaPri", ctypes.c_long),
-            ("dwFlags", ctypes.c_ulong)
-        ]
-else:
-    THREADENTRY32 = None
+# Windows THREADENTRY32 structure will be defined in Windows-specific section
 
 
 # Windows API imports for process injection
 if sys.platform == 'win32':
     try:
         import ctypes
-        from ctypes import wintypes
         KERNEL32 = ctypes.WinDLL('kernel32', use_last_error=True)
         PSAPI = ctypes.WinDLL('psapi', use_last_error=True)
         USER32 = ctypes.WinDLL('user32', use_last_error=True)
         WINDOWS_API_AVAILABLE = True
+
+        # Windows structure definitions for thread and module enumeration
+        class THREADENTRY32(ctypes.Structure):
+            """Windows THREADENTRY32 structure for thread enumeration."""
+            _fields_ = [
+                ("dwSize", ctypes.c_ulong),
+                ("cntUsage", ctypes.c_ulong),
+                ("th32ThreadID", ctypes.c_ulong),
+                ("th32OwnerProcessID", ctypes.c_ulong),
+                ("tpBasePri", ctypes.c_long),
+                ("tpDeltaPri", ctypes.c_long),
+                ("dwFlags", ctypes.c_ulong)
+            ]
+
+        class MODULEENTRY32(ctypes.Structure):
+            """Windows MODULEENTRY32 structure for module enumeration."""
+            _fields_ = [
+                ("dwSize", ctypes.c_ulong),
+                ("th32ModuleID", ctypes.c_ulong),
+                ("th32ProcessID", ctypes.c_ulong),
+                ("GlblcntUsage", ctypes.c_ulong),
+                ("ProccntUsage", ctypes.c_ulong),
+                ("modBaseAddr", ctypes.POINTER(ctypes.c_byte)),
+                ("modBaseSize", ctypes.c_ulong),
+                ("hModule", ctypes.c_void_p),
+                ("szModule", ctypes.c_char * 256),
+                ("szExePath", ctypes.c_char * 260)
+            ]
+
+        class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+            """Windows PROCESS_BASIC_INFORMATION structure for process information."""
+            _fields_ = [
+                ("ExitStatus", ctypes.c_ulong),
+                ("PebBaseAddress", ctypes.c_void_p),
+                ("AffinityMask", ctypes.c_ulong),
+                ("BasePriority", ctypes.c_ulong),
+                ("UniqueProcessId", ctypes.c_ulong),
+                ("InheritedFromUniqueProcessId", ctypes.c_ulong)
+            ]
     except (ImportError, OSError):
+        THREADENTRY32 = None
+        MODULEENTRY32 = None
+        PROCESS_BASIC_INFORMATION = None
         pass  # Keep the default values and WINDOWS_API_AVAILABLE = False
 
 logger = get_logger(__name__)
@@ -1201,7 +1222,13 @@ for (let name of targets) {
         shellcode.extend([0x48, 0xC7, 0xC1, 0xFF, 0xFF, 0xFF, 0xFF])
 
         # Setup other parameters for NtAllocateVirtualMemory
-        # This is a simplified version - real implementation needs proper parameter setup
+        # rdx = &BaseAddress (stack allocated)
+        # r8 = 0 (ZeroBits)
+        # r9 = &RegionSize (set to path_size)
+
+        # Push path size for allocation
+        shellcode.extend([0x48, 0xC7, 0xC2])  # mov rdx, immediate (simplified)
+        shellcode.extend(struct.pack('<I', path_size))  # size value
 
         # For now, embed DLL path directly and use kernel32!LoadLibraryA
         # Get kernel32 base address (simplified)
@@ -1430,20 +1457,7 @@ for (let name of targets) {
                 return modules
 
             try:
-                # Define MODULEENTRY32 structure
-                class MODULEENTRY32(ctypes.Structure):
-                    _fields_ = [
-                        ("dwSize", ctypes.c_ulong),
-                        ("th32ModuleID", ctypes.c_ulong),
-                        ("th32ProcessID", ctypes.c_ulong),
-                        ("GlblcntUsage", ctypes.c_ulong),
-                        ("ProccntUsage", ctypes.c_ulong),
-                        ("modBaseAddr", ctypes.POINTER(ctypes.c_byte)),
-                        ("modBaseSize", ctypes.c_ulong),
-                        ("hModule", ctypes.c_void_p),
-                        ("szModule", ctypes.c_char * 256),
-                        ("szExePath", ctypes.c_char * 260)
-                    ]
+                # Use the globally defined MODULEENTRY32 structure
 
                 me32 = MODULEENTRY32()
                 me32.dwSize = ctypes.sizeof(MODULEENTRY32)
@@ -1482,15 +1496,7 @@ for (let name of targets) {
                 # Fallback: use NtQueryInformationProcess
                 ntdll = ctypes.WinDLL('ntdll.dll')
 
-                class PROCESS_BASIC_INFORMATION(ctypes.Structure):
-                    _fields_ = [
-                        ("ExitStatus", ctypes.c_long),
-                        ("PebBaseAddress", ctypes.c_void_p),
-                        ("AffinityMask", ctypes.c_void_p),
-                        ("BasePriority", ctypes.c_long),
-                        ("UniqueProcessId", ctypes.c_void_p),
-                        ("InheritedFromUniqueProcessId", ctypes.c_void_p)
-                    ]
+                # Use the globally defined PROCESS_BASIC_INFORMATION structure
 
                 pbi = PROCESS_BASIC_INFORMATION()
                 status = ntdll.NtQueryInformationProcess(
@@ -1818,7 +1824,7 @@ for (let name of targets) {
             try:
                 USER32.UnhookWindowsHookEx(hook_handle)
                 KERNEL32.FreeLibrary(dll_handle)
-            except (OSError, WindowsError, Exception):
+            except (OSError, Exception):
                 pass
         self._active_hooks.clear()
 
@@ -1977,24 +1983,13 @@ for (let name of targets) {
                 return threads
 
             # Create thread snapshot
-            TH32CS_SNAPTHREAD = 0x00000004
             snapshot = KERNEL32.CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0)
 
             if snapshot == -1:
                 return threads
 
             try:
-                # Define THREADENTRY32 structure
-                class THREADENTRY32(ctypes.Structure):
-                    _fields_ = [
-                        ("dwSize", ctypes.c_ulong),
-                        ("cntUsage", ctypes.c_ulong),
-                        ("th32ThreadID", ctypes.c_ulong),
-                        ("th32OwnerProcessID", ctypes.c_ulong),
-                        ("tpBasePri", ctypes.c_long),
-                        ("tpDeltaPri", ctypes.c_long),
-                        ("dwFlags", ctypes.c_ulong)
-                    ]
+                # Use the globally defined THREADENTRY32 structure
 
                 te32 = THREADENTRY32()
                 te32.dwSize = ctypes.sizeof(THREADENTRY32)
@@ -2669,15 +2664,7 @@ for (let name of targets) {
             # Use NtQueryInformationProcess
             ntdll = ctypes.WinDLL('ntdll.dll')
 
-            class PROCESS_BASIC_INFORMATION(ctypes.Structure):
-                _fields_ = [
-                    ("ExitStatus", ctypes.c_long),
-                    ("PebBaseAddress", ctypes.c_void_p),
-                    ("AffinityMask", ctypes.c_void_p),
-                    ("BasePriority", ctypes.c_long),
-                    ("UniqueProcessId", ctypes.c_void_p),
-                    ("InheritedFromUniqueProcessId", ctypes.c_void_p)
-                ]
+            # Use the globally defined PROCESS_BASIC_INFORMATION structure
 
             pbi = PROCESS_BASIC_INFORMATION()
             return_length = ctypes.c_ulong(0)
@@ -2792,6 +2779,16 @@ for (let name of targets) {
                 entry_addr + base_offset,
                 ctypes.byref(dll_base),
                 ctypes.sizeof(dll_base),
+                ctypes.byref(bytes_read)
+            )
+
+            # Read DLL size
+            dll_size = ctypes.c_size_t(0)
+            KERNEL32.ReadProcessMemory(
+                process_handle,
+                entry_addr + size_offset,
+                ctypes.byref(dll_size),
+                ctypes.sizeof(dll_size),
                 ctypes.byref(bytes_read)
             )
 

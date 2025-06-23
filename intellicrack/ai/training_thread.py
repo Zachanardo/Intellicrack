@@ -184,9 +184,13 @@ class TrainingThread(QThread):
             model_format = self.params.get('model_format', 'standard')
             if model_format == 'GGUF':
                 try:
-                    from llama_cpp import Llama
-                    self.logger.warning("GGUF models require conversion for fine-tuning")
-                    return None
+                    import importlib.util
+                    if importlib.util.find_spec("llama_cpp") is not None:
+                        self.logger.warning("GGUF models require conversion for fine-tuning")
+                        return None
+                    else:
+                        self.logger.warning("llama-cpp-python not available for GGUF support")
+                        return None
                 except ImportError:
                     self.logger.warning("llama-cpp-python not installed for GGUF support")
                     return None
@@ -461,14 +465,14 @@ class TrainingThread(QThread):
                              epoch: int, total_batches: int) -> float:
         """
         Perform fallback training using scikit-learn when PyTorch/TensorFlow unavailable.
-        
+
         Args:
             dataset_path: Path to dataset
             batch_idx: Index of the batch  
             batch_size: Size of the batch
             epoch: Current epoch number
             total_batches: Total number of batches
-            
+
         Returns:
             Real loss value calculated using scikit-learn
         """
@@ -581,12 +585,12 @@ class TrainingThread(QThread):
     def _simple_fallback_loss(self, batch_idx: int, epoch: int, total_batches: int) -> float:
         """
         Simple mathematical fallback when even scikit-learn is unavailable.
-        
+
         Args:
             batch_idx: Current batch index
             epoch: Current epoch
             total_batches: Total batches per epoch
-            
+
         Returns:
             Mathematically computed loss that decreases over time
         """
@@ -594,7 +598,6 @@ class TrainingThread(QThread):
         total_steps = epoch * total_batches + batch_idx + 1
 
         # Learning curve: exponential decay with some noise
-        import math
         base_loss = 2.0
         decay_rate = 0.01
 
@@ -812,8 +815,6 @@ class TrainingThread(QThread):
             })
 
             # Training loop
-            current_loss = 0.0  # Always use real loss calculations
-
             for _epoch in range(epochs):
                 self.current_epoch = _epoch
                 epoch_start_time = time.time()

@@ -114,11 +114,11 @@ class SymbolicExecutionEngine:
                     angr.options.TRACK_CONSTRAINT_ACTIONS
                 }
             )
-            
+
             # Set up memory tracking for use-after-free detection
             if "use_after_free" in vulnerability_types:
                 self._setup_heap_tracking(initial_state)
-            
+
             # Set up taint tracking for data flow analysis
             if any(v in vulnerability_types for v in ["command_injection", "sql_injection", "path_traversal"]):
                 self._setup_taint_tracking(initial_state)
@@ -134,29 +134,29 @@ class SymbolicExecutionEngine:
                     simgr.use_technique(angr.exploration_techniques.MemoryLimiter(self.memory_limit))
                 else:
                     self.logger.warning("MemoryLimiter not available in this angr version")
-                    
+
             # Add veritesting for path explosion mitigation
             if hasattr(angr.exploration_techniques, 'Veritesting'):
                 simgr.use_technique(angr.exploration_techniques.Veritesting())
-                
+
             # Add loop seer for infinite loop detection
             if hasattr(angr.exploration_techniques, 'LoopSeer'):
                 simgr.use_technique(angr.exploration_techniques.LoopSeer(bound=10))
 
             # Explore the program with custom find/avoid conditions
             self.logger.info("Exploring program paths with enhanced techniques...")
-            
+
             # Define vulnerability-specific exploration targets
             find_addrs = []
             avoid_addrs = []
-            
+
             # Add addresses of dangerous functions as exploration targets
             dangerous_funcs = ['strcpy', 'strcat', 'gets', 'sprintf', 'system', 'exec']
             for func_name in dangerous_funcs:
                 if func_name in project.kb.functions:
                     func = project.kb.functions[func_name]
                     find_addrs.append(func.addr)
-                    
+
             simgr.explore(
                 find=find_addrs if find_addrs else None,
                 avoid=avoid_addrs if avoid_addrs else None,
@@ -198,7 +198,7 @@ class SymbolicExecutionEngine:
                             "severity": "high"
                         }
                         vulnerabilities.append(vuln)
-                        
+
             # Check for use-after-free vulnerabilities
             if "use_after_free" in vulnerability_types:
                 for _state in simgr.active + simgr.deadended + simgr.errored:
@@ -216,7 +216,7 @@ class SymbolicExecutionEngine:
                                         "severity": "critical"
                                     }
                                     vulnerabilities.append(vuln)
-                                    
+
             # Check for double-free vulnerabilities
             if "double_free" in vulnerability_types:
                 for _state in simgr.active + simgr.deadended:
@@ -235,7 +235,7 @@ class SymbolicExecutionEngine:
                                 }
                                 vulnerabilities.append(vuln)
                             freed_ptrs[ptr] = info['freed_at']
-                            
+
             # Check for race conditions
             if "race_condition" in vulnerability_types:
                 for _state in simgr.active + simgr.deadended:
@@ -247,7 +247,7 @@ class SymbolicExecutionEngine:
                             "severity": "high"
                         }
                         vulnerabilities.append(vuln)
-                        
+
             # Check for type confusion
             if "type_confusion" in vulnerability_types:
                 for _state in simgr.active + simgr.deadended:
@@ -259,7 +259,7 @@ class SymbolicExecutionEngine:
                             "severity": "high"
                         }
                         vulnerabilities.append(vuln)
-                        
+
             # Check for command injection via taint analysis
             if "command_injection" in vulnerability_types and hasattr(initial_state, 'plugins') and 'taint' in initial_state.plugins:
                 for _state in simgr.active + simgr.deadended:
@@ -541,6 +541,9 @@ class SymbolicExecutionEngine:
         vulnerabilities = []
 
         try:
+            # Get binary information from project
+            binary_name = project.loader.main_object.binary if project and project.loader.main_object else "unknown"
+
             # Enhanced buffer overflow detection
             if "buffer_overflow" in vulnerability_types:
                 # Check errored states for segfaults
@@ -552,7 +555,8 @@ class SymbolicExecutionEngine:
                             "description": "Segmentation fault detected",
                             "input": state.posix.dumps(0) if hasattr(state, "posix") else None,
                             "error_type": "segfault",
-                            "severity": "high"
+                            "severity": "high",
+                            "binary": binary_name
                         }
                         vulnerabilities.append(vuln)
 
@@ -1222,32 +1226,32 @@ class SymbolicExecutionEngine:
         unique_vulns.sort(key=lambda v: severity_order.get(v.get('severity', 'low'), 3))
 
         return unique_vulns
-    
+
     def _setup_heap_tracking(self, state):
         """Set up heap tracking for use-after-free detection."""
         if not hasattr(state, 'heap'):
             return
-            
+
         # Track heap allocations and frees
         state.heap._freed_chunks = {}
         state.heap._allocation_sites = {}
-        
+
         # Hook malloc/free functions
         malloc_addr = state.project.loader.find_symbol('malloc')
         free_addr = state.project.loader.find_symbol('free')
-        
+
         if malloc_addr:
             state.project.hook(malloc_addr.rebased_addr, self._malloc_hook, length=0)
         if free_addr:
             state.project.hook(free_addr.rebased_addr, self._free_hook, length=0)
-            
+
     def _malloc_hook(self, state):
         """Hook for malloc to track allocations."""
         size = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
-        
+
         # Perform the allocation
         addr = state.heap._malloc(size)
-        
+
         # Track the allocation
         if hasattr(state.heap, '_allocation_sites'):
             state.heap._allocation_sites[addr] = {
@@ -1255,34 +1259,34 @@ class SymbolicExecutionEngine:
                 'call_site': state.addr,
                 'allocated_at': state.history.bbl_addrs[-1] if state.history.bbl_addrs else 0
             }
-            
+
         # Return the allocated address
         state.regs.rax = addr
-        
+
     def _free_hook(self, state):
         """Hook for free to track deallocations and detect use-after-free."""
         ptr = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
-        
+
         # Check if already freed (double-free)
         if hasattr(state.heap, '_freed_chunks') and ptr in state.heap._freed_chunks:
             self.logger.warning(f"Double free detected at {hex(state.addr)} for ptr {hex(ptr)}")
-            
+
         # Track the deallocation
         if hasattr(state.heap, '_freed_chunks'):
             state.heap._freed_chunks[ptr] = {
                 'freed_at': state.addr,
                 'call_site': state.history.bbl_addrs[-1] if state.history.bbl_addrs else 0
             }
-            
+
         # Perform the free
         state.heap._free(ptr)
-        
+
     def _setup_taint_tracking(self, state):
         """Set up taint tracking for data flow analysis."""
         # Initialize taint tracking plugin if available
         if hasattr(state, 'plugins'):
             state.register_plugin('taint', TaintTracker())
-            
+
         # Mark user input as tainted
         for i in range(len(state.solver.constraints)):
             constraint = state.solver.constraints[i]
@@ -1290,7 +1294,7 @@ class SymbolicExecutionEngine:
                 if 'arg' in str(var) or 'stdin' in str(var):
                     if hasattr(state.plugins, 'taint'):
                         state.plugins.taint.add_taint(var, 'user_input')
-                        
+
     def _check_race_condition(self, state, project) -> bool:
         """Check for potential race conditions."""
         try:
@@ -1304,16 +1308,25 @@ class SymbolicExecutionEngine:
         except Exception as e:
             self.logger.debug(f"Race condition check failed: {e}")
             return False
-            
+
     def _analyze_synchronization(self, state, project) -> bool:
         """Analyze synchronization primitives usage."""
         # Look for mutex/lock usage
         sync_funcs = ['pthread_mutex_lock', 'pthread_mutex_unlock', 'EnterCriticalSection', 'LeaveCriticalSection']
         sync_count = sum(1 for f in sync_funcs if f in project.kb.functions)
-        
+
+        # Check if state has accessed shared memory without locks
+        try:
+            if hasattr(state, 'mem') and hasattr(state.mem, 'get_symbolic_addrs'):
+                shared_accesses = len(state.mem.get_symbolic_addrs())
+                if shared_accesses > 0 and sync_count < 2:
+                    return True
+        except:
+            pass
+
         # If threading is used but few sync primitives, potential race condition
         return sync_count < 2
-        
+
     def _check_type_confusion(self, state, project) -> bool:
         """Check for potential type confusion vulnerabilities."""
         try:
@@ -1334,19 +1347,19 @@ class SymbolicExecutionEngine:
 
 class TaintTracker:
     """Simple taint tracking plugin for symbolic execution."""
-    
+
     def __init__(self):
         self.tainted_data = {}
         self.taint_propagation = {}
-        
+
     def add_taint(self, data, source):
         """Mark data as tainted from a specific source."""
         self.tainted_data[str(data)] = source
-        
+
     def is_tainted(self, data):
         """Check if data is tainted."""
         return str(data) in self.tainted_data
-        
+
     def get_taint_source(self, data):
         """Get the source of taint for data."""
         return self.tainted_data.get(str(data), None)

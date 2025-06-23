@@ -19,6 +19,9 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ML/AI Libraries
 try:
@@ -93,6 +96,14 @@ except ImportError:
     pdfkit = None
     PDFKIT_AVAILABLE = False
 
+# OpenCL for GPU acceleration
+try:
+    import pyopencl as cl
+    HAS_OPENCL = True
+except ImportError:
+    cl = None
+    HAS_OPENCL = False
+
 # UI Framework
 try:
     from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
@@ -129,10 +140,58 @@ try:
 except ImportError:
     HAS_PYQT = False
     # Create dummy classes to prevent import errors
-    Qt = QThread = QTimer = pyqtSignal = None
-    QColor = QFont = None
-    (QApplication, QWidget, QCheckBox, QComboBox, QDial, QFileDialog,
-     QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget,
-     QListWidgetItem, QPlainTextEdit, QProgressBar, QPushButton, QSlider,
-     QSpinBox, QSplitter, QTableWidget, QTableWidgetItem, QTabWidget,
-     QTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout) = [None] * 25
+    class _DummyWidget:
+        def __init__(self, *args, **kwargs):
+            pass
+        def __call__(self, *args, **kwargs):
+            return self
+        def addWidget(self, *args, **kwargs):
+            """Stub method for adding widgets."""
+            pass
+        def addLayout(self, *args, **kwargs):
+            """Stub method for adding layouts."""
+            pass
+        def addItems(self, *args, **kwargs):
+            """Stub method for adding items."""
+            pass
+        def addStretch(self, *args, **kwargs):
+            """Stub method for adding stretch."""
+            pass
+        def setObjectName(self, *args, **kwargs):
+            """Stub method for setting object name."""
+            pass
+        def setMinimum(self, *args, **kwargs):
+            """Stub method for setting minimum value."""
+            pass
+        def setMaximum(self, *args, **kwargs):
+            """Stub method for setting maximum value."""
+            pass
+        def setValue(self, *args, **kwargs):
+            """Stub method for setting value."""
+            pass
+        def setText(self, *args, **kwargs):
+            """Stub method for setting text."""
+            pass
+        def addTab(self, *args, **kwargs):
+            """Stub method for adding tabs."""
+            pass
+        def timeout(self):
+            """Stub timeout method."""
+            return self
+        def connect(self, *args, **kwargs):
+            """Stub method for connecting signals."""
+            pass
+        def start(self, *args, **kwargs):
+            """Stub method for starting operations."""
+            pass
+        def __getattr__(self, name):
+            logger.debug(f"Dummy widget fallback for attribute: {name}")
+            return _DummyWidget()
+
+    Qt = QThread = QTimer = pyqtSignal = _DummyWidget()
+    QColor = QFont = _DummyWidget()
+    QApplication = QWidget = QCheckBox = QComboBox = QDial = QFileDialog = _DummyWidget()
+    QGroupBox = QHBoxLayout = QHeaderView = QLabel = QLineEdit = QListWidget = _DummyWidget()
+    QListWidgetItem = QPlainTextEdit = QProgressBar = QPushButton = QSlider = _DummyWidget()
+    QSpinBox = QSplitter = QTableWidget = QTableWidgetItem = QTabWidget = _DummyWidget()
+    QTextEdit = QTreeWidget = QTreeWidgetItem = QVBoxLayout = _DummyWidget()

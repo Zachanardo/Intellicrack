@@ -37,6 +37,8 @@ import subprocess
 import traceback
 from typing import Any, Dict, List, Optional
 
+import pkg_resources
+
 try:
     from reportlab.lib.pagesizes import A4, legal, letter
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -103,12 +105,12 @@ class PDFReportGenerator:
         self.title = "Intellicrack Security Analysis Report"
         self.author = "Intellicrack Security Team"
         self.company = "Intellicrack Security"
-        self.logo_path = os.path.join(os.getcwd(), "assets", "icon.ico")
+        self.logo_path = pkg_resources.resource_filename('intellicrack', 'assets/icon.ico')
 
         # Default configuration
         self.report_config = {
             "company_name": "Intellicrack Security",
-            "logo_path": os.path.join(os.getcwd(), "assets", "icon.ico"),
+            "logo_path": pkg_resources.resource_filename('intellicrack', 'assets/icon.ico'),
             "include_timestamps": True,
             "include_charts": True,
             "include_code_snippets": True,
@@ -239,7 +241,11 @@ class PDFReportGenerator:
             Path to the generated PDF report, or None if generation failed
         """
         try:
-            from reportlab.lib import colors
+            try:
+                from reportlab.lib import colors
+            except ImportError:
+                # Fallback when reportlab is not available
+                return None
 
             # Create filename for the report if not provided
             if not output_path:

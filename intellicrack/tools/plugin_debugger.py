@@ -88,7 +88,7 @@ class PluginDebugger:
         self.call_stack = []
         self.exception_breakpoint = False
         self.plugin_module = None
-        
+
         # Enhanced trace data tracking
         self.call_history = []
         self.return_history = []
@@ -215,7 +215,7 @@ class PluginDebugger:
         """Handle line event"""
         filename = frame.f_code.co_filename
         lineno = frame.f_lineno
-        
+
         # Use arg to enhance trace information
         if arg is not None:
             # Log trace data if verbose mode
@@ -270,7 +270,7 @@ class PluginDebugger:
     def _trace_call(self, frame, arg):
         """Handle call event"""
         self.call_stack.append(frame)
-        
+
         # Use arg to track function call information
         if arg is not None:
             # Store call information for analysis
@@ -283,7 +283,7 @@ class PluginDebugger:
             }
             if hasattr(self, 'call_history'):
                 self.call_history.append(call_info)
-            
+
             # Emit call event if in trace mode
             if hasattr(self, 'trace_calls') and self.trace_calls:
                 self.output_queue.put(('call_trace', call_info))
@@ -308,7 +308,7 @@ class PluginDebugger:
         """Handle return event"""
         if self.call_stack and self.call_stack[-1] == frame:
             self.call_stack.pop()
-        
+
         # Use arg to capture return values
         if arg is not None:
             return_info = {
@@ -318,15 +318,15 @@ class PluginDebugger:
                 'return_value': repr(arg) if not isinstance(arg, (bytes, bytearray)) else f"<{type(arg).__name__}: {len(arg)} bytes>",
                 'type': type(arg).__name__
             }
-            
+
             # Track return values for analysis
             if hasattr(self, 'return_history'):
                 self.return_history.append(return_info)
-            
+
             # Emit return event if tracing returns
             if hasattr(self, 'trace_returns') and self.trace_returns:
                 self.output_queue.put(('return_trace', return_info))
-            
+
             # Check for watched return values
             if hasattr(self, 'watched_returns'):
                 for pattern in self.watched_returns:
@@ -348,7 +348,7 @@ class PluginDebugger:
         # Use arg to get detailed exception information
         if arg is not None:
             exc_type, exc_value, exc_tb = arg
-            
+
             # Create comprehensive exception info
             exception_info = {
                 'type': exc_type.__name__ if exc_type else 'Unknown',
@@ -358,24 +358,24 @@ class PluginDebugger:
                 'function': frame.f_code.co_name,
                 'traceback': traceback.format_tb(exc_tb) if exc_tb else []
             }
-            
+
             # Track exception history
             if hasattr(self, 'exception_history'):
                 self.exception_history.append(exception_info)
-            
+
             # Check exception filters
             if hasattr(self, 'exception_filters'):
                 for filter_type in self.exception_filters:
                     if isinstance(exc_value, filter_type):
                         self.output_queue.put(('filtered_exception', exception_info))
                         break
-            
+
             # Handle exception breakpoint
             if self.exception_breakpoint:
                 self._handle_exception(exc_value, frame)
                 # Also provide the full exception info
                 self.output_queue.put(('exception_detail', exception_info))
-        
+
         return self._trace_dispatch
 
     def _pause_at_breakpoint(self, frame, breakpoint: Breakpoint):

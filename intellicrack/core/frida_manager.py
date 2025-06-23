@@ -149,7 +149,8 @@ class FridaOperationLogger:
 
         # Log to file (use INFO for modified returns, DEBUG for monitoring)
         level = logging.INFO if modified else logging.DEBUG
-        msg = f"Hook: {module}!{function_name} | Modified: {modified}"
+        # Add readable message to entry for better debugging
+        entry['readable_msg'] = f"Hook: {module}!{function_name} | Modified: {modified}"
         self.hook_logger.log(level, json.dumps(entry, default=str))
 
     def log_performance(self, metric_name: str, value: float,
@@ -190,6 +191,9 @@ class FridaOperationLogger:
             'success': success,
             'details': details or {}
         }
+
+        # Log the entry to bypass logger
+        self.bypass_logger.info(json.dumps(entry, default=str))
 
         # Update stats
         self.stats['bypasses_attempted'] += 1
@@ -255,6 +259,11 @@ class FridaOperationLogger:
             }, f, indent=2, default=str)
 
         return str(export_dir)
+
+    def error(self, message: str):
+        """Log error message using operation logger"""
+        self.log_operation("error", {"message": message, "level": "error"})
+        self.op_logger.error(message)
 
 
 class ProtectionDetector:
@@ -677,20 +686,25 @@ class FridaManager:
             # Attach to process
             if isinstance(process_identifier, int):
                 session = self.device.attach(process_identifier)
-                process_name = session.get_process_name()
+                # Get process name from device, not session
+                try:
+                    processes = self.device.enumerate_processes()
+                    process_name = next((p.name for p in processes if p.pid == process_identifier), f"pid_{process_identifier}")
+                except:
+                    process_name = f"pid_{process_identifier}"
             else:
                 session = self.device.attach(process_identifier)
                 process_name = process_identifier
 
             # Store session
-            session_id = f"{process_name}_{session.pid}"
+            session_id = f"{process_name}_{process_identifier}"
             self.sessions[session_id] = session
 
             # Log operation
             self.logger.log_operation(
                 "attach_to_process",
                 {
-                    'pid': session.pid,
+                    'pid': process_identifier,
                     'process_name': process_name,
                     'session_id': session_id,
                     'device': str(self.device)
@@ -828,9 +842,10 @@ class FridaManager:
             # Load script
             script.load()
 
-            # Store script
+            # Store script with generated key
             script_key = f"{session_id}:{script_name}"
             self.scripts[script_key] = script
+            logger.debug(f"Stored script with key: {script_key}")
 
             # Log operation
             self.logger.log_operation(
@@ -970,7 +985,7 @@ class FridaManager:
         """Handle messages from Frida scripts including binary data"""
         msg_type = message.get('type')
         payload = message.get('payload', {})
-        
+
         # Handle binary data if present
         if data is not None:
             # Log that we received binary data
@@ -983,11 +998,11 @@ class FridaManager:
                 },
                 success=True
             )
-            
+
             # Process binary data based on payload type
             if isinstance(payload, dict):
                 data_type = payload.get('data_type', 'unknown')
-                
+
                 if data_type == 'memory_dump':
                     # Handle memory dump data
                     self._handle_memory_dump(session_id, script_name, data, payload)
@@ -1286,14 +1301,14 @@ class FridaManager:
             {'method': 'usermode_emulation'}
         )
 
-    def _handle_memory_dump(self, session_id: str, script_name: str, 
+    def _handle_memory_dump(self, session_id: str, script_name: str,
                            data: Any, payload: Dict[str, Any]):
         """Handle memory dump data from Frida scripts"""
         # Extract metadata from payload
         address = payload.get('address', '0x0')
         size = payload.get('size', len(data) if hasattr(data, '__len__') else 0)
         process_name = payload.get('process_name', 'unknown')
-        
+
         # Log the memory dump event
         self.logger.log_operation(
             f"memory_dump:{script_name}",
@@ -1305,11 +1320,11 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Store memory dump for analysis
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         dump_file = self.logger.log_dir / f"memory_dump_{process_name}_{address}_{timestamp}.bin"
-        
+
         try:
             # Write binary data to file
             if isinstance(data, (bytes, bytearray)):
@@ -1319,10 +1334,10 @@ class FridaManager:
                 # Convert to bytes if necessary
                 with open(dump_file, 'wb') as f:
                     f.write(bytes(data))
-                    
+
             # Analyze memory dump for patterns
             self._analyze_memory_dump(data, payload)
-            
+
         except Exception as e:
             logger.error(f"Failed to save memory dump: {e}")
 
@@ -1333,7 +1348,7 @@ class FridaManager:
         window_title = payload.get('window_title', 'unknown')
         capture_time = payload.get('capture_time', datetime.now().isoformat())
         format_type = payload.get('format', 'png')
-        
+
         # Log screenshot event
         self.logger.log_operation(
             f"screenshot:{script_name}",
@@ -1345,19 +1360,19 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Save screenshot
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         screenshot_file = self.logger.log_dir / f"screenshot_{window_title}_{timestamp}.{format_type}"
-        
+
         try:
             with open(screenshot_file, 'wb') as f:
                 f.write(data if isinstance(data, bytes) else bytes(data))
-                
+
             # Perform OCR or pattern detection if needed
             if payload.get('analyze', False):
                 self._analyze_screenshot(data, payload)
-                
+
         except Exception as e:
             logger.error(f"Failed to save screenshot: {e}")
 
@@ -1368,7 +1383,7 @@ class FridaManager:
         file_path = payload.get('file_path', 'unknown')
         operation = payload.get('operation', 'read')  # read/write
         file_size = payload.get('size', len(data) if hasattr(data, '__len__') else 0)
-        
+
         # Log file operation
         self.logger.log_operation(
             f"file_{operation}:{script_name}",
@@ -1380,7 +1395,7 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Analyze file content for patterns
         if operation == 'read':
             # Check for license files, config files, etc.
@@ -1400,7 +1415,7 @@ class FridaManager:
         dst_addr = payload.get('dst_addr', '')
         src_port = payload.get('src_port', 0)
         dst_port = payload.get('dst_port', 0)
-        
+
         # Log network event
         self.logger.log_operation(
             f"network_{direction}:{script_name}",
@@ -1413,7 +1428,7 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Analyze packet content
         if protocol.lower() in ['http', 'https']:
             self._analyze_http_traffic(data, payload)
@@ -1429,7 +1444,7 @@ class FridaManager:
         operation = payload.get('operation', 'unknown')  # encrypt/decrypt
         key_info = payload.get('key_info', {})
         iv = payload.get('iv', None)
-        
+
         # Log encryption event
         self.logger.log_operation(
             f"crypto_{operation}:{script_name}",
@@ -1443,19 +1458,19 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Store encrypted/decrypted data for analysis
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         crypto_file = self.logger.log_dir / f"crypto_{operation}_{algorithm}_{timestamp}.bin"
-        
+
         try:
             with open(crypto_file, 'wb') as f:
                 f.write(data if isinstance(data, bytes) else bytes(data))
-                
+
             # If we have decrypted data, analyze it
             if operation == 'decrypt':
                 self._analyze_decrypted_data(data, payload)
-                
+
         except Exception as e:
             logger.error(f"Failed to save crypto data: {e}")
 
@@ -1465,7 +1480,7 @@ class FridaManager:
         # Extract any available metadata
         data_type = payload.get('data_type', 'binary')
         description = payload.get('description', 'Generic binary data')
-        
+
         # Log the event
         self.logger.log_operation(
             f"binary_data:{script_name}",
@@ -1477,11 +1492,11 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Save the data for later analysis
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         data_file = self.logger.log_dir / f"binary_data_{script_name}_{timestamp}.bin"
-        
+
         try:
             with open(data_file, 'wb') as f:
                 f.write(data if isinstance(data, bytes) else bytes(data))
@@ -1493,7 +1508,7 @@ class FridaManager:
         # Convert to bytes if necessary
         if not isinstance(data, bytes):
             data = bytes(data)
-            
+
         # Look for common patterns
         patterns = {
             'license_key': [b'LICENSE', b'KEY', b'SERIAL', b'ACTIVATION'],
@@ -1502,7 +1517,7 @@ class FridaManager:
             'registry': [b'HKEY_', b'SOFTWARE\\', b'CurrentVersion'],
             'interesting_strings': [b'trial', b'expired', b'registered', b'cracked']
         }
-        
+
         findings = {}
         for category, pattern_list in patterns.items():
             for pattern in pattern_list:
@@ -1519,7 +1534,7 @@ class FridaManager:
                         'offset': idx,
                         'context': context.hex()
                     })
-        
+
         if findings:
             self.logger.log_operation(
                 "memory_analysis",
@@ -1532,8 +1547,40 @@ class FridaManager:
 
     def _analyze_screenshot(self, data: Any, payload: Dict[str, Any]):
         """Analyze screenshot for UI elements or text"""
-        # This would integrate with OCR or image analysis
-        # For now, just log that analysis was requested
+        # Analyze screenshot data for UI elements
+        analysis_results = {
+            'ui_elements': [],
+            'text_content': [],
+            'coordinates': {}
+        }
+
+        # Process image data if provided
+        if data and hasattr(data, '__len__') and len(data) > 0:
+            try:
+                # Attempt basic image analysis on the data
+                analysis_results['data_size'] = len(data)
+                analysis_results['data_type'] = type(data).__name__
+
+                # Look for common UI patterns in raw data
+                if isinstance(data, (bytes, str)):
+                    # Search for common dialog patterns
+                    dialog_patterns = [
+                        b'OK', b'Cancel', b'Yes', b'No', b'Apply',
+                        b'License', b'Trial', b'Activate', b'Register'
+                    ]
+                    for pattern in dialog_patterns:
+                        if pattern in (data if isinstance(data, bytes) else data.encode()):
+                            analysis_results['ui_elements'].append({
+                                'type': 'button',
+                                'text': pattern.decode('utf-8', errors='ignore'),
+                                'confidence': 0.7
+                            })
+
+            except Exception as e:
+                self.logger.error(f"Data analysis failed: {e}")
+                analysis_results['error'] = str(e)
+
+        # Log analysis results with data info
         self.logger.log_operation(
             "screenshot_analysis",
             {
@@ -1551,22 +1598,29 @@ class FridaManager:
                 text_content = data.decode('utf-8', errors='ignore')
             else:
                 text_content = str(data)
-                
+
             # Look for license patterns
             license_indicators = ['expiry', 'trial', 'activation', 'serial', 'key', 'license']
             found_indicators = [ind for ind in license_indicators if ind in text_content.lower()]
-            
+
             if found_indicators:
+                # Extract additional context from payload
+                operation_context = {
+                    'file_path': file_path,
+                    'indicators': found_indicators,
+                    'size': len(data),
+                    'process_name': payload.get('process_name', 'unknown'),
+                    'thread_id': payload.get('thread_id'),
+                    'timestamp': payload.get('timestamp'),
+                    'operation_type': payload.get('operation', 'file_analysis')
+                }
+
                 self.logger.log_operation(
                     "license_file_detected",
-                    {
-                        'file_path': file_path,
-                        'indicators': found_indicators,
-                        'size': len(data)
-                    },
+                    operation_context,
                     success=True
                 )
-                
+
                 # Notify protection detector
                 self.detector.notify_protection_detected(
                     ProtectionType.LICENSE,
@@ -1575,21 +1629,29 @@ class FridaManager:
                         'indicators': found_indicators
                     }
                 )
-                
+
         except Exception as e:
             logger.debug(f"Failed to analyze license file: {e}")
 
     def _analyze_file_write(self, data: Any, file_path: str, payload: Dict[str, Any]):
         """Analyze file write operations for suspicious activity"""
+        # Use payload data for comprehensive analysis
+        write_context = {
+            'file_path': file_path,
+            'operation_type': payload.get('operation', 'write'),
+            'bytes_written': payload.get('bytes', 0),
+            'process_context': payload.get('process', {}),
+            'data_size': len(data) if hasattr(data, '__len__') else 0,
+            'timestamp': payload.get('timestamp')
+        }
+
         # Check for persistence mechanisms
         persistence_paths = ['startup', 'autorun', 'scheduled tasks', 'services']
         if any(path in file_path.lower() for path in persistence_paths):
+            # Use write_context for detailed logging
             self.logger.log_operation(
                 "persistence_attempt",
-                {
-                    'file_path': file_path,
-                    'size': len(data) if hasattr(data, '__len__') else 0
-                },
+                write_context,
                 success=True
             )
 
@@ -1600,7 +1662,7 @@ class FridaManager:
                 text_data = data.decode('utf-8', errors='ignore')
             else:
                 text_data = str(data)
-                
+
             # Look for license-related endpoints
             license_endpoints = ['activate', 'verify', 'license', 'validate', 'auth']
             for endpoint in license_endpoints:
@@ -1614,7 +1676,7 @@ class FridaManager:
                         success=True
                     )
                     break
-                    
+
         except Exception as e:
             logger.debug(f"Failed to analyze HTTP traffic: {e}")
 
@@ -1629,7 +1691,7 @@ class FridaManager:
             },
             success=True
         )
-        
+
         # Notify protection detector
         self.detector.notify_protection_detected(
             ProtectionType.CLOUD,
@@ -1645,7 +1707,7 @@ class FridaManager:
             # Try to interpret as text
             if isinstance(data, bytes):
                 text_data = data.decode('utf-8', errors='ignore')
-                
+
                 # Check if it looks like structured data
                 if text_data.strip().startswith('{') or text_data.strip().startswith('['):
                     # Possible JSON
@@ -1667,7 +1729,7 @@ class FridaManager:
                         },
                         success=True
                     )
-                    
+
         except Exception as e:
             logger.debug(f"Failed to analyze decrypted data: {e}")
 
@@ -1857,8 +1919,9 @@ class FridaManager:
         for session_id, session in self.sessions.items():
             try:
                 session.detach()
-            except:
-                pass
+                logger.debug(f"Detached session {session_id}")
+            except Exception as e:
+                logger.warning(f"Failed to detach session {session_id}: {e}")
 
         # Clear collections
         self.sessions.clear()

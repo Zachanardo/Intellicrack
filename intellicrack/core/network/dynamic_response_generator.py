@@ -751,16 +751,16 @@ class DynamicResponseGenerator:
         except Exception as e:
             self.logger.error(f"Generic response generation error: {e}")
             return b'OK'
-    
+
     def _create_intelligent_fallback(self, context: ResponseContext) -> bytes:
         """Create an intelligent fallback response based on context."""
         try:
             # Analyze request for protocol hints
             request_str = context.request_data.decode('utf-8', errors='ignore')
-            
+
             # Check content type from headers if available
             content_type = context.headers.get('content-type', '').lower() if context.headers else ''
-            
+
             # XML response pattern
             if '<' in request_str and '>' in request_str or 'xml' in content_type:
                 return b'''<?xml version="1.0" encoding="UTF-8"?>
@@ -770,7 +770,7 @@ class DynamicResponseGenerator:
     <message>Request processed successfully</message>
     <timestamp>''' + str(int(context.timestamp)).encode() + b'''</timestamp>
 </response>'''
-            
+
             # JSON response pattern
             elif '{' in request_str or 'json' in content_type:
                 response = {
@@ -781,7 +781,7 @@ class DynamicResponseGenerator:
                     "data": {}
                 }
                 return json.dumps(response).encode('utf-8')
-            
+
             # License-specific patterns
             elif any(word in request_str.lower() for word in ['license', 'auth', 'validate', 'verify']):
                 # Check if it looks like a product-specific request
@@ -793,20 +793,20 @@ class DynamicResponseGenerator:
                     return b'MICROSOFT_LICENSE_VALID'
                 else:
                     return b'LICENSE_VALID'
-            
+
             # HTTP-style response
             elif context.protocol == 'HTTP':
                 return b'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nOK'
-            
+
             # Binary protocol response
             elif not request_str.isprintable():
                 # Return a structured binary response
                 return b'\x00\x01' + b'\x00\x00\x00\x08' + b'SUCCESS\x00'
-            
+
             # Default fallback with more context
             else:
                 return b'SUCCESS'
-                
+
         except Exception as e:
             self.logger.debug(f"Fallback generation error: {e}")
             # Ultimate fallback

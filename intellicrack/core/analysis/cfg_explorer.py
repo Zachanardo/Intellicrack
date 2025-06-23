@@ -24,14 +24,15 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-import numpy as np
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    np = None
+    NUMPY_AVAILABLE = False
 
 # Optional dependencies - graceful fallback if not available
-try:
-    import r2pipe
-    R2PIPE_AVAILABLE = True
-except ImportError:
-    R2PIPE_AVAILABLE = False
+# r2pipe is handled through r2_session in radare2_utils
 
 try:
     import networkx as nx
@@ -51,7 +52,22 @@ try:
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
 
-from ...utils.core.import_checks import CAPSTONE_AVAILABLE, PEFILE_AVAILABLE, capstone, pefile
+try:
+    import capstone
+    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+    CAPSTONE_AVAILABLE = True
+except ImportError:
+    capstone = None
+    CS_ARCH_X86 = CS_MODE_32 = CS_MODE_64 = Cs = None
+    CAPSTONE_AVAILABLE = False
+
+try:
+    import pefile
+    PEFILE_AVAILABLE = True
+except ImportError:
+    pefile = None
+    PEFILE_AVAILABLE = False
+
 from ...utils.tools.radare2_utils import R2Exception, r2_session
 from .radare2_ai_integration import R2AIEngine
 
@@ -61,11 +77,6 @@ from .radare2_imports import R2ImportExportAnalyzer
 from .radare2_scripting import R2ScriptingEngine
 from .radare2_strings import R2StringAnalyzer
 from .radare2_vulnerability_engine import R2VulnerabilityEngine
-
-if CAPSTONE_AVAILABLE and capstone:
-    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
-else:
-    CS_ARCH_X86 = CS_MODE_32 = CS_MODE_64 = Cs = None
 
 try:
     import subprocess
@@ -149,10 +160,12 @@ class CFGExplorer:
 
         if not self.binary_path:
             self.logger.error("No binary path specified")
+            self._show_error_dialog("No binary path specified", "Please specify a valid binary file path.")
             return False
 
         if not NETWORKX_AVAILABLE:
             self.logger.error("NetworkX not available - please install networkx")
+            self._show_error_dialog("Missing Dependency", "NetworkX not available - please install networkx package.")
             return False
 
         try:
@@ -433,7 +446,7 @@ class CFGExplorer:
         function_names = list(self.function_graphs.keys())
 
         for i, func1 in enumerate(function_names):
-            for j, func2 in enumerate(function_names[i+1:], i+1):
+            for _j, func2 in enumerate(function_names[i+1:], i+1):
                 try:
                     graph1 = self.function_graphs[func1]
                     graph2 = self.function_graphs[func2]
@@ -454,7 +467,7 @@ class CFGExplorer:
 
         # Simple structural similarity based on node/edge ratios
         node_ratio = min(graph1.number_of_nodes(), graph2.number_of_nodes()) / max(graph1.number_of_nodes(), graph2.number_of_nodes())
-        
+
         # Calculate edge ratio with safe division
         max_edges = max(graph1.number_of_edges(), graph2.number_of_edges())
         if max_edges > 0:
@@ -761,7 +774,7 @@ class CFGExplorer:
                 continue
 
             license_score = 0
-            for node, node_data in graph.nodes(data=True):
+            for _node, node_data in graph.nodes(data=True):
                 license_score += node_data.get('license_operations', 0)
 
             if license_score > 0:
@@ -819,13 +832,24 @@ class CFGExplorer:
 
         # Calculate overall metrics
         if complexities:
-            complexity_data['overall_metrics'] = {
-                'average_complexity': np.mean(complexities),
-                'max_complexity': np.max(complexities),
-                'min_complexity': np.min(complexities),
-                'std_deviation': np.std(complexities),
-                'total_functions': len(complexities)
-            }
+            if NUMPY_AVAILABLE:
+                complexity_data['overall_metrics'] = {
+                    'average_complexity': np.mean(complexities),
+                    'max_complexity': np.max(complexities),
+                    'min_complexity': np.min(complexities),
+                    'std_deviation': np.std(complexities),
+                    'total_functions': len(complexities)
+                }
+            else:
+                # Use Python built-ins when numpy is not available
+                import statistics
+                complexity_data['overall_metrics'] = {
+                    'average_complexity': statistics.mean(complexities),
+                    'max_complexity': max(complexities),
+                    'min_complexity': min(complexities),
+                    'std_deviation': statistics.stdev(complexities) if len(complexities) > 1 else 0.0,
+                    'total_functions': len(complexities)
+                }
 
         return complexity_data
 
@@ -1160,9 +1184,9 @@ class CFGExplorer:
                     if self.set_current_function(target_function):
                         graph_data = self.get_graph_data()
                         if graph_data:
+                            if isinstance(graph_data, dict):
+                                graph_data['selected_function'] = target_function
                             results['graph_data'] = graph_data
-                            if isinstance(results['graph_data'], dict):
-                                results['graph_data']['selected_function'] = target_function
             except Exception as e:
                 self.logger.debug("Error getting graph data: %s", e)
 
@@ -1291,6 +1315,17 @@ class CFGExplorer:
 
         return summary
 
+    def _show_error_dialog(self, title: str, message: str) -> None:
+        """Show error dialog to user when in GUI mode."""
+        if PYQT_AVAILABLE:
+            try:
+                QMessageBox.critical(None, title, message)
+            except Exception as e:
+                # Fallback to logging if dialog fails
+                self.logger.error(f"Failed to show error dialog: {e}")
+        # Always log the error regardless of dialog display
+        self.logger.error(f"{title}: {message}")
+
 
 def run_deep_cfg_analysis(app):
     """Run deep CFG analysis."""
@@ -1324,7 +1359,7 @@ def run_deep_cfg_analysis(app):
 
         pe = pefile.PE(app.binary_path)
         is_64bit = getattr(pe.FILE_HEADER, 'Machine', 0) == 0x8664
-        if CAPSTONE_AVAILABLE:
+        if CAPSTONE_AVAILABLE and CS_MODE_64 is not None and CS_MODE_32 is not None:
             mode = CS_MODE_64 if is_64bit else CS_MODE_32
         else:
             mode = None

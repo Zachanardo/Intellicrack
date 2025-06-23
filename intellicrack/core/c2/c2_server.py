@@ -72,7 +72,7 @@ class C2Server(BaseC2):
             # Use environment variables with fallback to config values
             https_host = os.environ.get('C2_HTTPS_HOST', https_config.get('host', '0.0.0.0'))
             https_port = int(os.environ.get('C2_HTTPS_PORT', https_config.get('port', 443)))
-            
+
             protocols_config.append({
                 'type': 'https',
                 'server_url': f"https://{https_host}:{https_port}",
@@ -87,7 +87,7 @@ class C2Server(BaseC2):
             dns_domain = os.environ.get('C2_DNS_DOMAIN', dns_config.get('domain', 'example.com'))
             dns_host = os.environ.get('C2_DNS_HOST', dns_config.get('host', '0.0.0.0'))
             dns_port = int(os.environ.get('C2_DNS_PORT', dns_config.get('port', 53)))
-            
+
             protocols_config.append({
                 'type': 'dns',
                 'domain': dns_domain,
@@ -101,7 +101,7 @@ class C2Server(BaseC2):
             # Use environment variables with fallback to config values
             tcp_host = os.environ.get('C2_TCP_HOST', tcp_config.get('host', '0.0.0.0'))
             tcp_port = int(os.environ.get('C2_TCP_PORT', tcp_config.get('port', 4444)))
-            
+
             protocols_config.append({
                 'type': 'tcp',
                 'host': tcp_host,
@@ -488,7 +488,7 @@ class C2Server(BaseC2):
             # Extract command details
             command_type = command.get('type', 'unknown')
             command_data = command.copy()
-            
+
             # Remove type from data to avoid duplication
             if 'type' in command_data:
                 del command_data['type']

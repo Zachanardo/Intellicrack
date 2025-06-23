@@ -41,6 +41,7 @@ class LLMProvider(Enum):
     OLLAMA = "ollama"
     HUGGINGFACE = "huggingface"
     LOCAL_API = "local_api"
+    LOCAL_GGUF = "local_gguf"
 
 
 @dataclass
@@ -467,6 +468,11 @@ class OllamaBackend(LLMBackend):
             }
         }
 
+        # Add tools to request if provided
+        if tools:
+            request_data["tools"] = tools
+            logger.debug(f"Adding {len(tools)} tools to Ollama request")
+
         try:
             response = requests.post(
                 f"{self.base_url}/api/chat",
@@ -493,6 +499,149 @@ class OllamaBackend(LLMBackend):
         # No specific cleanup needed for HTTP client
 
 
+class LocalGGUFBackend(LLMBackend):
+    """Local GGUF model backend using our local server."""
+
+    def __init__(self, config: LLMConfig):
+        super().__init__(config)
+        self.server_url = config.api_base or "http://127.0.0.1:8000"
+        self.gguf_manager = None
+
+    def initialize(self) -> bool:
+        """Initialize GGUF backend."""
+        try:
+            # Import the GGUF manager
+            from .local_gguf_server import gguf_manager
+            self.gguf_manager = gguf_manager
+
+            # Check if server dependencies are available
+            if not self.gguf_manager.server.can_run():
+                logger.error("GGUF server dependencies not available (need Flask and llama-cpp-python)")
+                return False
+
+            # Start server if not running
+            if not self.gguf_manager.is_server_running():
+                logger.info("Starting local GGUF server...")
+                if not self.gguf_manager.start_server():
+                    logger.error("Failed to start GGUF server")
+                    return False
+
+            # Load model if specified and not already loaded
+            if self.config.model_path:
+                if not self.gguf_manager.current_model:
+                    logger.info(f"Loading GGUF model: {self.config.model_path}")
+
+                    # Extract model parameters from config
+                    model_params = {
+                        "context_length": self.config.context_length,
+                        "gpu_layers": getattr(self.config, 'gpu_layers', 0),
+                        "threads": getattr(self.config, 'threads', None),
+                        "batch_size": getattr(self.config, 'batch_size', 512),
+                        "temperature": self.config.temperature
+                    }
+
+                    # Filter out custom params if they exist
+                    if hasattr(self.config, 'custom_params') and self.config.custom_params:
+                        model_params.update(self.config.custom_params)
+
+                    if not self.gguf_manager.server.load_model(self.config.model_path, **model_params):
+                        logger.error("Failed to load GGUF model")
+                        return False
+
+            # Test server connection
+            try:
+                import requests
+            except ImportError:
+                logger.error("requests module required for GGUF backend")
+                return False
+            try:
+                response = requests.get(f"{self.server_url}/health", timeout=5)
+                if response.status_code == 200:
+                    self.is_initialized = True
+                    logger.info("Local GGUF backend initialized")
+                    return True
+                else:
+                    logger.error("GGUF server not responding properly")
+                    return False
+            except Exception as e:
+                logger.error(f"Failed to connect to GGUF server: {e}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Failed to initialize GGUF backend: {e}")
+            return False
+
+    def chat(self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None) -> LLMResponse:
+        """Chat with local GGUF model."""
+        if not self.is_initialized:
+            raise RuntimeError("Backend not initialized")
+
+        try:
+            import requests
+        except ImportError:
+            return LLMResponse(
+                content="GGUF backend requires 'requests' library",
+                finish_reason="error"
+            )
+
+        # Convert messages to OpenAI-compatible format
+        openai_messages = []
+        for msg in messages:
+            openai_messages.append({
+                "role": msg.role,
+                "content": msg.content
+            })
+
+        request_data = {
+            "model": self.config.model_name,
+            "messages": openai_messages,
+            "max_tokens": self.config.max_tokens,
+            "temperature": self.config.temperature,
+            "stream": False
+        }
+
+        # Add tools if supported (future enhancement)
+        if tools and self.config.tools_enabled:
+            # Tools support could be added here in the future
+            pass
+
+        try:
+            response = requests.post(
+                f"{self.server_url}/v1/chat/completions",
+                json=request_data,
+                timeout=120  # Longer timeout for local inference
+            )
+            response.raise_for_status()
+
+            result = response.json()
+
+            if "error" in result:
+                raise RuntimeError(f"GGUF server error: {result['error']}")
+
+            choice = result.get("choices", [{}])[0]
+            message = choice.get("message", {})
+            content = message.get("content", "")
+
+            usage = result.get("usage", {})
+
+            return LLMResponse(
+                content=content,
+                usage=usage,
+                finish_reason=choice.get("finish_reason", "stop"),
+                model=result.get("model", self.config.model_name)
+            )
+
+        except Exception as e:
+            logger.error(f"GGUF API error: {e}")
+            raise
+
+    def shutdown(self):
+        """Shutdown GGUF backend."""
+        super().shutdown()
+        # Could stop the server here, but leave it running for other instances
+        # self.gguf_manager.stop_server() if self.gguf_manager else None
+
+
 class LLMManager:
     """Manager for LLM backends and configurations."""
 
@@ -517,6 +666,8 @@ class LLMManager:
                     backend = LlamaCppBackend(config)
                 elif config.provider == LLMProvider.OLLAMA:
                     backend = OllamaBackend(config)
+                elif config.provider == LLMProvider.LOCAL_GGUF:
+                    backend = LocalGGUFBackend(config)
                 else:
                     raise ValueError(f"Unsupported LLM provider: {config.provider}")
 
@@ -597,6 +748,237 @@ class LLMManager:
         if llm_id in self.backends:
             self.backends[llm_id].register_tools(tools)
             logger.info("Registered %d tools for LLM: %s", len(tools), llm_id)
+
+    def generate_script_content(self, prompt: str, script_type: str, context_data: Dict[str, Any] = None,
+                               max_tokens: int = 4000, llm_id: Optional[str] = None) -> Optional[str]:
+        """Generate script content using LLM."""
+        with self.lock:
+            backend_id = llm_id or self.active_backend
+
+            if not backend_id or backend_id not in self.backends:
+                logger.error("No active LLM backend available for script generation")
+                return None
+
+            # Prepare system prompt for script generation
+            system_prompt = f"""You are an expert {script_type} script developer for binary reverse engineering and protection bypass.
+
+CRITICAL REQUIREMENTS:
+- Generate ONLY real, functional {script_type} code
+- NO placeholders, stubs, or "TODO" comments
+- Every function must be completely implemented
+- All API calls must be correct and properly formatted
+- Scripts must be production-ready and immediately executable
+
+Your task: Generate a complete {script_type} script based on the user's requirements.
+Return ONLY the script code, no explanations or markdown formatting."""
+
+            # Add context if provided
+            if context_data:
+                context_info = f"\nContext Information:\n{json.dumps(context_data, indent=2)}\n"
+                system_prompt += context_info
+
+            # Create messages
+            messages = [
+                LLMMessage(role="system", content=system_prompt),
+                LLMMessage(role="user", content=prompt)
+            ]
+
+            # Update token limit for the backend if possible
+            backend = self.backends[backend_id]
+            original_max_tokens = backend.config.max_tokens
+            backend.config.max_tokens = max_tokens
+
+            try:
+                response = backend.chat(messages)
+                if response and response.content:
+                    logger.info("Generated %s script: %d characters", script_type, len(response.content))
+                    return response.content.strip()
+                else:
+                    logger.error("LLM returned empty response for script generation")
+                    return None
+
+            except Exception as e:
+                logger.error("Script generation failed: %s", e)
+                return None
+            finally:
+                # Restore original token limit
+                backend.config.max_tokens = original_max_tokens
+
+    def refine_script_content(self, original_script: str, error_feedback: str,
+                             test_results: Dict[str, Any], script_type: str,
+                             llm_id: Optional[str] = None) -> Optional[str]:
+        """Refine existing script based on test results and feedback."""
+        with self.lock:
+            backend_id = llm_id or self.active_backend
+
+            if not backend_id or backend_id not in self.backends:
+                logger.error("No active LLM backend available for script refinement")
+                return None
+
+            # Prepare refinement prompt
+            system_prompt = f"""You are an expert {script_type} script developer. Your task is to fix and improve existing scripts.
+
+CRITICAL REQUIREMENTS:
+- Generate ONLY real, functional {script_type} code
+- NO placeholders, stubs, or "TODO" comments
+- Fix all errors and improve reliability
+- Maintain the original script's purpose and structure
+- Return ONLY the complete refined script code
+
+Analyze the test results and errors, then provide a complete improved version of the script."""
+
+            user_prompt = f"""Original {script_type} Script:
+```{script_type.lower()}
+{original_script}
+```
+
+Error Feedback:
+{error_feedback}
+
+Test Results:
+{json.dumps(test_results, indent=2)}
+
+Please provide the complete refined script that fixes these issues."""
+
+            messages = [
+                LLMMessage(role="system", content=system_prompt),
+                LLMMessage(role="user", content=user_prompt)
+            ]
+
+            try:
+                response = self.backends[backend_id].chat(messages)
+                if response and response.content:
+                    logger.info("Refined %s script: %d characters", script_type, len(response.content))
+                    return response.content.strip()
+                else:
+                    logger.error("LLM returned empty response for script refinement")
+                    return None
+
+            except Exception as e:
+                logger.error("Script refinement failed: %s", e)
+                return None
+
+    def analyze_protection_patterns(self, binary_data: Dict[str, Any],
+                                   llm_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Analyze binary data to identify protection patterns."""
+        with self.lock:
+            backend_id = llm_id or self.active_backend
+
+            if not backend_id or backend_id not in self.backends:
+                logger.error("No active LLM backend available for pattern analysis")
+                return None
+
+            system_prompt = """You are an expert binary analyst specializing in protection mechanism detection.
+
+Analyze the provided binary data and identify:
+1. License check mechanisms
+2. Time-based protections (trial timers, expiration)
+3. Network validation systems
+4. Anti-debugging techniques
+5. VM detection methods
+6. Cryptographic validations
+
+Return a JSON object with detected patterns and recommended bypass strategies."""
+
+            user_prompt = f"""Binary Analysis Data:
+{json.dumps(binary_data, indent=2)}
+
+Please analyze this data and provide detailed protection pattern analysis in JSON format."""
+
+            messages = [
+                LLMMessage(role="system", content=system_prompt),
+                LLMMessage(role="user", content=user_prompt)
+            ]
+
+            try:
+                response = self.backends[backend_id].chat(messages)
+                if response and response.content:
+                    # Try to parse as JSON
+                    try:
+                        result = json.loads(response.content)
+                        logger.info("Protection pattern analysis completed")
+                        return result
+                    except json.JSONDecodeError:
+                        # Return as text if not valid JSON
+                        logger.warning("LLM response was not valid JSON, returning as text")
+                        return {"analysis": response.content}
+                else:
+                    logger.error("LLM returned empty response for pattern analysis")
+                    return None
+
+            except Exception as e:
+                logger.error("Protection pattern analysis failed: %s", e)
+                return None
+
+    def stream_script_generation(self, prompt: str, script_type: str,
+                                context_data: Dict[str, Any] = None,
+                                llm_id: Optional[str] = None):
+        """Generate script with streaming support for long generation times."""
+        # Note: Streaming implementation would depend on backend support
+        # For now, fall back to regular generation
+        logger.info("Streaming script generation requested, falling back to standard generation")
+        return self.generate_script_content(prompt, script_type, context_data, llm_id=llm_id)
+
+    def validate_script_syntax(self, script_content: str, script_type: str,
+                              llm_id: Optional[str] = None) -> Dict[str, Any]:
+        """Use LLM to validate script syntax and detect common issues."""
+        with self.lock:
+            backend_id = llm_id or self.active_backend
+
+            if not backend_id or backend_id not in self.backends:
+                logger.error("No active LLM backend available for script validation")
+                return {"valid": False, "errors": ["No LLM backend available"]}
+
+            system_prompt = f"""You are a {script_type} code validator and syntax checker.
+
+Analyze the provided {script_type} script and check for:
+1. Syntax errors
+2. API usage errors
+3. Missing dependencies
+4. Logic errors
+5. Security issues
+6. Best practice violations
+
+Return a JSON object with validation results:
+{{
+    "valid": true/false,
+    "errors": ["list of errors"],
+    "warnings": ["list of warnings"],
+    "suggestions": ["list of improvements"]
+}}"""
+
+            user_prompt = f"""{script_type} Script to Validate:
+```{script_type.lower()}
+{script_content}
+```
+
+Please analyze this script and return validation results in JSON format."""
+
+            messages = [
+                LLMMessage(role="system", content=system_prompt),
+                LLMMessage(role="user", content=user_prompt)
+            ]
+
+            try:
+                response = self.backends[backend_id].chat(messages)
+                if response and response.content:
+                    try:
+                        result = json.loads(response.content)
+                        logger.info("Script validation completed")
+                        return result
+                    except json.JSONDecodeError:
+                        logger.warning("LLM validation response was not valid JSON")
+                        return {
+                            "valid": False,
+                            "errors": ["Failed to parse validation response"],
+                            "raw_response": response.content
+                        }
+                else:
+                    return {"valid": False, "errors": ["Empty LLM response"]}
+
+            except Exception as e:
+                logger.error("Script validation failed: %s", e)
+                return {"valid": False, "errors": [str(e)]}
 
     def shutdown(self):
         """Shutdown all LLM backends."""

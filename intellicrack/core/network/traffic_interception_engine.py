@@ -35,17 +35,9 @@ try:
 except ImportError:
     HAS_SCAPY = False
 
-try:
-    import pcap
-    HAS_PCAP = True
-except ImportError:
-    HAS_PCAP = False
+# Note: Removed pcap import - now using Scapy exclusively for packet capture
+# Legacy pcap support removed in favor of superior Scapy implementation
 
-try:
-    import netfilterqueue
-    HAS_NETFILTER = True
-except ImportError:
-    HAS_NETFILTER = False
 
 
 @dataclass
@@ -213,9 +205,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             if HAS_SCAPY and is_root:
                 self.logger.info("Using Scapy for Linux packet capture (root required)")
                 return "scapy"
-            elif HAS_PCAP:
-                self.logger.info("Using libpcap for packet capture")
-                return "pcap"
+            # Note: libpcap support removed - using Scapy for all packet capture
             else:
                 self.logger.warning("Limited capture capabilities, using socket-based capture")
                 return "socket"
@@ -296,8 +286,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         try:
             if self.capture_backend == "scapy":
                 self._scapy_capture()
-            elif self.capture_backend == "pcap":
-                self._pcap_capture()
+            # Note: pcap backend removed - using Scapy exclusively
             else:
                 self._socket_capture()
 
@@ -360,98 +349,8 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
         except Exception as e:
             self.logger.error(f"Scapy capture error: {e}")
-    def _pcap_capture(self):
-        """Packet capture using libpcap"""
-        if not HAS_PCAP:
-            return
-
-        try:
-            # Create pcap handle
-            pc = pcap.pcap(
-                name=None,  # Default interface
-                promisc=self.capture_config['promiscuous_mode'],
-                immediate=True,
-                timeout_ms=self.capture_config['timeout_ms']
-            )
-
-            # Build filter
-            port_filter = " or ".join([f"port {port}" for port in self.license_ports])
-            filter_expr = f"tcp and ({port_filter})"
-            pc.setfilter(filter_expr)
-
-            self.logger.info(f"Starting libpcap capture with filter: {filter_expr}")
-
-            for timestamp, raw_packet in pc:
-                if not self.running:
-                    break
-
-                try:
-                    # Parse Ethernet header (14 bytes)
-                    if len(raw_packet) < 14:
-                        continue
-
-                    eth_header = raw_packet[:14]
-                    eth_protocol = struct.unpack('!H', eth_header[12:14])[0]
-
-                    # Check for IPv4 (0x0800)
-                    if eth_protocol != 0x0800:
-                        continue
-
-                    # Parse IP header
-                    ip_header = raw_packet[14:34]
-                    if len(ip_header) < 20:
-                        continue
-
-                    ip_data = struct.unpack('!BBHHHBBH4s4s', ip_header)
-                    protocol = ip_data[6]
-
-                    # Check for TCP (6)
-                    if protocol != 6:
-                        continue
-
-                    source_ip = socket.inet_ntoa(ip_data[8])
-                    dest_ip = socket.inet_ntoa(ip_data[9])
-
-                    # Parse TCP header
-                    tcp_header = raw_packet[34:54]
-                    if len(tcp_header) < 20:
-                        continue
-
-                    tcp_data = struct.unpack('!HHLLBBHHH', tcp_header)
-                    source_port = tcp_data[0]
-                    dest_port = tcp_data[1]
-                    flags = tcp_data[5]
-
-                    # Extract payload
-                    tcp_header_length = (tcp_data[4] >> 4) * 4
-                    payload_start = 34 + tcp_header_length
-                    payload = raw_packet[payload_start:] if payload_start < len(raw_packet) else b''
-
-                    # Create intercepted packet
-                    intercepted = InterceptedPacket(
-                        source_ip=source_ip,
-                        dest_ip=dest_ip,
-                        source_port=source_port,
-                        dest_port=dest_port,
-                        protocol='tcp',
-                        data=payload,
-                        timestamp=timestamp,
-                        packet_size=len(raw_packet),
-                        flags={
-                            'syn': bool(flags & 0x02),
-                            'ack': bool(flags & 0x10),
-                            'fin': bool(flags & 0x01),
-                            'rst': bool(flags & 0x04)
-                        }
-                    )
-
-                    self._queue_packet(intercepted)
-
-                except Exception as e:
-                    self.logger.debug(f"Error processing packet: {e}")
-
-        except Exception as e:
-            self.logger.error(f"libpcap capture error: {e}")
+    # Note: _pcap_capture method removed - now using Scapy exclusively for packet capture
+    # This provides better cross-platform compatibility and enhanced features
 
     def _socket_capture(self):
         """Basic socket-based capture for localhost traffic"""

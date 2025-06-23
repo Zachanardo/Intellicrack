@@ -39,6 +39,15 @@ try:
 except ImportError:
     NUMPY_AVAILABLE = False
 
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    TORCH_AVAILABLE = False
+
+logger = logging.getLogger(__name__)
+
 
 def process_binary_chunks(binary_path: str, chunk_size: int = 1024 * 1024,
                          processor_func: Optional[Callable] = None,
@@ -298,7 +307,7 @@ def run_distributed_entropy_analysis(binary_path: str,
 
         # Calculate entropy using shared utility
         entropy = calculate_byte_entropy(data)
-        
+
         # Calculate byte frequency
         freq = {}
         for byte in data:
@@ -848,20 +857,25 @@ def _distributed_hash_calculation(binary_path: str,
 
     # For hash calculation, we need sequential processing
     # but can parallelize multiple hash algorithms
-    algorithms = ["md5", "sha1", "sha256", "sha512"]
-    results = {"hashes": {}}
+
+    # Get algorithms from config or use defaults
+    algorithms = config.get('hash_algorithms', ["md5", "sha1", "sha256", "sha512"])
+    chunk_size = config.get('chunk_size', 8192)
+    max_workers = config.get('max_workers', len(algorithms))
+
+    results = {"hashes": {}, "config_used": config}
 
     def calculate_hash(algo: str) -> Tuple[str, str]:
         """Calculate hash for given algorithm."""
         h = hashlib.new(algo)
 
         with open(binary_path, 'rb') as f:
-            while chunk := f.read(8192):
+            while chunk := f.read(chunk_size):
                 h.update(chunk)
 
         return algo, h.hexdigest()
 
-    with ThreadPoolExecutor(max_workers=len(algorithms)) as executor:
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_algo = {
             executor.submit(calculate_hash, algo): algo
             for algo in algorithms
@@ -887,14 +901,16 @@ def _check_gpu_backends() -> Dict[str, Any]:
     }
 
     # Check for CUDA
-    try:
-        import torch
-        if torch.cuda.is_available():
-            backends["available"] = True
-            backends["backend"] = "cuda"
-            backends["devices"] = [f"cuda:{i}" for i in range(torch.cuda.device_count())]
-            return backends
-    except ImportError:
+    if TORCH_AVAILABLE:
+        try:
+            if torch.cuda.is_available():
+                backends["available"] = True
+                backends["backend"] = "cuda"
+                backends["devices"] = [f"cuda:{i}" for i in range(torch.cuda.device_count())]
+                return backends
+        except Exception as e:
+            logger.debug("CUDA backend check failed: %s", e)
+    else:
         logger.debug("CUDA backend not available: PyTorch not installed")
 
     # Check for OpenCL
@@ -916,11 +932,50 @@ def _check_gpu_backends() -> Dict[str, Any]:
 
 def _run_cpu_fallback(task_type: str, data: Any) -> Dict[str, Any]:
     """CPU fallback for GPU tasks."""
-    return {
+    import time
+    start_time = time.time()
+
+    # Process data based on task type
+    result = {
         "backend": "cpu",
         "task_type": task_type,
-        "message": "Processed on CPU"
+        "message": "Processed on CPU",
+        "data_info": {
+            "type": type(data).__name__,
+            "size": len(data) if hasattr(data, '__len__') else 1
+        }
     }
+
+    # Perform basic CPU processing based on task type
+    if task_type == "hash_calculation" and isinstance(data, (str, bytes)):
+        import hashlib
+        if isinstance(data, str):
+            data = data.encode()
+        result["cpu_hash"] = hashlib.sha256(data).hexdigest()
+
+    elif task_type == "analysis" and hasattr(data, '__len__'):
+        # Basic analysis on CPU
+        result["analysis"] = {
+            "item_count": len(data),
+            "complexity": "low" if len(data) < 1000 else "medium" if len(data) < 10000 else "high"
+        }
+
+    elif task_type == "pattern_matching" and isinstance(data, (str, bytes)):
+        # Simple pattern matching
+        if isinstance(data, bytes):
+            data = data.decode('utf-8', errors='ignore')
+
+        patterns = ['license', 'trial', 'crack', 'serial', 'key']
+        matches = [pattern for pattern in patterns if pattern in data.lower()]
+        result["pattern_matches"] = matches
+
+    else:
+        # Generic processing
+        result["processed"] = True
+        result["data_summary"] = str(data)[:100] if data else "No data"
+
+    result["processing_time"] = time.time() - start_time
+    return result
 
 
 def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
@@ -930,8 +985,7 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
 
     try:
         # Check if GPU libraries are available
-        import torch
-        if torch.cuda.is_available():
+        if TORCH_AVAILABLE and torch.cuda.is_available():
             # Convert patterns and data to GPU tensors for fast matching
             patterns = config.get('patterns', [])
             search_data = data.get('data', b'')
@@ -1033,7 +1087,12 @@ def _gpu_ml_inference(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
     start_time = time.time()
 
     try:
-        import torch
+        if not TORCH_AVAILABLE:
+            return {
+                "error": "PyTorch not available",
+                "backend": "cpu",
+                "processing_time": time.time() - start_time
+            }
 
         # Check for GPU availability
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

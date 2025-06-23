@@ -23,6 +23,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from typing import Any, Dict, List, Optional
 
+import pkg_resources
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import (
@@ -48,6 +49,7 @@ from ..config import CONFIG
 from ..core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
 from ..core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 from ..utils.logger import get_logger
+from .dialogs.program_selector_dialog import show_program_selector
 
 # Configure module logger
 logger = get_logger(__name__)
@@ -318,6 +320,11 @@ class IntellicrackMainWindow(QMainWindow):
         open_action.triggered.connect(self._browse_for_file)
         file_menu.addAction(open_action)
 
+        program_selector_action = QAction('Program Selector...', self)
+        program_selector_action.setShortcut('Ctrl+Shift+O')
+        program_selector_action.triggered.connect(self._show_program_selector)
+        file_menu.addAction(program_selector_action)
+
         file_menu.addSeparator()
 
         exit_action = QAction('Exit', self)
@@ -341,7 +348,7 @@ class IntellicrackMainWindow(QMainWindow):
     def _apply_initial_settings(self):
         """Apply initial application settings."""
         # Set window icon if available
-        icon_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'icon.png')
+        icon_path = pkg_resources.resource_filename('intellicrack', 'assets/icon.ico')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
@@ -388,6 +395,82 @@ class IntellicrackMainWindow(QMainWindow):
 
             self.update_status.emit(f"Selected: {os.path.basename(file_path)}")
             self.logger.info("Selected binary file: %s", file_path)
+
+    def _show_program_selector(self):
+        """Show the program selector dialog."""
+        try:
+            self.logger.info("Opening Program Selector")
+
+            # Show the program selector dialog
+            result = show_program_selector(self)
+
+            if result:
+                program_info = result['program_info']
+                installation_folder = result['installation_folder']
+                licensing_files = result['licensing_files']
+                auto_analyze = result['auto_analyze']
+
+                self.logger.info(f"Selected program: {program_info['display_name']}")
+
+                # Update UI with selected program
+                if program_info.get('executable_paths'):
+                    # Use the first executable path as the binary to analyze
+                    selected_executable = program_info['executable_paths'][0]
+                    self.binary_path = selected_executable
+                    self.file_path_label.setText(f"{program_info['display_name']} ({os.path.basename(selected_executable)})")
+                    self.file_path_label.setToolTip(f"Program: {program_info['display_name']}\nPath: {selected_executable}\nInstall Location: {installation_folder}")
+
+                    # Enable analysis buttons
+                    self.analyze_button.setEnabled(True)
+                    self.scan_vulnerabilities_button.setEnabled(True)
+                    self.generate_report_button.setEnabled(True)
+
+                    # Display program information
+                    program_details = f"""Selected Program Information:
+Name: {program_info['display_name']}
+Version: {program_info.get('version', 'Unknown')}
+Publisher: {program_info.get('publisher', 'Unknown')}
+Architecture: {program_info.get('architecture', 'Unknown')}
+Install Location: {installation_folder}
+Executable: {selected_executable}
+Discovery Method: {program_info.get('discovery_method', 'Unknown')}
+Confidence Score: {program_info.get('confidence_score', 0):.2f}
+Analysis Priority: {program_info.get('analysis_priority', 0)}
+
+Licensing Files Found: {len(licensing_files)}"""
+
+                    if licensing_files:
+                        program_details += "\nHigh-Priority Licensing Files:"
+                        for lic_file in licensing_files[:5]:  # Show top 5
+                            program_details += f"\n- {os.path.basename(lic_file['path'])} (Priority: {lic_file['priority']})"
+
+                    self.info_display.setPlainText(program_details)
+
+                    status_msg = f"Selected: {program_info['display_name']} from {program_info.get('discovery_method', 'unknown')}"
+                    self.update_status.emit(status_msg)
+
+                    # Auto-analyze if requested
+                    if auto_analyze and licensing_files:
+                        QMessageBox.information(
+                            self,
+                            "Auto-Analysis",
+                            f"Starting automatic analysis of {program_info['display_name']} and {len(licensing_files)} licensing files."
+                        )
+                        self._run_analysis()
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "No Executable Found",
+                        f"No executable files found for {program_info['display_name']}. Please select a different program."
+                    )
+
+        except Exception as e:
+            self.logger.error(f"Error in Program Selector: {e}")
+            QMessageBox.critical(
+                self,
+                "Program Selector Error",
+                f"An error occurred while opening the Program Selector:\n{str(e)}"
+            )
 
     def _run_analysis(self):
         """Run binary analysis."""

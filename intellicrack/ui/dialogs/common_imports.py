@@ -45,12 +45,16 @@ except ImportError:
 
     # Stub classes for when PyQt is not available
     class QDialog:
+        """Stub QDialog class for non-PyQt environments."""
         pass
 
     class QThread:
+        """Stub QThread class for non-PyQt environments."""
         pass
 
     def pyqtSignal(*args, **kwargs):
+        """Stub pyqtSignal function for non-PyQt environments."""
+        _ = args, kwargs
         return lambda: None
 
 logger = logging.getLogger(__name__)

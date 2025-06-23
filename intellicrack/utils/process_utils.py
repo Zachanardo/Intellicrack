@@ -483,7 +483,7 @@ def find_processes_by_pattern(pattern: str) -> List[Dict[str, Any]]:
 def detect_hardware_dongles() -> List[Dict[str, Any]]:
     """
     Detect hardware dongles connected to the system.
-    
+
     Returns:
         List of detected hardware dongles with their information
     """
@@ -550,7 +550,7 @@ def detect_hardware_dongles() -> List[Dict[str, Any]]:
 def detect_tpm_protection() -> Dict[str, Any]:
     """
     Detect TPM (Trusted Platform Module) protection on the system.
-    
+
     Returns:
         Dictionary with TPM detection results
     """
@@ -580,7 +580,6 @@ def detect_tpm_protection() -> Dict[str, Any]:
                         if line.strip():
                             parts = line.strip().split()
                             if len(parts) >= 3:
-                                is_activated = parts[0]
                                 is_enabled = parts[1]
                                 version = parts[2]
 

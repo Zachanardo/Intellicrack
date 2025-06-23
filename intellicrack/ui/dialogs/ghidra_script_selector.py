@@ -45,8 +45,8 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from ...utils.tools.ghidra_script_manager import GhidraScript, get_script_manager
 from ...utils.logger import get_logger
+from ...utils.tools.ghidra_script_manager import GhidraScript, get_script_manager
 
 logger = get_logger(__name__)
 
@@ -440,6 +440,7 @@ class GhidraScriptSelector(QDialog):
 
     def _on_search_changed(self, text):
         """Handle search text change."""
+        _ = text
         # Debounce search with timer
         if hasattr(self, '_search_timer'):
             self._search_timer.stop()
@@ -451,6 +452,7 @@ class GhidraScriptSelector(QDialog):
 
     def _on_category_changed(self, category):
         """Handle category filter change."""
+        _ = category
         self._populate_tree()
 
     def _on_show_invalid_changed(self, state):
@@ -460,6 +462,7 @@ class GhidraScriptSelector(QDialog):
 
     def _on_item_double_clicked(self, item, column):
         """Handle double-click on item."""
+        _ = column
         script_path = item.data(0, Qt.UserRole)
         if script_path:
             script = self.script_manager.get_script(script_path)

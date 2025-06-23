@@ -33,6 +33,7 @@ class AIAssistant:
     """AI assistant for code analysis and suggestions."""
 
     def __init__(self):
+        """Initialize AI tools with LLM manager."""
         self.llm_manager = None
         self._llm_manager = None
 
@@ -247,20 +248,58 @@ class AIAssistant:
         import datetime
         return datetime.datetime.now().isoformat()
 
-    def get_suggestions(self, context: str) -> List[str]:  # pylint: disable=unused-argument
+    def get_suggestions(self, context: str) -> List[str]:
         """Get AI suggestions for given context."""
-        return [
-            "Consider analyzing the binary structure",
-            "Look for protection mechanisms",
-            "Check for network communications",
-            "Examine string patterns"
-        ]
+        # Analyze context to provide targeted suggestions
+        context_lower = context.lower()
+        suggestions = []
+
+        if "license" in context_lower or "activation" in context_lower:
+            suggestions.extend([
+                "Analyze license validation routines",
+                "Search for activation key checks",
+                "Look for trial period limitations",
+                "Examine license file dependencies"
+            ])
+        elif "protection" in context_lower or "obfuscation" in context_lower:
+            suggestions.extend([
+                "Detect packing and obfuscation",
+                "Identify anti-debugging techniques",
+                "Look for virtual machine detection",
+                "Analyze code flow obfuscation"
+            ])
+        elif "network" in context_lower or "communication" in context_lower:
+            suggestions.extend([
+                "Monitor network traffic patterns",
+                "Analyze protocol communications",
+                "Check for license server connections",
+                "Examine SSL/TLS certificate validation"
+            ])
+        elif "vulnerability" in context_lower or "exploit" in context_lower:
+            suggestions.extend([
+                "Scan for buffer overflow opportunities",
+                "Look for privilege escalation vectors",
+                "Analyze input validation weaknesses",
+                "Check for race condition vulnerabilities"
+            ])
+        else:
+            # Default general suggestions
+            suggestions.extend([
+                "Analyze the binary structure and format",
+                "Look for protection mechanisms and obfuscation",
+                "Check for network communications and protocols",
+                "Examine string patterns and embedded data",
+                "Review import tables and external dependencies"
+            ])
+
+        return suggestions[:5]  # Return top 5 suggestions
 
 
 class CodeAnalyzer:
     """Advanced code analyzer with AI capabilities."""
 
     def __init__(self):
+        """Initialize code analyzer with AI assistant."""
         self.ai_assistant = AIAssistant()
 
     def analyze_binary(self, file_path: str) -> Dict[str, Any]:

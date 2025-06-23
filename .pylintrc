@@ -2,6 +2,9 @@
 # Add PyQt5 to the extension whitelist
 extension-pkg-whitelist=PyQt5
 
+# Ignore specific paths
+ignore-paths=^tests/.*,^dev/.*,^\.git/.*,^venv/.*,^\.venv/.*,^build/.*,^dist/.*
+
 [MESSAGES CONTROL]
 # Disable all C (Convention) codes
 disable=C

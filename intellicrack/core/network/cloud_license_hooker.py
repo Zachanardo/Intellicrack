@@ -20,7 +20,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import copy
 import hashlib
 import json
 import logging
@@ -435,6 +434,7 @@ class CloudLicenseResponseGenerator:
             dict: Customized template
         """
         # Create a deep copy of the template
+        import copy
         result = copy.deepcopy(template)
 
         # Extract information from request
@@ -499,7 +499,7 @@ class CloudLicenseResponseGenerator:
 
         # Set current date for issued date if not present
         if 'issuedDate' not in result:
-            result['issuedDate'] = datetime.datetime.now().strftime('%Y-%m-%d')
+            result['issuedDate'] = datetime.now().strftime('%Y-%m-%d')
 
         return result
 
@@ -716,7 +716,6 @@ class CloudLicenseResponseGenerator:
         try:
             import ctypes
             import platform
-            from ctypes import wintypes
 
             if platform.system() != 'Windows':
                 self.logger.warning("Network API hooking only supported on Windows")
@@ -727,10 +726,10 @@ class CloudLicenseResponseGenerator:
 
             # Initialize Windows API functions for hooking
             kernel32 = ctypes.windll.kernel32
-            user32 = ctypes.windll.user32
 
-            # Get current process handle
-            current_process = kernel32.GetCurrentProcess()
+            # Get current process handle for potential future use
+            if hasattr(kernel32, 'GetCurrentProcess'):
+                kernel32.GetCurrentProcess()
 
             # Hook key Winsock functions
             winsock_apis = [
@@ -803,7 +802,7 @@ class CloudLicenseResponseGenerator:
                 func_addr = getattr(dll, function_name)
                 if func_addr:
                     # Store original function for later restoration
-                    self.original_functions[f"{dll_name}:{function_name}"] = func_addr
+                    self._original_functions[f"{dll_name}:{function_name}"] = func_addr
                     self.logger.debug("Hook handler registered for %s:%s", dll_name, function_name, extra={'handler': str(hook_handler)})
 
                     # In a real implementation, this would use techniques like:
@@ -963,17 +962,17 @@ class CloudLicenseResponseGenerator:
             if args and len(args) >= 2:
                 original_host = args[0] if isinstance(args[0], str) else str(args[0])
                 original_port = args[1] if len(args) > 1 else 80
-                
+
                 # Log redirection details
                 self.logger.info(f"Redirecting {original_host}:{original_port} to 127.0.0.1:8080")
-                
+
                 # Store original target for response crafting
                 self.license_targets[original_host] = {
                     'host': original_host,
                     'port': original_port,
                     'redirect_time': time.time()
                 }
-                
+
                 # Return success code based on successful redirection setup
                 return 0  # Success - connection redirected
             else:
@@ -1007,10 +1006,10 @@ class CloudLicenseResponseGenerator:
                 # Extract request type from arguments
                 request_analysis = self._analyze_license_request(args)
                 response_code = self._generate_protocol_response(request_analysis)
-                
+
                 self.logger.info(f"Generated response code {response_code} for request type: {request_analysis.get('type', 'unknown')}")
                 return response_code
-                
+
             except Exception as e:
                 self.logger.error(f"Failed to analyze license request: {e}")
                 return -1  # Error code for analysis failure
@@ -1066,10 +1065,10 @@ class CloudLicenseResponseGenerator:
                 request_info = self._parse_license_check_request(request_data)
             else:
                 request_info = {'type': 'generic_check', 'software': 'unknown'}
-            
+
             # Generate appropriate response based on request
             response_data = self._craft_license_check_response(request_info)
-            
+
             # Validate response completeness
             if self._validate_response_structure(response_data):
                 self.logger.info(f"Generated valid license check response for {request_info.get('software', 'unknown')}")
@@ -1077,7 +1076,7 @@ class CloudLicenseResponseGenerator:
             else:
                 self.logger.warning("Generated response failed validation")
                 return 0  # Partial success - response may have issues
-                
+
         except Exception as e:
             self.logger.error(f"License check response generation failed: {e}")
             return -1  # Error in response generation
@@ -1091,7 +1090,7 @@ class CloudLicenseResponseGenerator:
         """Analyze license request to determine type and software."""
         try:
             args_str = str(args).lower()
-            
+
             # Detect request type
             if 'activate' in args_str or 'registration' in args_str:
                 request_type = 'activation'
@@ -1101,21 +1100,21 @@ class CloudLicenseResponseGenerator:
                 request_type = 'heartbeat'
             else:
                 request_type = 'generic'
-            
+
             # Detect software type from request
             software = 'unknown'
             for known_software in ['adobe', 'office', 'autocad', 'maya', 'solidworks', 'vmware']:
                 if known_software in args_str:
                     software = known_software
                     break
-            
+
             return {
                 'type': request_type,
                 'software': software,
                 'raw_args': args_str[:500],  # Truncate for logging
                 'timestamp': time.time()
             }
-            
+
         except Exception as e:
             self.logger.error(f"Request analysis failed: {e}")
             return {'type': 'unknown', 'software': 'unknown', 'error': str(e)}
@@ -1125,7 +1124,7 @@ class CloudLicenseResponseGenerator:
         try:
             request_type = request_analysis.get('type', 'unknown')
             software = request_analysis.get('software', 'unknown')
-            
+
             # Generate response based on request type
             if request_type == 'activation':
                 # Activation requests typically return 1 for success
@@ -1144,7 +1143,7 @@ class CloudLicenseResponseGenerator:
                     return -1  # Error in analysis
                 else:
                     return 1  # Default success
-                    
+
         except Exception as e:
             self.logger.error(f"Protocol response generation failed: {e}")
             return -1
@@ -1157,7 +1156,7 @@ class CloudLicenseResponseGenerator:
                 request_str = request_data.decode('utf-8', errors='ignore')
             else:
                 request_str = str(request_data)
-            
+
             request_info = {
                 'type': 'license_check',
                 'software': 'unknown',
@@ -1165,26 +1164,25 @@ class CloudLicenseResponseGenerator:
                 'features': [],
                 'client_id': None
             }
-            
+
             # Extract software information
             for software in ['adobe', 'office', 'autocad', 'maya', 'solidworks', 'vmware']:
                 if software in request_str.lower():
                     request_info['software'] = software
                     break
-            
+
             # Extract version if present
-            import re
             version_match = re.search(r'version[:\s]+([0-9.]+)', request_str.lower())
             if version_match:
                 request_info['version'] = version_match.group(1)
-            
+
             # Extract features if present
             if 'feature' in request_str.lower():
                 features = re.findall(r'feature[:\s]+([a-zA-Z0-9_]+)', request_str.lower())
                 request_info['features'] = features
-            
+
             return request_info
-            
+
         except Exception as e:
             self.logger.error(f"License check request parsing failed: {e}")
             return {'type': 'license_check', 'software': 'unknown', 'error': str(e)}
@@ -1194,7 +1192,7 @@ class CloudLicenseResponseGenerator:
         try:
             software = request_info.get('software', 'unknown')
             features = request_info.get('features', [])
-            
+
             response = {
                 'status': 'valid',
                 'software': software,
@@ -1206,7 +1204,7 @@ class CloudLicenseResponseGenerator:
                 'server_time': time.time(),
                 'signature': self._generate_response_signature(software)
             }
-            
+
             # Add software-specific response fields
             if software == 'adobe':
                 response.update({
@@ -1220,9 +1218,9 @@ class CloudLicenseResponseGenerator:
                     'activation_count': 1,
                     'device_limit': 5
                 })
-            
+
             return response
-            
+
         except Exception as e:
             self.logger.error(f"License response crafting failed: {e}")
             return {'status': 'error', 'message': str(e)}
@@ -1231,21 +1229,21 @@ class CloudLicenseResponseGenerator:
         """Validate that response has required structure."""
         try:
             required_fields = ['status', 'software']
-            
+
             # Check for required fields
             for field in required_fields:
                 if field not in response_data:
                     self.logger.warning(f"Response missing required field: {field}")
                     return False
-            
+
             # Validate status value
             valid_statuses = ['valid', 'invalid', 'expired', 'error']
             if response_data.get('status') not in valid_statuses:
                 self.logger.warning(f"Invalid status value: {response_data.get('status')}")
                 return False
-            
+
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Response validation failed: {e}")
             return False
@@ -1253,23 +1251,21 @@ class CloudLicenseResponseGenerator:
     def _generate_response_signature(self, software: str) -> str:
         """Generate cryptographic signature for response."""
         try:
-            import hashlib
             import hmac
-            
+
             # Use software name and timestamp for signature
             message = f"{software}:{time.time()}:license_valid"
             key = f"intellicrack_license_key_{software}".encode()
-            
+
             signature = hmac.new(key, message.encode(), hashlib.sha256).hexdigest()
             return signature[:16]  # Truncate for brevity
-            
+
         except Exception as e:
             self.logger.error(f"Signature generation failed: {e}")
             return "default_signature"
 
     def _get_timestamp(self) -> float:
         """Get current timestamp."""
-        import time
         return time.time()
 
     def _get_success_code_for_api(self, api_name: str) -> int:
@@ -1665,15 +1661,12 @@ class CloudLicenseResponseGenerator:
         Returns:
             Dict containing the intercepted response with protocol-specific data
         """
-        import time
-
         self.logger.info("Handling license-related %s call", api_name)
 
         # Extract URL and request data from parameters
         url = params.get('url', '').lower()
         hostname = params.get('hostname', '').lower()
         request_data = params.get('data', '')
-        headers = params.get('headers', {})
 
         # Determine license protocol type from URL/hostname
         protocol_type = self._identify_license_protocol(url, hostname)
@@ -1830,6 +1823,7 @@ class CloudLicenseResponseGenerator:
 
             # Create wrapper class for socket
             class HookedSocket(socket.socket):
+                """Wrapper socket class for license server communication hooking."""
                 def __init__(self, *args, **kwargs):
                     super().__init__(*args, **kwargs)
                     self._logger = logging.getLogger(__name__)

@@ -19,8 +19,6 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-logger = logging.getLogger(__name__)
-
 
 class EncryptionManager:
     """
@@ -262,6 +260,11 @@ class EncryptionManager:
             old_master_key = self.master_key
             self.master_key = os.urandom(self.key_size)
 
+            # Securely clear old master key
+            if old_master_key:
+                # Overwrite old key data for security
+                old_master_key = b'\x00' * len(old_master_key)
+
             # Generate new RSA keypair
             self._generate_rsa_keypair()
 
@@ -390,8 +393,8 @@ class EncryptionManager:
         """Apply PKCS7 padding to data."""
         block_size = 16  # AES block size
         padding_length = block_size - (len(data) % block_size)
-        padding = bytes([padding_length] * padding_length)
-        return data + padding
+        padding_bytes = bytes([padding_length] * padding_length)
+        return data + padding_bytes
 
     def _pkcs7_unpad(self, padded_data: bytes) -> bytes:
         """Remove PKCS7 padding from data."""

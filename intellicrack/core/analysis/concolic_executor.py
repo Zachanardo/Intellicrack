@@ -35,8 +35,10 @@ except ImportError:
     try:
         import os
         import sys
+
         # Add scripts directory to path
-        scripts_dir = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'scripts')
+        import pkg_resources
+        scripts_dir = pkg_resources.resource_filename('intellicrack', 'scripts')
         if os.path.exists(scripts_dir):
             sys.path.insert(0, scripts_dir)
 
@@ -514,21 +516,33 @@ class ConcolicExecutionEngine:
                     super().__init__()
                     self.logger = logging.getLogger(__name__)
 
-                def will_run_callback(self, *args, **kwargs):  # pylint: disable=unused-argument
+                def will_run_callback(self, *args, **kwargs):
                     """Called when path exploration is about to start."""
-                    self.logger.info("Starting path exploration")
+                    self.logger.info(f"Starting path exploration with {len(args)} args and {len(kwargs)} kwargs")
+                    if args:
+                        self.logger.debug(f"Exploration args: {[type(arg).__name__ for arg in args]}")
+                    if kwargs:
+                        self.logger.debug(f"Exploration kwargs: {list(kwargs.keys())}")
 
-                def did_finish_run_callback(self, *args, **kwargs):  # pylint: disable=unused-argument
+                def did_finish_run_callback(self, *args, **kwargs):
                     """Called when path exploration has finished execution."""
-                    self.logger.info("Finished path exploration")
+                    self.logger.info(f"Finished path exploration with {len(args)} args and {len(kwargs)} kwargs")
+                    if args:
+                        self.logger.debug(f"Finish args: {[type(arg).__name__ for arg in args]}")
+                    if kwargs:
+                        self.logger.debug(f"Finish kwargs: {list(kwargs.keys())}")
 
-                def will_fork_state_callback(self, state, *args, **kwargs):  # pylint: disable=unused-argument
+                def will_fork_state_callback(self, state, *args, **kwargs):
                     """Called before a state is about to be forked during exploration.
 
                     Args:
                         state: The state that will be forked
                     """
-                    self.logger.debug("Forking state at PC: %s", state.cpu.PC)
+                    self.logger.debug(f"Forking state at PC: {state.cpu.PC} with {len(args)} args and {len(kwargs)} kwargs")
+                    if args:
+                        self.logger.debug(f"Fork args: {[type(arg).__name__ for arg in args]}")
+                    if kwargs:
+                        self.logger.debug(f"Fork kwargs: {list(kwargs.keys())}")
 
             m.register_plugin(PathExplorationPlugin())
 

@@ -321,7 +321,7 @@ if __name__ == '__main__':
     def _generate_test_body(self, method: Dict[str, Any], class_name: str = None) -> str:
         """Generate basic test body for method"""
         lines = []
-        
+
         # Add class-specific setup if needed
         if class_name:
             if 'Security' in class_name or 'Crypto' in class_name:
@@ -362,7 +362,7 @@ if __name__ == '__main__':
     def _generate_invalid_test_body(self, method: Dict[str, Any], class_name: str = None) -> str:
         """Generate invalid input test body"""
         lines = []
-        
+
         # Add class-specific invalid tests
         if class_name:
             if 'Parser' in class_name:
@@ -395,7 +395,7 @@ if __name__ == '__main__':
     def _generate_edge_test_body(self, method: Dict[str, Any], class_name: str = None) -> str:
         """Generate edge case test body"""
         lines = []
-        
+
         # Add class-specific edge cases
         if class_name:
             if 'Network' in class_name:
@@ -506,7 +506,7 @@ class TestCoverageAnalyzer:
         import subprocess
         env = os.environ.copy()
         env['PYTHONPATH'] = os.path.dirname(plugin_path) + os.pathsep + env.get('PYTHONPATH', '')
-        
+
         result = subprocess.run(
             [sys.executable, '-m', 'pytest', test_path, '-v', f'--cov={plugin_path}', '--cov-report=xml'],
             capture_output=True,
@@ -516,10 +516,10 @@ class TestCoverageAnalyzer:
 
         # Stop coverage
         cov.stop()
-        
+
         # Save coverage data for the specific plugin
         cov.save()
-        
+
         # Get coverage data for the plugin file
         try:
             plugin_coverage = cov.analysis(plugin_path)
@@ -545,13 +545,13 @@ class TestCoverageAnalyzer:
                 'errors': 0
             }
         }
-        
+
         # Analyze uncovered functions from the plugin
         if missing and plugin_path:
             try:
                 with open(plugin_path, 'r') as f:
                     lines = f.readlines()
-                
+
                 # Find function definitions in missing lines
                 for line_num in missing:
                     if line_num <= len(lines):

@@ -36,6 +36,14 @@ try:
 except ImportError:
     psutil = None
 
+try:
+    from PIL import Image, ImageDraw
+    PIL_AVAILABLE = True
+except ImportError:
+    Image = None
+    ImageDraw = None
+    PIL_AVAILABLE = False
+
 # Module logger
 logger = logging.getLogger(__name__)
 
@@ -363,6 +371,7 @@ def run_as_admin(command: Union[str, List[str]], shell: bool = False) -> bool:
     Returns:
         bool: True if command executed successfully
     """
+    _ = shell
     try:
         if is_windows():
             # On Windows, use runas or PowerShell Start-Process -Verb RunAs
@@ -403,7 +412,9 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
         Optional[str]: Path to the extracted icon file, or None if failed
     """
     try:
-        from PIL import Image
+        if not PIL_AVAILABLE:
+            logger.warning("PIL not available for icon extraction")
+            return None
 
         if not os.path.exists(exe_path):
             logger.error("Executable not found: %s", exe_path)
@@ -498,17 +509,17 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> Optional[
 
         # If all methods fail, create a default icon
         logger.warning("All icon extraction methods failed, creating default icon")
-        try:
-            # Create a simple default icon
-            img = Image.new('RGBA', (64, 64), (100, 100, 100, 255))
-            from PIL import ImageDraw
-            draw = ImageDraw.Draw(img)
-            draw.rectangle([10, 10, 54, 54], outline=(200, 200, 200), width=2)
-            draw.text((20, 25), "EXE", fill=(255, 255, 255))
-            img.save(output_path, 'PNG')
-            return output_path
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to create default icon: %s", e)
+        if PIL_AVAILABLE:
+            try:
+                # Create a simple default icon
+                img = Image.new('RGBA', (64, 64), (100, 100, 100, 255))
+                draw = ImageDraw.Draw(img)
+                draw.rectangle([10, 10, 54, 54], outline=(200, 200, 200), width=2)
+                draw.text((20, 25), "EXE", fill=(255, 255, 255))
+                img.save(output_path, 'PNG')
+                return output_path
+            except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Failed to create default icon: %s", e)
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Icon extraction failed: %s", e)

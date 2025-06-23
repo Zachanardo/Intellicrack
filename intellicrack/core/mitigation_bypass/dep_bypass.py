@@ -51,10 +51,10 @@ class DEPBypass:
                 analysis_confidence = min(analysis_confidence + 0.2, 1.0)
 
         # Success is based on whether we found viable bypass techniques
-        analysis_success = (recommended_technique is not None and 
-                          analysis_confidence > 0.3 and 
+        analysis_success = (recommended_technique is not None and
+                          analysis_confidence > 0.3 and
                           binary_info is not None)
-        
+
         return {
             'success': analysis_success,
             'techniques_available': self.techniques,

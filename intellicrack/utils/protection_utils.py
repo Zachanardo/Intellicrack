@@ -34,6 +34,7 @@ def inject_comprehensive_api_hooks(app: Any, hook_types: List[str] = None) -> st
     Returns:
         Generated script content for API hooking
     """
+    logger.debug(f"Injecting API hooks for app: {app is not None}, hook_types: {hook_types}")
     if hook_types is None:
         hook_types = ["hardware_id", "debugger", "time", "telemetry", "network"]
 

@@ -258,17 +258,107 @@ def bypass_protection(binary_path: Union[str, Path], protection_type: str) -> Di
         'success_probability': 'unknown',
         'methods': [],
         'tools': [],
-        'warnings': []
+        'warnings': [],
+        'binary_analysis': {}
     }
 
+    # Analyze the specific binary for targeted bypass strategies
+    try:
+        binary_path = Path(binary_path)
+
+        if not binary_path.exists():
+            strategies['warnings'].append(f'Binary file not found: {binary_path}')
+            return strategies
+
+        # Get basic file information for strategy customization
+        file_size = binary_path.stat().st_size
+        strategies['binary_analysis']['file_size'] = file_size
+        strategies['binary_analysis']['file_name'] = binary_path.name
+
+        # Read file header to determine architecture and type
+        with open(binary_path, 'rb') as f:
+            header = f.read(64)
+
+        if header.startswith(b'MZ'):
+            strategies['binary_analysis']['format'] = 'PE'
+            strategies['binary_analysis']['platform'] = 'Windows'
+        elif header.startswith(b'\x7fELF'):
+            strategies['binary_analysis']['format'] = 'ELF'
+            strategies['binary_analysis']['platform'] = 'Linux'
+        elif header[0:4] in [b'\xfe\xed\xfa\xce', b'\xfe\xed\xfa\xcf']:
+            strategies['binary_analysis']['format'] = 'Mach-O'
+            strategies['binary_analysis']['platform'] = 'macOS'
+        else:
+            strategies['binary_analysis']['format'] = 'Unknown'
+            strategies['binary_analysis']['platform'] = 'Unknown'
+
+    except Exception as e:
+        strategies['warnings'].append(f'Failed to analyze binary: {e}')
+        strategies['binary_analysis']['error'] = str(e)
+
+    # Customize bypass strategies based on protection type and binary analysis
     if protection_type.lower() == 'packed':
         strategies['methods'] = [
             'Dynamic unpacking using debugger',
             'Memory dumping at OEP',
             'Using specialized unpackers'
         ]
-        strategies['tools'] = ['x64dbg', 'OllyDbg', 'UPX', 'VMUnpacker']
+
+        # Customize tools based on platform
+        platform = strategies['binary_analysis'].get('platform', 'Unknown')
+        if platform == 'Windows':
+            strategies['tools'] = ['x64dbg', 'OllyDbg', 'UPX', 'VMUnpacker', 'PEiD']
+        elif platform == 'Linux':
+            strategies['tools'] = ['gdb', 'radare2', 'UPX', 'objdump']
+        elif platform == 'macOS':
+            strategies['tools'] = ['lldb', 'radare2', 'otool', 'class-dump']
+        else:
+            strategies['tools'] = ['radare2', 'IDA Pro', 'Ghidra']
+
         strategies['warnings'] = ['May trigger anti-debugging mechanisms']
+
+        # Adjust success probability based on file size
+        if file_size < 1024 * 1024:  # < 1MB
+            strategies['success_probability'] = 'high'
+        elif file_size < 10 * 1024 * 1024:  # < 10MB
+            strategies['success_probability'] = 'medium'
+        else:
+            strategies['success_probability'] = 'low'
+            strategies['warnings'].append('Large file size may indicate complex packing')
+
+    elif protection_type.lower() == 'obfuscated':
+        strategies['methods'] = [
+            'Control flow deobfuscation',
+            'String decryption',
+            'Dead code elimination'
+        ]
+        strategies['tools'] = ['de4dot', 'VMProtect unpacker', 'Themida unpacker']
+        strategies['success_probability'] = 'medium'
+
+    elif protection_type.lower() == 'anti_debug':
+        strategies['methods'] = [
+            'Patch anti-debug checks',
+            'Use stealth debugger',
+            'Runtime NOP patching'
+        ]
+
+        platform = strategies['binary_analysis'].get('platform', 'Unknown')
+        if platform == 'Windows':
+            strategies['tools'] = ['ScyllaHide', 'x64dbg with anti-anti-debug', 'Detours']
+        else:
+            strategies['tools'] = ['gdb with anti-detection', 'Intel Pin', 'DynamoRIO']
+
+        strategies['success_probability'] = 'high'
+
+    elif protection_type.lower() == 'virtualized':
+        strategies['methods'] = [
+            'VM handler analysis',
+            'Bytecode extraction',
+            'Dynamic trace analysis'
+        ]
+        strategies['tools'] = ['VMAttack', 'Titan Engine', 'Intel Pin']
+        strategies['success_probability'] = 'low'
+        strategies['warnings'] = ['Virtualization protection requires advanced techniques']
 
     return strategies
 
@@ -418,7 +508,9 @@ def inject_comprehensive_api_hooks(app, script: str = None) -> None:
 
     try:
         # Try to use Frida for _real injection if available
-        import frida
+        import importlib.util
+        if importlib.util.find_spec("frida") is None:
+            raise ImportError("Frida not available")
 
         # Check if we have a binary path
         if hasattr(app, 'binary_path') and app.binary_path:

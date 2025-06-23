@@ -147,6 +147,7 @@ def update_training_progress(progress: float, message: str = "") -> None:
 
 def update_visualization(data: Any, viz_type: str = "plot") -> None:
     """Update visualization with new data."""
+    _ = data
     logger.info("Updating %s visualization with data", viz_type)
 
 
@@ -371,7 +372,7 @@ def get_captured_requests(limit: int = 100) -> List[Dict[str, Any]]:
 
 def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
     """Get requests from active license protocol handlers."""
-    requests = []
+    request_list = []
 
     try:
         # Check if protocol handlers are active and have captured data
@@ -391,7 +392,7 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
                 # Simulate getting requests from active handlers
                 if module_name == 'license_protocol_handler':
                     # FlexLM requests
-                    requests.extend([
+                    request_list.extend([
                         {
                             "timestamp": time.time() - (i * 30),
                             "source": "FlexLM_Handler",
@@ -410,7 +411,7 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
                     ])
                 elif module_name == 'cloud_license_hooker':
                     # Cloud license API requests
-                    requests.extend([
+                    request_list.extend([
                         {
                             "timestamp": time.time() - (i * 45),
                             "source": "Cloud_License_Hooker",
@@ -434,12 +435,12 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
     except Exception as e:
         logger.debug("Error getting protocol handler requests: %s", e)
 
-    return requests[:limit]
+    return request_list[:limit]
 
 
 def _get_network_interceptor_requests(limit: int) -> List[Dict[str, Any]]:
     """Get requests from network traffic interceptors."""
-    requests = []
+    request_list = []
 
     try:
         # Check for captured traffic from network monitors
@@ -456,7 +457,7 @@ def _get_network_interceptor_requests(limit: int) -> List[Dict[str, Any]]:
             if i >= limit:
                 break
 
-            requests.append({
+            request_list.append({
                 "timestamp": time.time() - (i * 60),
                 "source": "Network_Interceptor",
                 "type": "intercepted_traffic",
@@ -476,12 +477,12 @@ def _get_network_interceptor_requests(limit: int) -> List[Dict[str, Any]]:
     except Exception as e:
         logger.debug("Error getting network interceptor requests: %s", e)
 
-    return requests
+    return request_list
 
 
 def _get_cached_capture_requests(limit: int) -> List[Dict[str, Any]]:
     """Get requests from cached capture files."""
-    requests = []
+    request_list = []
 
     try:
         # Check multiple cache locations
@@ -502,9 +503,9 @@ def _get_cached_capture_requests(limit: int) -> List[Dict[str, Any]]:
                         if isinstance(item, dict) and 'timestamp' in item:
                             # Add source information
                             item['source'] = f"Cache_File_{os.path.basename(cache_file)}"
-                            requests.append(item)
+                            request_list.append(item)
 
-                    if len(requests) >= limit:
+                    if len(request_list) >= limit:
                         break
 
                 except (json.JSONDecodeError, OSError) as e:
@@ -512,18 +513,18 @@ def _get_cached_capture_requests(limit: int) -> List[Dict[str, Any]]:
                     continue
 
         # If no cached data found, create some realistic examples
-        if not requests:
-            requests = _generate_example_cached_requests(limit)
+        if not request_list:
+            request_list = _generate_example_cached_requests(limit)
 
     except Exception as e:
         logger.debug("Error getting cached requests: %s", e)
 
-    return requests[:limit]
+    return request_list[:limit]
 
 
 def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
     """Get requests from system-level network monitoring."""
-    requests = []
+    request_list = []
 
     try:
         # Use system tools to capture recent network activity
@@ -533,7 +534,7 @@ def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
 
                 for i, conn in enumerate(connections[:limit]):
                     if conn.status == 'ESTABLISHED' and conn.raddr:
-                        requests.append({
+                        request_list.append({
                             "timestamp": time.time() - (i * 10),
                             "source": "System_Monitor",
                             "type": "active_connection",
@@ -559,7 +560,7 @@ def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
                         connections = child.connections(kind='inet')
                         for conn in connections[:2]:
                             if conn.raddr:
-                                requests.append({
+                                request_list.append({
                                     "timestamp": time.time() - 5,
                                     "source": "Process_Monitor",
                                     "type": "process_connection",
@@ -580,7 +581,7 @@ def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
     except Exception as e:
         logger.debug("Error getting system network requests: %s", e)
 
-    return requests[:limit]
+    return request_list[:limit]
 
 
 def _generate_realistic_request_data(req_type: str, protocol: str) -> str:
@@ -1754,9 +1755,6 @@ def _save_report_as_csv(report_data: Dict[str, Any], csv_path: str) -> bool:
     try:
         import csv
 
-        # Extract tabular data from report
-        tabular_data = []
-
         # Look for list/array data that can be converted to CSV
         content = report_data.get("content", {})
         for key, value in content.items():
@@ -1790,6 +1788,7 @@ def _save_report_as_csv(report_data: Dict[str, Any], csv_path: str) -> bool:
 
 def _create_report_archive(report_id: str, formats_saved: List[Dict[str, Any]], archive_path: str) -> bool:
     """Create compressed archive of all report formats."""
+    _ = report_id
     try:
         import tarfile
 
@@ -1951,6 +1950,7 @@ def create_full_feature_model(features: List[str],
 def predict_vulnerabilities(binary_features: Dict[str, Any],
                           model: Optional[Any] = None) -> Dict[str, Any]:
     """Predict vulnerabilities in a binary."""
+    _ = model
     # Simplified prediction logic
     predictions = {
         "buffer_overflow": 0.2,
@@ -1994,6 +1994,7 @@ def add_dataset_row(dataset: List[Dict[str, Any]], row: Dict[str, Any]) -> None:
 def add_image(document: Any, image_path: str,
              caption: Optional[str] = None) -> bool:
     """Add an image to a document."""
+    _ = document
     # This would typically add to a PDF or HTML document
     logger.info("Adding image %s with caption: %s", image_path, caption)
     return os.path.exists(image_path)
@@ -2009,6 +2010,7 @@ def add_recommendations(report: Dict[str, Any],
 
 def showEvent(event: Any) -> None:
     """Handle widget show event."""
+    _ = event
     logger.debug("Widget shown")
 
 

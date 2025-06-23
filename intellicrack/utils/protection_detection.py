@@ -20,4 +20,22 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 # Import all functions from the protection/protection_detection module
-from .protection.protection_detection import *
+from .protection.protection_detection import (
+    detect_virtualization_protection,
+    detect_commercial_protections,
+    run_comprehensive_protection_scan,
+    generate_checksum,
+    detect_checksum_verification,
+    detect_self_healing_code,
+    detect_obfuscation,
+    detect_anti_debugging_techniques,
+    scan_for_bytecode_protectors,
+    detect_protection_mechanisms,
+    detect_packing_methods,
+    detect_all_protections,
+    detect_anti_debug,
+    detect_commercial_protectors,
+    detect_tpm_protection,
+    detect_anti_debugging,
+    detect_vm_detection
+)

@@ -300,6 +300,10 @@ class MemoryOptimizedBinaryLoader:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
+        if exc_type:
+            self.logger.error(f"Memory loader exiting due to {exc_type.__name__}: {exc_val}")
+            if exc_tb:
+                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.close()
 
     def __del__(self):

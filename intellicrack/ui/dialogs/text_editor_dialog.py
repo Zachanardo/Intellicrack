@@ -55,8 +55,6 @@ try:
     )
     from PyQt5.QtWidgets import (
         QAction,
-        QFontComboBox,
-        QFrame,
         QPlainTextEdit,
         QStatusBar,
         QToolBar,

@@ -29,6 +29,20 @@ import sys
 import time
 from typing import Any, Dict, List, Optional, Union
 
+try:
+    import joblib
+    JOBLIB_AVAILABLE = True
+except ImportError:
+    joblib = None
+    JOBLIB_AVAILABLE = False
+
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    psutil = None
+    PSUTIL_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,8 +84,8 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
 
     # Import required modules
     try:
+        from ..analysis.binary_analysis import analyze_binary, analyze_patterns
         from ..analysis.security_analysis import check_buffer_overflow, scan_protectors
-        from ..binary.binary_analysis import analyze_binary, analyze_patterns
         from ..protection.protection_detection import run_comprehensive_protection_scan
         from .distributed_processing import run_distributed_entropy_analysis
     except ImportError as e:
@@ -93,6 +107,8 @@ def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = Non
 
             elif analysis == "protection_scan":
                 results["analyses"]["protection_scan"] = scan_protectors(binary_path)
+                # Also run comprehensive protection scan
+                results["analyses"]["comprehensive_protection"] = run_comprehensive_protection_scan(binary_path)
 
             elif analysis == "string_extraction":
                 # Use distributed processing for strings
@@ -158,7 +174,7 @@ def run_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
     try:
         # Import required modules
         from ...core.analysis.core_analysis import enhanced_deep_license_analysis
-        from ..binary.binary_analysis import analyze_patterns
+        from ..analysis.binary_analysis import analyze_patterns
 
         # Use existing deep license analysis
         deep_results = enhanced_deep_license_analysis(binary_path)
@@ -203,7 +219,7 @@ def run_detect_packing(binary_path: str) -> Dict[str, Any]:
         Dict containing packing detection results
     """
     try:
-        from ..core.analysis.core_analysis import detect_packing
+        from ...core.analysis.core_analysis import detect_packing
         from .distributed_processing import run_distributed_entropy_analysis
 
         results = {
@@ -472,7 +488,7 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> Dict
         Dict containing CFG analysis results
     """
     try:
-        from ..core.analysis.cfg_explorer import CFGExplorer
+        from ...core.analysis.cfg_explorer import CFGExplorer
 
         results = {
             "binary": binary_path,
@@ -603,7 +619,7 @@ def run_windows_activator(product: str = "windows", method: str = "kms") -> Dict
         Dict containing activation results
     """
     try:
-        from ..core.patching.windows_activator import WindowsActivator
+        from ...core.patching.windows_activator import WindowsActivator
 
         activator = WindowsActivator()
 
@@ -683,7 +699,7 @@ def run_adobe_licensex_manually(action: str = "bypass") -> Dict[str, Any]:
         Dict containing operation results
     """
     try:
-        from ..core.patching.adobe_injector import AdobeLicenseInjector
+        from ...core.patching.adobe_injector import AdobeLicenseInjector
 
         injector = AdobeLicenseInjector()
 
@@ -962,7 +978,11 @@ def load_ai_model(model_path: str, model_type: str = "auto") -> Dict[str, Any]:
 
         # Load based on type
         if model_type == "sklearn":
-            import joblib
+            if not JOBLIB_AVAILABLE:
+                results["error"] = "joblib not available for sklearn model loading"
+                results["loaded"] = False
+                return results
+
             model = joblib.load(model_path)
             results["loaded"] = True
             results["model_info"] = {
@@ -990,9 +1010,11 @@ def get_target_process_pid(process_name: str) -> Optional[int]:
     Returns:
         Process ID or None
     """
-    try:
-        import psutil
+    if not PSUTIL_AVAILABLE:
+        logger.warning("psutil not available for process detection")
+        return None
 
+    try:
         for proc in psutil.process_iter(['pid', 'name']):
             if process_name.lower() in proc.info['name'].lower():
                 return proc.info['pid']
@@ -1117,9 +1139,11 @@ def _detect_dongle_processes() -> List[Dict[str, Any]]:
     """Detect dongle-related processes."""
     processes = []
 
-    try:
-        import psutil
+    if not PSUTIL_AVAILABLE:
+        logger.debug("psutil not available for process detection")
+        return processes
 
+    try:
         # Known dongle process names
         dongle_processes = [
             "aksusbd", "hasplms", "wkssvc", "nhsrvice", "aksusbd",
@@ -1143,9 +1167,6 @@ def _detect_dongle_processes() -> List[Dict[str, Any]]:
 
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
-
-    except ImportError:
-        logger.debug("psutil not available for process detection")
     except Exception as e:
         logger.debug("Process dongle detection error: %s", e)
 
@@ -2110,7 +2131,7 @@ def run_vulnerability_scan(binary_path: str) -> Dict[str, Any]:
         Dict containing vulnerability scan results
     """
     try:
-        from ..core.analysis.vulnerability_engine import VulnerabilityEngine
+        from ...core.analysis.vulnerability_engine import VulnerabilityEngine
 
         engine = VulnerabilityEngine()
         vulnerabilities = engine.scan_binary(binary_path)
@@ -2142,7 +2163,7 @@ def run_cfg_analysis(binary_path: str) -> Dict[str, Any]:
         Dict containing CFG analysis results
     """
     try:
-        from ..core.analysis.cfg_explorer import CFGExplorer
+        from ...core.analysis.cfg_explorer import CFGExplorer
 
         explorer = CFGExplorer()
         cfg = explorer.analyze(binary_path)
@@ -2170,7 +2191,7 @@ def run_rop_gadget_finder(binary_path: str) -> Dict[str, Any]:
         Dict containing ROP gadgets
     """
     try:
-        from ..core.analysis.rop_generator import ROPChainGenerator
+        from ...core.analysis.rop_generator import ROPChainGenerator
 
         generator = ROPChainGenerator()
         generator.binary_path = binary_path
@@ -2216,7 +2237,7 @@ def run_section_analysis(binary_path: str) -> Dict[str, Any]:
         Dict containing section analysis results
     """
     try:
-        from .binary_analysis import analyze_binary
+        from ..analysis.binary_analysis import analyze_binary
 
         # Get basic binary info which includes sections
         info = analyze_binary(binary_path, detailed=True)
@@ -2268,7 +2289,7 @@ def run_import_export_analysis(binary_path: str) -> Dict[str, Any]:
         Dict containing import/export analysis
     """
     try:
-        from .binary_analysis import analyze_binary
+        from ..analysis.binary_analysis import analyze_binary
 
         # Get binary info which includes imports/exports
         info = analyze_binary(binary_path, detailed=True)
@@ -2316,7 +2337,7 @@ def run_weak_crypto_detection(binary_path: str) -> Dict[str, Any]:
         Dict containing weak crypto detection results
     """
     try:
-        from .binary_analysis import analyze_patterns
+        from ..analysis.binary_analysis import analyze_patterns
 
         # Patterns for weak crypto
         weak_crypto_patterns = [
@@ -2369,8 +2390,8 @@ def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
         Dict containing all protection mechanisms found
     """
     try:
-        from ..core.analysis.core_analysis import detect_packing
-        from .protection.protection_detection import (
+        from ...core.analysis.core_analysis import detect_packing
+        from ..protection.protection_detection import (
             detect_anti_debugging,
             detect_commercial_protections,
             detect_tpm_protection,
@@ -2433,7 +2454,7 @@ def run_ml_vulnerability_prediction(binary_path: str) -> Dict[str, Any]:
         Dict containing ML predictions
     """
     try:
-        from ..ai import VulnerabilityPredictor
+        from ...ai import VulnerabilityPredictor
 
         predictor = VulnerabilityPredictor()
         predictions = predictor.predict(binary_path)
@@ -2461,8 +2482,8 @@ def run_generate_patch_suggestions(binary_path: str) -> Dict[str, Any]:
         Dict containing patch suggestions
     """
     try:
-        from ..core.patching.payload_generator import PayloadGenerator
-        from .exploitation.exploitation import analyze_for_patches
+        from ...core.patching.payload_generator import PayloadGenerator
+        from ..exploitation.exploitation import analyze_for_patches
 
         # Analyze binary for patchable locations
         analysis = analyze_for_patches(binary_path)
@@ -2514,7 +2535,7 @@ def run_multi_format_analysis(binary_path: str) -> Dict[str, Any]:
         Dict containing multi-format analysis results
     """
     try:
-        from ..core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
+        from ...core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
 
         analyzer = MultiFormatBinaryAnalyzer()
         results = analyzer.analyze_binary(binary_path)
@@ -2543,7 +2564,7 @@ def run_ml_similarity_search(binary_path: str, database: Optional[str] = None) -
         Dict containing similar binaries
     """
     try:
-        from ..core.analysis import SimilaritySearcher
+        from ...core.analysis import SimilaritySearcher
 
         searcher = SimilaritySearcher()
         if database:

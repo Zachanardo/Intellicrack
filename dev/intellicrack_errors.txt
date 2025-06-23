@@ -1,0 +1,357 @@
+================================================================================
+                    INTELLICRACK COMPREHENSIVE ERROR DETECTION
+================================================================================
+Generated: 2025-06-14 03:13:01
+Python: 3.12.3
+Project: /mnt/c/Intellicrack
+================================================================================
+
+[03:13:01] Starting Intellicrack Comprehensive Error Detection...
+[03:13:01] 
+=== PYLINT ANALYSIS ===
+[03:13:01] Pylint not installed, skipping pylint analysis
+[03:13:01] 
+=== AST PATTERN ANALYSIS ===
+[03:13:03] Analyzed 264 files for AST patterns
+[03:13:03] 
+=== IMPORT ANALYSIS ===
+[03:13:05] Found 0 import cycles
+[03:13:05] 
+=== RUNTIME SAFETY TESTING ===
+[03:13:07] Runtime safety testing completed
+[03:13:07] 
+=== SECURITY ANALYSIS ===
+[03:13:08] Found 11 potential security issues
+[03:13:08] 
+=== CODE QUALITY ANALYSIS ===
+[03:13:10] Code quality analysis completed
+
+
+================================================================================
+                              DETAILED ISSUES
+================================================================================
+
+
+### FILE_NOT_CLOSED (5 issues) ###
+------------------------------------------------------------
+intellicrack/core/processing/memory_loader.py:83 - open() without context manager - potential resource leak
+intellicrack/hexview/file_handler.py:96 - open() without context manager - potential resource leak
+intellicrack/hexview/file_handler.py:272 - open() without context manager - potential resource leak
+intellicrack/hexview/large_file_handler.py:417 - open() without context manager - potential resource leak
+scripts/cli/hex_viewer_cli.py:93 - open() without context manager - potential resource leak
+
+### GLOBAL_USAGE (10 issues) ###
+------------------------------------------------------------
+intellicrack/ai/llm_backends.py:664 - Global declaration: _llm_manager
+intellicrack/ai/llm_backends.py:672 - Global declaration: _llm_manager
+intellicrack/ai/model_manager_module.py:772 - Global declaration: _global_model_manager
+intellicrack/ai/orchestrator.py:756 - Global declaration: _orchestrator_instance
+intellicrack/ai/orchestrator.py:764 - Global declaration: _orchestrator_instance
+intellicrack/config.py:544 - Global declaration: _config_manager
+intellicrack/config.py:557 - Global declaration: _config_manager
+intellicrack/core/patching/syscalls.py:281 - Global declaration: _direct_syscalls
+intellicrack/core/processing/emulator_manager.py:181 - Global declaration: _emulator_manager
+intellicrack/utils/path_discovery.py:756 - Global declaration: _path_discovery
+
+### HARDCODED_TOKEN (5 issues) ###
+------------------------------------------------------------
+intellicrack/ui/dialogs/model_finetuning_dialog.py:697 - Hardcoded token
+intellicrack/ui/dialogs/model_finetuning_dialog.py:698 - Hardcoded token
+intellicrack/ui/dialogs/model_finetuning_dialog.py:699 - Hardcoded token
+intellicrack/ui/dialogs/model_finetuning_dialog.py:700 - Hardcoded token
+intellicrack/ui/dialogs/model_finetuning_dialog.py:701 - Hardcoded token
+
+### HIGH_COMPLEXITY (329 issues) ###
+------------------------------------------------------------
+comprehensive_placeholder_check.py:230 - generate_report has complexity 12 (>10)
+dependencies/fix_tool_paths.py:18 - find_ghidra_installation has complexity 13 (>10)
+dependencies/fix_tool_paths.py:67 - find_radare2_installation has complexity 11 (>10)
+dependencies/fix_tool_paths.py:255 - update_config_file has complexity 13 (>10)
+detailed_placeholder_analysis.py:219 - generate_priority_report has complexity 17 (>10)
+dev/final_verification_report.py:20 - generate_final_report has complexity 12 (>10)
+dev/final_verification_report.py:488 - generate_recommendations has complexity 11 (>10)
+dev/fix_all_remaining_errors.py:166 - fix_w0107_unnecessary_pass has complexity 12 (>10)
+dev/fix_all_remaining_errors.py:219 - add_pylint_disable_to_lines has complexity 12 (>10)
+dev/fix_multiline_fstrings.py:9 - fix_multiline_fstrings has complexity 12 (>10)
+dev/fix_multiline_strings.py:8 - fix_multiline_fstrings has complexity 21 (>10)
+dev/fix_r1705_errors.py:23 - fix_file has complexity 12 (>10)
+dev/fix_remaining_errors.py:33 - fix_file has complexity 16 (>10)
+dev/fix_try_except.py:7 - fix_try_except_imbalance has complexity 14 (>10)
+dev/fix_unused_arguments.py:61 - fix_unused_arguments_in_file has complexity 13 (>10)
+dev/fix_w0613_errors.py:113 - fix_file has complexity 11 (>10)
+dev/intellicrack_error_detector.py:151 - analyze_ast_patterns has complexity 24 (>10)
+dev/intellicrack_error_detector.py:323 - detect_import_issues has complexity 25 (>10)
+dev/intellicrack_error_detector.py:444 - test_runtime_safety has complexity 12 (>10)
+dev/intellicrack_error_detector.py:582 - check_code_quality has complexity 18 (>10)
+dev/lint_intellicrack.py:275 - _create_markdown_report has complexity 13 (>10)
+dev/verify_after_move.py:14 - verify_paths has complexity 12 (>10)
+examples/sample_binary_analysis.py:163 - manual_network_capture has complexity 31 (>10)
+examples/sample_binary_analysis.py:333 - example_network_analysis has complexity 14 (>10)
+intellicrack/ai/ai_file_tools.py:205 - read_file_content has complexity 13 (>10)
+intellicrack/ai/ai_tools.py:89 - _perform_basic_analysis has complexity 15 (>10)
+intellicrack/ai/ai_tools.py:434 - _perform_format_specific_analysis has complexity 15 (>10)
+intellicrack/ai/ai_tools.py:785 - explain_code has complexity 14 (>10)
+intellicrack/ai/ai_tools.py:939 - _analyze_code_structure has complexity 16 (>10)
+intellicrack/ai/ml_predictor.py:147 - load_model has complexity 11 (>10)
+intellicrack/ai/model_manager_module.py:623 - get_model_path has complexity 11 (>10)
+intellicrack/ai/model_manager_module.py:1131 - save_model has complexity 11 (>10)
+intellicrack/ai/orchestrator.py:248 - _initialize_components has complexity 11 (>10)
+intellicrack/ai/orchestrator.py:462 - _execute_vulnerability_scan has complexity 11 (>10)
+intellicrack/ai/training_thread.py:809 - save_model has complexity 11 (>10)
+intellicrack/config.py:310 - load_config has complexity 13 (>10)
+intellicrack/core/analysis/binary_similarity_search.py:127 - _extract_binary_features has complexity 14 (>10)
+intellicrack/core/analysis/cfg_explorer.py:84 - load_binary has complexity 12 (>10)
+intellicrack/core/analysis/cfg_explorer.py:477 - analyze_cfg has complexity 14 (>10)
+intellicrack/core/analysis/cfg_explorer.py:563 - run_deep_cfg_analysis has complexity 25 (>10)
+intellicrack/core/analysis/concolic_executor.py:225 - run has complexity 14 (>10)
+intellicrack/core/analysis/concolic_executor.py:332 - _emulate_instruction has complexity 11 (>10)
+intellicrack/core/analysis/core_analysis.py:100 - analyze_binary_internal has complexity 33 (>10)
+intellicrack/core/analysis/core_analysis.py:247 - enhanced_deep_license_analysis has complexity 19 (>10)
+intellicrack/core/analysis/core_analysis.py:350 - detect_packing has complexity 19 (>10)
+intellicrack/core/analysis/core_analysis.py:476 - decrypt_embedded_script has complexity 22 (>10)
+intellicrack/core/analysis/dynamic_analyzer.py:117 - _frida_runtime_analysis has complexity 11 (>10)
+intellicrack/core/analysis/dynamic_analyzer.py:600 - _frida_memory_scan has complexity 13 (>10)
+intellicrack/core/analysis/dynamic_analyzer.py:875 - run_dynamic_analysis has complexity 12 (>10)
+intellicrack/core/analysis/incremental_manager.py:693 - run_analysis_manager has complexity 11 (>10)
+
+... and 279 more HIGH_COMPLEXITY issues
+
+### LARGE_FILE (35 issues) ###
+------------------------------------------------------------
+intellicrack/ai/ai_tools.py - File has 1047 lines (consider splitting)
+intellicrack/ai/enhanced_training_interface.py - File has 1120 lines (consider splitting)
+intellicrack/ai/ml_predictor.py - File has 1080 lines (consider splitting)
+intellicrack/ai/model_manager_module.py - File has 1293 lines (consider splitting)
+intellicrack/core/analysis/binary_similarity_search.py - File has 1130 lines (consider splitting)
+intellicrack/core/analysis/dynamic_analyzer.py - File has 1112 lines (consider splitting)
+intellicrack/core/analysis/rop_generator.py - File has 1207 lines (consider splitting)
+intellicrack/core/network/cloud_license_hooker.py - File has 1629 lines (consider splitting)
+intellicrack/core/network/license_server_emulator.py - File has 1273 lines (consider splitting)
+intellicrack/core/network/traffic_analyzer.py - File has 1126 lines (consider splitting)
+intellicrack/core/patching/adobe_injector.py - File has 2458 lines (consider splitting)
+intellicrack/core/patching/memory_patcher.py - File has 1013 lines (consider splitting)
+intellicrack/core/processing/distributed_manager.py - File has 1128 lines (consider splitting)
+intellicrack/core/processing/qemu_emulator.py - File has 1638 lines (consider splitting)
+intellicrack/core/reporting/pdf_generator.py - File has 1084 lines (consider splitting)
+intellicrack/hexview/advanced_search.py - File has 1067 lines (consider splitting)
+intellicrack/hexview/ai_bridge.py - File has 2136 lines (consider splitting)
+intellicrack/hexview/hex_widget.py - File has 1884 lines (consider splitting)
+intellicrack/plugins/plugin_system.py - File has 1697 lines (consider splitting)
+intellicrack/ui/dialogs/guided_workflow_wizard.py - File has 1029 lines (consider splitting)
+intellicrack/ui/dialogs/model_finetuning_dialog.py - File has 2500 lines (consider splitting)
+intellicrack/ui/main_app.py - File has 26042 lines (consider splitting)
+intellicrack/ui/widgets/hex_viewer.py - File has 1067 lines (consider splitting)
+intellicrack/utils/additional_runners.py - File has 2613 lines (consider splitting)
+intellicrack/utils/binary_analysis.py - File has 1267 lines (consider splitting)
+intellicrack/utils/distributed_processing.py - File has 1103 lines (consider splitting)
+intellicrack/utils/exploitation.py - File has 2693 lines (consider splitting)
+intellicrack/utils/final_utilities.py - File has 1712 lines (consider splitting)
+intellicrack/utils/internal_helpers.py - File has 2398 lines (consider splitting)
+intellicrack/utils/runner_functions.py - File has 2711 lines (consider splitting)
+intellicrack/utils/security_analysis.py - File has 1042 lines (consider splitting)
+intellicrack/utils/tool_wrappers.py - File has 1860 lines (consider splitting)
+models/create_ml_model.py - File has 1053 lines (consider splitting)
+scripts/cli/interactive_mode.py - File has 3157 lines (consider splitting)
+scripts/cli/main.py - File has 1980 lines (consider splitting)
+
+### MISSING_DOCSTRING (58 issues) ###
+------------------------------------------------------------
+comprehensive_placeholder_check.py:13 - PlaceholderDetector lacks docstring
+comprehensive_placeholder_check.py:176 - FunctionVisitor lacks docstring
+comprehensive_placeholder_check.py:177 - visit_FunctionDef lacks docstring
+detailed_placeholder_analysis.py:12 - PlaceholderAnalyzer lacks docstring
+detailed_placeholder_analysis.py:314 - main lacks docstring
+intellicrack/core/analysis/binary_similarity_search.py:791 - generate_ngrams lacks docstring
+intellicrack/core/analysis/binary_similarity_search.py:828 - create_entropy_distribution lacks docstring
+intellicrack/core/analysis/binary_similarity_search.py:897 - get_size_distribution lacks docstring
+intellicrack/core/analysis/binary_similarity_search.py:928 - create_hash_signature lacks docstring
+intellicrack/core/analysis/binary_similarity_search.py:961 - edit_distance lacks docstring
+intellicrack/core/analysis/binary_similarity_search.py:993 - create_feature_vector lacks docstring
+intellicrack/core/analysis/dynamic_analyzer.py:693 - on_message lacks docstring
+intellicrack/core/analysis/taint_analyzer.py:476 - dfs_path lacks docstring
+intellicrack/core/network/cloud_license_hooker.py:1294 - dict_to_xml_recursive lacks docstring
+intellicrack/core/network/traffic_analyzer.py:813 - stop_filter lacks docstring
+intellicrack/core/network/traffic_interception_engine.py:314 - packet_handler lacks docstring
+intellicrack/core/patching/adobe_injector.py:1141 - MODULEENTRY32 lacks docstring
+intellicrack/core/patching/adobe_injector.py:1192 - PROCESS_BASIC_INFORMATION lacks docstring
+intellicrack/core/patching/adobe_injector.py:1425 - THREADENTRY32 lacks docstring
+intellicrack/core/patching/adobe_injector.py:1487 - enum_thread_windows_proc lacks docstring
+intellicrack/core/patching/adobe_injector.py:1693 - THREADENTRY32 lacks docstring
+intellicrack/core/patching/adobe_injector.py:2069 - PROCESS_BASIC_INFORMATION lacks docstring
+intellicrack/core/patching/kernel_injection.py:302 - INJECTION_INFO lacks docstring
+intellicrack/core/patching/memory_patcher.py:774 - MEMORY_BASIC_INFORMATION lacks docstring
+intellicrack/core/patching/memory_patcher.py:967 - MEMORY_BASIC_INFORMATION lacks docstring
+intellicrack/ui/dialogs/common_imports.py:47 - QDialog lacks docstring
+intellicrack/ui/dialogs/common_imports.py:50 - QThread lacks docstring
+intellicrack/ui/dialogs/common_imports.py:53 - pyqtSignal lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:341 - GPTBlock lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:356 - forward lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:372 - forward lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:439 - forward lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:510 - RMSNorm lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:516 - forward lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:525 - LlamaLayer lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:539 - forward lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:558 - forward lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:612 - EnhancedTransformerLayer lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:632 - forward lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:651 - forward lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:811 - init_weights lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:886 - forward lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:890 - parameters lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:893 - train lacks docstring
+intellicrack/ui/dialogs/model_finetuning_dialog.py:896 - eval lacks docstring
+intellicrack/ui/emulator_ui_enhancements.py:184 - wrapper lacks docstring
+intellicrack/ui/emulator_ui_enhancements.py:208 - wrapper lacks docstring
+intellicrack/ui/main_app.py:4817 - analyze_with_qemu lacks docstring
+intellicrack/ui/main_app.py:5062 - on_message lacks docstring
+intellicrack/ui/main_app.py:15303 - DownloadThread lacks docstring
+
+... and 8 more MISSING_DOCSTRING issues
+
+### MISSING_INIT (1 issues) ###
+------------------------------------------------------------
+intellicrack/core/network/protocols - Directory missing __init__.py file
+
+### MUTABLE_DEFAULT (1 issues) ###
+------------------------------------------------------------
+comprehensive_placeholder_check.py:213 - scan_directory() has mutable default argument
+
+### PICKLE_USAGE (6 issues) ###
+------------------------------------------------------------
+intellicrack/ai/ai_tools.py:124 - Pickle usage (potential security risk)
+intellicrack/ai/ml_predictor.py:189 - Pickle usage (potential security risk)
+intellicrack/core/analysis/incremental_manager.py:312 - Pickle usage (potential security risk)
+intellicrack/plugins/remote_executor.py:106 - Pickle usage (potential security risk)
+intellicrack/ui/main_app.py:6738 - Pickle usage (potential security risk)
+intellicrack/utils/exception_utils.py:330 - Pickle usage (potential security risk)
+
+### RELATIVE_IMPORT (597 issues) ###
+------------------------------------------------------------
+intellicrack/__init__.py:48 - Relative import (level 1)
+intellicrack/__init__.py:55 - Relative import (level 1)
+intellicrack/__init__.py:56 - Relative import (level 1)
+intellicrack/__init__.py:64 - Relative import (level 1)
+intellicrack/__init__.py:71 - Relative import (level 1)
+intellicrack/__init__.py:78 - Relative import (level 1)
+intellicrack/__init__.py:85 - Relative import (level 1)
+intellicrack/__main__.py:30 - Relative import (level 1)
+intellicrack/ai/__init__.py:30 - Relative import (level 1)
+intellicrack/ai/__init__.py:43 - Relative import (level 1)
+intellicrack/ai/__init__.py:57 - Relative import (level 1)
+intellicrack/ai/__init__.py:76 - Relative import (level 1)
+intellicrack/ai/__init__.py:98 - Relative import (level 1)
+intellicrack/ai/__init__.py:115 - Relative import (level 1)
+intellicrack/ai/__init__.py:128 - Relative import (level 1)
+intellicrack/ai/ai_assistant_enhanced.py:30 - Relative import (level 1)
+intellicrack/ai/ai_assistant_enhanced.py:777 - Relative import (level 2)
+intellicrack/ai/ai_file_tools.py:29 - Relative import (level 2)
+intellicrack/ai/ai_tools.py:185 - Relative import (level 1)
+intellicrack/ai/ai_tools.py:445 - Relative import (level 2)
+intellicrack/ai/ai_tools.py:469 - Relative import (level 2)
+intellicrack/ai/ai_tools.py:492 - Relative import (level 1)
+intellicrack/ai/ai_tools.py:646 - Relative import (level 1)
+intellicrack/ai/ai_tools.py:1013 - Relative import (level 1)
+intellicrack/ai/coordination_layer.py:34 - Relative import (level 2)
+intellicrack/ai/coordination_layer.py:35 - Relative import (level 1)
+intellicrack/ai/coordination_layer.py:36 - Relative import (level 1)
+intellicrack/ai/coordination_layer.py:37 - Relative import (level 1)
+intellicrack/ai/coordination_layer.py:492 - Relative import (level 1)
+intellicrack/ai/coordination_layer.py:557 - Relative import (level 2)
+intellicrack/ai/ml_predictor.py:51 - Relative import (level 2)
+intellicrack/ai/ml_predictor.py:52 - Relative import (level 2)
+intellicrack/ai/ml_predictor.py:92 - Relative import (level 2)
+intellicrack/ai/model_manager_module.py:35 - Relative import (level 2)
+intellicrack/ai/orchestrator.py:31 - Relative import (level 2)
+intellicrack/ai/orchestrator.py:35 - Relative import (level 2)
+intellicrack/ai/orchestrator.py:36 - Relative import (level 2)
+intellicrack/ai/orchestrator.py:37 - Relative import (level 1)
+intellicrack/ai/orchestrator.py:38 - Relative import (level 1)
+intellicrack/ai/orchestrator.py:39 - Relative import (level 1)
+intellicrack/ai/orchestrator.py:40 - Relative import (level 1)
+intellicrack/ai/training_thread.py:57 - Relative import (level 2)
+intellicrack/config.py:45 - Relative import (level 1)
+intellicrack/config.py:64 - Relative import (level 1)
+intellicrack/config.py:461 - Relative import (level 1)
+intellicrack/config.py:490 - Relative import (level 1)
+intellicrack/core/__init__.py:23 - Relative import (level 1)
+intellicrack/core/analysis/__init__.py:25 - Relative import (level 1)
+intellicrack/core/analysis/__init__.py:38 - Relative import (level 1)
+intellicrack/core/analysis/__init__.py:43 - Relative import (level 1)
+
+... and 547 more RELATIVE_IMPORT issues
+
+### TODO_COMMENT (19 issues) ###
+------------------------------------------------------------
+comprehensive_placeholder_check.py:33 - TODO["\']',
+comprehensive_placeholder_check.py:34 - FIXME["\']',
+comprehensive_placeholder_check.py:39 - TODO',
+comprehensive_placeholder_check.py:40 - FIXME',
+comprehensive_placeholder_check.py:41 - XXX',
+comprehensive_placeholder_check.py:42 - HACK',
+comprehensive_placeholder_check.py:155 - TODO/FIXME comments, not descriptive ones
+comprehensive_placeholder_check.py:303 - TODO/FIXME comments")
+detailed_placeholder_analysis.py:152 - TODO',
+detailed_placeholder_analysis.py:153 - FIXME',
+dev/intellicrack_error_detector.py:610 - hack comments
+dev/intellicrack_error_detector.py:612 - TODO|FIXME|HACK|XXX)\b', line, re.IGNORECASE):
+dev/intellicrack_error_detector.py:613 - TODO|FIXME|HACK|XXX)\b.*', line, re.IGNORECASE)
+intellicrack/ui/dialogs/plugin_manager_dialog.py:753 - TODO: Implement plugin functionality here
+intellicrack/ui/dialogs/plugin_manager_dialog.py:779 - TODO: Implement cleanup logic here
+intellicrack/ui/main_app.py:9249 - XXX-XXXXXXX-XXX", "Custom"])
+intellicrack/ui/main_app.py:19189 - XXX-XXX-XXX-XXX-XXX":
+scripts/cli/hex_viewer_cli.py:348 - TODO: Add confirmation dialog
+scripts/cli/hex_viewer_cli.py:579 - TODO: Show error message
+
+### USER_INPUT (28 issues) ###
+------------------------------------------------------------
+dev/fix_w0613_errors.py:61 - Direct user input (validate/sanitize)
+dev/intellicrack_error_detector.py:543 - Direct user input (validate/sanitize)
+dev/summarize_remaining_issues.py:64 - Direct user input (validate/sanitize)
+intellicrack/hexview/data_inspector.py:756 - Direct user input (validate/sanitize)
+intellicrack/utils/internal_helpers.py:1294 - Direct user input (validate/sanitize)
+intellicrack/utils/path_discovery.py:724 - Direct user input (validate/sanitize)
+intellicrack/utils/ui_utils.py:114 - Direct user input (validate/sanitize)
+intellicrack/utils/ui_utils.py:136 - Direct user input (validate/sanitize)
+intellicrack/utils/ui_utils.py:141 - Direct user input (validate/sanitize)
+intellicrack/utils/ui_utils.py:187 - Direct user input (validate/sanitize)
+intellicrack/utils/ui_utils.py:220 - Direct user input (validate/sanitize)
+intellicrack/utils/ui_utils.py:241 - Direct user input (validate/sanitize)
+scripts/cli/ai_chat_interface.py:183 - Direct user input (validate/sanitize)
+scripts/cli/ai_wrapper.py:119 - Direct user input (validate/sanitize)
+scripts/cli/hex_viewer_cli.py:148 - Direct user input (validate/sanitize)
+scripts/cli/hex_viewer_cli.py:333 - Direct user input (validate/sanitize)
+scripts/cli/hex_viewer_cli.py:340 - Direct user input (validate/sanitize)
+scripts/cli/hex_viewer_cli.py:342 - Direct user input (validate/sanitize)
+scripts/cli/hex_viewer_cli.py:344 - Direct user input (validate/sanitize)
+scripts/cli/hex_viewer_cli.py:398 - Direct user input (validate/sanitize)
+scripts/cli/interactive_mode.py:961 - Direct user input (validate/sanitize)
+scripts/cli/interactive_mode.py:987 - Direct user input (validate/sanitize)
+scripts/cli/interactive_mode.py:1516 - Direct user input (validate/sanitize)
+scripts/cli/interactive_mode.py:1531 - Direct user input (validate/sanitize)
+scripts/cli/interactive_mode.py:1615 - Direct user input (validate/sanitize)
+scripts/cli/interactive_mode.py:1885 - Direct user input (validate/sanitize)
+scripts/cli/pipeline.py:85 - Direct user input (validate/sanitize)
+scripts/cli/pipeline.py:419 - Direct user input (validate/sanitize)
+
+
+================================================================================
+                              SUMMARY
+================================================================================
+
+ISSUE COUNTS BY CATEGORY:
+----------------------------------------
+ERRORS:         0
+WARNINGS:      16
+SECURITY:      11
+QUALITY:     1038
+--------------------
+TOTAL:       1094
+
+Analysis completed in 9.7 seconds
+Report saved to: /mnt/c/Intellicrack/dev/intellicrack_errors.txt
+[03:13:10] 
+============================================================
+[03:13:10] ANALYSIS COMPLETE: 1094 total issues found
+[03:13:10] Errors: 0 | Warnings: 16 | Security: 11 | Quality: 1038
+[03:13:10] Full report: /mnt/c/Intellicrack/dev/intellicrack_errors.txt

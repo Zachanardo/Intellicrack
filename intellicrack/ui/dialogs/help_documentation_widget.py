@@ -561,6 +561,7 @@ class HelpDocumentationWidget(QWidget):
 
     def show_feature_details(self, category: str, feature: str):
         """Show detailed information about a feature."""
+        _ = category
         # Feature documentation mapping
         feature_docs = {
             "Static Binary Analysis": """

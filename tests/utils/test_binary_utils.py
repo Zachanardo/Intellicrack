@@ -9,7 +9,6 @@ import unittest
 import os
 import tempfile
 import shutil
-from unittest.mock import patch, MagicMock
 
 try:
     from intellicrack.utils.binary.binary_utils import (

@@ -53,6 +53,10 @@ def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[
         "confidence": 0.0
     }
 
+    # Log the binary being analyzed for virtualization protection
+    if binary_path:
+        logger.debug(f"Analyzing virtualization protection for binary: {binary_path}")
+
     try:
         # Check for known VM detection techniques
         vm_indicators = [

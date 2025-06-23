@@ -50,7 +50,7 @@ from .base_dialog import BinarySelectionDialog
 
 try:
     from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat
-    from PyQt5.QtWidgets import QPlainTextEdit, QTreeWidget, QTreeWidgetItem
+    from PyQt5.QtWidgets import QPlainTextEdit
 except ImportError:
     pass
 

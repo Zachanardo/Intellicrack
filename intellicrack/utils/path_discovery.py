@@ -21,6 +21,7 @@ import logging
 import os
 import platform
 import shutil
+import sys
 from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)

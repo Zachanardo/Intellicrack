@@ -56,8 +56,7 @@ from .common_imports import (
 )
 
 try:
-    from PyQt5.QtCore import QDateTime
-    from PyQt5.QtWidgets import QDateTimeEdit, QTextBrowser
+    from PyQt5.QtWidgets import QTextBrowser
 except ImportError:
     pass
 

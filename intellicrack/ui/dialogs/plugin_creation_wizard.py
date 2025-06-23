@@ -71,6 +71,7 @@ class PluginCreationWizard(QWizard):
 
     def on_page_changed(self, page_id):
         """Handle page changes"""
+        _ = page_id
         current_page = self.currentPage()
 
         if isinstance(current_page, CodeGenerationPage):
@@ -101,6 +102,7 @@ class PluginCreationWizard(QWizard):
 
     def generate_python_code(self, info, template, features):
         """Generate Python plugin code"""
+        _ = template
         code = f'''"""
 {info['name']}
 {info['description']}
@@ -160,6 +162,7 @@ def get_plugin():
 
     def generate_frida_code(self, info, template, features):
         """Generate Frida script code"""
+        _ = template
         code = f'''/*
  * {info['name']}
  * {info['description']}
@@ -198,6 +201,7 @@ function hexdump(buffer, options) {{
 
     def generate_ghidra_code(self, info, template, features):
         """Generate Ghidra script code"""
+        _ = template
         code = f'''# {info['name']}
 # {info['description']}
 #
@@ -523,6 +527,7 @@ class TemplateSelectionPage(QWizardPage):
 
     def on_template_selected(self, current, previous):
         """Handle template selection"""
+        _ = previous
         if current:
             template = current.data(Qt.UserRole)
             self.description_label.setText(template['description'])

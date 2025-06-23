@@ -319,16 +319,20 @@ def get_fallback_implementations() -> Dict[str, Any]:
     # Simple numpy-like operations
     if not NUMPY_AVAILABLE:
         class NumpyFallback:
+            """Fallback numpy-like operations when numpy is not available."""
             @staticmethod
             def array(data):
+                """Convert data to array-like structure."""
                 return list(data) if hasattr(data, '__iter__') else [data]
 
             @staticmethod
             def mean(data):
+                """Calculate mean of data."""
                 return sum(data) / len(data) if data else 0
 
             @staticmethod
             def std(data):
+                """Calculate standard deviation of data."""
                 if not data:
                     return 0
                 mean_val = sum(data) / len(data)
@@ -343,8 +347,11 @@ def get_fallback_implementations() -> Dict[str, Any]:
         import urllib.request
 
         class RequestsFallback:
+            """Fallback HTTP requests implementation when requests module is not available."""
             @staticmethod
             def get(url, **kwargs):
+                """Perform HTTP GET request using urllib."""
+                logger.debug(f"Fallback HTTP GET to {url} with {len(kwargs)} kwargs: {list(kwargs.keys())}")
                 try:
                     response = urllib.request.urlopen(url)
                     return type('Response', (), {

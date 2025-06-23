@@ -496,11 +496,11 @@ class PathDiscovery:
                                                     bin_path = os.path.join(install_location, 'bin', exe)
                                                     if os.path.isfile(bin_path):
                                                         return bin_path
-                                    except WindowsError:
+                                    except OSError:
                                         pass
-                            except WindowsError:
+                            except OSError:
                                 pass
-                except WindowsError:
+                except OSError:
                     pass
         except ImportError:
             logger.warning("winreg module not available")

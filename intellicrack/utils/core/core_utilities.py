@@ -133,6 +133,7 @@ def run_gui_mode(args) -> int:
     Returns:
         Exit code
     """
+    _ = args
     try:
         from PyQt5.QtWidgets import QApplication
 

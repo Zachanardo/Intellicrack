@@ -184,33 +184,33 @@ public class BasicAnalysis extends GhidraScript {
 
     @Override
     public void run() throws Exception {
-        
+
         println("=== Intellicrack Basic Analysis ===");
-        
+
         // Get program info
         Program program = getCurrentProgram();
         println("Program: " + program.getName());
         println("Language: " + program.getLanguageID());
         println("Entry Point: " + program.getImageBase().toString());
-        
+
         // Analyze functions
         analyzeFunctions();
-        
+
         // Analyze strings
         analyzeStrings();
-        
+
         // Analyze imports
         analyzeImports();
-        
+
         println("=== Analysis Complete ===");
     }
-    
+
     private void analyzeFunctions() {
         println("\\n--- Function Analysis ---");
         FunctionManager funcMgr = getCurrentProgram().getFunctionManager();
         int functionCount = funcMgr.getFunctionCount();
         println("Total Functions: " + functionCount);
-        
+
         // List first 10 functions
         int count = 0;
         FunctionIterator iter = funcMgr.getFunctions(true);
@@ -219,20 +219,20 @@ public class BasicAnalysis extends GhidraScript {
             println("Function: " + func.getName() + " @ " + func.getEntryPoint());
             count++;
         }
-        
+
         if (functionCount > 10) {
             println("... and " + (functionCount - 10) + " more functions");
         }
     }
-    
+
     private void analyzeStrings() {
         println("\\n--- String Analysis ---");
         Listing listing = getCurrentProgram().getListing();
         Memory memory = getCurrentProgram().getMemory();
-        
+
         int stringCount = 0;
         MemoryBlock[] blocks = memory.getBlocks();
-        
+
         for (MemoryBlock block : blocks) {
             if (block.isRead() && !block.isWrite()) { // Likely read-only data
                 DataIterator dataIter = listing.getDefinedData(block.getStart(), true);
@@ -248,15 +248,15 @@ public class BasicAnalysis extends GhidraScript {
                 }
             }
         }
-        
+
         println("Total Strings Found: " + stringCount);
     }
-    
+
     private void analyzeImports() {
         println("\\n--- Import Analysis ---");
         SymbolTable symbolTable = getCurrentProgram().getSymbolTable();
         SymbolIterator iter = symbolTable.getExternalSymbols();
-        
+
         int importCount = 0;
         while (iter.hasNext()) {
             Symbol symbol = iter.next();
@@ -266,11 +266,11 @@ public class BasicAnalysis extends GhidraScript {
                        symbol.getParentNamespace().getName());
             }
         }
-        
+
         if (importCount > 10) {
             println("... and " + (importCount - 10) + " more imports");
         }
-        
+
         println("Total Imports: " + importCount);
     }
 }'''
@@ -296,35 +296,35 @@ public class LicenseAnalysis extends GhidraScript {
 
     @Override
     public void run() throws Exception {
-        
+
         println("=== Intellicrack License Analysis ===");
-        
+
         // Search for license-related functions
         findLicenseFunctions();
-        
+
         // Search for license-related strings
         findLicenseStrings();
-        
+
         // Search for crypto functions
         findCryptoFunctions();
-        
+
         // Search for time-related functions
         findTimeFunctions();
-        
+
         println("=== License Analysis Complete ===");
     }
-    
+
     private void findLicenseFunctions() {
         println("\\n--- License Function Analysis ---");
         FunctionManager funcMgr = getCurrentProgram().getFunctionManager();
         String[] licenseKeywords = {"license", "valid", "check", "verify", "auth", "trial", "expire", "register"};
-        
+
         int foundCount = 0;
         FunctionIterator iter = funcMgr.getFunctions(true);
         while (iter.hasNext()) {
             Function func = iter.next();
             String funcName = func.getName().toLowerCase();
-            
+
             for (String keyword : licenseKeywords) {
                 if (funcName.contains(keyword)) {
                     println("License Function: " + func.getName() + " @ " + func.getEntryPoint());
@@ -333,19 +333,19 @@ public class LicenseAnalysis extends GhidraScript {
                 }
             }
         }
-        
+
         println("License-related functions found: " + foundCount);
     }
-    
+
     private void findLicenseStrings() {
         println("\\n--- License String Analysis ---");
         Listing listing = getCurrentProgram().getListing();
         Memory memory = getCurrentProgram().getMemory();
         String[] licenseKeywords = {"license", "trial", "expire", "valid", "invalid", "key", "serial", "activate"};
-        
+
         int foundCount = 0;
         MemoryBlock[] blocks = memory.getBlocks();
-        
+
         for (MemoryBlock block : blocks) {
             if (block.isRead()) {
                 DataIterator dataIter = listing.getDefinedData(block.getStart(), true);
@@ -353,7 +353,7 @@ public class LicenseAnalysis extends GhidraScript {
                     Data data = dataIter.next();
                     if (data.hasStringValue()) {
                         String stringValue = data.getDefaultValueRepresentation().toLowerCase();
-                        
+
                         for (String keyword : licenseKeywords) {
                             if (stringValue.contains(keyword)) {
                                 println("License String: " + data.getDefaultValueRepresentation() + 
@@ -366,21 +366,21 @@ public class LicenseAnalysis extends GhidraScript {
                 }
             }
         }
-        
+
         println("License-related strings found: " + foundCount);
     }
-    
+
     private void findCryptoFunctions() {
         println("\\n--- Crypto Function Analysis ---");
         SymbolTable symbolTable = getCurrentProgram().getSymbolTable();
         String[] cryptoKeywords = {"crypt", "hash", "md5", "sha", "aes", "des", "rsa", "encrypt", "decrypt"};
-        
+
         int foundCount = 0;
         SymbolIterator iter = symbolTable.getAllSymbols(true);
         while (iter.hasNext()) {
             Symbol symbol = iter.next();
             String symbolName = symbol.getName().toLowerCase();
-            
+
             for (String keyword : cryptoKeywords) {
                 if (symbolName.contains(keyword)) {
                     println("Crypto Symbol: " + symbol.getName() + " @ " + symbol.getAddress());
@@ -389,21 +389,21 @@ public class LicenseAnalysis extends GhidraScript {
                 }
             }
         }
-        
+
         println("Crypto-related symbols found: " + foundCount);
     }
-    
+
     private void findTimeFunctions() {
         println("\\n--- Time Function Analysis ---");
         SymbolTable symbolTable = getCurrentProgram().getSymbolTable();
         String[] timeKeywords = {"time", "date", "tick", "clock", "timer", "stamp"};
-        
+
         int foundCount = 0;
         SymbolIterator iter = symbolTable.getAllSymbols(true);
         while (iter.hasNext()) {
             Symbol symbol = iter.next();
             String symbolName = symbol.getName().toLowerCase();
-            
+
             for (String keyword : timeKeywords) {
                 if (symbolName.contains(keyword)) {
                     println("Time Symbol: " + symbol.getName() + " @ " + symbol.getAddress());
@@ -412,7 +412,7 @@ public class LicenseAnalysis extends GhidraScript {
                 }
             }
         }
-        
+
         println("Time-related symbols found: " + foundCount);
     }
 }'''
@@ -437,27 +437,27 @@ public class FunctionAnalysis extends GhidraScript {
 
     @Override
     public void run() throws Exception {
-        
+
         println("=== Intellicrack Function Analysis ===");
-        
+
         analyzeFunctionComplexity();
         analyzeCallGraph();
         findInterestingFunctions();
-        
+
         println("=== Function Analysis Complete ===");
     }
-    
+
     private void analyzeFunctionComplexity() {
         println("\\n--- Function Complexity Analysis ---");
         FunctionManager funcMgr = getCurrentProgram().getFunctionManager();
-        
+
         int simple = 0, moderate = 0, complex = 0;
-        
+
         FunctionIterator iter = funcMgr.getFunctions(true);
         while (iter.hasNext()) {
             Function func = iter.next();
             long size = func.getBody().getNumAddresses();
-            
+
             if (size < 50) {
                 simple++;
             } else if (size < 200) {
@@ -467,52 +467,52 @@ public class FunctionAnalysis extends GhidraScript {
                 println("Complex Function: " + func.getName() + " (size: " + size + ") @ " + func.getEntryPoint());
             }
         }
-        
+
         println("Simple functions (< 50 instructions): " + simple);
         println("Moderate functions (50-200 instructions): " + moderate);
         println("Complex functions (> 200 instructions): " + complex);
     }
-    
+
     private void analyzeCallGraph() {
         println("\\n--- Call Graph Analysis ---");
         FunctionManager funcMgr = getCurrentProgram().getFunctionManager();
-        
+
         Function mainFunc = getMainFunction();
         if (mainFunc != null) {
             println("Main function found: " + mainFunc.getName() + " @ " + mainFunc.getEntryPoint());
             analyzeCallTree(mainFunc, 1, 3); // Analyze 3 levels deep
         }
     }
-    
+
     private Function getMainFunction() {
         FunctionManager funcMgr = getCurrentProgram().getFunctionManager();
-        
+
         // Try to find main function
         Function main = funcMgr.getFunction("main");
         if (main != null) return main;
-        
+
         main = funcMgr.getFunction("_main");
         if (main != null) return main;
-        
+
         main = funcMgr.getFunction("WinMain");
         if (main != null) return main;
-        
+
         // Return entry point function
         AddressSetView entries = getCurrentProgram().getSymbolTable().getExternalEntryPointIterator();
         if (!entries.isEmpty()) {
             Address entryAddr = entries.getMinAddress();
             return funcMgr.getFunctionAt(entryAddr);
         }
-        
+
         return null;
     }
-    
+
     private void analyzeCallTree(Function func, int level, int maxLevel) {
         if (level > maxLevel || func == null) return;
-        
+
         String indent = "  ".repeat(level);
         println(indent + "Level " + level + ": " + func.getName());
-        
+
         Set<Function> calledFunctions = func.getCalledFunctions(null);
         for (Function calledFunc : calledFunctions) {
             if (level < maxLevel) {
@@ -520,17 +520,17 @@ public class FunctionAnalysis extends GhidraScript {
             }
         }
     }
-    
+
     private void findInterestingFunctions() {
         println("\\n--- Interesting Functions ---");
         FunctionManager funcMgr = getCurrentProgram().getFunctionManager();
         String[] interestingKeywords = {"decrypt", "check", "valid", "auth", "parse", "verify"};
-        
+
         FunctionIterator iter = funcMgr.getFunctions(true);
         while (iter.hasNext()) {
             Function func = iter.next();
             String funcName = func.getName().toLowerCase();
-            
+
             for (String keyword : interestingKeywords) {
                 if (funcName.contains(keyword)) {
                     println("Interesting: " + func.getName() + " @ " + func.getEntryPoint());
@@ -562,22 +562,22 @@ public class StringAnalysis extends GhidraScript {
 
     @Override
     public void run() throws Exception {
-        
+
         println("=== Intellicrack String Analysis ===");
-        
+
         analyzeAllStrings();
         findUrls();
         findFilePaths();
         findErrorMessages();
-        
+
         println("=== String Analysis Complete ===");
     }
-    
+
     private void analyzeAllStrings() {
         println("\\n--- All Strings Analysis ---");
         Listing listing = getCurrentProgram().getListing();
         Memory memory = getCurrentProgram().getMemory();
-        
+
         Map<String, Integer> stringCategories = new HashMap<>();
         stringCategories.put("URLs", 0);
         stringCategories.put("File Paths", 0);
@@ -585,7 +585,7 @@ public class StringAnalysis extends GhidraScript {
         stringCategories.put("Registry Keys", 0);
         stringCategories.put("Crypto Related", 0);
         stringCategories.put("Other", 0);
-        
+
         MemoryBlock[] blocks = memory.getBlocks();
         for (MemoryBlock block : blocks) {
             if (block.isRead()) {
@@ -599,15 +599,15 @@ public class StringAnalysis extends GhidraScript {
                 }
             }
         }
-        
+
         for (Map.Entry<String, Integer> entry : stringCategories.entrySet()) {
             println(entry.getKey() + ": " + entry.getValue());
         }
     }
-    
+
     private void categorizeString(String str, Map<String, Integer> categories) {
         String lowerStr = str.toLowerCase();
-        
+
         if (lowerStr.contains("http") || lowerStr.contains("www.") || lowerStr.contains(".com")) {
             categories.put("URLs", categories.get("URLs") + 1);
         } else if (lowerStr.contains("\\\\") || lowerStr.contains("c:") || lowerStr.contains(".exe") || lowerStr.contains(".dll")) {
@@ -622,13 +622,13 @@ public class StringAnalysis extends GhidraScript {
             categories.put("Other", categories.get("Other") + 1);
         }
     }
-    
+
     private void findUrls() {
         println("\\n--- URL Analysis ---");
         Listing listing = getCurrentProgram().getListing();
         Memory memory = getCurrentProgram().getMemory();
         Pattern urlPattern = Pattern.compile("https?://[\\\\w.-]+(?:\\\\.[\\\\w.-]+)+[\\\\w\\\\-\\\\._~:/?#[\\\\]@!\\\\$&'()*+,;=.]*");
-        
+
         int urlCount = 0;
         MemoryBlock[] blocks = memory.getBlocks();
         for (MemoryBlock block : blocks) {
@@ -647,15 +647,15 @@ public class StringAnalysis extends GhidraScript {
                 }
             }
         }
-        
+
         println("Total URLs found: " + urlCount);
     }
-    
+
     private void findFilePaths() {
         println("\\n--- File Path Analysis ---");
         Listing listing = getCurrentProgram().getListing();
         Memory memory = getCurrentProgram().getMemory();
-        
+
         int pathCount = 0;
         MemoryBlock[] blocks = memory.getBlocks();
         for (MemoryBlock block : blocks) {
@@ -673,22 +673,22 @@ public class StringAnalysis extends GhidraScript {
                 }
             }
         }
-        
+
         println("Total file paths found: " + pathCount);
     }
-    
+
     private boolean isFilePath(String str) {
         return str.contains("\\\\") || str.contains("/") || 
                str.matches(".*\\\\.[a-zA-Z]{2,4}$") ||
                str.startsWith("C:") || str.startsWith("/");
     }
-    
+
     private void findErrorMessages() {
         println("\\n--- Error Message Analysis ---");
         Listing listing = getCurrentProgram().getListing();
         Memory memory = getCurrentProgram().getMemory();
         String[] errorKeywords = {"error", "fail", "invalid", "corrupt", "cannot", "unable", "denied"};
-        
+
         int errorCount = 0;
         MemoryBlock[] blocks = memory.getBlocks();
         for (MemoryBlock block : blocks) {
@@ -698,7 +698,7 @@ public class StringAnalysis extends GhidraScript {
                     Data data = dataIter.next();
                     if (data.hasStringValue()) {
                         String stringValue = data.getDefaultValueRepresentation().toLowerCase();
-                        
+
                         for (String keyword : errorKeywords) {
                             if (stringValue.contains(keyword)) {
                                 println("Error Message: " + data.getDefaultValueRepresentation() + 
@@ -711,7 +711,7 @@ public class StringAnalysis extends GhidraScript {
                 }
             }
         }
-        
+
         println("Total error messages found: " + errorCount);
     }
 }'''

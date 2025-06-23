@@ -494,8 +494,13 @@ class R2ScriptingEngine:
             address = point.get('address', '')
 
             if function_name:
+                # Use both function name and address for comprehensive analysis
+                location_info = f"{function_name}"
+                if address:
+                    location_info += f" at {address}"
+
                 script_commands.extend([
-                    f'# Analyzing function: {function_name}',
+                    f'# Analyzing function: {location_info}',
                     f's {function_name}',
                     'pdf',  # Disassemble
                     'pdc',  # Decompile
@@ -505,6 +510,17 @@ class R2ScriptingEngine:
                     '/j key',      # Search for key strings
                     ''
                 ])
+
+                # If we have an address, add direct address analysis
+                if address:
+                    script_commands.extend([
+                        f'# Direct address analysis for {address}',
+                        f's {address}',
+                        'pd 20',  # Print disassembly at address
+                        'px 64',  # Print hex dump
+                        f'axf @ {address}',  # Cross-references from this address
+                        ''
+                    ])
 
         script_commands.extend([
             '# Search for license-related imports',

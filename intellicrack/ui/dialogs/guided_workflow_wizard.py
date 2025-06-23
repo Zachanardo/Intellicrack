@@ -24,6 +24,7 @@ import datetime
 import os
 from typing import Any, Dict
 
+import pkg_resources
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import (
@@ -77,8 +78,9 @@ class GuidedWorkflowWizard(QWizard):
         self.setWindowTitle("Intellicrack Guided Workflow")
         self.setWizardStyle(QWizard.ModernStyle)
 
-        if os.path.exists("assets/icon.ico"):
-            self.setWindowIcon(QIcon("assets/icon.ico"))
+        icon_path = pkg_resources.resource_filename('intellicrack', 'assets/icon.ico')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
 
         # Set minimum size
         self.setMinimumSize(800, 600)
@@ -120,9 +122,10 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(intro_text)
 
         # Add image if available
-        if os.path.exists("assets/splash.png"):
+        splash_path = pkg_resources.resource_filename('intellicrack', 'assets/splash.png')
+        if os.path.exists(splash_path):
             image_label = QLabel()
-            pixmap = QPixmap("assets/splash.png").scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            pixmap = QPixmap(splash_path).scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             image_label.setPixmap(pixmap)
             image_label.setAlignment(Qt.AlignCenter)
             layout.addWidget(image_label)

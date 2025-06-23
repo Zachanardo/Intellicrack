@@ -67,6 +67,13 @@ class EnhancedR2Integration:
         self.logger = logger
         self.error_handler = error_handler
 
+        # Check r2pipe availability
+        if r2pipe is None:
+            self.logger.warning("r2pipe not available, some functionality may be limited")
+            self.r2pipe_available = False
+        else:
+            self.r2pipe_available = True
+
         # Performance and monitoring
         self.performance_stats = {
             'analysis_times': {},
@@ -95,6 +102,10 @@ class EnhancedR2Integration:
 
     def _initialize_components(self):
         """Initialize all analysis components with error handling"""
+        if not self.r2pipe_available:
+            self.logger.warning("r2pipe not available, skipping component initialization")
+            return
+
         component_classes = {
             'decompiler': R2DecompilationEngine,
             'esil': ESILAnalysisEngine,
@@ -406,6 +417,9 @@ class EnhancedR2Integration:
                     data['avg_time'] = sum(data['times']) / len(data['times'])
                     data['max_time'] = max(data['times'])
                     data['min_time'] = min(data['times'])
+                    # Add analysis type metadata for reporting
+                    data['analysis_type'] = analysis_type
+                    data['total_time'] = sum(data['times'])
 
                 total_attempts = data['successes'] + data['failures']
                 if total_attempts > 0:
@@ -450,6 +464,7 @@ class EnhancedR2Integration:
 
         health = {
             'overall_health': 'healthy',
+            'r2pipe_available': self.r2pipe_available,
             'components_available': sum(1 for c in self.components.values() if c is not None),
             'total_components': len(self.components),
             'cache_health': {
@@ -472,7 +487,9 @@ class EnhancedR2Integration:
             health['error_health']['recovery_rate'] = stats['recoveries_successful'] / stats['errors_handled']
 
         # Determine overall health
-        if health['components_available'] < health['total_components'] * 0.5:
+        if not health['r2pipe_available']:
+            health['overall_health'] = 'critical'
+        elif health['components_available'] < health['total_components'] * 0.5:
             health['overall_health'] = 'critical'
         elif health['error_health']['recovery_rate'] < 0.5:
             health['overall_health'] = 'degraded'

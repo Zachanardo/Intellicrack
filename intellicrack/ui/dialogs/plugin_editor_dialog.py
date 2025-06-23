@@ -214,6 +214,7 @@ class PluginEditorDialog(QDialog):
 
     def show_api_docs(self, current, previous):
         """Show API documentation"""
+        _ = previous
         if not current:
             return
 
@@ -441,6 +442,7 @@ Process.enumerateModules().forEach(function(module) {
 
     def test_finished(self, exit_code, exit_status):
         """Handle test process finished"""
+        _ = exit_status
         self.test_output.append(f"\nTest finished with exit code: {exit_code}")
 
         # Update UI

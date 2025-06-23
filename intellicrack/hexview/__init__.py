@@ -124,6 +124,7 @@ __all__ = [
     # Convenience aliases
     'show_hex_viewer',
     'integrate',
+    'HexViewer',
 
     # Large file optimization (conditionally available)
     'LARGE_FILE_SUPPORT',
@@ -142,3 +143,6 @@ if LARGE_FILE_SUPPORT:
 # Convenience aliases
 show_hex_viewer = show_enhanced_hex_viewer
 integrate = integrate_with_intellicrack
+
+# Main hex viewer class (alias for compatibility)
+HexViewer = HexViewerWidget

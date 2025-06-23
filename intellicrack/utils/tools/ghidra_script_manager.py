@@ -30,6 +30,8 @@ import shutil
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+import pkg_resources
+
 logger = logging.getLogger(__name__)
 
 
@@ -171,7 +173,7 @@ class GhidraScriptManager:
 
     # Centralized script directory
     DEFAULT_SCRIPT_DIRS = [
-        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "scripts", "ghidra")
+        pkg_resources.resource_filename('intellicrack', 'plugins/ghidra_scripts')
     ]
 
     # Script metadata cache file
@@ -201,7 +203,7 @@ class GhidraScriptManager:
     def _create_default_directories(self):
         """Create default script directories if they don't exist."""
         # Create main directory and subdirectories
-        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "scripts", "ghidra")
+        base_dir = pkg_resources.resource_filename('intellicrack', 'plugins/ghidra_scripts')
         subdirs = ["default", "user", "examples", "community"]
 
         # Create base directory
@@ -309,7 +311,7 @@ class GhidraScriptManager:
             return self.scripts[identifier]
 
         # Try by filename or name
-        for path, script in self.scripts.items():
+        for _, script in self.scripts.items():
             if script.filename == identifier or script.name == identifier:
                 return script
 
@@ -397,7 +399,7 @@ class GhidraScriptManager:
         Returns:
             GhidraScript object if successful
         """
-        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "scripts", "ghidra")
+        base_dir = pkg_resources.resource_filename('intellicrack', 'plugins/ghidra_scripts')
         user_dir = os.path.join(base_dir, "user")
         os.makedirs(user_dir, exist_ok=True)
 

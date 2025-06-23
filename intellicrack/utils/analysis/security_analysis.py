@@ -32,9 +32,13 @@ from ..core.common_imports import (
     PEFILE_AVAILABLE,
     PSUTIL_AVAILABLE,
     capstone,
-    pefile,
     psutil,
 )
+
+try:
+    import pefile
+except ImportError:
+    pefile = None
 
 
 def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = None) -> Dict[str, Any]:
@@ -78,9 +82,6 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
                 results["aslr_enabled"] = bool(dll_chars & 0x0040)  # IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
 
             # Check imports for vulnerable functions
-            from ..binary.pe_common import extract_pe_imports
-            imports = extract_pe_imports(pe)
-
             # Also need DLL names for detailed analysis
             from ..binary.pe_common import iterate_pe_imports_with_dll
 

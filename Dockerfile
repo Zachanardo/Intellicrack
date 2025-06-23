@@ -41,7 +41,7 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     libglu1-mesa \
     # Network tools
-    libpcap0.8 \
+    libpcap0.8 \  # Optional backend for Scapy packet capture
     tcpdump \
     # Binary tools
     file \

@@ -288,12 +288,37 @@ class R2PerformanceOptimizer:
         section_count = characteristics['section_count']
         import_count = characteristics['import_count']
 
-        # Size-based complexity
+        # Multi-factor complexity analysis
+        complexity_score = 0
+
+        # Size-based scoring
         if size > 500 * 1024 * 1024:  # >500MB
-            return 'very_high'
+            complexity_score += 4
         elif size > 100 * 1024 * 1024:  # >100MB
-            return 'high'
+            complexity_score += 3
         elif size > 10 * 1024 * 1024:  # >10MB
+            complexity_score += 2
+        else:
+            complexity_score += 1
+
+        # Section count factor
+        if section_count > 50:
+            complexity_score += 2
+        elif section_count > 20:
+            complexity_score += 1
+
+        # Import count factor
+        if import_count > 1000:
+            complexity_score += 2
+        elif import_count > 500:
+            complexity_score += 1
+
+        # Determine final complexity based on total score
+        if complexity_score >= 7:
+            return 'very_high'
+        elif complexity_score >= 5:
+            return 'high'
+        elif complexity_score >= 3:
             return 'medium'
         else:
             return 'low'
@@ -304,7 +329,9 @@ class R2PerformanceOptimizer:
 
         for profile_name, profile in self.PERFORMANCE_PROFILES.items():
             if file_size <= profile.max_file_size:
-                self.logger.debug(f"Selected profile: {profile.name}")
+                self.logger.debug(f"Selected profile: {profile.name} (key: {profile_name})")
+                # Log profile selection for monitoring and optimization
+                self._track_profile_usage(profile_name, file_size)
                 return profile
 
         # Default to huge files profile
@@ -544,6 +571,25 @@ class R2PerformanceOptimizer:
 
         except Exception as e:
             self.logger.error(f"Failed to optimize r2 session: {e}")
+
+    def _track_profile_usage(self, profile_name: str, file_size: int):
+        """Track profile usage for optimization insights"""
+        if not hasattr(self, 'profile_usage_stats'):
+            self.profile_usage_stats = {}
+
+        if profile_name not in self.profile_usage_stats:
+            self.profile_usage_stats[profile_name] = {
+                'usage_count': 0,
+                'total_file_size': 0,
+                'avg_file_size': 0
+            }
+
+        stats = self.profile_usage_stats[profile_name]
+        stats['usage_count'] += 1
+        stats['total_file_size'] += file_size
+        stats['avg_file_size'] = stats['total_file_size'] / stats['usage_count']
+
+        self.logger.debug(f"Profile {profile_name} used {stats['usage_count']} times, avg file size: {stats['avg_file_size']:.2f} bytes")
 
     def get_performance_report(self) -> Dict[str, Any]:
         """Generate comprehensive performance report"""

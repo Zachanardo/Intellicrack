@@ -24,6 +24,8 @@ class ProtectionType(Enum):
     MEMORY_PROTECTION = "Memory Protection"
     KERNEL = "Kernel-mode Protection"
     BEHAVIOR = "Behavioral Analysis"
+    ROOT_DETECTION = "Root Detection"
+    INTEGRITY_CHECK = "Integrity Check"
     UNKNOWN = "Unknown Protection"
 
 

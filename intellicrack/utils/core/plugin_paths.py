@@ -26,17 +26,25 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 from pathlib import Path
 from typing import Dict, List, Optional
 
+import pkg_resources
+
 
 def get_project_root() -> Path:
     """
-    Get the project root directory.
+    Get the project root directory using pkg_resources.
 
     Returns:
         Path: Absolute path to the Intellicrack project root
     """
-    current_file = Path(__file__)
-    # Go up from utils -> intellicrack -> project root
-    return current_file.parent.parent.parent
+    try:
+        # Use pkg_resources to find the package root
+        intellicrack_root = Path(pkg_resources.resource_filename('intellicrack', ''))
+        return intellicrack_root.parent
+    except Exception:
+        # Fallback to relative path calculation
+        current_file = Path(__file__)
+        # Go up from utils -> intellicrack -> project root
+        return current_file.parent.parent.parent
 
 
 def get_scripts_dir() -> Path:
@@ -46,7 +54,7 @@ def get_scripts_dir() -> Path:
     Returns:
         Path: Absolute path to the scripts directory
     """
-    return get_project_root() / "scripts"
+    return Path(pkg_resources.resource_filename('intellicrack', 'scripts'))
 
 
 def get_frida_scripts_dir() -> Path:
@@ -56,7 +64,7 @@ def get_frida_scripts_dir() -> Path:
     Returns:
         Path: Absolute path to the Frida scripts directory
     """
-    return get_scripts_dir() / "frida"
+    return Path(pkg_resources.resource_filename('intellicrack', 'plugins/frida_scripts'))
 
 
 def get_ghidra_scripts_dir() -> Path:
@@ -66,7 +74,7 @@ def get_ghidra_scripts_dir() -> Path:
     Returns:
         Path: Absolute path to the Ghidra scripts directory
     """
-    return get_scripts_dir() / "ghidra"
+    return Path(pkg_resources.resource_filename('intellicrack', 'plugins/ghidra_scripts'))
 
 
 def get_plugin_modules_dir() -> Path:
@@ -81,22 +89,34 @@ def get_plugin_modules_dir() -> Path:
 
 def get_config_dir() -> Path:
     """
-    Get the configuration directory.
+    Get the configuration directory using modern config system.
 
     Returns:
         Path: Absolute path to the configuration directory
     """
-    return get_project_root() / "config"
+    try:
+        from intellicrack.core.config_manager import get_config
+        config = get_config()
+        return config.config_dir
+    except ImportError:
+        # Fallback to legacy behavior
+        return get_project_root() / "config"
 
 
 def get_main_config_file() -> Path:
     """
-    Get the main configuration file path.
+    Get the main configuration file path using modern config system.
 
     Returns:
-        Path: Absolute path to intellicrack_config.json
+        Path: Absolute path to main config file
     """
-    return get_config_dir() / "intellicrack_config.json"
+    try:
+        from intellicrack.core.config_manager import get_config
+        config = get_config()
+        return config.config_file
+    except ImportError:
+        # Fallback to legacy behavior
+        return get_config_dir() / "intellicrack_config.json"
 
 
 def get_tests_dir() -> Path:

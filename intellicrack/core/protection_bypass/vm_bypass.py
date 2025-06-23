@@ -323,23 +323,28 @@ class VirtualizationDetectionBypass:
 
             if FRIDA_AVAILABLE:
                 # Use Frida to hide processes
-                hide_process_script = """
+                vm_process_list = "|".join(vm_processes)  # Create searchable string
+                hide_process_script = f"""
+                // VM processes to hide: {vm_process_list}
+                var vmProcesses = ["{'", "'.join(vm_processes)}"];
+
                 var ntQuerySystemInformation = Module.findExportByName("ntdll.dll", "NtQuerySystemInformation");
-                if (ntQuerySystemInformation) {
-                    Interceptor.attach(ntQuerySystemInformation, {
-                        onEnter: function(args) {
+                if (ntQuerySystemInformation) {{
+                    Interceptor.attach(ntQuerySystemInformation, {{
+                        onEnter: function(args) {{
                             this.infoClass = args[0].toInt32();
                             this.buffer = args[1];
                             this.length = args[2].toInt32();
-                        },
-                        onLeave: function(retval) {
-                            if (this.infoClass === 5) { // SystemProcessInformation
+                        }},
+                        onLeave: function(retval) {{
+                            if (this.infoClass === 5) {{ // SystemProcessInformation
                                 // Filter out VM processes from the list
-                                console.log("[VM Bypass] Filtering VM processes from system information");
-                            }
-                        }
-                    });
-                }
+                                console.log("[VM Bypass] Filtering " + vmProcesses.length + " VM processes from system information");
+                                // TODO: Implement actual process list filtering using vmProcesses array
+                            }}
+                        }}
+                    }});
+                }}
                 """
                 self.hooks.append({
                     "type": "frida",
@@ -650,8 +655,8 @@ class VMDetector:
         self.logger = logging.getLogger("IntellicrackLogger.VMDetector")
         self.vm_indicators = []
 
-    def _get_driver_path(self, driver_name: str) -> str:
-        """Get Windows driver path dynamically."""
+    def _get_vm_driver_path(self, driver_name: str) -> str:
+        """Get Windows VM driver path dynamically for detection."""
         import os
         # Common driver paths on Windows
         driver_paths = [
@@ -699,8 +704,8 @@ class VMDetector:
 
         # Check for VM files/directories
         vm_paths = [
-            self._get_driver_path("VBoxGuest.sys"),
-            self._get_driver_path("vmhgfs.sys"),
+            self._get_vm_driver_path("VBoxGuest.sys"),
+            self._get_vm_driver_path("vmhgfs.sys"),
             "/usr/bin/VBoxClient",
             "/usr/bin/vmware-toolbox"
         ]
@@ -732,9 +737,16 @@ class VMDetector:
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.debug("MAC address check failed: %s", e)
 
+        # Store indicators in instance variable for later analysis
+        self.vm_indicators = indicators.copy()
+
         results["indicators"] = indicators
         results["is_vm"] = len(indicators) > 0
         results["confidence"] = min(len(indicators) * 0.25, 1.0)
+
+        # Log detected indicators for debugging
+        for indicator in self.vm_indicators:
+            self.logger.debug(f"VM indicator detected: {indicator}")
 
         # Determine VM type
         if results["is_vm"]:

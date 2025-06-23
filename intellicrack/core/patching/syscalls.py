@@ -214,7 +214,6 @@ class DirectSyscalls:
             else:
                 # 32-bit: TEB is at FS:[0x18]
                 # For 32-bit WOW64 processes, we can read it directly
-                teb_ptr = ctypes.c_void_p()
 
                 # Use NtQueryInformationThread to get TEB
                 tbi = THREAD_BASIC_INFORMATION_32()
@@ -227,11 +226,14 @@ class DirectSyscalls:
                 )
 
                 if status == 0:  # STATUS_SUCCESS
+                    # Store TEB pointer for potential future use
+                    teb_ptr = tbi.TebBaseAddress
+
                     # Read WOW64Reserved from TEB
                     wow64_reserved = ctypes.c_void_p()
                     kernel32.ReadProcessMemory(
                         kernel32.GetCurrentProcess(),
-                        tbi.TebBaseAddress + TEB_WOW64_RESERVED_OFFSET,
+                        teb_ptr + TEB_WOW64_RESERVED_OFFSET,
                         ctypes.byref(wow64_reserved),
                         ctypes.sizeof(ctypes.c_void_p),
                         None
@@ -259,7 +261,7 @@ class DirectSyscalls:
 
         # Execute syscall
         if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
-            status, allocated_base = self._syscall_64(
+            status = self._syscall_64(
                 syscall_num,
                 process_handle,
                 ctypes.byref(base_addr_ptr),
@@ -269,7 +271,7 @@ class DirectSyscalls:
                 protection
             )
         else:  # 32-bit
-            status, allocated_base = self._syscall_32(
+            status = self._syscall_32(
                 syscall_num,
                 process_handle,
                 ctypes.byref(base_addr_ptr),
@@ -279,7 +281,9 @@ class DirectSyscalls:
                 protection
             )
 
-        return status, base_addr_ptr.value
+        # Return status and the allocated base address
+        allocated_base = base_addr_ptr.value
+        return status, allocated_base
 
     def nt_write_virtual_memory(self, process_handle: int, base_address: int,
                                buffer: bytes) -> int:
@@ -632,6 +636,11 @@ def inject_using_syscalls(process_handle: int, dll_path: str) -> bool:
         if status != 0:
             logger.error(f"NtCreateThreadEx failed: 0x{status:X}")
             return False
+
+        # Wait for thread completion and clean up
+        if thread_handle:
+            kernel32.WaitForSingleObject(thread_handle, 5000)  # Wait up to 5 seconds
+            kernel32.CloseHandle(thread_handle)
 
         logger.info("Successfully injected using direct syscalls")
         return True

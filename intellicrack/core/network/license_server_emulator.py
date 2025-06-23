@@ -37,12 +37,10 @@ from typing import Any, Dict, List, Optional, Tuple
 try:
     from .dynamic_response_generator import (
         DynamicResponseGenerator,
-        GeneratedResponse,
         ResponseContext,
     )
     from .traffic_interception_engine import (
         AnalyzedTraffic,
-        InterceptedPacket,
         TrafficInterceptionEngine,
     )
     HAS_NEW_COMPONENTS = True
@@ -614,7 +612,6 @@ class NetworkLicenseServerEmulator:
 
             # Parse DNS header
             transaction_id = struct.unpack('>H', data[0:2])[0]
-            flags = struct.unpack('>H', data[2:4])[0]
             questions = struct.unpack('>H', data[4:6])[0]
 
             if questions != 1:  # Only handle single question queries
@@ -1008,102 +1005,7 @@ class NetworkLicenseServerEmulator:
             self.logger.error("Failed to start traffic recorder: %s", e)
             return None
 
-    def get_status(self) -> Dict[str, Any]:
-        """
-        Get the current status of the license server emulator.
-
-        Returns:
-            Dict containing emulator status information
-        """
-        return {
-            'running': self.running,
-            'ports': self.config['listen_ports'],
-            'active_servers': len(self.servers),
-            'protocols_supported': list(self.protocol_fingerprints.keys()),
-            'ssl_enabled': self.ssl_interceptor is not None,
-            'traffic_recording': self.traffic_recorder is not None,
-            'dns_redirect': self.dns_server is not None
-        }
-
-
-def run_network_license_emulator(app: Any) -> None:
-    """
-    Run the network license server emulator.
-
-    Args:
-        app: Application instance
-    """
-    try:
-        from ...utils.ui_utils import log_message
-    except ImportError:
-        def log_message(msg):
-            """
-            Fallback log message function when ui_utils is not available.
-
-            Args:
-                msg: Message to log
-
-            Returns:
-                str: The input message unchanged
-            """
-            return msg
-
-    if not QT_AVAILABLE:
-        print("PyQt5 not available, cannot run interactive emulator")
-        return
-
-    app.update_output.emit(log_message("[Network] Starting network license server emulator..."))
-
-    # Create emulator
-    emulator = NetworkLicenseServerEmulator()
-
-    # Ask for ports
-    ports_str, ok = QInputDialog.getText(
-        app,
-        "License Server Ports",
-        "Enter comma-separated list of ports to listen on:",
-        QLineEdit.Normal,
-        "1111,1234,1337,8080,8888,27000,27001"
-    )
-
-    if ok:
-        # Parse ports
-        try:
-            ports = [int(_port.strip()) for _port in ports_str.split(',')]
-            emulator.config['listen_ports'] = ports
-        except ValueError:
-            app.update_output.emit(log_message("[Network] Invalid port numbers, using defaults"))
-    else:
-        app.update_output.emit(log_message("[Network] Cancelled"))
-        return
-
-    # Start emulator
-    if emulator.start():
-        app.update_output.emit(log_message("[Network] Network license server emulator started"))
-        app.update_output.emit(log_message(f"[Network] Listening on ports: {emulator.config['listen_ports']}"))
-
-        # Store emulator instance in app
-        app.license_emulator = emulator
-
-        # Add to analyze results
-        if not hasattr(app, "analyze_results"):
-            app.analyze_results = []
-
-        app.analyze_results.append("\n=== NETWORK LICENSE SERVER EMULATOR ===")
-        app.analyze_results.append(f"Listening on ports: {emulator.config['listen_ports']}")
-        app.analyze_results.append("\nSupported protocols:")
-        for _protocol in emulator.protocol_fingerprints.keys():
-            app.analyze_results.append(f"- {_protocol.upper()}")
-
-        app.analyze_results.append("\nTo use the emulator:")
-        app.analyze_results.append("1. Configure the application to use localhost as the license server")
-        app.analyze_results.append("2. Or redirect license server hostnames to localhost using hosts file")
-        app.analyze_results.append("3. The emulator will automatically respond to license checks with valid responses")
-    else:
-        app.update_output.emit(log_message("[Network] Failed to start network license server emulator"))
-
-
-    def _handle_analyzed_traffic(self, analysis: AnalyzedTraffic):
+    def _handle_analyzed_traffic(self, analysis: 'AnalyzedTraffic') -> None:
         """Handle analyzed traffic from the traffic interception engine"""
         try:
             if analysis.is_license_related:
@@ -1126,7 +1028,7 @@ def run_network_license_emulator(app: Any) -> None:
         except Exception as e:
             self.logger.error(f"Error handling analyzed traffic: {e}")
 
-    def _learn_protocol_pattern(self, analysis: AnalyzedTraffic):
+    def _learn_protocol_pattern(self, analysis: 'AnalyzedTraffic') -> None:
         """Learn new protocol patterns from analyzed traffic"""
         try:
             protocol_type = analysis.protocol_type
@@ -1164,7 +1066,7 @@ def run_network_license_emulator(app: Any) -> None:
         except Exception as e:
             self.logger.error(f"Error learning protocol pattern: {e}")
 
-    def setup_dns_redirection_for_hosts(self, hostnames: List[str]):
+    def setup_dns_redirection_for_hosts(self, hostnames: List[str]) -> None:
         """Setup DNS redirection for specific license server hostnames"""
         try:
             if self.traffic_engine:
@@ -1177,7 +1079,7 @@ def run_network_license_emulator(app: Any) -> None:
         except Exception as e:
             self.logger.error(f"Error setting up DNS redirection: {e}")
 
-    def setup_transparent_proxy(self, target_host: str, target_port: int):
+    def setup_transparent_proxy(self, target_host: str, target_port: int) -> bool:
         """Setup transparent proxy for license server traffic"""
         try:
             if self.traffic_engine:
@@ -1297,7 +1199,7 @@ def run_network_license_emulator(app: Any) -> None:
 
         return export_data
 
-    def import_learning_data(self, data: Dict[str, Any]):
+    def import_learning_data(self, data: Dict[str, Any]) -> None:
         """Import learning data from previous sessions"""
         try:
             # Import learned protocols
@@ -1327,6 +1229,100 @@ def run_network_license_emulator(app: Any) -> None:
 
         except Exception as e:
             self.logger.error(f"Error importing learning data: {e}")
+
+    def get_status(self) -> Dict[str, Any]:
+        """
+        Get the current status of the license server emulator.
+
+        Returns:
+            Dict containing emulator status information
+        """
+        return {
+            'running': self.running,
+            'ports': self.config['listen_ports'],
+            'active_servers': len(self.servers),
+            'protocols_supported': list(self.protocol_fingerprints.keys()),
+            'ssl_enabled': self.ssl_interceptor is not None,
+            'traffic_recording': self.traffic_recorder is not None,
+            'dns_redirect': self.dns_server is not None
+        }
+
+
+def run_network_license_emulator(app: Any) -> None:
+    """
+    Run the network license server emulator.
+
+    Args:
+        app: Application instance
+    """
+    try:
+        from ...utils.ui_utils import log_message
+    except ImportError:
+        def log_message(msg):
+            """
+            Fallback log message function when ui_utils is not available.
+
+            Args:
+                msg: Message to log
+
+            Returns:
+                str: The input message unchanged
+            """
+            return msg
+
+    if not QT_AVAILABLE:
+        print("PyQt5 not available, cannot run interactive emulator")
+        return
+
+    app.update_output.emit(log_message("[Network] Starting network license server emulator..."))
+
+    # Create emulator
+    emulator = NetworkLicenseServerEmulator()
+
+    # Ask for ports
+    ports_str, ok = QInputDialog.getText(
+        app,
+        "License Server Ports",
+        "Enter comma-separated list of ports to listen on:",
+        QLineEdit.Normal,
+        "1111,1234,1337,8080,8888,27000,27001"
+    )
+
+    if ok:
+        # Parse ports
+        try:
+            ports = [int(_port.strip()) for _port in ports_str.split(',')]
+            emulator.config['listen_ports'] = ports
+        except ValueError:
+            app.update_output.emit(log_message("[Network] Invalid port numbers, using defaults"))
+    else:
+        app.update_output.emit(log_message("[Network] Cancelled"))
+        return
+
+    # Start emulator
+    if emulator.start():
+        app.update_output.emit(log_message("[Network] Network license server emulator started"))
+        app.update_output.emit(log_message(f"[Network] Listening on ports: {emulator.config['listen_ports']}"))
+
+        # Store emulator instance in app
+        app.license_emulator = emulator
+
+        # Add to analyze results
+        if not hasattr(app, "analyze_results"):
+            app.analyze_results = []
+
+        app.analyze_results.append("\n=== NETWORK LICENSE SERVER EMULATOR ===")
+        app.analyze_results.append(f"Listening on ports: {emulator.config['listen_ports']}")
+        app.analyze_results.append("\nSupported protocols:")
+        for _protocol in emulator.protocol_fingerprints.keys():
+            app.analyze_results.append(f"- {_protocol.upper()}")
+
+        app.analyze_results.append("\nTo use the emulator:")
+        app.analyze_results.append("1. Configure the application to use localhost as the license server")
+        app.analyze_results.append("2. Or redirect license server hostnames to localhost using hosts file")
+        app.analyze_results.append("3. The emulator will automatically respond to license checks with valid responses")
+    else:
+        app.update_output.emit(log_message("[Network] Failed to start network license server emulator"))
 
 
 __all__ = ['NetworkLicenseServerEmulator', 'run_network_license_emulator']

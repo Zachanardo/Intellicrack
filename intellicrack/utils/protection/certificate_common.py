@@ -19,7 +19,6 @@ def create_certificate_builder():
     """
     try:
         from cryptography import x509
-        from cryptography.hazmat.primitives import hashes
         from cryptography.x509.oid import NameOID
 
         builder = x509.CertificateBuilder().subject_name(
@@ -45,7 +44,7 @@ def create_certificate_builder():
         # Set validity dates
         not_valid_before, not_valid_after = get_certificate_validity_dates(365)
         builder = builder.not_valid_before(not_valid_before).not_valid_after(not_valid_after)
-        
+
         return builder
     except ImportError:
         logger.warning("cryptography library not available for certificate generation")

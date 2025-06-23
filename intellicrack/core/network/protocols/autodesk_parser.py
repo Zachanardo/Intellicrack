@@ -22,6 +22,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import base64
 import hashlib
 import json
+import random
 import time
 import uuid
 from dataclasses import dataclass
@@ -646,6 +647,7 @@ class AutodeskLicensingParser:
     def _handle_subscription(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle subscription status check"""
         user_id = request.user_id or 'anonymous'
+        logger.debug(f"Processing subscription request for user: {user_id}")
 
         subscription_data = {
             "subscription_id": str(uuid.uuid4()).upper(),

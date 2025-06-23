@@ -89,10 +89,11 @@ def load_plugins(plugin_dir: str = "plugins") -> Dict[str, List[Dict[str, Any]]]
         os.makedirs(plugin_dir)
 
         # Create subdirectories if needed
-        for _subdir in ["custom_modules"]:
-            path = os.path.join(plugin_dir, _subdir)
+        for subdir in ["custom_modules"]:
+            path = os.path.join(plugin_dir, subdir)
             if not os.path.exists(path):
                 os.makedirs(path)
+                logger.info(f"Created plugin subdirectory: {subdir}")
 
     # Frida scripts are now managed independently by FridaManager
 
@@ -104,9 +105,10 @@ def load_plugins(plugin_dir: str = "plugins") -> Dict[str, List[Dict[str, Any]]]
         # Add to Python path
         sys.path.insert(0, custom_dir)
 
-        for _file in os.listdir(custom_dir):
-            if _file.endswith(".py") and not _file.startswith("__"):
-                plugin_name = os.path.splitext(_file)[0]
+        for file in os.listdir(custom_dir):
+            if file.endswith(".py") and not file.startswith("__"):
+                plugin_name = os.path.splitext(file)[0]
+                logger.debug(f"Processing custom plugin file: {file}")
 
                 try:
                     # Import the module
@@ -129,7 +131,7 @@ def load_plugins(plugin_dir: str = "plugins") -> Dict[str, List[Dict[str, Any]]]
                             "description": description
                         })
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error loading custom plugin %s: %s", _file, e)
+                    logger.error("Error loading custom plugin %s: %s", file, e)
                     logger.error(traceback.format_exc())
 
     logger.info(
@@ -206,12 +208,14 @@ def run_custom_plugin(app, plugin_info: Dict[str, Any]) -> None:
 
             if results:
                 if isinstance(results, list):
-                    for _line in results:
+                    for line in results:
                         app.update_output.emit(log_message(
-                            f"[{plugin_info['name']}] {_line}"))
+                            f"[{plugin_info['name']}] {line}"))
+                        logger.debug(f"Plugin {plugin_info['name']} result line: {line}")
                 else:
                     app.update_output.emit(log_message(
                         f"[{plugin_info['name']}] {results}"))
+                    logger.debug(f"Plugin {plugin_info['name']} result: {results}")
         except (OSError, ValueError, RuntimeError) as e:
             app.update_output.emit(log_message(
                 f"[Plugin] Error running plugin: {e}"))
@@ -236,12 +240,14 @@ def run_custom_plugin(app, plugin_info: Dict[str, Any]) -> None:
 
                 if results:
                     if isinstance(results, list):
-                        for _line in results:
+                        for line in results:
                             app.update_output.emit(log_message(
-                                f"[{plugin_info['name']}] {_line}"))
+                                f"[{plugin_info['name']}] {line}"))
+                            logger.debug(f"Plugin {plugin_info['name']} patch result: {line}")
                     else:
                         app.update_output.emit(log_message(
                             f"[{plugin_info['name']}] {results}"))
+                        logger.debug(f"Plugin {plugin_info['name']} patch result: {results}")
             except (OSError, ValueError, RuntimeError) as e:
                 app.update_output.emit(log_message(
                     f"[Plugin] Error running patch: {e}"))
@@ -307,7 +313,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
 
         script = session.create_script(script_content)
 
-        def on_message(message, _data):  # pylint: disable=unused-argument
+        def on_message(message, data):
             """
             Callback for handling messages from a Frida script.
 
@@ -327,6 +333,11 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
                     except TypeError:
                         log_text = f"{prefix} Received complex data structure"
                 app.update_output.emit(log_message(log_text))
+
+                # Log binary data information if available
+                if data and len(data) > 0:
+                    logger.debug(f"{prefix} Received binary data: {len(data)} bytes")
+
             elif message["type"] == "error":
                 # More specific error logging from Frida script errors
                 description = message.get('description', 'Unknown error')
@@ -334,6 +345,10 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
                 app.update_output.emit(
                     log_message(
                         f"{prefix} Script Error: Desc: {description}\nStack: {stack}"))
+
+                # Log additional data if available in error context
+                if data and len(data) > 0:
+                    logger.debug(f"{prefix} Error context data: {len(data)} bytes")
 
         script.on("message", on_message)
         script.load()  # This can also raise exceptions
@@ -445,31 +460,35 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
 
         # Process output
         if stdout and isinstance(stdout, (str, bytes)):
-            for _line in (stdout.splitlines() if stdout is not None else []):
-                if _line and _line.strip():
+            for line in (stdout.splitlines() if stdout is not None else []):
+                if line and line.strip():
                     app.update_output.emit(
-                        log_message(f"[Ghidra] {_line.strip()}"))
+                        log_message(f"[Ghidra] {line.strip()}"))
+                    logger.debug(f"Ghidra stdout: {line.strip()}")
 
         if stderr and isinstance(stderr, (str, bytes)):
-            for _line in (stderr.splitlines() if stderr is not None else []):
-                if _line and _line.strip():
+            for line in (stderr.splitlines() if stderr is not None else []):
+                if line and line.strip():
                     app.update_output.emit(log_message(
-                        f"[Ghidra Error] {_line.strip()}"))
+                        f"[Ghidra Error] {line.strip()}"))
+                    logger.warning(f"Ghidra stderr: {line.strip()}")
 
         app.update_output.emit(log_message(
             "[Plugin] Ghidra script execution complete"))
 
         # Check for any output files the script might have created
         result_files = []
-        for _file in os.listdir(temp_dir):
-            if _file not in [project_name, project_name + ".rep"]:
-                result_files.append(os.path.join(temp_dir, _file))
+        for file in os.listdir(temp_dir):
+            if file not in [project_name, project_name + ".rep"]:
+                result_files.append(os.path.join(temp_dir, file))
+                logger.debug(f"Found Ghidra output file: {file}")
 
         if result_files:
             app.update_output.emit(log_message(
                 "[Plugin] Ghidra script created output files:"))
-            for _file in result_files:
-                app.update_output.emit(log_message(f"[Plugin] - {_file}"))
+            for file in result_files:
+                app.update_output.emit(log_message(f"[Plugin] - {file}"))
+                logger.info(f"Ghidra output file created: {file}")
 
     except (OSError, ValueError, RuntimeError) as e:
         app.update_output.emit(log_message(
@@ -560,7 +579,7 @@ class AdvancedDemoPlugin(BasePlugin):
             categories=PLUGIN_CATEGORIES,
             supported_formats=PLUGIN_SUPPORTED_FORMATS
         )
-        
+
         # Plugin configuration
         default_config = {
             'max_file_size': 100 * 1024 * 1024,  # 100MB limit
@@ -570,7 +589,7 @@ class AdvancedDemoPlugin(BasePlugin):
             'export_results': False,
             'timeout_seconds': 30
         }
-        
+
         # Initialize base plugin
         super().__init__(metadata, default_config)
 
@@ -1546,7 +1565,7 @@ class PluginSystem:
     def run_frida_plugin_from_file(self, app, plugin_path: str) -> None:
         """Run a Frida plugin script from a file."""
         run_frida_plugin_from_file(app, plugin_path)
-    
+
     def find_plugin(self, plugin_name: str) -> Optional[str]:
         """Find a plugin by name and return its path."""
         # Check custom modules directory
@@ -1555,7 +1574,7 @@ class PluginSystem:
             plugin_file = os.path.join(custom_dir, f"{plugin_name}.py")
             if os.path.exists(plugin_file):
                 return plugin_file
-        
+
         # Check other plugin directories
         for subdir in ["frida_scripts", "ghidra_scripts"]:
             plugin_path = os.path.join(self.plugin_dir, subdir)
@@ -1564,7 +1583,7 @@ class PluginSystem:
                     plugin_file = os.path.join(plugin_path, f"{plugin_name}{ext}")
                     if os.path.exists(plugin_file):
                         return plugin_file
-        
+
         return None
 
     def run_ghidra_plugin_from_file(self, app, plugin_path: str) -> None:
