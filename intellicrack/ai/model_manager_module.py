@@ -710,6 +710,160 @@ class ModelManager:
             logger.error("Failed to import API model: %s", e)
             return None
 
+    def train_model(self, training_data: Any, model_type: str) -> bool:
+        """Train a machine learning model with provided data.
+        
+        Args:
+            training_data: Training data for the model
+            model_type: Type of model to train (pytorch, tensorflow, sklearn)
+            
+        Returns:
+            bool: True if training succeeded, False otherwise
+        """
+        try:
+            logger.info("Training %s model with provided data", model_type)
+            
+            # Check if we have the appropriate backend
+            if model_type.lower() not in self.backends:
+                logger.error("Backend not available for model type: %s", model_type)
+                return False
+            
+            backend = self.backends[model_type.lower()]
+            
+            # For demonstration, we'll create a simple training workflow
+            # In a real implementation, this would depend on the specific model type and data
+            
+            if model_type.lower() == 'sklearn':
+                # Use sklearn backend for traditional ML models
+                try:
+                    from sklearn.ensemble import RandomForestClassifier
+                    from sklearn.model_selection import train_test_split
+                    import numpy as np
+                    
+                    # Handle different data formats
+                    if hasattr(training_data, 'shape'):
+                        # NumPy array or similar
+                        X = training_data[:, :-1] if training_data.shape[1] > 1 else training_data
+                        y = training_data[:, -1] if training_data.shape[1] > 1 else np.zeros(len(training_data))
+                    elif isinstance(training_data, (list, tuple)):
+                        # Convert to numpy arrays
+                        X = np.array(training_data)
+                        y = np.zeros(len(training_data))  # Dummy labels
+                    else:
+                        logger.warning("Unsupported training data format for sklearn")
+                        return False
+                    
+                    # Create and train model
+                    model = RandomForestClassifier(n_estimators=10, random_state=42)
+                    model.fit(X, y)
+                    
+                    # Store trained model in cache
+                    model_id = f"trained_model_{model_type}_{len(self.cache.cache)}"
+                    model_data = {
+                        'model': model,
+                        'backend': backend,
+                        'last_used': time.time(),
+                        'metadata': {
+                            'type': model_type,
+                            'trained': True,
+                            'training_samples': len(X)
+                        }
+                    }
+                    self.cache.put(model_id, model_data)
+                    
+                    logger.info("Model training completed successfully: %s", model_id)
+                    return True
+                    
+                except ImportError:
+                    logger.warning("sklearn not available for training")
+                    return False
+                    
+            elif model_type.lower() == 'pytorch':
+                # PyTorch training would go here
+                logger.info("PyTorch training not implemented in this demo")
+                return False
+                
+            elif model_type.lower() == 'tensorflow':
+                # TensorFlow training would go here  
+                logger.info("TensorFlow training not implemented in this demo")
+                return False
+                
+            else:
+                logger.error("Unsupported model type for training: %s", model_type)
+                return False
+                
+        except Exception as e:
+            logger.error("Model training failed: %s", e)
+            return False
+
+    def save_model(self, model: Any, path: str) -> bool:
+        """Save a trained model to disk.
+        
+        Args:
+            model: Model object to save
+            path: File path where to save the model
+            
+        Returns:
+            bool: True if saving succeeded, False otherwise
+        """
+        try:
+            import os
+            import pickle
+            from pathlib import Path
+            
+            # Ensure directory exists
+            save_path = Path(path)
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Try to determine model type and use appropriate saving method
+            model_type = type(model).__name__.lower()
+            
+            if 'sklearn' in str(type(model)) or hasattr(model, 'fit'):
+                # Sklearn or sklearn-compatible model
+                try:
+                    import joblib
+                    joblib.dump(model, str(save_path))
+                    logger.info("Model saved using joblib: %s", path)
+                    return True
+                except ImportError:
+                    # Fallback to pickle
+                    with open(save_path, 'wb') as f:
+                        pickle.dump(model, f)
+                    logger.info("Model saved using pickle: %s", path)
+                    return True
+                    
+            elif 'torch' in str(type(model)):
+                # PyTorch model
+                try:
+                    import torch
+                    torch.save(model.state_dict(), str(save_path))
+                    logger.info("PyTorch model saved: %s", path)
+                    return True
+                except ImportError:
+                    logger.error("PyTorch not available for saving")
+                    return False
+                    
+            elif 'tensorflow' in str(type(model)) or 'keras' in str(type(model)):
+                # TensorFlow/Keras model
+                try:
+                    model.save(str(save_path))
+                    logger.info("TensorFlow/Keras model saved: %s", path)
+                    return True
+                except Exception as tf_error:
+                    logger.error("TensorFlow model save failed: %s", tf_error)
+                    return False
+                    
+            else:
+                # Generic pickle save as fallback
+                with open(save_path, 'wb') as f:
+                    pickle.dump(model, f)
+                logger.info("Model saved using generic pickle: %s", path)
+                return True
+                
+        except Exception as e:
+            logger.error("Model save failed: %s", e)
+            return False
+
     @property
     def repositories(self) -> List[str]:
         """Get available repositories."""

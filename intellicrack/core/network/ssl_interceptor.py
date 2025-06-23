@@ -346,5 +346,143 @@ def response(flow: http.HTTPFlow) -> None:
         """
         return self.config['target_hosts'].copy()
 
+    def configure(self, config: Dict[str, Any]) -> bool:
+        """
+        Configure SSL/TLS interception settings.
+        
+        This method allows dynamic configuration of the SSL/TLS interceptor,
+        including proxy settings, target hosts, certificate paths, and behavior options.
+        
+        Args:
+            config: Configuration dictionary with settings to update
+            
+        Returns:
+            bool: True if configuration was successful, False otherwise
+        """
+        try:
+            self.logger.info("Configuring SSL/TLS interceptor with new settings")
+            
+            # Validate configuration
+            valid_keys = {
+                'listen_ip', 'listen_port', 'target_hosts', 'ca_cert_path',
+                'ca_key_path', 'record_traffic', 'auto_respond', 'proxy_timeout',
+                'max_connections', 'log_level', 'response_delay', 'inject_headers'
+            }
+            
+            invalid_keys = set(config.keys()) - valid_keys
+            if invalid_keys:
+                self.logger.warning(f"Ignoring invalid configuration keys: {invalid_keys}")
+            
+            # Validate specific settings
+            if 'listen_port' in config:
+                port = config['listen_port']
+                if not isinstance(port, int) or port < 1 or port > 65535:
+                    self.logger.error(f"Invalid port number: {port}")
+                    return False
+            
+            if 'listen_ip' in config:
+                ip = config['listen_ip']
+                # Basic IP validation
+                import socket
+                try:
+                    socket.inet_aton(ip)
+                except socket.error:
+                    self.logger.error(f"Invalid IP address: {ip}")
+                    return False
+            
+            if 'target_hosts' in config:
+                if not isinstance(config['target_hosts'], list):
+                    self.logger.error("target_hosts must be a list")
+                    return False
+            
+            # Check if interceptor is running
+            was_running = self.proxy_process is not None
+            if was_running:
+                self.logger.info("Stopping interceptor for reconfiguration")
+                self.stop()
+            
+            # Update configuration
+            old_config = self.config.copy()
+            self.config.update(config)
+            
+            # Validate certificate paths if changed
+            if 'ca_cert_path' in config or 'ca_key_path' in config:
+                if not os.path.exists(self.config['ca_cert_path']):
+                    self.logger.warning(f"CA certificate not found at {self.config['ca_cert_path']}")
+                    # Generate new certificate if needed
+                    self.logger.info("Generating new CA certificate")
+                    cert, key = self.generate_ca_certificate()
+                    if not cert or not key:
+                        self.logger.error("Failed to generate CA certificate")
+                        self.config = old_config  # Restore old config
+                        return False
+                
+                if not os.path.exists(self.config['ca_key_path']):
+                    self.logger.error(f"CA key not found at {self.config['ca_key_path']}")
+                    self.config = old_config  # Restore old config
+                    return False
+            
+            # Apply runtime configuration changes
+            if 'log_level' in config:
+                log_levels = {
+                    'DEBUG': logging.DEBUG,
+                    'INFO': logging.INFO,
+                    'WARNING': logging.WARNING,
+                    'ERROR': logging.ERROR
+                }
+                level = log_levels.get(config['log_level'].upper(), logging.INFO)
+                self.logger.setLevel(level)
+            
+            # Restart if was running
+            if was_running:
+                self.logger.info("Restarting interceptor with new configuration")
+                if not self.start():
+                    self.logger.error("Failed to restart interceptor")
+                    self.config = old_config  # Restore old config
+                    return False
+            
+            self.logger.info("Configuration updated successfully")
+            
+            # Log configuration summary
+            self.logger.debug(f"Current configuration: {self._get_safe_config()}")
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Error configuring SSL/TLS interceptor: {e}")
+            self.logger.error(traceback.format_exc())
+            return False
+    
+    def get_config(self) -> Dict[str, Any]:
+        """
+        Get current configuration.
+        
+        Returns the current configuration of the SSL/TLS interceptor with
+        sensitive information like private keys redacted for security.
+        
+        Returns:
+            Dictionary containing current configuration settings
+        """
+        return self._get_safe_config()
+    
+    def _get_safe_config(self) -> Dict[str, Any]:
+        """Get configuration with sensitive data redacted."""
+        safe_config = self.config.copy()
+        
+        # Redact sensitive information
+        if 'ca_key_path' in safe_config:
+            safe_config['ca_key_path'] = '<redacted>' if os.path.exists(self.config['ca_key_path']) else 'not found'
+        
+        # Add runtime status
+        safe_config['status'] = {
+            'running': self.proxy_process is not None,
+            'traffic_captured': len(self.traffic_log),
+            'response_templates_loaded': len(self.response_templates),
+            'ca_cert_exists': os.path.exists(self.config['ca_cert_path']),
+            'ca_key_exists': os.path.exists(self.config['ca_key_path'])
+        }
+        
+        return safe_config
+
 
 __all__ = ['SSLTLSInterceptor']

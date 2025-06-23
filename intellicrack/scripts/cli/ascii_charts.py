@@ -49,6 +49,7 @@ class ASCIIChartGenerator:
         self.width = width
         self.height = height
         self.console = Console() if RICH_AVAILABLE else None
+        self.has_color_support = RICH_AVAILABLE
 
         # Chart symbols
         self.symbols = {

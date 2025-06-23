@@ -958,6 +958,208 @@ class TPMAnalyzer:
 
         return results
 
+    def generate_bypass(self, tpm_version: str) -> Dict[str, Any]:
+        """
+        Generate TPM bypass strategy.
+        
+        This method analyzes the TPM version and usage patterns to generate
+        an appropriate bypass strategy with success probability estimates.
+        
+        Args:
+            tpm_version: TPM version string (e.g., "1.2", "2.0")
+            
+        Returns:
+            Dictionary containing bypass strategy and metadata
+        """
+        self.logger.info(f"Generating TPM bypass strategy for version: {tpm_version}")
+        
+        bypass_config = {
+            "tpm_version": tpm_version,
+            "bypass_method": "emulation",
+            "success_probability": 0.0,
+            "requirements": [],
+            "strategies": [],
+            "implementation": {},
+            "risks": [],
+            "recommendations": []
+        }
+        
+        # Analyze TPM version capabilities
+        if tpm_version == "2.0":
+            bypass_config["bypass_method"] = "advanced_emulation"
+            bypass_config["success_probability"] = 0.75
+            bypass_config["requirements"] = [
+                "Administrator privileges",
+                "TPM command interception capability",
+                "Cryptographic key generation"
+            ]
+            bypass_config["strategies"] = [
+                {
+                    "name": "API Hooking",
+                    "description": "Hook Tbsi.dll and NCrypt.dll APIs",
+                    "success_rate": 0.85,
+                    "complexity": "medium"
+                },
+                {
+                    "name": "Virtual TPM",
+                    "description": "Create software TPM emulator",
+                    "success_rate": 0.70,
+                    "complexity": "high"
+                },
+                {
+                    "name": "Command Spoofing",
+                    "description": "Intercept and modify TPM commands",
+                    "success_rate": 0.65,
+                    "complexity": "high"
+                }
+            ]
+            
+        elif tpm_version == "1.2":
+            bypass_config["bypass_method"] = "legacy_emulation"
+            bypass_config["success_probability"] = 0.85
+            bypass_config["requirements"] = [
+                "Administrator privileges",
+                "TBS service manipulation"
+            ]
+            bypass_config["strategies"] = [
+                {
+                    "name": "TBS Service Hook",
+                    "description": "Hook legacy TPM Base Services",
+                    "success_rate": 0.90,
+                    "complexity": "low"
+                },
+                {
+                    "name": "Registry Emulation",
+                    "description": "Simulate TPM presence via registry",
+                    "success_rate": 0.80,
+                    "complexity": "low"
+                }
+            ]
+            
+        else:
+            # Unknown or no TPM version
+            bypass_config["bypass_method"] = "generic_bypass"
+            bypass_config["success_probability"] = 0.60
+            bypass_config["requirements"] = [
+                "System analysis required",
+                "Runtime monitoring capability"
+            ]
+            bypass_config["strategies"] = [
+                {
+                    "name": "Binary Patching",
+                    "description": "Patch TPM check routines",
+                    "success_rate": 0.70,
+                    "complexity": "medium"
+                },
+                {
+                    "name": "Generic API Hook",
+                    "description": "Hook common TPM APIs",
+                    "success_rate": 0.50,
+                    "complexity": "low"
+                }
+            ]
+        
+        # Add implementation details
+        bypass_config["implementation"]["hook_script"] = self._generate_hook_script(tpm_version)
+        bypass_config["implementation"]["patch_locations"] = self._identify_patch_points()
+        bypass_config["implementation"]["emulator_config"] = self._generate_emulator_config(tpm_version)
+        
+        # Add risk assessment
+        bypass_config["risks"] = [
+            "System instability if hooks fail",
+            "Detection by anti-tampering mechanisms",
+            "Potential legal implications"
+        ]
+        
+        # Add recommendations based on indicators
+        if self.tpm_indicators:
+            if "NCryptOpenStorageProvider" in self.tpm_indicators:
+                bypass_config["recommendations"].append("Focus on NCrypt API hooking")
+            if "Tbsi_Submit_Command" in self.tpm_indicators:
+                bypass_config["recommendations"].append("Implement command-level interception")
+            if "TPM2" in str(self.tpm_indicators):
+                bypass_config["recommendations"].append("Use TPM 2.0 specific bypass techniques")
+        
+        bypass_config["recommendations"].extend([
+            "Test bypass in isolated environment first",
+            "Monitor system stability after applying bypass",
+            "Consider using virtual TPM for safer emulation"
+        ])
+        
+        return bypass_config
+    
+    def _generate_hook_script(self, tpm_version: str) -> str:
+        """Generate Frida hook script for TPM bypass."""
+        if tpm_version == "2.0":
+            return """
+// TPM 2.0 Bypass Hook Script
+var tbs = Process.getModuleByName('tbs.dll');
+var ncrypt = Process.getModuleByName('ncrypt.dll');
+
+// Hook Tbsi_Submit_Command for TPM 2.0
+var Tbsi_Submit_Command = tbs.getExportByName('Tbsi_Submit_Command');
+Interceptor.attach(Tbsi_Submit_Command, {
+    onEnter: function(args) {
+        console.log('[TPM] Command intercepted');
+        this.cmdBuffer = args[4];
+        this.respBuffer = args[6];
+    },
+    onLeave: function(retval) {
+        // Return success
+        retval.replace(0);
+    }
+});
+"""
+        else:
+            return """
+// TPM 1.2 Bypass Hook Script  
+var tbs = Process.getModuleByName('tbs.dll');
+
+// Hook legacy TPM functions
+Interceptor.attach(tbs.getExportByName('Tbsi_Context_Create'), {
+    onLeave: function(retval) {
+        console.log('[TPM] Context creation bypassed');
+        retval.replace(0);
+    }
+});
+"""
+    
+    def _identify_patch_points(self) -> List[Dict[str, Any]]:
+        """Identify potential patch points in binary."""
+        patch_points = []
+        
+        if self.binary_path and self.tpm_indicators:
+            # Simulate patch point identification
+            for indicator in self.tpm_indicators:
+                patch_points.append({
+                    "type": "api_call",
+                    "location": f"Call to {indicator}",
+                    "patch": "Replace with NOP or return success"
+                })
+        
+        return patch_points
+    
+    def _generate_emulator_config(self, tpm_version: str) -> Dict[str, Any]:
+        """Generate TPM emulator configuration."""
+        return {
+            "version": tpm_version,
+            "emulation_level": "full" if tpm_version == "2.0" else "basic",
+            "supported_commands": [
+                "TPM2_Startup",
+                "TPM2_CreatePrimary",
+                "TPM2_Load",
+                "TPM2_Sign",
+                "TPM2_PCR_Read"
+            ] if tpm_version == "2.0" else [
+                "TPM_Startup",
+                "TPM_CreateWrapKey",
+                "TPM_LoadKey",
+                "TPM_Sign"
+            ],
+            "key_storage": "memory",
+            "persistence": False
+        }
+
 
 def analyze_tpm_protection(binary_path: str) -> Dict[str, Any]:
     """

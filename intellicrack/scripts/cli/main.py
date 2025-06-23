@@ -86,7 +86,7 @@ try:
         CloudLicenseHooker,
         LicenseServerEmulator,
         ProtocolFingerprinter,
-        SSLInterceptor,
+        SSLInterceptor,  # This imports SSLTLSInterceptor as SSLInterceptor
         TrafficAnalyzer,  # Actual name, not NetworkTrafficAnalyzer
     )
 
@@ -336,9 +336,9 @@ class IntellicrackCLI:
             if self.args.cfg_output:
                 # Export CFG to file
                 if self.args.cfg_format == 'dot':
-                    cfg_explorer.export_dot(cfg, self.args.cfg_output)
+                    cfg_explorer.export_dot(self.args.cfg_output)
                 elif self.args.cfg_format == 'json':
-                    cfg_explorer.export_json(cfg, self.args.cfg_output)
+                    cfg_explorer.export_json(self.args.cfg_output)
                 logger.info(f"CFG exported to {self.args.cfg_output}")
 
             self.results['cfg'] = cfg
@@ -350,7 +350,6 @@ class IntellicrackCLI:
             if self.args.symbolic_address:
                 # Start from specific address
                 sym_results = sym_engine.explore_from(
-                    self.binary_path,
                     int(self.args.symbolic_address, 16)
                 )
             else:
@@ -373,9 +372,7 @@ class IntellicrackCLI:
             taint_engine = TaintAnalysisEngine()
             if self.args.taint_sources:
                 sources = self.args.taint_sources.split(',')
-                taint_results = taint_engine.analyze_with_sources(
-                    self.binary_path, sources
-                )
+                taint_results = taint_engine.analyze_with_sources(sources)
             else:
                 taint_results = run_taint_analysis(self.binary_path)
             self.results['taint'] = taint_results
@@ -383,15 +380,13 @@ class IntellicrackCLI:
         # ROP Gadgets
         if self.args.rop_gadgets:
             logger.info("Finding ROP gadgets...")
-            rop_gen = ROPChainGenerator()
-            gadgets = rop_gen.find_gadgets(
-                self.binary_path,
-                max_gadgets=self.args.rop_max_gadgets
-            )
+            rop_gen = ROPChainGenerator({'max_gadgets': self.args.rop_max_gadgets})
+            rop_gen.set_binary(self.binary_path)
+            gadgets = rop_gen.find_gadgets()
 
             if self.args.rop_chain:
                 # Generate ROP chain for specific goal
-                chain = rop_gen.generate_chain(gadgets, self.args.rop_chain)
+                chain = rop_gen.generate_chain(self.args.rop_chain)
                 self.results['rop_chain'] = chain
 
             self.results['rop_gadgets'] = gadgets
@@ -411,7 +406,7 @@ class IntellicrackCLI:
         if self.args.multi_format:
             logger.info("Running multi-format analysis...")
             mf_analyzer = MultiFormatBinaryAnalyzer()
-            mf_results = mf_analyzer.analyze(self.binary_path)
+            mf_results = mf_analyzer.analyze_binary(self.binary_path)
             self.results['multi_format'] = mf_results
 
         # Section analysis
@@ -481,10 +476,7 @@ class IntellicrackCLI:
 
             if self.args.capture_duration:
                 # Capture for specified duration
-                analyzer.start_capture(
-                    interface=self.args.network_interface,
-                    filter_expr=self.args.capture_filter
-                )
+                analyzer.start_capture(interface=self.args.network_interface)
                 time.sleep(self.args.capture_duration)
                 analyzer.stop_capture()
             else:
@@ -504,10 +496,10 @@ class IntellicrackCLI:
         if self.args.ssl_intercept:
             logger.info("Setting up SSL/TLS interception...")
             interceptor = SSLInterceptor()
-            interceptor.configure(
-                port=self.args.ssl_port,
-                cert_file=self.args.ssl_cert
-            )
+            interceptor.configure({
+                'listen_port': self.args.ssl_port,
+                'ca_cert_path': self.args.ssl_cert
+            })
             self.results['ssl_config'] = interceptor.get_config()
 
     def run_patching_operations(self):
@@ -557,35 +549,31 @@ class IntellicrackCLI:
         """Run protection bypass operations."""
         if self.args.bypass_tpm:
             logger.info("Generating TPM bypass...")
-            analyzer = TPMAnalyzer()
+            analyzer = TPMAnalyzer(self.binary_path)
             self.results['tpm_bypass'] = analyzer.generate_bypass(
-                self.binary_path,
-                method=self.args.tpm_method
+                self.args.tpm_method or "2.0"
             )
 
         if self.args.bypass_vm_detection:
             logger.info("Generating VM detection bypass...")
             detector = VMDetector()
             self.results['vm_bypass'] = detector.generate_bypass(
-                self.binary_path,
-                aggressive=self.args.aggressive_bypass
+                self.args.vm_type or "vmware"
             )
 
         if self.args.emulate_dongle:
             logger.info(f"Setting up {self.args.dongle_type} dongle emulation...")
             # Use protection_utils for dongle emulation
-            config = protection_utils.emulate_hardware_dongle(
-                self.args.dongle_type,
-                self.binary_path,
-                dongle_id=self.args.dongle_id
-            )
+            config = protection_utils.emulate_hardware_dongle({
+                'type': self.args.dongle_type,
+                'serial': self.args.dongle_id
+            })
             self.results['dongle_emulation'] = config
 
         if self.args.hwid_spoof:
             logger.info("Generating HWID spoofing configuration...")
             self.results['hwid_spoof'] = protection_utils.generate_hwid_spoof_config(
-                self.binary_path,
-                target_hwid=self.args.target_hwid
+                self.args.target_hwid
             )
 
         if self.args.time_bomb_defuser:
@@ -612,11 +600,10 @@ class IntellicrackCLI:
 
         if self.args.train_model:
             logger.info("Training custom ML model...")
-            manager = ModelManager()
+            manager = ModelManager({})
             model = manager.train_model(
                 self.args.training_data,
-                model_type=self.args.model_type,
-                epochs=self.args.training_epochs
+                model_type=self.args.model_type
             )
 
             if self.args.save_model:
@@ -641,12 +628,15 @@ class IntellicrackCLI:
 
         if self.args.qemu_emulate:
             logger.info("Setting up QEMU emulation...")
-            emulator = QEMUSystemEmulator()
-            self.results['qemu'] = emulator.emulate_binary(
-                self.binary_path,
-                arch=self.args.qemu_arch,
-                snapshot=self.args.qemu_snapshot
+            emulator = QEMUSystemEmulator(
+                self.binary_path, 
+                architecture=self.args.qemu_arch or 'x86_64'
             )
+            # Start system and analyze
+            if emulator.start_system():
+                self.results['qemu'] = {'status': 'running', 'emulator': emulator}
+            else:
+                self.results['qemu'] = {'status': 'failed'}
 
         if self.args.frida_script:
             logger.info(f"Running Frida script: {self.args.frida_script}...")
@@ -688,11 +678,9 @@ class IntellicrackCLI:
             question = self.args.ai_question or "Analyze this binary"
             context = self.args.ai_context or str(self.results)
 
-            response = assistant.ask_question(
-                question=question,
-                context=context,
-                binary_path=self.binary_path
-            )
+            # Combine question with context for more detailed question
+            full_question = f"{question}. Context: {context}. Binary: {self.binary_path}"
+            response = assistant.ask_question(full_question)
             self.results['ai_assistant'] = {
                 'question': question,
                 'response': response
@@ -760,9 +748,8 @@ class IntellicrackCLI:
             output = self.format_text_output()
         elif self.args.format in ['pdf', 'html']:
             output = generate_report(
-                self.results,
-                self.binary_path,
-                format=self.args.format
+                analysis_results=self.results,
+                output_format=self.args.format
             )
         else:
             output = str(self.results)
@@ -1587,7 +1574,11 @@ def run_server_mode(args):
     """Run as REST API server."""
     import tempfile
 
-    from flask import Flask, jsonify, request
+    try:
+        from flask import Flask, jsonify, request
+    except ImportError:
+        print("Flask not available. Install flask to use server mode.")
+        return
 
     app = Flask(__name__)
 
@@ -1865,8 +1856,13 @@ def list_all_commands():
 
 def run_ai_mode(args):
     """Run in AI-controlled mode."""
-    from ai_integration import IntellicrackAIServer, create_ai_system_prompt
-    from ai_wrapper import ConfirmationManager
+    try:
+        from ai_integration import IntellicrackAIServer, create_ai_system_prompt
+        from ai_wrapper import ConfirmationManager
+    except ImportError as e:
+        logger.error(f"AI mode dependencies not available: {e}")
+        print("❌ AI mode requires additional dependencies. Please install them first.")
+        return
 
     logger.info("Starting Intellicrack in AI-controlled mode")
 
@@ -1931,8 +1927,10 @@ def main():
         plugins = plugin_sys.list_plugins()
         print("🔌 AVAILABLE PLUGINS:")
         print("=" * 30)
-        for name, info in plugins.items():
-            print(f"  {name:<20} {info.get('description', 'No description')}")
+        for plugin_info in plugins:
+            name = plugin_info.get('name', 'Unknown')
+            description = plugin_info.get('description', 'No description')
+            print(f"  {name:<20} {description}")
         print()
         print("💡 Use --plugin-run <plugin> to execute a plugin")
         return

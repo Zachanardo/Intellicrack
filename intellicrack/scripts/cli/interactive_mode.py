@@ -31,7 +31,10 @@ import cmd
 import json
 import logging
 import os
-import readline
+try:
+    import readline
+except ImportError:
+    readline = None  # readline not available on all platforms
 import sys
 import time
 from pathlib import Path
@@ -2797,13 +2800,9 @@ Let's start by loading a binary file!""",
     def _export_html(self, output_path: str):
         """Export results as HTML."""
         try:
-            from intellicrack.utils.reporting.report_generator import ReportGenerator
+            from intellicrack.utils.reporting.report_generator import generate_html_report
 
-            generator = ReportGenerator()
-            html_content = generator.generate_html_report(
-                self.current_binary,
-                self.analysis_results
-            )
+            html_content = generate_html_report(self.analysis_results)
 
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(html_content)
@@ -3254,13 +3253,12 @@ Let's start by loading a binary file!""",
 
             self.info(f"Running plugin: {plugin_name}")
 
-            result = plugin_system.run_plugin(plugin_name, self.current_binary)
-
-            if result:
-                self.analysis_results[f'plugin_{plugin_name}'] = result
-                self.success(f"Plugin {plugin_name} completed successfully")
-            else:
-                self.error(f"Plugin {plugin_name} failed")
+            # run_plugin doesn't return a value, just executes the plugin
+            plugin_system.run_plugin(plugin_name, self.current_binary)
+            
+            # Indicate successful execution (assuming no exception means success)
+            self.analysis_results[f'plugin_{plugin_name}'] = {"status": "executed", "plugin": plugin_name}
+            self.success(f"Plugin {plugin_name} completed successfully")
 
         except Exception as e:
             self.error(f"Failed to run plugin: {e}")

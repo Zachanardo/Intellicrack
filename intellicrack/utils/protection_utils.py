@@ -511,10 +511,670 @@ def create_custom_hook_script(hook_config: Dict[str, Any]) -> str:
     return "\n".join(script_lines)
 
 
+def emulate_hardware_dongle(config: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Emulate hardware dongle for license bypass.
+    
+    This function creates a virtual hardware dongle emulation configuration
+    that can bypass hardware-based license checks by simulating the presence
+    and responses of common hardware protection devices.
+    
+    Args:
+        config: Configuration dictionary with dongle parameters
+        
+    Returns:
+        Dictionary containing dongle emulation details and status
+    """
+    logger.info("Generating hardware dongle emulation configuration")
+    
+    # Extract configuration parameters
+    dongle_type = config.get('type', 'generic')
+    vendor_id = config.get('vendor_id', '0x0529')  # Aladdin HASP default
+    product_id = config.get('product_id', '0x0001')
+    serial_number = config.get('serial', 'EMULATED_001')
+    
+    emulation_result = {
+        "dongle_id": serial_number,
+        "status": "active",
+        "features": [],
+        "emulation_active": True,
+        "type": dongle_type,
+        "vendor_id": vendor_id,
+        "product_id": product_id,
+        "responses": {},
+        "memory_map": {},
+        "implementation": {}
+    }
+    
+    # Configure based on dongle type
+    if dongle_type.lower() == 'hasp':
+        emulation_result['features'] = ['feature1', 'feature2', 'feature3', 'unlimited_users']
+        emulation_result['responses'] = {
+            'get_version': b'\x04\x00\x00\x00',  # Version 4
+            'get_id': serial_number.encode(),
+            'is_present': b'\x01',  # Present
+            'check_license': b'\x01\x00\x00\x00',  # Valid
+            'get_memory': b'\x00' * 112  # 112 bytes of memory
+        }
+        emulation_result['implementation']['script'] = """
+// HASP Dongle Emulation
+Interceptor.attach(Module.findExportByName(null, 'hasp_login'), {
+    onLeave: function(retval) {
+        console.log('[Dongle] HASP login intercepted, returning success');
+        retval.replace(0);  // HASP_STATUS_OK
+    }
+});
+"""
+    
+    elif dongle_type.lower() == 'sentinel':
+        emulation_result['features'] = ['feature_a', 'feature_b', 'pro_license']
+        emulation_result['responses'] = {
+            'slm_login': 0,  # Success
+            'slm_get_info': {'version': '7.0', 'features': 0xFFFF},
+            'slm_check_license': 0  # Valid
+        }
+        emulation_result['implementation']['script'] = """
+// Sentinel Dongle Emulation
+Interceptor.attach(Module.findExportByName(null, 'SLM_LoginEasy'), {
+    onLeave: function(retval) {
+        console.log('[Dongle] Sentinel login intercepted, returning success');
+        retval.replace(0);  // SLM_SUCCESS
+    }
+});
+"""
+    
+    elif dongle_type.lower() == 'wibu':
+        emulation_result['features'] = ['codemeter', 'network_license', 'time_unlimited']
+        emulation_result['responses'] = {
+            'cm_login': 0,
+            'cm_get_license': {'valid': True, 'expiry': '2099-12-31'},
+            'cm_check': 0
+        }
+        emulation_result['implementation']['script'] = """
+// CodeMeter Dongle Emulation
+Interceptor.attach(Module.findExportByName(null, 'CmGetLicenseInfo'), {
+    onLeave: function(retval) {
+        console.log('[Dongle] CodeMeter license check intercepted');
+        retval.replace(0);  // CM_OK
+    }
+});
+"""
+    
+    else:
+        # Generic dongle emulation
+        emulation_result['features'] = ['basic', 'standard', 'pro']
+        emulation_result['responses'] = {
+            'check': True,
+            'validate': 0,
+            'get_features': 0xFFFFFFFF
+        }
+    
+    # Add memory emulation
+    emulation_result['memory_map'] = {
+        '0x0000': b'DONGLE_OK',
+        '0x0008': serial_number.encode()[:16].ljust(16, b'\x00'),
+        '0x0018': b'\xFF' * 8,  # Feature flags
+        '0x0020': b'\x00' * 32  # User data area
+    }
+    
+    # Add advanced features
+    emulation_result['advanced'] = {
+        'usb_emulation': vendor_id != '0x0000',
+        'network_emulation': False,
+        'time_based_features': False,
+        'encryption_support': True
+    }
+    
+    logger.info(f"Hardware dongle emulation configured for {dongle_type}")
+    return emulation_result
+
+
+def generate_hwid_spoof_config(target_hwid: str) -> Dict[str, Any]:
+    """
+    Generate hardware ID spoofing configuration.
+    
+    This function creates a comprehensive configuration for spoofing hardware IDs,
+    including registry modifications, API hooks, and system information overrides.
+    
+    Args:
+        target_hwid: Target hardware ID to spoof
+        
+    Returns:
+        Dictionary containing HWID spoofing configuration
+    """
+    logger.info(f"Generating HWID spoof configuration for: {target_hwid}")
+    
+    import uuid
+    
+    # Parse target HWID or generate components
+    if len(target_hwid) == 36 and '-' in target_hwid:
+        # UUID format
+        hwid_uuid = target_hwid
+    else:
+        # Generate UUID from HWID
+        hwid_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, target_hwid))
+    
+    config = {
+        "target_hwid": target_hwid,
+        "spoof_method": "registry",
+        "backup_original": True,
+        "restore_command": f"restore_hwid {target_hwid}",
+        "components": {
+            "machine_guid": hwid_uuid,
+            "product_id": f"00000-00000-{target_hwid[:5]}-00000",
+            "hardware_id": target_hwid,
+            "volume_serial": f"{target_hwid[:8]}",
+            "cpu_id": f"BFEBFBFF{target_hwid[:8].upper()}",
+            "motherboard_serial": f"MB-{target_hwid[:12].upper()}",
+            "mac_address": f"{target_hwid[:2]}:{target_hwid[2:4]}:{target_hwid[4:6]}:00:00:01"
+        },
+        "registry_keys": [
+            {
+                "path": r"HKLM\SOFTWARE\Microsoft\Cryptography",
+                "value": "MachineGuid",
+                "data": hwid_uuid,
+                "type": "REG_SZ"
+            },
+            {
+                "path": r"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion",
+                "value": "ProductId",
+                "data": f"00000-00000-{target_hwid[:5]}-00000",
+                "type": "REG_SZ"
+            }
+        ],
+        "api_hooks": {
+            "kernel32.dll": [
+                {
+                    "function": "GetVolumeInformationW",
+                    "hook_type": "modify_serial",
+                    "serial": f"{target_hwid[:8]}"
+                }
+            ],
+            "advapi32.dll": [
+                {
+                    "function": "RegQueryValueExW",
+                    "hook_type": "intercept_hwid",
+                    "values": ["MachineGuid", "ProductId", "DigitalProductId"]
+                }
+            ]
+        },
+        "wmi_overrides": {
+            "Win32_BaseBoard": {"SerialNumber": f"MB-{target_hwid[:12].upper()}"},
+            "Win32_Processor": {"ProcessorId": f"BFEBFBFF{target_hwid[:8].upper()}"},
+            "Win32_DiskDrive": {"SerialNumber": f"DSK-{target_hwid[:10].upper()}"},
+            "Win32_NetworkAdapter": {"MACAddress": f"{target_hwid[:2]}:{target_hwid[2:4]}:{target_hwid[4:6]}:00:00:01"}
+        },
+        "implementation_script": f"""
+# HWID Spoofing Script
+# Target HWID: {target_hwid}
+
+import winreg
+import subprocess
+
+def backup_registry():
+    # Backup current HWID values
+    subprocess.run(['reg', 'export', 'HKLM\\SOFTWARE\\Microsoft\\Cryptography', 'hwid_backup.reg'])
+
+def apply_hwid_spoof():
+    # Apply registry modifications
+    try:
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
+                           r'SOFTWARE\\Microsoft\\Cryptography', 
+                           0, winreg.KEY_WRITE)
+        winreg.SetValueEx(key, 'MachineGuid', 0, winreg.REG_SZ, '{hwid_uuid}')
+        winreg.CloseKey(key)
+        print(f"HWID spoofed to: {hwid_uuid}")
+    except Exception as e:
+        print(f"Failed to spoof HWID: {{e}}")
+
+if __name__ == "__main__":
+    backup_registry()
+    apply_hwid_spoof()
+"""
+    }
+    
+    # Add restoration information
+    config['restoration'] = {
+        'backup_location': 'hwid_backup.reg',
+        'restore_script': """
+# HWID Restoration Script
+import subprocess
+subprocess.run(['reg', 'import', 'hwid_backup.reg'])
+print("Original HWID restored")
+""",
+        'verification_command': 'wmic csproduct get UUID'
+    }
+    
+    logger.info("HWID spoof configuration generated")
+    return config
+
+
+def generate_time_bomb_defuser(binary_path: str) -> Dict[str, Any]:
+    """
+    Generate time bomb defusal configuration.
+    
+    This function analyzes a binary for time-based protection mechanisms
+    and generates patches to defuse time bombs and trial limitations.
+    
+    Args:
+        binary_path: Path to the binary to analyze
+        
+    Returns:
+        Dictionary containing time bomb defusal strategy
+    """
+    logger.info(f"Analyzing binary for time bombs: {binary_path}")
+    
+    config = {
+        "binary": binary_path,
+        "time_checks_found": 0,
+        "patches": [],
+        "defusal_strategy": "nop_time_checks",
+        "analysis_results": {},
+        "hook_points": [],
+        "recommendations": []
+    }
+    
+    try:
+        # Read binary for analysis
+        with open(binary_path, 'rb') as f:
+            binary_data = f.read()
+        
+        # Common time-related API patterns
+        time_apis = {
+            b'GetSystemTime': 'System time check',
+            b'GetLocalTime': 'Local time check',
+            b'GetTickCount': 'Uptime check',
+            b'GetTickCount64': 'Extended uptime check',
+            b'QueryPerformanceCounter': 'High-resolution time check',
+            b'time': 'C runtime time check',
+            b'_time64': '64-bit time check',
+            b'GetFileTime': 'File timestamp check',
+            b'CompareFileTime': 'Time comparison'
+        }
+        
+        # Search for time-related APIs
+        for api, description in time_apis.items():
+            if api in binary_data:
+                config['time_checks_found'] += 1
+                offset = binary_data.find(api)
+                
+                config['analysis_results'][api.decode()] = {
+                    'offset': hex(offset),
+                    'description': description,
+                    'severity': 'high' if b'Compare' in api else 'medium'
+                }
+                
+                # Generate hook point
+                config['hook_points'].append({
+                    'api': api.decode(),
+                    'module': 'kernel32.dll' if b'Get' in api else 'msvcrt.dll',
+                    'strategy': 'return_fixed_value'
+                })
+        
+        # Look for date comparison patterns
+        date_patterns = [
+            (b'\x07\xE5', '2021'),  # Year 2021 in hex
+            (b'\x07\xE6', '2022'),
+            (b'\x07\xE7', '2023'),
+            (b'\x07\xE8', '2024'),
+            (b'\x07\xE9', '2025')
+        ]
+        
+        for pattern, year in date_patterns:
+            if pattern in binary_data:
+                offset = binary_data.find(pattern)
+                config['analysis_results'][f'year_{year}'] = {
+                    'offset': hex(offset),
+                    'description': f'Hardcoded year {year} found',
+                    'severity': 'critical'
+                }
+                
+                # Generate patch to change year to 2099
+                config['patches'].append({
+                    'offset': hex(offset),
+                    'original': pattern.hex(),
+                    'replacement': b'\x07\xF3'.hex(),  # 2099
+                    'description': f'Change year {year} to 2099'
+                })
+        
+        # Generate defusal strategies based on findings
+        if config['time_checks_found'] > 0:
+            config['defusal_strategy'] = 'comprehensive_time_bypass'
+            
+            # Add Frida script for runtime bypass
+            config['frida_script'] = """
+// Time Bomb Defuser Script
+console.log('[TimeBomb] Starting time manipulation...');
+
+// Fixed date: January 1, 2020
+var fixedDate = new Date(2020, 0, 1);
+var fixedTick = 1000000;
+
+// Hook GetSystemTime
+Interceptor.attach(Module.findExportByName('kernel32.dll', 'GetSystemTime'), {
+    onEnter: function(args) {
+        this.timePtr = args[0];
+    },
+    onLeave: function(retval) {
+        if (this.timePtr) {
+            // SYSTEMTIME structure
+            this.timePtr.writeU16(2020);       // wYear
+            this.timePtr.add(2).writeU16(1);   // wMonth
+            this.timePtr.add(4).writeU16(1);   // wDayOfWeek
+            this.timePtr.add(6).writeU16(1);   // wDay
+            this.timePtr.add(8).writeU16(0);   // wHour
+            this.timePtr.add(10).writeU16(0);  // wMinute
+            this.timePtr.add(12).writeU16(0);  // wSecond
+            this.timePtr.add(14).writeU16(0);  // wMilliseconds
+            console.log('[TimeBomb] GetSystemTime spoofed to 2020-01-01');
+        }
+    }
+});
+
+// Hook GetTickCount
+Interceptor.attach(Module.findExportByName('kernel32.dll', 'GetTickCount'), {
+    onLeave: function(retval) {
+        retval.replace(fixedTick);
+        console.log('[TimeBomb] GetTickCount spoofed');
+    }
+});
+
+// Hook time() function
+var time_func = Module.findExportByName('msvcrt.dll', 'time');
+if (time_func) {
+    Interceptor.attach(time_func, {
+        onLeave: function(retval) {
+            var fixedTime = Math.floor(fixedDate.getTime() / 1000);
+            retval.replace(ptr(fixedTime));
+            console.log('[TimeBomb] time() spoofed');
+        }
+    });
+}
+"""
+        
+        # Add recommendations
+        if config['time_checks_found'] > 3:
+            config['recommendations'].append("Multiple time checks detected - comprehensive bypass recommended")
+        
+        if any('critical' in result.get('severity', '') for result in config['analysis_results'].values()):
+            config['recommendations'].append("Critical time bomb detected - immediate patching required")
+        
+        if config['patches']:
+            config['recommendations'].append(f"Apply {len(config['patches'])} binary patches for permanent fix")
+        
+        config['recommendations'].extend([
+            "Use Frida script for runtime bypass without modifying binary",
+            "Consider system date manipulation as alternative approach",
+            "Monitor for additional time checks during runtime"
+        ])
+        
+    except Exception as e:
+        logger.error(f"Time bomb analysis failed: {e}")
+        config['error'] = str(e)
+        config['recommendations'].append("Manual analysis required")
+    
+    logger.info(f"Found {config['time_checks_found']} time checks")
+    return config
+
+
+def generate_telemetry_blocker(app_name: str) -> Dict[str, Any]:
+    """
+    Generate telemetry blocking configuration.
+    
+    This function creates a comprehensive configuration to block telemetry
+    and analytics data collection from applications.
+    
+    Args:
+        app_name: Name of the application to block telemetry for
+        
+    Returns:
+        Dictionary containing telemetry blocking configuration
+    """
+    logger.info(f"Generating telemetry blocker for: {app_name}")
+    
+    # Common telemetry domains by application
+    telemetry_domains = {
+        'default': [
+            'telemetry.microsoft.com',
+            'telemetry.adobe.com',
+            'analytics.google.com',
+            'metrics.*.com',
+            'tracking.*.com',
+            'stats.*.com',
+            'dc.services.visualstudio.com',
+            'vortex.data.microsoft.com'
+        ],
+        'adobe': [
+            'lm.licenses.adobe.com',
+            'activate.adobe.com',
+            'practivate.adobe.com',
+            'ereg.adobe.com',
+            'wip.adobe.com',
+            'adobeereg.com',
+            'Adobelm.com',
+            'hlrcv.stage.adobe.com'
+        ],
+        'microsoft': [
+            'telemetry.microsoft.com',
+            'vortex.data.microsoft.com',
+            'settings-win.data.microsoft.com',
+            'watson.microsoft.com',
+            'umwatson.events.data.microsoft.com',
+            'sqm.microsoft.com'
+        ],
+        'autodesk': [
+            'autodesk.com/adsk/servlet',
+            'planet9.autodesk.com',
+            'registeronce.autodesk.com',
+            'api.autodesk.com'
+        ]
+    }
+    
+    # Determine which domains to block
+    app_lower = app_name.lower()
+    blocked_domains = telemetry_domains.get('default', []).copy()
+    
+    for key, domains in telemetry_domains.items():
+        if key in app_lower:
+            blocked_domains.extend(domains)
+    
+    # Remove duplicates
+    blocked_domains = list(set(blocked_domains))
+    
+    config = {
+        "application": app_name,
+        "blocked_domains": blocked_domains,
+        "blocked_ips": [],
+        "firewall_rules": [],
+        "hosts_entries": [],
+        "dns_redirects": {},
+        "implementation": {
+            "hosts_file": True,
+            "firewall": True,
+            "dns": False,
+            "proxy": False
+        }
+    }
+    
+    # Generate hosts file entries
+    for domain in blocked_domains:
+        config['hosts_entries'].append(f"0.0.0.0 {domain}")
+        config['hosts_entries'].append(f"::0 {domain}")  # IPv6
+    
+    # Generate firewall rules (Windows netsh format)
+    config['firewall_rules'] = [
+        {
+            'name': f'Block_{app_name}_Telemetry_Out',
+            'direction': 'out',
+            'action': 'block',
+            'program': f'%ProgramFiles%\\{app_name}\\*.exe',
+            'command': f'netsh advfirewall firewall add rule name="Block {app_name} Telemetry" dir=out action=block program="%ProgramFiles%\\{app_name}\\*.exe" enable=yes'
+        },
+        {
+            'name': f'Block_{app_name}_Analytics',
+            'direction': 'out',
+            'action': 'block',
+            'protocol': 'tcp',
+            'remoteport': '443,80',
+            'command': f'netsh advfirewall firewall add rule name="Block {app_name} Analytics" dir=out action=block protocol=tcp remoteport=443,80 enable=yes'
+        }
+    ]
+    
+    # Add domain-specific firewall rules
+    for domain in blocked_domains[:10]:  # Limit to 10 most important
+        config['firewall_rules'].append({
+            'name': f'Block_{domain.replace(".", "_")}',
+            'direction': 'out',
+            'action': 'block',
+            'remoteip': domain,
+            'command': f'netsh advfirewall firewall add rule name="Block {domain}" dir=out action=block remoteip={domain} enable=yes'
+        })
+    
+    # Generate Frida script for runtime blocking
+    config['frida_script'] = f"""
+// Telemetry Blocking Script for {app_name}
+console.log('[Telemetry] Starting telemetry blocker...');
+
+var blocked_domains = {blocked_domains};
+
+// Hook WinInet functions
+try {{
+    var wininet = Process.getModuleByName('wininet.dll');
+    
+    // Hook InternetConnectW
+    var InternetConnectW = wininet.getExportByName('InternetConnectW');
+    Interceptor.attach(InternetConnectW, {{
+        onEnter: function(args) {{
+            var serverName = args[1].readUtf16String();
+            for (var i = 0; i < blocked_domains.length; i++) {{
+                if (serverName && serverName.includes(blocked_domains[i])) {{
+                    console.log('[Telemetry] Blocking connection to: ' + serverName);
+                    args[1] = Memory.allocUtf16String('127.0.0.1');
+                    break;
+                }}
+            }}
+        }}
+    }});
+    
+    // Hook HttpOpenRequestW
+    var HttpOpenRequestW = wininet.getExportByName('HttpOpenRequestW');
+    Interceptor.attach(HttpOpenRequestW, {{
+        onEnter: function(args) {{
+            var objectName = args[2].readUtf16String();
+            if (objectName && (objectName.includes('telemetry') || objectName.includes('analytics'))) {{
+                console.log('[Telemetry] Blocking HTTP request: ' + objectName);
+                this.block = true;
+            }}
+        }},
+        onLeave: function(retval) {{
+            if (this.block) {{
+                retval.replace(ptr(0));
+            }}
+        }}
+    }});
+}} catch (e) {{
+    console.log('[Telemetry] WinInet hooks failed: ' + e);
+}}
+
+// Hook WinHTTP functions
+try {{
+    var winhttp = Process.getModuleByName('winhttp.dll');
+    
+    var WinHttpConnect = winhttp.getExportByName('WinHttpConnect');
+    Interceptor.attach(WinHttpConnect, {{
+        onEnter: function(args) {{
+            var serverName = args[1].readUtf16String();
+            for (var i = 0; i < blocked_domains.length; i++) {{
+                if (serverName && serverName.includes(blocked_domains[i])) {{
+                    console.log('[Telemetry] Blocking WinHTTP connection to: ' + serverName);
+                    args[1] = Memory.allocUtf16String('127.0.0.1');
+                    break;
+                }}
+            }}
+        }}
+    }});
+}} catch (e) {{
+    console.log('[Telemetry] WinHTTP hooks failed: ' + e);
+}}
+
+console.log('[Telemetry] Telemetry blocker active');
+"""
+    
+    # Add batch script for easy setup
+    config['setup_script'] = f"""@echo off
+echo Setting up telemetry blocker for {app_name}...
+
+:: Add hosts entries
+echo.
+echo Adding hosts file entries...
+{"".join(f'echo {entry} >> %WINDIR%' + chr(92) + 'System32' + chr(92) + 'drivers' + chr(92) + 'etc' + chr(92) + 'hosts' + chr(10) for entry in config['hosts_entries'][:5])}
+
+:: Add firewall rules
+echo.
+echo Adding firewall rules...
+{chr(10).join(rule['command'] for rule in config['firewall_rules'][:3])}
+
+echo.
+echo Telemetry blocker setup complete!
+pause
+"""
+    
+    # Add removal script
+    config['removal_script'] = f"""@echo off
+echo Removing telemetry blocker for {app_name}...
+
+:: Remove firewall rules
+{chr(10).join(f'netsh advfirewall firewall delete rule name="{rule["name"]}"' for rule in config['firewall_rules'][:3])}
+
+echo.
+echo Telemetry blocker removed!
+echo Note: Hosts file entries must be removed manually
+pause
+"""
+    
+    logger.info(f"Telemetry blocker configured with {len(blocked_domains)} blocked domains")
+    return config
+
+
+def calculate_entropy(data: bytes) -> float:
+    """
+    Calculate Shannon entropy of binary data.
+    
+    Args:
+        data: Binary data to analyze
+        
+    Returns:
+        Entropy value between 0 and 8
+    """
+    if not data:
+        return 0.0
+    
+    # Count byte frequencies
+    byte_counts = {}
+    for byte in data:
+        byte_counts[byte] = byte_counts.get(byte, 0) + 1
+    
+    # Calculate entropy
+    entropy = 0.0
+    data_len = len(data)
+    
+    for count in byte_counts.values():
+        if count > 0:
+            probability = count / data_len
+            entropy -= probability * (probability and probability * probability.bit_length() or 0)
+    
+    return min(entropy, 8.0)
+
+
 # Export commonly used functions
 __all__ = [
     'inject_comprehensive_api_hooks',
     'detect_protection_mechanisms',
     'generate_bypass_strategy',
-    'create_custom_hook_script'
+    'create_custom_hook_script',
+    'emulate_hardware_dongle',
+    'generate_hwid_spoof_config',
+    'generate_time_bomb_defuser',
+    'generate_telemetry_blocker',
+    'calculate_entropy'
 ]

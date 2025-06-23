@@ -982,6 +982,237 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         except Exception as e:
             self.logger.error("Error generating visualizations: %s", e)
 
+    def get_results(self) -> Dict[str, Any]:
+        """
+        Get network analysis results.
+        
+        This method returns comprehensive results from the network traffic analysis,
+        including packet statistics, protocol detection, license server identification,
+        and suspicious traffic patterns.
+        
+        Returns:
+            Dictionary containing:
+            - packets_analyzed: Total number of packets analyzed
+            - protocols_detected: List of detected protocols
+            - suspicious_traffic: List of suspicious traffic patterns
+            - statistics: Detailed traffic statistics
+        """
+        # Analyze traffic if not already done
+        if not hasattr(self, '_last_analysis_results'):
+            self._last_analysis_results = self.analyze_traffic()
+        
+        # Get base analysis results
+        analysis = self._last_analysis_results or {
+            'total_packets': 0,
+            'total_connections': 0,
+            'license_connections': 0,
+            'license_servers': [],
+            'license_conn_details': []
+        }
+        
+        # Detect protocols used
+        protocols_detected = []
+        port_protocol_map = {
+            80: 'HTTP',
+            443: 'HTTPS',
+            27000: 'FlexLM',
+            27001: 'FlexLM',
+            1947: 'HASP/Sentinel',
+            6001: 'HASP/Sentinel',
+            22350: 'CodeMeter',
+            2080: 'License Manager',
+            8224: 'License Server',
+            5093: 'Sentinel RMS'
+        }
+        
+        detected_ports = set()
+        for conn in self.connections.values():
+            detected_ports.add(conn['dst_port'])
+            detected_ports.add(conn['src_port'])
+        
+        for port in detected_ports:
+            if port in port_protocol_map:
+                protocol = port_protocol_map[port]
+                if protocol not in protocols_detected:
+                    protocols_detected.append(protocol)
+        
+        # Add generic TCP if no specific protocols detected
+        if not protocols_detected and self.connections:
+            protocols_detected.append('TCP')
+        
+        # Identify suspicious traffic patterns
+        suspicious_traffic = []
+        
+        for conn_key, conn in self.connections.items():
+            # Check for suspicious patterns
+            suspicious_indicators = []
+            
+            # 1. Unusual license server ports
+            if conn['dst_port'] > 40000 and conn.get('is_license'):
+                suspicious_indicators.append('High port number for license traffic')
+            
+            # 2. Excessive data transfer
+            total_bytes = conn['bytes_sent'] + conn['bytes_received']
+            if total_bytes > 1000000:  # 1MB
+                suspicious_indicators.append(f'Large data transfer: {total_bytes} bytes')
+            
+            # 3. Long-duration connections
+            if 'duration' in conn or ('last_time' in conn and 'start_time' in conn):
+                duration = conn.get('duration', conn['last_time'] - conn['start_time'])
+                if duration > 3600:  # 1 hour
+                    suspicious_indicators.append(f'Long connection duration: {duration:.0f}s')
+            
+            # 4. Potential data exfiltration
+            if conn['bytes_sent'] > conn['bytes_received'] * 10:
+                suspicious_indicators.append('Asymmetric data flow (potential exfiltration)')
+            
+            # 5. Non-standard license protocols
+            if conn.get('is_license') and conn['dst_port'] not in self.license_ports:
+                suspicious_indicators.append(f'Non-standard license port: {conn["dst_port"]}')
+            
+            if suspicious_indicators:
+                suspicious_traffic.append({
+                    'connection': conn_key,
+                    'src_ip': conn['src_ip'],
+                    'dst_ip': conn['dst_ip'],
+                    'src_port': conn['src_port'],
+                    'dst_port': conn['dst_port'],
+                    'indicators': suspicious_indicators,
+                    'severity': self._assess_threat_level(suspicious_indicators)
+                })
+        
+        # Calculate comprehensive statistics
+        statistics = {
+            'capture_duration': self._calculate_capture_duration(),
+            'packets_per_second': self._calculate_packet_rate(),
+            'total_bytes': sum(conn['bytes_sent'] + conn['bytes_received'] for conn in self.connections.values()),
+            'unique_ips': len(set(conn['src_ip'] for conn in self.connections.values()) | 
+                              set(conn['dst_ip'] for conn in self.connections.values())),
+            'protocol_distribution': self._calculate_protocol_distribution(),
+            'port_distribution': self._calculate_port_distribution(),
+            'license_traffic_percentage': self._calculate_license_traffic_percentage(),
+            'peak_traffic_time': self._identify_peak_traffic_time(),
+            'connection_durations': self._analyze_connection_durations()
+        }
+        
+        # Compile final results
+        results = {
+            'packets_analyzed': analysis['total_packets'],
+            'protocols_detected': protocols_detected,
+            'suspicious_traffic': suspicious_traffic,
+            'statistics': statistics,
+            'license_analysis': {
+                'license_servers': analysis['license_servers'],
+                'license_connections': analysis['license_connections'],
+                'license_connection_details': analysis['license_conn_details']
+            },
+            'summary': {
+                'total_connections': analysis['total_connections'],
+                'suspicious_connections': len(suspicious_traffic),
+                'identified_license_servers': len(analysis['license_servers']),
+                'analysis_timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        }
+        
+        return results
+    
+    def _assess_threat_level(self, indicators: list) -> str:
+        """Assess threat level based on suspicious indicators."""
+        if len(indicators) >= 3:
+            return 'high'
+        elif len(indicators) >= 2:
+            return 'medium'
+        else:
+            return 'low'
+    
+    def _calculate_capture_duration(self) -> float:
+        """Calculate total capture duration in seconds."""
+        if not self.packets:
+            return 0.0
+        
+        timestamps = [pkt['timestamp'] for pkt in self.packets]
+        if timestamps:
+            return max(timestamps) - min(timestamps)
+        return 0.0
+    
+    def _calculate_packet_rate(self) -> float:
+        """Calculate average packets per second."""
+        duration = self._calculate_capture_duration()
+        if duration > 0:
+            return len(self.packets) / duration
+        return 0.0
+    
+    def _calculate_protocol_distribution(self) -> Dict[str, int]:
+        """Calculate distribution of protocols."""
+        distribution = {}
+        
+        port_protocol_map = {
+            80: 'HTTP', 443: 'HTTPS', 27000: 'FlexLM', 27001: 'FlexLM',
+            1947: 'HASP', 6001: 'HASP', 22350: 'CodeMeter'
+        }
+        
+        for conn in self.connections.values():
+            protocol = port_protocol_map.get(conn['dst_port'], 'Other')
+            distribution[protocol] = distribution.get(protocol, 0) + len(conn['packets'])
+        
+        return distribution
+    
+    def _calculate_port_distribution(self) -> Dict[int, int]:
+        """Calculate distribution of destination ports."""
+        distribution = {}
+        
+        for conn in self.connections.values():
+            port = conn['dst_port']
+            distribution[port] = distribution.get(port, 0) + 1
+        
+        return dict(sorted(distribution.items(), key=lambda x: x[1], reverse=True)[:10])
+    
+    def _calculate_license_traffic_percentage(self) -> float:
+        """Calculate percentage of traffic that is license-related."""
+        if not self.packets:
+            return 0.0
+        
+        license_packets = sum(len(conn['packets']) for conn in self.connections.values() 
+                            if conn.get('is_license', False))
+        
+        return (license_packets / len(self.packets)) * 100 if self.packets else 0.0
+    
+    def _identify_peak_traffic_time(self) -> Optional[str]:
+        """Identify time period with peak traffic."""
+        if not self.packets:
+            return None
+        
+        # Group packets by minute
+        minute_counts = {}
+        for pkt in self.packets:
+            minute = int(pkt['timestamp'] / 60) * 60
+            minute_counts[minute] = minute_counts.get(minute, 0) + 1
+        
+        if minute_counts:
+            peak_minute = max(minute_counts.items(), key=lambda x: x[1])[0]
+            return time.strftime('%Y-%m-%d %H:%M', time.localtime(peak_minute))
+        
+        return None
+    
+    def _analyze_connection_durations(self) -> Dict[str, float]:
+        """Analyze connection duration statistics."""
+        durations = []
+        
+        for conn in self.connections.values():
+            if 'last_time' in conn and 'start_time' in conn:
+                duration = conn['last_time'] - conn['start_time']
+                durations.append(duration)
+        
+        if not durations:
+            return {'min': 0, 'max': 0, 'avg': 0, 'total': 0}
+        
+        return {
+            'min': min(durations),
+            'max': max(durations),
+            'avg': sum(durations) / len(durations),
+            'total': len(durations)
+        }
+
     def stop_capture(self) -> bool:
         """
         Stop the packet capture process.

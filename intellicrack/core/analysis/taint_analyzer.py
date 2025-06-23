@@ -1265,6 +1265,294 @@ class TaintAnalysisEngine:
         else:
             return "NOP the validation or force success return"
 
+    def analyze_with_sources(self, sources: List[str], **kwargs) -> Dict[str, Any]:
+        """
+        Analyze taint propagation from specific sources.
+        
+        This method performs taint analysis starting from a specified list of sources,
+        tracking how data flows through the program to identify security-critical sinks
+        and potential validation bypass points.
+        
+        Args:
+            sources: List of source identifiers (function names, addresses, or patterns)
+            **kwargs: Additional analysis parameters
+            
+        Returns:
+            Dictionary containing:
+            - sources: Analyzed source locations
+            - sinks_reached: Sinks that were reached by tainted data
+            - taint_flows: Detailed taint propagation paths
+            - vulnerabilities: Identified security issues
+        """
+        self.logger.info(f"Starting taint analysis with {len(sources)} sources")
+        
+        # Clear previous analysis
+        self.clear_analysis()
+        
+        # Process source specifications
+        processed_sources = []
+        for source_spec in sources:
+            if source_spec.startswith('0x'):
+                # Address-based source
+                try:
+                    addr = int(source_spec, 16)
+                    self.add_taint_source('address', source_spec, f"Taint source at address {source_spec}")
+                    processed_sources.append({
+                        'type': 'address',
+                        'value': addr,
+                        'spec': source_spec
+                    })
+                except ValueError:
+                    self.logger.warning(f"Invalid address format: {source_spec}")
+            elif source_spec.startswith('func:'):
+                # Function-based source
+                func_name = source_spec[5:]
+                self.add_taint_source('function', func_name, f"Function taint source: {func_name}")
+                processed_sources.append({
+                    'type': 'function',
+                    'value': func_name,
+                    'spec': source_spec
+                })
+            elif source_spec.startswith('api:'):
+                # API call source
+                api_name = source_spec[4:]
+                self.add_taint_source('api', api_name, f"API call taint source: {api_name}")
+                processed_sources.append({
+                    'type': 'api',
+                    'value': api_name,
+                    'spec': source_spec
+                })
+            else:
+                # Default: treat as function name
+                self.add_taint_source('function', source_spec, f"Function taint source: {source_spec}")
+                processed_sources.append({
+                    'type': 'function',
+                    'value': source_spec,
+                    'spec': source_spec
+                })
+        
+        # Add default sinks if none specified
+        if 'sinks' not in kwargs:
+            self._add_default_taint_sinks()
+        else:
+            # Add custom sinks
+            for sink in kwargs['sinks']:
+                sink_type = sink.get('type', 'custom')
+                sink_loc = sink.get('location', 'unknown')
+                sink_desc = sink.get('description', f"Custom sink: {sink_loc}")
+                self.add_taint_sink(sink_type, sink_loc, sink_desc)
+        
+        # Run the analysis
+        if not self.run_analysis():
+            return {
+                'sources': sources,
+                'sinks_reached': [],
+                'taint_flows': [],
+                'vulnerabilities': [],
+                'error': 'Analysis failed'
+            }
+        
+        # Process results
+        sinks_reached = []
+        taint_flows = []
+        vulnerabilities = []
+        
+        # Analyze taint propagation paths
+        for path in self.taint_propagation:
+            if not path:
+                continue
+                
+            # Find source and sink in path
+            source_step = None
+            sink_step = None
+            
+            for step in path:
+                if step.get('taint_status') == 'source':
+                    source_step = step
+                elif step.get('taint_status') == 'sink':
+                    sink_step = step
+            
+            if source_step and sink_step:
+                # Check if this path matches our requested sources
+                source_matches = False
+                for proc_source in processed_sources:
+                    if proc_source['type'] == 'address':
+                        if source_step.get('address') == proc_source['value']:
+                            source_matches = True
+                            break
+                    elif proc_source['type'] in ['function', 'api']:
+                        if proc_source['value'] in str(source_step.get('instruction', '')):
+                            source_matches = True
+                            break
+                
+                if source_matches:
+                    # Record sink reached
+                    sink_info = {
+                        'address': sink_step.get('address', 0),
+                        'instruction': sink_step.get('instruction', ''),
+                        'sink_type': sink_step.get('sink', {}).get('type', 'unknown'),
+                        'confidence': self._calculate_path_confidence(path)
+                    }
+                    
+                    if sink_info not in sinks_reached:
+                        sinks_reached.append(sink_info)
+                    
+                    # Record taint flow
+                    taint_flows.append({
+                        'source': {
+                            'address': source_step.get('address', 0),
+                            'instruction': source_step.get('instruction', ''),
+                            'type': source_step.get('source', {}).get('type', 'unknown')
+                        },
+                        'sink': sink_info,
+                        'path_length': len(path),
+                        'path': [step['address'] for step in path],
+                        'transformations': self._extract_transformations(path)
+                    })
+        
+        # Identify vulnerabilities based on taint flows
+        for flow in taint_flows:
+            vuln_type = self._classify_vulnerability(flow)
+            if vuln_type:
+                vulnerabilities.append({
+                    'type': vuln_type,
+                    'source': flow['source'],
+                    'sink': flow['sink'],
+                    'severity': self._assess_severity(flow),
+                    'description': self._generate_vuln_description(vuln_type, flow),
+                    'mitigation': self._suggest_mitigation(vuln_type, flow)
+                })
+        
+        # Compile final results
+        results = {
+            'sources': sources,
+            'sinks_reached': sinks_reached,
+            'taint_flows': taint_flows,
+            'vulnerabilities': vulnerabilities,
+            'summary': {
+                'total_sources': len(self.taint_sources),
+                'total_sinks_reached': len(sinks_reached),
+                'total_flows': len(taint_flows),
+                'vulnerabilities_found': len(vulnerabilities),
+                'critical_vulnerabilities': sum(1 for v in vulnerabilities if v['severity'] == 'critical'),
+                'high_vulnerabilities': sum(1 for v in vulnerabilities if v['severity'] == 'high')
+            }
+        }
+        
+        self.logger.info(f"Analysis complete: {len(sinks_reached)} sinks reached, {len(vulnerabilities)} vulnerabilities found")
+        
+        return results
+    
+    def _calculate_path_confidence(self, path: List[Dict[str, Any]]) -> float:
+        """Calculate confidence score for a taint propagation path."""
+        confidence = 1.0
+        
+        # Reduce confidence for longer paths
+        path_length = len(path)
+        if path_length > 10:
+            confidence *= 0.9
+        if path_length > 20:
+            confidence *= 0.8
+        if path_length > 50:
+            confidence *= 0.7
+        
+        # Check for indirect propagation
+        for step in path:
+            if step.get('taint_status') == 'indirect':
+                confidence *= 0.95
+        
+        return min(max(confidence, 0.1), 1.0)
+    
+    def _extract_transformations(self, path: List[Dict[str, Any]]) -> List[str]:
+        """Extract data transformations along a taint path."""
+        transformations = []
+        
+        for step in path:
+            instruction = step.get('instruction', '').lower()
+            
+            # Check for common transformations
+            if 'xor' in instruction:
+                transformations.append('xor_operation')
+            elif 'add' in instruction or 'sub' in instruction:
+                transformations.append('arithmetic')
+            elif 'shl' in instruction or 'shr' in instruction:
+                transformations.append('bit_shift')
+            elif 'call' in instruction:
+                transformations.append('function_call')
+            elif 'cmp' in instruction or 'test' in instruction:
+                transformations.append('comparison')
+        
+        return transformations
+    
+    def _classify_vulnerability(self, flow: Dict[str, Any]) -> Optional[str]:
+        """Classify vulnerability type based on taint flow."""
+        sink_type = flow['sink'].get('sink_type', '')
+        source_type = flow['source'].get('type', '')
+        transformations = flow.get('transformations', [])
+        
+        # License validation vulnerabilities
+        if sink_type == 'comparison' and source_type in ['file_read', 'registry', 'network']:
+            if 'xor_operation' in transformations or 'arithmetic' in transformations:
+                return 'license_validation_bypass'
+            else:
+                return 'weak_license_check'
+        
+        # Cryptographic vulnerabilities
+        if sink_type == 'crypto':
+            if source_type == 'hardware_id':
+                return 'predictable_crypto_key'
+            elif 'comparison' in transformations:
+                return 'crypto_validation_bypass'
+        
+        # Input validation vulnerabilities
+        if source_type == 'network' and sink_type == 'conditional':
+            return 'insufficient_input_validation'
+        
+        # Hardware ID vulnerabilities
+        if source_type == 'hardware_id' and sink_type in ['comparison', 'conditional']:
+            return 'hardware_id_bypass'
+        
+        return None
+    
+    def _assess_severity(self, flow: Dict[str, Any]) -> str:
+        """Assess vulnerability severity."""
+        vuln_type = self._classify_vulnerability(flow)
+        
+        if vuln_type in ['license_validation_bypass', 'crypto_validation_bypass']:
+            return 'critical'
+        elif vuln_type in ['weak_license_check', 'hardware_id_bypass']:
+            return 'high'
+        elif vuln_type in ['predictable_crypto_key', 'insufficient_input_validation']:
+            return 'medium'
+        else:
+            return 'low'
+    
+    def _generate_vuln_description(self, vuln_type: str, flow: Dict[str, Any]) -> str:
+        """Generate vulnerability description."""
+        descriptions = {
+            'license_validation_bypass': f"License validation can be bypassed at {hex(flow['sink']['address'])}",
+            'weak_license_check': f"Weak license check implementation at {hex(flow['sink']['address'])}",
+            'predictable_crypto_key': f"Cryptographic key derived from predictable hardware ID at {hex(flow['sink']['address'])}",
+            'crypto_validation_bypass': f"Cryptographic validation bypass possible at {hex(flow['sink']['address'])}",
+            'insufficient_input_validation': f"Insufficient input validation at {hex(flow['sink']['address'])}",
+            'hardware_id_bypass': f"Hardware ID check can be bypassed at {hex(flow['sink']['address'])}"
+        }
+        
+        return descriptions.get(vuln_type, f"Security vulnerability at {hex(flow['sink']['address'])}")
+    
+    def _suggest_mitigation(self, vuln_type: str, flow: Dict[str, Any]) -> str:
+        """Suggest mitigation for vulnerability."""
+        mitigations = {
+            'license_validation_bypass': "Implement multiple validation layers and use cryptographic signatures",
+            'weak_license_check': "Use strong cryptographic validation with proper key management",
+            'predictable_crypto_key': "Use proper random number generation for cryptographic keys",
+            'crypto_validation_bypass': "Implement time-constant comparison and proper error handling",
+            'insufficient_input_validation': "Add comprehensive input validation and sanitization",
+            'hardware_id_bypass': "Combine multiple hardware identifiers and use secure hashing"
+        }
+        
+        return mitigations.get(vuln_type, "Review and strengthen the validation logic")
+
 
 def run_taint_analysis(app: Any) -> None:
     """Initialize and run the taint analysis engine"""

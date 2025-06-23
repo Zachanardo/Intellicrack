@@ -3,7 +3,7 @@
 A comprehensive binary analysis and security research tool with GUI, AI integration, and advanced analysis capabilities.
 
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-GPL%20v3-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 ## 🚀 Features

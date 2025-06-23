@@ -9,7 +9,7 @@ import logging
 import os
 import platform
 import subprocess
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 from .base_detector import BaseDetector
 
@@ -527,3 +527,278 @@ if (IsRunningInVM()) {
     def get_detection_type(self) -> str:
         """Get the type of detection this class performs."""
         return 'virtual_machine'
+    
+    def generate_bypass(self, vm_type: str) -> Dict[str, Any]:
+        """
+        Generate VM detection bypass.
+        
+        This method analyzes the detected VM type and generates appropriate
+        bypass techniques to hide VM artifacts and evade detection.
+        
+        Args:
+            vm_type: Type of VM detected (e.g., 'vmware', 'virtualbox', 'hyperv')
+            
+        Returns:
+            Dictionary containing bypass strategies and implementation
+        """
+        self.logger.info(f"Generating VM detection bypass for: {vm_type}")
+        
+        bypass_config = {
+            "vm_type": vm_type,
+            "detection_methods": [],
+            "bypass_techniques": [],
+            "stealth_level": "low",
+            "success_probability": 0.0,
+            "implementation": {},
+            "requirements": [],
+            "risks": []
+        }
+        
+        # Identify detection methods used by target
+        if vm_type.lower() in self.vm_signatures:
+            vm_sig = self.vm_signatures[vm_type.lower()]
+            
+            # Determine which detection methods to bypass
+            if vm_sig.get('processes'):
+                bypass_config["detection_methods"].append("Process detection")
+            if vm_sig.get('files'):
+                bypass_config["detection_methods"].append("File system artifacts")  
+            if vm_sig.get('registry'):
+                bypass_config["detection_methods"].append("Registry keys")
+            if vm_sig.get('hardware'):
+                bypass_config["detection_methods"].append("Hardware signatures")
+            if vm_sig.get('mac_prefixes'):
+                bypass_config["detection_methods"].append("MAC address patterns")
+        
+        # Generate bypass techniques based on VM type
+        if vm_type.lower() == 'vmware':
+            bypass_config["stealth_level"] = "high"
+            bypass_config["success_probability"] = 0.85
+            bypass_config["bypass_techniques"] = [
+                {
+                    "name": "VMware Tools Hiding",
+                    "description": "Hide or rename VMware Tools processes and services",
+                    "complexity": "medium",
+                    "effectiveness": 0.90
+                },
+                {
+                    "name": "CPUID Masking", 
+                    "description": "Mask hypervisor CPUID leaf responses",
+                    "complexity": "high",
+                    "effectiveness": 0.85
+                },
+                {
+                    "name": "Hardware ID Spoofing",
+                    "description": "Change hardware identifiers to non-VM values",
+                    "complexity": "medium", 
+                    "effectiveness": 0.80
+                },
+                {
+                    "name": "Driver Hiding",
+                    "description": "Hide VMware drivers from enumeration",
+                    "complexity": "high",
+                    "effectiveness": 0.75
+                }
+            ]
+            
+        elif vm_type.lower() == 'virtualbox':
+            bypass_config["stealth_level"] = "high"
+            bypass_config["success_probability"] = 0.90
+            bypass_config["bypass_techniques"] = [
+                {
+                    "name": "VBoxGuest Hiding",
+                    "description": "Hide VirtualBox Guest Additions",
+                    "complexity": "medium",
+                    "effectiveness": 0.95
+                },
+                {
+                    "name": "ACPI Table Modification",
+                    "description": "Modify ACPI tables to remove VBox signatures",
+                    "complexity": "high",
+                    "effectiveness": 0.85
+                },
+                {
+                    "name": "Device Name Changing",
+                    "description": "Change VBox device names in registry",
+                    "complexity": "low",
+                    "effectiveness": 0.90
+                }
+            ]
+            
+        elif vm_type.lower() == 'hyperv':
+            bypass_config["stealth_level"] = "medium" 
+            bypass_config["success_probability"] = 0.70
+            bypass_config["bypass_techniques"] = [
+                {
+                    "name": "Hyper-V Integration Disabling",
+                    "description": "Disable Hyper-V integration services",
+                    "complexity": "low",
+                    "effectiveness": 0.80
+                },
+                {
+                    "name": "VMBUS Hiding",
+                    "description": "Hide VMBUS driver and devices",
+                    "complexity": "high",
+                    "effectiveness": 0.70
+                }
+            ]
+            
+        else:
+            # Generic VM bypass
+            bypass_config["stealth_level"] = "medium"
+            bypass_config["success_probability"] = 0.60
+            bypass_config["bypass_techniques"] = [
+                {
+                    "name": "Generic Process Hiding",
+                    "description": "Hide common VM guest processes",
+                    "complexity": "low",
+                    "effectiveness": 0.70
+                },
+                {
+                    "name": "Timing Attack Mitigation",
+                    "description": "Normalize timing to hide VM overhead",
+                    "complexity": "medium",
+                    "effectiveness": 0.65
+                },
+                {
+                    "name": "Generic Hardware Spoofing",
+                    "description": "Replace VM hardware strings",
+                    "complexity": "medium",
+                    "effectiveness": 0.60
+                }
+            ]
+        
+        # Add implementation details
+        bypass_config["implementation"]["hook_script"] = self._generate_vm_bypass_script(vm_type)
+        bypass_config["implementation"]["registry_modifications"] = self._get_registry_mods(vm_type)
+        bypass_config["implementation"]["file_operations"] = self._get_file_operations(vm_type)
+        
+        # Add requirements
+        bypass_config["requirements"] = [
+            "Administrator/root privileges",
+            "Ability to modify system files",
+            "Runtime hooking capability (Frida/similar)"
+        ]
+        
+        # Add risks
+        bypass_config["risks"] = [
+            "System instability if modifications fail",
+            "VM vendor updates may break bypass",
+            "Some applications may depend on VM tools"
+        ]
+        
+        return bypass_config
+    
+    def _generate_vm_bypass_script(self, vm_type: str) -> str:
+        """Generate Frida script for VM detection bypass."""
+        if vm_type.lower() == 'vmware':
+            return """
+// VMware Detection Bypass Script
+// Hide VMware artifacts
+
+// Hook process enumeration
+var psapi = Process.getModuleByName('psapi.dll');
+var EnumProcesses = psapi.getExportByName('EnumProcesses');
+
+Interceptor.attach(EnumProcesses, {
+    onLeave: function(retval) {
+        // Filter out VMware processes
+        console.log('[VM Bypass] Filtering process list');
+    }
+});
+
+// Hook file system checks
+var kernel32 = Process.getModuleByName('kernel32.dll');
+var GetFileAttributesW = kernel32.getExportByName('GetFileAttributesW');
+
+Interceptor.attach(GetFileAttributesW, {
+    onEnter: function(args) {
+        var path = args[0].readUtf16String();
+        if (path && path.toLowerCase().includes('vmware')) {
+            console.log('[VM Bypass] Hiding VMware file: ' + path);
+            args[0] = Memory.allocUtf16String('C:\\\\NonExistent.sys');
+        }
+    }
+});
+
+// Hook registry access
+var advapi32 = Process.getModuleByName('advapi32.dll');
+var RegOpenKeyExW = advapi32.getExportByName('RegOpenKeyExW');
+
+Interceptor.attach(RegOpenKeyExW, {
+    onEnter: function(args) {
+        var keyName = args[1].readUtf16String();
+        if (keyName && keyName.includes('VMware')) {
+            console.log('[VM Bypass] Blocking VMware registry access');
+            this.block = true;
+        }
+    },
+    onLeave: function(retval) {
+        if (this.block) {
+            retval.replace(0x2); // ERROR_FILE_NOT_FOUND
+        }
+    }
+});
+"""
+        else:
+            return """
+// Generic VM Detection Bypass Script
+console.log('[VM Bypass] Generic VM hiding active');
+
+// Hook CPUID instruction detection
+Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
+    onLeave: function(retval) {
+        retval.replace(0);
+    }
+});
+"""
+    
+    def _get_registry_mods(self, vm_type: str) -> List[Dict[str, str]]:
+        """Get registry modifications for VM bypass."""
+        mods = []
+        
+        if vm_type.lower() == 'vmware':
+            mods.extend([
+                {
+                    "action": "delete",
+                    "key": r"HKLM\SOFTWARE\VMware, Inc.",
+                    "description": "Remove VMware software keys"
+                },
+                {
+                    "action": "rename", 
+                    "key": r"HKLM\SYSTEM\CurrentControlSet\Services\vmtools",
+                    "new_name": "svchost_helper",
+                    "description": "Rename VMware Tools service"
+                }
+            ])
+        elif vm_type.lower() == 'virtualbox':
+            mods.extend([
+                {
+                    "action": "delete",
+                    "key": r"HKLM\SOFTWARE\Oracle\VirtualBox Guest Additions",
+                    "description": "Remove VirtualBox guest additions keys"
+                }
+            ])
+        
+        return mods
+    
+    def _get_file_operations(self, vm_type: str) -> List[Dict[str, str]]:
+        """Get file operations for VM bypass."""
+        ops = []
+        
+        if vm_type.lower() == 'vmware':
+            ops.extend([
+                {
+                    "action": "rename",
+                    "path": r"C:\Program Files\VMware\VMware Tools\vmtoolsd.exe",
+                    "new_name": "svchost32.exe",
+                    "description": "Rename VMware Tools daemon"
+                },
+                {
+                    "action": "hide",
+                    "path": r"C:\Windows\System32\drivers\vmmouse.sys",
+                    "description": "Hide VMware mouse driver"
+                }
+            ])
+        
+        return ops

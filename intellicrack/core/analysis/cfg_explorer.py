@@ -22,6 +22,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
 import logging
+import os
+import time
+import traceback
 from typing import Any, Dict, List, Optional
 
 try:
@@ -1325,6 +1328,195 @@ class CFGExplorer:
                 self.logger.error(f"Failed to show error dialog: {e}")
         # Always log the error regardless of dialog display
         self.logger.error(f"{title}: {message}")
+    
+    def export_json(self, output_path: str) -> bool:
+        """Export comprehensive CFG analysis to JSON format.
+        
+        This exports all analysis data including:
+        - Function graphs with full node/edge data
+        - Call graph relationships
+        - Complexity metrics
+        - Vulnerability patterns
+        - License validation analysis
+        - AI analysis results
+        - Cross-reference data
+        
+        Args:
+            output_path: Path to save the JSON file
+            
+        Returns:
+            bool: True if export successful, False otherwise
+        """
+        try:
+            self.logger.info(f"Exporting CFG analysis to JSON: {output_path}")
+            
+            # Prepare comprehensive export data
+            export_data = {
+                "metadata": {
+                    "binary_path": self.binary_path,
+                    "export_timestamp": str(time.time()),
+                    "export_version": "2.0",
+                    "analysis_engines": {
+                        "decompiler": self.decompiler is not None,
+                        "vulnerability_engine": self.vulnerability_engine is not None,
+                        "ai_engine": self.ai_engine is not None,
+                        "string_analyzer": self.string_analyzer is not None,
+                        "import_analyzer": self.import_analyzer is not None,
+                        "scripting_engine": self.scripting_engine is not None
+                    }
+                },
+                "functions": {},
+                "call_graph": {},
+                "cross_references": self.cross_references,
+                "function_similarities": self.function_similarities,
+                "analysis_results": self.analysis_cache,
+                "comprehensive_metrics": {}
+            }
+            
+            # Export function data with full graph information
+            for func_name, func_data in self.functions.items():
+                function_export = {
+                    "address": func_data.get('addr', 0),
+                    "size": func_data.get('size', 0),
+                    "complexity": func_data.get('complexity', 1),
+                    "calls": func_data.get('calls', 0),
+                    "type": func_data.get('type', 'fcn'),
+                    "blocks": [],
+                    "edges": [],
+                    "enhanced_data": func_data.get('enhanced_data', {})
+                }
+                
+                # Export graph data if available
+                graph = func_data.get('graph')
+                if graph and NETWORKX_AVAILABLE:
+                    # Export nodes with all attributes
+                    for node, node_data in graph.nodes(data=True):
+                        block_export = {
+                            "address": node,
+                            "size": node_data.get('size', 0),
+                            "instruction_count": node_data.get('instruction_count', 0),
+                            "has_call": node_data.get('has_call', False),
+                            "has_jump": node_data.get('has_jump', False),
+                            "has_return": node_data.get('has_return', False),
+                            "crypto_operations": node_data.get('crypto_operations', 0),
+                            "license_operations": node_data.get('license_operations', 0),
+                            "block_type": node_data.get('block_type', 'unknown'),
+                            "complexity_score": node_data.get('complexity_score', 0.0),
+                            "instructions": []
+                        }
+                        
+                        # Export individual instructions
+                        ops = node_data.get('ops', [])
+                        for op in ops:
+                            instruction_export = {
+                                "offset": op.get('offset', 0),
+                                "size": op.get('size', 0),
+                                "disasm": op.get('disasm', ''),
+                                "type": op.get('type', ''),
+                                "bytes": op.get('bytes', '').hex() if 'bytes' in op and hasattr(op['bytes'], 'hex') else ''
+                            }
+                            block_export["instructions"].append(instruction_export)
+                        
+                        function_export["blocks"].append(block_export)
+                    
+                    # Export edges with attributes
+                    for source, target, edge_data in graph.edges(data=True):
+                        edge_export = {
+                            "source": source,
+                            "target": target,
+                            "type": edge_data.get('type', 'unknown'),
+                            "condition": edge_data.get('condition', '')
+                        }
+                        function_export["edges"].append(edge_export)
+                
+                export_data["functions"][func_name] = function_export
+            
+            # Export call graph
+            if self.call_graph and NETWORKX_AVAILABLE:
+                call_graph_export = {
+                    "nodes": [],
+                    "edges": []
+                }
+                
+                # Export call graph nodes
+                for node, node_data in self.call_graph.nodes(data=True):
+                    call_graph_export["nodes"].append({
+                        "function": node,
+                        "address": node_data.get('addr', 0),
+                        "size": node_data.get('size', 0),
+                        "complexity": node_data.get('complexity', 1)
+                    })
+                
+                # Export call graph edges
+                for source, target, edge_data in self.call_graph.edges(data=True):
+                    call_graph_export["edges"].append({
+                        "source": source,
+                        "target": target,
+                        "type": edge_data.get('type', 'function_call'),
+                        "from_addr": edge_data.get('from_addr', ''),
+                        "to_addr": edge_data.get('to_addr', '')
+                    })
+                
+                export_data["call_graph"] = call_graph_export
+            
+            # Get comprehensive metrics
+            try:
+                export_data["comprehensive_metrics"] = {
+                    "complexity_metrics": self.get_code_complexity_analysis(),
+                    "call_graph_metrics": self.get_call_graph_metrics(),
+                    "vulnerability_patterns": self.get_vulnerability_patterns(),
+                    "license_validation": self.get_license_validation_analysis(),
+                    "cross_reference_analysis": self.get_cross_reference_analysis()
+                }
+            except Exception as e:
+                self.logger.warning(f"Failed to export some metrics: {e}")
+            
+            # Handle special types in the export data
+            def json_serializable(obj):
+                """Convert non-serializable objects to JSON-friendly format."""
+                if isinstance(obj, (nx.Graph, nx.DiGraph)):
+                    # Convert NetworkX graphs to dict representation
+                    return {
+                        "nodes": list(obj.nodes()),
+                        "edges": list(obj.edges()),
+                        "graph_type": "networkx_graph"
+                    }
+                elif hasattr(obj, '__dict__'):
+                    # Convert objects with __dict__ to dict
+                    return obj.__dict__
+                elif isinstance(obj, bytes):
+                    # Convert bytes to hex string
+                    return obj.hex()
+                elif hasattr(obj, 'tolist'):
+                    # Convert numpy arrays to lists
+                    return obj.tolist()
+                else:
+                    # Default to string representation
+                    return str(obj)
+            
+            # Write JSON file with proper formatting
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(export_data, f, indent=2, sort_keys=True, default=json_serializable)
+            
+            # Verify the file was written successfully
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                self.logger.info(f"Successfully exported CFG analysis to {output_path}")
+                
+                # Log export statistics
+                num_functions = len(export_data["functions"])
+                num_blocks = sum(len(func.get("blocks", [])) for func in export_data["functions"].values())
+                file_size_kb = os.path.getsize(output_path) / 1024
+                
+                self.logger.info(f"Export statistics: {num_functions} functions, {num_blocks} blocks, {file_size_kb:.2f} KB")
+                return True
+            else:
+                self.logger.error("Export file verification failed")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Failed to export CFG to JSON: {e}")
+            self.logger.debug(f"Export error traceback: {traceback.format_exc()}")
+            return False
 
 
 def run_deep_cfg_analysis(app):

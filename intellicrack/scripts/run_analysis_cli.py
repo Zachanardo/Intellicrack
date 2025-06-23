@@ -244,9 +244,8 @@ def format_output(results, format_type):
     elif format_type in ['pdf', 'html']:
         # Use the report generator for PDF/HTML
         return generate_report(
-            results,
-            report_format=format_type,
-            title=f"Intellicrack Analysis: {Path(results['binary']).name}"
+            analysis_results=results,
+            output_format=format_type
         )
 
     return str(results)

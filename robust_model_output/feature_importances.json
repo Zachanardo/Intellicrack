@@ -1,0 +1,135 @@
+{
+  "feature_importances": {
+    "has_resources": 0.14596452853282088,
+    "is_pe": 0.12761195099842995,
+    "strings_license_keys_count": 0.12327910437166688,
+    "resource_count": 0.1046713497910678,
+    "section_count": 0.06581030462932223,
+    "strings_crypto_count": 0.055586700412103264,
+    "is_elf": 0.044033513760149745,
+    "file_size": 0.04211200256370847,
+    "imports_time_count": 0.039485650753094834,
+    "entropy": 0.03929625836678682,
+    "imports_protection_count": 0.037298572254874686,
+    "export_count": 0.034345163930409636,
+    "licensing_score": 0.030381079149208585,
+    "executable_sections": 0.01840366963867816,
+    "is_dll": 0.017534534496121825,
+    "has_license_key_pattern": 0.013263393287372196,
+    "imports_file_count": 0.010942622052808382,
+    "strings_license_text_count": 0.00812401859014685,
+    "writable_sections": 0.005143366078725203,
+    "strings_license_files_count": 0.004259224579802038,
+    "has_copyright": 0.0038163471704095353,
+    "imports_network_count": 0.0033583002112560455,
+    "has_tls": 0.003296866747092197,
+    "imports_hardware_count": 0.003121454130907602,
+    "scheme_flexlm_score": 0.002772833066301015,
+    "strings_urls_count": 0.002640061040448216,
+    "imports_registry_count": 0.0026290314050347683,
+    "protection_level": 0.0025999907372591573,
+    "has_support_email": 0.0022779280417770426,
+    "imports_crypto_count": 0.0022726097330080597,
+    "has_eula": 0.0012358184032311217,
+    "high_entropy_sections": 0.0009997003557174217,
+    "license_url_count": 0.0008642250383093167,
+    "has_digital_signature": 0.00043439033404511193,
+    "scheme_sentinel_score": 0.00013343534790501662,
+    "is_packed": 0.0,
+    "strings_registry_keys_count": 0.0,
+    "function_count": 0.0,
+    "licensing_functions": 0.0,
+    "crypto_functions": 0.0,
+    "time_functions": 0.0,
+    "code_string_refs": 0.0,
+    "anti_debug_instructions": 0.0,
+    "has_indirect_calls": 0.0,
+    "scheme_codemeter_score": 0.0,
+    "scheme_softwarepassport_score": 0.0,
+    "scheme_winlicense_score": 0.0,
+    "scheme_asprotect_score": 0.0,
+    "scheme_custom_score": 0.0
+  },
+  "top_features": [
+    [
+      "has_resources",
+      0.14596452853282088
+    ],
+    [
+      "is_pe",
+      0.12761195099842995
+    ],
+    [
+      "strings_license_keys_count",
+      0.12327910437166688
+    ],
+    [
+      "resource_count",
+      0.1046713497910678
+    ],
+    [
+      "section_count",
+      0.06581030462932223
+    ],
+    [
+      "strings_crypto_count",
+      0.055586700412103264
+    ],
+    [
+      "is_elf",
+      0.044033513760149745
+    ],
+    [
+      "file_size",
+      0.04211200256370847
+    ],
+    [
+      "imports_time_count",
+      0.039485650753094834
+    ],
+    [
+      "entropy",
+      0.03929625836678682
+    ],
+    [
+      "imports_protection_count",
+      0.037298572254874686
+    ],
+    [
+      "export_count",
+      0.034345163930409636
+    ],
+    [
+      "licensing_score",
+      0.030381079149208585
+    ],
+    [
+      "executable_sections",
+      0.01840366963867816
+    ],
+    [
+      "is_dll",
+      0.017534534496121825
+    ],
+    [
+      "has_license_key_pattern",
+      0.013263393287372196
+    ],
+    [
+      "imports_file_count",
+      0.010942622052808382
+    ],
+    [
+      "strings_license_text_count",
+      0.00812401859014685
+    ],
+    [
+      "writable_sections",
+      0.005143366078725203
+    ],
+    [
+      "strings_license_files_count",
+      0.004259224579802038
+    ]
+  ]
+}

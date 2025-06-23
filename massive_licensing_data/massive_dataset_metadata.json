@@ -1,0 +1,25 @@
+{
+  "collection_info": {
+    "target_samples": 5000,
+    "total_collected": 0,
+    "collection_date": "2025-06-22 20:09:46",
+    "unique_hashes": 0
+  },
+  "categories": {
+    "system_binaries": 0,
+    "package_managers": 0,
+    "installed_software": 0,
+    "github_releases": 0
+  },
+  "collection_sources": {
+    "installed_software": true,
+    "system_binaries": true,
+    "package_managers": true,
+    "github_releases": true,
+    "vendor_sites": false,
+    "download_sites": false
+  },
+  "quality_metrics": {
+    "overall_quality": 0.0
+  }
+}

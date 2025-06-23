@@ -297,6 +297,30 @@ class ConfigManager:
             logger.error(f"Configuration validation error: {e}")
             return False
 
+    def items(self):
+        """Return items from the configuration dictionary."""
+        return self.config.items()
+    
+    def keys(self):
+        """Return keys from the configuration dictionary."""
+        return self.config.keys()
+    
+    def values(self):
+        """Return values from the configuration dictionary."""
+        return self.config.values()
+    
+    def __getitem__(self, key):
+        """Allow dictionary-style access."""
+        return self.config[key]
+    
+    def __setitem__(self, key, value):
+        """Allow dictionary-style setting."""
+        self.set(key, value)
+    
+    def __contains__(self, key):
+        """Check if key exists in configuration."""
+        return key in self.config
+
 
 # Global configuration instance
 _config_manager: Optional[ConfigManager] = None

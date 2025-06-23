@@ -854,7 +854,8 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
                     try:
                         result = ai_researcher.analyze_target_with_ai(target_path)
                     finally:
-                        signal.alarm(0)  # Cancel the alarm
+                        if hasattr(signal, 'alarm'):
+                            signal.alarm(0)  # Cancel the alarm
                 else:
                     # Windows or systems without SIGALRM
                     result = ai_researcher.analyze_target_with_ai(target_path)
@@ -966,7 +967,8 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
                             vulnerability_types=None
                         )
                     finally:
-                        signal.alarm(0)  # Cancel the alarm
+                        if hasattr(signal, 'alarm'):
+                            signal.alarm(0)  # Cancel the alarm
                 else:
                     # Windows or systems without SIGALRM
                     result = analyzer.analyze_vulnerability(

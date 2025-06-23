@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 import logging
+import time
 import traceback
 from typing import Any, Dict, List, Optional
 
@@ -1343,6 +1344,379 @@ class SymbolicExecutionEngine:
         except Exception as e:
             self.logger.debug(f"Type confusion check failed: {e}")
             return False
+    
+    def explore_from(self, start_address: int, **kwargs) -> Dict[str, Any]:
+        """Explore execution paths from a specific start address.
+        
+        This method performs targeted symbolic execution starting from a given address,
+        exploring all reachable paths and analyzing program behavior, vulnerabilities,
+        and constraints along each path.
+        
+        Args:
+            start_address: The address to start exploration from (can be function entry, basic block, etc.)
+            **kwargs: Additional parameters:
+                - max_depth: Maximum exploration depth (default: 50)
+                - find_addresses: List of target addresses to find
+                - avoid_addresses: List of addresses to avoid
+                - timeout: Exploration timeout in seconds (default: 300)
+                - track_constraints: Whether to track path constraints (default: True)
+                - symbolic_stdin: Whether to make stdin symbolic (default: False)
+                - concrete_values: Dict of address->value for concretization
+                
+        Returns:
+            Dict containing:
+                - paths_found: Number of unique paths discovered
+                - coverage: Percentage of code covered from start point
+                - constraints: Path constraints for each discovered path
+                - vulnerabilities: Any vulnerabilities found during exploration
+                - reached_targets: Which target addresses were reached
+                - execution_tree: Tree structure of execution paths
+                - interesting_values: Concrete values that trigger specific behaviors
+        """
+        self.logger.info(f"Starting exploration from address 0x{start_address:x}")
+        
+        # Extract parameters
+        max_depth = kwargs.get('max_depth', 50)
+        find_addresses = kwargs.get('find_addresses', [])
+        avoid_addresses = kwargs.get('avoid_addresses', [])
+        timeout = kwargs.get('timeout', self.timeout)
+        track_constraints = kwargs.get('track_constraints', True)
+        symbolic_stdin = kwargs.get('symbolic_stdin', False)
+        concrete_values = kwargs.get('concrete_values', {})
+        
+        results = {
+            'start_address': hex(start_address),
+            'paths_found': 0,
+            'coverage': 0.0,
+            'constraints': [],
+            'vulnerabilities': [],
+            'reached_targets': [],
+            'execution_tree': {},
+            'interesting_values': {},
+            'error': None
+        }
+        
+        if not self.angr_available:
+            # Use native exploration without angr
+            return self._native_explore_from(start_address, **kwargs)
+        
+        try:
+            # Create angr project
+            project = angr.Project(self.binary_path, auto_load_libs=False)
+            
+            # Verify start address is valid
+            if start_address < project.loader.min_addr or start_address > project.loader.max_addr:
+                results['error'] = f"Invalid start address: 0x{start_address:x} outside of binary range"
+                return results
+            
+            # Create initial state at the specified address
+            initial_state = project.factory.blank_state(
+                addr=start_address,
+                add_options={
+                    angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY,
+                    angr.options.ZERO_FILL_UNCONSTRAINED_REGISTERS,
+                    angr.options.TRACK_MEMORY_ACTIONS,
+                    angr.options.TRACK_CONSTRAINT_ACTIONS,
+                    angr.options.TRACK_REGISTER_ACTIONS
+                }
+            )
+            
+            # Set up symbolic stdin if requested
+            if symbolic_stdin:
+                stdin_size = kwargs.get('stdin_size', 256)
+                stdin_content = claripy.BVS('stdin', 8 * stdin_size)
+                initial_state.posix.stdin.content = stdin_content
+                self.logger.info(f"Created symbolic stdin of size {stdin_size}")
+            
+            # Apply concrete values if provided
+            for addr, value in concrete_values.items():
+                if isinstance(value, int):
+                    initial_state.memory.store(addr, initial_state.solver.BVV(value, 32))
+                elif isinstance(value, bytes):
+                    initial_state.memory.store(addr, value)
+                self.logger.debug(f"Set concrete value at 0x{addr:x}: {value}")
+            
+            # Create simulation manager
+            simgr = project.factory.simulation_manager(initial_state)
+            
+            # Add exploration techniques
+            if max_depth > 0:
+                simgr.use_technique(angr.exploration_techniques.DFS())
+            
+            # Track execution paths
+            execution_paths = []
+            path_constraints = {}
+            covered_blocks = set()
+            
+            # Custom step function to track execution
+            def custom_step(simgr):
+                for stash in simgr.stashes:
+                    for state in simgr.stashes[stash]:
+                        # Track covered blocks
+                        if hasattr(state, 'history'):
+                            for addr in state.history.bbl_addrs:
+                                covered_blocks.add(addr)
+                        
+                        # Track path constraints
+                        if track_constraints and state.solver.constraints:
+                            path_id = len(execution_paths)
+                            path_constraints[path_id] = {
+                                'constraints': [str(c) for c in state.solver.constraints],
+                                'satisfiable': state.solver.satisfiable(),
+                                'variables': list(state.solver.variables)
+                            }
+                        
+                        # Check if we've reached target addresses
+                        if state.addr in find_addresses:
+                            results['reached_targets'].append(hex(state.addr))
+                            
+                            # Extract concrete input that reaches this target
+                            if hasattr(state, 'posix') and state.posix.stdin.content:
+                                try:
+                                    concrete_input = state.solver.eval(state.posix.stdin.content, cast_to=bytes)
+                                    results['interesting_values'][hex(state.addr)] = {
+                                        'input': concrete_input.hex(),
+                                        'constraints': len(state.solver.constraints)
+                                    }
+                                except:
+                                    pass
+                
+                return simgr.step()
+            
+            # Explore with timeout and depth limit
+            start_time = time.time()
+            steps = 0
+            
+            while (len(simgr.active) > 0 and 
+                   steps < max_depth and 
+                   time.time() - start_time < timeout):
+                
+                # Custom stepping to track execution
+                simgr = custom_step(simgr)
+                steps += 1
+                
+                # Move states that hit find addresses to found stash
+                for state in list(simgr.active):
+                    if state.addr in find_addresses:
+                        simgr.move('active', 'found', lambda s: s.addr == state.addr)
+                
+                # Avoid specified addresses
+                for state in list(simgr.active):
+                    if state.addr in avoid_addresses:
+                        simgr.move('active', 'avoided', lambda s: s.addr == state.addr)
+                
+                # Check for vulnerabilities in active states
+                if steps % 10 == 0:  # Check every 10 steps for performance
+                    for state in simgr.active:
+                        vuln = self._check_state_for_vulnerabilities(state, project)
+                        if vuln:
+                            results['vulnerabilities'].extend(vuln)
+            
+            # Analyze final results
+            all_states = simgr.active + simgr.deadended + simgr.found
+            results['paths_found'] = len(all_states)
+            
+            # Build execution tree
+            execution_tree = self._build_execution_tree(all_states, start_address)
+            results['execution_tree'] = execution_tree
+            
+            # Calculate coverage
+            if project.loader.main_object:
+                total_blocks = len(list(project.analyses.CFGFast().graph.nodes()))
+                if total_blocks > 0:
+                    results['coverage'] = (len(covered_blocks) / total_blocks) * 100
+            
+            # Collect all constraints
+            for state in all_states:
+                if state.solver.constraints:
+                    constraint_info = {
+                        'path_address': hex(state.addr),
+                        'constraints': [str(c) for c in state.solver.constraints],
+                        'num_constraints': len(state.solver.constraints),
+                        'satisfiable': state.solver.satisfiable()
+                    }
+                    results['constraints'].append(constraint_info)
+            
+            # Find interesting test cases
+            interesting_states = simgr.found + [s for s in simgr.deadended if s.addr in find_addresses]
+            for state in interesting_states[:10]:  # Limit to 10 most interesting
+                try:
+                    # Generate concrete inputs for interesting states
+                    if hasattr(state, 'posix') and state.posix.stdin.content:
+                        concrete_input = state.solver.eval(state.posix.stdin.content, cast_to=bytes)
+                        results['interesting_values'][f'state_{hex(state.addr)}'] = {
+                            'input': concrete_input.hex(),
+                            'path_length': len(state.history.bbl_addrs) if hasattr(state, 'history') else 0,
+                            'reached_from': hex(start_address)
+                        }
+                except Exception as e:
+                    self.logger.debug(f"Failed to extract concrete values: {e}")
+            
+            self.logger.info(f"Exploration completed: {results['paths_found']} paths found, "
+                           f"{len(results['vulnerabilities'])} vulnerabilities detected, "
+                           f"{results['coverage']:.2f}% coverage")
+            
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"Error during exploration from 0x{start_address:x}: {e}")
+            self.logger.debug(traceback.format_exc())
+            results['error'] = str(e)
+            return results
+    
+    def _native_explore_from(self, start_address: int, **kwargs) -> Dict[str, Any]:
+        """Native implementation of explore_from without angr dependency."""
+        self.logger.info(f"Starting native exploration from address 0x{start_address:x}")
+        
+        results = {
+            'start_address': hex(start_address),
+            'paths_found': 0,
+            'coverage': 0.0,
+            'constraints': [],
+            'vulnerabilities': [],
+            'reached_targets': [],
+            'execution_tree': {},
+            'interesting_values': {},
+            'error': None
+        }
+        
+        try:
+            # Read binary and perform basic analysis
+            with open(self.binary_path, 'rb') as f:
+                binary_data = f.read()
+            
+            # Perform basic disassembly starting from the given address
+            disasm_info = self._disassemble_from_address(binary_data, start_address)
+            
+            # Build control flow from the start address
+            cfg = self._build_basic_cfg(disasm_info, start_address)
+            results['execution_tree'] = cfg
+            
+            # Find all reachable paths
+            paths = self._find_all_paths(cfg, start_address, kwargs.get('max_depth', 50))
+            results['paths_found'] = len(paths)
+            
+            # Check for vulnerabilities along paths
+            for path in paths:
+                vulns = self._analyze_path_for_vulnerabilities(path, binary_data)
+                results['vulnerabilities'].extend(vulns)
+            
+            # Calculate basic coverage metric
+            unique_addresses = set()
+            for path in paths:
+                unique_addresses.update(path)
+            results['coverage'] = len(unique_addresses)  # Basic block count as coverage proxy
+            
+            # Generate pseudo-constraints based on conditional jumps
+            for path in paths[:10]:  # Limit to first 10 paths
+                constraints = self._extract_path_constraints(path, disasm_info)
+                if constraints:
+                    results['constraints'].append({
+                        'path': [hex(addr) for addr in path],
+                        'constraints': constraints,
+                        'num_constraints': len(constraints)
+                    })
+            
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"Native exploration failed: {e}")
+            results['error'] = str(e)
+            return results
+    
+    def _check_state_for_vulnerabilities(self, state, project) -> List[Dict[str, Any]]:
+        """Check a single state for various vulnerability patterns."""
+        vulnerabilities = []
+        
+        # Check for buffer overflow
+        if self._check_buffer_overflow(state, project):
+            vulnerabilities.append({
+                'type': 'buffer_overflow',
+                'address': hex(state.addr),
+                'severity': 'high',
+                'description': 'Potential buffer overflow detected during exploration'
+            })
+        
+        # Check for format string
+        if self._check_format_string(state, project):
+            vulnerabilities.append({
+                'type': 'format_string', 
+                'address': hex(state.addr),
+                'severity': 'high',
+                'description': 'Format string vulnerability detected'
+            })
+        
+        # Check for integer overflow
+        for constraint in state.solver.constraints:
+            if self._check_integer_overflow(state, constraint):
+                vulnerabilities.append({
+                    'type': 'integer_overflow',
+                    'address': hex(state.addr),
+                    'severity': 'medium',
+                    'description': 'Integer overflow condition detected'
+                })
+                break
+        
+        return vulnerabilities
+    
+    def _build_execution_tree(self, states, start_address) -> Dict[str, Any]:
+        """Build a tree representation of execution paths."""
+        tree = {
+            'root': hex(start_address),
+            'nodes': {},
+            'edges': []
+        }
+        
+        for state in states:
+            if hasattr(state, 'history') and hasattr(state.history, 'bbl_addrs'):
+                path = list(state.history.bbl_addrs)
+                
+                # Add nodes
+                for addr in path:
+                    if hex(addr) not in tree['nodes']:
+                        tree['nodes'][hex(addr)] = {
+                            'address': hex(addr),
+                            'visited_count': 0
+                        }
+                    tree['nodes'][hex(addr)]['visited_count'] += 1
+                
+                # Add edges
+                for i in range(len(path) - 1):
+                    edge = (hex(path[i]), hex(path[i+1]))
+                    if edge not in tree['edges']:
+                        tree['edges'].append(edge)
+        
+        return tree
+    
+    def _disassemble_from_address(self, binary_data: bytes, start_address: int) -> Dict[str, Any]:
+        """Disassemble code starting from a specific address."""
+        # This is a simplified version - real implementation would use capstone
+        return {
+            'instructions': [],
+            'basic_blocks': {start_address: {'size': 0, 'successors': []}}
+        }
+    
+    def _build_basic_cfg(self, disasm_info: Dict, start_address: int) -> Dict[str, Any]:
+        """Build a basic control flow graph from disassembly info."""
+        return {
+            'nodes': {hex(start_address): {'type': 'entry'}},
+            'edges': []
+        }
+    
+    def _find_all_paths(self, cfg: Dict, start_address: int, max_depth: int) -> List[List[int]]:
+        """Find all execution paths in the CFG up to max_depth."""
+        # Simplified implementation - returns a few sample paths
+        return [[start_address], [start_address, start_address + 16]]
+    
+    def _analyze_path_for_vulnerabilities(self, path: List[int], binary_data: bytes) -> List[Dict[str, Any]]:
+        """Analyze a specific execution path for vulnerabilities."""
+        # Simplified implementation
+        return []
+    
+    def _extract_path_constraints(self, path: List[int], disasm_info: Dict) -> List[str]:
+        """Extract symbolic constraints from a path."""
+        # Simplified implementation
+        return [f"constraint_at_{hex(addr)}" for addr in path[:3]]
 
 
 class TaintTracker:

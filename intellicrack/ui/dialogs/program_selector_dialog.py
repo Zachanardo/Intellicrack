@@ -55,6 +55,11 @@ if HAS_PYQT:
     from PyQt5.QtCore import QThread, QTimer, pyqtSignal
     from PyQt5.QtGui import QFont
     from PyQt5.QtWidgets import QStyle
+else:
+    # Fallback definitions when PyQt is not available
+    QThread = object
+    QTimer = object
+    pyqtSignal = lambda *args: lambda x: x
 
 from ...utils.system.file_resolution import file_resolver
 from ...utils.system.program_discovery import ProgramDiscoveryEngine
@@ -871,7 +876,8 @@ Description: {program_data.get('description', 'No description available')}"""
             try:
                 # Use system default program to open file
                 if sys.platform.startswith('win'):
-                    os.startfile(file_path)
+                    if hasattr(os, 'startfile'):
+                        os.startfile(file_path)
                 elif sys.platform.startswith('linux'):
                     subprocess.run(['xdg-open', file_path])
                 elif sys.platform.startswith('darwin'):

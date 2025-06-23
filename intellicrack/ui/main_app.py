@@ -3110,7 +3110,7 @@ def _check_intercepted_traffic(proxy_server):
                 if app.cfg_analysis_tools.get('radare2_available'):
                     try:
                         import r2pipe
-
+                        
                         if hasattr(app, 'update_output'):
                             app.update_output.emit(log_message("[CFG] Using Radare2 for CFG analysis..."))
 
@@ -3155,6 +3155,9 @@ def _check_intercepted_traffic(proxy_server):
                         if hasattr(app, 'update_output'):
                             app.update_output.emit(log_message(f"[CFG] Radare2 analysis found {len(edges)} edges"))
 
+                    except ImportError:
+                        if hasattr(app, 'update_output'):
+                            app.update_output.emit(log_message("[Analysis] r2pipe not available, skipping CFG analysis"))
                     except Exception as e:
                         if hasattr(app, 'update_output'):
                             app.update_output.emit(log_message(f"[CFG] Radare2 analysis error: {e}"))
@@ -3163,42 +3166,46 @@ def _check_intercepted_traffic(proxy_server):
                 if not edges and app.cfg_analysis_tools.get('capstone_available'):
                     try:
                         import capstone
-
+                    except ImportError:
                         if hasattr(app, 'update_output'):
-                            app.update_output.emit(log_message("[CFG] Using Capstone for CFG analysis..."))
+                            app.update_output.emit(log_message("[Analysis] capstone not available, skipping CFG analysis"))
+                    else:
+                        try:
+                            if hasattr(app, 'update_output'):
+                                app.update_output.emit(log_message("[CFG] Using Capstone for CFG analysis..."))
 
-                        with open(app.binary_path, 'rb') as f:
-                            binary_data = f.read()
+                            with open(app.binary_path, 'rb') as f:
+                                binary_data = f.read()
 
-                        # Determine architecture
-                        arch = capstone.CS_ARCH_X86
-                        mode = capstone.CS_MODE_32
+                            # Determine architecture
+                            arch = capstone.CS_ARCH_X86
+                            mode = capstone.CS_MODE_32
 
-                        if hasattr(app, 'cfg_binary_format'):
-                            if app.cfg_binary_format == 'PE64' or app.cfg_binary_format == 'ELF64':
-                                mode = capstone.CS_MODE_64
+                            if hasattr(app, 'cfg_binary_format'):
+                                if app.cfg_binary_format == 'PE64' or app.cfg_binary_format == 'ELF64':
+                                    mode = capstone.CS_MODE_64
 
-                        md = capstone.Cs(arch, mode)
-                        md.detail = True
+                            md = capstone.Cs(arch, mode)
+                            md.detail = True
 
-                        # Analyze each function
-                        for i, node in enumerate(nodes):
-                            try:
-                                func_addr = int(node['address'], 16)
-                                offset = func_addr - 0x400000  # Assume standard base
+                            # Analyze each function
+                            for i, node in enumerate(nodes):
+                                try:
+                                    func_addr = int(node['address'], 16)
+                                    offset = func_addr - 0x400000  # Assume standard base
 
-                                if 0 <= offset < len(binary_data) - 100:
-                                    # Disassemble function
-                                    code = binary_data[offset:offset + 500]  # Analyze 500 bytes
+                                    if 0 <= offset < len(binary_data) - 100:
+                                        # Disassemble function
+                                        code = binary_data[offset:offset + 500]  # Analyze 500 bytes
 
-                                    for insn in md.disasm(code, func_addr):
-                                        # Look for call instructions
-                                        if insn.mnemonic == 'call':
-                                            # Get target address
-                                            if insn.operands:
-                                                op = insn.operands[0]
-                                                if op.type == capstone.x86.X86_OP_IMM:
-                                                    target_addr = op.imm
+                                        for insn in md.disasm(code, func_addr):
+                                            # Look for call instructions
+                                            if insn.mnemonic == 'call':
+                                                # Get target address
+                                                if insn.operands:
+                                                    op = insn.operands[0]
+                                                    if op.type == capstone.x86.X86_OP_IMM:
+                                                        target_addr = op.imm
 
                                                     # Find target node
                                                     for j, target_node in enumerate(nodes):
@@ -3214,12 +3221,12 @@ def _check_intercepted_traffic(proxy_server):
                                                                 })
                                                                 break
 
-                                        # Look for jump instructions
-                                        elif insn.mnemonic in ['jmp', 'je', 'jne', 'jz', 'jnz', 'ja', 'jb', 'jg', 'jl']:
-                                            if insn.operands:
-                                                op = insn.operands[0]
-                                                if op.type == capstone.x86.X86_OP_IMM:
-                                                    target_addr = op.imm
+                                            # Look for jump instructions
+                                            elif insn.mnemonic in ['jmp', 'je', 'jne', 'jz', 'jnz', 'ja', 'jb', 'jg', 'jl']:
+                                                if insn.operands:
+                                                    op = insn.operands[0]
+                                                    if op.type == capstone.x86.X86_OP_IMM:
+                                                        target_addr = op.imm
 
                                                     # Find target node (within same function usually)
                                                     for j, target_node in enumerate(nodes):
@@ -3233,15 +3240,15 @@ def _check_intercepted_traffic(proxy_server):
                                                                 'offset': hex(insn.address)
                                                             })
                                                             break
-                            except:
-                                pass
+                                except:
+                                    pass
 
-                        if hasattr(app, 'update_output'):
-                            app.update_output.emit(log_message(f"[CFG] Capstone analysis found {len(edges)} edges"))
+                            if hasattr(app, 'update_output'):
+                                app.update_output.emit(log_message(f"[CFG] Capstone analysis found {len(edges)} edges"))
 
-                    except Exception as e:
-                        if hasattr(app, 'update_output'):
-                            app.update_output.emit(log_message(f"[CFG] Capstone analysis error: {e}"))
+                        except Exception as e:
+                            if hasattr(app, 'update_output'):
+                                app.update_output.emit(log_message(f"[CFG] Capstone analysis error: {e}"))
 
                 # Method 3: Pattern-based heuristic analysis
                 if not edges:
@@ -4969,47 +4976,55 @@ def _check_intercepted_traffic(proxy_server):
             elif gpu_frameworks['pytorch_cuda']:
                 try:
                     import torch
-                    for i in range(torch.cuda.device_count()):
-                        props = torch.cuda.get_device_properties(i)
-                        device_info = {
-                            'device_id': i,
-                            'name': props.name,
-                            'compute_capability': f"{props.major}.{props.minor}",
-                            'total_memory_mb': props.total_memory // (1024 * 1024),
-                            'multiprocessor_count': props.multi_processor_count,
-                            'max_threads_per_block': props.max_threads_per_block,
-                            'framework': 'PyTorch CUDA',
-                            'status': 'available'
-                        }
-                        detected_devices.append(device_info)
-                except Exception as e:
-                    if hasattr(app, 'update_output'):
-                        app.update_output.emit(log_message(f"[GPU] PyTorch CUDA device detection failed: {e}"))
+                except ImportError:
+                    torch = None
+                if torch:
+                    try:
+                        for i in range(torch.cuda.device_count()):
+                            props = torch.cuda.get_device_properties(i)
+                            device_info = {
+                                'device_id': i,
+                                'name': props.name,
+                                'compute_capability': f"{props.major}.{props.minor}",
+                                'total_memory_mb': props.total_memory // (1024 * 1024),
+                                'multiprocessor_count': props.multi_processor_count,
+                                'max_threads_per_block': props.max_threads_per_block,
+                                'framework': 'PyTorch CUDA',
+                                'status': 'available'
+                            }
+                            detected_devices.append(device_info)
+                    except Exception as e:
+                        if hasattr(app, 'update_output'):
+                            app.update_output.emit(log_message(f"[GPU] PyTorch CUDA device detection failed: {e}"))
 
             elif gpu_frameworks['opencl']:
                 try:
                     import pyopencl as cl
-                    platforms = cl.get_platforms()
-                    device_id = 0
+                except ImportError:
+                    cl = None
+                if cl:
+                    try:
+                        platforms = cl.get_platforms()
+                        device_id = 0
 
-                    for platform in platforms:
-                        devices = platform.get_devices(device_type=cl.device_type.GPU)
-                        for device in devices:
-                            device_info = {
-                                'device_id': device_id,
-                                'name': device.name.strip(),
-                                'compute_capability': 'OpenCL',
-                                'total_memory_mb': device.global_mem_size // (1024 * 1024),
-                                'multiprocessor_count': device.max_compute_units,
-                                'max_threads_per_block': device.max_work_group_size,
-                                'framework': 'OpenCL',
-                                'status': 'available'
-                            }
-                            detected_devices.append(device_info)
-                            device_id += 1
-                except Exception as e:
-                    if hasattr(app, 'update_output'):
-                        app.update_output.emit(log_message(f"[GPU] OpenCL device detection failed: {e}"))
+                        for platform in platforms:
+                            devices = platform.get_devices(device_type=cl.device_type.GPU)
+                            for device in devices:
+                                device_info = {
+                                    'device_id': device_id,
+                                    'name': device.name.strip(),
+                                    'compute_capability': 'OpenCL',
+                                    'total_memory_mb': device.global_mem_size // (1024 * 1024),
+                                    'multiprocessor_count': device.max_compute_units,
+                                    'max_threads_per_block': device.max_work_group_size,
+                                    'framework': 'OpenCL',
+                                    'status': 'available'
+                                }
+                                detected_devices.append(device_info)
+                                device_id += 1
+                    except Exception as e:
+                        if hasattr(app, 'update_output'):
+                            app.update_output.emit(log_message(f"[GPU] OpenCL device detection failed: {e}"))
 
             # If no real GPUs detected, create virtual GPU for demonstration
             if not detected_devices and any(gpu_frameworks.values()):
@@ -5161,84 +5176,88 @@ def _check_intercepted_traffic(proxy_server):
                             try:
                                 import numpy as np
                                 import pyopencl as cl
+                            except ImportError:
+                                cl = None
+                                np = None
+                            if cl and np:
+                                try:
+                                    # Create OpenCL context and queue
+                                    platforms = cl.get_platforms()
+                                    devices = platforms[0].get_devices(device_type=cl.device_type.GPU)
+                                    ctx = cl.Context([devices[0]])
+                                    queue = cl.CommandQueue(ctx)
 
-                                # Create OpenCL context and queue
-                                platforms = cl.get_platforms()
-                                devices = platforms[0].get_devices(device_type=cl.device_type.GPU)
-                                ctx = cl.Context([devices[0]])
-                                queue = cl.CommandQueue(ctx)
+                                    # Measure CPU baseline
+                                    cpu_start = time.time()
 
-                                # Measure CPU baseline
-                                cpu_start = time.time()
+                                    if task['task_name'] == 'entropy_calculation' and binary_data:
+                                        # CPU entropy
+                                        data = np.frombuffer(binary_data[:min(1024*1024, len(binary_data))], dtype=np.uint8)
+                                        hist, _ = np.histogram(data, bins=256, range=(0, 255))
+                                        hist = hist / len(data)
+                                        hist = hist[hist > 0]
+                                        cpu_entropy = -np.sum(hist * np.log2(hist))
+                                        task_result['cpu_entropy'] = float(cpu_entropy)
 
-                                if task['task_name'] == 'entropy_calculation' and binary_data:
-                                    # CPU entropy
-                                    data = np.frombuffer(binary_data[:min(1024*1024, len(binary_data))], dtype=np.uint8)
-                                    hist, _ = np.histogram(data, bins=256, range=(0, 255))
-                                    hist = hist / len(data)
-                                    hist = hist[hist > 0]
-                                    cpu_entropy = -np.sum(hist * np.log2(hist))
-                                    task_result['cpu_entropy'] = float(cpu_entropy)
+                                    cpu_time = time.time() - cpu_start
 
-                                cpu_time = time.time() - cpu_start
+                                    # GPU implementation
+                                    gpu_start = time.time()
 
-                                # GPU implementation
-                                gpu_start = time.time()
+                                    if task['task_name'] == 'entropy_calculation' and binary_data:
+                                        # OpenCL entropy calculation
+                                        data = np.frombuffer(binary_data[:min(1024*1024, len(binary_data))], dtype=np.uint8)
 
-                                if task['task_name'] == 'entropy_calculation' and binary_data:
-                                    # OpenCL entropy calculation
-                                    data = np.frombuffer(binary_data[:min(1024*1024, len(binary_data))], dtype=np.uint8)
+                                        # Create buffers
+                                        mf = cl.mem_flags
+                                        data_buffer = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data)
+                                        hist_buffer = cl.Buffer(ctx, mf.READ_WRITE, size=256*4)
 
-                                    # Create buffers
-                                    mf = cl.mem_flags
-                                    data_buffer = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data)
-                                    hist_buffer = cl.Buffer(ctx, mf.READ_WRITE, size=256*4)
-
-                                    # Histogram kernel
-                                    prg = cl.Program(ctx, """
-                                    __kernel void histogram(__global const uchar* data,
-                                                           __global uint* hist,
-                                                           const uint data_size) {
-                                        int gid = get_global_id(0);
-                                        if (gid < data_size) {
-                                            atomic_inc(&hist[data[gid]]);
+                                        # Histogram kernel
+                                        prg = cl.Program(ctx, """
+                                        __kernel void histogram(__global const uchar* data,
+                                                               __global uint* hist,
+                                                               const uint data_size) {
+                                            int gid = get_global_id(0);
+                                            if (gid < data_size) {
+                                                atomic_inc(&hist[data[gid]]);
+                                            }
                                         }
-                                    }
-                                    """).build()
+                                        """).build()
 
-                                    # Clear histogram
-                                    cl.enqueue_fill_buffer(queue, hist_buffer, np.uint32(0), 0, 256*4)
+                                        # Clear histogram
+                                        cl.enqueue_fill_buffer(queue, hist_buffer, np.uint32(0), 0, 256*4)
 
-                                    # Execute kernel
-                                    prg.histogram(queue, (len(data),), None, data_buffer, hist_buffer, np.uint32(len(data)))
+                                        # Execute kernel
+                                        prg.histogram(queue, (len(data),), None, data_buffer, hist_buffer, np.uint32(len(data)))
 
-                                    # Read results
-                                    hist = np.empty(256, dtype=np.uint32)
-                                    cl.enqueue_copy(queue, hist, hist_buffer).wait()
+                                        # Read results
+                                        hist = np.empty(256, dtype=np.uint32)
+                                        cl.enqueue_copy(queue, hist, hist_buffer).wait()
 
-                                    # Calculate entropy
-                                    hist = hist / len(data)
-                                    hist = hist[hist > 0]
-                                    gpu_entropy = -np.sum(hist * np.log2(hist))
-                                    task_result['entropy'] = float(gpu_entropy)
+                                        # Calculate entropy
+                                        hist = hist / len(data)
+                                        hist = hist[hist > 0]
+                                        gpu_entropy = -np.sum(hist * np.log2(hist))
+                                        task_result['entropy'] = float(gpu_entropy)
 
-                                gpu_time = time.time() - gpu_start
+                                    gpu_time = time.time() - gpu_start
 
-                                task_result['gpu_execution_time'] = gpu_time
-                                task_result['cpu_execution_time'] = cpu_time
-                                task_result['speedup_factor'] = cpu_time / gpu_time if gpu_time > 0 else 1.0
-                                task_result['memory_used_mb'] = len(binary_data) / (1024 * 1024) if binary_data else 0
-                                task_result['gpu_utilization'] = 0.8  # Estimate
-                                task_result['status'] = 'completed'
+                                    task_result['gpu_execution_time'] = gpu_time
+                                    task_result['cpu_execution_time'] = cpu_time
+                                    task_result['speedup_factor'] = cpu_time / gpu_time if gpu_time > 0 else 1.0
+                                    task_result['memory_used_mb'] = len(binary_data) / (1024 * 1024) if binary_data else 0
+                                    task_result['gpu_utilization'] = 0.8  # Estimate
+                                    task_result['status'] = 'completed'
 
-                            except Exception as e:
-                                task_result['status'] = 'failed'
-                                task_result['error'] = str(e)
-                                task_result['gpu_execution_time'] = 0.1
-                                task_result['cpu_execution_time'] = 0.5
-                                task_result['speedup_factor'] = 1.0
-                                task_result['memory_used_mb'] = 100
-                                task_result['gpu_utilization'] = 0.0
+                                except Exception as e:
+                                    task_result['status'] = 'failed'
+                                    task_result['error'] = str(e)
+                                    task_result['gpu_execution_time'] = 0.1
+                                    task_result['cpu_execution_time'] = 0.5
+                                    task_result['speedup_factor'] = 1.0
+                                    task_result['memory_used_mb'] = 100
+                                    task_result['gpu_utilization'] = 0.0
 
                         else:
                             # No GPU framework available - use CPU with timing
@@ -17418,7 +17437,12 @@ def register():
 
                 # Open the log file (with fallbacks for different platforms)
                 try:
-                    os.startfile(log_path)  # Windows
+                    if hasattr(os, 'startfile'):  # Windows only
+                        if hasattr(os, 'startfile'):
+                            os.startfile(log_path)
+                    else:
+                        import subprocess
+                        subprocess.run(['open', log_path])  # macOS/Linux alternative
                 except AttributeError:
                     try:
                                         subprocess.call(['open', log_path])  # macOS
@@ -17448,7 +17472,8 @@ def register():
                 for alt_path in alternate_paths:
                     if os.path.exists(alt_path):
                         self.update_output.emit(f"✅ Found log at alternate location: {alt_path}")
-                        os.startfile(alt_path)
+                        if hasattr(os, 'startfile'):
+                            os.startfile(alt_path)
                         break
         except (OSError, ValueError, RuntimeError) as e:
             self.update_output.emit(f"❌ Failed to open log: {e}")
@@ -18512,7 +18537,8 @@ def register():
             self.save_config()
 
             # Reinitialize model manager
-            self.model_manager = ModelManager(CONFIG)
+            models_dir = CONFIG.get('model_repositories', {}).get('local', {}).get('models_directory', 'models')
+            self.model_manager = ModelManager(models_dir)
 
             dialog.accept()
 
@@ -18672,20 +18698,27 @@ def register():
                     try:
                         # Try loading as PyTorch model
                         import torch
+                    except ImportError:
+                        torch = None
+                    if torch:
                         model = torch.load(model_path, map_location='cpu')
                         model_type = "pytorch"
                         self.update_output.emit(log_message("[ML] Loaded PyTorch model"))
-                    except:
+                    else:
                         try:
                             # Try loading as TensorFlow model
                             import tensorflow as tf
-                            keras = getattr(tf, 'keras', None)
-                            if keras and hasattr(keras, 'models'):
-                                model = keras.models.load_model(model_path)
-                                model_type = "tensorflow"
-                                self.update_output.emit(log_message("[ML] Loaded TensorFlow model"))
-                        except:
-                            pass
+                        except ImportError:
+                            tf = None
+                        if tf:
+                            try:
+                                keras = getattr(tf, 'keras', None)
+                                if keras and hasattr(keras, 'models'):
+                                    model = keras.models.load_model(model_path)
+                                    model_type = "tensorflow"
+                                    self.update_output.emit(log_message("[ML] Loaded TensorFlow model"))
+                            except:
+                                pass
 
             if model is None:
                 # If no model loaded, use the pre-trained fallback model
@@ -18785,7 +18818,7 @@ def register():
                     import torch
                 except ImportError:
                     self.update_output.emit(log_message("[ML] PyTorch not available for model evaluation"))
-                    return results
+                    return {"error": "PyTorch not available"}
                     
                 model.eval()
                 with torch.no_grad():
@@ -22340,8 +22373,13 @@ def register():
                     extended_results = detect_dongles_extended()
                     if isinstance(extended_results, dict):
                         for dongle_type, details in extended_results.items():
-                            if isinstance(details, dict) and details.get('detected', False):
-                                description = details.get('description', 'Detected')
+                            if isinstance(details, dict):
+                                if details.get('detected', False):
+                                    description = details.get('description', 'Detected')
+                                    self.update_output.emit(log_message(
+                                        f"  • {dongle_type}: {description}"))
+                            elif isinstance(details, list) and details:
+                                description = 'Detected (list result)'
                                 self.update_output.emit(log_message(
                                     f"  • {dongle_type}: {description}"))
                 except ImportError:
@@ -22668,7 +22706,8 @@ def register():
                 try:
                     # Try to open with default viewer
                     if sys.platform == 'win32':
-                        os.startfile(path)
+                        if hasattr(os, 'startfile'):
+                            os.startfile(path)
                     elif sys.platform == 'darwin':  # macOS
                         subprocess.call(['open', path])
                     else:  # Linux
@@ -24554,7 +24593,8 @@ def register():
                     except Exception:
                         # Last resort fallback using OS-specific methods
                         if os.name == 'nt':  # Windows
-                            os.startfile(report_path)
+                            if hasattr(os, 'startfile'):
+                                os.startfile(report_path)
                         else:  # macOS, Linux
                             subprocess.call(('xdg-open' if os.name == 'posix' else 'open', report_path))
             else:
@@ -25734,7 +25774,16 @@ ANALYSIS SUMMARY
 
             if gadgets and hasattr(gadgets, '__len__') and hasattr(gadgets, '__getitem__'):
                 self.update_analysis_results.emit(f"Found {len(gadgets)} ROP gadgets:\n")
-                gadgets_to_show = gadgets[:50] if len(gadgets) > 50 else gadgets
+                try:
+                    if hasattr(gadgets, '__getitem__') and hasattr(gadgets, '__len__'):
+                        if len(gadgets) > 50:
+                            gadgets_to_show = getattr(gadgets, '__getitem__')(slice(None, 50))
+                        else:
+                            gadgets_to_show = gadgets
+                    else:
+                        gadgets_to_show = list(gadgets)[:50] if len(gadgets) > 50 else list(gadgets)
+                except (TypeError, IndexError):
+                    gadgets_to_show = list(gadgets)[:50] if len(gadgets) > 50 else list(gadgets)
                 for i, gadget in enumerate(gadgets_to_show):  # Show first 50
                     self.update_analysis_results.emit(f"{i+1:3d}: {gadget}\n")
 

@@ -1,0 +1,19 @@
+Fallback Font Information
+========================
+
+If custom fonts fail to load, the application will use these system fonts:
+
+Windows:
+  1. Consolas
+  2. Courier New
+  3. Lucida Console
+
+Linux:
+  1. DejaVu Sans Mono
+  2. Liberation Mono
+  3. Ubuntu Mono
+
+macOS:
+  1. SF Mono
+  2. Monaco
+  3. Menlo
