@@ -62,6 +62,16 @@ except ImportError as e:
     Breakpoint = None
     StackFrame = None
 
+try:
+    from .protection_analyzer_tool import (
+        ProtectionAnalyzerTool,
+        register_protection_analyzer_tool,
+    )
+except ImportError as e:
+    logger.warning("Failed to import protection_analyzer_tool: %s", e)
+    ProtectionAnalyzerTool = None
+    register_protection_analyzer_tool = None
+
 # Define package exports
 __all__ = []
 
@@ -84,6 +94,12 @@ if PluginDebugger is not None:
         'DebuggerState',
         'Breakpoint',
         'StackFrame'
+    ])
+
+if ProtectionAnalyzerTool is not None:
+    __all__.extend([
+        'ProtectionAnalyzerTool',
+        'register_protection_analyzer_tool'
     ])
 
 # Package metadata

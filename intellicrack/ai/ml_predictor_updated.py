@@ -10,9 +10,9 @@ import os
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-# Import the real ML integration
+# Import the new ML integration v2
 try:
-    from ..models.ml_integration import IntellicrockMLPredictor
+    from ..models.ml_integration_v2 import IntellicrackMLPredictor
     REAL_ML_AVAILABLE = True
 except ImportError:
     REAL_ML_AVAILABLE = False
@@ -53,7 +53,7 @@ class MLVulnerabilityPredictor:
         # Try to use real ML predictor first
         if REAL_ML_AVAILABLE:
             try:
-                self.real_predictor = IntellicrockMLPredictor()
+                self.real_predictor = IntellicrackMLPredictor()
                 if self.real_predictor.load_model():
                     self.logger.info("Real ML model loaded successfully")
                 else:
@@ -164,8 +164,8 @@ class MLVulnerabilityPredictor:
         Returns:
             List of prediction results
         """
-        if self.real_predictor:
-            return self.real_predictor.batch_predict(binary_paths)
+        if self.real_predictor and hasattr(self.real_predictor, 'batch_predict'):
+            return self.real_predictor.batch_predict(binary_paths)  # pylint: disable=no-member
         
         # Fallback implementation
         results = []
@@ -234,8 +234,8 @@ class MLVulnerabilityPredictor:
         Returns:
             bool: True if saved successfully
         """
-        if self.real_predictor:
-            return self.real_predictor.update_model(model_path)
+        if self.real_predictor and hasattr(self.real_predictor, 'update_model'):
+            return self.real_predictor.update_model(model_path)  # pylint: disable=no-member
         
         if self.legacy_predictor:
             return self.legacy_predictor.save_model(model_path)
@@ -253,8 +253,8 @@ class MLVulnerabilityPredictor:
             return {
                 'status': 'Real ML Model Loaded',
                 'model_type': 'Ensemble (RandomForest + GradientBoosting)',
-                'model_path': self.real_predictor.model_path,
-                'metadata': self.real_predictor.model_metadata,
+                'model_path': getattr(self.real_predictor, 'model_path', 'Unknown'),
+                'metadata': getattr(self.real_predictor, 'model_metadata', {}),
                 'feature_extractor': 'RealFeatureExtractor'
             }
         

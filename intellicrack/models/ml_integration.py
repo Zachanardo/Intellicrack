@@ -18,7 +18,7 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 
-class IntellicrockMLPredictor:
+class IntellicrackMLPredictor:
     """
     ML Predictor that uses real trained models for vulnerability detection
     """
@@ -334,7 +334,7 @@ def integrate_ml_predictions(binary_path: str) -> Dict[str, any]:
     Returns:
         Dict with vulnerability analysis results
     """
-    predictor = IntellicrockMLPredictor()
+    predictor = IntellicrackMLPredictor()
     return predictor.predict_vulnerability(binary_path)
 
 
@@ -346,7 +346,7 @@ if __name__ == "__main__":
         test_binary = sys.argv[1]
         
         # Create predictor
-        predictor = IntellicrockMLPredictor()
+        predictor = IntellicrackMLPredictor()
         
         # Make prediction
         result = predictor.predict_vulnerability(test_binary)

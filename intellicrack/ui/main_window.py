@@ -50,6 +50,7 @@ from ..core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
 from ..core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 from ..utils.logger import get_logger
 from .dialogs.program_selector_dialog import show_program_selector
+from .widgets.protection_analysis_widget import ProtectionAnalysisWidget
 
 # Configure module logger
 logger = get_logger(__name__)
@@ -132,6 +133,7 @@ class IntellicrackMainWindow(QMainWindow):
         self._setup_dashboard_tab()
         self._setup_analysis_tab()
         self._setup_results_tab()
+        self._setup_protection_tab()
         self._setup_settings_tab()
 
     def _setup_dashboard_tab(self):
@@ -173,9 +175,14 @@ class IntellicrackMainWindow(QMainWindow):
         self.generate_report_button = QPushButton("Generate Report")
         self.generate_report_button.clicked.connect(self._generate_report)
         self.generate_report_button.setEnabled(False)
+        
+        self.protection_analysis_button = QPushButton("Analyze Protection")
+        self.protection_analysis_button.clicked.connect(self._analyze_current_protection)
+        self.protection_analysis_button.setEnabled(False)
 
         button_layout.addWidget(self.analyze_button)
         button_layout.addWidget(self.scan_vulnerabilities_button)
+        button_layout.addWidget(self.protection_analysis_button)
         button_layout.addWidget(self.generate_report_button)
 
         actions_layout.addLayout(button_layout)
@@ -264,6 +271,17 @@ class IntellicrackMainWindow(QMainWindow):
 
         self.tab_widget.addTab(results_widget, "Results")
 
+    def _setup_protection_tab(self):
+        """Setup the protection analysis tab."""
+        # Create protection analysis widget
+        self.protection_widget = ProtectionAnalysisWidget()
+        
+        # Connect signals
+        self.protection_widget.analysis_requested.connect(self._analyze_protection)
+        self.protection_widget.bypass_requested.connect(self._generate_bypass_script)
+        
+        self.tab_widget.addTab(self.protection_widget, "Protection Analysis")
+
     def _setup_settings_tab(self):
         """Setup the settings tab."""
         settings_widget = QWidget()
@@ -344,6 +362,13 @@ class IntellicrackMainWindow(QMainWindow):
         vulnerability_action.setShortcut('F6')
         vulnerability_action.triggered.connect(self._scan_vulnerabilities)
         analysis_menu.addAction(vulnerability_action)
+        
+        analysis_menu.addSeparator()
+        
+        protection_action = QAction('Analyze Protection', self)
+        protection_action.setShortcut('F7')
+        protection_action.triggered.connect(self._analyze_current_protection)
+        analysis_menu.addAction(protection_action)
 
     def _apply_initial_settings(self):
         """Apply initial application settings."""
@@ -392,6 +417,7 @@ class IntellicrackMainWindow(QMainWindow):
             # Enable analysis buttons
             self.analyze_button.setEnabled(True)
             self.scan_vulnerabilities_button.setEnabled(True)
+            self.protection_analysis_button.setEnabled(True)
 
             self.update_status.emit(f"Selected: {os.path.basename(file_path)}")
             self.logger.info("Selected binary file: %s", file_path)
@@ -423,6 +449,7 @@ class IntellicrackMainWindow(QMainWindow):
                     # Enable analysis buttons
                     self.analyze_button.setEnabled(True)
                     self.scan_vulnerabilities_button.setEnabled(True)
+                    self.protection_analysis_button.setEnabled(True)
                     self.generate_report_button.setEnabled(True)
 
                     # Display program information
@@ -611,6 +638,69 @@ Licensing Files Found: {len(licensing_files)}"""
             except (OSError, ValueError, RuntimeError) as e:
                 QMessageBox.critical(self, "Error", f"Failed to export results: {str(e)}")
                 self.logger.error(f"Export error: {str(e)}")
+
+    def _analyze_protection(self, file_path: str):
+        """Analyze protection for the given file."""
+        try:
+            # Import ML system
+            from ..models import get_ml_system
+            ml_system = get_ml_system()
+            
+            # Run analysis
+            self.update_status.emit(f"Analyzing protection for {os.path.basename(file_path)}...")
+            result = ml_system.predict(file_path)
+            result['file_path'] = file_path
+            
+            # Update widget with results
+            self.protection_widget.update_analysis_result(result)
+            self.update_status.emit("Protection analysis completed")
+            
+            # Switch to protection tab
+            self.tab_widget.setCurrentWidget(self.protection_widget)
+            
+        except Exception as e:
+            self.logger.error(f"Protection analysis error: {e}")
+            QMessageBox.critical(self, "Error", f"Protection analysis failed: {str(e)}")
+
+    def _generate_bypass_script(self, file_path: str, protection_type: str):
+        """Generate bypass script for the detected protection."""
+        try:
+            from ..ai.protection_aware_script_gen import ProtectionAwareScriptGenerator
+            
+            generator = ProtectionAwareScriptGenerator()
+            result = generator.generate_bypass_script(file_path, "frida")
+            
+            if result['success']:
+                # Show script in a dialog or new tab
+                msg = f"Generated {protection_type} bypass script:\n\n"
+                msg += f"Approach: {result['approach']}\n"
+                msg += f"Confidence: {result['confidence']:.0%}\n"
+                msg += f"Difficulty: {result['difficulty']}\n\n"
+                msg += "Script saved to clipboard."
+                
+                # Copy script to clipboard
+                from PyQt5.QtWidgets import QApplication
+                clipboard = QApplication.clipboard()
+                clipboard.setText(result['script'])
+                
+                QMessageBox.information(self, "Bypass Script Generated", msg)
+            else:
+                QMessageBox.warning(self, "Script Generation Failed", 
+                                   f"Failed to generate bypass script: {result.get('error', 'Unknown error')}")
+                
+        except Exception as e:
+            self.logger.error(f"Script generation error: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to generate bypass script: {str(e)}")
+
+    def _analyze_current_protection(self):
+        """Analyze protection for the currently selected binary."""
+        if not self.binary_path:
+            QMessageBox.warning(self, "Warning", "Please select a binary file first.")
+            return
+        
+        # Switch to protection tab and run analysis
+        self.tab_widget.setCurrentWidget(self.protection_widget)
+        self._analyze_protection(self.binary_path)
 
 
 # Export the main window class

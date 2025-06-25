@@ -290,6 +290,12 @@ models/repositories/
 *.pth
 *.h5
 *.joblib
+*.pkl
+*.pickle
+advanced_licensing_model.joblib
+advanced_licensing_metadata.json
+model_training_data/
+ml_training_cache/
 
 # Capture files
 *.pcap
