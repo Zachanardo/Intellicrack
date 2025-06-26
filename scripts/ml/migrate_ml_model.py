@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 
 # Add intellicrack to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 def migrate_ml_system():

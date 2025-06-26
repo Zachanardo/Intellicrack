@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 
 # Add intellicrack to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from intellicrack.models import get_ml_system, get_current_model_info
 
