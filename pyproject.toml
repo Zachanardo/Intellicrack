@@ -57,14 +57,14 @@ dependencies = [
     "frida==17.2.4",
     
     # Security & Network
-    "mitmproxy>=9.0.1,<10.0.0",
+    "mitmproxy>=10.0.0",
     "scapy==2.6.1",
-    "cryptography>=38.0,<39.0",
+    "cryptography>=41.0.7",
     "paramiko==3.5.1",
     "pyshark==0.6",
     "dpkt==1.9.8",
     "pycryptodome==3.19.0",
-    "pyOpenSSL>=22.0,<23.0",
+    "pyOpenSSL>=23.0",
     
     # Web & HTTP
     "aiohttp>=3.12.0,<3.13.0",
@@ -99,7 +99,7 @@ dependencies = [
     # "PyQt5>=5.15.0,<5.16.0",  # Temporarily disabled - install separately
     # "PyQt5-sip>=12.13.0,<13.0.0",  # Temporarily disabled - install separately
     "PyQt6>=6.7.0,<7.0.0",
-    "Pillow==11.2.1",
+    "Pillow>=11.3.0",
     "graphviz==0.20.3",
     
     # System & OS
@@ -111,9 +111,9 @@ dependencies = [
     "wmi==1.5.1",
     
     # Web & Document Processing
-    "Flask>=1.1.1,<2.3",
+    "Flask>=2.3.0",
     "flask_cors==6.0.1",
-    "Jinja2==3.1.6",
+    "Jinja2>=3.1.6",
     "pdfkit==1.0.0",
     "reportlab==4.4.1",
     "weasyprint==65.1",
@@ -141,10 +141,6 @@ dependencies = [
     "keyring==24.2.0",
     "jmespath==1.0.0",
     "hyperframe==6.0.0",
-    "h11>=0.11,<0.15",
-    "zstandard>=0.11,<0.20",
-    "pyperclip>=1.6.0,<1.9",
-    "urwid>=2.1.1,<2.2",
     
     # Task Management
     "celery==5.5.3",
