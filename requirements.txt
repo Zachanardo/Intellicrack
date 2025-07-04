@@ -22,12 +22,12 @@ cffi==1.17.1
 claripy==9.2.95
 click==8.1.7
 coverage==7.8.2
-cryptography>=38.0,<39.0  # Compatible with mitmproxy 9.0.1
+cryptography>=41.0.7  # Updated for security - CVE fixes
 # cupy==13.4.1  # Requires CUDA - optional GPU acceleration
 dask==2025.5.1
 dpkt==1.9.8
 flake8==5.0.4
-Flask>=1.1.1,<2.3
+Flask>=2.3.0
 flask_cors==6.0.1
 frida==17.2.4
 # Intel GPU acceleration (install manually if you have supported hardware):
@@ -42,7 +42,7 @@ frida==17.2.4
 # INSTALLATION COMMANDS:
 # python -m pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/xpu
 # python -m pip install intel-extension-for-pytorch==2.7.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/
-Jinja2==3.1.6
+Jinja2>=3.1.6  # Allow newer versions for security updates
 joblib==1.5.1
 keystone_engine==0.9.2
 lief==0.16.6
@@ -71,7 +71,7 @@ paramiko==3.5.1
 pdfkit==1.0.0
 pefile==2024.8.26
 peft==0.15.2
-Pillow==11.2.1
+Pillow>=11.3.0  # Updated for security patches
 psutil==7.0.0
 psycopg2_binary==2.9.10
 # pycuda==2025.1.1  # Requires NVIDIA CUDA - not compatible with Intel GPUs
@@ -82,7 +82,7 @@ pycryptodome==3.19.0
 pymongo==4.13.2
 pynput==1.8.1
 pyopencl==2025.2.4
-pyOpenSSL>=22.0,<23.0  # Compatible with cryptography 38.x
+pyOpenSSL>=23.0  # Compatible with newer cryptography
 # pypykatz==0.6.11  # Windows credential dumping - install separately if needed
 PyQt5==5.15.11
 PyQt5_sip==12.17.0
