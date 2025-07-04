@@ -73,6 +73,7 @@ class HardwareDongleEmulator:
             self._hook_dongle_apis(dongle_types)
             results["methods_applied"].append("API Hooking")
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in dongle_emulator: %s", e)
             results["errors"].append(f"API hooking failed: {str(e)}")
 
         # Strategy 2: Create virtual dongle responses
@@ -80,6 +81,7 @@ class HardwareDongleEmulator:
             self._create_virtual_dongles(dongle_types)
             results["methods_applied"].append("Virtual Dongle Creation")
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in dongle_emulator: %s", e)
             results["errors"].append(f"Virtual dongle creation failed: {str(e)}")
 
         # Strategy 3: Patch dongle check instructions
@@ -88,6 +90,7 @@ class HardwareDongleEmulator:
                 self._patch_dongle_checks()
                 results["methods_applied"].append("Binary Patching")
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in dongle_emulator: %s", e)
             results["errors"].append(f"Binary patching failed: {str(e)}")
 
         # Strategy 4: Install registry spoofing
@@ -95,6 +98,7 @@ class HardwareDongleEmulator:
             self._spoof_dongle_registry()
             results["methods_applied"].append("Registry Spoofing")
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in dongle_emulator: %s", e)
             results["errors"].append(f"Registry spoofing failed: {str(e)}")
 
         results["emulated_dongles"] = list(self.virtual_dongles.keys())

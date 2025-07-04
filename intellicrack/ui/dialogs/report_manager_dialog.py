@@ -57,7 +57,8 @@ from .common_imports import (
 
 try:
     from PyQt5.QtWidgets import QTextBrowser
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in report_manager_dialog: %s", e)
     pass
 
 logger = logging.getLogger(__name__)
@@ -104,6 +105,7 @@ class ReportGenerationThread(QThread):
             self.generation_finished.emit(True, "Report generated successfully", self.output_path)
 
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in report_manager_dialog: %s", e)
             self.generation_finished.emit(False, f"Report generation failed: {str(e)}", "")
 
     def generate_report_content(self) -> str:
@@ -546,6 +548,7 @@ class ReportManagerDialog(BaseTemplateDialog):
             self.report_preview.setPlainText(preview)
 
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in report_manager_dialog: %s", e)
             self.report_preview.setPlainText(f"Error loading preview: {str(e)}")
 
     def filter_reports(self):
@@ -570,6 +573,7 @@ class ReportManagerDialog(BaseTemplateDialog):
             else:
                 subprocess.run(["xdg-open", report_path], check=False)
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in report_manager_dialog: %s", e)
             if HAS_PYQT:
                 QMessageBox.warning(self, "Warning", f"Could not open report: {str(e)}")
 
@@ -600,6 +604,7 @@ class ReportManagerDialog(BaseTemplateDialog):
                 QMessageBox.information(self, "Success", f"Report duplicated as: {new_name}")
 
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in report_manager_dialog: %s", e)
             if HAS_PYQT:
                 QMessageBox.critical(self, "Error", f"Failed to duplicate report: {str(e)}")
 
@@ -632,6 +637,7 @@ class ReportManagerDialog(BaseTemplateDialog):
                 QMessageBox.information(self, "Success", "Report deleted successfully")
 
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in report_manager_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to delete report: {str(e)}")
 
     def browse_binary(self):
@@ -731,7 +737,8 @@ class ReportManagerDialog(BaseTemplateDialog):
                         subprocess.run(["open", output_path], check=False)
                     else:
                         subprocess.run(["xdg-open", output_path], check=False)
-                except Exception:
+                except Exception as e:
+                    logger.error("Exception in report_manager_dialog: %s", e)
                     pass
         else:
             QMessageBox.critical(self, "Error", message)
@@ -761,6 +768,7 @@ class ReportManagerDialog(BaseTemplateDialog):
                 QMessageBox.information(self, "Success", f"Report exported to: {file_path}")
 
             except (OSError, ValueError, RuntimeError) as e:
+                self.logger.error("Error in report_manager_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to export report: {str(e)}")
 
     def on_template_selected(self):

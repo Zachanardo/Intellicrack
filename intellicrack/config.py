@@ -35,21 +35,25 @@ logger = logging.getLogger(__name__)
 try:
     from dotenv import load_dotenv
     load_dotenv()
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in config: %s", e)
     pass
 
 # Global configuration instance
 _modern_config = None
 _legacy_mode = False
 
+
 def _get_modern_config():
     """Get the modern configuration instance."""
-    global _modern_config
+    global _modern_config  # pylint: disable=global-statement
     if _modern_config is None:
         _modern_config = get_new_config()
     return _modern_config
 
 # Tool discovery functions using new system
+
+
 def find_tool(tool_name: str, required_executables=None) -> Optional[str]:
     """
     Find tool executable path using the modern discovery system.
@@ -62,15 +66,18 @@ def find_tool(tool_name: str, required_executables=None) -> Optional[str]:
         Path to the tool executable or None if not found
     """
     if required_executables:
-        logger.debug(f"Tool search for {tool_name} with required executables: {required_executables}")
+        logger.debug("Tool search for %s with required executables: %s",
+                     tool_name, required_executables)
     try:
         config = _get_modern_config()
         return config.get_tool_path(tool_name)
-    except Exception as e:
-        logger.warning(f"Modern tool discovery failed for {tool_name}: {e}")
+    except (AttributeError, KeyError, ValueError) as e:
+        logger.warning("Modern tool discovery failed for %s: %s",
+                       tool_name, e, exc_info=True)
         # Fallback to basic PATH search
         import shutil
         return shutil.which(tool_name)
+
 
 def get_system_path(path_type: str) -> Optional[str]:
     """
@@ -86,23 +93,24 @@ def get_system_path(path_type: str) -> Optional[str]:
         config = _get_modern_config()
         if path_type == "output":
             return str(config.get_output_dir())
-        elif path_type == "cache":
+        if path_type == "cache":
             return str(config.get_cache_dir())
-        elif path_type == "logs":
+        if path_type == "logs":
             return str(config.get_logs_dir())
-        elif path_type == "temp":
+        if path_type == "temp":
             return config.get('directories.temp')
         return None
-    except Exception as e:
-        logger.warning(f"System path lookup failed for {path_type}: {e}")
+    except (AttributeError, KeyError, ValueError, TypeError) as e:
+        logger.warning("System path lookup failed for %s: %s",
+                       path_type, e, exc_info=True)
         # Fallback to basic paths
         if path_type == "desktop":
             return os.path.join(os.path.expanduser("~"), "Desktop")
-        elif path_type == "documents":
+        if path_type == "documents":
             return os.path.join(os.path.expanduser("~"), "Documents")
-        elif path_type == "downloads":
+        if path_type == "downloads":
             return os.path.join(os.path.expanduser("~"), "Downloads")
-        elif path_type == "temp":
+        if path_type == "temp":
             import tempfile
             return tempfile.gettempdir()
         return None
@@ -111,7 +119,7 @@ def get_system_path(path_type: str) -> Optional[str]:
 class ConfigManager:
     """
     Legacy configuration manager that wraps the modern IntellicrackConfig.
-    
+
     Provides backward compatibility for existing code while using the new
     dynamic configuration system under the hood.
     """
@@ -120,7 +128,7 @@ class ConfigManager:
         """Initialize legacy configuration manager wrapper."""
         self._modern_config = _get_modern_config()
         self.config_path = config_path or str(self._modern_config.config_file)
-        
+
     @property
     def config(self) -> Dict[str, Any]:
         """Get configuration as dictionary for legacy compatibility."""
@@ -129,7 +137,7 @@ class ConfigManager:
     def _build_legacy_config(self) -> Dict[str, Any]:
         """Build a legacy-compatible configuration dictionary."""
         config = self._modern_config
-        
+
         # Create legacy structure from modern config
         legacy_config = {
             # Paths - mapped from modern directories
@@ -138,15 +146,15 @@ class ConfigManager:
             "temp_dir": config.get('directories.temp', str(config.get_cache_dir())),
             "plugin_directory": "plugins",
             "download_directory": str(config.get_cache_dir() / "downloads"),
-            
+
             # Tool paths
             "ghidra_path": config.get_tool_path('ghidra'),
             "radare2_path": config.get_tool_path('radare2'),
             "frida_path": config.get_tool_path('frida'),
-            
+
             # Analysis settings
             "analysis": config.get('analysis', {}),
-            
+
             # Other sections from modern config
             "patching": config.get('patching', {}),
             "network": config.get('network', {}),
@@ -206,7 +214,7 @@ class ConfigManager:
             "external_services": {},
             "api": {}
         }
-        
+
         return legacy_config
 
     def load_config(self) -> Dict[str, Any]:
@@ -215,34 +223,31 @@ class ConfigManager:
 
     def save_config(self) -> bool:
         """Save configuration - delegates to modern system."""
-        try:
-            # Modern config auto-saves, so this is just compatibility
-            return True
-        except Exception as e:
-            logger.error(f"Error in legacy save_config: {e}")
-            return False
+        # Modern config auto-saves, so this is just compatibility
+        # Always return True for backward compatibility
+        return True
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value with legacy key support."""
         # Handle legacy key mappings
         if key == "ghidra_path":
             return self._modern_config.get_tool_path('ghidra') or default
-        elif key == "radare2_path":
+        if key == "radare2_path":
             return self._modern_config.get_tool_path('radare2') or default
-        elif key == "frida_path":
+        if key == "frida_path":
             return self._modern_config.get_tool_path('frida') or default
-        elif key == "log_dir":
+        if key == "log_dir":
             return str(self._modern_config.get_logs_dir())
-        elif key == "output_dir":
+        if key == "output_dir":
             return str(self._modern_config.get_output_dir())
-        elif key == "temp_dir":
+        if key == "temp_dir":
             return self._modern_config.get('directories.temp', str(self._modern_config.get_cache_dir()))
-        else:
-            # Try modern config first, then legacy structure
-            result = self._modern_config.get(key, None)
-            if result is not None:
-                return result
-            return self.config.get(key, default)
+
+        # Try modern config first, then legacy structure
+        result = self._modern_config.get(key, None)
+        if result is not None:
+            return result
+        return self.config.get(key, default)
 
     def set(self, key: str, value: Any) -> None:
         """Set configuration value."""
@@ -290,33 +295,30 @@ class ConfigManager:
 
     def validate_config(self) -> bool:
         """Validate the current configuration."""
-        try:
-            # Basic validation - modern config handles the real validation
-            return True
-        except Exception as e:
-            logger.error(f"Configuration validation error: {e}")
-            return False
+        # Basic validation - modern config handles the real validation
+        # Always return True for backward compatibility
+        return True
 
     def items(self):
         """Return items from the configuration dictionary."""
         return self.config.items()
-    
+
     def keys(self):
         """Return keys from the configuration dictionary."""
         return self.config.keys()
-    
+
     def values(self):
         """Return values from the configuration dictionary."""
         return self.config.values()
-    
+
     def __getitem__(self, key):
         """Allow dictionary-style access."""
         return self.config[key]
-    
+
     def __setitem__(self, key, value):
         """Allow dictionary-style setting."""
         self.set(key, value)
-    
+
     def __contains__(self, key):
         """Check if key exists in configuration."""
         return key in self.config
@@ -329,14 +331,14 @@ _config_manager: Optional[ConfigManager] = None
 def load_config(config_path: str = None) -> Dict[str, Any]:
     """
     Load configuration using the modern config system.
-    
+
     Args:
         config_path: Path to configuration file (ignored in modern system)
-    
+
     Returns:
         Configuration dictionary for legacy compatibility
     """
-    global _config_manager
+    global _config_manager  # pylint: disable=global-statement
     if _config_manager is None:
         _config_manager = ConfigManager(config_path)
     return _config_manager.config
@@ -345,11 +347,11 @@ def load_config(config_path: str = None) -> Dict[str, Any]:
 def get_config() -> ConfigManager:
     """
     Get the global configuration manager instance.
-    
+
     Returns:
         ConfigManager instance (legacy wrapper)
     """
-    global _config_manager
+    global _config_manager  # pylint: disable=global-statement
     if _config_manager is None:
         _config_manager = ConfigManager()
     return _config_manager
@@ -358,7 +360,7 @@ def get_config() -> ConfigManager:
 def save_config() -> bool:
     """
     Save the global configuration.
-    
+
     Returns:
         True if saved successfully, False otherwise
     """
@@ -371,8 +373,9 @@ def save_config() -> bool:
 try:
     _legacy_config_dict = load_config()
     CONFIG = _legacy_config_dict
-except Exception as e:
-    logger.warning(f"Failed to load modern config, using empty dict: {e}")
+except (FileNotFoundError, PermissionError, ValueError, KeyError, ImportError) as e:
+    logger.warning(
+        "Failed to load modern config, using empty dict: %s", e, exc_info=True)
     CONFIG = {}
 
 # Create a DEFAULT_CONFIG for compatibility
@@ -381,7 +384,7 @@ DEFAULT_CONFIG = CONFIG
 # Export main components
 __all__ = [
     'ConfigManager',
-    'load_config', 
+    'load_config',
     'get_config',
     'save_config',
     'CONFIG',

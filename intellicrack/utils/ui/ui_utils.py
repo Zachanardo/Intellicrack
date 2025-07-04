@@ -184,7 +184,8 @@ def get_user_input(prompt: str, default: str = "",
             })
 
         return result
-    except (KeyboardInterrupt, EOFError):
+    except (KeyboardInterrupt, EOFError) as e:
+        logger.error("Error in ui_utils: %s", e)
         return None
 
 
@@ -231,7 +232,8 @@ def confirm_action(message: str, title: str = "Confirm Action",
         response = input(f"{safe_title}: {safe_message} (y/n): ").strip().lower()  # Input validated below
         # Validate response - only accept specific values (y/yes)
         return response in ('y', 'yes')
-    except (KeyboardInterrupt, EOFError):
+    except (KeyboardInterrupt, EOFError) as e:
+        logger.error("Error in ui_utils: %s", e)
         return False
 
 
@@ -279,7 +281,8 @@ def select_from_list(items: List[str], prompt: str = "Select an item",
                     idx = int(s_clean) - 1
                     if 0 <= idx < len(items):
                         selected.append(items[idx])
-                except ValueError:
+                except ValueError as e:
+                    logger.error("Value error in ui_utils: %s", e)
                     continue
             return selected if selected else None
         else:
@@ -293,7 +296,8 @@ def select_from_list(items: List[str], prompt: str = "Select an item",
                 return [items[idx]]
             return None
 
-    except (KeyboardInterrupt, EOFError, ValueError):
+    except (KeyboardInterrupt, EOFError, ValueError) as e:
+        logger.error("Error in ui_utils: %s", e)
         return None
 
 

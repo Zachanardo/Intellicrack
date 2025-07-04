@@ -15,8 +15,8 @@ class ResponseLineParser:
 
     @staticmethod
     def parse_lines_by_sections(response: str,
-                              section_keywords: Dict[str, List[str]],
-                              line_processor: Optional[Callable[[str, str], Optional[str]]] = None) -> Dict[str, List[str]]:
+                                section_keywords: Dict[str, List[str]],
+                                line_processor: Optional[Callable[[str, str], Optional[str]]] = None) -> Dict[str, List[str]]:
         """
         Parse response lines into sections based on keywords.
 
@@ -39,7 +39,8 @@ class ResponseLineParser:
                 continue
 
             # Detect section changes
-            detected_section = ResponseLineParser._detect_section(line, section_keywords)
+            detected_section = ResponseLineParser._detect_section(
+                line, section_keywords)
             if detected_section:
                 current_section = detected_section
                 continue
@@ -60,8 +61,8 @@ class ResponseLineParser:
 
     @staticmethod
     def parse_lines_with_categorization(response: str,
-                                      category_keywords: Dict[str, List[str]],
-                                      default_category: str = 'other') -> Dict[str, List[str]]:
+                                        category_keywords: Dict[str, List[str]],
+                                        default_category: str = 'other') -> Dict[str, List[str]]:
         """
         Parse response lines and categorize them based on content.
 
@@ -97,8 +98,8 @@ class ResponseLineParser:
 
     @staticmethod
     def extract_structured_content(response: str,
-                                 patterns: List[str],
-                                 section_separators: Optional[List[str]] = None) -> List[Dict[str, str]]:
+                                   patterns: List[str],
+                                   section_separators: Optional[List[str]] = None) -> List[Dict[str, str]]:
         """
         Extract structured content using regex patterns.
 
@@ -165,8 +166,8 @@ class ResponseLineParser:
 
     @staticmethod
     def clean_and_filter_lines(lines: List[str],
-                             min_length: int = 3,
-                             filter_patterns: Optional[List[str]] = None) -> List[str]:
+                               min_length: int = 3,
+                               filter_patterns: Optional[List[str]] = None) -> List[str]:
         """
         Clean and filter lines based on criteria.
 

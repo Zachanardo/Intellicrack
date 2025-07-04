@@ -10,9 +10,14 @@ import logging
 import struct
 from typing import Any, Dict, Optional, Tuple
 
+from ...utils.system.windows_common import WindowsConstants
+
+logger = logging.getLogger(__name__)
+
 try:
     import ctypes.wintypes
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in process_hollowing: %s", e)
     # Create mock for non-Windows platforms
     class MockWintypes:
         """Mock wintypes implementation for non-Windows platforms."""
@@ -23,9 +28,6 @@ except ImportError:
         HANDLE = ctypes.c_void_p
     ctypes.wintypes = MockWintypes()
 
-from ...utils.system.windows_common import WindowsConstants
-
-logger = logging.getLogger(__name__)
 
 
 # Windows structures for process hollowing

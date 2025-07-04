@@ -29,21 +29,23 @@ import sys
 import time
 from typing import Any, Dict, List, Optional, Union
 
+logger = logging.getLogger(__name__)
+
 try:
     import joblib
     JOBLIB_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in additional_runners: %s", e)
     joblib = None
     JOBLIB_AVAILABLE = False
 
 try:
     import psutil
     PSUTIL_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in additional_runners: %s", e)
     psutil = None
     PSUTIL_AVAILABLE = False
-
-logger = logging.getLogger(__name__)
 
 
 def run_comprehensive_analysis(binary_path: str, output_dir: Optional[str] = None,
@@ -594,9 +596,11 @@ def run_external_tool(tool_name: str, binary_path: str,
         else:
             results["success"] = False
 
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as e:
+        logger.error("Subprocess timeout in additional_runners: %s", e)
         results["error"] = "Tool execution timed out"
-    except FileNotFoundError:
+    except FileNotFoundError as e:
+        logger.error("File not found in additional_runners: %s", e)
         results["error"] = f"Tool '{tool_name}' not found in PATH"
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error running external tool: %s", e)
@@ -835,7 +839,8 @@ def run_external_command(command: Union[str, List[str]],
         results["stderr"] = result.stderr
         results["success"] = result.returncode == 0
 
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as e:
+        logger.error("Subprocess timeout in additional_runners: %s", e)
         results["error"] = "Command timed out"
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error running command: %s", e)
@@ -1052,11 +1057,12 @@ def _detect_usb_dongles() -> List[Dict[str, Any]]:
                             "product": product,
                             "confidence": 0.9
                         })
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError) as e:
                     logger.debug("Failed to get USB device info: %s", e)
                     continue
 
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in additional_runners: %s", e)
             # Fallback to platform-specific methods
             import platform
             system = platform.system().lower()
@@ -1066,7 +1072,7 @@ def _detect_usb_dongles() -> List[Dict[str, Any]]:
             elif system == "linux":
                 dongles.extend(_detect_linux_usb_dongles())
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.debug("USB dongle detection error: %s", e)
 
     return dongles
@@ -1103,7 +1109,7 @@ def _detect_windows_usb_dongles() -> List[Dict[str, Any]]:
                         "confidence": 0.85
                     })
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
         logger.debug("Windows USB dongle detection error: %s", e)
 
     return dongles
@@ -1129,7 +1135,7 @@ def _detect_linux_usb_dongles() -> List[Dict[str, Any]]:
                             "confidence": 0.8
                         })
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
         logger.debug("Linux USB dongle detection error: %s", e)
 
     return dongles
@@ -1165,9 +1171,10 @@ def _detect_dongle_processes() -> List[Dict[str, Any]]:
                         "confidence": 0.9
                     })
 
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
+            except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                logger.error("Error in additional_runners: %s", e)
                 continue
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.debug("Process dongle detection error: %s", e)
 
     return processes
@@ -1186,7 +1193,7 @@ def _detect_dongle_drivers() -> List[Dict[str, Any]]:
         elif system == "linux":
             drivers.extend(_detect_linux_dongle_drivers())
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.debug("Driver dongle detection error: %s", e)
 
     return drivers
@@ -1219,7 +1226,7 @@ def _detect_windows_dongle_drivers() -> List[Dict[str, Any]]:
                         "confidence": 0.85
                     })
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
         logger.debug("Windows driver detection error: %s", e)
 
     return drivers
@@ -1245,7 +1252,7 @@ def _detect_linux_dongle_drivers() -> List[Dict[str, Any]]:
                             "confidence": 0.8
                         })
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
         logger.debug("Linux driver detection error: %s", e)
 
     return drivers
@@ -1279,11 +1286,11 @@ def _detect_license_dongles() -> List[Dict[str, Any]]:
                             "size": os.path.getsize(file_path),
                             "confidence": 0.7
                         })
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.debug("Failed to search pattern '%s': %s", pattern, e)
                 continue
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.debug("License file detection error: %s", e)
 
     return license_files[:10]  # Limit to 10 results
@@ -1312,11 +1319,11 @@ def _detect_network_dongles() -> List[Dict[str, Any]]:
                         "confidence": 0.8
                     })
                 sock.close()
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError, socket.error) as e:
                 logger.debug("Port %d connection failed: %s", port, e)
                 continue
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.debug("Network dongle detection error: %s", e)
 
     return network_dongles
@@ -1534,7 +1541,7 @@ def _verify_crack(binary_path: str) -> Dict[str, Any]:
         logger.info("Crack verification completed. Verified: %s, Confidence: %.2f",
                    verification_result["verified"], verification_result["confidence"])
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in crack verification: %s", e)
         verification_result["warnings"].append(f"Verification error: {e}")
 
@@ -1582,10 +1589,12 @@ def _verify_static_analysis(binary_path: str) -> Dict[str, Any]:
             else:
                 result["checks"].append("No obvious patch patterns detected")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["checks"].append(f"Error reading binary: {e}")
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in additional_runners: %s", e)
         result["checks"].append(f"Static analysis error: {e}")
 
     return result
@@ -1606,7 +1615,7 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
         if platform.system() != "Windows":
             try:
                 os.chmod(binary_path, 0o755)
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.debug("Could not set executable permissions: %s", e)
 
         # Test 1: Basic execution test (does it run without crashing?)
@@ -1625,10 +1634,12 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
             else:
                 result["tests"].append(f"Binary execution failed with code: {proc.returncode}")
 
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            logger.error("Subprocess timeout in additional_runners: %s", e)
             result["tests"].append("Binary execution timed out (may be waiting for input)")
             result["confidence"] += 0.1
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["tests"].append(f"Execution test error: {e}")
 
         # Test 2: Check for license-related error messages
@@ -1659,9 +1670,11 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
             else:
                 result["tests"].append("No output captured from execution")
 
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            logger.error("Subprocess timeout in additional_runners: %s", e)
             result["tests"].append("Binary execution hangs (possible input wait)")
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["tests"].append(f"License test error: {e}")
 
         # Test 3: File system access test
@@ -1685,14 +1698,16 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
 
                 result["tests"].append("Filesystem access test completed")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["tests"].append(f"Filesystem test error: {e}")
 
         # Overall success determination
         if result["confidence"] > 0.5:
             result["success"] = True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in additional_runners: %s", e)
         result["tests"].append(f"Execution testing error: {e}")
 
     return result
@@ -1725,7 +1740,8 @@ def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
             else:
                 result["protections"].append(f"Anti-debugging functions still present ({debug_protection_found})")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["protections"].append(f"Debug protection check error: {e}")
 
         # Protection 2: Check for VM detection bypass
@@ -1739,7 +1755,8 @@ def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
             else:
                 result["protections"].append(f"VM detection strings still present ({vm_detection_found})")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["protections"].append(f"VM protection check error: {e}")
 
         # Protection 3: Check for integrity checks bypass
@@ -1755,14 +1772,16 @@ def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
                 result["protections"].append("No obvious integrity check functions found")
                 result["confidence"] += 0.1
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["protections"].append(f"Integrity check error: {e}")
 
         # Overall bypass determination
         if result["confidence"] > 0.4:
             result["bypassed"] = True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in additional_runners: %s", e)
         result["protections"].append(f"Protection bypass verification error: {e}")
 
     return result
@@ -1795,7 +1814,8 @@ def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
             else:
                 result["license_checks"].append("No obvious license bypass patterns detected")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["license_checks"].append(f"Pattern search error: {e}")
 
         # Check 2: Look for NOPed license checks
@@ -1811,7 +1831,8 @@ def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
             else:
                 result["license_checks"].append("No significant NOP sequences found")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["license_checks"].append(f"NOP detection error: {e}")
 
         # Check 3: License string analysis
@@ -1827,14 +1848,16 @@ def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
                 result["license_checks"].append("No license-related strings found")
                 result["confidence"] += 0.2
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["license_checks"].append(f"String analysis error: {e}")
 
         # Overall bypass determination
         if result["confidence"] > 0.5:
             result["bypassed"] = True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in additional_runners: %s", e)
         result["license_checks"].append(f"License bypass verification error: {e}")
 
     return result
@@ -1877,7 +1900,8 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
             else:
                 result["integrity_checks"].append("Executable header format unrecognized or corrupted")
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["integrity_checks"].append(f"Header check error: {e}")
 
         # Check 3: Basic executable validation
@@ -1892,7 +1916,8 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
                 result["integrity_checks"].append("File format appropriate for platform")
                 result["confidence"] += 0.1
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["integrity_checks"].append(f"Platform check error: {e}")
 
         # Check 4: Calculate file hash for future reference
@@ -1904,7 +1929,8 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
             result["file_hash"] = file_hash
             result["confidence"] += 0.1
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in additional_runners: %s", e)
             result["integrity_checks"].append(f"Hash calculation error: {e}")
 
         # Overall validity determination
@@ -1914,7 +1940,8 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
         else:
             result["integrity_checks"].append("Patch integrity validation failed")
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in additional_runners: %s", e)
         result["integrity_checks"].append(f"Patch integrity verification error: {e}")
 
     return result
@@ -1928,7 +1955,8 @@ def _find_ghidra_installation() -> Optional[str]:
         ghidra_path = find_tool("ghidra")
         if ghidra_path:
             return ghidra_path
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in additional_runners: %s", e)
         pass
 
     # Fallback to legacy search
@@ -2059,7 +2087,7 @@ def _is_license_check_pattern(cfg: Dict[str, Any]) -> bool:
 
         return is_license_pattern
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in license pattern analysis: %s", e)
         # Fallback to simple heuristic
         return cfg.get("complexity", 0) > 10 and cfg.get("branches", 0) > 5
@@ -2444,31 +2472,14 @@ def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
 
 
 def run_ml_vulnerability_prediction(binary_path: str) -> Dict[str, Any]:
-    """
-    Run ML-based vulnerability prediction.
-
-    Args:
-        binary_path: Path to the binary file
-
-    Returns:
-        Dict containing ML predictions
-    """
-    try:
-        from ...ai import VulnerabilityPredictor
-
-        predictor = VulnerabilityPredictor()
-        predictions = predictor.predict(binary_path)
-
-        return {
-            "status": "success",
-            "predictions": predictions,
-            "confidence": predictor.get_confidence_score(binary_path),
-            "top_vulnerabilities": predictions[:5] if isinstance(predictions, list) else []
-        }
-
-    except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in ML vulnerability prediction: %s", e)
-        return {"status": "error", "message": str(e)}
+    """ML vulnerability prediction removed - using LLM-only approach."""
+    return {
+        "status": "removed", 
+        "message": "ML vulnerability prediction has been removed. Use LLM-based analysis instead.",
+        "predictions": [],
+        "confidence": 0.0,
+        "top_vulnerabilities": []
+    }
 
 
 def run_generate_patch_suggestions(binary_path: str) -> Dict[str, Any]:

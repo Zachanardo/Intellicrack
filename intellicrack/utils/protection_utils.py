@@ -514,25 +514,25 @@ def create_custom_hook_script(hook_config: Dict[str, Any]) -> str:
 def emulate_hardware_dongle(config: Dict[str, Any]) -> Dict[str, Any]:
     """
     Emulate hardware dongle for license bypass.
-    
+
     This function creates a virtual hardware dongle emulation configuration
     that can bypass hardware-based license checks by simulating the presence
     and responses of common hardware protection devices.
-    
+
     Args:
         config: Configuration dictionary with dongle parameters
-        
+
     Returns:
         Dictionary containing dongle emulation details and status
     """
     logger.info("Generating hardware dongle emulation configuration")
-    
+
     # Extract configuration parameters
     dongle_type = config.get('type', 'generic')
     vendor_id = config.get('vendor_id', '0x0529')  # Aladdin HASP default
     product_id = config.get('product_id', '0x0001')
     serial_number = config.get('serial', 'EMULATED_001')
-    
+
     emulation_result = {
         "dongle_id": serial_number,
         "status": "active",
@@ -545,7 +545,7 @@ def emulate_hardware_dongle(config: Dict[str, Any]) -> Dict[str, Any]:
         "memory_map": {},
         "implementation": {}
     }
-    
+
     # Configure based on dongle type
     if dongle_type.lower() == 'hasp':
         emulation_result['features'] = ['feature1', 'feature2', 'feature3', 'unlimited_users']
@@ -565,7 +565,7 @@ Interceptor.attach(Module.findExportByName(null, 'hasp_login'), {
     }
 });
 """
-    
+
     elif dongle_type.lower() == 'sentinel':
         emulation_result['features'] = ['feature_a', 'feature_b', 'pro_license']
         emulation_result['responses'] = {
@@ -582,7 +582,7 @@ Interceptor.attach(Module.findExportByName(null, 'SLM_LoginEasy'), {
     }
 });
 """
-    
+
     elif dongle_type.lower() == 'wibu':
         emulation_result['features'] = ['codemeter', 'network_license', 'time_unlimited']
         emulation_result['responses'] = {
@@ -599,7 +599,7 @@ Interceptor.attach(Module.findExportByName(null, 'CmGetLicenseInfo'), {
     }
 });
 """
-    
+
     else:
         # Generic dongle emulation
         emulation_result['features'] = ['basic', 'standard', 'pro']
@@ -608,7 +608,7 @@ Interceptor.attach(Module.findExportByName(null, 'CmGetLicenseInfo'), {
             'validate': 0,
             'get_features': 0xFFFFFFFF
         }
-    
+
     # Add memory emulation
     emulation_result['memory_map'] = {
         '0x0000': b'DONGLE_OK',
@@ -616,7 +616,7 @@ Interceptor.attach(Module.findExportByName(null, 'CmGetLicenseInfo'), {
         '0x0018': b'\xFF' * 8,  # Feature flags
         '0x0020': b'\x00' * 32  # User data area
     }
-    
+
     # Add advanced features
     emulation_result['advanced'] = {
         'usb_emulation': vendor_id != '0x0000',
@@ -624,7 +624,7 @@ Interceptor.attach(Module.findExportByName(null, 'CmGetLicenseInfo'), {
         'time_based_features': False,
         'encryption_support': True
     }
-    
+
     logger.info(f"Hardware dongle emulation configured for {dongle_type}")
     return emulation_result
 
@@ -632,20 +632,20 @@ Interceptor.attach(Module.findExportByName(null, 'CmGetLicenseInfo'), {
 def generate_hwid_spoof_config(target_hwid: str) -> Dict[str, Any]:
     """
     Generate hardware ID spoofing configuration.
-    
+
     This function creates a comprehensive configuration for spoofing hardware IDs,
     including registry modifications, API hooks, and system information overrides.
-    
+
     Args:
         target_hwid: Target hardware ID to spoof
-        
+
     Returns:
         Dictionary containing HWID spoofing configuration
     """
     logger.info(f"Generating HWID spoof configuration for: {target_hwid}")
-    
+
     import uuid
-    
+
     # Parse target HWID or generate components
     if len(target_hwid) == 36 and '-' in target_hwid:
         # UUID format
@@ -653,7 +653,7 @@ def generate_hwid_spoof_config(target_hwid: str) -> Dict[str, Any]:
     else:
         # Generate UUID from HWID
         hwid_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, target_hwid))
-    
+
     config = {
         "target_hwid": target_hwid,
         "spoof_method": "registry",
@@ -725,6 +725,7 @@ def apply_hwid_spoof():
         winreg.CloseKey(key)
         print(f"HWID spoofed to: {hwid_uuid}")
     except Exception as e:
+        logger.error("Exception in protection_utils: %s", e)
         print(f"Failed to spoof HWID: {{e}}")
 
 if __name__ == "__main__":
@@ -732,7 +733,7 @@ if __name__ == "__main__":
     apply_hwid_spoof()
 """
     }
-    
+
     # Add restoration information
     config['restoration'] = {
         'backup_location': 'hwid_backup.reg',
@@ -744,7 +745,7 @@ print("Original HWID restored")
 """,
         'verification_command': 'wmic csproduct get UUID'
     }
-    
+
     logger.info("HWID spoof configuration generated")
     return config
 
@@ -752,18 +753,18 @@ print("Original HWID restored")
 def generate_time_bomb_defuser(binary_path: str) -> Dict[str, Any]:
     """
     Generate time bomb defusal configuration.
-    
+
     This function analyzes a binary for time-based protection mechanisms
     and generates patches to defuse time bombs and trial limitations.
-    
+
     Args:
         binary_path: Path to the binary to analyze
-        
+
     Returns:
         Dictionary containing time bomb defusal strategy
     """
     logger.info(f"Analyzing binary for time bombs: {binary_path}")
-    
+
     config = {
         "binary": binary_path,
         "time_checks_found": 0,
@@ -773,12 +774,12 @@ def generate_time_bomb_defuser(binary_path: str) -> Dict[str, Any]:
         "hook_points": [],
         "recommendations": []
     }
-    
+
     try:
         # Read binary for analysis
         with open(binary_path, 'rb') as f:
             binary_data = f.read()
-        
+
         # Common time-related API patterns
         time_apis = {
             b'GetSystemTime': 'System time check',
@@ -791,26 +792,26 @@ def generate_time_bomb_defuser(binary_path: str) -> Dict[str, Any]:
             b'GetFileTime': 'File timestamp check',
             b'CompareFileTime': 'Time comparison'
         }
-        
+
         # Search for time-related APIs
         for api, description in time_apis.items():
             if api in binary_data:
                 config['time_checks_found'] += 1
                 offset = binary_data.find(api)
-                
+
                 config['analysis_results'][api.decode()] = {
                     'offset': hex(offset),
                     'description': description,
                     'severity': 'high' if b'Compare' in api else 'medium'
                 }
-                
+
                 # Generate hook point
                 config['hook_points'].append({
                     'api': api.decode(),
                     'module': 'kernel32.dll' if b'Get' in api else 'msvcrt.dll',
                     'strategy': 'return_fixed_value'
                 })
-        
+
         # Look for date comparison patterns
         date_patterns = [
             (b'\x07\xE5', '2021'),  # Year 2021 in hex
@@ -819,7 +820,7 @@ def generate_time_bomb_defuser(binary_path: str) -> Dict[str, Any]:
             (b'\x07\xE8', '2024'),
             (b'\x07\xE9', '2025')
         ]
-        
+
         for pattern, year in date_patterns:
             if pattern in binary_data:
                 offset = binary_data.find(pattern)
@@ -828,7 +829,7 @@ def generate_time_bomb_defuser(binary_path: str) -> Dict[str, Any]:
                     'description': f'Hardcoded year {year} found',
                     'severity': 'critical'
                 }
-                
+
                 # Generate patch to change year to 2099
                 config['patches'].append({
                     'offset': hex(offset),
@@ -836,11 +837,11 @@ def generate_time_bomb_defuser(binary_path: str) -> Dict[str, Any]:
                     'replacement': b'\x07\xF3'.hex(),  # 2099
                     'description': f'Change year {year} to 2099'
                 })
-        
+
         # Generate defusal strategies based on findings
         if config['time_checks_found'] > 0:
             config['defusal_strategy'] = 'comprehensive_time_bypass'
-            
+
             # Add Frida script for runtime bypass
             config['frida_script'] = """
 // Time Bomb Defuser Script
@@ -891,28 +892,28 @@ if (time_func) {
     });
 }
 """
-        
+
         # Add recommendations
         if config['time_checks_found'] > 3:
             config['recommendations'].append("Multiple time checks detected - comprehensive bypass recommended")
-        
+
         if any('critical' in result.get('severity', '') for result in config['analysis_results'].values()):
             config['recommendations'].append("Critical time bomb detected - immediate patching required")
-        
+
         if config['patches']:
             config['recommendations'].append(f"Apply {len(config['patches'])} binary patches for permanent fix")
-        
+
         config['recommendations'].extend([
             "Use Frida script for runtime bypass without modifying binary",
             "Consider system date manipulation as alternative approach",
             "Monitor for additional time checks during runtime"
         ])
-        
+
     except Exception as e:
         logger.error(f"Time bomb analysis failed: {e}")
         config['error'] = str(e)
         config['recommendations'].append("Manual analysis required")
-    
+
     logger.info(f"Found {config['time_checks_found']} time checks")
     return config
 
@@ -920,18 +921,18 @@ if (time_func) {
 def generate_telemetry_blocker(app_name: str) -> Dict[str, Any]:
     """
     Generate telemetry blocking configuration.
-    
+
     This function creates a comprehensive configuration to block telemetry
     and analytics data collection from applications.
-    
+
     Args:
         app_name: Name of the application to block telemetry for
-        
+
     Returns:
         Dictionary containing telemetry blocking configuration
     """
     logger.info(f"Generating telemetry blocker for: {app_name}")
-    
+
     # Common telemetry domains by application
     telemetry_domains = {
         'default': [
@@ -969,18 +970,18 @@ def generate_telemetry_blocker(app_name: str) -> Dict[str, Any]:
             'api.autodesk.com'
         ]
     }
-    
+
     # Determine which domains to block
     app_lower = app_name.lower()
     blocked_domains = telemetry_domains.get('default', []).copy()
-    
+
     for key, domains in telemetry_domains.items():
         if key in app_lower:
             blocked_domains.extend(domains)
-    
+
     # Remove duplicates
     blocked_domains = list(set(blocked_domains))
-    
+
     config = {
         "application": app_name,
         "blocked_domains": blocked_domains,
@@ -995,12 +996,12 @@ def generate_telemetry_blocker(app_name: str) -> Dict[str, Any]:
             "proxy": False
         }
     }
-    
+
     # Generate hosts file entries
     for domain in blocked_domains:
         config['hosts_entries'].append(f"0.0.0.0 {domain}")
         config['hosts_entries'].append(f"::0 {domain}")  # IPv6
-    
+
     # Generate firewall rules (Windows netsh format)
     config['firewall_rules'] = [
         {
@@ -1019,7 +1020,7 @@ def generate_telemetry_blocker(app_name: str) -> Dict[str, Any]:
             'command': f'netsh advfirewall firewall add rule name="Block {app_name} Analytics" dir=out action=block protocol=tcp remoteport=443,80 enable=yes'
         }
     ]
-    
+
     # Add domain-specific firewall rules
     for domain in blocked_domains[:10]:  # Limit to 10 most important
         config['firewall_rules'].append({
@@ -1029,7 +1030,7 @@ def generate_telemetry_blocker(app_name: str) -> Dict[str, Any]:
             'remoteip': domain,
             'command': f'netsh advfirewall firewall add rule name="Block {domain}" dir=out action=block remoteip={domain} enable=yes'
         })
-    
+
     # Generate Frida script for runtime blocking
     config['frida_script'] = f"""
 // Telemetry Blocking Script for {app_name}
@@ -1040,7 +1041,7 @@ var blocked_domains = {blocked_domains};
 // Hook WinInet functions
 try {{
     var wininet = Process.getModuleByName('wininet.dll');
-    
+
     // Hook InternetConnectW
     var InternetConnectW = wininet.getExportByName('InternetConnectW');
     Interceptor.attach(InternetConnectW, {{
@@ -1055,7 +1056,7 @@ try {{
             }}
         }}
     }});
-    
+
     // Hook HttpOpenRequestW
     var HttpOpenRequestW = wininet.getExportByName('HttpOpenRequestW');
     Interceptor.attach(HttpOpenRequestW, {{
@@ -1079,7 +1080,7 @@ try {{
 // Hook WinHTTP functions
 try {{
     var winhttp = Process.getModuleByName('winhttp.dll');
-    
+
     var WinHttpConnect = winhttp.getExportByName('WinHttpConnect');
     Interceptor.attach(WinHttpConnect, {{
         onEnter: function(args) {{
@@ -1099,7 +1100,7 @@ try {{
 
 console.log('[Telemetry] Telemetry blocker active');
 """
-    
+
     # Add batch script for easy setup
     config['setup_script'] = f"""@echo off
 echo Setting up telemetry blocker for {app_name}...
@@ -1118,7 +1119,7 @@ echo.
 echo Telemetry blocker setup complete!
 pause
 """
-    
+
     # Add removal script
     config['removal_script'] = f"""@echo off
 echo Removing telemetry blocker for {app_name}...
@@ -1131,7 +1132,7 @@ echo Telemetry blocker removed!
 echo Note: Hosts file entries must be removed manually
 pause
 """
-    
+
     logger.info(f"Telemetry blocker configured with {len(blocked_domains)} blocked domains")
     return config
 
@@ -1139,30 +1140,30 @@ pause
 def calculate_entropy(data: bytes) -> float:
     """
     Calculate Shannon entropy of binary data.
-    
+
     Args:
         data: Binary data to analyze
-        
+
     Returns:
         Entropy value between 0 and 8
     """
     if not data:
         return 0.0
-    
+
     # Count byte frequencies
     byte_counts = {}
     for byte in data:
         byte_counts[byte] = byte_counts.get(byte, 0) + 1
-    
+
     # Calculate entropy
     entropy = 0.0
     data_len = len(data)
-    
+
     for count in byte_counts.values():
         if count > 0:
             probability = count / data_len
             entropy -= probability * (probability and probability * probability.bit_length() or 0)
-    
+
     return min(entropy, 8.0)
 
 

@@ -19,19 +19,20 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
+import pytest
+
 from intellicrack.ai.ai_script_generator import (
     AIScriptGenerator,
-    ScriptType,
+    GeneratedScript,
     ProtectionType,
     ScriptMetadata,
-    GeneratedScript,
+    ScriptTemplateEngine,
+    ScriptType,
     ScriptValidator,
-    ScriptTemplateEngine
 )
 from intellicrack.ai.llm_backends import LLMManager, LLMResponse
 

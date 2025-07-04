@@ -1,3 +1,7 @@
+from typing import Dict
+
+from intellicrack.logger import logger
+
 """
 UI enhancements for emulator status and warnings.
 
@@ -26,14 +30,14 @@ try:
         QMessageBox,
         QWidget,
     )
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in emulator_ui_enhancements: %s", e)
     from PyQt6.QtWidgets import (
         QHBoxLayout,
         QLabel,
         QMessageBox,
         QWidget,
     )
-from typing import Dict
 
 
 class EmulatorStatusWidget(QWidget):

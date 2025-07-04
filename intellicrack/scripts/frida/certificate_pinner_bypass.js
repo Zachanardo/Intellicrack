@@ -1,0 +1,1 @@
+/mnt/c/Intellicrack/intellicrack/plugins/frida_scripts/certificate_pinner_bypass.js

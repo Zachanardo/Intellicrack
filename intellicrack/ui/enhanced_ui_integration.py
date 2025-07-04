@@ -604,7 +604,8 @@ class EnhancedMainWindow(QMainWindow):
             from .widgets.hex_viewer import show_hex_viewer
             show_hex_viewer(self.binary_path)
             self.dashboard.add_activity("Opened hex viewer")
-        except ImportError:
+        except ImportError as e:
+            self.logger.error("Import error in enhanced_ui_integration: %s", e)
             QMessageBox.information(self, "Hex Viewer", "Hex viewer not available")
 
     def _show_about(self):

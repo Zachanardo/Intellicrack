@@ -1,3 +1,13 @@
+import logging
+import platform
+from typing import Any, Dict, List, Optional
+
+from intellicrack.logger import logger
+
+# from ...utils.driver_utils import get_driver_path  # Removed unused import
+from ...utils.binary.binary_io import analyze_binary_for_strings
+from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
+
 """
 Virtualization Detection Bypass Module
 
@@ -20,13 +30,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import logging
-import platform
-from typing import Any, Dict, List, Optional
 
-# from ...utils.driver_utils import get_driver_path  # Removed unused import
-from ...utils.binary.binary_io import analyze_binary_for_strings
-from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
 
 class VirtualizationDetectionBypass:
@@ -67,6 +71,7 @@ class VirtualizationDetectionBypass:
             self._hook_vm_detection_apis()
             results["methods_applied"].append("API Hooking")
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in vm_bypass: %s", e)
             results["errors"].append(f"API hooking failed: {str(e)}")
 
         # Strategy 2: Patch VM detection instructions
@@ -75,6 +80,7 @@ class VirtualizationDetectionBypass:
                 self._patch_vm_detection()
                 results["methods_applied"].append("Binary Patching")
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in vm_bypass: %s", e)
             results["errors"].append(f"Binary patching failed: {str(e)}")
 
         # Strategy 3: Manipulate registry for VM artifacts
@@ -82,6 +88,7 @@ class VirtualizationDetectionBypass:
             self._hide_vm_registry_artifacts()
             results["methods_applied"].append("Registry Manipulation")
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in vm_bypass: %s", e)
             results["errors"].append(f"Registry manipulation failed: {str(e)}")
 
         # Strategy 4: Hook timing functions to mitigate timing attacks
@@ -89,6 +96,7 @@ class VirtualizationDetectionBypass:
             self._hook_timing_functions()
             results["methods_applied"].append("Timing Attack Mitigation")
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in vm_bypass: %s", e)
             results["errors"].append(f"Timing hook failed: {str(e)}")
 
         # Strategy 5: Hide VM artifacts (files, processes, etc.)
@@ -96,6 +104,7 @@ class VirtualizationDetectionBypass:
             if self._hide_vm_artifacts():
                 results["methods_applied"].append("VM Artifact Hiding")
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in vm_bypass: %s", e)
             results["errors"].append(f"VM artifact hiding failed: {str(e)}")
 
         # Strategy 6: Modify system information
@@ -103,6 +112,7 @@ class VirtualizationDetectionBypass:
             if self._modify_system_info():
                 results["methods_applied"].append("System Info Modification")
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in vm_bypass: %s", e)
             results["errors"].append(f"System info modification failed: {str(e)}")
 
         results["success"] = len(results["methods_applied"]) > 0
@@ -111,6 +121,7 @@ class VirtualizationDetectionBypass:
     def _get_driver_path(self, driver_name: str) -> str:
         """Get Windows driver path dynamically."""
         import os
+
         # Common driver paths on Windows
         driver_paths = [
             os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'System32', 'drivers', driver_name),
@@ -303,7 +314,8 @@ class VirtualizationDetectionBypass:
                     # Try to delete or rename the key
                     winreg.DeleteKey(hkey, path)
                     self.logger.info("Deleted VM registry key: %s", path)
-                except FileNotFoundError:
+                except FileNotFoundError as e:
+                    logger.error("File not found in vm_bypass: %s", e)
                     pass  # Key doesn't exist, good
                 except (OSError, ValueError, RuntimeError) as e:
                     self.logger.warning(f"Could not delete registry key {path}: {str(e)}")
@@ -435,7 +447,8 @@ class VirtualizationDetectionBypass:
                             winreg.DeleteValue(key, name)
                             self.logger.info(f"Deleted registry value {path}\\{name}")
                             modifications_applied += 1
-                        except FileNotFoundError:
+                        except FileNotFoundError as e:
+                            logger.error("File not found in vm_bypass: %s", e)
                             pass  # Value doesn't exist, good
                     else:
                         # Set the value
@@ -658,6 +671,7 @@ class VMDetector:
     def _get_vm_driver_path(self, driver_name: str) -> str:
         """Get Windows VM driver path dynamically for detection."""
         import os
+
         # Common driver paths on Windows
         driver_paths = [
             os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'System32', 'drivers', driver_name),
@@ -766,25 +780,25 @@ class VMDetector:
 
     def generate_bypass(self, vm_type: str) -> Dict[str, Any]:
         """Generate VM detection bypass strategy.
-        
+
         Args:
             vm_type: Type of VM to bypass (vmware, virtualbox, qemu, etc.)
-            
+
         Returns:
             Dict[str, Any]: Bypass strategy and implementation details
         """
         try:
             self.logger.info("Generating VM detection bypass for: %s", vm_type)
-            
+
             # Normalize VM type
             vm_type_lower = vm_type.lower()
-            
+
             # VM-specific bypass strategies
             bypass_techniques = []
             registry_modifications = []
             file_operations = []
             environment_changes = []
-            
+
             if "vmware" in vm_type_lower:
                 bypass_techniques.extend([
                     "Hook VMware detection APIs",
@@ -801,7 +815,7 @@ class VMDetector:
                     "Hide VMware driver files",
                     "Spoof system BIOS information"
                 ])
-                
+
             elif "virtualbox" in vm_type_lower or "vbox" in vm_type_lower:
                 bypass_techniques.extend([
                     "Hook VirtualBox guest additions",
@@ -818,15 +832,15 @@ class VMDetector:
                     "Spoof mouse and video drivers",
                     "Modify hardware device names"
                 ])
-                
+
             elif "qemu" in vm_type_lower:
                 bypass_techniques.extend([
                     "Spoof QEMU hardware signatures",
-                    "Hide QEMU processes and services", 
+                    "Hide QEMU processes and services",
                     "Modify ACPI and DMI information",
                     "Hook QEMU-specific instructions"
                 ])
-                
+
             else:
                 # Generic bypass techniques
                 bypass_techniques.extend([
@@ -835,15 +849,15 @@ class VMDetector:
                     "Hide VM-related processes and services",
                     "Modify system timing characteristics"
                 ])
-            
+
             # Generate implementation script
             script_content = self._generate_bypass_script(
                 vm_type, bypass_techniques, registry_modifications, file_operations
             )
-            
+
             # Estimate success probability based on complexity
             success_probability = self._calculate_success_probability(vm_type, bypass_techniques)
-            
+
             return {
                 "vm_type": vm_type,
                 "bypass_method": "multi-technique",
@@ -862,7 +876,7 @@ class VMDetector:
                 "estimated_duration": f"{len(bypass_techniques) * 2}-{len(bypass_techniques) * 5} minutes",
                 "risk_level": "high" if "registry" in str(registry_modifications).lower() else "medium"
             }
-            
+
         except Exception as e:
             self.logger.error("VM bypass generation failed: %s", e)
             return {
@@ -874,8 +888,8 @@ class VMDetector:
                 "techniques": [],
                 "stealth_level": "none"
             }
-    
-    def _generate_bypass_script(self, vm_type: str, techniques: List[str], 
+
+    def _generate_bypass_script(self, vm_type: str, techniques: List[str],
                                registry_mods: List[str], file_ops: List[str]) -> str:
         """Generate implementation script for VM detection bypass."""
         script_lines = [
@@ -883,7 +897,7 @@ class VMDetector:
             "# Generated by Intellicrack VMDetector",
             "",
             "import os",
-            "import sys", 
+            "import sys",
             "import winreg",
             "import subprocess",
             "",
@@ -892,7 +906,7 @@ class VMDetector:
             "    print(f'Applying bypass for {vm_type}...')",
             ""
         ]
-        
+
         # Add registry modifications
         if registry_mods:
             script_lines.extend([
@@ -907,7 +921,7 @@ class VMDetector:
                 "        print(f'Registry modification failed: {e}')",
                 ""
             ])
-        
+
         # Add file operations
         if file_ops:
             script_lines.extend([
@@ -921,28 +935,28 @@ class VMDetector:
                 "        print(f'File operation failed: {e}')",
                 ""
             ])
-        
+
         script_lines.extend([
             "    print('VM bypass application completed')",
             "",
             "if __name__ == '__main__':",
             "    apply_vm_bypass()"
         ])
-        
+
         return "\n".join(script_lines)
-    
+
     def _calculate_success_probability(self, vm_type: str, techniques: List[str]) -> float:
         """Calculate estimated success probability for bypass."""
         base_probability = 0.3  # Base 30% success rate
-        
+
         # Boost for known VM types
         if vm_type.lower() in ["vmware", "virtualbox", "vbox"]:
             base_probability += 0.3
-        
+
         # Boost for number of techniques
         technique_boost = min(len(techniques) * 0.1, 0.4)
         base_probability += technique_boost
-        
+
         # Cap at 85% maximum
         return min(base_probability, 0.85)
 

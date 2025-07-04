@@ -24,8 +24,6 @@ import logging
 import time
 from typing import Any, Dict, Optional
 
-from PyQt5.QtCore import QTimer
-
 from ..ui.common_imports import (
     PYQT5_AVAILABLE,
     QFont,
@@ -397,7 +395,8 @@ class PerformanceWidget(QWidget if PYQT5_AVAILABLE else object):
             memory = psutil.virtual_memory()
             self.system_memory_label.setText(f"{memory.percent:.1f}%")
             self.system_memory_progress.setValue(int(memory.percent))
-        except ImportError:
+        except ImportError as e:
+            self.logger.error("Import error in performance_monitor: %s", e)
             self.system_memory_label.setText("N/A (psutil not available)")
             self.system_memory_progress.setValue(50)  # Default to 50%
 

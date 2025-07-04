@@ -9,19 +9,21 @@ Copyright (C) 2025 Zachary Flint
 
 import asyncio
 import logging
-import os
 from typing import Any, Dict, Optional
+
+from .secrets_manager import get_secret
+
+logger = logging.getLogger(__name__)
 
 try:
     import aiohttp
     from aiohttp import ClientTimeout
     HAS_AIOHTTP = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in api_client: %s", e)
     aiohttp = None
     ClientTimeout = None
     HAS_AIOHTTP = False
-
-logger = logging.getLogger(__name__)
 
 
 class APIClient:
@@ -30,10 +32,10 @@ class APIClient:
     def __init__(self, base_url: Optional[str] = None):
         if not HAS_AIOHTTP:
             logger.warning("aiohttp not available - API client will use fallback implementation")
-        self.base_url = base_url or os.environ.get('API_BASE_URL', 'https://api.intellicrack.com')
-        self.timeout = int(os.environ.get('API_TIMEOUT', '60'))
-        self.retry_attempts = int(os.environ.get('API_RETRY_ATTEMPTS', '3'))
-        self.retry_delay = int(os.environ.get('API_RETRY_DELAY', '1000')) / 1000  # Convert ms to seconds
+        self.base_url = base_url or get_secret('API_BASE_URL', 'https://api.intellicrack.com')
+        self.timeout = int(get_secret('API_TIMEOUT', '60'))
+        self.retry_attempts = int(get_secret('API_RETRY_ATTEMPTS', '3'))
+        self.retry_delay = int(get_secret('API_RETRY_DELAY', '1000')) / 1000  # Convert ms to seconds
         self.session = None
 
     async def __aenter__(self):
@@ -87,7 +89,7 @@ class APIClient:
         }
 
         # Add API key if available
-        api_key = os.environ.get('API_KEY')
+        api_key = get_secret('API_KEY')
         if api_key:
             default_headers['Authorization'] = f'Bearer {api_key}'
 
@@ -111,8 +113,8 @@ class APIClient:
                         try:
                             error_data = await response.json()
                             error_msg = f"{error_msg} - {error_data.get('error', error_data)}"
-                        except:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"Failed to parse error response: {e}")
 
                         # Don't retry client errors (4xx)
                         if 400 <= response.status < 500:

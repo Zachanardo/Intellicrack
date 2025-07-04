@@ -32,18 +32,18 @@ from typing import Any, Dict, List, Optional
 # Local imports
 try:
     from ..utils.logger import get_logger
-    from .ml_predictor import MLVulnerabilityPredictor
+    logger = get_logger(__name__)
     from .model_manager_module import ModelManager
     from .orchestrator import AIEventBus, AISharedContext
-except ImportError:
+except ImportError as e:
+    # Create a basic logger if get_logger fails
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.error("Import error in coordination_layer: %s", e)
     # Fallback for testing
-    MLVulnerabilityPredictor = None
     ModelManager = None
     AISharedContext = None
     AIEventBus = None
-
-
-logger = get_logger(__name__)
 
 
 class AnalysisStrategy(Enum):
@@ -83,27 +83,24 @@ class CoordinatedResult:
 
 class AICoordinationLayer:
     """
-    Coordination layer between fast ML models and intelligent LLMs.
+    Coordination layer for intelligent LLMs.
 
-    This class orchestrates the interaction between:
-    - MLVulnerabilityPredictor: Fast, specific vulnerability detection
+    This class orchestrates the interaction with:
     - ModelManager: Intelligent LLM reasoning and complex analysis
 
-    It maintains the performance characteristics of each while enabling
-    intelligent workflows that leverage both capabilities.
+    It maintains performance characteristics while enabling
+    intelligent workflows that leverage LLM capabilities.
     """
 
     def __init__(self, shared_context: Optional[AISharedContext] = None,
                  event_bus: Optional[AIEventBus] = None):
         """Initialize the coordination layer."""
-        self.logger = logging.getLogger(__name__)
-        self.logger.info("Initializing AI Coordination Layer...")
+        logger.info("Initializing AI Coordination Layer...")
 
         self.shared_context = shared_context or AISharedContext()
         self.event_bus = event_bus or AIEventBus()
 
         # Initialize components
-        self.ml_predictor = None
         self.model_manager = None
         self._llm_manager = None
         self._initialize_components()
@@ -125,17 +122,7 @@ class AICoordinationLayer:
         logger.info("AI Coordination Layer initialized")
 
     def _initialize_components(self):
-        """Initialize ML and LLM components."""
-        # Initialize ML predictor
-        try:
-            if MLVulnerabilityPredictor:
-                self.ml_predictor = MLVulnerabilityPredictor()
-                logger.info("ML Predictor initialized in coordination layer")
-            else:
-                logger.warning("ML Predictor not available")
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to initialize ML Predictor: %s", e)
-
+        """Initialize LLM components."""
         # Initialize model manager
         try:
             if ModelManager:
@@ -183,7 +170,8 @@ class AICoordinationLayer:
             else:
                 return AnalysisStrategy.ML_FIRST  # Default to ML first
 
-        except (OSError, ValueError, RuntimeError):
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in coordination_layer: %s", e)
             return AnalysisStrategy.ML_FIRST
 
     def analyze_vulnerabilities(self, request: AnalysisRequest) -> CoordinatedResult:
@@ -196,7 +184,8 @@ class AICoordinationLayer:
         start_time = time.time()
         strategy = self._choose_strategy(request)
 
-        logger.info("Starting coordinated vulnerability analysis with strategy: %s", strategy)
+        logger.info(
+            "Starting coordinated vulnerability analysis with strategy: %s", strategy)
 
         # Check cache first
         cache_key = self._get_cache_key(request)
@@ -240,7 +229,8 @@ class AICoordinationLayer:
                 "escalated": result.escalated
             }, "coordination_layer")
 
-            logger.info("Coordinated analysis complete in %fs", result.processing_time)
+            logger.info("Coordinated analysis complete in %fs",
+                        result.processing_time)
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -249,53 +239,15 @@ class AICoordinationLayer:
             return result
 
     def _ml_first_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
-        """Execute ML-first analysis strategy."""
-        logger.debug("Executing ML-first analysis strategy")
+        """Execute LLM-only analysis (ML functionality removed)."""
+        logger.debug("ML functionality has been removed, using LLM-only analysis")
 
-        # Step 1: Fast ML analysis
-        if self.ml_predictor:
-            ml_start = time.time()
-            try:
-                # Check if method exists, fallback to alternative
-                if hasattr(self.ml_predictor, 'predict_vulnerabilities'):
-                    ml_results = self.ml_predictor.predict_vulnerabilities(request.binary_path)
-                elif hasattr(self.ml_predictor, 'predict'):
-                    ml_results = self.ml_predictor.predict(request.binary_path)
-                else:
-                    raise AttributeError("No prediction method available")
-                result.ml_results = ml_results
-
-                ml_time = time.time() - ml_start
-                self.performance_stats["ml_calls"] += 1
-                self.performance_stats["avg_ml_time"] = (
-                    (self.performance_stats["avg_ml_time"] * (self.performance_stats["ml_calls"] - 1) + ml_time) /
-                    self.performance_stats["ml_calls"]
-                )
-
-                # Check if escalation to LLM is needed
-                ml_confidence = ml_results.get("confidence", 0.0)
-                vulnerability_count = len(ml_results.get("vulnerabilities", []))
-
-                should_escalate = (
-                    ml_confidence < request.confidence_threshold or
-                    vulnerability_count > 5 or  # Many vulnerabilities need deeper analysis
-                    any(_vuln.get("severity") == "critical" for _vuln in ml_results.get("vulnerabilities", []))
-                )
-
-                if should_escalate and self.model_manager:
-                    logger.info("Escalating to LLM analysis (ML confidence: %f)", ml_confidence)
-                    result = self._add_llm_analysis(request, result)
-                    result.escalated = True
-                    self.performance_stats["escalations"] += 1
-                else:
-                    result.combined_confidence = ml_confidence
-
-            except (OSError, ValueError, RuntimeError) as e:
-                logger.error("ML analysis failed: %s", e)
-                if self.model_manager:
-                    # Fallback to LLM analysis
-                    result = self._add_llm_analysis(request, result)
-                    result.escalated = True
+        # Since ML is removed, go directly to LLM analysis
+        if self.model_manager:
+            result = self._add_llm_analysis(request, result)
+        else:
+            logger.warning("No model manager available for analysis")
+            result.combined_confidence = 0.0
 
         return result
 
@@ -303,77 +255,32 @@ class AICoordinationLayer:
         """Execute LLM-first analysis strategy."""
         logger.debug("Executing LLM-first analysis strategy")
 
-        # Step 1: Deep LLM analysis
+        # Deep LLM analysis
         if self.model_manager:
             result = self._add_llm_analysis(request, result)
-
-            # Step 2: Use ML for validation/augmentation
-            if self.ml_predictor and result.llm_results:
-                try:
-                    # Check if method exists, fallback to alternative
-                    if hasattr(self.ml_predictor, 'predict_vulnerabilities'):
-                        ml_results = self.ml_predictor.predict_vulnerabilities(request.binary_path)
-                    elif hasattr(self.ml_predictor, 'predict'):
-                        ml_results = self.ml_predictor.predict(request.binary_path)
-                    else:
-                        raise AttributeError("No prediction method available")
-                    result.ml_results = ml_results
-
-                    # Combine confidences (weighted toward LLM)
-                    llm_confidence = result.llm_results.get("confidence", 0.8)
-                    ml_confidence = ml_results.get("confidence", 0.0)
-                    result.combined_confidence = 0.7 * llm_confidence + 0.3 * ml_confidence
-
-                except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("ML validation failed: %s", e)
+            
+            # Use LLM confidence directly (ML removed)
+            if result.llm_results:
+                result.combined_confidence = result.llm_results.get("confidence", 0.8)
+            else:
+                result.combined_confidence = 0.0
 
         return result
 
     def _parallel_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
-        """Execute parallel analysis strategy."""
-        logger.debug("Executing parallel analysis strategy")
+        """Execute LLM-only analysis (ML functionality removed)."""
+        logger.debug("ML functionality has been removed, using LLM-only analysis")
 
-        import queue
-
-        # Create and start analysis threads
-        ml_queue = queue.Queue()
-        llm_queue = queue.Queue()
-        threads = self._start_parallel_threads(request, ml_queue, llm_queue)
-
-        # Collect results with timeout
-        self._collect_parallel_results(request, result, ml_queue, llm_queue)
-
-        # Ensure threads complete
-        self._cleanup_threads(threads)
+        # Since ML is removed, just use LLM analysis
+        if self.model_manager:
+            result = self._add_llm_analysis(request, result)
+        else:
+            logger.warning("No model manager available for analysis")
+            result.combined_confidence = 0.0
 
         return result
 
-    def _start_parallel_threads(self, request: AnalysisRequest, ml_queue, llm_queue):
-        """Start ML and LLM analysis threads."""
-        ml_thread_obj = threading.Thread(target=self._ml_thread_worker, args=(request, ml_queue))  # pylint: disable=redefined-outer-name
-        llm_thread_obj = threading.Thread(target=self._llm_thread_worker, args=(request, llm_queue))  # pylint: disable=redefined-outer-name
 
-        ml_thread_obj.start()
-        llm_thread_obj.start()
-
-        return ml_thread_obj, llm_thread_obj
-
-    def _ml_thread_worker(self, request: AnalysisRequest, ml_queue):
-        """Worker function for ML analysis thread."""
-        if self.ml_predictor:
-            try:
-                # Check if method exists, fallback to alternative
-                if hasattr(self.ml_predictor, 'predict_vulnerabilities'):
-                    ml_results = self.ml_predictor.predict_vulnerabilities(request.binary_path)
-                elif hasattr(self.ml_predictor, 'predict'):
-                    ml_results = self.ml_predictor.predict(request.binary_path)
-                else:
-                    raise AttributeError("No prediction method available")
-                ml_queue.put(("success", ml_results))
-            except (OSError, ValueError, RuntimeError) as e:
-                ml_queue.put(("error", str(e)))
-        else:
-            ml_queue.put(("unavailable", None))
 
     def _llm_thread_worker(self, request: AnalysisRequest, llm_queue):
         """Worker function for LLM analysis thread."""
@@ -382,6 +289,7 @@ class AICoordinationLayer:
                 llm_results = self._perform_llm_analysis(request)
                 llm_queue.put(("success", llm_results))
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in coordination_layer: %s", e)
                 llm_queue.put(("error", str(e)))
         else:
             llm_queue.put(("unavailable", None))
@@ -392,12 +300,14 @@ class AICoordinationLayer:
 
         try:
             # Get ML results
-            ml_status, ml_data = ml_queue.get(timeout=request.max_processing_time / 2)
+            ml_status, ml_data = ml_queue.get(
+                timeout=request.max_processing_time / 2)
             if ml_status == "success":
                 result.ml_results = ml_data
 
             # Get LLM results
-            llm_status, llm_data = llm_queue.get(timeout=request.max_processing_time / 2)
+            llm_status, llm_data = llm_queue.get(
+                timeout=request.max_processing_time / 2)
             if llm_status == "success":
                 result.llm_results = llm_data
 
@@ -414,9 +324,11 @@ class AICoordinationLayer:
             llm_conf = result.llm_results.get("confidence", 0.0)
             result.combined_confidence = max(ml_conf, llm_conf)
         elif result.ml_results:
-            result.combined_confidence = result.ml_results.get("confidence", 0.0)
+            result.combined_confidence = result.ml_results.get(
+                "confidence", 0.0)
         elif result.llm_results:
-            result.combined_confidence = result.llm_results.get("confidence", 0.0)
+            result.combined_confidence = result.llm_results.get(
+                "confidence", 0.0)
 
     def _cleanup_threads(self, threads):
         """Ensure all threads complete gracefully."""
@@ -425,24 +337,14 @@ class AICoordinationLayer:
         llm_thread_obj.join(timeout=1)
 
     def _ml_only_analysis(self, request: AnalysisRequest, result: CoordinatedResult) -> CoordinatedResult:
-        """Execute ML-only analysis strategy."""
-        logger.debug("Executing ML-only analysis strategy")
+        """ML functionality has been removed - fallback to LLM."""
+        logger.debug("ML functionality has been removed, falling back to LLM analysis")
 
-        if self.ml_predictor:
-            try:
-                # Check if method exists, fallback to alternative
-                if hasattr(self.ml_predictor, 'predict_vulnerabilities'):
-                    ml_results = self.ml_predictor.predict_vulnerabilities(request.binary_path)
-                elif hasattr(self.ml_predictor, 'predict'):
-                    ml_results = self.ml_predictor.predict(request.binary_path)
-                else:
-                    raise AttributeError("No prediction method available")
-                result.ml_results = ml_results
-                result.combined_confidence = ml_results.get("confidence", 0.0)
-                self.performance_stats["ml_calls"] += 1
-
-            except (OSError, ValueError, RuntimeError) as e:
-                logger.error("ML-only analysis failed: %s", e)
+        if self.model_manager:
+            result = self._add_llm_analysis(request, result)
+        else:
+            logger.warning("No analysis methods available")
+            result.combined_confidence = 0.0
 
         return result
 
@@ -501,7 +403,7 @@ class AICoordinationLayer:
             # Get available LLMs
             available_llms = llm_manager.get_available_llms()
             if not available_llms:
-                self.logger.warning("No LLM backends available for analysis")
+                logger.warning("No LLM backends available for analysis")
                 return self._fallback_analysis(request)
 
             # Prepare binary analysis prompt
@@ -512,8 +414,8 @@ class AICoordinationLayer:
                 LLMMessage(
                     role="system",
                     content="You are a cybersecurity expert specializing in binary analysis and vulnerability research. "
-                           "Analyze the provided binary information and identify potential security vulnerabilities, "
-                           "exploitation techniques, and recommend appropriate security measures."
+                    "Analyze the provided binary information and identify potential security vulnerabilities, "
+                    "exploitation techniques, and recommend appropriate security measures."
                 ),
                 LLMMessage(
                     role="user",
@@ -526,18 +428,20 @@ class AICoordinationLayer:
 
             if response and response.content:
                 # Parse LLM response and structure it
-                analysis_result = self._parse_llm_response(response.content, request)
+                analysis_result = self._parse_llm_response(
+                    response.content, request)
 
                 # Increment performance stats
                 self.performance_stats["llm_calls"] += 1
 
                 return analysis_result
             else:
-                self.logger.warning("No response from LLM, using fallback analysis")
+                logger.warning(
+                    "No response from LLM, using fallback analysis")
                 return self._fallback_analysis(request)
 
         except Exception as e:
-            self.logger.error("LLM analysis failed: %s", e)
+            logger.error("LLM analysis failed: %s", e)
             return self._fallback_analysis(request)
 
     def _create_binary_analysis_prompt(self, request: AnalysisRequest) -> str:
@@ -565,15 +469,16 @@ class AICoordinationLayer:
                 try:
                     import subprocess
                     result = subprocess.run(['file', request.binary_path],
-                                          capture_output=True, text=True, timeout=5, check=False)
+                                            capture_output=True, text=True, timeout=5, check=False)
                     if result.returncode == 0:
-                        binary_info.append(f"File type: {result.stdout.strip()}")
+                        binary_info.append(
+                            f"File type: {result.stdout.strip()}")
                 except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError) as e:
                     logger.debug("File type detection failed: %s", e)
                     binary_info.append("File type: Detection unavailable")
 
         except Exception as e:
-            self.logger.debug("Error gathering binary info: %s", e)
+            logger.debug("Error gathering binary info: %s", e)
 
         # Build comprehensive prompt
         prompt = f"""
@@ -602,10 +507,12 @@ class AICoordinationLayer:
         # Extract key information from LLM response
         # Parse using common AI response parser
         from .response_parser import parse_attack_vector_response
-        vulnerabilities, recommendations, attack_vectors = parse_attack_vector_response(response_content)
+        vulnerabilities, recommendations, attack_vectors = parse_attack_vector_response(
+            response_content)
 
         # Calculate confidence based on response quality
-        confidence = min(0.95, 0.6 + (len(vulnerabilities) * 0.1) + (len(recommendations) * 0.05))
+        confidence = min(0.95, 0.6 + (len(vulnerabilities) *
+                         0.1) + (len(recommendations) * 0.05))
 
         return {
             "analysis_type": "llm_vulnerability_analysis",
@@ -616,7 +523,8 @@ class AICoordinationLayer:
             "recommendations": recommendations[:8],    # Limit to top 8
             "complex_patterns": [],  # Would be populated by more advanced analysis
             "reasoning": "Deep analysis performed using Large Language Model reasoning and pattern recognition",
-            "raw_response": response_content[:1000],  # Store first 1000 chars for debugging
+            # Store first 1000 chars for debugging
+            "raw_response": response_content[:1000],
             "analysis_timestamp": self._get_timestamp()
         }
 
@@ -655,7 +563,6 @@ class AICoordinationLayer:
             "avg_llm_time": self.performance_stats["avg_llm_time"],
             "cache_size": len(self.analysis_cache),
             "components_available": {
-                "ml_predictor": self.ml_predictor is not None,
                 "model_manager": self.model_manager is not None
             }
         }
@@ -683,7 +590,8 @@ class AICoordinationLayer:
             else:
                 return AnalysisStrategy.ADAPTIVE  # Let the system decide
 
-        except (OSError, ValueError, RuntimeError):
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in coordination_layer: %s", e)
             return AnalysisStrategy.ADAPTIVE
 
 

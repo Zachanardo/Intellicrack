@@ -69,6 +69,7 @@ class PayloadGenerationThread(QThread):
             self.finished.emit(result)
 
         except Exception as e:
+            self.logger.error("Exception in payload_generator_dialog: %s", e)
             self.error.emit(str(e))
 
 

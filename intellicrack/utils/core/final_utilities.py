@@ -1,3 +1,19 @@
+import hashlib
+import json
+import os
+import platform
+import socket
+import subprocess
+import threading
+import time
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
+
+from intellicrack.logger import logger
+
+from ..utils.logger import setup_logger
+from .common_imports import HAS_NUMPY, HAS_PYQT
+
 """
 Final utility functions to complete the Intellicrack refactoring.
 
@@ -20,38 +36,28 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import hashlib
-import json
-import os
-import platform
-import socket
-import subprocess
-import threading
-import time
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
 
 # Optional imports with graceful fallbacks
 try:
     import psutil
     HAS_PSUTIL = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in final_utilities: %s", e)
     HAS_PSUTIL = False
 
 try:
     import requests
     REQUESTS_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in final_utilities: %s", e)
     REQUESTS_AVAILABLE = False
 
-from .common_imports import HAS_NUMPY, HAS_PYQT
 
 if HAS_PYQT:
     from .common_imports import QApplication
 if HAS_NUMPY:
     pass
 
-from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -186,6 +192,7 @@ def monitor_memory(process_name: Optional[str] = None,
                 "percent": memory.percent
             }
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in final_utilities: %s", e)
         return {"error": str(e)}
 
 
@@ -429,10 +436,11 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
                         } for i in range(min(2, limit // 4))
                     ])
 
-            except ImportError:
+            except ImportError as e:
+                logger.error("Import error in final_utilities: %s", e)
                 continue
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error getting protocol handler requests: %s", e)
 
     return request_list[:limit]
@@ -474,7 +482,7 @@ def _get_network_interceptor_requests(limit: int) -> List[Dict[str, Any]]:
                 "connection_id": f"conn_{hash(f'{req_type}_{i}') % 10000}"
             })
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error getting network interceptor requests: %s", e)
 
     return request_list
@@ -486,9 +494,11 @@ def _get_cached_capture_requests(limit: int) -> List[Dict[str, Any]]:
 
     try:
         # Check multiple cache locations
+        from intellicrack.utils.core.plugin_paths import get_data_dir
+        data_dir = get_data_dir()
         cache_locations = [
             os.path.join(os.path.expanduser("~"), ".intellicrack", "cache", "network_captures.json"),
-            os.path.join(os.getcwd(), "captures", "network_log.json"),
+            str(data_dir / "captures" / "network_log.json"),
             os.path.join("/tmp", "intellicrack_network.json")
         ]
 
@@ -516,7 +526,7 @@ def _get_cached_capture_requests(limit: int) -> List[Dict[str, Any]]:
         if not request_list:
             request_list = _generate_example_cached_requests(limit)
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error getting cached requests: %s", e)
 
     return request_list[:limit]
@@ -548,7 +558,8 @@ def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
                             "connection_type": "system_monitored"
                         })
 
-            except (AttributeError, OSError):
+            except (AttributeError, OSError) as e:
+                logger.error("Error in final_utilities: %s", e)
                 pass
 
         # Add process-specific network activity
@@ -572,13 +583,15 @@ def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
                                     "process_pid": child.pid,
                                     "status": conn.status
                                 })
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                        logger.error("Error in final_utilities: %s", e)
                         continue
 
-            except (AttributeError, OSError):
+            except (AttributeError, OSError) as e:
+                logger.error("Error in final_utilities: %s", e)
                 pass
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error getting system network requests: %s", e)
 
     return request_list[:limit]
@@ -654,7 +667,7 @@ def _enhance_request_metadata(request: Dict[str, Any]) -> None:
             'size_category': _categorize_data_size(bytes_sent + bytes_received)
         }
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error enhancing request metadata: %s", e)
 
 
@@ -830,12 +843,14 @@ def sandbox_process(command: List[str], timeout: int = 60) -> Dict[str, Any]:
             "stderr": result.stderr,
             "returncode": result.returncode
         }
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as e:
+        logger.error("Subprocess timeout in final_utilities: %s", e)
         return {
             "success": False,
             "error": f"Process timed out after {timeout} seconds"
         }
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in final_utilities: %s", e)
         return {
             "success": False,
             "error": str(e)
@@ -1060,7 +1075,7 @@ def _validate_and_enhance_report(report_data: Dict[str, Any]) -> Optional[Dict[s
 
         return enhanced_report
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.error("Error validating report: %s", e)
         return None
 
@@ -1161,7 +1176,7 @@ def _submit_to_remote_endpoint(report_data: Dict[str, Any], endpoint: str, repor
                     "delivery_method": "http_post_unavailable"
                 }
 
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
             logger.error("HTTP submission failed: %s", e)
             return {
                 "status": "failed",
@@ -1171,7 +1186,7 @@ def _submit_to_remote_endpoint(report_data: Dict[str, Any], endpoint: str, repor
                 "delivery_method": "http_post"
             }
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.error("Remote submission error: %s", e)
         return {"status": "error", "error": str(e)}
 
@@ -1209,7 +1224,7 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
         try:
             if _save_report_as_csv(report_data, csv_path):
                 formats_saved.append({"format": "csv", "path": csv_path, "size": os.path.getsize(csv_path)})
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
             logger.debug("Could not save CSV format: %s", e)
 
         # 4. Compressed archive
@@ -1217,7 +1232,7 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
         try:
             if _create_report_archive(report_id, formats_saved, archive_path):
                 formats_saved.append({"format": "archive", "path": archive_path, "size": os.path.getsize(archive_path)})
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
             logger.debug("Could not create archive: %s", e)
 
         if formats_saved:
@@ -1236,7 +1251,7 @@ def _submit_to_local_storage(report_data: Dict[str, Any], report_id: str) -> Dic
                 "delivery_method": "local_storage"
             }
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.error("Local storage submission error: %s", e)
         return {"status": "error", "error": str(e)}
 
@@ -1261,7 +1276,7 @@ def _handle_additional_delivery_methods(report_data: Dict[str, Any], report_id: 
         if db_result:
             additional_deliveries.append(db_result)
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error in additional delivery methods: %s", e)
 
     return additional_deliveries
@@ -1313,13 +1328,14 @@ def _attempt_email_delivery(report_data: Dict[str, Any], report_id: str) -> Opti
                 "message": "Email sent successfully"
             }
 
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in final_utilities: %s", e)
             return {
                 "method": "email",
                 "status": "unavailable",
                 "message": "Email delivery requires Python's built-in smtplib"
             }
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
             logger.warning("Email delivery failed: %s", e)
             return {
                 "method": "email",
@@ -1328,7 +1344,7 @@ def _attempt_email_delivery(report_data: Dict[str, Any], report_id: str) -> Opti
                 "message": "Email delivery failed - check SMTP configuration"
             }
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.error("Email configuration error: %s", e)
         return None
 
@@ -1384,7 +1400,8 @@ def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optio
                     "provider": "aws_s3",
                     "message": "AWS SDK (boto3) not installed. Install with: pip install boto3"
                 }
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
+                logger.error("Error in final_utilities: %s", e)
                 return {
                     "method": "cloud_storage",
                     "status": "failed",
@@ -1429,7 +1446,8 @@ def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optio
                     "provider": "azure",
                     "message": "Azure SDK not installed. Install with: pip install azure-storage-blob"
                 }
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
+                logger.error("Error in final_utilities: %s", e)
                 return {
                     "method": "cloud_storage",
                     "status": "failed",
@@ -1445,13 +1463,15 @@ def _attempt_cloud_storage(report_data: Dict[str, Any], report_id: str) -> Optio
                 "message": f"Unsupported cloud provider: {provider}. Supported: aws_s3, azure"
             }
 
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        logger.error("json.JSONDecodeError in final_utilities: %s", e)
         return {
             "method": "cloud_storage",
             "status": "failed",
             "message": "Invalid cloud configuration JSON in INTELLICRACK_CLOUD_CONFIG"
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
+        logger.error("Error in final_utilities: %s", e)
         return {
             "method": "cloud_storage",
             "status": "failed",
@@ -1509,7 +1529,8 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
                     "message": f"Report stored in SQLite database: {db_path}"
                 }
 
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
+                logger.error("Error in final_utilities: %s", e)
                 return {
                     "method": "database",
                     "status": "failed",
@@ -1572,7 +1593,8 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
                     "database": "postgresql",
                     "message": "PostgreSQL driver not installed. Install with: pip install psycopg2-binary"
                 }
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
+                logger.error("Error in final_utilities: %s", e)
                 return {
                     "method": "database",
                     "status": "failed",
@@ -1621,7 +1643,8 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
                     "database": "mongodb",
                     "message": "MongoDB driver not installed. Install with: pip install pymongo"
                 }
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
+                logger.error("Error in final_utilities: %s", e)
                 return {
                     "method": "database",
                     "status": "failed",
@@ -1637,13 +1660,15 @@ def _attempt_database_storage(report_data: Dict[str, Any], report_id: str) -> Op
                 "message": f"Unsupported database type: {db_type}. Supported: sqlite, postgresql, mongodb"
             }
 
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        logger.error("json.JSONDecodeError in final_utilities: %s", e)
         return {
             "method": "database",
             "status": "failed",
             "message": "Invalid database configuration JSON in INTELLICRACK_DB_CONFIG"
         }
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
+        logger.error("Error in final_utilities: %s", e)
         return {
             "method": "database",
             "status": "failed",
@@ -1781,7 +1806,7 @@ def _save_report_as_csv(report_data: Dict[str, Any], csv_path: str) -> bool:
 
         return True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error saving CSV: %s", e)
         return False
 
@@ -1802,7 +1827,7 @@ def _create_report_archive(report_id: str, formats_saved: List[Dict[str, Any]], 
 
         return True
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error creating archive: %s", e)
         return False
 
@@ -1824,14 +1849,16 @@ def _create_submission_audit_trail(submission_result: Dict[str, Any], metadata: 
         logger.info("Audit trail: %s", json.dumps(audit_entry))
 
         # Save to audit file if possible
-        audit_file = os.path.join(os.getcwd(), "reports", "audit.log")
+        from intellicrack.utils.core.plugin_paths import get_reports_dir
+        audit_file = get_reports_dir() / "audit.log"
         try:
             with open(audit_file, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(audit_entry) + "\n")
-        except OSError:
+        except OSError as e:
+            logger.error("OS error in final_utilities: %s", e)
             pass  # Audit file not critical
 
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error creating audit trail: %s", e)
 
 

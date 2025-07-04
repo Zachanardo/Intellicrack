@@ -1,3 +1,7 @@
+import platform
+
+from intellicrack.logger import logger
+
 """
 Common import availability checks for Intellicrack.
 
@@ -5,34 +9,37 @@ This module consolidates repeated import checking patterns
 to avoid code duplication across modules.
 """
 
-import platform
 
 # Binary analysis libraries
 try:
     import pefile
     PEFILE_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     PEFILE_AVAILABLE = False
     pefile = None
 
 try:
     import lief
     LIEF_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     LIEF_AVAILABLE = False
     lief = None
 
 try:
     import capstone
     CAPSTONE_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     CAPSTONE_AVAILABLE = False
     capstone = None
 
 try:
     from elftools.elf.elffile import ELFFile
     PYELFTOOLS_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     PYELFTOOLS_AVAILABLE = False
     ELFFile = None
 
@@ -40,7 +47,8 @@ except ImportError:
 try:
     import psutil
     PSUTIL_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     PSUTIL_AVAILABLE = False
     psutil = None
 
@@ -48,7 +56,8 @@ except ImportError:
 try:
     import frida
     FRIDA_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     FRIDA_AVAILABLE = False
     frida = None
 
@@ -56,7 +65,8 @@ except ImportError:
 try:
     import matplotlib.pyplot as plt
     MATPLOTLIB_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     MATPLOTLIB_AVAILABLE = False
     plt = None
 
@@ -64,7 +74,8 @@ except ImportError:
 try:
     import pdfkit
     PDFKIT_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     PDFKIT_AVAILABLE = False
     pdfkit = None
 
@@ -72,7 +83,8 @@ except ImportError:
 try:
     import tensorflow as tf
     TENSORFLOW_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     TENSORFLOW_AVAILABLE = False
     tf = None
 
@@ -81,7 +93,8 @@ try:
     from PyQt5.QtCore import QThread, QTimer, pyqtSignal
     from PyQt5.QtWidgets import QApplication, QWidget
     HAS_PYQT = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     HAS_PYQT = False
     QThread = None
     QTimer = None
@@ -93,7 +106,8 @@ except ImportError:
 try:
     import numpy as np
     HAS_NUMPY = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     HAS_NUMPY = False
     np = None
 
@@ -105,7 +119,8 @@ try:
     else:
         WINREG_AVAILABLE = False
         winreg = None
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in import_checks: %s", e)
     WINREG_AVAILABLE = False
     winreg = None
 

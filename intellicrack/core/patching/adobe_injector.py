@@ -1,3 +1,19 @@
+import logging
+import os
+import struct
+import sys
+import time
+from typing import Any, Dict, List, Optional, Set
+
+from intellicrack.logger import logger
+
+from ...utils.constants import ADOBE_PROCESSES
+from ...utils.logger import get_logger
+from .early_bird_injection import perform_early_bird_injection
+from .kernel_injection import inject_via_kernel_driver
+from .process_hollowing import perform_process_hollowing
+from .syscalls import inject_using_syscalls
+
 """
 Adobe License Bypass Module
 
@@ -20,17 +36,13 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import os
-import struct
-import sys
-import time
-from typing import Any, Dict, List, Optional, Set
 
 try:
     import frida
     import psutil
     DEPENDENCIES_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in adobe_injector: %s", e)
     DEPENDENCIES_AVAILABLE = False
     psutil = None
     frida = None
@@ -38,16 +50,11 @@ except ImportError:
 try:
     import pefile
     PE_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in adobe_injector: %s", e)
     PE_AVAILABLE = False
     pefile = None
 
-from ...utils.constants import ADOBE_PROCESSES
-from ...utils.logger import get_logger
-from .early_bird_injection import perform_early_bird_injection
-from .kernel_injection import inject_via_kernel_driver
-from .process_hollowing import perform_process_hollowing
-from .syscalls import inject_using_syscalls
 
 # Windows API availability check will be done later with Windows-specific imports
 
@@ -137,7 +144,8 @@ if sys.platform == 'win32':
                 ("UniqueProcessId", ctypes.c_ulong),
                 ("InheritedFromUniqueProcessId", ctypes.c_ulong)
             ]
-    except (ImportError, OSError):
+    except (ImportError, OSError) as e:
+        logger.error("Error in adobe_injector: %s", e)
         THREADENTRY32 = None
         MODULEENTRY32 = None
         PROCESS_BASIC_INFORMATION = None
@@ -186,6 +194,7 @@ for (let name of targets) {
         self.injected: Set[str] = set()
         self.running = False
         self._active_hooks: List[tuple] = []
+        self.logger = logging.getLogger(__name__ + ".AdobeInjector")
 
         if not DEPENDENCIES_AVAILABLE:
             logger.warning("Adobe injector dependencies not available (psutil, frida)")
@@ -232,7 +241,8 @@ for (let name of targets) {
                     pname = _proc.info['name']
                     if pname in self.ADOBE_PROCESSES and pname not in self.injected:
                         running.append(pname)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    self.logger.error("Error in adobe_injector: %s", e)
                     continue
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error scanning processes: %s", e)
@@ -291,7 +301,8 @@ for (let name of targets) {
                     handle = KERNEL32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
                     if handle:
                         return handle
-        except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
+        except (psutil.NoSuchProcess, psutil.AccessDenied, OSError) as e:
+            self.logger.error("Error in adobe_injector: %s", e)
             pass
 
         return None
@@ -368,14 +379,14 @@ for (let name of targets) {
             KERNEL32.VirtualFreeEx(process_handle, remote_memory, 0, 0x8000)
 
             if thread_success:
-                logger.info(f"Successfully injected DLL: {dll_path}")
+                logger.info("Successfully injected DLL: %s", dll_path)
                 return True
             else:
                 logger.error("Failed to create remote thread")
                 return False
 
         except Exception as e:
-            logger.error(f"Exception during DLL injection: {e}")
+            logger.error("Exception during DLL injection: %s", e)
             return False
 
     def _create_remote_thread(self, process_handle: int, start_address: int, parameter: int = 0) -> bool:
@@ -421,14 +432,14 @@ for (let name of targets) {
             KERNEL32.CloseHandle(thread_handle)
 
             if wait_result == 0:  # WAIT_OBJECT_0
-                logger.info(f"Remote thread completed with exit code: {exit_code.value}")
+                logger.info("Remote thread completed with exit code: %s", exit_code.value)
                 return True
             else:
-                logger.warning(f"Remote thread wait result: {wait_result}")
+                logger.warning("Remote thread wait result: %s", wait_result)
                 return False
 
         except Exception as e:
-            logger.error(f"Exception during remote thread creation: {e}")
+            logger.error("Exception during remote thread creation: %s", e)
             return False
 
     def inject_dll_windows_api(self, target_name: str, dll_path: str) -> bool:
@@ -449,7 +460,7 @@ for (let name of targets) {
         # Get process handle
         process_handle = self._get_process_handle(target_name)
         if not process_handle:
-            logger.error(f"Failed to get handle for process: {target_name}")
+            logger.error("Failed to get handle for process: %s", target_name)
             return False
 
         try:
@@ -487,7 +498,7 @@ for (let name of targets) {
             # Get process handle
             process_handle = self._get_process_handle(target_name)
             if not process_handle:
-                logger.error(f"Failed to get handle for process: {target_name}")
+                logger.error("Failed to get handle for process: %s", target_name)
                 return False
 
             try:
@@ -510,7 +521,7 @@ for (let name of targets) {
                     logger.error("Failed to allocate memory for manual mapping")
                     return False
 
-                logger.info(f"Allocated {image_size} bytes at {hex(remote_base)}")
+                logger.info("Allocated %s bytes at %s", image_size, hex(remote_base))
 
                 # Map sections
                 if not self._map_sections(process_handle, pe, dll_data, remote_base):
@@ -542,7 +553,7 @@ for (let name of targets) {
                 KERNEL32.CloseHandle(process_handle)
 
         except Exception as e:
-            logger.error(f"Manual mapping failed: {e}")
+            logger.error("Manual mapping failed: %s", e)
             return False
 
     def _map_sections(self, process_handle: int, pe: Any, dll_data: bytes,
@@ -581,15 +592,15 @@ for (let name of targets) {
                     )
 
                     if not success:
-                        logger.error(f"Failed to write section {section.Name}")
+                        logger.error("Failed to write section %s", section.Name)
                         return False
 
-                    logger.debug(f"Mapped section {section.Name} to {hex(section_addr)}")
+                    logger.debug("Mapped section %s to %s", section.Name, hex(section_addr))
 
             return True
 
         except Exception as e:
-            logger.error(f"Section mapping failed: {e}")
+            logger.error("Section mapping failed: %s", e)
             return False
 
     def _process_relocations(self, process_handle: int, pe: Any,
@@ -661,7 +672,7 @@ for (let name of targets) {
             return True
 
         except Exception as e:
-            logger.error(f"Relocation processing failed: {e}")
+            logger.error("Relocation processing failed: %s", e)
             return False
 
     def _resolve_imports(self, process_handle: int, pe: Any,
@@ -682,7 +693,7 @@ for (let name of targets) {
                     # Try to load the DLL
                     dll_handle = KERNEL32.LoadLibraryW(dll_name)
                     if not dll_handle:
-                        logger.error(f"Failed to load import DLL: {dll_name}")
+                        logger.error("Failed to load import DLL: %s", dll_name)
                         continue
 
                 # Process each import
@@ -696,7 +707,7 @@ for (let name of targets) {
                                                            imp.name.encode('utf-8'))
 
                     if not func_addr:
-                        logger.warning(f"Failed to resolve import: {imp.name or imp.ordinal}")
+                        logger.warning("Failed to resolve import: %s", imp.name or imp.ordinal)
                         continue
 
                     # Write to IAT
@@ -717,7 +728,7 @@ for (let name of targets) {
             return True
 
         except Exception as e:
-            logger.error(f"Import resolution failed: {e}")
+            logger.error("Import resolution failed: %s", e)
             return False
 
     def _execute_tls_callbacks(self, process_handle: int, pe: Any,
@@ -760,7 +771,7 @@ for (let name of targets) {
                 callback_addr += 8 if getattr(pe, 'PE_TYPE', 0) == getattr(pefile, 'OPTIONAL_HEADER_MAGIC_PE_PLUS', 0x20b) else 4
 
         except Exception as e:
-            logger.debug(f"TLS callback execution error (non-critical): {e}")
+            logger.debug("TLS callback execution error (non-critical): %s", e)
 
     def _call_dll_entry(self, process_handle: int, pe: Any,
                        remote_base: int) -> bool:
@@ -803,7 +814,7 @@ for (let name of targets) {
             return True
 
         except Exception as e:
-            logger.error(f"Entry point execution failed: {e}")
+            logger.error("Entry point execution failed: %s", e)
             return False
 
     def is_process_64bit(self, process_handle: int) -> Optional[bool]:
@@ -839,7 +850,7 @@ for (let name of targets) {
             return None
 
         except Exception as e:
-            logger.error(f"Failed to check process architecture: {e}")
+            logger.error("Failed to check process architecture: %s", e)
             return None
 
     def is_dll_64bit(self, dll_path: str) -> Optional[bool]:
@@ -864,11 +875,11 @@ for (let name of targets) {
             elif machine == 0x014c:  # IMAGE_FILE_MACHINE_I386
                 return False
             else:
-                logger.warning(f"Unknown machine type: {hex(machine)}")
+                logger.warning("Unknown machine type: %s", hex(machine))
                 return None
 
         except Exception as e:
-            logger.error(f"Failed to check DLL architecture: {e}")
+            logger.error("Failed to check DLL architecture: %s", e)
             return None
 
     def inject_wow64(self, target_name: str, dll_path: str) -> bool:
@@ -890,7 +901,7 @@ for (let name of targets) {
             # Get process handle for architecture checking
             process_handle = self._get_process_handle(target_name)
             if not process_handle:
-                logger.error(f"Failed to get handle for process: {target_name}")
+                logger.error("Failed to get handle for process: %s", target_name)
                 return False
 
             try:
@@ -924,7 +935,7 @@ for (let name of targets) {
                 KERNEL32.CloseHandle(process_handle)
 
         except Exception as e:
-            logger.error(f"WOW64 injection failed: {e}")
+            logger.error("WOW64 injection failed: %s", e)
             return False
 
     def _inject_wow64_32bit(self, process_handle: int, dll_path: str) -> bool:
@@ -1013,7 +1024,7 @@ for (let name of targets) {
                 return False
 
         except Exception as e:
-            logger.error(f"WOW64 32-bit injection failed: {e}")
+            logger.error("WOW64 32-bit injection failed: %s", e)
             return False
 
     def _inject_heavens_gate_64bit(self, process_handle: int, dll_path: str) -> bool:
@@ -1056,7 +1067,7 @@ for (let name of targets) {
                 )
 
                 if status != 0:
-                    logger.error(f"NtWow64AllocateVirtualMemory64 failed: {hex(status)}")
+                    logger.error("NtWow64AllocateVirtualMemory64 failed: %s", hex(status))
                     return False
             else:
                 # Manual Heaven's Gate implementation using direct 64-bit syscalls
@@ -1074,7 +1085,7 @@ for (let name of targets) {
                 )
 
                 if status != 0:
-                    logger.error(f"NtWow64WriteVirtualMemory64 failed: {hex(status)}")
+                    logger.error("NtWow64WriteVirtualMemory64 failed: %s", hex(status))
                     return False
             else:
                 logger.error("Cannot write to 64-bit process from 32-bit without Wow64 functions")
@@ -1110,7 +1121,7 @@ for (let name of targets) {
                     ntdll.NtClose(thread_handle.value)
                     return True
                 else:
-                    logger.error(f"NtWow64CreateThreadEx64 failed: {hex(status)}")
+                    logger.error("NtWow64CreateThreadEx64 failed: %s", hex(status))
                     return False
             else:
                 # Use manual shellcode injection
@@ -1119,7 +1130,7 @@ for (let name of targets) {
                 )
 
         except Exception as e:
-            logger.error(f"Heaven's Gate injection failed: {e}")
+            logger.error("Heaven's Gate injection failed: %s", e)
             return False
 
     def _manual_heavens_gate_injection(self, process_handle: int, dll_path_bytes: bytes) -> bool:
@@ -1180,7 +1191,7 @@ for (let name of targets) {
                 return False
 
         except Exception as e:
-            logger.error(f"Manual Heaven's Gate failed: {e}")
+            logger.error("Manual Heaven's Gate failed: %s", e)
             return False
 
     def _generate_heavens_gate_shellcode(self, dll_path_bytes: bytes) -> bytes:
@@ -1251,7 +1262,7 @@ for (let name of targets) {
         # Embed DLL path at the end
         shellcode.extend(dll_path_bytes)
 
-        logger.debug(f"Generated Heaven's Gate shellcode: {len(shellcode)} bytes")
+        logger.debug("Generated Heaven's Gate shellcode: %s bytes", len(shellcode))
         return bytes(shellcode)
 
     def _get_64bit_loadlibrary_address(self) -> int:
@@ -1268,7 +1279,7 @@ for (let name of targets) {
                 # Fallback: try to get address through other means
                 return 0x77770000  # Typical kernel32 base on x64 (approximate)
         except Exception as e:
-            logger.debug(f"Failed to get 64-bit LoadLibraryA address: {e}")
+            logger.debug("Failed to get 64-bit LoadLibraryA address: %s", e)
             return 0
 
     def _execute_heavens_gate_shellcode(self, process_handle: int,
@@ -1326,7 +1337,7 @@ for (let name of targets) {
             return result
 
         except Exception as e:
-            logger.debug(f"Heaven's Gate shellcode execution failed: {e}")
+            logger.debug("Heaven's Gate shellcode execution failed: %s", e)
             return False
 
     def _generate_thread_creation_shellcode(self, dll_addr: int,
@@ -1397,7 +1408,7 @@ for (let name of targets) {
             # Get process handle
             process_handle = self._get_process_handle(target_name)
             if not process_handle:
-                logger.error(f"Process not found: {target_name}")
+                logger.error("Process not found: %s", target_name)
                 return result
 
             result['process_found'] = True
@@ -1413,7 +1424,7 @@ for (let name of targets) {
                         if dll_name.lower() in module['name'].lower():
                             result['dll_loaded'] = True
                             result['dll_path'] = module['path']
-                            logger.info(f"Found injected DLL: {module['path']}")
+                            logger.info("Found injected DLL: %s", module['path'])
                             break
                 else:
                     # Check for any non-system DLLs
@@ -1421,7 +1432,7 @@ for (let name of targets) {
                         if not self._is_system_dll(module['path']):
                             result['dll_loaded'] = True
                             result['dll_path'] = module['path']
-                            logger.info(f"Found injected DLL: {module['path']}")
+                            logger.info("Found injected DLL: %s", module['path'])
 
                 # Verify hooks if requested
                 if check_hooks and result['dll_loaded']:
@@ -1433,7 +1444,7 @@ for (let name of targets) {
                 KERNEL32.CloseHandle(process_handle)
 
         except Exception as e:
-            logger.error(f"Injection verification failed: {e}")
+            logger.error("Injection verification failed: %s", e)
 
         return result
 
@@ -1480,7 +1491,7 @@ for (let name of targets) {
                 KERNEL32.CloseHandle(snapshot)
 
         except Exception as e:
-            logger.error(f"Module enumeration failed: {e}")
+            logger.error("Module enumeration failed: %s", e)
 
         return modules
 
@@ -1513,7 +1524,7 @@ for (let name of targets) {
             return process_id.value
 
         except Exception as e:
-            logger.error(f"Failed to get process ID: {e}")
+            logger.error("Failed to get process ID: %s", e)
             return 0
 
     def _is_system_dll(self, dll_path: str) -> bool:
@@ -1565,7 +1576,7 @@ for (let name of targets) {
                     hook_info['details'].extend(inline_hooks)
 
         except Exception as e:
-            logger.error(f"Hook verification failed: {e}")
+            logger.error("Hook verification failed: %s", e)
 
         return hook_info
 
@@ -1604,7 +1615,7 @@ for (let name of targets) {
                     return True
 
         except Exception as e:
-            logger.debug(f"Hook check failed for {dll_name}!{func_name}: {e}")
+            logger.debug("Hook check failed for %s!%s: %s", dll_name, func_name, e)
 
         return False
 
@@ -1613,7 +1624,7 @@ for (let name of targets) {
         inline_hooks = []
 
         # Log process handle for debugging hook detection
-        logger.debug(f"Checking inline hooks for process handle: {process_handle}")
+        logger.debug("Checking inline hooks for process handle: %s", process_handle)
 
         # This is a simplified check - real implementation would be more thorough
         try:
@@ -1627,12 +1638,12 @@ for (let name of targets) {
             # Attempt to get basic process information to validate handle
             pid = self._get_process_id(process_handle)
             if pid:
-                logger.debug(f"Performing inline hook check for PID: {pid}")
+                logger.debug("Performing inline hook check for PID: %s", pid)
             else:
                 logger.warning("Could not retrieve process ID for inline hook check")
 
         except Exception as e:
-            logger.debug(f"Inline hook check failed: {e}")
+            logger.debug("Inline hook check failed: %s", e)
 
         return inline_hooks
 
@@ -1661,13 +1672,13 @@ for (let name of targets) {
             # Get target thread ID
             thread_id = self._get_target_thread_id(target_name)
             if not thread_id:
-                logger.error(f"Failed to get thread ID for process: {target_name}")
+                logger.error("Failed to get thread ID for process: %s", target_name)
                 return False
 
             # Load the DLL
             dll_handle = KERNEL32.LoadLibraryW(dll_path)
             if not dll_handle:
-                logger.error(f"Failed to load DLL: {dll_path}")
+                logger.error("Failed to load DLL: %s", dll_path)
                 return False
 
             try:
@@ -1680,7 +1691,7 @@ for (let name of targets) {
                     # Try generic hook procedure
                     hook_proc = KERNEL32.GetProcAddress(dll_handle, b"HookProc")
                     if not hook_proc:
-                        logger.error(f"DLL must export {hook_proc_name} or HookProc function")
+                        logger.error("DLL must export %s or HookProc function", hook_proc_name)
                         return False
 
                 # Set the hook
@@ -1693,10 +1704,10 @@ for (let name of targets) {
 
                 if not hook_handle:
                     error = ctypes.get_last_error()
-                    logger.error(f"SetWindowsHookEx failed with error: {error}")
+                    logger.error("SetWindowsHookEx failed with error: %s", error)
                     return False
 
-                logger.info(f"Successfully set {self._get_hook_type_name(hook_type)} hook")
+                logger.info("Successfully set %s hook", self._get_hook_type_name(hook_type))
 
                 # Store hook for cleanup
                 self._active_hooks.append((hook_handle, dll_handle))
@@ -1706,12 +1717,13 @@ for (let name of targets) {
 
                 return True
 
-            except Exception:
+            except Exception as e:
+                logger.error("Exception in adobe_injector: %s", e)
                 KERNEL32.FreeLibrary(dll_handle)
                 raise
 
         except Exception as e:
-            logger.error(f"SetWindowsHookEx injection failed: {e}")
+            logger.error("SetWindowsHookEx injection failed: %s", e)
             return False
 
     def _get_target_thread_id(self, process_name: str) -> int:
@@ -1747,7 +1759,7 @@ for (let name of targets) {
                         KERNEL32.CloseHandle(snapshot)
 
         except Exception as e:
-            logger.error(f"Failed to get thread ID: {e}")
+            logger.error("Failed to get thread ID: %s", e)
 
         return 0
 
@@ -1791,7 +1803,7 @@ for (let name of targets) {
                 nonlocal window_handle
                 window_handle = hwnd
                 # Log lparam for debugging injection context
-                logger.debug(f"Enumerating window {hwnd} with lparam {lparam} for thread {thread_id}")
+                logger.debug("Enumerating window %s with lparam %s for thread %s", hwnd, lparam, thread_id)
                 return False  # Stop enumeration
 
             # Create callback
@@ -1813,7 +1825,7 @@ for (let name of targets) {
                     USER32.PostMessageW(window_handle, WM_NULL, 0, 0)
 
         except Exception as e:
-            logger.debug(f"Hook trigger failed (non-critical): {e}")
+            logger.debug("Hook trigger failed (non-critical): %s", e)
 
     def unhook_all(self) -> None:
         """Remove all active hooks"""
@@ -1824,7 +1836,8 @@ for (let name of targets) {
             try:
                 USER32.UnhookWindowsHookEx(hook_handle)
                 KERNEL32.FreeLibrary(dll_handle)
-            except (OSError, Exception):
+            except (OSError, Exception) as e:
+                self.logger.error("Error in adobe_injector: %s", e)
                 pass
         self._active_hooks.clear()
 
@@ -1850,7 +1863,7 @@ for (let name of targets) {
             # Get process handle
             process_handle = self._get_process_handle(target_name)
             if not process_handle:
-                logger.error(f"Failed to get handle for process: {target_name}")
+                logger.error("Failed to get handle for process: %s", target_name)
                 return False
 
             try:
@@ -1919,7 +1932,7 @@ for (let name of targets) {
                             )
 
                             if result:
-                                logger.info(f"APC queued to thread {thread_id}")
+                                logger.info("APC queued to thread %s", thread_id)
                                 apc_queued = True
 
                                 # Force thread to alertable state if needed
@@ -1941,7 +1954,7 @@ for (let name of targets) {
                 KERNEL32.CloseHandle(process_handle)
 
         except Exception as e:
-            logger.error(f"APC injection failed: {e}")
+            logger.error("APC injection failed: %s", e)
             return False
 
     def _find_alertable_threads(self, process_name: str) -> List[int]:
@@ -1964,7 +1977,7 @@ for (let name of targets) {
             return self._get_all_threads(process_name)[:3]  # Return first 3 threads
 
         except Exception as e:
-            logger.debug(f"Failed to find alertable threads: {e}")
+            logger.debug("Failed to find alertable threads: %s", e)
             return alertable_threads
 
     def _get_all_threads(self, process_name: str) -> List[int]:
@@ -2007,7 +2020,7 @@ for (let name of targets) {
                 KERNEL32.CloseHandle(snapshot)
 
         except Exception as e:
-            logger.debug(f"Failed to enumerate threads: {e}")
+            logger.debug("Failed to enumerate threads: %s", e)
 
         return threads
 
@@ -2023,11 +2036,12 @@ for (let name of targets) {
                 ntdll = ctypes.WinDLL('ntdll.dll')
                 if hasattr(ntdll, 'NtAlertThread'):
                     ntdll.NtAlertThread(thread_handle)
-            except (OSError, AttributeError, Exception):
+            except (OSError, AttributeError, Exception) as e:
+                self.logger.error("Error in adobe_injector: %s", e)
                 pass
 
         except Exception as e:
-            logger.debug(f"Failed to force thread alertable: {e}")
+            logger.debug("Failed to force thread alertable: %s", e)
 
     def inject_direct_syscall(self, target_name: str, dll_path: str) -> bool:
         """
@@ -2048,7 +2062,7 @@ for (let name of targets) {
             # Get process handle
             process_handle = self._get_process_handle(target_name)
             if not process_handle:
-                logger.error(f"Failed to get handle for process: {target_name}")
+                logger.error("Failed to get handle for process: %s", target_name)
                 return False
 
             try:
@@ -2065,7 +2079,7 @@ for (let name of targets) {
                 KERNEL32.CloseHandle(process_handle)
 
         except Exception as e:
-            logger.error(f"Direct syscall injection failed: {e}")
+            logger.error("Direct syscall injection failed: %s", e)
             return False
 
     def inject_reflective_dll(self, target_name: str, dll_data: bytes) -> bool:
@@ -2090,7 +2104,7 @@ for (let name of targets) {
             # Get process handle
             process_handle = self._get_process_handle(target_name)
             if not process_handle:
-                logger.error(f"Failed to get handle for process: {target_name}")
+                logger.error("Failed to get handle for process: %s", target_name)
                 return False
 
             try:
@@ -2114,7 +2128,7 @@ for (let name of targets) {
                     logger.error("Failed to allocate memory for reflective DLL")
                     return False
 
-                logger.info(f"Allocated {total_size} bytes at {hex(remote_base)}")
+                logger.info("Allocated %s bytes at %s", total_size, hex(remote_base))
 
                 # Write the reflective loader
                 loader_code = self._generate_reflective_loader()
@@ -2176,7 +2190,7 @@ for (let name of targets) {
                 KERNEL32.CloseHandle(process_handle)
 
         except Exception as e:
-            logger.error(f"Reflective DLL injection failed: {e}")
+            logger.error("Reflective DLL injection failed: %s", e)
             return False
 
     def _generate_reflective_loader(self) -> bytes:
@@ -2244,7 +2258,7 @@ for (let name of targets) {
             0xC3                            # ret
         ])
 
-        logger.debug(f"Generated x64 reflective loader: {len(loader_code)} bytes")
+        logger.debug("Generated x64 reflective loader: %s bytes", len(loader_code))
         return bytes(loader_code)
 
     def _generate_x86_reflective_loader(self) -> bytes:
@@ -2280,7 +2294,7 @@ for (let name of targets) {
             0xC3                            # ret
         ])
 
-        logger.debug(f"Generated x86 reflective loader: {len(loader_code)} bytes")
+        logger.debug("Generated x86 reflective loader: %s bytes", len(loader_code))
         return bytes(loader_code)
 
     def _generate_parse_pe_headers(self) -> bytes:
@@ -2589,7 +2603,7 @@ for (let name of targets) {
             return self.inject_reflective_dll(target_name, dll_data)
 
         except Exception as e:
-            logger.error(f"Failed to read DLL file: {e}")
+            logger.error("Failed to read DLL file: %s", e)
             return False
 
     def unlink_dll_from_peb(self, target_name: str, dll_name: str) -> bool:
@@ -2611,7 +2625,7 @@ for (let name of targets) {
             # Get process handle
             process_handle = self._get_process_handle(target_name)
             if not process_handle:
-                logger.error(f"Failed to get handle for process: {target_name}")
+                logger.error("Failed to get handle for process: %s", target_name)
                 return False
 
             try:
@@ -2635,7 +2649,7 @@ for (let name of targets) {
                         break
 
                 if not target_module:
-                    logger.error(f"DLL {dll_name} not found in module list")
+                    logger.error("DLL %s not found in module list", dll_name)
                     return False
 
                 # Unlink from all three lists
@@ -2645,7 +2659,7 @@ for (let name of targets) {
                 success &= self._unlink_from_list(process_handle, target_module, 'InInitializationOrderLinks')
 
                 if success:
-                    logger.info(f"Successfully unlinked {dll_name} from PEB")
+                    logger.info("Successfully unlinked %s from PEB", dll_name)
                 else:
                     logger.warning("Partial PEB unlinking - some lists may still contain the module")
 
@@ -2655,7 +2669,7 @@ for (let name of targets) {
                 KERNEL32.CloseHandle(process_handle)
 
         except Exception as e:
-            logger.error(f"PEB unlinking failed: {e}")
+            logger.error("PEB unlinking failed: %s", e)
             return False
 
     def _get_peb_address(self, process_handle: int) -> int:
@@ -2680,11 +2694,11 @@ for (let name of targets) {
             if status == 0:
                 return pbi.PebBaseAddress
             else:
-                logger.error(f"NtQueryInformationProcess failed: 0x{status:X}")
+                logger.error("NtQueryInformationProcess failed: 0x%08X", status)
                 return 0
 
         except Exception as e:
-            logger.error(f"Failed to get PEB address: {e}")
+            logger.error("Failed to get PEB address: %s", e)
             return 0
 
     def _get_peb_module_list(self, process_handle: int, peb_addr: int) -> List[Dict]:
@@ -2754,7 +2768,7 @@ for (let name of targets) {
                 current_entry = next_entry.value
 
         except Exception as e:
-            logger.error(f"Failed to get PEB module list: {e}")
+            logger.error("Failed to get PEB module list: %s", e)
 
         return modules
 
@@ -2834,7 +2848,7 @@ for (let name of targets) {
             }
 
         except Exception as e:
-            logger.debug(f"Failed to read LDR entry: {e}")
+            logger.debug("Failed to read LDR entry: %s", e)
             return None
 
     def _unlink_from_list(self, process_handle: int, module: Dict,
@@ -2894,11 +2908,11 @@ for (let name of targets) {
                 ctypes.byref(bytes_written)
             )
 
-            logger.debug(f"Unlinked from {list_name}")
+            logger.debug("Unlinked from %s", list_name)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to unlink from {list_name}: {e}")
+            logger.error("Failed to unlink from %s: %s", list_name, e)
             return False
 
     def inject_process_hollowing(self, target_exe: str, payload_exe: str) -> bool:
@@ -2917,7 +2931,7 @@ for (let name of targets) {
             return False
 
         try:
-            logger.info(f"Attempting process hollowing: {target_exe}")
+            logger.info("Attempting process hollowing: %s", target_exe)
 
             # Use the imported function
             success = perform_process_hollowing(target_exe, payload_exe)
@@ -2930,7 +2944,7 @@ for (let name of targets) {
             return success
 
         except Exception as e:
-            logger.error(f"Process hollowing exception: {e}")
+            logger.error("Process hollowing exception: %s", e)
             return False
 
     def inject_kernel_driver(self, target_pid: int, dll_path: str) -> bool:
@@ -2949,7 +2963,7 @@ for (let name of targets) {
             return False
 
         try:
-            logger.info(f"Attempting kernel driver injection into PID {target_pid}")
+            logger.info("Attempting kernel driver injection into PID %s", target_pid)
 
             # Use the imported function
             success = inject_via_kernel_driver(target_pid, dll_path)
@@ -2962,7 +2976,7 @@ for (let name of targets) {
             return success
 
         except Exception as e:
-            logger.error(f"Kernel injection exception: {e}")
+            logger.error("Kernel injection exception: %s", e)
             return False
 
     def inject_early_bird(self, target_exe: str, dll_path: str,
@@ -2983,7 +2997,7 @@ for (let name of targets) {
             return False
 
         try:
-            logger.info(f"Attempting Early Bird injection: {target_exe}")
+            logger.info("Attempting Early Bird injection: %s", target_exe)
 
             # Use the imported function
             success = perform_early_bird_injection(target_exe, dll_path, command_line)
@@ -2996,7 +3010,7 @@ for (let name of targets) {
             return success
 
         except Exception as e:
-            logger.error(f"Early Bird injection exception: {e}")
+            logger.error("Early Bird injection exception: %s", e)
             return False
 
     def get_injection_status(self) -> dict:

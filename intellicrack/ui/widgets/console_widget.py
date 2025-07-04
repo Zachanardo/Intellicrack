@@ -1,3 +1,4 @@
+
 """
 Console Widget for displaying logs and output
 
@@ -320,6 +321,7 @@ class ConsoleWidget(QWidget):
                     f.write(self.output.toPlainText())
                 self.append_success(f"Log exported to: {filename}")
             except Exception as e:
+                self.logger.error("Exception in console_widget: %s", e)
                 self.append_error(f"Failed to export log: {e}")
 
     def process_command(self):

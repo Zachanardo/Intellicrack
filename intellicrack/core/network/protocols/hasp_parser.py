@@ -27,7 +27,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from ....utils.logger import get_logger
+from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -282,7 +282,8 @@ class HASPSentinelParser:
                 try:
                     client_info_json = data[offset:offset+client_info_length].decode('utf-8')
                     client_info = json.loads(client_info_json)
-                except (UnicodeDecodeError, ValueError, json.JSONDecodeError, Exception):
+                except (UnicodeDecodeError, ValueError, json.JSONDecodeError, Exception) as e:
+                    logger.error("Error in hasp_parser: %s", e)
                     pass
                 offset += client_info_length
 

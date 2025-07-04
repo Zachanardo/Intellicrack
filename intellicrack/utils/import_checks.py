@@ -320,6 +320,30 @@ def get_fallback_implementations() -> Dict[str, Any]:
     if not NUMPY_AVAILABLE:
         class NumpyFallback:
             """Fallback numpy-like operations when numpy is not available."""
+            # Define ndarray as the list type for compatibility
+            ndarray = list
+            
+            class random:
+                """Random number generation fallback."""
+                @staticmethod
+                def uniform(low, high):
+                    """Generate uniform random value."""
+                    import random
+                    return random.uniform(low, high)
+                
+                @staticmethod
+                def normal(loc=0.0, scale=1.0):
+                    """Generate normal distribution value."""
+                    import random
+                    return random.gauss(loc, scale)
+                
+                @staticmethod
+                def choice(a, p=None):
+                    """Random choice from array."""
+                    import random
+                    if p is not None:
+                        return random.choices(a, weights=p, k=1)[0]
+                    return random.choice(a)
             @staticmethod
             def array(data):
                 """Convert data to array-like structure."""
@@ -360,6 +384,7 @@ def get_fallback_implementations() -> Dict[str, Any]:
                         'content': response.read()
                     })()
                 except Exception as e:
+                    logger.error("Exception in import_checks: %s", e)
                     return type('Response', (), {
                         'status_code': 500,
                         'text': str(e),

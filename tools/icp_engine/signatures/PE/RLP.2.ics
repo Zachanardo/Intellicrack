@@ -1,0 +1,12 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("protector", "RLP");
+
+function detect() {
+    if (PE.section[".rlp"]) {
+        sVersion = "0.7.3.beta";
+        bDetected = true;
+    }
+
+    return result();
+}

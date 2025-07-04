@@ -1,3 +1,16 @@
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+from datetime import datetime
+from typing import Any, Dict
+
+import yaml
+
+from intellicrack.logger import logger
+
 """
 CI/CD Integration for Intellicrack Plugin Development.
 
@@ -17,16 +30,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import hashlib
-import json
-import os
-import shutil
-import subprocess
-import sys
-from datetime import datetime
-from typing import Any, Dict
 
-import yaml
 
 
 class CICDPipeline:
@@ -214,10 +218,12 @@ class CICDPipeline:
                     result['success'] = False
                     result['errors'].append(f"Coverage {result['coverage']}% below threshold {test_config['coverage_threshold']}%")
 
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            logger.error("Subprocess timeout in plugin_ci_cd: %s", e)
             result['success'] = False
             result['errors'].append(f"Tests timed out after {test_config['timeout']} seconds")
         except Exception as e:
+            logger.error("Exception in plugin_ci_cd: %s", e)
             result['success'] = False
             result['errors'].append(f"Test execution error: {str(e)}")
 
@@ -330,6 +336,7 @@ class CICDPipeline:
             result['artifacts'] = [dest_path, metadata_path]
 
         except Exception as e:
+            logger.error("Exception in plugin_ci_cd: %s", e)
             result['success'] = False
             result['errors'].append(f"Build error: {str(e)}")
 
@@ -372,6 +379,7 @@ class CICDPipeline:
                 self._update_plugin_registry(dest_path)
 
             except Exception as e:
+                logger.error("Exception in plugin_ci_cd: %s", e)
                 result['success'] = False
                 result['errors'].append(f"Deployment error: {str(e)}")
 
@@ -385,6 +393,7 @@ class CICDPipeline:
                     compile(f.read(), self.plugin_path, 'exec')
                 return {'valid': True, 'errors': []}
             except SyntaxError as e:
+                logger.error("SyntaxError in plugin_ci_cd: %s", e)
                 return {'valid': False, 'errors': [f"Line {e.lineno}: {e.msg}"]}
         else:
             # For JavaScript, we'd need a JS parser
@@ -425,9 +434,8 @@ class CICDPipeline:
                 if any(issue.get('type') == 'error' for issue in issues):
                     result['success'] = False
 
-        except (subprocess.CalledProcessError, json.JSONDecodeError):
-            # Linter not available or output parsing failed
-            pass
+        except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
+            logger.debug(f"Linter {linter} not available or output parsing failed: {e}")
 
         return result
 
@@ -446,7 +454,8 @@ class CICDPipeline:
 
             return 0
 
-        except ImportError:
+        except ImportError as e:
+            logger.debug(f"Radon not available for complexity calculation: {e}")
             # Radon not available
             return 0
 
@@ -479,8 +488,8 @@ class CICDPipeline:
                         'line': issue.get('line_number')
                     })
 
-        except (subprocess.CalledProcessError, json.JSONDecodeError):
-            pass
+        except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
+            logger.debug(f"Bandit security scanner not available or failed: {e}")
 
         return result
 
@@ -518,8 +527,8 @@ class CICDPipeline:
             match = re.search(r'version\s*=\s*["\']([^"\']+)["\']', content)
             if match:
                 return match.group(1)
-        except:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to extract plugin version: {e}")
 
         return "1.0.0"
 

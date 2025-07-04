@@ -1,0 +1,13 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("sign tool", "Windows Authenticode");
+
+function detect() {
+    if (PE.compareOverlay("........00020200")) {
+        sVersion = "2.0";
+        sOptions = "PKCS #7";
+        bDetected = true;
+    }
+
+    return result();
+}

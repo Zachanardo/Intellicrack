@@ -1,3 +1,5 @@
+
+
 """
 Intellicrack: A fully featured, AI-assisted software analysis and security research suite.
 
@@ -36,25 +38,66 @@ Usage:
     app = IntellicrackApp()
     app.run()
 """
+# Standard library imports first
+import logging
+
+# Local imports
+from .config import CONFIG, get_config
 
 __version__ = "1.0.0"
 __author__ = "Intellicrack Team"
 __license__ = "GPL-3.0"
 
-# Standard library imports first
-import logging
-
-# Local imports
-from .config import CONFIG
+# Initialize GPU acceleration automatically
+try:
+    from .utils.gpu_autoloader import gpu_autoloader, get_device, get_gpu_info
+    
+    # Setup GPU on import (silent)
+    gpu_autoloader.setup()
+    
+    # Log GPU status only if logger is configured
+    gpu_info = get_gpu_info()
+    if gpu_info['gpu_available']:
+        import sys
+        if not hasattr(sys, 'ps1'):  # Not in interactive mode
+            # Only log, don't print
+            pass
+except Exception:
+    # Silently continue without GPU
+    pass
 
 # Setup logging after imports
 logger = logging.getLogger(__name__)
+
+# Initialize and validate configuration
+_config = get_config()
+if _config:
+    # Validate configuration on module load
+    if not _config.validate_config():
+        logger.warning("Configuration validation failed - using defaults")
+    
+    # Check if repositories are enabled
+    if _config.is_repository_enabled('model_repository'):
+        logger.info("Model repository is enabled")
+    
+    # Get and validate Ghidra path
+    ghidra_path = _config.get_ghidra_path()
+    if ghidra_path and ghidra_path != "ghidra":
+        logger.info(f"Ghidra path configured: {ghidra_path}")
+    
+    # Update configuration with runtime defaults if needed
+    runtime_config = {
+        'initialized': True,
+        'version': __version__
+    }
+    _config.update(runtime_config)
 
 # Main application
 try:
     from .main import main
     from .ui.main_app import IntellicrackApp
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     # Handle case where dependencies aren't available
     main = None
     IntellicrackApp = None
@@ -88,22 +131,28 @@ except ImportError as e:
     hexview = None
 
 # Version info
+
+
 def get_version():
     """Return the current version of Intellicrack."""
     return __version__
 
 # Package-level convenience functions
+
+
 def create_app():
     """Create and return a new Intellicrack application instance."""
     if IntellicrackApp is None:
         raise ImportError("IntellicrackApp not available. Check dependencies.")
     return IntellicrackApp()
 
+
 def run_app():
     """Run the Intellicrack application."""
     if main is None:
         raise ImportError("Main function not available. Check dependencies.")
     return main()
+
 
 __all__ = [
     'CONFIG',

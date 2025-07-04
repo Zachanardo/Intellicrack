@@ -22,16 +22,17 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import asyncio
 import concurrent.futures
 import gc
-import psutil
-import pytest
 import tempfile
 import time
 from pathlib import Path
 from unittest.mock import Mock
 
+import psutil
+import pytest
+
 from intellicrack.ai.ai_script_generator import AIScriptGenerator
-from intellicrack.ai.intelligent_code_modifier import IntelligentCodeModifier
 from intellicrack.ai.integration_manager import IntegrationManager
+from intellicrack.ai.intelligent_code_modifier import IntelligentCodeModifier
 from intellicrack.ai.llm_backends import LLMManager, LLMResponse
 from intellicrack.ai.performance_monitor import PerformanceMonitor, performance_monitor
 

@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import ctypes
+import logging
 import os
 import struct
 import tempfile
@@ -65,6 +66,7 @@ class KernelInjector:
         self.driver_handle = None
         self.driver_path = None
         self.service_name = "IntellicrackDrv"
+        self.logger = logging.getLogger(__name__ + ".KernelInjector")
         self._setup_api()
 
     def _setup_api(self):
@@ -543,7 +545,8 @@ class KernelInjector:
             if self.driver_path and os.path.exists(self.driver_path):
                 try:
                     os.remove(self.driver_path)
-                except (OSError, IOError, Exception):
+                except (OSError, IOError, Exception) as e:
+                    self.logger.error("Error in kernel_injection: %s", e)
                     pass
 
         except Exception as e:

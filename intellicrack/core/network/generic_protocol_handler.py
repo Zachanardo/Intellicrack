@@ -1,3 +1,12 @@
+import socket
+import threading
+import time
+from typing import Any, Dict, Optional
+
+from intellicrack.logger import logger
+
+from .license_protocol_handler import LicenseProtocolHandler
+
 """
 Generic License Protocol Handler Implementation.
 
@@ -19,12 +28,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import socket
-import threading
-import time
-from typing import Any, Dict, Optional
 
-from .license_protocol_handler import LicenseProtocolHandler
 
 
 class GenericProtocolHandler(LicenseProtocolHandler):
@@ -80,7 +84,8 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                     )
                     conn_thread.start()
 
-                except socket.timeout:
+                except socket.timeout as e:
+                    logger.error("socket.timeout in generic_protocol_handler: %s", e)
                     continue
                 except Exception as e:
                     if self.running:
@@ -112,7 +117,8 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                         if response:
                             server_socket.sendto(response, client_addr)
 
-                except socket.timeout:
+                except socket.timeout as e:
+                    logger.error("socket.timeout in generic_protocol_handler: %s", e)
                     continue
                 except Exception as e:
                     if self.running:
@@ -148,9 +154,11 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                     if not more_data:
                         break
                     self.handle_connection(client_socket, more_data)
-                except socket.timeout:
+                except socket.timeout as e:
+                    logger.error("socket.timeout in generic_protocol_handler: %s", e)
                     continue
-                except Exception:
+                except Exception as e:
+                    logger.error("Exception in generic_protocol_handler: %s", e)
                     break
 
         except Exception as e:

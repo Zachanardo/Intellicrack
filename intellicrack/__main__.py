@@ -23,11 +23,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import sys
 
+from .main import main
+
 # Set Qt to offscreen mode for WSL/headless environments if no display
 if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:
     os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
-from .main import main
 
 if __name__ == "__main__":
     sys.exit(main())

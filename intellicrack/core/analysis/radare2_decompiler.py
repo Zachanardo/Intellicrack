@@ -26,6 +26,8 @@ from typing import Any, Dict, List, Optional
 
 from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 
+logger = logging.getLogger(__name__)
+
 
 class R2DecompilationEngine:
     """
@@ -177,7 +179,8 @@ class R2DecompilationEngine:
                         'kind': var.get('kind', ''),
                         'size': var.get('size', 0)
                     })
-        except R2Exception:
+        except R2Exception as e:
+            self.logger.error("R2Exception in radare2_decompiler: %s", e)
             pass
 
         return variables
@@ -423,9 +426,11 @@ class R2DecompilationEngine:
                                         'content': string_data.strip(),
                                         'reference_type': 'direct'
                                     })
-                            except R2Exception:
+                            except R2Exception as e:
+                                logger.error("R2Exception in radare2_decompiler: %s", e)
                                 continue
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_decompiler: %s", e)
             pass
 
         return strings

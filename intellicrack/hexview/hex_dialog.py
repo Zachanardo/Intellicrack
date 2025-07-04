@@ -533,7 +533,8 @@ class HexViewerDialog(QDialog):
         try:
             value = int(value_text)
             self.hex_viewer.set_bytes_per_row(value)
-        except ValueError:
+        except ValueError as e:
+            self.logger.error("Value error in hex_dialog: %s", e)
             pass
 
     def change_group_size(self, value_text: str):
@@ -546,7 +547,8 @@ class HexViewerDialog(QDialog):
         try:
             value = int(value_text)
             self.hex_viewer.set_group_size(value)
-        except ValueError:
+        except ValueError as e:
+            self.logger.error("Value error in hex_dialog: %s", e)
             pass
 
     def show_bookmark_context_menu(self, position):

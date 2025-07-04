@@ -1,3 +1,26 @@
+import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+from intellicrack.logger import logger
+
+# Import common patterns from centralized module
+from ...utils.core.import_patterns import (
+    LIEF_AVAILABLE,
+    MACHOLIB_AVAILABLE,
+    PEFILE_AVAILABLE,
+    PYELFTOOLS_AVAILABLE,
+    XML_AVAILABLE,
+    ZIPFILE_AVAILABLE,
+    ELFFile,
+    MachO,
+    lief,
+    pefile,
+    zipfile,
+)
+from ...utils.protection.protection_utils import calculate_entropy
+
 """
 Multi-format binary analyzer for various executable formats.
 
@@ -20,23 +43,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import logging
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
 
-# Import common patterns from centralized module
-from ...utils.core.import_patterns import (
-    LIEF_AVAILABLE,
-    MACHOLIB_AVAILABLE,
-    PEFILE_AVAILABLE,
-    PYELFTOOLS_AVAILABLE,
-    ELFFile,
-    MachO,
-    lief,
-    pefile,
-)
-from ...utils.protection.protection_utils import calculate_entropy
 
 
 class MultiFormatBinaryAnalyzer:
@@ -56,6 +63,8 @@ class MultiFormatBinaryAnalyzer:
         self.pefile_available = PEFILE_AVAILABLE
         self.pyelftools_available = PYELFTOOLS_AVAILABLE
         self.macholib_available = MACHOLIB_AVAILABLE
+        self.zipfile_available = ZIPFILE_AVAILABLE
+        self.xml_available = XML_AVAILABLE
 
         self._check_available_backends()
 
@@ -81,6 +90,16 @@ class MultiFormatBinaryAnalyzer:
         else:
             self.logger.info("macholib Mach-O analysis not available")
 
+        if self.zipfile_available:
+            self.logger.info("zipfile archive analysis available")
+        else:
+            self.logger.info("zipfile archive analysis not available")
+
+        if self.xml_available:
+            self.logger.info("XML parsing available")
+        else:
+            self.logger.info("XML parsing not available")
+
     def identify_format(self, binary_path: Union[str, Path]) -> str:
         """
         Identify the format of a binary file.
@@ -89,7 +108,7 @@ class MultiFormatBinaryAnalyzer:
             binary_path: Path to the binary file
 
         Returns:
-            Format of the binary ('PE', 'ELF', 'MACHO', 'DOTNET', 'CLASS', 'UNKNOWN')
+            Format of the binary ('PE', 'ELF', 'MACHO', 'DOTNET', 'CLASS', 'DEX', 'APK', 'JAR', 'MSI', 'COM', 'UNKNOWN')
         """
         try:
             with open(binary_path, 'rb') as f:
@@ -123,6 +142,48 @@ class MultiFormatBinaryAnalyzer:
                 if magic.startswith(b'\xca\xfe\xba\xbe'):
                     return 'CLASS'
 
+                # Check for DEX (Android Dalvik Executable)
+                if magic.startswith(b'dex\n'):
+                    return 'DEX'
+
+                # Check for ZIP-based formats (JAR, APK)
+                if magic.startswith(b'PK\x03\x04') or magic.startswith(b'PK\x05\x06'):
+                    # This is a ZIP file, need to check for specific types
+                    file_extension = str(binary_path).lower().split('.')[-1]
+                    if file_extension in ['apk', 'xapk']:
+                        return 'APK'
+                    elif file_extension in ['jar', 'war', 'ear']:
+                        return 'JAR'
+                    else:
+                        # Check if it's an APK by looking for AndroidManifest.xml
+                        try:
+                            import zipfile as zf
+                            with zf.ZipFile(binary_path, 'r') as zip_file:
+                                if 'AndroidManifest.xml' in zip_file.namelist():
+                                    return 'APK'
+                                elif 'META-INF/MANIFEST.MF' in zip_file.namelist():
+                                    return 'JAR'
+                        except Exception as e:
+                            self.logger.debug(f"Failed to check ZIP sub-type: {e}")
+                        return 'ZIP'
+
+                # Check for MSI (Microsoft Installer)
+                if magic.startswith(b'\xd0\xcf\x11\xe0'):
+                    # This is a compound document format, could be MSI
+                    file_extension = str(binary_path).lower().split('.')[-1]
+                    if file_extension == 'msi':
+                        return 'MSI'
+
+                # Check for COM (DOS executable) based on file extension and size
+                file_extension = str(binary_path).lower().split('.')[-1]
+                if file_extension == 'com':
+                    try:
+                        file_size = Path(binary_path).stat().st_size
+                        if file_size <= 65536:  # 64KB limit for COM files
+                            return 'COM'
+                    except Exception as e:
+                        self.logger.debug(f"Failed to check COM file size: {e}")
+
                 return 'UNKNOWN'
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -153,9 +214,19 @@ class MultiFormatBinaryAnalyzer:
             return self.analyze_dotnet(binary_path)
         elif binary_format == 'CLASS':
             return self.analyze_java(binary_path)
+        elif binary_format == 'DEX':
+            return self.analyze_dex(binary_path)
+        elif binary_format == 'APK':
+            return self.analyze_apk(binary_path)
+        elif binary_format == 'JAR':
+            return self.analyze_jar(binary_path)
+        elif binary_format == 'MSI':
+            return self.analyze_msi(binary_path)
+        elif binary_format == 'COM':
+            return self.analyze_com(binary_path)
         else:
             return {
-                'format': 'UNKNOWN',
+                'format': binary_format,
                 'error': 'Unsupported binary format'
             }
 
@@ -458,6 +529,481 @@ class MultiFormatBinaryAnalyzer:
             'note': 'Java class file analysis not yet implemented'
         }
 
+    def analyze_dex(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
+        """
+        Analyze an Android DEX (Dalvik Executable) file.
+
+        Args:
+            binary_path: Path to the binary file
+
+        Returns:
+            Analysis results dictionary
+        """
+        try:
+            with open(binary_path, 'rb') as f:
+                # Read DEX header
+                magic = f.read(8)
+                if not magic.startswith(b'dex\n'):
+                    return {
+                        'format': 'DEX',
+                        'error': 'Invalid DEX magic bytes'
+                    }
+
+                # Read basic header information
+                f.seek(8)
+                checksum = int.from_bytes(f.read(4), byteorder='little')
+
+                f.seek(12)
+                sha1_signature = f.read(20)
+
+                f.seek(32)
+                file_size = int.from_bytes(f.read(4), byteorder='little')
+                header_size = int.from_bytes(f.read(4), byteorder='little')
+                endian_tag = int.from_bytes(f.read(4), byteorder='little')
+
+                f.seek(48)
+                link_size = int.from_bytes(f.read(4), byteorder='little')
+                link_off = int.from_bytes(f.read(4), byteorder='little')
+
+                f.seek(56)
+                map_off = int.from_bytes(f.read(4), byteorder='little')
+                string_ids_size = int.from_bytes(f.read(4), byteorder='little')
+                string_ids_off = int.from_bytes(f.read(4), byteorder='little')
+
+                f.seek(68)
+                type_ids_size = int.from_bytes(f.read(4), byteorder='little')
+                type_ids_off = int.from_bytes(f.read(4), byteorder='little')
+
+                f.seek(76)
+                proto_ids_size = int.from_bytes(f.read(4), byteorder='little')
+                proto_ids_off = int.from_bytes(f.read(4), byteorder='little')
+
+                f.seek(84)
+                field_ids_size = int.from_bytes(f.read(4), byteorder='little')
+                field_ids_off = int.from_bytes(f.read(4), byteorder='little')
+
+                f.seek(92)
+                method_ids_size = int.from_bytes(f.read(4), byteorder='little')
+                method_ids_off = int.from_bytes(f.read(4), byteorder='little')
+
+                f.seek(100)
+                class_defs_size = int.from_bytes(f.read(4), byteorder='little')
+                class_defs_off = int.from_bytes(f.read(4), byteorder='little')
+
+                # Basic information
+                info = {
+                    'format': 'DEX',
+                    'dex_version': magic[4:7].decode('ascii'),
+                    'checksum': f'0x{checksum:08X}',
+                    'sha1_signature': sha1_signature.hex(),
+                    'file_size': file_size,
+                    'header_size': header_size,
+                    'endian_tag': f'0x{endian_tag:08X}',
+                    'link_size': link_size,
+                    'link_offset': f'0x{link_off:08X}' if link_off else 'None',
+                    'map_offset': f'0x{map_off:08X}',
+                    'string_ids_count': string_ids_size,
+                    'type_ids_count': type_ids_size,
+                    'proto_ids_count': proto_ids_size,
+                    'field_ids_count': field_ids_size,
+                    'method_ids_count': method_ids_size,
+                    'class_defs_count': class_defs_size,
+                    'sections': []
+                }
+
+                # Add section information
+                if string_ids_size > 0:
+                    info['sections'].append({
+                        'name': 'String IDs',
+                        'offset': f'0x{string_ids_off:08X}',
+                        'count': string_ids_size
+                    })
+
+                if type_ids_size > 0:
+                    info['sections'].append({
+                        'name': 'Type IDs',
+                        'offset': f'0x{type_ids_off:08X}',
+                        'count': type_ids_size
+                    })
+
+                if proto_ids_size > 0:
+                    info['sections'].append({
+                        'name': 'Proto IDs',
+                        'offset': f'0x{proto_ids_off:08X}',
+                        'count': proto_ids_size
+                    })
+
+                if field_ids_size > 0:
+                    info['sections'].append({
+                        'name': 'Field IDs',
+                        'offset': f'0x{field_ids_off:08X}',
+                        'count': field_ids_size
+                    })
+
+                if method_ids_size > 0:
+                    info['sections'].append({
+                        'name': 'Method IDs',
+                        'offset': f'0x{method_ids_off:08X}',
+                        'count': method_ids_size
+                    })
+
+                if class_defs_size > 0:
+                    info['sections'].append({
+                        'name': 'Class Definitions',
+                        'offset': f'0x{class_defs_off:08X}',
+                        'count': class_defs_size
+                    })
+
+                return info
+
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error analyzing DEX binary: %s", e)
+            return {
+                'format': 'DEX',
+                'error': str(e)
+            }
+
+    def analyze_apk(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
+        """
+        Analyze an Android APK (Android Package) file.
+
+        Args:
+            binary_path: Path to the binary file
+
+        Returns:
+            Analysis results dictionary
+        """
+        if not self.zipfile_available:
+            return {
+                'format': 'APK',
+                'error': 'zipfile library not available'
+            }
+
+        if not self.xml_available:
+            return {
+                'format': 'APK',
+                'error': 'XML parsing not available'
+            }
+
+        try:
+            info = {
+                'format': 'APK',
+                'files': [],
+                'dex_files': [],
+                'native_libs': [],
+                'resources': [],
+                'manifest_info': {},
+                'certificates': []
+            }
+
+            with zipfile.ZipFile(binary_path, 'r') as apk_file:
+                file_list = apk_file.namelist()
+
+                # Basic file information
+                info['total_files'] = len(file_list)
+
+                # Categorize files
+                for file_name in file_list:
+                    file_info = apk_file.getinfo(file_name)
+
+                    entry = {
+                        'name': file_name,
+                        'compressed_size': file_info.compress_size,
+                        'uncompressed_size': file_info.file_size,
+                        'compression_type': file_info.compress_type
+                    }
+
+                    if file_name.endswith('.dex'):
+                        info['dex_files'].append(entry)
+                    elif file_name.startswith('lib/'):
+                        info['native_libs'].append(entry)
+                    elif file_name.startswith('res/'):
+                        info['resources'].append(entry)
+                    elif file_name.startswith('META-INF/'):
+                        info['certificates'].append(entry)
+
+                    info['files'].append(entry)
+
+                # Parse AndroidManifest.xml if available
+                if 'AndroidManifest.xml' in file_list:
+                    try:
+                        manifest_data = apk_file.read('AndroidManifest.xml')
+                        # Note: AndroidManifest.xml is binary XML, would need specialized parser
+                        info['manifest_info'] = {
+                            'present': True,
+                            'size': len(manifest_data),
+                            'note': 'Binary XML format - specialized parser required for full analysis'
+                        }
+                    except Exception as e:
+                        logger.error("Exception in multi_format_analyzer: %s", e)
+                        info['manifest_info'] = {
+                            'present': True,
+                            'error': f'Failed to read manifest: {str(e)}'
+                        }
+                else:
+                    info['manifest_info'] = {'present': False}
+
+                # Summary statistics
+                info['summary'] = {
+                    'dex_count': len(info['dex_files']),
+                    'native_lib_count': len(info['native_libs']),
+                    'resource_count': len(info['resources']),
+                    'certificate_count': len(info['certificates']),
+                    'total_uncompressed_size': sum(f['uncompressed_size'] for f in info['files']),
+                    'total_compressed_size': sum(f['compressed_size'] for f in info['files'])
+                }
+
+                return info
+
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error analyzing APK binary: %s", e)
+            return {
+                'format': 'APK',
+                'error': str(e)
+            }
+
+    def analyze_jar(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
+        """
+        Analyze a Java JAR (Java Archive) file.
+
+        Args:
+            binary_path: Path to the binary file
+
+        Returns:
+            Analysis results dictionary
+        """
+        if not self.zipfile_available:
+            return {
+                'format': 'JAR',
+                'error': 'zipfile library not available'
+            }
+
+        try:
+            info = {
+                'format': 'JAR',
+                'files': [],
+                'class_files': [],
+                'resources': [],
+                'manifest_info': {},
+                'meta_inf': []
+            }
+
+            with zipfile.ZipFile(binary_path, 'r') as jar_file:
+                file_list = jar_file.namelist()
+
+                # Basic file information
+                info['total_files'] = len(file_list)
+
+                # Categorize files
+                for file_name in file_list:
+                    file_info = jar_file.getinfo(file_name)
+
+                    entry = {
+                        'name': file_name,
+                        'compressed_size': file_info.compress_size,
+                        'uncompressed_size': file_info.file_size,
+                        'compression_type': file_info.compress_type
+                    }
+
+                    if file_name.endswith('.class'):
+                        info['class_files'].append(entry)
+                    elif file_name.startswith('META-INF/'):
+                        info['meta_inf'].append(entry)
+                    else:
+                        info['resources'].append(entry)
+
+                    info['files'].append(entry)
+
+                # Parse MANIFEST.MF if available
+                if 'META-INF/MANIFEST.MF' in file_list:
+                    try:
+                        manifest_data = jar_file.read('META-INF/MANIFEST.MF').decode('utf-8')
+                        manifest_lines = manifest_data.strip().split('\n')
+
+                        manifest_attrs = {}
+                        for line in manifest_lines:
+                            if ':' in line:
+                                key, value = line.split(':', 1)
+                                manifest_attrs[key.strip()] = value.strip()
+
+                        info['manifest_info'] = {
+                            'present': True,
+                            'attributes': manifest_attrs,
+                            'main_class': manifest_attrs.get('Main-Class', 'Not specified'),
+                            'manifest_version': manifest_attrs.get('Manifest-Version', 'Unknown'),
+                            'created_by': manifest_attrs.get('Created-By', 'Unknown')
+                        }
+                    except Exception as e:
+                        logger.error("Exception in multi_format_analyzer: %s", e)
+                        info['manifest_info'] = {
+                            'present': True,
+                            'error': f'Failed to parse manifest: {str(e)}'
+                        }
+                else:
+                    info['manifest_info'] = {'present': False}
+
+                # Summary statistics
+                info['summary'] = {
+                    'class_count': len(info['class_files']),
+                    'resource_count': len(info['resources']),
+                    'meta_inf_count': len(info['meta_inf']),
+                    'total_uncompressed_size': sum(f['uncompressed_size'] for f in info['files']),
+                    'total_compressed_size': sum(f['compressed_size'] for f in info['files'])
+                }
+
+                return info
+
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error analyzing JAR binary: %s", e)
+            return {
+                'format': 'JAR',
+                'error': str(e)
+            }
+
+    def analyze_msi(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
+        """
+        Analyze a Microsoft Installer (MSI) file.
+
+        Args:
+            binary_path: Path to the binary file
+
+        Returns:
+            Analysis results dictionary
+        """
+        try:
+            with open(binary_path, 'rb') as f:
+                # Read compound document header
+                header = f.read(512)
+
+                if not header.startswith(b'\\xd0\\xcf\\x11\\xe0'):
+                    return {
+                        'format': 'MSI',
+                        'error': 'Invalid compound document signature'
+                    }
+
+                # Basic MSI analysis (compound document format)
+                info = {
+                    'format': 'MSI',
+                    'compound_document': True,
+                    'file_size': Path(binary_path).stat().st_size,
+                    'note': 'MSI files use compound document format - specialized parser needed for full analysis'
+                }
+
+                # Extract basic compound document information
+                minor_version = int.from_bytes(header[24:26], byteorder='little')
+                major_version = int.from_bytes(header[26:28], byteorder='little')
+                byte_order = int.from_bytes(header[28:30], byteorder='little')
+                sector_size = int.from_bytes(header[30:32], byteorder='little')
+                mini_sector_size = int.from_bytes(header[32:34], byteorder='little')
+
+                info.update({
+                    'minor_version': minor_version,
+                    'major_version': major_version,
+                    'byte_order': f'0x{byte_order:04X}',
+                    'sector_size': 2 ** sector_size,
+                    'mini_sector_size': 2 ** mini_sector_size,
+                    'compound_doc_info': {
+                        'sectors_in_directory_chain': int.from_bytes(header[44:48], byteorder='little'),
+                        'sectors_in_fat': int.from_bytes(header[48:52], byteorder='little'),
+                        'directory_first_sector': int.from_bytes(header[52:56], byteorder='little'),
+                        'transaction_signature': int.from_bytes(header[56:60], byteorder='little'),
+                        'mini_stream_cutoff': int.from_bytes(header[60:64], byteorder='little')
+                    }
+                })
+
+                return info
+
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error analyzing MSI binary: %s", e)
+            return {
+                'format': 'MSI',
+                'error': str(e)
+            }
+
+    def analyze_com(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
+        """
+        Analyze a DOS COM (Command) executable.
+
+        Args:
+            binary_path: Path to the binary file
+
+        Returns:
+            Analysis results dictionary
+        """
+        try:
+            file_size = Path(binary_path).stat().st_size
+
+            if file_size > 65536:  # 64KB limit for COM files
+                return {
+                    'format': 'COM',
+                    'error': 'File too large for COM format (>64KB)'
+                }
+
+            with open(binary_path, 'rb') as f:
+                # Read first few bytes to analyze
+                header_bytes = f.read(min(512, file_size))
+
+                # Basic COM file analysis
+                info = {
+                    'format': 'COM',
+                    'file_size': file_size,
+                    'load_address': '0x0100',  # COM files load at CS:0100
+                    'max_size': '64KB',
+                    'header_analysis': {
+                        'first_bytes': header_bytes[:16].hex(),
+                        'possible_instructions': []
+                    }
+                }
+
+                # Try to identify common COM file patterns
+                if header_bytes.startswith(b'\\xe9'):  # JMP instruction
+                    jump_offset = int.from_bytes(header_bytes[1:3], byteorder='little', signed=True)
+                    info['header_analysis']['first_instruction'] = f'JMP {jump_offset:+d}'
+                    info['header_analysis']['possible_instructions'].append('Near jump')
+
+                elif header_bytes.startswith(b'\\xeb'):  # Short JMP instruction
+                    jump_offset = int.from_bytes(header_bytes[1:2], byteorder='little', signed=True)
+                    info['header_analysis']['first_instruction'] = f'JMP SHORT {jump_offset:+d}'
+                    info['header_analysis']['possible_instructions'].append('Short jump')
+
+                elif header_bytes.startswith(b'\\xb8'):  # MOV AX, imm16
+                    immediate = int.from_bytes(header_bytes[1:3], byteorder='little')
+                    info['header_analysis']['first_instruction'] = f'MOV AX, 0x{immediate:04X}'
+                    info['header_analysis']['possible_instructions'].append('Load immediate to AX')
+
+                # Check for common DOS system calls
+                if b'\\xcd\\x21' in header_bytes:  # INT 21h (DOS interrupt)
+                    info['header_analysis']['possible_instructions'].append('DOS system call (INT 21h)')
+
+                if b'\\xcd\\x20' in header_bytes:  # INT 20h (terminate program)
+                    info['header_analysis']['possible_instructions'].append('Program termination (INT 20h)')
+
+                # Calculate basic entropy
+                if len(header_bytes) > 0:
+                    byte_counts = [0] * 256
+                    for byte in header_bytes:
+                        byte_counts[byte] += 1
+
+                    import math
+                    entropy = 0.0
+                    data_len = len(header_bytes)
+
+                    for count in byte_counts:
+                        if count > 0:
+                            probability = count / data_len
+                            entropy -= probability * math.log2(probability)
+
+                    info['entropy'] = round(entropy, 2)
+
+                return info
+
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error analyzing COM binary: %s", e)
+            return {
+                'format': 'COM',
+                'error': str(e)
+            }
+
     # Helper methods
     def _get_machine_type(self, machine_value: int) -> str:
         """Get readable machine type from Machine value."""
@@ -494,7 +1040,8 @@ class MultiFormatBinaryAnalyzer:
         """Convert PE timestamp to readable date string."""
         try:
             return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
-        except Exception:
+        except Exception as e:
+            self.logger.error("Exception in multi_format_analyzer: %s", e)
             return f"Invalid timestamp ({timestamp})"
 
     def _get_characteristics(self, characteristics: int) -> List[str]:
@@ -617,6 +1164,54 @@ def run_multi_format_analysis(app, binary_path: Optional[Union[str, Path]] = Non
             for _section in _segment['sections']:
                 app.analyze_results.append(f"    {_section['name']} - Addr: {_section['address']}, Size: {_section['size']}")
 
+    elif binary_format == 'DEX':
+        app.analyze_results.append(f"DEX Version: {results['dex_version']}")
+        app.analyze_results.append(f"File Size: {results['file_size']} bytes")
+        app.analyze_results.append(f"Checksum: {results['checksum']}")
+        app.analyze_results.append(f"String IDs: {results['string_ids_count']}")
+        app.analyze_results.append(f"Type IDs: {results['type_ids_count']}")
+        app.analyze_results.append(f"Method IDs: {results['method_ids_count']}")
+        app.analyze_results.append(f"Class Definitions: {results['class_defs_count']}")
+
+    elif binary_format == 'APK':
+        app.analyze_results.append(f"Total Files: {results['total_files']}")
+        app.analyze_results.append(f"DEX Files: {results['summary']['dex_count']}")
+        app.analyze_results.append(f"Native Libraries: {results['summary']['native_lib_count']}")
+        app.analyze_results.append(f"Resources: {results['summary']['resource_count']}")
+        app.analyze_results.append(f"Certificates: {results['summary']['certificate_count']}")
+
+        if results['manifest_info']['present']:
+            app.analyze_results.append("\nAndroidManifest.xml: Present")
+        else:
+            app.analyze_results.append("\nAndroidManifest.xml: Missing")
+
+    elif binary_format == 'JAR':
+        app.analyze_results.append(f"Total Files: {results['total_files']}")
+        app.analyze_results.append(f"Class Files: {results['summary']['class_count']}")
+        app.analyze_results.append(f"Resources: {results['summary']['resource_count']}")
+        app.analyze_results.append(f"META-INF Files: {results['summary']['meta_inf_count']}")
+
+        if results['manifest_info']['present']:
+            app.analyze_results.append("\nManifest Information:")
+            manifest = results['manifest_info']
+            app.analyze_results.append(f"  Main Class: {manifest.get('main_class', 'Not specified')}")
+            app.analyze_results.append(f"  Manifest Version: {manifest.get('manifest_version', 'Unknown')}")
+            app.analyze_results.append(f"  Created By: {manifest.get('created_by', 'Unknown')}")
+
+    elif binary_format == 'MSI':
+        app.analyze_results.append(f"File Size: {results['file_size']} bytes")
+        app.analyze_results.append("Format: Compound Document")
+        app.analyze_results.append(f"Version: {results['major_version']}.{results['minor_version']}")
+        app.analyze_results.append(f"Sector Size: {results['sector_size']} bytes")
+
+    elif binary_format == 'COM':
+        app.analyze_results.append(f"File Size: {results['file_size']} bytes (Max: 64KB)")
+        app.analyze_results.append(f"Load Address: {results['load_address']}")
+        app.analyze_results.append(f"Entropy: {results.get('entropy', 'N/A')}")
+
+        if 'first_instruction' in results['header_analysis']:
+            app.analyze_results.append(f"First Instruction: {results['header_analysis']['first_instruction']}")
+
     # Add recommendations based on format
     app.analyze_results.append("\nRecommendations:")
     if binary_format == 'PE':
@@ -628,5 +1223,22 @@ def run_multi_format_analysis(app, binary_path: Optional[Union[str, Path]] = Non
     elif binary_format == 'MACHO':
         app.analyze_results.append("- Use macOS-specific analysis tools for _deeper inspection")
         app.analyze_results.append("- Check for code signing and entitlements")
+    elif binary_format == 'DEX':
+        app.analyze_results.append("- Use Android-specific analysis tools like JADX or dex2jar")
+        app.analyze_results.append("- Consider using dynamic analysis with Android emulators")
+    elif binary_format == 'APK':
+        app.analyze_results.append("- Extract and analyze DEX files for code analysis")
+        app.analyze_results.append("- Check native libraries for potential security issues")
+        app.analyze_results.append("- Verify certificate signatures and permissions")
+    elif binary_format == 'JAR':
+        app.analyze_results.append("- Decompile class files for source code analysis")
+        app.analyze_results.append("- Check for dependency vulnerabilities")
+        app.analyze_results.append("- Verify manifest security attributes")
+    elif binary_format == 'MSI':
+        app.analyze_results.append("- Use specialized MSI analysis tools for full inspection")
+        app.analyze_results.append("- Check for custom actions and embedded scripts")
+    elif binary_format == 'COM':
+        app.analyze_results.append("- Use 16-bit disassemblers for code analysis")
+        app.analyze_results.append("- Consider DOS-era analysis techniques and tools")
 
     return results

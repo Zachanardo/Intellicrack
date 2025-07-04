@@ -1,0 +1,17 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("protector", "HackShield");
+
+function detect() {
+    var nImportSection = PE.getImportSection();
+    if (nImportSection != 0) {
+        var nOffset = PE.section[nImportSection].FileOffset;
+        var nSize = PE.section[nImportSection].FileSize;
+        nSize = Math.min(nSize, 0x2048);
+        if (PE.findString(nOffset, nSize, "TerminateHackShield") != -1) {
+            bDetected = true;
+        }
+    }
+
+    return result();
+}

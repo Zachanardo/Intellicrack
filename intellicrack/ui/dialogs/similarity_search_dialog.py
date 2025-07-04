@@ -1,25 +1,3 @@
-"""
-Binary Similarity Search Dialog
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
-
 import json
 import logging
 import os
@@ -44,10 +22,37 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from intellicrack.logger import logger
+
+"""
+Binary Similarity Search Dialog
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+
+
+
 try:
     from ...core.analysis.binary_similarity_search import BinarySimilaritySearch
     HAS_SIMILARITY_SEARCH = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in similarity_search_dialog: %s", e)
     HAS_SIMILARITY_SEARCH = False
 
 __all__ = ['BinarySimilaritySearchDialog']
@@ -214,6 +219,7 @@ class BinarySimilaritySearchDialog(QDialog):
             else:
                 self.db_info_label.setText("Database: Not found (will be created)")
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in similarity_search_dialog: %s", e)
             self.db_info_label.setText(f"Database Error: {e}")
 
     def update_threshold_label(self, value: int) -> None:
@@ -369,6 +375,7 @@ class BinarySimilaritySearchDialog(QDialog):
                         self.status_label.setText("Pattern displayed for manual application")
 
                 except (OSError, ValueError, RuntimeError) as e:
+                    logger.error("Error in similarity_search_dialog: %s", e)
                     QMessageBox.critical(self, "Error", f"Error applying pattern: {e}")
 
     def add_to_database(self) -> None:
@@ -414,6 +421,7 @@ class BinarySimilaritySearchDialog(QDialog):
                     "Failed to add binary to database"
                 )
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in similarity_search_dialog: %s", e)
             QMessageBox.critical(
                 self,
                 "Error",

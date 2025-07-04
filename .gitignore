@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Intellicrack runtime data directories
+data/logs/
+data/plugin_cache/
+data/visualizations/
+data/reports/
+
 # C extensions
 *.so
 
@@ -172,6 +178,9 @@ intellicrack_error.log
 *.backup
 *.orig
 
+# Data directory - runtime files
+data/
+
 # Environment files (should not be in repo)
 .env.example
 .env.production
@@ -185,11 +194,39 @@ COMPLETE_IMPLEMENTATION_TODO.md
 PRODUCTION_REFACTORING_REPORT.md
 SCRIPT_ENHANCEMENT_PLAN.md
 
-# Dev folder reports and scripts
-dev/*.py
-dev/*.md
-dev/comprehensive_*
-dev/duplicate_*
+# Dev folder - exclude entire directory
+dev/
+dev/**
+
+# PowerShell scripts for AI assistants
+claude*.ps1
+Claude*.ps1
+gemini*.ps1
+Gemini*.ps1
+codex*.ps1
+Codex*.ps1
+*claude*.ps1
+*gemini*.ps1
+*codex*.ps1
+
+# Virtual environments (all variations)
+venv/
+venv*/
+.venv/
+.venv*/
+virtualenv/
+virtualenv*/
+env/
+env*/
+.env/
+.env*/
+ENV/
+ENV*/
+pythonenv*/
+pyenv*/
+.pyenv*/
+*_venv/
+*_env/
 
 # Project docs temporary files
 project-docs/*AUDIT*
@@ -203,7 +240,12 @@ nul
 # Local-specific files and development artifacts
 CLAUDE.md
 ClaudeCode.ps1
+Codex.ps1
+GeminiCLI.ps1
 .claude/
+.serena/
+.zen_venv/
+.venv_wsl/
 docs/CLAUDE.md
 docs/verification/
 IntellicrackFeatures.txt
@@ -223,6 +265,7 @@ install_helper.py
 siphash24_replacement.py
 Install_Dependencies.ps1
 install_dependencies.bat
+run_vulture_windows.py
 
 # AI/LLM specific
 .llm_cache/
@@ -375,7 +418,41 @@ conda-env/
 Pipfile
 requirements-dev.txt
 setup.cfg
-pyproject.toml
+
+# UV package manager
+uv.lock
+.python-version
+
+# Environment files
+.env.*
+!.env.example
+
+# Backup directories
+backups/
+backup/
+*.backup/
+
+# Cache directories
+plugin_cache/
+__pycache__/
+.ruff_cache/
+
+# Output directories
+visualizations/
+reports/
+
+# Node.js (if any frontend components)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Serena and other tool configs
+.serena/
+.zen*/
+
+# WSL specific files
+*_wsl.*
+run_*_wsl.sh
 
 # Python cache and compiled files
 *.pyc

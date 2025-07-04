@@ -1,0 +1,17 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("format", "Archive");
+
+function detect() {
+    if (Archive.isVerbose()) {
+        sName = Archive.getFileFormatName();
+        sVersion = Archive.getFileFormatVersion();
+        sOptions = Archive.getFileFormatOptions();
+        
+        if (sName != "") {
+            bDetected = true;
+        }
+    }
+
+    return result();
+}

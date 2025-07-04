@@ -42,18 +42,18 @@ class SandboxDetector(BaseDetector):
         # Known sandbox signatures
         self.sandbox_signatures = {
             'cuckoo': {
-                'files': ['C:\\\\analyzer\\\\', 'C:\\\\sandbox\\\\', '/tmp/.cuckoo-*'],
+                'files': [os.path.join(os.environ.get('SystemDrive', 'C:'), 'analyzer'), os.path.join(os.environ.get('SystemDrive', 'C:'), 'sandbox'), '/tmp/.cuckoo-*'],
                 'processes': ['python.exe', 'analyzer.py'],
                 'network': ['192.168.56.0/24'],  # Common Cuckoo network
                 'artifacts': ['cuckoo', 'analyzer', 'auxiliary']
             },
             'vmray': {
-                'files': ['C:\\\\vmray\\\\'],
+                'files': [os.path.join(os.environ.get('SystemDrive', 'C:'), 'vmray')],
                 'processes': ['vmray_controller.exe'],
                 'artifacts': ['vmray', 'controller']
             },
             'joe_sandbox': {
-                'files': ['C:\\\\joe\\\\'],
+                'files': [os.path.join(os.environ.get('SystemDrive', 'C:'), 'joe')],
                 'processes': ['joeboxcontrol.exe', 'joeboxserver.exe'],
                 'artifacts': ['joe', 'joebox']
             },
@@ -63,7 +63,7 @@ class SandboxDetector(BaseDetector):
             },
             'hybrid_analysis': {
                 'artifacts': ['falcon', 'hybrid-analysis'],
-                'files': ['C:\\\\falcon\\\\']
+                'files': [os.path.join(os.environ.get('SystemDrive', 'C:'), 'falcon')]
             }
         }
 
@@ -193,8 +193,8 @@ class SandboxDetector(BaseDetector):
                     try:
                         files = os.listdir(path)
                         user_file_count += len(files)
-                    except:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"Error accessing {path}: {e}")
 
             if user_file_count < self.behavioral_patterns['no_user_files']['min_files']:
                 details['anomalies'].append(f'Few user files: {user_file_count}')
@@ -242,8 +242,8 @@ class SandboxDetector(BaseDetector):
                     total_gb = mem.total / (1024**3)
                     if total_gb < 4:
                         details['limitations'].append(f'Low memory: {total_gb:.1f}GB')
-                except ImportError:
-                    pass
+                except ImportError as e:
+                    self.logger.error("Import error in sandbox_detector: %s", e)
             else:
                 try:
                     with open('/proc/meminfo', 'r') as f:
@@ -254,8 +254,8 @@ class SandboxDetector(BaseDetector):
                                 if total_gb < 4:
                                     details['limitations'].append(f'Low memory: {total_gb:.1f}GB')
                                 break
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error reading memory info: {e}")
 
             # Check disk space
             if platform.system() == 'Windows':
@@ -310,8 +310,8 @@ class SandboxDetector(BaseDetector):
                         if self._ip_in_network(local_ip, network):
                             details['network_anomalies'].append(f'Sandbox network: {network} ({sandbox_type})')
 
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Error checking network configuration: {e}")
 
             # Check DNS resolution
             try:
@@ -323,14 +323,14 @@ class SandboxDetector(BaseDetector):
                     try:
                         socket.gethostbyname(domain)
                         resolved += 1
-                    except:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"DNS resolution failed for {domain}: {e}")
 
                 if resolved == 0:
                     details['network_anomalies'].append('No DNS resolution')
 
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Error in DNS resolution test: {e}")
 
             if details['network_anomalies']:
                 confidence = min(0.8, len(details['network_anomalies']) * 0.3)
@@ -409,10 +409,10 @@ class SandboxDetector(BaseDetector):
 
             # Check for analysis artifacts
             suspicious_paths = [
-                'C:\\\\analysis\\\\',
-                'C:\\\\analyzer\\\\',
-                'C:\\\\sandbox\\\\',
-                'C:\\\\malware\\\\',
+                os.path.join(os.environ.get('SystemDrive', 'C:'), 'analysis'),
+                os.path.join(os.environ.get('SystemDrive', 'C:'), 'analyzer'),
+                os.path.join(os.environ.get('SystemDrive', 'C:'), 'sandbox'),
+                os.path.join(os.environ.get('SystemDrive', 'C:'), 'malware'),
                 '/tmp/analysis/',
                 '/tmp/cuckoo/',
                 '/opt/sandbox/'
@@ -484,8 +484,8 @@ class SandboxDetector(BaseDetector):
                         if any(susp in dll_name for susp in suspicious_dlls):
                             details['monitoring_signs'].append(f'Suspicious DLL: {dll_name}')
 
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error checking loaded DLLs: {e}")
 
             if details['monitoring_signs']:
                 confidence = min(0.8, len(details['monitoring_signs']) * 0.3)
@@ -576,8 +576,8 @@ class SandboxDetector(BaseDetector):
                             elif first_byte == 0x68:  # PUSH
                                 details['hooked_apis'].append(f'{dll_name}!{api_name}')
 
-                    except:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"Error checking API hook for {dll_name}!{api_name}: {e}")
 
             if details['hooked_apis']:
                 confidence = min(0.8, len(details['hooked_apis']) * 0.15)
@@ -596,6 +596,7 @@ class SandboxDetector(BaseDetector):
             if platform.system() == 'Windows':
                 try:
                     from ctypes import wintypes
+
                     # Check if POINT is available
                     if not hasattr(wintypes, 'POINT'):
                         # Create mock POINT structure
@@ -603,7 +604,8 @@ class SandboxDetector(BaseDetector):
                             """Mock POINT structure for Windows API compatibility."""
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
                         wintypes.POINT = MockPOINT
-                except (ImportError, AttributeError):
+                except (ImportError, AttributeError) as e:
+                    self.logger.error("Error in sandbox_detector: %s", e)
                     # Fallback if wintypes is not available
                     class MockWintypes:
                         """Mock wintypes implementation for compatibility."""

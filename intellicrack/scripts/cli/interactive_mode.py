@@ -34,7 +34,8 @@ import os
 try:
     import readline
 except ImportError:
-    readline = None  # readline not available on all platforms
+    # readline is not available on all platforms
+    readline = None
 import sys
 import time
 from pathlib import Path
@@ -77,7 +78,7 @@ sys.path.insert(0, project_root)
 try:
     from intellicrack.config import get_config
     from intellicrack.utils.analysis.binary_analysis import analyze_binary
-    from intellicrack.utils.runtime.runner_functions import (
+    from intellicrack.utils.runner_functions import (
         run_comprehensive_analysis,
         run_symbolic_execution,
         run_vulnerability_scan,
@@ -85,8 +86,6 @@ try:
 except ImportError as e:
     print(f"Error importing Intellicrack modules: {e}")
     sys.exit(1)
-
-logger = logging.getLogger(__name__)
 
 
 class AdvancedProgressManager:
@@ -207,6 +206,7 @@ class IntellicrackShell(cmd.Cmd):
         self.analysis_results = {}
         self.history = []
         self.config = get_config()
+        self.logger = logging.getLogger(__name__)
 
         # Initialize advanced progress manager
         self.progress_manager = AdvancedProgressManager(self.console)
@@ -224,7 +224,7 @@ class IntellicrackShell(cmd.Cmd):
         try:
             readline.read_history_file(self.histfile)
         except FileNotFoundError:
-            pass
+            self.logger.debug("History file not found, starting fresh")
 
         # Set history size
         readline.set_history_length(1000)
@@ -234,7 +234,7 @@ class IntellicrackShell(cmd.Cmd):
         try:
             readline.write_history_file(self.histfile)
         except (IOError, AttributeError):
-            pass
+            self.logger.debug("Failed to save command history")
 
     def do_load(self, arg):
         """Load a binary for analysis: load <path>"""
@@ -375,7 +375,7 @@ class IntellicrackShell(cmd.Cmd):
                     size = os.path.getsize(output_path)
                     self.info(f"File size: {size:,} bytes")
                 except OSError:
-                    pass
+                    self.logger.debug("Failed to get file size for output")
             else:
                 self.error("Export failed")
 
@@ -450,7 +450,6 @@ class IntellicrackShell(cmd.Cmd):
 
     def do_history(self, arg):
         """Show command history"""
-        logger.debug(f"History command called with arg: {arg}")
         if self.console:
             table = Table(title="Command History")
             table.add_column("#", style="dim")
@@ -714,12 +713,10 @@ Let's start by loading a binary file!""",
 
     def do_clear(self, arg):
         """Clear the screen"""
-        logger.debug(f"Clear command called with arg: {arg}")
         os.system('cls' if os.name == 'nt' else 'clear')
 
     def do_formats(self, arg):
         """List available export formats and their descriptions"""
-        logger.debug(f"Formats command called with arg: {arg}")
         try:
             from .advanced_export import get_available_formats
             formats = get_available_formats()
@@ -1058,7 +1055,7 @@ Let's start by loading a binary file!""",
                     size = os.path.getsize(output_path)
                     self.info(f"Report size: {size:,} bytes")
                 except OSError:
-                    pass
+                    self.logger.debug("Failed to get file size for output")
             else:
                 self.error("Report generation failed")
 
@@ -1069,7 +1066,6 @@ Let's start by loading a binary file!""",
 
     def do_stats(self, arg):
         """Show analysis statistics with visual charts"""
-        logger.debug(f"Stats command called with arg: {arg}")
         if not self.analysis_results:
             self.error("No analysis results available. Run analysis first.")
             return
@@ -1206,7 +1202,6 @@ Let's start by loading a binary file!""",
 
     def do_status(self, arg):
         """Show quick status summary"""
-        logger.debug(f"Status command called with arg: {arg}")
         try:
             from .terminal_dashboard import create_dashboard
 
@@ -1315,7 +1310,7 @@ Let's start by loading a binary file!""",
                 time.sleep(1)
 
         except KeyboardInterrupt:
-            pass
+            self.logger.debug("Operation interrupted by user")
 
     def _update_dashboard_session(self):
         """Update dashboard with current session information."""
@@ -1614,7 +1609,7 @@ Let's start by loading a binary file!""",
                 size = os.path.getsize(filename)
                 self.info(f"Export size: {size:,} bytes")
             except OSError:
-                pass
+                self.logger.debug("Failed to get export file size")
         else:
             self.error("Export failed. Supported formats: json, yaml")
 
@@ -1695,7 +1690,6 @@ Let's start by loading a binary file!""",
 
     def do_exit(self, arg):
         """Exit the interactive shell"""
-        logger.debug(f"Exit command called with arg: {arg}")
         # Check if there are unsaved results
         if self.analysis_results and not getattr(self, '_results_exported', False):
             if self.console:
@@ -1733,8 +1727,8 @@ Let's start by loading a binary file!""",
                     border_style="yellow"
                 )
                 self.console.print(summary_panel)
-            except Exception:
-                pass  # Ignore errors in exit summary
+            except Exception as e:
+                self.logger.debug(f"Failed to display exit summary: {e}")
 
         if self.console:
             self.console.print("[bold green]Goodbye![/bold green]")
@@ -1883,7 +1877,7 @@ Let's start by loading a binary file!""",
                 size = os.path.getsize(output_path)
                 self.info(f"Archive size: {size:,} bytes")
             except OSError:
-                pass
+                self.logger.debug("Failed to get archive file size")
         else:
             self.error("Export failed")
 
@@ -2310,7 +2304,8 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
                 scan_results = engine.scan_binary(self.current_binary)
 
                 # Convert to our format
-                for issue in scan_results.get('issues', []):
+                issues = scan_results.get('issues', []) if isinstance(scan_results, dict) else scan_results
+                for issue in issues if isinstance(issues, list) else []:
                     vulns.append({
                         'severity': issue.get('severity', 'INFO').upper(),
                         'type': issue.get('category', 'Unknown'),
@@ -2800,9 +2795,13 @@ Let's start by loading a binary file!""",
     def _export_html(self, output_path: str):
         """Export results as HTML."""
         try:
-            from intellicrack.utils.reporting.report_generator import generate_html_report
+            from intellicrack.utils.report_generator import ReportGenerator
 
-            html_content = generate_html_report(self.analysis_results)
+            generator = ReportGenerator()
+            html_content = generator.generate_html_report(
+                self.current_binary,
+                self.analysis_results
+            )
 
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(html_content)
@@ -3049,6 +3048,7 @@ Let's start by loading a binary file!""",
                 patch_data = json.load(f)
 
             self.info(f"Applying patch from {patch_file}")
+            self.info(f"Patch contains {len(patch_data.get('patches', []))} modifications")
 
             # Simulate patching
             if self.console:
@@ -3253,12 +3253,14 @@ Let's start by loading a binary file!""",
 
             self.info(f"Running plugin: {plugin_name}")
 
-            # run_plugin doesn't return a value, just executes the plugin
-            plugin_system.run_plugin(plugin_name, self.current_binary)
-            
-            # Indicate successful execution (assuming no exception means success)
-            self.analysis_results[f'plugin_{plugin_name}'] = {"status": "executed", "plugin": plugin_name}
-            self.success(f"Plugin {plugin_name} completed successfully")
+            result = plugin_system.run_plugin(plugin_name, self.current_binary)  # pylint: disable=assignment-from-no-return
+
+            if result is not None:
+                self.analysis_results[f'plugin_{plugin_name}'] = result
+                self.success(f"Plugin {plugin_name} completed successfully")
+            else:
+                # Plugin executed but returned no result (which may be normal)
+                self.success(f"Plugin {plugin_name} completed")
 
         except Exception as e:
             self.error(f"Failed to run plugin: {e}")
@@ -3426,6 +3428,10 @@ show summary
             self.success(f"Sample batch script created: {filename}")
         except Exception as e:
             self.error(f"Failed to create sample script: {e}")
+
+
+# Alias for easier importing
+InteractiveMode = IntellicrackShell
 
 
 def main():

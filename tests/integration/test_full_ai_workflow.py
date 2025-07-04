@@ -458,8 +458,9 @@ class TestFullAIWorkflow:
     def test_memory_usage_optimization(self, temp_project_dir, mock_llm_manager):
         """Test memory usage optimization."""
 
-        import psutil
         import os
+
+        import psutil
 
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss

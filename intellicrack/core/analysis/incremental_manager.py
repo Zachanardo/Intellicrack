@@ -1,3 +1,14 @@
+import datetime
+import hashlib
+import json
+import logging
+import os
+import pickle
+import time
+from typing import Any, Dict, Optional
+
+from intellicrack.logger import logger
+
 """
 Incremental Analysis Manager for avoiding reprocessing unchanged code.
 
@@ -28,19 +39,12 @@ between analysis runs and avoid reprocessing unchanged code sections, significan
 improving performance for large binaries.
 """
 
-import datetime
-import hashlib
-import json
-import logging
-import os
-import pickle
-import time
-from typing import Any, Dict, Optional
 
 try:
     from PyQt5.QtWidgets import QMessageBox
     PYQT_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in incremental_manager: %s", e)
     PYQT_AVAILABLE = False
 
 
@@ -188,7 +192,7 @@ class IncrementalAnalysisManager:
                 try:
                     os.rename(backup_path, index_path)
                     self.logger.info("Restored cache index from backup")
-                except OSError:
+                except OSError as e:
                     self.logger.error("Failed to restore backup")
 
             return False
@@ -320,7 +324,8 @@ class IncrementalAnalysisManager:
             try:
                 os.remove(cache_file)
                 self.logger.info("Removed corrupted cache file: %s", cache_file)
-            except OSError:
+            except OSError as e:
+                logger.error("OS error in incremental_manager: %s", e)
                 pass
             return None
         except Exception as e:
@@ -489,7 +494,8 @@ class IncrementalAnalysisManager:
                     timestamp = datetime.datetime.fromisoformat(timestamp_str)
                     if timestamp < cutoff_date:
                         old_hashes.append(binary_hash)
-                except ValueError:
+                except ValueError as e:
+                    logger.error("Value error in incremental_manager: %s", e)
                     # Invalid timestamp, consider it old
                     old_hashes.append(binary_hash)
 
@@ -644,7 +650,8 @@ class IncrementalAnalysisManager:
                 'sample_size': len(data),
                 'analysis_type': 'entropy'
             }
-        except (OSError, ValueError, RuntimeError):
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in incremental_manager: %s", e)
             return {'entropy': 0.0, 'analysis_type': 'entropy', 'error': 'Failed to read file'}
 
     def _strings_analysis(self, binary_path: str) -> Dict[str, Any]:
@@ -663,7 +670,8 @@ class IncrementalAnalysisManager:
                 'strings_sample': string_list,
                 'analysis_type': 'strings'
             }
-        except (OSError, ValueError, RuntimeError):
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in incremental_manager: %s", e)
             return {'strings_count': 0, 'analysis_type': 'strings', 'error': 'Failed to read file'}
 
     def _headers_analysis(self, binary_path: str) -> Dict[str, Any]:
@@ -685,7 +693,8 @@ class IncrementalAnalysisManager:
                 'header_bytes': header[:16].hex(),
                 'analysis_type': 'headers'
             }
-        except (OSError, ValueError, RuntimeError):
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in incremental_manager: %s", e)
             return {'file_type': 'unknown', 'analysis_type': 'headers', 'error': 'Failed to read file'}
 
 
@@ -719,6 +728,7 @@ def run_analysis_manager(app: Any) -> None:
         binary_name = os.path.basename(app.binary_path)
         app.update_output.emit(f"[Incremental Analysis] Analyzing binary: {binary_name} ({binary_size/1024:.1f} KB)")
     except OSError as e:
+        logger.error("OS error in incremental_manager: %s", e)
         app.update_output.emit(f"[Incremental Analysis] Error accessing binary: {e}")
         return
 

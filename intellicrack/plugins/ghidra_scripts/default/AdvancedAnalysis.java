@@ -223,13 +223,15 @@ public class AdvancedAnalysis extends GhidraScript {
                 while (instructions.hasNext() && !monitor.isCancelled()) {
                     Instruction instr = instructions.next();
                     for (int i = 0; i < instr.getNumOperands(); i++) {
-                        if (instr.getOperandType(i) == OperandType.REGISTER || instr.getOperandType(i) == OperandType.ADDRESS) {
-                            RegisterOrMemorySlot slot = instr.getRegisterOrMemorySlot(i);
-                            if (slot != null) {
-                                // Track data flow related to this register/memory slot
-                                // This is still a simplified example; real data flow analysis is very complex
+                        try {
+                            int opType = instr.getOperandType(i);
+                            if (opType == OperandType.REGISTER || opType == OperandType.ADDRESS) {
+                                // Track data flow for register and address operands
                                 dataFlow.get(func.address).add(instr.getAddress().getOffset());
                             }
+                        } catch (Exception e) {
+                            // Skip problematic operands
+                            continue;
                         }
                     }
                 }
@@ -247,11 +249,29 @@ public class AdvancedAnalysis extends GhidraScript {
             Function currentFunction = getFunctionAt(toAddr(func.address));
             if (currentFunction != null) {
                 int complexity = 0;
-                // Example: More sophisticated complexity metrics
-                complexity += currentFunction.getBody().getNumAddresses();
-                complexity += currentFunction.getInstructionIterator().hasNext() ? 10 : 0; // Check if it has instructions
-                complexity += currentFunction.getBasicBlocks().size() * 5; // Number of basic blocks
-                complexity += currentFunction.getCallFixups().size() * 2; // Number of call fixups
+                try {
+                    // More sophisticated complexity metrics
+                    complexity += currentFunction.getBody().getNumAddresses();
+                    
+                    // Check instruction count
+                    InstructionIterator instrIter = getInstructions(currentFunction.getBody(), true);
+                    int instrCount = 0;
+                    while (instrIter.hasNext()) {
+                        instrIter.next();
+                        instrCount++;
+                    }
+                    complexity += instrCount > 0 ? 10 : 0;
+                    
+                    // Add basic block complexity
+                    try {
+                        AddressSetView body = currentFunction.getBody();
+                        complexity += body.getNumAddressRanges() * 5;
+                    } catch (Exception e) {
+                        complexity += 5; // Default complexity
+                    }
+                } catch (Exception e) {
+                    complexity = 100; // Default complexity on error
+                }
                 functionComplexity.put(func.address, complexity);
             }
         }
@@ -443,25 +463,27 @@ public class AdvancedAnalysis extends GhidraScript {
                 if (pseudoCode.contains("strcmp") || pseudoCode.contains("memcmp") || pseudoCode.contains("strncmp")) {
                     println("  Potential license check function: " + func.getName() + " at 0x" + Long.toHexString(funcAddr));
 
-                    // Get CFG for the function
-                    FunctionGraph functionGraph = new FunctionGraph(currentProgram, toAddr(funcAddr), monitor);
-                    Iterator<Block> blocks = functionGraph.getBlocks(true).iterator();
-
-                    while (blocks.hasNext() && !monitor.isCancelled()) {
-                        Block block = blocks.next();
-                        InstructionIterator instructions = block.getInstructions();
-                        while (instructions.hasNext()) {
+                    try {
+                        // Analyze function instructions for potential patch locations
+                        InstructionIterator instructions = getInstructions(func.getBody(), true);
+                        while (instructions.hasNext() && !monitor.isCancelled()) {
                             Instruction instr = instructions.next();
-                            if (instr.getMnemonicString().startsWith("J") && !instr.getMnemonicString().equals("JMP")) {
+                            String mnemonic = instr.getMnemonicString();
+                            
+                            // Look for conditional jumps that could be license checks
+                            if (mnemonic.startsWith("J") && !mnemonic.equals("JMP")) {
                                 println("    Potential patch location: " + instr.getAddress());
 
                                 JsonObject patchObj = new JsonObject();
                                 patchObj.put("address", instr.getAddress().toString());
+                                patchObj.put("mnemonic", mnemonic);
                                 patchObj.put("newBytes", "9090"); // Example: NOP
-                                patchObj.put("description", "Bypass license check");
+                                patchObj.put("description", "Bypass license check conditional jump");
                                 patchCandidates.add(patchObj);
                             }
                         }
+                    } catch (Exception e) {
+                        println("    Error analyzing function instructions: " + e.getMessage());
                     }
                 }
             }
@@ -472,11 +494,25 @@ public class AdvancedAnalysis extends GhidraScript {
     }
 
     private void outputResults() throws Exception {
-        File outputFile = new File(System.getProperty("user.dir"), "analysis_results.json");
-        PrintWriter writer = new PrintWriter(new FileWriter(outputFile));
-        writer.println(analysisResults.toString(4)); // Indent for readability
-        writer.close();
-        println("Analysis results written to: " + outputFile.getAbsolutePath());
+        try {
+            File outputFile = new File(System.getProperty("user.dir"), "analysis_results.json");
+            PrintWriter writer = new PrintWriter(new FileWriter(outputFile));
+            writer.println(analysisResults.toString(4)); // Indent for readability
+            writer.close();
+            println("Analysis results written to: " + outputFile.getAbsolutePath());
+        } catch (Exception e) {
+            println("Error writing analysis results: " + e.getMessage());
+            // Try alternative output location
+            try {
+                File fallbackFile = new File("analysis_results.json");
+                PrintWriter writer = new PrintWriter(new FileWriter(fallbackFile));
+                writer.println(analysisResults.toString(4));
+                writer.close();
+                println("Analysis results written to fallback location: " + fallbackFile.getAbsolutePath());
+            } catch (Exception e2) {
+                println("Failed to write analysis results: " + e2.getMessage());
+            }
+        }
     }
 
     // --- Data Structures ---

@@ -362,7 +362,8 @@ class WindowsActivator:
                                         detected_versions.append('2013')
                                     elif 'Office14' in item or '14.0' in item:
                                         detected_versions.append('2010')
-                    except (OSError, PermissionError):
+                    except (OSError, PermissionError) as e:
+                        logger.error("Error in windows_activator: %s", e)
                         continue
 
             # Also check registry for C2R installations
@@ -382,12 +383,15 @@ class WindowsActivator:
                                     detected_versions.append("2016")
                                 elif version_info.startswith("15."):
                                     detected_versions.append("2013")
-                            except FileNotFoundError:
+                            except FileNotFoundError as e:
+                                logger.error("File not found in windows_activator: %s", e)
                                 pass
-                    except FileNotFoundError:
+                    except FileNotFoundError as e:
+                        logger.error("File not found in windows_activator: %s", e)
                         continue
 
-            except ImportError:
+            except ImportError as e:
+                logger.error("Import error in windows_activator: %s", e)
                 # winreg not available (non-Windows)
                 pass
 
@@ -452,13 +456,15 @@ class WindowsActivator:
                 'stderr': result.stderr
             }
 
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            logger.error("Subprocess timeout in windows_activator: %s", e)
             return {
                 'success': False,
                 'method': 'C2R',
                 'error': 'Office C2R activation timed out'
             }
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in windows_activator: %s", e)
             return {
                 'success': False,
                 'method': 'C2R',
@@ -550,13 +556,15 @@ class WindowsActivator:
                 'stderr': result.stderr
             }
 
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            logger.error("Subprocess timeout in windows_activator: %s", e)
             return {
                 'success': False,
                 'method': 'MSI',
                 'error': 'Office MSI activation timed out'
             }
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in windows_activator: %s", e)
             return {
                 'success': False,
                 'method': 'MSI',

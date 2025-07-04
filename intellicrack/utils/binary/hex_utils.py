@@ -340,7 +340,8 @@ def detect_encoding(data: bytes) -> Optional[str]:
         try:
             data.decode(encoding)
             return encoding
-        except (UnicodeDecodeError, UnicodeError):
+        except (UnicodeDecodeError, UnicodeError) as e:
+            logger.error("Error in hex_utils: %s", e)
             continue
 
     return None

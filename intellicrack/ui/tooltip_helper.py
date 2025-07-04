@@ -1,3 +1,7 @@
+from typing import Dict
+
+from intellicrack.logger import logger
+
 """
 Comprehensive tooltip definitions for Intellicrack UI.
 
@@ -19,7 +23,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Dict
 
 
 def get_tooltip_definitions() -> Dict[str, str]:
@@ -308,7 +311,8 @@ def apply_tooltips_to_buttons(parent_widget):
     """
     try:
         from PyQt5.QtWidgets import QPushButton
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in tooltip_helper: %s", e)
         from PyQt6.QtWidgets import QPushButton
 
     tooltips = get_tooltip_definitions()

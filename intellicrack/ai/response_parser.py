@@ -66,7 +66,7 @@ def parse_attack_vector_response(response: str) -> Tuple[List[str], List[str], L
 
 
 def parse_simple_response(response: str, finding_keywords: Optional[List[str]] = None,
-                         recommendation_keywords: Optional[List[str]] = None) -> Tuple[List[str], List[str]]:
+                          recommendation_keywords: Optional[List[str]] = None) -> Tuple[List[str], List[str]]:
     """
     Simple response parser for findings and recommendations.
 

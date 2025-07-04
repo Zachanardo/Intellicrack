@@ -1,30 +1,10 @@
-"""
-Professional Keygen Dialog for Intellicrack.
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
-
 import json
 import os
 import platform
 import subprocess
 import time
+
+from intellicrack.logger import logger
 
 from ..common_imports import (
     QCheckBox,
@@ -53,6 +33,30 @@ from ..common_imports import (
 )
 from .base_dialog import BinarySelectionDialog
 
+"""
+Professional Keygen Dialog for Intellicrack.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+
+
+
 
 class KeygenWorker(QThread):
     """Background worker for keygen operations."""
@@ -79,6 +83,7 @@ class KeygenWorker(QThread):
             elif self.operation == "analyze":
                 self._analyze_binary()
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in keygen_dialog: %s", e)
             self.error_occurred.emit(str(e))
 
     def _generate_single_key(self):
@@ -117,6 +122,7 @@ class KeygenWorker(QThread):
                 keys.append(result)
                 self.batch_progress.emit(_i + 1, count)
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in keygen_dialog: %s", e)
                 keys.append({
                     'batch_id': _i + 1,
                     'key': '',
@@ -656,7 +662,8 @@ class KeygenDialog(BinarySelectionDialog):
                 from PyQt5.QtWidgets import QApplication
                 QApplication.clipboard().setText(key)
                 self.status_label.setText("Key copied to clipboard")
-            except (OSError, ValueError, RuntimeError):
+            except (OSError, ValueError, RuntimeError) as e:
+                self.logger.error("Error in keygen_dialog: %s", e)
                 QMessageBox.information(self, "Copy", f"Key: {key}")
 
     def save_single_key(self):
@@ -731,10 +738,12 @@ class KeygenDialog(BinarySelectionDialog):
                         subprocess.run(["open", save_dir], check=False)
                     else:  # Linux
                         subprocess.run(["xdg-open", save_dir], check=False)
-                except (OSError, ValueError, RuntimeError):
+                except (OSError, ValueError, RuntimeError) as e:
+                    logger.error("Error in keygen_dialog: %s", e)
                     QMessageBox.information(self, "Folder Location", f"Keys saved to: {save_dir}")
 
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in keygen_dialog: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save key: {str(e)}")
             self.status_label.setText("Error saving key")
 
@@ -907,6 +916,7 @@ class KeygenDialog(BinarySelectionDialog):
                 self.status_label.setText(f"Keys exported to {os.path.basename(file_path)}")
 
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in keygen_dialog: %s", e)
                 QMessageBox.critical(self, "Export Error", f"Failed to export keys: {str(e)}")
 
     def analyze_existing_keys(self):
@@ -952,6 +962,7 @@ class KeygenDialog(BinarySelectionDialog):
             self.tabs.setCurrentIndex(3)
 
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in keygen_dialog: %s", e)
             QMessageBox.critical(self, "Analysis Error", f"Failed to analyze keys: {str(e)}")
 
     def on_error(self, error_msg):

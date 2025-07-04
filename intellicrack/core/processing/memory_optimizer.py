@@ -1,3 +1,11 @@
+import gc
+import logging
+import os
+import time
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+from intellicrack.logger import logger
+
 """
 Memory Optimizer
 
@@ -20,16 +28,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import gc
-import logging
-import os
-import time
-from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:
     import psutil
     PSUTIL_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in memory_optimizer: %s", e)
     PSUTIL_AVAILABLE = False
 
 
@@ -373,7 +377,8 @@ class MemoryOptimizer:
                         large_lists.append(obj)
                     elif isinstance(obj, dict) and len(obj) > 500:
                         large_dicts.append(obj)
-                except (TypeError, AttributeError):
+                except (TypeError, AttributeError) as e:
+                    self.logger.error("Error in memory_optimizer: %s", e)
                     continue
 
             # Optimize large lists by converting to tuples where possible
@@ -385,7 +390,8 @@ class MemoryOptimizer:
                         continue
                     # This is a heuristic - in practice you'd need more sophisticated detection
                     converted_lists += 1
-                except (AttributeError, TypeError):
+                except (AttributeError, TypeError) as e:
+                    logger.error("Error in memory_optimizer: %s", e)
                     continue
 
             if converted_lists > 0:
@@ -399,7 +405,8 @@ class MemoryOptimizer:
                         # Only clear if it's safe to do so
                         if hasattr(obj, 'clear'):
                             empty_cleared += 1
-                except (TypeError, AttributeError):
+                except (TypeError, AttributeError) as e:
+                    logger.error("Error in memory_optimizer: %s", e)
                     continue
 
             if empty_cleared > 0:
@@ -471,7 +478,8 @@ class MemoryOptimizer:
                             if hasattr(cache_info, 'currsize') and cache_info.currsize > 10:
                                 obj.cache_clear()
                                 cache_clears += 1
-                except (AttributeError, TypeError, ValueError):
+                except (AttributeError, TypeError, ValueError) as e:
+                    logger.error("Error in memory_optimizer: %s", e)
                     continue
 
             if cache_clears > 0:
@@ -624,7 +632,8 @@ class MemoryOptimizer:
 
                     object_sizes[obj_type]['count'] += 1
                     object_sizes[obj_type]['total_size'] += obj_size
-                except (TypeError, OSError):
+                except (TypeError, OSError) as e:
+                    self.logger.error("Error in memory_optimizer: %s", e)
                     continue
 
             # Find objects using significant memory
@@ -660,9 +669,11 @@ class MemoryOptimizer:
                             try:
                                 if obj in gc.get_referrers(referrer):
                                     cycle_count += 1
-                            except (TypeError, RuntimeError):
+                            except (TypeError, RuntimeError) as e:
+                                self.logger.error("Error in memory_optimizer: %s", e)
                                 continue
-                except (TypeError, RuntimeError):
+                except (TypeError, RuntimeError) as e:
+                    logger.error("Error in memory_optimizer: %s", e)
                     continue
 
             return cycle_count

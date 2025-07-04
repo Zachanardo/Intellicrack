@@ -1,0 +1,9 @@
+// Intellicrack Protection Engine: detection rule file
+
+includeScript("arj");
+
+function detect() {
+    detect_ARJ(1);
+
+    return result();
+}

@@ -356,7 +356,8 @@ def hex_string_to_bytes(hex_string: str) -> bytes:
     for hex_val in hex_values:
         try:
             result.append(int(hex_val, 16))
-        except ValueError:
+        except ValueError as e:
+            logger.error("Value error in api: %s", e)
             # Skip invalid hex values
             pass
 

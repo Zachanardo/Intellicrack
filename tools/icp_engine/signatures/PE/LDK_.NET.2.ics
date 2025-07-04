@@ -1,0 +1,13 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("protector", "SafeNet Sentinel LDK .NET");
+
+function detect() {
+    if (PE.isNET()) {
+        if (PE.isNetObjectPresent(".protect") && PE.isNetObjectPresent("haspdnert.dll")) {
+            bDetected = true;
+        }
+    }
+
+    return result();
+}

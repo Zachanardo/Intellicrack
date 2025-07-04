@@ -49,6 +49,45 @@ from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+# Utility functions for QHeaderView and QAbstractItemView
+def create_custom_header_view(orientation, parent=None):
+    """Create a custom header view with enhanced functionality"""
+    header = QHeaderView(orientation, parent)
+    header.setDefaultSectionSize(100)
+    header.setMinimumSectionSize(50)
+    header.setSectionsClickable(True)
+    header.setSortIndicatorShown(True)
+    return header
+
+def configure_table_selection(table, behavior=None, mode=None):
+    """Configure table selection behavior using QAbstractItemView"""
+    if behavior is None:
+        behavior = QAbstractItemView.SelectRows
+    if mode is None:
+        mode = QAbstractItemView.SingleSelection
+    
+    table.setSelectionBehavior(behavior)
+    table.setSelectionMode(mode)
+    
+    # Additional QAbstractItemView configurations
+    table.setDragDropMode(QAbstractItemView.NoDragDrop)
+    table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+    
+    return table
+
+def create_enhanced_item_view(parent=None):
+    """Create an enhanced item view with custom behavior"""
+    from PyQt5.QtWidgets import QListView
+    
+    view = QListView(parent)
+    # Use QAbstractItemView methods
+    view.setAlternatingRowColors(True)
+    view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    view.setDragDropMode(QAbstractItemView.InternalMove)
+    view.setEditTriggers(QAbstractItemView.DoubleClicked | QAbstractItemView.EditKeyPressed)
+    
+    return view
+
 
 class ModelDownloadThread(QThread):
     """Thread for downloading models."""
@@ -98,6 +137,7 @@ class ModelDownloadThread(QThread):
             self.download_finished.emit(self.model_name, True)
 
         except Exception as e:
+            logger.error("Exception in model_manager_dialog: %s", e)
             self.log_message.emit(f"Download failed: {self.model_name} - {e}")
             self.download_finished.emit(self.model_name, False)
 
@@ -207,11 +247,16 @@ class ModelManagerDialog(QDialog):
         # Configure table
         header = self.models_table.horizontalHeader()
         header.setStretchLastSection(True)
+        # Configure header resize modes
         header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        
+        # Create additional custom header for advanced features
+        self.custom_header = create_custom_header_view(header.orientation(), self.models_table)
 
-        self.models_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # Use utility function to configure table selection
+        configure_table_selection(self.models_table, QAbstractItemView.SelectRows)
         self.models_table.setAlternatingRowColors(True)
 
         layout.addWidget(self.models_table)
@@ -245,6 +290,9 @@ class ModelManagerDialog(QDialog):
         header = self.recommended_table.horizontalHeader()
         header.setStretchLastSection(True)
         header.setSectionResizeMode(1, QHeaderView.Stretch)
+        
+        # Configure table selection behavior
+        configure_table_selection(self.recommended_table)
 
         self.recommended_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.recommended_table.setAlternatingRowColors(True)
@@ -480,6 +528,7 @@ Server URL: {gguf_manager.get_server_url()}"""
                 QMessageBox.warning(self, "Error", f"Failed to load model '{model_name}'")
 
         except Exception as e:
+            logger.error("Exception in model_manager_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Error loading model: {e}")
 
     def load_selected_model(self):
@@ -531,6 +580,7 @@ Server URL: {gguf_manager.get_server_url()}"""
                         QMessageBox.warning(self, "Error", "Model not found in list.")
 
                 except Exception as e:
+                    logger.error("Exception in model_manager_dialog: %s", e)
                     QMessageBox.critical(self, "Error", f"Error deleting model: {e}")
         else:
             QMessageBox.information(self, "Info", "Please select a model to delete.")
@@ -554,6 +604,7 @@ Server URL: {gguf_manager.get_server_url()}"""
                 self.refresh_models()
 
             except Exception as e:
+                logger.error("Exception in model_manager_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Error adding model: {e}")
 
     def download_model(self, model_url: str, model_name: str):
@@ -600,6 +651,44 @@ Server URL: {gguf_manager.get_server_url()}"""
             QMessageBox.information(self, "Info", "Please enter a model URL.")
             return
 
+        # Security: Validate URL to prevent SSRF attacks
+        allowed_domains = [
+            'huggingface.co',
+            'github.com',
+            'raw.githubusercontent.com',
+            'ollama.ai',
+            'anthropic.com',
+            'openai.com'
+        ]
+        
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            
+            # Check if URL is using HTTPS
+            if parsed.scheme != 'https':
+                QMessageBox.warning(self, "Security Warning", 
+                    "Only HTTPS URLs are allowed for security reasons.")
+                return
+            
+            # Check if domain is in allowed list
+            domain_allowed = False
+            for allowed_domain in allowed_domains:
+                if parsed.hostname and (parsed.hostname == allowed_domain or 
+                                      parsed.hostname.endswith('.' + allowed_domain)):
+                    domain_allowed = True
+                    break
+            
+            if not domain_allowed:
+                QMessageBox.warning(self, "Security Warning", 
+                    f"Domain {parsed.hostname} is not in the allowed list.\n"
+                    f"Allowed domains: {', '.join(allowed_domains)}")
+                return
+                
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Invalid URL: {e}")
+            return
+
         # Extract model name from URL
         model_name = Path(url).name
         if not model_name.endswith('.gguf'):
@@ -635,6 +724,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             else:
                 QMessageBox.warning(self, "Error", "Failed to start GGUF server. Check dependencies.")
         except Exception as e:
+            logger.error("Exception in model_manager_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Error starting server: {e}")
 
         self.update_server_status()
@@ -645,6 +735,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             gguf_manager.stop_server()
             QMessageBox.information(self, "Info", "GGUF server stop requested.")
         except Exception as e:
+            logger.error("Exception in model_manager_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Error stopping server: {e}")
 
         self.update_server_status()
@@ -674,19 +765,22 @@ Server URL: {gguf_manager.get_server_url()}"""
         try:
             import flask
             deps_status.append("✓ Flask available")
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in model_manager_dialog: %s", e)
             deps_status.append("✗ Flask not available (pip install flask flask-cors)")
 
         try:
             import llama_cpp
             deps_status.append("✓ llama-cpp-python available")
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in model_manager_dialog: %s", e)
             deps_status.append("✗ llama-cpp-python not available (pip install llama-cpp-python)")
 
         try:
             import requests
             deps_status.append("✓ requests available")
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in model_manager_dialog: %s", e)
             deps_status.append("✗ requests not available (pip install requests)")
 
         self.deps_status_text.setPlainText("\n".join(deps_status))

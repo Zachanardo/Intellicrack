@@ -1,3 +1,4 @@
+
 """
 Plugin Editor Dialog for Intellicrack.
 
@@ -327,6 +328,7 @@ Process.enumerateModules().forEach(function(module) {
             self.editor.current_file = path
             self.setWindowTitle(f"Plugin Editor - {os.path.basename(path)}")
         except Exception as e:
+            self.logger.error("Exception in plugin_editor_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load plugin:\n{str(e)}")
 
     def save_plugin(self):
@@ -383,7 +385,8 @@ Process.enumerateModules().forEach(function(module) {
             debugger_dialog = DebuggerDialog(self, self.editor.current_file)
             debugger_dialog.exec_()
 
-        except ImportError:
+        except ImportError as e:
+            self.logger.error("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
                 self, "Not Available",
                 "Debugger not available.\nPlease check installation."
@@ -464,7 +467,8 @@ Process.enumerateModules().forEach(function(module) {
             test_dialog = TestGeneratorDialog(self, self.editor.current_file)
             test_dialog.exec_()
 
-        except ImportError:
+        except ImportError as e:
+            self.logger.error("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
                 self, "Not Available",
                 "Test generator not available.\nPlease check installation."
@@ -482,7 +486,8 @@ Process.enumerateModules().forEach(function(module) {
             ci_cd_dialog = CICDDialog(self, self.editor.current_file)
             ci_cd_dialog.exec_()
 
-        except ImportError:
+        except ImportError as e:
+            self.logger.error("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
                 self, "Not Available",
                 "CI/CD pipeline not available.\nPlease check installation."

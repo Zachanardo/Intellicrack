@@ -9,15 +9,20 @@ import asyncio
 import base64
 import json
 import logging
+import socket
 import ssl
 import time
 from typing import Any, Dict, List, Optional
+
+# Create module logger
+logger = logging.getLogger(__name__)
 
 # Optional import for aiohttp
 try:
     import aiohttp
     HAS_AIOHTTP = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in communication_protocols: %s", e)
     aiohttp = None
     HAS_AIOHTTP = False
 
@@ -41,19 +46,19 @@ class BaseProtocol:
 
     async def _default_on_connection(self, connection_info: Dict[str, Any]):
         """Default no-op connection handler."""
-        self.logger.debug(f"Default connection handler called with: {connection_info}")
+        self.logger.debug("Default connection handler called with: %s", connection_info)
 
     async def _default_on_message(self, session_id: str, message: Dict[str, Any]):
         """Default no-op message handler."""
-        self.logger.debug(f"Default message handler for session {session_id}: {message}")
+        self.logger.debug("Default message handler for session %s: %s", session_id, message)
 
     async def _default_on_disconnection(self, session_id: str):
         """Default no-op disconnection handler."""
-        self.logger.debug(f"Default disconnection handler for session: {session_id}")
+        self.logger.debug("Default disconnection handler for session: %s", session_id)
 
     async def _default_on_error(self, protocol: str, error: Exception):
         """Default no-op error handler."""
-        self.logger.warning(f"Default error handler for protocol {protocol}: {error}")
+        self.logger.warning("Default error handler for protocol %s: %s", protocol, error)
 
     async def start(self):
         """Start the protocol handler."""
@@ -65,7 +70,7 @@ class BaseProtocol:
 
     async def send_message(self, message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Send message through the protocol."""
-        self.logger.debug(f"Send message called with: {message}")
+        self.logger.debug("Send message called with: %s", message)
         raise NotImplementedError(f"Subclasses must implement send_message. Message: {message.get('type', 'unknown')}")
 
     async def connect(self) -> bool:
@@ -134,10 +139,10 @@ class HttpsProtocol(BaseProtocol):
             )
 
             self.connected = True
-            self.logger.info(f"HTTPS server started on {self.host}:{self.port}")
+            self.logger.info("HTTPS server started on %s:%s", self.host, self.port)
 
-        except Exception as e:
-            self.logger.error(f"Failed to start HTTPS server: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Failed to start HTTPS server: %s", e)
             raise
 
     async def stop(self):
@@ -153,8 +158,8 @@ class HttpsProtocol(BaseProtocol):
             self.connected = False
             self.logger.info("HTTPS server stopped")
 
-        except Exception as e:
-            self.logger.error(f"Error stopping HTTPS server: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error stopping HTTPS server: %s", e)
 
     async def connect(self) -> bool:
         """Connect to HTTPS server (client mode)."""
@@ -174,8 +179,8 @@ class HttpsProtocol(BaseProtocol):
                     self.connected = True
                     return True
 
-        except Exception as e:
-            self.logger.error(f"HTTPS connection failed: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("HTTPS connection failed: %s", e)
 
         return False
 
@@ -209,8 +214,8 @@ class HttpsProtocol(BaseProtocol):
                     decrypted = self.encryption_manager.decrypt(response_data)
                     return json.loads(decrypted)
 
-        except Exception as e:
-            self.logger.error(f"HTTPS message send failed: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("HTTPS message send failed: %s", e)
 
         return None
 
@@ -234,7 +239,7 @@ class HttpsProtocol(BaseProtocol):
         try:
             client_addr = writer.get_extra_info('peername')
             self.connection_count += 1
-            self.logger.debug(f"Reader stream ready: {reader is not None}")
+            self.logger.debug("Reader stream ready: %s", reader is not None)
 
             try:
                 await self.on_connection({
@@ -242,11 +247,11 @@ class HttpsProtocol(BaseProtocol):
                     'protocol': 'https',
                     'timestamp': time.time()
                 })
-            except Exception as e:
-                self.logger.error(f"on_connection callback error: {e}")
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                self.logger.error("on_connection callback error: %s", e)
 
-        except Exception as e:
-            self.logger.error(f"Error handling client connection: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error handling client connection: %s", e)
 
     async def _handle_beacon(self, request):
         """Handle beacon endpoint."""
@@ -259,8 +264,8 @@ class HttpsProtocol(BaseProtocol):
             session_id = message.get('session_id', 'unknown')
             try:
                 await self.on_message(session_id, message)
-            except Exception as e:
-                self.logger.error(f"on_message callback error: {e}")
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                self.logger.error("on_message callback error: %s", e)
 
             # Send response
             response = {'status': 'success', 'timestamp': time.time()}
@@ -268,8 +273,8 @@ class HttpsProtocol(BaseProtocol):
 
             return self._create_response(body=encrypted_response)
 
-        except Exception as e:
-            self.logger.error(f"Error handling beacon: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error handling beacon: %s", e)
             return self._create_response(status=500)
 
     async def _handle_task(self, request):
@@ -283,16 +288,16 @@ class HttpsProtocol(BaseProtocol):
             session_id = message.get('session_id', 'unknown')
             try:
                 await self.on_message(session_id, message)
-            except Exception as e:
-                self.logger.error(f"on_message callback error: {e}")
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                self.logger.error("on_message callback error: %s", e)
 
             response = {'status': 'success', 'timestamp': time.time()}
             encrypted_response = self.encryption_manager.encrypt(json.dumps(response))
 
             return self._create_response(body=encrypted_response)
 
-        except Exception as e:
-            self.logger.error(f"Error handling task: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error handling task: %s", e)
             return self._create_response(status=500)
 
     async def _handle_upload(self, request):
@@ -306,16 +311,16 @@ class HttpsProtocol(BaseProtocol):
             session_id = message.get('session_id', 'unknown')
             try:
                 await self.on_message(session_id, message)
-            except Exception as e:
-                self.logger.error(f"on_message callback error: {e}")
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                self.logger.error("on_message callback error: %s", e)
 
             response = {'status': 'success', 'timestamp': time.time()}
             encrypted_response = self.encryption_manager.encrypt(json.dumps(response))
 
             return self._create_response(body=encrypted_response)
 
-        except Exception as e:
-            self.logger.error(f"Error handling upload: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error handling upload: %s", e)
             return self._create_response(status=500)
 
     async def _handle_download(self, request):
@@ -329,16 +334,16 @@ class HttpsProtocol(BaseProtocol):
             session_id = message.get('session_id', 'unknown')
             try:
                 await self.on_message(session_id, message)
-            except Exception as e:
-                self.logger.error(f"on_message callback error: {e}")
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                self.logger.error("on_message callback error: %s", e)
 
             response = {'status': 'success', 'timestamp': time.time()}
             encrypted_response = self.encryption_manager.encrypt(json.dumps(response))
 
             return self._create_response(body=encrypted_response)
 
-        except Exception as e:
-            self.logger.error(f"Error handling download: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error handling download: %s", e)
             return self._create_response(status=500)
 
 
@@ -365,13 +370,13 @@ class DnsProtocol(BaseProtocol):
             self.socket.setblocking(False)
 
             self.connected = True
-            self.logger.info(f"DNS server started on {self.host}:{self.port}")
+            self.logger.info("DNS server started on %s:%s", self.host, self.port)
 
             # Start DNS handler loop
             asyncio.create_task(self._dns_handler_loop())
 
-        except Exception as e:
-            self.logger.error(f"Failed to start DNS server: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Failed to start DNS server: %s", e)
             raise
 
     async def stop(self):
@@ -383,8 +388,8 @@ class DnsProtocol(BaseProtocol):
             self.connected = False
             self.logger.info("DNS server stopped")
 
-        except Exception as e:
-            self.logger.error(f"Error stopping DNS server: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error stopping DNS server: %s", e)
 
     async def connect(self) -> bool:
         """Connect to DNS server (client mode)."""
@@ -402,11 +407,11 @@ class DnsProtocol(BaseProtocol):
             response, addr = self.socket.recvfrom(1024)
             if response:
                 self.connected = True
-                self.logger.debug(f"DNS connection established with {addr}")
+                self.logger.debug("DNS connection established with %s", addr)
                 return True
 
-        except Exception as e:
-            self.logger.error(f"DNS connection failed: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("DNS connection failed: %s", e)
 
         return False
 
@@ -449,8 +454,8 @@ class DnsProtocol(BaseProtocol):
                     decrypted = self.encryption_manager.decrypt(base64.b64decode(combined_response))
                     return json.loads(decrypted)
 
-        except Exception as e:
-            self.logger.error(f"DNS message send failed: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("DNS message send failed: %s", e)
 
         return None
 
@@ -496,7 +501,7 @@ class DnsProtocol(BaseProtocol):
         import struct
 
         try:
-            self.logger.debug(f"Parsing DNS response of {len(response)} bytes")
+            self.logger.debug("Parsing DNS response of %s bytes", len(response))
 
             if len(response) < 12:
                 self.logger.warning("DNS response too short")
@@ -506,7 +511,7 @@ class DnsProtocol(BaseProtocol):
             header = struct.unpack('!HHHHHH', response[:12])
             transaction_id, flags, questions, answer_rrs, authority_rrs, additional_rrs = header
 
-            self.logger.debug(f"DNS Response - ID: {transaction_id}, Flags: {flags:04x}, Answers: {answer_rrs}, Authority: {authority_rrs}, Additional: {additional_rrs}")
+            self.logger.debug("DNS Response - ID: %s, Flags: %04x, Answers: %s, Authority: %s, Additional: %s", transaction_id, flags, answer_rrs, authority_rrs, additional_rrs)
 
             if answer_rrs == 0:
                 self.logger.debug("No answers in DNS response")
@@ -561,7 +566,7 @@ class DnsProtocol(BaseProtocol):
 
                 # Parse TYPE, CLASS, TTL, RDLENGTH
                 rr_type, rr_class, ttl, rdlength = struct.unpack('!HHIH', response[offset:offset+10])
-                self.logger.debug(f"RR - Type: {rr_type}, Class: {rr_class}, TTL: {ttl}, Length: {rdlength}")
+                self.logger.debug("RR - Type: %s, Class: %s, TTL: %s, Length: %s", rr_type, rr_class, ttl, rdlength)
                 offset += 10
 
                 if offset + rdlength > len(response):
@@ -573,7 +578,7 @@ class DnsProtocol(BaseProtocol):
                 if rr_type == 1:  # A record
                     if rdlength == 4:
                         ip = '.'.join(str(b) for b in rdata)
-                        self.logger.debug(f"A record: {ip}")
+                        self.logger.debug("A record: %s", ip)
 
                         # Try to extract encoded data from IP octets
                         try:
@@ -581,8 +586,8 @@ class DnsProtocol(BaseProtocol):
                             data_chunk = ''.join(chr(b) for b in rdata if 32 <= b <= 126)
                             if data_chunk:
                                 extracted_data.append(data_chunk)
-                        except:
-                            pass
+                        except Exception:
+                            self.logger.debug("Error extracting data from IP octets")
 
                 elif rr_type == 16:  # TXT record
                     # TXT records store our data directly
@@ -601,14 +606,14 @@ class DnsProtocol(BaseProtocol):
                             break
 
                     if txt_data:
-                        self.logger.debug(f"TXT record data: {txt_data[:50]}...")
+                        self.logger.debug("TXT record data: %s...", txt_data[:50])
                         extracted_data.append(txt_data)
 
                 elif rr_type == 5:  # CNAME record
                     # Parse CNAME and extract data from subdomain
                     cname = self._parse_domain_name(rdata, response)
                     if cname:
-                        self.logger.debug(f"CNAME: {cname}")
+                        self.logger.debug("CNAME: %s", cname)
                         # Extract data from subdomain part
                         parts = cname.split('.')
                         if len(parts) > 0:
@@ -624,19 +629,20 @@ class DnsProtocol(BaseProtocol):
                                 decoded = base64.b64decode(data_part).decode('utf-8', errors='ignore')
                                 if decoded:
                                     extracted_data.append(decoded)
-                            except:
+                            except Exception:
+                                self.logger.debug("Error decoding base64 data part")
                                 extracted_data.append(data_part)
 
                 offset += rdlength
 
             # Combine all extracted data
             result = ''.join(extracted_data)
-            self.logger.debug(f"Extracted {len(result)} bytes of data from DNS response")
+            self.logger.debug("Extracted %s bytes of data from DNS response", len(result))
 
             return result
 
-        except Exception as e:
-            self.logger.error(f"Error parsing DNS response: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error parsing DNS response: %s", e)
             return ""
 
     def _parse_domain_name(self, data: bytes, packet: bytes, offset: int = 0) -> str:
@@ -673,8 +679,8 @@ class DnsProtocol(BaseProtocol):
 
             return '.'.join(labels)
 
-        except Exception as e:
-            self.logger.error(f"Error parsing domain name: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error parsing domain name: %s", e)
             return ""
 
     def _combine_dns_responses(self, responses: List[dict]) -> str:
@@ -696,15 +702,16 @@ class DnsProtocol(BaseProtocol):
                 if response:
                     await asyncio.get_event_loop().sock_sendto(self.socket, response, addr)
 
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as e:
+                self.logger.error("asyncio.TimeoutError in communication_protocols: %s", e)
                 continue
-            except Exception as e:
-                self.logger.error(f"Error in DNS handler loop: {e}")
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                self.logger.error("Error in DNS handler loop: %s", e)
 
     async def _process_dns_query(self, data: bytes, addr: tuple) -> bytes:
         """Process incoming DNS query and extract C2 data."""
         try:
-            self.logger.debug(f"Processing DNS query from {addr}")
+            self.logger.debug("Processing DNS query from %s", addr)
             # Parse DNS query and extract domain
             domain = self._extract_domain_from_query(data)
 
@@ -720,16 +727,16 @@ class DnsProtocol(BaseProtocol):
                         session_id = message.get('session_id', 'unknown')
                         try:
                             await self.on_message(session_id, message)
-                        except Exception as e:
-                            self.logger.error(f"on_message callback error: {e}")
-                    except Exception as e:
-                        self.logger.warning(f"Failed to decrypt DNS message: {e}")
+                        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                            self.logger.error("on_message callback error: %s", e)
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.warning("Failed to decrypt DNS message: %s", e)
 
                 # Build response
                 return self._build_dns_response(data)
 
-        except Exception as e:
-            self.logger.error(f"Error processing DNS query: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error processing DNS query: %s", e)
 
         return None
 
@@ -755,8 +762,8 @@ class DnsProtocol(BaseProtocol):
 
             return '.'.join(domain_parts)
 
-        except Exception as e:
-            self.logger.error(f"Error extracting domain: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error extracting domain: %s", e)
             return ""
 
     def _extract_c2_data_from_domain(self, domain: str) -> str:
@@ -770,8 +777,8 @@ class DnsProtocol(BaseProtocol):
                 if len(parts) >= 2:
                     return parts[0]  # First part contains the data
 
-        except Exception as e:
-            self.logger.error(f"Error extracting C2 data: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error extracting C2 data: %s", e)
 
         return ""
 
@@ -823,8 +830,8 @@ class DnsProtocol(BaseProtocol):
 
             return header + question_section + answer_section
 
-        except Exception as e:
-            self.logger.error(f"Error building DNS response: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error building DNS response: %s", e)
             return b''
 
 
@@ -851,10 +858,10 @@ class TcpProtocol(BaseProtocol):
             )
 
             self.connected = True
-            self.logger.info(f"TCP server started on {self.host}:{self.port}")
+            self.logger.info("TCP server started on %s:%s", self.host, self.port)
 
-        except Exception as e:
-            self.logger.error(f"Failed to start TCP server: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Failed to start TCP server: %s", e)
             raise
 
     async def stop(self):
@@ -876,8 +883,8 @@ class TcpProtocol(BaseProtocol):
             self.connected = False
             self.logger.info("TCP server stopped")
 
-        except Exception as e:
-            self.logger.error(f"Error stopping TCP server: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error stopping TCP server: %s", e)
 
     async def connect(self) -> bool:
         """Connect to TCP server (client mode)."""
@@ -889,8 +896,8 @@ class TcpProtocol(BaseProtocol):
             self.connected = True
             return True
 
-        except Exception as e:
-            self.logger.error(f"TCP connection failed: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("TCP connection failed: %s", e)
             return False
 
     async def disconnect(self):
@@ -928,8 +935,8 @@ class TcpProtocol(BaseProtocol):
                 decrypted = self.encryption_manager.decrypt(encrypted_response)
                 return json.loads(decrypted)
 
-        except Exception as e:
-            self.logger.error(f"TCP message send failed: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("TCP message send failed: %s", e)
 
         return None
 
@@ -949,14 +956,14 @@ class TcpProtocol(BaseProtocol):
                     'protocol': 'tcp',
                     'timestamp': time.time()
                 })
-            except Exception as e:
-                self.logger.error(f"on_connection callback error: {e}")
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                self.logger.error("on_connection callback error: %s", e)
 
             # Handle messages from this client
             await self._handle_client_messages(reader, writer, session_id)
 
-        except Exception as e:
-            self.logger.error(f"Error handling TCP client connection: {e}")
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error handling TCP client connection: %s", e)
         finally:
             if session_id in self.client_connections:
                 del self.client_connections[session_id]
@@ -981,8 +988,8 @@ class TcpProtocol(BaseProtocol):
 
                 try:
                     await self.on_message(session_id, message)
-                except Exception as e:
-                    self.logger.error(f"on_message callback error: {e}")
+                except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                    self.logger.error("on_message callback error: %s", e)
 
                 # Send acknowledgment
                 ack = {'status': 'success', 'timestamp': time.time()}
@@ -998,11 +1005,11 @@ class TcpProtocol(BaseProtocol):
             # Client disconnected
             try:
                 await self.on_disconnection(session_id)
-            except Exception as e:
-                self.logger.error(f"on_disconnection callback error: {e}")
-        except Exception as e:
-            self.logger.error(f"Error handling client messages: {e}")
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                self.logger.error("on_disconnection callback error: %s", e)
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("Error handling client messages: %s", e)
             try:
                 await self.on_error('tcp', e)
-            except Exception as ex:
-                self.logger.error(f"on_error callback error: {ex}")
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as ex:
+                self.logger.error("on_error callback error: %s", ex)

@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 class IntellicrackConfig:
     """
     Platform-aware configuration manager that auto-configures Intellicrack.
-    
+
     Features:
     - Platform-specific config directories (Windows/Linux/macOS)
     - Auto-discovery of tools (Ghidra, radare2, etc.)
@@ -63,6 +63,7 @@ class IntellicrackConfig:
             return
 
         self._initialized = True
+        self.logger = logging.getLogger(__name__ + ".IntellicrackConfig")
         self._config = {}
         self._config_lock = threading.RLock()
 
@@ -107,7 +108,8 @@ class IntellicrackConfig:
                 self._load_config()
                 self._upgrade_config_if_needed()
             else:
-                logger.info("First run detected - creating default configuration")
+                logger.info(
+                    "First run detected - creating default configuration")
                 self._create_default_config()
         except Exception as e:
             logger.error(f"Configuration initialization failed: {e}")
@@ -168,6 +170,27 @@ class IntellicrackConfig:
                 'allow_network_access': False,
                 'log_sensitive_data': False,
                 'encrypt_config': False
+            },
+            'patching': {
+                'backup_original': True,
+                'verify_patches': True,
+                'max_patch_size': '10MB',
+                'patch_format': 'binary'
+            },
+            'ui': {
+                'theme': 'dark',
+                'font_size': 10,
+                'show_tooltips': True,
+                'auto_save_layout': True,
+                'hex_view_columns': 16
+            },
+            'ai': {
+                'enabled': True,
+                'model_provider': 'auto',
+                'temperature': 0.7,
+                'max_tokens': 2048,
+                'cache_responses': True,
+                'background_loading': True
             }
         }
 
@@ -239,7 +262,8 @@ class IntellicrackConfig:
 
     def _discover_tool(self, tool_name: str, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Discover a specific tool and return its information."""
-        logger.debug(f"Discovering tool: {tool_name} with config keys: {list(config.keys())}")
+        logger.debug(
+            f"Discovering tool: {tool_name} with config keys: {list(config.keys())}")
         # First check PATH
         for executable in config['executables']:
             tool_path = shutil.which(executable)
@@ -280,7 +304,8 @@ class IntellicrackConfig:
                     timeout=10
                 )
                 if result.returncode == 0:
-                    tool_info['version'] = result.stdout.strip()[:100]  # Limit length
+                    tool_info['version'] = result.stdout.strip()[
+                        :100]  # Limit length
             except Exception as e:
                 logger.debug(f"Could not get version for {tool_path}: {e}")
 
@@ -355,12 +380,14 @@ class IntellicrackConfig:
         """Upgrade configuration if version changed."""
         current_version = self._config.get('version', '1.0')
         if current_version != '2.0':
-            logger.info(f"Upgrading configuration from {current_version} to 2.0")
+            logger.info(
+                f"Upgrading configuration from {current_version} to 2.0")
             self._upgrade_config(current_version)
 
     def _upgrade_config(self, from_version: str):
         """Upgrade configuration from older version."""
-        logger.info(f"Upgrading configuration schema from version: {from_version}")
+        logger.info(
+            f"Upgrading configuration schema from version: {from_version}")
         # Preserve user settings while updating structure
         user_preferences = self._config.get('preferences', {})
         user_tools = self._config.get('tools', {})
@@ -425,7 +452,8 @@ class IntellicrackConfig:
                 for k in keys:
                     value = value[k]
                 return value
-            except (KeyError, TypeError):
+            except (KeyError, TypeError) as e:
+                self.logger.error("Error in config_manager: %s", e)
                 return default
 
     def set(self, key: str, value: Any, save: bool = True):
@@ -505,6 +533,7 @@ class IntellicrackConfig:
 
 # Global instance
 _global_config = None
+
 
 def get_config() -> IntellicrackConfig:
     """Get global configuration instance."""

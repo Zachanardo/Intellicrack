@@ -1,3 +1,16 @@
+import hashlib
+import logging
+import os
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from intellicrack.logger import logger
+
+from ...utils.analysis.entropy_utils import calculate_byte_entropy
+from ...utils.core.string_utils import extract_ascii_strings
+from ..plugin_base import BasePlugin, PluginMetadata, create_plugin_info
+
 """
 Enhanced Demo Plugin for Intellicrack
 Comprehensive example showing modern plugin development practices
@@ -8,16 +21,7 @@ License: GPL v3
 Compatibility: Intellicrack 1.0+
 """
 
-import hashlib
-import logging
-import os
-import time
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-from ...utils.analysis.entropy_utils import calculate_byte_entropy
-from ...utils.core.string_utils import extract_ascii_strings
-from ..plugin_base import BasePlugin, PluginMetadata, create_plugin_info
 
 # Plugin metadata
 PLUGIN_NAME = "Enhanced Demo Plugin"
@@ -128,6 +132,7 @@ class DemoPlugin(BasePlugin):
             return True, "File validation successful"
 
         except Exception as e:
+            logger.error("Exception in demo_plugin: %s", e)
             return False, f"Validation error: {str(e)}"
 
     def _detect_file_type(self, data: bytes) -> str:
@@ -230,7 +235,7 @@ class DemoPlugin(BasePlugin):
             if entropy > 7.5:
                 results.append("   ⚠️  High entropy - possibly packed/encrypted")
             elif entropy < 1.0:
-                results.append("   ℹ️  Low entropy - likely text or structured data")
+                results.append("   INFO: Low entropy - likely text or structured data")
             else:
                 results.append("   ✅ Normal entropy range")
 
@@ -299,6 +304,7 @@ class DemoPlugin(BasePlugin):
                 results.append("\n💡 Modify this code for your specific analysis needs!")
 
         except Exception as e:
+            logger.error("Exception in demo_plugin: %s", e)
             results.append(f"❌ Analysis error: {str(e)}")
             results.append("💡 This error is being handled gracefully")
 
@@ -348,6 +354,7 @@ class DemoPlugin(BasePlugin):
                     shutil.copy2(binary_path, backup_path)
                     results.append(f"💾 Backup created: {os.path.basename(backup_path)}")
                 except Exception as e:
+                    logger.error("Exception in demo_plugin: %s", e)
                     results.append(f"⚠️  Backup failed: {e}")
                     if options.get('require_backup', True):
                         results.append("❌ Aborting patch for safety")
@@ -411,7 +418,7 @@ class DemoPlugin(BasePlugin):
             # Limit opportunities based on max_patches option
             if len(patch_opportunities) > max_patches:
                 patch_opportunities = patch_opportunities[:max_patches]
-                results.append(f"ℹ️ Limiting to first {max_patches} opportunities (configured via options)")
+                results.append(f"INFO: Limiting to first {max_patches} opportunities (configured via options)")
 
             if patch_opportunities:
                 results.append("Patch opportunities identified:")
@@ -480,6 +487,7 @@ class DemoPlugin(BasePlugin):
                 results.append(f"🛡️  Backup available at: {os.path.basename(backup_path)}")
 
         except Exception as e:
+            logger.error("Exception in demo_plugin: %s", e)
             results.append(f"❌ Patch demonstration error: {str(e)}")
             results.append("💡 This error is being handled gracefully")
 
@@ -568,6 +576,7 @@ class DemoPlugin(BasePlugin):
             }
 
         except Exception as e:
+            logger.error("Exception in demo_plugin: %s", e)
             return {
                 "success": False,
                 "error": str(e),
@@ -658,7 +667,8 @@ class DemoPlugin(BasePlugin):
             self.config_manager.update(new_config)
             return True
 
-        except Exception:
+        except Exception as e:
+            self.logger.error("Exception in demo_plugin: %s", e)
             return False
 
     def get_capabilities(self) -> List[str]:
@@ -723,6 +733,7 @@ class DemoPlugin(BasePlugin):
                     'results': []
                 }
         except Exception as e:
+            logger.error("Exception in demo_plugin: %s", e)
             return {
                 'success': False,
                 'error': str(e),

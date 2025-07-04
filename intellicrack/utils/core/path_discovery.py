@@ -496,11 +496,14 @@ class PathDiscovery:
                                                     bin_path = os.path.join(install_location, 'bin', exe)
                                                     if os.path.isfile(bin_path):
                                                         return bin_path
-                                    except OSError:
+                                    except OSError as e:
+                                        logger.error("OS error in path_discovery: %s", e)
                                         pass
-                            except OSError:
+                            except OSError as e:
+                                logger.error("OS error in path_discovery: %s", e)
                                 pass
-                except OSError:
+                except OSError as e:
+                    logger.error("OS error in path_discovery: %s", e)
                     pass
         except ImportError:
             logger.warning("winreg module not available")
@@ -613,7 +616,8 @@ class PathDiscovery:
         try:
             result = subprocess.run([path, '-v'], capture_output=True, text=True, timeout=5, check=False)
             return 'radare2' in result.stdout.lower()
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in path_discovery: %s", e)
             return False
 
     def _validate_frida(self, path: str) -> bool:
@@ -621,7 +625,8 @@ class PathDiscovery:
         try:
             result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5, check=False)
             return 'frida' in result.stdout.lower() or result.returncode == 0
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in path_discovery: %s", e)
             return False
 
     def _validate_python(self, path: str) -> bool:
@@ -629,7 +634,8 @@ class PathDiscovery:
         try:
             result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5, check=False)
             return 'python' in result.stdout.lower() or 'python' in result.stderr.lower()
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in path_discovery: %s", e)
             return False
 
     def _validate_docker(self, path: str) -> bool:
@@ -637,7 +643,8 @@ class PathDiscovery:
         try:
             result = subprocess.run([path, '--version'], capture_output=True, text=True, timeout=5, check=False)
             return 'docker' in result.stdout.lower()
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in path_discovery: %s", e)
             return False
 
     def _validate_wireshark(self, path: str) -> bool:
@@ -741,7 +748,8 @@ class PathDiscovery:
                             logger.warning(f"Path {path} is not an executable file")
                     else:
                         logger.warning(f"Path {path} does not exist or is not a file")
-                except (KeyboardInterrupt, EOFError):
+                except (KeyboardInterrupt, EOFError) as e:
+                    logger.error("Error in path_discovery: %s", e)
                     pass
                 return None
 

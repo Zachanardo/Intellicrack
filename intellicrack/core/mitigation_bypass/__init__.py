@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Mitigation Bypass Module - Compatibility Alias
 
@@ -8,7 +10,8 @@ This module provides compatibility aliases for the exploit mitigation bypass com
 try:
     from ..exploitation.cfi_bypass import CFIBypass
     HAS_CFI_BYPASS = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     CFIBypass = None
     HAS_CFI_BYPASS = False
 

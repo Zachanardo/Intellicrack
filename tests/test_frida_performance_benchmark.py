@@ -12,7 +12,6 @@ Measures and tracks performance metrics for Frida operations including:
 import gc
 import json
 import platform
-import psutil
 import statistics
 import sys
 import time
@@ -22,10 +21,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
+import psutil
+
 try:
     import frida
+
     from intellicrack.core.frida_manager import (
-        FridaManager, HookCategory, FridaPerformanceOptimizer
+        FridaManager,
+        FridaPerformanceOptimizer,
+        HookCategory,
     )
     FRIDA_AVAILABLE = True
 except ImportError:

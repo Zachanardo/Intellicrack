@@ -22,12 +22,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 # Import system utilities
 from .os_detection import (
     detect_operating_system,
-    is_windows,
+    get_default_persistence_method,
+    get_platform_details,
+    get_platform_specific_paths,
     is_linux_like,
     is_unix_like,
-    get_platform_details,
-    get_default_persistence_method,
-    get_platform_specific_paths
+    is_windows,
 )
 from .os_detection_mixin import OSDetectionMixin
 

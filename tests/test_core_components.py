@@ -3,8 +3,8 @@
 Direct test of core Intellicrack components without full import chain
 """
 
-import sys
 import logging
+import sys
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

@@ -28,30 +28,33 @@ from queue import Empty, Queue
 from typing import Any, Callable, Dict, List, Optional
 
 from ..utils.logger import get_logger
-
-logger = get_logger(__name__)
-
 from .ai_script_generator import AIScriptGenerator, ScriptGenerationResult
 from .autonomous_agent import AutonomousAgent
 from .intelligent_code_modifier import IntelligentCodeModifier
 from .llm_backends import LLMManager
 from .performance_monitor import performance_monitor, profile_ai_operation
 
+logger = get_logger(__name__)
+
 # Import QEMU Test Manager with fallback
 try:
     from .qemu_test_manager import QEMUTestManager
 except ImportError:
     logger.warning("QEMUTestManager not available")
+
     class QEMUTestManager:
         """Fallback QEMUTestManager when real implementation not available."""
+
         def __init__(self, *_args, **_kwargs):
             logger.warning("QEMUTestManager fallback initialized")
             pass
 
         def test_script_in_vm(self, script, target_binary, vm_config=None):
             """Fallback method for QEMU script testing."""
-            logger.warning("QEMU testing not available, using fallback simulation")
-            logger.info(f"Would test script on {target_binary} with config: {vm_config}")
+            logger.warning(
+                "QEMU testing not available, using fallback simulation")
+            logger.info(
+                f"Would test script on {target_binary} with config: {vm_config}")
 
             # Analyze script content for basic validation
             script_info = {}
@@ -108,6 +111,7 @@ class IntegrationManager:
     """Manages integration and coordination of AI components."""
 
     def __init__(self, llm_manager: Optional[LLMManager] = None):
+        self.logger = get_logger(__name__ + ".IntegrationManager")
         self.llm_manager = llm_manager or LLMManager()
 
         # Initialize components
@@ -160,7 +164,8 @@ class IntegrationManager:
             thread.start()
             self.worker_threads.append(thread)
 
-        logger.info(f"Integration manager started with {self.max_workers} workers")
+        logger.info(
+            f"Integration manager started with {self.max_workers} workers")
 
     def stop(self):
         """Stop the integration manager."""
@@ -185,7 +190,8 @@ class IntegrationManager:
                 # Get task from queue (with timeout)
                 try:
                     task = self.task_queue.get(timeout=1.0)
-                except Empty:
+                except Empty as e:
+                    self.logger.error("Empty in integration_manager: %s", e)
                     continue
 
                 # Check dependencies
@@ -276,7 +282,8 @@ class IntegrationManager:
         request_data = task.input_data["request"]
 
         # Create modification request
-        request = self.code_modifier.create_modification_request(**request_data)
+        request = self.code_modifier.create_modification_request(
+            **request_data)
 
         # Analyze and generate changes
         changes = self.code_modifier.analyze_modification_request(request)
@@ -302,7 +309,8 @@ class IntegrationManager:
         vm_config = task.input_data.get("vm_config", {})
 
         # Test script in QEMU
-        results = self.qemu_manager.test_script_in_vm(script, target_binary, vm_config)
+        results = self.qemu_manager.test_script_in_vm(
+            script, target_binary, vm_config)
 
         return results
 
@@ -365,7 +373,7 @@ class IntegrationManager:
         return list(results.values())[0]
 
     def create_task(self, task_type: str, description: str, input_data: Dict[str, Any],
-                   dependencies: List[str] = None, priority: int = 1) -> str:
+                    dependencies: List[str] = None, priority: int = 1) -> str:
         """Create a new integration task."""
         task_id = f"{task_type}_{int(time.time() * 1000)}"
 
@@ -432,7 +440,8 @@ class IntegrationManager:
                 return self.completed_tasks[task_id]
 
             if timeout and time.time() - start_time > timeout:
-                raise TimeoutError(f"Task {task_id} did not complete within {timeout} seconds")
+                raise TimeoutError(
+                    f"Task {task_id} did not complete within {timeout} seconds")
 
             time.sleep(0.1)
 
@@ -463,7 +472,8 @@ class IntegrationManager:
                         failed_tasks[task_id] = task
 
             if timeout and time.time() - start_time > timeout:
-                raise TimeoutError(f"Workflow {workflow_id} did not complete within {timeout} seconds")
+                raise TimeoutError(
+                    f"Workflow {workflow_id} did not complete within {timeout} seconds")
 
             time.sleep(0.1)
 
@@ -526,8 +536,10 @@ class IntegrationManager:
             workflow = self.active_workflows[workflow_id]
             task_ids = list(workflow["tasks"].keys())
 
-            completed = sum(1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "completed")
-            failed = sum(1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "failed")
+            completed = sum(
+                1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "completed")
+            failed = sum(
+                1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "failed")
             running = sum(1 for tid in task_ids if tid in self.active_tasks)
             pending = len(task_ids) - completed - failed - running
 
@@ -690,9 +702,11 @@ class IntegrationManager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         if exc_type:
-            logger.error(f"Integration manager exiting due to {exc_type.__name__}: {exc_val}")
+            logger.error(
+                f"Integration manager exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                logger.debug(f"Exception traceback available: {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                logger.debug(
+                    f"Exception traceback available: {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.stop()
         return False  # Don't suppress exceptions
 

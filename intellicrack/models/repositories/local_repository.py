@@ -213,6 +213,7 @@ class LocalFileRepository(ModelRepositoryInterface):
             return True, "Copy complete"
 
         except IOError as e:
+            logger.error("IO error in local_repository: %s", e)
             if progress_callback:
                 progress_callback.on_complete(False, f"Copy failed: {str(e)}")
             return False, f"Copy failed: {str(e)}"

@@ -154,6 +154,7 @@ else:
                     self.installation_finished.emit(False, "No Python files found in plugin")
 
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in plugin_manager_dialog: %s", e)
                 self.installation_finished.emit(False, f"Installation failed: {str(e)}")
 
     class PluginManagerDialog(QDialog):
@@ -639,6 +640,7 @@ Description: {plugin_info['description']}"""
                         self.load_installed_plugins()  # Refresh list
                         QMessageBox.information(self, "Success", "Plugin removed successfully")
                     except Exception as e:
+                        logger.error("Exception in plugin_manager_dialog: %s", e)
                         QMessageBox.critical(self, "Error", f"Failed to remove plugin: {str(e)}")
 
         def configure_selected_plugin(self):
@@ -831,6 +833,7 @@ class {plugin_name.replace(' ', '')}Plugin:
             if file_size > max_size:
                 return False, f"File too large: {{file_size}} bytes (max: {{max_size}})"
         except OSError as e:
+            logger.error("OS error in plugin_manager_dialog: %s", e)
             return False, f"Could not get file size: {{str(e)}}"
 
         return True, "Valid"
@@ -1173,6 +1176,7 @@ if __name__ == '__main__':
                 self.load_installed_plugins()  # Refresh list
 
             except Exception as e:
+                logger.error("Exception in plugin_manager_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to create template: {str(e)}")
 
         def browse_test_plugin(self):
@@ -1229,8 +1233,10 @@ if __name__ == '__main__':
                 self.test_output.append("\n✅ Plugin test completed successfully")
 
             except SyntaxError as e:
+                logger.error("SyntaxError in plugin_manager_dialog: %s", e)
                 self.test_output.append(f"❌ Syntax error: {e}")
             except Exception as e:
+                logger.error("Exception in plugin_manager_dialog: %s", e)
                 self.test_output.append(f"❌ Test failed: {e}")
 
         def refresh_plugins(self):

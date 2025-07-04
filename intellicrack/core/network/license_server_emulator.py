@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Network License Server Emulator
 
@@ -44,13 +46,15 @@ try:
         TrafficInterceptionEngine,
     )
     HAS_NEW_COMPONENTS = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in license_server_emulator: %s", e)
     HAS_NEW_COMPONENTS = False
 
 try:
     from PyQt5.QtWidgets import QInputDialog, QLineEdit
     QT_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in license_server_emulator: %s", e)
     QT_AVAILABLE = False
 
 
@@ -583,7 +587,8 @@ class NetworkLicenseServerEmulator:
                         daemon=True
                     )
                     dns_thread.start()
-                except socket.timeout:
+                except socket.timeout as e:
+                    logger.error("socket.timeout in license_server_emulator: %s", e)
                     continue
                 except Exception as e:
                     if self.running:
@@ -659,7 +664,8 @@ class NetworkLicenseServerEmulator:
                     response, _ = forward_socket.recvfrom(512)
                     self.dns_socket.sendto(response, addr)
                     forward_socket.close()
-                except Exception:
+                except Exception as e:
+                    logger.error("Exception in license_server_emulator: %s", e)
                     # If forwarding fails, send NXDOMAIN response
                     response = self._create_dns_error_response(transaction_id, data[12:query_offset+4])
                     self.dns_socket.sendto(response, addr)
@@ -774,7 +780,7 @@ class NetworkLicenseServerEmulator:
                 def _generate_self_signed_cert(self, cert_file: str, key_file: str) -> None:
                     """Generate a self-signed certificate for SSL interception using common utility"""
                     try:
-                        from ....utils.certificate_utils import generate_self_signed_cert
+                        from ...utils.certificate_utils import generate_self_signed_cert
 
                         # Use common certificate generation utility
                         cert_data = generate_self_signed_cert(
@@ -937,10 +943,11 @@ class NetworkLicenseServerEmulator:
                 def save_log(self) -> None:
                     """Save traffic log to file"""
                     try:
-                        log_dir = os.path.join(os.path.dirname(__file__), 'logs', 'traffic')
-                        os.makedirs(log_dir, exist_ok=True)
+                        from intellicrack.utils.core.plugin_paths import get_logs_dir
+                        log_dir = get_logs_dir() / 'traffic'
+                        log_dir.mkdir(parents=True, exist_ok=True)
 
-                        log_file = os.path.join(log_dir, f"traffic_{time.strftime('%Y%m%d_%H%M%S')}.json")
+                        log_file = log_dir / f"traffic_{time.strftime('%Y%m%d_%H%M%S')}.json"
 
                         # Convert bytes to string for JSON serialization
                         serializable_log = []
@@ -1210,7 +1217,8 @@ class NetworkLicenseServerEmulator:
                         try:
                             # Try to decode hex patterns
                             patterns.append(bytes.fromhex(pattern_str))
-                        except ValueError:
+                        except ValueError as e:
+                            self.logger.error("Value error in license_server_emulator: %s", e)
                             # Use as string pattern
                             patterns.append(pattern_str.encode())
 
@@ -1257,7 +1265,8 @@ def run_network_license_emulator(app: Any) -> None:
     """
     try:
         from ...utils.ui_utils import log_message
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in license_server_emulator: %s", e)
         def log_message(msg):
             """
             Fallback log message function when ui_utils is not available.
@@ -1293,7 +1302,8 @@ def run_network_license_emulator(app: Any) -> None:
         try:
             ports = [int(_port.strip()) for _port in ports_str.split(',')]
             emulator.config['listen_ports'] = ports
-        except ValueError:
+        except ValueError as e:
+            logger.error("Value error in license_server_emulator: %s", e)
             app.update_output.emit(log_message("[Network] Invalid port numbers, using defaults"))
     else:
         app.update_output.emit(log_message("[Network] Cancelled"))

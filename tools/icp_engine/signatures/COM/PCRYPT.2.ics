@@ -1,0 +1,14 @@
+// Intellicrack Protection Engine: detection rule file
+// Author: hypn0 <hypn0@mail.ru>
+
+init("protector", "PCRYPT");
+
+function detect() {
+    if (Binary.compare("'PCRYPT'ff'v3.51'00e9")) {
+        sVersion = "3.51";
+        sOptions = "1997 by MERLiN //DTG";
+        bDetected = true;
+    }
+
+    return result();
+}

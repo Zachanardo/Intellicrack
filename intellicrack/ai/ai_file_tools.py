@@ -37,7 +37,8 @@ from ..ui.common_imports import (
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['AIFileTools', 'FileSearchTool', 'FileReadTool', 'create_approval_dialog']
+__all__ = ['AIFileTools', 'FileSearchTool',
+           'FileReadTool', 'create_approval_dialog']
 
 
 class FileApprovalDialog(QDialog):
@@ -64,7 +65,8 @@ class FileApprovalDialog(QDialog):
         layout.addWidget(details_text)
 
         # Warning
-        warning = QLabel("⚠️ Only approve if you trust the AI's analysis purpose.")
+        warning = QLabel(
+            "⚠️ Only approve if you trust the AI's analysis purpose.")
         warning.setStyleSheet("color: orange; font-weight: bold;")
         layout.addWidget(warning)
 
@@ -72,7 +74,8 @@ class FileApprovalDialog(QDialog):
         button_layout = QHBoxLayout()
 
         self.approve_btn = QPushButton("Approve")
-        self.approve_btn.setStyleSheet("background-color: #4CAF50; color: white;")
+        self.approve_btn.setStyleSheet(
+            "background-color: #4CAF50; color: white;")
         self.approve_btn.clicked.connect(self.accept)
 
         self.deny_btn = QPushButton("Deny")
@@ -249,7 +252,8 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-            except UnicodeDecodeError:
+            except UnicodeDecodeError as e:
+                logger.error("UnicodeDecodeError in ai_file_tools: %s", e)
                 # Try common encodings
                 for _enc in ['latin-1', 'cp1252', 'ascii']:
                     try:
@@ -257,7 +261,9 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
                             content = f.read()
                             encoding = _enc
                             break
-                    except UnicodeDecodeError:
+                    except UnicodeDecodeError as e:
+                        logger.error(
+                            "UnicodeDecodeError in ai_file_tools: %s", e)
                         continue
 
             if content is None:
@@ -331,7 +337,8 @@ Files:
         }
 
         for _file_path in valid_paths:
-            file_result = self.read_file_content(str(file_path), f"{purpose} (batch)")
+            file_result = self.read_file_content(
+                str(file_path), f"{purpose} (batch)")
             if file_result["status"] == "success":
                 results["files_read"].append(file_result)
 
@@ -389,7 +396,8 @@ class AIFileTools:
 
         # If we found potential license files, offer to read them
         if license_scan["files_found"]:
-            file_paths = [_f["path"] for _f in license_scan["files_found"][:5]]  # Limit to first 5
+            file_paths = [_f["path"]
+                          for _f in license_scan["files_found"][:5]]  # Limit to first 5
 
             read_results = self.read_multiple_files(
                 file_paths,
@@ -398,7 +406,8 @@ class AIFileTools:
 
             if read_results["status"] == "success":
                 for _file_data in read_results["files_read"]:
-                    analysis["file_contents"][_file_data["file_path"]] = _file_data["content"]
+                    analysis["file_contents"][_file_data["file_path"]
+                                              ] = _file_data["content"]
 
         # Generate analysis summary
         analysis["analysis_summary"] = {

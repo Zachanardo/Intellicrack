@@ -5,23 +5,23 @@ This module contains unit tests for the binary_utils module, testing
 functions related to binary analysis, file handling, and format detection.
 """
 
-import unittest
 import os
-import tempfile
 import shutil
+import tempfile
+import unittest
 
 try:
     from intellicrack.utils.binary.binary_utils import (
-        is_pe_file,
+        calculate_entropy,
+        disassemble_address,
+        extract_strings,
+        find_binary_patterns,
+        get_binary_info,
+        get_file_hash,
+        get_section_info,
         is_elf_file,
         is_macho_file,
-        get_file_hash,
-        extract_strings,
-        get_binary_info,
-        disassemble_address,
-        find_binary_patterns,
-        calculate_entropy,
-        get_section_info
+        is_pe_file,
     )
 except ImportError:
     # Graceful fallback if module not available

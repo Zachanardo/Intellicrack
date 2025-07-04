@@ -604,15 +604,15 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
             analysis_methods.append('disassembly_analysis')
 
             # Method 5: Machine learning predictions (if available)
-            try:
-                from ...ai.ml_predictor import predict_vulnerabilities
-                ml_result = predict_vulnerabilities(app_instance.binary_path)
-                if ml_result.get('vulnerabilities'):
-                    ml_patches = _convert_vulnerabilities_to_patches(ml_result['vulnerabilities'])
-                    patches.extend(ml_patches)
-                    analysis_methods.append('ml_analysis')
-            except Exception as e:
-                logger.debug(f"ML analysis not available: {e}")
+            # try:
+            #     from ...ai.ml_predictor import predict_vulnerabilities
+            #     ml_result = predict_vulnerabilities(app_instance.binary_path)
+            #     if ml_result.get('vulnerabilities'):
+            #         ml_patches = _convert_vulnerabilities_to_patches(ml_result['vulnerabilities'])
+            #         patches.extend(ml_patches)
+            #         analysis_methods.append('ml_analysis')
+            # except Exception as e:
+            #     logger.debug(f"ML analysis not available: {e}")
 
             # Remove duplicates and rank patches
             unique_patches = _deduplicate_and_rank_patches(patches)
@@ -1583,7 +1583,8 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
             except OSError as e:
                 logger.debug("Failed to remove project directory: %s", e)
 
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as e:
+        logger.error("Subprocess timeout in tool_wrappers: %s", e)
         results["status"] = "error"
         results["errors"].append(f"Ghidra analysis timed out after {timeout} seconds")
     except (OSError, ValueError, RuntimeError) as e:
@@ -1891,6 +1892,7 @@ def _load_analysis_exports(results: dict, output_dir: str, export_format: str) -
                 results["exported_files"].append(file_path)
 
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in tool_wrappers: %s", e)
                 results["warnings"].append(f"Failed to load {export_file}: {str(e)}")
 
     return results

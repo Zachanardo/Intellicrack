@@ -21,6 +21,8 @@ import ast
 import importlib
 from typing import Dict, List, Optional, Set, Tuple, Union
 
+from intellicrack.logger import logger
+
 
 class ImportValidator:
     """Utility class for validating Python imports in code files"""
@@ -45,19 +47,22 @@ class ImportValidator:
                     for alias in node.names:
                         try:
                             importlib.import_module(alias.name)
-                        except ImportError:
+                        except ImportError as e:
+                            logger.error("Import error in import_validator: %s", e)
                             warnings.append(f"Module not found: {alias.name}")
 
                 elif isinstance(node, ast.ImportFrom):
                     if node.module:  # Skip relative imports without module
                         try:
                             importlib.import_module(node.module)
-                        except ImportError:
+                        except ImportError as e:
+                            logger.error("Import error in import_validator: %s", e)
                             warnings.append(f"Module not found: {node.module}")
 
             return True, warnings
 
         except Exception as e:
+            logger.error("Exception in import_validator: %s", e)
             return False, [f"Import validation error: {str(e)}"]
 
     @staticmethod
@@ -86,7 +91,8 @@ class ImportValidator:
 
             return {"missing": missing, "success": success}
 
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in import_validator: %s", e)
             return {"missing": missing, "success": False}
 
     @staticmethod
@@ -130,7 +136,8 @@ class ImportValidator:
                             }
                         )
 
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in import_validator: %s", e)
             pass
 
         return imports
@@ -149,7 +156,8 @@ class ImportValidator:
         try:
             importlib.import_module(module_name)
             return True
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in import_validator: %s", e)
             return False
 
     @staticmethod
@@ -227,6 +235,7 @@ class PluginStructureValidator:
             return len(errors) == 0, errors
 
         except Exception as e:
+            logger.error("Exception in import_validator: %s", e)
             errors.append(f"Structure validation error: {str(e)}")
             return False, errors
 
@@ -256,6 +265,7 @@ class PluginStructureValidator:
             return {"valid": is_valid, "errors": errors}
 
         except Exception as e:
+            logger.error("Exception in import_validator: %s", e)
             return {"valid": False, "errors": [str(e)]}
 
     @staticmethod
@@ -303,7 +313,8 @@ class PluginStructureValidator:
                                 "class": node.name
                             })
 
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in import_validator: %s", e)
             pass
 
         return functions

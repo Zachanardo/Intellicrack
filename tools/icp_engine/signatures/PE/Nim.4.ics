@@ -1,0 +1,18 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("compiler", "Nim");
+
+function detect() {
+    if (PE.section[".rdata"]) {
+        var nOffset = PE.section[".rdata"].FileOffset;
+        var nSize = PE.section[".rdata"].FileSize;
+
+        if ((PE.findString(nOffset, nSize, "io.nim") != -1) || (PE.findString(nOffset, nSize, "fatal.nim") != -1)) {
+            bDetected = true;
+        }
+    }
+
+    _setLang("Nim", bDetected);
+
+    return result();
+}

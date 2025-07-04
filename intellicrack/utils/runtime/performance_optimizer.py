@@ -63,7 +63,8 @@ class MemoryManager:
                 "percent": process.memory_percent(),
                 "available_mb": (self.max_memory_bytes - memory_info.rss) / 1024 / 1024
             }
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in performance_optimizer: %s", e)
             # Fallback if psutil not available
             return {
                 "rss_mb": 0,
@@ -531,7 +532,8 @@ class PerformanceOptimizer:
             with open(file_path, 'rb') as f:
                 with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
                     return analysis_func(mm)
-        except (OSError, ValueError, RuntimeError):
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in performance_optimizer: %s", e)
             # Fallback to regular file reading
             with open(file_path, 'rb') as f:
                 data = f.read()

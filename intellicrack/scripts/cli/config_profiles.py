@@ -298,7 +298,7 @@ def create_default_profiles():
     return manager
 
 
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-statements
 def main():
     """Demo the profile system"""
     console = Console()
@@ -370,6 +370,10 @@ def main():
             break
 
     console.print("\n[cyan]Goodbye![/cyan]")
+
+
+# Alias for easier importing
+ConfigProfileManager = ProfileManager
 
 
 if __name__ == "__main__":

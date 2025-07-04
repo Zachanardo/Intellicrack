@@ -2,12 +2,71 @@
   "flexlm": {
     "name": "FlexLM",
     "description": "Flexible License Manager by Flexera",
-    "ports": [
-      27000,
-      27001,
-      1101
-    ],
+    "ports": [27000, 27001, 1101],
     "patterns": [
       {
         "offset": 0,
-        "bytes": 
+        "bytes": "464c455820",
+        "description": "FLEX header"
+      }
+    ],
+    "handshake": ["FLEXLM", "LICENSE"],
+    "confidence": 0.9
+  },
+  "hasp": {
+    "name": "HASP/Sentinel",
+    "description": "Hardware-based protection system",
+    "ports": [1947, 6001],
+    "patterns": [
+      {
+        "offset": 0,
+        "bytes": "484153502d",
+        "description": "HASP- prefix"
+      }
+    ],
+    "handshake": ["HASP", "SENTINEL"],
+    "confidence": 0.85
+  },
+  "codemeter": {
+    "name": "CodeMeter",
+    "description": "Wibu-Systems CodeMeter",
+    "ports": [22350],
+    "patterns": [
+      {
+        "offset": 0,
+        "bytes": "434d54",
+        "description": "CMT header"
+      }
+    ],
+    "handshake": ["CODEMETER", "WIBU"],
+    "confidence": 0.9
+  },
+  "adobe": {
+    "name": "Adobe License Manager",
+    "description": "Adobe Creative Suite licensing",
+    "ports": [8080, 443, 3052],
+    "patterns": [
+      {
+        "offset": 0,
+        "bytes": "41444f4245",
+        "description": "ADOBE header"
+      }
+    ],
+    "handshake": ["ADOBE", "LICENSE", "ACTIVATE"],
+    "confidence": 0.8
+  },
+  "microsoft_kms": {
+    "name": "Microsoft KMS",
+    "description": "Microsoft Key Management Service",
+    "ports": [1688],
+    "patterns": [
+      {
+        "offset": 0,
+        "bytes": "4b4d53",
+        "description": "KMS header"
+      }
+    ],
+    "handshake": ["KMS", "ACTIVATE"],
+    "confidence": 0.85
+  }
+}

@@ -6,12 +6,12 @@ Validates individual components, imports, and functionality without
 requiring full integration testing.
 """
 
+import importlib
+import logging
 import os
 import sys
-import logging
 import unittest
-import importlib
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 # Add project root to path
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

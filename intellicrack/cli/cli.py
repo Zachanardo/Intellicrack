@@ -14,9 +14,15 @@ import threading
 import time
 from typing import Optional
 
+from intellicrack.logger import logger
+from intellicrack.utils.analysis.binary_analysis import analyze_binary
+from intellicrack.utils.exploitation.exploitation import exploit
+from intellicrack.utils.patching.patch_generator import generate_patch
+
 try:
     import click
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cli: %s", e)
     print("Error: click module not found. Please install with: pip install click")
     sys.exit(1)
 
@@ -27,7 +33,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     from intellicrack.core.config_manager import get_config
     MODERN_CONFIG_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cli: %s", e)
     MODERN_CONFIG_AVAILABLE = False
 
 # Basic imports (with fallbacks for missing components)
@@ -38,7 +45,8 @@ try:
         PayloadTemplates,
         PayloadType,
     )
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cli: %s", e)
     PayloadEngine = None
     PayloadTemplates = None
     Architecture = None
@@ -46,17 +54,16 @@ except ImportError:
 
 try:
     from intellicrack.utils.exploitation.payload_result_handler import PayloadResultHandler
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cli: %s", e)
     PayloadResultHandler = None
 
 try:
     from intellicrack.core.c2 import C2Client, C2Server
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cli: %s", e)
     C2Server = None
     C2Client = None
-from intellicrack.utils.analysis.binary_analysis import analyze_binary
-from intellicrack.utils.exploitation.exploitation import exploit
-from intellicrack.utils.patching.patch_generator import generate_patch
 
 # Import new exploitation modules
 try:
@@ -75,7 +82,8 @@ try:
         VulnerabilityAnalyzer,
     )
     ADVANCED_MODULES_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cli: %s", e)
     ADVANCED_MODULES_AVAILABLE = False
 
 # Initialize logger before it's used
@@ -96,25 +104,27 @@ def cli(verbose: bool, quiet: bool):
         logging.basicConfig(level=logging.ERROR)
     else:
         logging.basicConfig(level=logging.INFO)
-    
+
     # Initialize configuration if available
     if MODERN_CONFIG_AVAILABLE:
         try:
             config = get_config()
-            logging.getLogger(__name__).debug(f"Loaded configuration from {config.config_dir}")
-        except Exception as e:
-            logging.getLogger(__name__).warning(f"Failed to load configuration: {e}")
+            logging.getLogger(__name__).debug(
+                "Loaded configuration from %s", config.config_dir)
+        except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
+            logging.getLogger(__name__).warning(
+                "Failed to load configuration: %s", e)
 
 
 @cli.group()
 def payload():
     """Payload generation commands"""
-    pass
 
 
 @payload.command('generate')
 @click.option('--type', '-t', 'payload_type',
-              type=click.Choice(['reverse_shell', 'bind_shell', 'meterpreter', 'custom']),
+              type=click.Choice(
+                  ['reverse_shell', 'bind_shell', 'meterpreter', 'custom']),
               default='reverse_shell', help='Type of payload to generate')
 @click.option('--arch', '-a', 'architecture',
               type=click.Choice(['x86', 'x64', 'arm', 'arm64']),
@@ -125,11 +135,12 @@ def payload():
               help='Encoding schemes to apply (can be specified multiple times)')
 @click.option('--output', '-o', help='Output file path')
 @click.option('--format', '-f', 'output_format',
-              type=click.Choice(['raw', 'exe', 'dll', 'powershell', 'python', 'c']),
+              type=click.Choice(
+                  ['raw', 'exe', 'dll', 'powershell', 'python', 'c']),
               default='raw', help='Output format')
 def generate(payload_type: str, architecture: str, lhost: Optional[str],
-            lport: Optional[int], encoding: tuple, output: Optional[str],
-            output_format: str):
+             lport: Optional[int], encoding: tuple, output: Optional[str],
+             output_format: str):
     """Generate a custom payload with various options"""
     try:
         engine = PayloadEngine()
@@ -162,7 +173,8 @@ def generate(payload_type: str, architecture: str, lhost: Optional[str],
         # Add output format
         options['output_format'] = output_format
 
-        click.echo(f"Generating {payload_type} payload for {architecture} (format: {output_format})...")
+        click.echo(
+            f"Generating {payload_type} payload for {architecture} (format: {output_format})...")
 
         # Generate payload
         result = engine.generate_payload(
@@ -194,8 +206,8 @@ def generate(payload_type: str, architecture: str, lhost: Optional[str],
 
         click.echo("Payload generated successfully!")
 
-    except Exception as e:
-        logger.error(f"Payload generation failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError) as e:
+        logger.error("Payload generation failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -203,7 +215,7 @@ def generate(payload_type: str, architecture: str, lhost: Optional[str],
 @payload.command()
 @click.option('--category', '-c',
               type=click.Choice(['shell', 'persistence', 'privilege_escalation',
-                               'lateral_movement', 'steganography', 'anti_analysis']),
+                                 'lateral_movement', 'steganography', 'anti_analysis']),
               help='Template category')
 def list_templates(category: Optional[str]):
     """List available payload templates"""
@@ -217,8 +229,8 @@ def list_templates(category: Optional[str]):
             for template in template_list:
                 click.echo(f"  - {template}")
 
-    except Exception as e:
-        logger.error(f"Failed to list templates: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError) as e:
+        logger.error("Failed to list templates: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -232,7 +244,7 @@ def list_templates(category: Optional[str]):
 @click.option('--param', '-p', multiple=True, help='Template parameters (key=value)')
 @click.option('--output', '-o', help='Output file path')
 def from_template(category: str, template_name: str, architecture: str,
-                 param: tuple, output: Optional[str]):
+                  param: tuple, output: Optional[str]):
     """Generate payload from template"""
     try:
         engine = PayloadEngine()
@@ -247,10 +259,12 @@ def from_template(category: str, template_name: str, architecture: str,
 
         # Get template
         arch = Architecture[architecture.upper()]
-        template = templates.get_template(category, template_name, arch, **params)
+        template = templates.get_template(
+            category, template_name, arch, **params)
 
         if not template:
-            click.echo(f"Template not found: {category}/{template_name}", err=True)
+            click.echo(
+                f"Template not found: {category}/{template_name}", err=True)
             sys.exit(1)
 
         click.echo(f"Generating payload from template: {template_name}")
@@ -277,7 +291,8 @@ def from_template(category: str, template_name: str, architecture: str,
             'bind_shell': PayloadType.BIND_SHELL,
             'staged': PayloadType.STAGED_PAYLOAD
         }
-        payload_type = payload_type_map.get(category.lower(), PayloadType.REVERSE_SHELL)
+        payload_type = payload_type_map.get(
+            category.lower(), PayloadType.REVERSE_SHELL)
 
         result = engine.generate_payload(
             payload_type,
@@ -296,8 +311,9 @@ def from_template(category: str, template_name: str, architecture: str,
 
         click.echo("Payload generated successfully!")
 
-    except Exception as e:
-        logger.error(f"Template payload generation failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError) as e:
+        logger.error("Template payload generation failed: %s",
+                     e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -305,7 +321,6 @@ def from_template(category: str, template_name: str, architecture: str,
 @cli.group()
 def c2():
     """Command and Control operations"""
-    pass
 
 
 @c2.command()
@@ -336,13 +351,16 @@ def server(host: str, https_port: int, dns_port: int, tcp_port: int, protocols: 
 
         # Add event handlers
         def on_session_connected(session):
-            click.echo(f"[+] New session: {session.get('session_id', 'unknown')}")
+            click.echo(
+                f"[+] New session: {session.get('session_id', 'unknown')}")
 
         def on_session_disconnected(session):
-            click.echo(f"[-] Session lost: {session.get('session_id', 'unknown')}")
+            click.echo(
+                f"[-] Session lost: {session.get('session_id', 'unknown')}")
 
         c2_server.add_event_handler('session_connected', on_session_connected)
-        c2_server.add_event_handler('session_disconnected', on_session_disconnected)
+        c2_server.add_event_handler(
+            'session_disconnected', on_session_disconnected)
 
         # Run server
         loop = asyncio.new_event_loop()
@@ -350,12 +368,13 @@ def server(host: str, https_port: int, dns_port: int, tcp_port: int, protocols: 
 
         try:
             loop.run_until_complete(c2_server.start())
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
+            logger.error("KeyboardInterrupt in cli: %s", e)
             click.echo("\nShutting down server...")
             loop.run_until_complete(c2_server.stop())
 
-    except Exception as e:
-        logger.error(f"C2 server failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("C2 server failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -380,7 +399,8 @@ def client(server_host: str, port: int, protocol: str, interval: int):
             }
         }
 
-        click.echo(f"Connecting to C2 server at {server_host}:{port} via {protocol}")
+        click.echo(
+            f"Connecting to C2 server at {server_host}:{port} via {protocol}")
 
         # Create and start client
         c2_client = C2Client(config)
@@ -391,20 +411,21 @@ def client(server_host: str, port: int, protocol: str, interval: int):
 
         try:
             loop.run_until_complete(c2_client.start())
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
+            logger.error("KeyboardInterrupt in cli: %s", e)
             click.echo("\nDisconnecting from server...")
             loop.run_until_complete(c2_client.stop())
 
-    except Exception as e:
-        logger.error(f"C2 client failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("C2 client failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
 
-@c2.command()
+@c2.command('exec')
 @click.argument('session_id')
 @click.argument('command')
-def exec(session_id: str, command: str):
+def execute_command(session_id: str, command: str):
     """Execute command on remote session"""
     # This would connect to running C2 server
     click.echo(f"Executing on {session_id}: {command}")
@@ -415,12 +436,12 @@ def exec(session_id: str, command: str):
 @click.argument('target')
 @click.option('--type', '-t', 'exploit_type',
               type=click.Choice(['auto', 'buffer_overflow', 'format_string',
-                               'heap_overflow', 'use_after_free']),
+                                 'heap_overflow', 'use_after_free']),
               default='auto', help='Exploit type')
-@click.option('--payload', '-p', help='Custom payload or payload file')
+@click.option('--payload', '-p', 'payload_data', help='Custom payload or payload file')
 @click.option('--output', '-o', help='Output exploit to file')
 def exploit_target(target: str, exploit_type: str, payload_data: Optional[str],
-                  output: Optional[str]):
+                   output: Optional[str]):
     """Exploit a target binary or service"""
     try:
         click.echo(f"Exploiting target: {target}")
@@ -432,7 +453,7 @@ def exploit_target(target: str, exploit_type: str, payload_data: Optional[str],
             click.echo("Exploitation successful!")
 
             if 'exploit_code' in result and output:
-                with open(output, 'w') as f:
+                with open(output, 'w', encoding='utf-8') as f:
                     f.write(result['exploit_code'])
                 click.echo(f"Exploit saved to: {output}")
 
@@ -446,8 +467,8 @@ def exploit_target(target: str, exploit_type: str, payload_data: Optional[str],
             if 'error' in result:
                 click.echo(f"Error: {result['error']}", err=True)
 
-    except Exception as e:
-        logger.error(f"Exploitation failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Exploitation failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -465,14 +486,26 @@ def basic_analyze(binary_path: str, deep: bool, output: Optional[str], no_ai: bo
             click.echo("Performing deep analysis...")
 
         if not no_ai:
-            click.echo("AI integration enabled - will suggest script generation opportunities")
+            click.echo(
+                "AI integration enabled - will suggest script generation opportunities")
 
-        result = analyze_binary(binary_path, detailed=deep, enable_ai_integration=not no_ai)
+        result = analyze_binary(
+            binary_path, detailed=deep, enable_ai_integration=not no_ai)
 
         # Display analysis
-        click.echo(f"\nBinary Type: {result.get('file_type', 'Unknown')}")
+        click.echo(
+            f"\nBinary Type: {result.get('format', result.get('file_type', 'Unknown'))}")
         click.echo(f"Architecture: {result.get('architecture', 'Unknown')}")
-        click.echo(f"Size: {result.get('size', 0)} bytes")
+
+        # Get size from basic_info if not at top level
+        size = result.get('size', 0)
+        if size == 0 and 'basic_info' in result:
+            size = result.get('basic_info', {}).get('size', 0)
+        click.echo(f"Size: {size} bytes")
+
+        # Display any errors
+        if 'error' in result:
+            click.echo(f"\nWarning: {result['error']}")
 
         if 'protections' in result:
             click.echo("\nProtections:")
@@ -494,12 +527,14 @@ def basic_analyze(binary_path: str, deep: bool, output: Optional[str], no_ai: bo
             if suggestions.get('frida_scripts'):
                 click.echo("  Frida Scripts:")
                 for script in suggestions['frida_scripts']:
-                    click.echo(f"    - {script['description']} (confidence: {script['confidence']:.0%})")
+                    click.echo(
+                        f"    - {script['description']} (confidence: {script['confidence']:.0%})")
 
             if suggestions.get('ghidra_scripts'):
                 click.echo("  Ghidra Scripts:")
                 for script in suggestions['ghidra_scripts']:
-                    click.echo(f"    - {script['description']} (confidence: {script['confidence']:.0%})")
+                    click.echo(
+                        f"    - {script['description']} (confidence: {script['confidence']:.0%})")
 
             # Display recommended actions
             if ai_data.get('recommended_actions'):
@@ -510,26 +545,30 @@ def basic_analyze(binary_path: str, deep: bool, output: Optional[str], no_ai: bo
             # Display auto-generation status
             auto_confidence = suggestions.get('auto_generate_confidence', 0)
             if auto_confidence > 0.8:
-                click.echo(f"\n  🚀 High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!")
+                click.echo(
+                    f"\n  🚀 High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!")
             elif auto_confidence > 0.5:
-                click.echo(f"\n  ⚡ Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation")
+                click.echo(
+                    f"\n  ⚡ Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation")
 
             # Display autonomous generation status
             if ai_data.get('autonomous_generation', {}).get('started'):
-                click.echo("  🔄 Autonomous script generation started in background")
-                click.echo(f"  📋 Targets: {', '.join(ai_data['autonomous_generation']['targets'])}")
+                click.echo(
+                    "  🔄 Autonomous script generation started in background")
+                click.echo(
+                    f"  📋 Targets: {', '.join(ai_data['autonomous_generation']['targets'])}")
 
         elif 'ai_integration' in result and not result['ai_integration'].get('enabled'):
             ai_error = result['ai_integration'].get('error', 'Unknown error')
             click.echo(f"\n⚠️  AI integration failed: {ai_error}")
 
         if output:
-            with open(output, 'w') as f:
+            with open(output, 'w', encoding='utf-8') as f:
                 json.dump(result, f, indent=2)
             click.echo(f"\nAnalysis saved to: {output}")
 
-    except Exception as e:
-        logger.error(f"Analysis failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Analysis failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -541,7 +580,7 @@ def basic_analyze(binary_path: str, deep: bool, output: Optional[str], no_ai: bo
 @click.option('--nop-range', '-n', help='NOP range (start:end in hex)')
 @click.option('--output', '-O', help='Output patched binary')
 def patch(binary_path: str, offset: Optional[str], data: Optional[str],
-         nop_range: Optional[str], output: Optional[str]):
+          nop_range: Optional[str], output: Optional[str]):
     """Patch a binary file"""
     try:
         patches = []
@@ -578,8 +617,8 @@ def patch(binary_path: str, offset: Optional[str], data: Optional[str],
         else:
             click.echo("Patching failed!", err=True)
 
-    except Exception as e:
-        logger.error(f"Patching failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Patching failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -592,19 +631,20 @@ def patch(binary_path: str, offset: Optional[str], data: Optional[str],
 def advanced():
     """Advanced exploitation commands"""
     if not ADVANCED_MODULES_AVAILABLE:
-        click.echo("Advanced modules not available. Please check installation.", err=True)
+        click.echo(
+            "Advanced modules not available. Please check installation.", err=True)
         sys.exit(1)
 
 
 @advanced.group()
 def advanced_payload():
     """Advanced payload generation commands"""
-    pass
 
 
 @advanced_payload.command()
 @click.option('--type', '-t', 'payload_type',
-              type=click.Choice(['reverse_shell', 'bind_shell', 'meterpreter', 'staged_payload', 'custom']),
+              type=click.Choice(
+                  ['reverse_shell', 'bind_shell', 'meterpreter', 'staged_payload', 'custom']),
               default='reverse_shell', help='Payload type')
 @click.option('--arch', '-a', 'architecture',
               type=click.Choice(['x86', 'x64', 'arm', 'arm64']),
@@ -619,13 +659,15 @@ def advanced_payload():
 @click.option('--format', type=click.Choice(['raw', 'exe', 'dll', 'shellcode']),
               default='raw', help='Output format')
 def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: int,
-                     encoding: str, evasion: str, output: Optional[str], format: str):
+                      encoding: str, evasion: str, output: Optional[str], output_format: str):
     """Generate advanced payload with evasion techniques"""
     try:
         from intellicrack.core.exploitation.payload_types import (
             Architecture as AdvancedArchitecture,
         )
-        from intellicrack.core.exploitation.payload_types import EncodingType
+        from intellicrack.core.exploitation.payload_types import (
+            EncodingType,
+        )
         from intellicrack.core.exploitation.payload_types import PayloadType as AdvancedPayloadType
 
         engine = AdvancedPayloadEngine()
@@ -666,11 +708,12 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
             'lport': lport,
             'encoding': encoding_mapping[encoding],
             'evasion_level': evasion,
-            'output_format': format
+            'output_format': output_format
         }
 
         click.echo(f"Generating {payload_type} payload...")
-        click.echo(f"Target: {architecture}, Encoding: {encoding}, Evasion: {evasion}, Format: {format}")
+        click.echo(
+            f"Target: {architecture}, Encoding: {encoding}, Evasion: {evasion}, Format: {output_format}")
 
         result = engine.generate_payload(
             payload_type=payload_type_mapping[payload_type],
@@ -688,7 +731,7 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
                 # Save metadata alongside if available
                 if metadata:
                     metadata_file = output + '.metadata.json'
-                    with open(metadata_file, 'w') as f:
+                    with open(metadata_file, 'w', encoding='utf-8') as f:
                         json.dump(metadata, f, indent=2)
                     click.echo(f"Metadata saved to: {metadata_file}")
             else:
@@ -705,7 +748,8 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
 
         # Use common payload result handler
         if PayloadResultHandler:
-            success = PayloadResultHandler.process_payload_result(result, click.echo, save_payload)
+            success = PayloadResultHandler.process_payload_result(
+                result, click.echo, save_payload)
             if not success:
                 sys.exit(1)
         else:
@@ -713,11 +757,13 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
             if result['success']:
                 save_payload(result['payload'], result['metadata'])
             else:
-                click.echo(f"✗ Payload generation failed: {result.get('error', 'Unknown error')}")
+                click.echo(
+                    f"✗ Payload generation failed: {result.get('error', 'Unknown error')}")
                 sys.exit(1)
 
-    except Exception as e:
-        logger.error(f"Advanced payload generation failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Advanced payload generation failed: %s",
+                     e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -725,7 +771,6 @@ def advanced_generate(payload_type: str, architecture: str, lhost: str, lport: i
 @advanced.group()
 def advanced_c2():
     """Advanced C2 infrastructure commands"""
-    pass
 
 
 @advanced_c2.command()
@@ -742,7 +787,8 @@ def start(protocol: str, port: Optional[int], encryption: str, interface: str, c
         manager = C2Manager()
 
         # Set default ports
-        default_ports = {'http': 8080, 'https': 8443, 'tcp': 4444, 'udp': 5555, 'dns': 5353}
+        default_ports = {'http': 8080, 'https': 8443,
+                         'tcp': 4444, 'udp': 5555, 'dns': 5353}
         if not port:
             port = default_ports.get(protocol, 8080)
 
@@ -756,7 +802,7 @@ def start(protocol: str, port: Optional[int], encryption: str, interface: str, c
         }
 
         if config:
-            with open(config, 'r') as f:
+            with open(config, 'r', encoding='utf-8') as f:
                 file_config = json.load(f)
                 server_config.update(file_config)
 
@@ -775,7 +821,8 @@ def start(protocol: str, port: Optional[int], encryption: str, interface: str, c
                 click.echo("Press Ctrl+C to stop server...")
                 while True:
                     time.sleep(1)
-            except KeyboardInterrupt:
+            except KeyboardInterrupt as e:
+                logger.error("KeyboardInterrupt in cli: %s", e)
                 click.echo("\nStopping C2 server...")
                 manager.stop_server()
                 click.echo("Server stopped.")
@@ -783,8 +830,8 @@ def start(protocol: str, port: Optional[int], encryption: str, interface: str, c
             click.echo(f"✗ Failed to start C2 server: {result.get('error')}")
             sys.exit(1)
 
-    except Exception as e:
-        logger.error(f"C2 server failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("C2 server failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -804,10 +851,11 @@ def status():
         if status_info['sessions']:
             click.echo("\nActive Sessions:")
             for session in status_info['sessions']:
-                click.echo(f"  • {session['id']} - {session['remote_ip']} ({session['platform']})")
+                click.echo(
+                    f"  • {session['id']} - {session['remote_ip']} ({session['platform']})")
 
-    except Exception as e:
-        logger.error(f"Failed to get C2 status: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Failed to get C2 status: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -815,13 +863,13 @@ def status():
 @advanced.group()
 def research():
     """Vulnerability research commands"""
-    pass
 
 
 @research.command()
 @click.argument('target_path')
 @click.option('--type', '-t', 'campaign_type',
-              type=click.Choice(['binary_analysis', 'fuzzing', 'vulnerability_assessment', 'patch_analysis', 'hybrid_research']),
+              type=click.Choice(
+                  ['binary_analysis', 'fuzzing', 'vulnerability_assessment', 'patch_analysis', 'hybrid_research']),
               default='binary_analysis', help='Research campaign type')
 @click.option('--output', '-o', help='Output directory for results')
 @click.option('--timeout', type=int, default=3600, help='Analysis timeout (seconds)')
@@ -837,7 +885,8 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
             # Use AI-guided analysis
             ai_researcher = VulnerabilityResearchAI()
 
-            click.echo(f"Running AI-guided analysis on {target_path} (timeout: {timeout}s)...")
+            click.echo(
+                f"Running AI-guided analysis on {target_path} (timeout: {timeout}s)...")
             # Set timeout for the analysis
             import platform
             import signal
@@ -845,21 +894,25 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
             try:
                 if platform.system() != 'Windows' and hasattr(signal, 'SIGALRM') and hasattr(signal, 'alarm'):
                     def timeout_handler(signum, frame):
-                        logger.warning(f"AI analysis timeout handler: signal {signum}, frame {frame}")
-                        raise TimeoutError(f"Analysis timed out after {timeout} seconds")
+                        logger.warning(
+                            "AI analysis timeout handler: signal %s, frame %s", signum, frame)
+                        raise TimeoutError(
+                            f"Analysis timed out after {timeout} seconds")
 
                     signal.signal(signal.SIGALRM, timeout_handler)
                     signal.alarm(timeout)
 
                     try:
-                        result = ai_researcher.analyze_target_with_ai(target_path)
+                        result = ai_researcher.analyze_target_with_ai(
+                            target_path)
                     finally:
                         if hasattr(signal, 'alarm'):
                             signal.alarm(0)  # Cancel the alarm
                 else:
                     # Windows or systems without SIGALRM
                     result = ai_researcher.analyze_target_with_ai(target_path)
-            except (AttributeError, OSError):
+            except (AttributeError, OSError) as e:
+                logger.error("Error in cli: %s", e)
                 # Fallback for systems without signal support - use threading for timeout
                 exception_holder = [None]
                 result = None
@@ -867,8 +920,10 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
                 def run_analysis():
                     try:
                         nonlocal result
-                        result = ai_researcher.analyze_target_with_ai(target_path)
-                    except Exception as e:
+                        result = ai_researcher.analyze_target_with_ai(
+                            target_path)
+                    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+                        logger.error("Error in cli: %s", e)
                         exception_holder[0] = e
 
                 thread = threading.Thread(target=run_analysis)
@@ -878,11 +933,13 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
 
                 if thread.is_alive():
                     # Thread is still running, analysis timed out
-                    result = {'success': False, 'error': f'Analysis timed out after {timeout} seconds'}
+                    result = {
+                        'success': False, 'error': f'Analysis timed out after {timeout} seconds'}
                 elif exception_holder[0] is not None:
                     exception_to_raise = exception_holder[0]
                     if exception_to_raise is not None:
-                        raise exception_to_raise
+                        raise RuntimeError(
+                            "Analysis failed in thread") from exception_to_raise
 
             if result['success']:
                 click.echo("✓ AI analysis completed!")
@@ -891,23 +948,28 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
                 risk = result['risk_assessment']
                 click.echo(f"  Risk Level: {risk['overall_risk']}")
                 click.echo(f"  Risk Score: {risk['risk_score']:.2f}")
-                click.echo(f"  Exploitation Likelihood: {risk['exploitation_likelihood']:.2f}")
+                click.echo(
+                    f"  Exploitation Likelihood: {risk['exploitation_likelihood']:.2f}")
 
                 # Show AI recommendations
                 recommendations = result['ai_recommendations']
                 if recommendations:
-                    click.echo(f"\nAI Recommendations ({len(recommendations)}):")
+                    click.echo(
+                        f"\nAI Recommendations ({len(recommendations)}):")
                     for i, rec in enumerate(recommendations[:5], 1):
                         click.echo(f"  {i}. {rec}")
 
                 # Show exploitation strategies
                 strategies = result['exploitation_strategies']
                 if strategies:
-                    click.echo(f"\nExploitation Strategies ({len(strategies)}):")
+                    click.echo(
+                        f"\nExploitation Strategies ({len(strategies)}):")
                     for strategy in strategies[:3]:
                         vuln = strategy['vulnerability']
-                        click.echo(f"  • {vuln['type']} ({vuln['severity']}) - {strategy['approach']}")
-                        click.echo(f"    Confidence: {strategy['confidence']:.2f}")
+                        click.echo(
+                            f"  • {vuln['type']} ({vuln['severity']}) - {strategy['approach']}")
+                        click.echo(
+                            f"    Confidence: {strategy['confidence']:.2f}")
 
         else:
             # Use standard research manager
@@ -924,7 +986,8 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
             }
 
             # Get actual campaign type from mapping
-            selected_campaign_type = campaign_type_mapping.get(campaign_type, CampaignType.BINARY_ANALYSIS)
+            selected_campaign_type = campaign_type_mapping.get(
+                campaign_type, CampaignType.BINARY_ANALYSIS)
 
             # Create a campaign using the manager's proper interface
             campaign_result = manager.create_campaign(
@@ -932,10 +995,12 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
                 campaign_type=selected_campaign_type,
                 targets=[target_path]
             )
-            
+
             if campaign_result:
-                click.echo(f"✅ Created research campaign: {campaign_result.get('name', 'Unknown')}")
-                click.echo(f"📁 Campaign ID: {campaign_result.get('campaign_id', 'Unknown')}")
+                click.echo(
+                    f"✅ Created research campaign: {campaign_result.get('name', 'Unknown')}")
+                click.echo(
+                    f"📁 Campaign ID: {campaign_result.get('campaign_id', 'Unknown')}")
             else:
                 click.echo("❌ Failed to create research campaign")
                 return
@@ -943,7 +1008,8 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
             # Use analyzer for initial vulnerability assessment
             initial_assessment = analyzer.analyze_target(target_path)
             if initial_assessment.get('vulnerabilities'):
-                click.echo(f"⚠️  {len(initial_assessment['vulnerabilities'])} vulnerabilities detected")
+                click.echo(
+                    f"⚠️  {len(initial_assessment['vulnerabilities'])} vulnerabilities detected")
 
             click.echo(f"Running {campaign_type} analysis on {target_path}...")
 
@@ -954,8 +1020,10 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
             try:
                 if platform.system() != 'Windows' and hasattr(signal, 'SIGALRM') and hasattr(signal, 'alarm'):
                     def timeout_handler(signum, frame):
-                        logger.warning(f"Vulnerability analysis timeout handler: signal {signum}, frame {frame}")
-                        raise TimeoutError(f"Analysis timed out after {timeout} seconds")
+                        logger.warning(
+                            "Vulnerability analysis timeout handler: signal %s, frame %s", signum, frame)
+                        raise TimeoutError(
+                            f"Analysis timed out after {timeout} seconds")
 
                     signal.signal(signal.SIGALRM, timeout_handler)
                     signal.alarm(timeout)
@@ -976,7 +1044,8 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
                         analysis_method=AnalysisMethod.HYBRID,
                         vulnerability_types=None
                     )
-            except (AttributeError, OSError):
+            except (AttributeError, OSError) as e:
+                logger.error("Error in cli: %s", e)
                 # Fallback for systems without signal support
                 result = analyzer.analyze_vulnerability(
                     target_path=target_path,
@@ -986,12 +1055,15 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
 
             if result['success']:
                 vulnerabilities = result['vulnerabilities']
-                click.echo(f"✓ Analysis completed - {len(vulnerabilities)} vulnerabilities found")
+                click.echo(
+                    f"✓ Analysis completed - {len(vulnerabilities)} vulnerabilities found")
 
                 # Categorize vulnerabilities
-                critical = [v for v in vulnerabilities if v['severity'] == 'critical']
+                critical = [
+                    v for v in vulnerabilities if v['severity'] == 'critical']
                 high = [v for v in vulnerabilities if v['severity'] == 'high']
-                medium = [v for v in vulnerabilities if v['severity'] == 'medium']
+                medium = [
+                    v for v in vulnerabilities if v['severity'] == 'medium']
 
                 click.echo(f"  Critical: {len(critical)}")
                 click.echo(f"  High: {len(high)}")
@@ -1001,20 +1073,22 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
                 if vulnerabilities:
                     click.echo("\nTop Vulnerabilities:")
                     for vuln in vulnerabilities[:5]:
-                        click.echo(f"  • {vuln['type']} ({vuln['severity']}) - {vuln['description']}")
+                        click.echo(
+                            f"  • {vuln['type']} ({vuln['severity']}) - {vuln['description']}")
 
         # Save results if output specified
         if output and result['success']:
             os.makedirs(output, exist_ok=True)
-            result_file = os.path.join(output, f"analysis_results_{int(time.time())}.json")
+            result_file = os.path.join(
+                output, f"analysis_results_{int(time.time())}.json")
 
-            with open(result_file, 'w') as f:
+            with open(result_file, 'w', encoding='utf-8') as f:
                 json.dump(result, f, indent=2, default=str)
 
             click.echo(f"\nResults saved to: {result_file}")
 
-    except Exception as e:
-        logger.error(f"Vulnerability research failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Vulnerability research failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -1022,7 +1096,6 @@ def run(target_path: str, campaign_type: str, output: Optional[str], timeout: in
 @advanced.group()
 def post_exploit():
     """Post-exploitation commands"""
-    pass
 
 
 @post_exploit.command()
@@ -1031,43 +1104,47 @@ def post_exploit():
 @click.option('--method', type=click.Choice(['auto', 'registry', 'service', 'scheduled_task', 'startup']),
               default='auto', help='Persistence method')
 @click.option('--payload-path', help='Path to payload for persistence')
-def persist(target_platform: str, method: str, payload_path: Optional[str]):
+def persist(platform: str, method: str, payload_path: Optional[str]):
     """Establish persistence on target system"""
     try:
         manager = PersistenceManager()
 
         # Configure manager based on target platform
+        import tempfile
         platform_configs = {
             'windows': {
-                'default_payload': 'C:\\Windows\\Temp\\implant.exe',
+                'default_payload': os.path.join(tempfile.gettempdir(), 'implant.exe'),
                 'methods': ['registry', 'service', 'scheduled_task', 'startup'],
                 'stealth_level': 'high'
             },
             'linux': {
-                'default_payload': '/tmp/implant',
+                'default_payload': os.path.join(tempfile.gettempdir(), 'implant'),
                 'methods': ['systemd', 'cron', 'rc_local', 'profile'],
                 'stealth_level': 'medium'
             },
             'macos': {
-                'default_payload': '/tmp/implant',
+                'default_payload': os.path.join(tempfile.gettempdir(), 'implant'),
                 'methods': ['launchd', 'cron', 'profile', 'login_items'],
                 'stealth_level': 'high'
             }
         }
 
-        platform_config = platform_configs.get(target_platform, platform_configs['linux'])
+        platform_config = platform_configs.get(
+            platform, platform_configs['linux'])
 
         # Auto-select method if not specified or validate platform compatibility
         if method == 'auto':
-            method = platform_config['methods'][0]  # Use best method for platform
+            # Use best method for platform
+            method = platform_config['methods'][0]
         elif method not in platform_config['methods']:
-            click.echo(f"⚠️  Method '{method}' may not be optimal for {target_platform}")
+            click.echo(
+                f"⚠️  Method '{method}' may not be optimal for {platform}")
 
-        click.echo(f"Establishing {method} persistence on {target_platform}...")
+        click.echo(f"Establishing {method} persistence on {platform}...")
 
         result = manager.establish_persistence(
             payload_path=payload_path or platform_config['default_payload'],
-            target_os=target_platform,
+            target_os=platform,
             privilege_level='user',
             stealth_level=platform_config['stealth_level'],
             options={'preferred_method': method}
@@ -1083,8 +1160,8 @@ def persist(target_platform: str, method: str, payload_path: Optional[str]):
             click.echo(f"✗ Persistence failed: {result.get('error')}")
             sys.exit(1)
 
-    except Exception as e:
-        logger.error(f"Persistence establishment failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Persistence establishment failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -1099,9 +1176,11 @@ def escalate(target_platform: str, method: str):
     try:
         manager = PrivilegeEscalationManager()
 
-        click.echo(f"Attempting privilege escalation on {target_platform} using {method}...")
+        click.echo(
+            f"Attempting privilege escalation on {target_platform} using {method}...")
 
-        result = manager.escalate_privileges(target_platform=target_platform, method=method)
+        result = manager.escalate_privileges(
+            target_platform=target_platform, method=method)
 
         if result['success']:
             click.echo("✓ Privilege escalation successful!")
@@ -1111,8 +1190,8 @@ def escalate(target_platform: str, method: str):
             click.echo(f"✗ Privilege escalation failed: {result.get('error')}")
             sys.exit(1)
 
-    except Exception as e:
-        logger.error(f"Privilege escalation failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Privilege escalation failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -1127,7 +1206,8 @@ def lateral(method: str, target: Optional[str]):
         manager = LateralMovementManager()
 
         if target:
-            click.echo(f"Attempting lateral movement to {target} using {method}...")
+            click.echo(
+                f"Attempting lateral movement to {target} using {method}...")
             result = manager.move_to_target(target, method=method)
         else:
             click.echo("Discovering targets for lateral movement...")
@@ -1138,7 +1218,8 @@ def lateral(method: str, target: Optional[str]):
                 click.echo(f"✓ Discovered {len(targets)} potential targets:")
 
                 for target_info in targets[:10]:  # Show first 10
-                    click.echo(f"  • {target_info['ip']} - {target_info['hostname']} ({target_info['os']})")
+                    click.echo(
+                        f"  • {target_info['ip']} - {target_info['hostname']} ({target_info['os']})")
 
                 return
 
@@ -1150,8 +1231,8 @@ def lateral(method: str, target: Optional[str]):
             click.echo(f"✗ Lateral movement failed: {result.get('error')}")
             sys.exit(1)
 
-    except Exception as e:
-        logger.error(f"Lateral movement failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Lateral movement failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -1181,7 +1262,8 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
             }
         }
 
-        click.echo(f"Starting automated exploitation of {os.path.basename(target_path)}...")
+        click.echo(
+            f"Starting automated exploitation of {os.path.basename(target_path)}...")
         click.echo(f"Target platform: {target_platform}")
         click.echo(f"Callback: {lhost}:{lport}")
         click.echo("=" * 50)
@@ -1198,7 +1280,8 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
             click.echo(f"\nExploitation Timeline ({len(timeline)} phases):")
             for entry in timeline:
                 status_symbol = "✓" if entry['status'] == 'completed' else "✗"
-                click.echo(f"  {status_symbol} {entry['phase'].replace('_', ' ').title()}")
+                click.echo(
+                    f"  {status_symbol} {entry['phase'].replace('_', ' ').title()}")
 
             # Show AI adaptations
             adaptations = result['ai_adaptations']
@@ -1208,7 +1291,8 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
                     click.echo(f"  • {adaptation}")
 
         else:
-            click.echo(f"✗ Automated exploitation failed: {result.get('error')}")
+            click.echo(
+                f"✗ Automated exploitation failed: {result.get('error')}")
 
             # Show what phases completed
             if 'exploitation_phases' in result:
@@ -1216,18 +1300,19 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
                 click.echo("\nPhase Results:")
                 for phase_name, phase_result in phases.items():
                     phase_status = "✓" if phase_result.get('success') else "✗"
-                    click.echo(f"  {phase_status} {phase_name.replace('_', ' ').title()}")
+                    click.echo(
+                        f"  {phase_status} {phase_name.replace('_', ' ').title()}")
 
             sys.exit(1)
 
         # Save detailed results
         if output:
-            with open(output, 'w') as f:
+            with open(output, 'w', encoding='utf-8') as f:
                 json.dump(result, f, indent=2, default=str)
             click.echo(f"\nDetailed results saved to: {output}")
 
-    except Exception as e:
-        logger.error(f"Automated exploitation failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Automated exploitation failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -1235,7 +1320,6 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
 @cli.group()
 def ai():
     """AI-powered script generation and analysis commands"""
-    pass
 
 
 @ai.command('generate')
@@ -1250,7 +1334,7 @@ def ai():
 @click.option('--autonomous', is_flag=True, help='Enable autonomous mode with testing')
 @click.option('--preview', is_flag=True, help='Preview script before saving')
 def ai_generate(binary_path: str, script_type: str, complexity: str, focus: str,
-             output: Optional[str], autonomous_mode: bool, preview: bool):
+                output: Optional[str], autonomous_mode: bool, preview: bool):
     """Generate AI scripts for binary protection bypass"""
     try:
         if not os.path.exists(binary_path):
@@ -1293,7 +1377,8 @@ def ai_generate(binary_path: str, script_type: str, complexity: str, focus: str,
 
         if autonomous_mode:
             script_request += " Use autonomous mode with testing and refinement."
-            click.echo("🔄 Autonomous mode enabled - AI will test and refine scripts")
+            click.echo(
+                "🔄 Autonomous mode enabled - AI will test and refine scripts")
 
         # Generate scripts
         click.echo("\n🚀 Starting AI script generation...")
@@ -1314,23 +1399,27 @@ def ai_generate(binary_path: str, script_type: str, complexity: str, focus: str,
             if analysis and "protections" in analysis:
                 protections = analysis["protections"]
                 if protections:
-                    click.echo(f"\n🛡️  Detected {len(protections)} protection mechanisms:")
+                    click.echo(
+                        f"\n🛡️  Detected {len(protections)} protection mechanisms:")
                     for prot in protections[:5]:
                         confidence = prot.get("confidence", 0.0)
-                        click.echo(f"   • {prot['type']} (confidence: {confidence:.0%})")
+                        click.echo(
+                            f"   • {prot['type']} (confidence: {confidence:.0%})")
 
             # Process each script
             for i, script in enumerate(scripts):
                 script_name = f"ai_generated_{binary_name}_{script.metadata.script_type.value}_{int(time.time())}"
                 success_prob = script.metadata.success_probability
 
-                click.echo(f"\n📄 Script {i+1}: {script.metadata.script_type.value} ({script_name})")
+                click.echo(
+                    f"\n📄 Script {i+1}: {script.metadata.script_type.value} ({script_name})")
                 click.echo(f"   Success Probability: {success_prob:.0%}")
                 click.echo(f"   Size: {len(script.content)} characters")
 
                 # Preview if requested
                 if preview:
-                    click.echo(f"\n📖 Preview of {script.metadata.script_type.value} script:")
+                    click.echo(
+                        f"\n📖 Preview of {script.metadata.script_type.value} script:")
                     click.echo("─" * 60)
                     preview_lines = script.content.split('\n')[:20]
                     for line in preview_lines:
@@ -1352,7 +1441,8 @@ def ai_generate(binary_path: str, script_type: str, complexity: str, focus: str,
 
                     click.echo(f"💾 Saved: {saved_path}")
 
-                except Exception as e:
+                except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+                    logger.error("Error in cli: %s", e)
                     click.echo(f"❌ Failed to save script: {e}", err=True)
 
         else:
@@ -1360,8 +1450,8 @@ def ai_generate(binary_path: str, script_type: str, complexity: str, focus: str,
             click.echo(f"❌ Generation failed: {error_msg}", err=True)
             sys.exit(1)
 
-    except Exception as e:
-        logger.error(f"AI script generation failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("AI script generation failed: %s", e, exc_info=True)
         click.echo(f"❌ Error: {e}", err=True)
         sys.exit(1)
 
@@ -1387,14 +1477,16 @@ def test(script_path: str, binary: Optional[str], environment: str, timeout: int
         elif script_ext == '.py':
             script_type = 'ghidra'
         else:
-            click.echo(f"Unknown script type for file: {script_path}", err=True)
+            click.echo(
+                f"Unknown script type for file: {script_path}", err=True)
             sys.exit(1)
 
         # Read script content
-        with open(script_path, 'r') as f:
+        with open(script_path, 'r', encoding='utf-8') as f:
             script_content = f.read()
 
-        click.echo(f"🧪 Testing {script_type} script: {os.path.basename(script_path)}")
+        click.echo(
+            f"🧪 Testing {script_type} script: {os.path.basename(script_path)}")
         click.echo(f"🏗️  Environment: {environment}")
         click.echo(f"⏱️  Timeout: {timeout}s")
 
@@ -1414,9 +1506,11 @@ def test(script_path: str, binary: Optional[str], environment: str, timeout: int
                 # Run test
                 click.echo("🚀 Executing script in QEMU...")
                 if script_type == 'frida':
-                    result = test_manager.test_frida_script(snapshot_id, script_content, binary or "unknown")
+                    result = test_manager.test_frida_script(
+                        snapshot_id, script_content, binary or "unknown")
                 else:
-                    result = test_manager.test_ghidra_script(snapshot_id, script_content, binary or "unknown")
+                    result = test_manager.test_ghidra_script(
+                        snapshot_id, script_content, binary or "unknown")
 
                 # Show results
                 if result.success:
@@ -1438,10 +1532,11 @@ def test(script_path: str, binary: Optional[str], environment: str, timeout: int
                 test_manager.cleanup_snapshot(snapshot_id)
 
         else:
-            click.echo(f"Environment '{environment}' testing not yet implemented")
+            click.echo(
+                f"Environment '{environment}' testing not yet implemented")
 
-    except Exception as e:
-        logger.error(f"Script testing failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Script testing failed: %s", e, exc_info=True)
         click.echo(f"❌ Error: {e}", err=True)
         sys.exit(1)
 
@@ -1452,7 +1547,7 @@ def test(script_path: str, binary: Optional[str], environment: str, timeout: int
 @click.option('--format', type=click.Choice(['text', 'json', 'html']),
               default='text', help='Output format')
 @click.option('--deep', is_flag=True, help='Enable deep AI analysis')
-def analyze(binary_path: str, output: Optional[str], format: str, deep: bool):
+def analyze(binary_path: str, output: Optional[str], output_format: str, deep: bool):
     """Analyze binary for protection mechanisms using AI"""
     try:
         if not os.path.exists(binary_path):
@@ -1524,9 +1619,9 @@ def analyze(binary_path: str, output: Optional[str], format: str, deep: bool):
         }
 
         # Format output
-        if format == 'json':
+        if output_format == 'json':
             output_text = json.dumps(analysis_results, indent=2)
-        elif format == 'html':
+        elif output_format == 'html':
             output_text = f"""
 <html><head><title>AI Analysis: {binary_name}</title></head>
 <body>
@@ -1557,15 +1652,15 @@ def analyze(binary_path: str, output: Optional[str], format: str, deep: bool):
 
         # Save or display
         if output:
-            with open(output, 'w') as f:
+            with open(output, 'w', encoding='utf-8') as f:
                 f.write(output_text)
             click.echo(f"💾 Analysis saved to: {output}")
         else:
             click.echo("\n📋 Analysis Results:")
             click.echo(output_text)
 
-    except Exception as e:
-        logger.error(f"AI analysis failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("AI analysis failed: %s", e, exc_info=True)
         click.echo(f"❌ Error: {e}", err=True)
         sys.exit(1)
 
@@ -1622,15 +1717,18 @@ def autonomous(request: str, binary: Optional[str], max_iterations: int,
             for i, script in enumerate(scripts):
                 script_type = script.metadata.script_type.value
                 success_prob = script.metadata.success_probability
-                click.echo(f"   Script {i+1}: {script_type} (success: {success_prob:.0%})")
+                click.echo(
+                    f"   Script {i+1}: {script_type} (success: {success_prob:.0%})")
 
                 if save_all:
                     try:
                         from intellicrack.ai.ai_script_generator import AIScriptGenerator
                         generator = AIScriptGenerator()
-                        saved_path = generator.save_script(script, "scripts/autonomous")
+                        saved_path = generator.save_script(
+                            script, "scripts/autonomous")
                         click.echo(f"      Saved: {saved_path}")
-                    except Exception as e:
+                    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+                        logger.error("Error in cli: %s", e)
                         click.echo(f"      Save failed: {e}")
 
             # Show analysis if verbose
@@ -1646,8 +1744,184 @@ def autonomous(request: str, binary: Optional[str], max_iterations: int,
             click.echo(f"❌ Autonomous workflow failed: {error_msg}", err=True)
             sys.exit(1)
 
-    except Exception as e:
-        logger.error(f"Autonomous workflow failed: {e}")
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Autonomous workflow failed: %s", e, exc_info=True)
+        click.echo(f"❌ Error: {e}", err=True)
+        sys.exit(1)
+
+
+@ai.command()
+@click.argument('binary_path', type=click.Path(exists=True))
+@click.option('--output', '-o', help='Output file for session data')
+@click.option('--include-ui', is_flag=True, help='Include UI conversation history')
+def save_session(binary_path: str, output: Optional[str], include_ui: bool):
+    """Save AI session data including conversation history"""
+    try:
+        from intellicrack.ai.autonomous_agent import AutonomousAgent
+        
+        click.echo("💾 Saving AI session data...")
+        
+        # Initialize agent
+        agent = AutonomousAgent()
+        
+        # Prepare session save options
+        save_options = {
+            'binary_path': binary_path,
+            'include_ui_history': include_ui
+        }
+        
+        # Include UI conversation history if requested
+        if include_ui:
+            click.echo("📊 Including UI conversation history in session data...")
+            # Try to get UI history if available
+            try:
+                from intellicrack.ui.main_app import get_conversation_history
+                ui_history = get_conversation_history()
+                if ui_history:
+                    save_options['ui_conversation_history'] = ui_history
+                    click.echo(f"  Added {len(ui_history)} UI conversation entries")
+                else:
+                    click.echo("  No UI conversation history available")
+            except ImportError:
+                click.echo("  UI module not available, skipping UI history")
+            except Exception as e:
+                click.echo(f"  Warning: Could not retrieve UI history: {e}")
+        
+        # Save session data with options
+        if hasattr(agent, 'save_session_data_with_options'):
+            session_file = agent.save_session_data_with_options(output, save_options)
+        else:
+            # Fallback to basic save
+            session_file = agent.save_session_data(output)
+            if include_ui:
+                click.echo("  Note: Agent doesn't support extended save options")
+        
+        click.echo(f"✅ Session data saved to: {session_file}")
+        
+        # Display what was included
+        click.echo("\n📋 Session includes:")
+        click.echo("  ✓ Agent conversation history")
+        click.echo("  ✓ Analysis results")
+        click.echo("  ✓ Generated scripts")
+        if include_ui:
+            click.echo("  ✓ UI conversation history")
+        else:
+            click.echo("  ✗ UI conversation history (use --include-ui to add)")
+        
+        # Show session summary
+        history = agent.get_conversation_history()
+        click.echo(f"📊 Conversation entries: {len(history)}")
+        click.echo(f"📄 Scripts generated: {len(agent.generated_scripts)}")
+        click.echo(f"🧪 Tests run: {len(agent.test_results)}")
+        
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Failed to save session: %s", e, exc_info=True)
+        click.echo(f"❌ Error: {e}", err=True)
+        sys.exit(1)
+
+
+@ai.command()
+@click.option('--confirm', is_flag=True, help='Confirm reset without prompt')
+def reset(confirm: bool):
+    """Reset AI agent state for new analysis"""
+    try:
+        from intellicrack.ai.autonomous_agent import AutonomousAgent
+        
+        if not confirm:
+            if not click.confirm("⚠️  Reset AI agent? This will clear all conversation history."):
+                click.echo("❌ Reset cancelled")
+                return
+        
+        click.echo("🔄 Resetting AI agent...")
+        
+        # Initialize and reset agent
+        agent = AutonomousAgent()
+        agent.reset()
+        
+        click.echo("✅ AI agent reset successfully")
+        click.echo("   • Conversation history cleared")
+        click.echo("   • Generated scripts cleared")
+        click.echo("   • Test results cleared")
+        click.echo("   • Ready for new analysis")
+        
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Failed to reset agent: %s", e, exc_info=True)
+        click.echo(f"❌ Error: {e}", err=True)
+        sys.exit(1)
+
+
+@ai.command()
+@click.argument('task_type', type=click.Choice(['script_generation', 'vulnerability_analysis', 'script_testing']))
+@click.argument('binary_path', type=click.Path(exists=True))
+@click.option('--request', help='Custom request for the task')
+@click.option('--script', help='Script content for testing (script_testing only)')
+@click.option('--output', '-o', help='Output file for results')
+@click.option('--verbose', '-v', is_flag=True, help='Verbose output')
+def task(task_type: str, binary_path: str, request: Optional[str], script: Optional[str], 
+         output: Optional[str], verbose: bool):
+    """Execute specific autonomous AI task"""
+    try:
+        from intellicrack.ai.autonomous_agent import AutonomousAgent
+        
+        click.echo(f"🤖 Executing {task_type} task...")
+        click.echo(f"🎯 Target: {os.path.basename(binary_path)}")
+        
+        # Initialize agent
+        agent = AutonomousAgent()
+        
+        # Build task config
+        task_config = {
+            'type': task_type,
+            'target_binary': binary_path,
+            'request': request or f"Perform {task_type} on {binary_path}"
+        }
+        
+        # Add script for testing tasks
+        if task_type == 'script_testing' and script:
+            task_config['script'] = script
+        
+        # Execute task
+        with click.progressbar(length=100, label='Processing') as bar:
+            result = agent.execute_autonomous_task(task_config)
+            bar.update(100)
+        
+        # Handle results
+        if result.get('success'):
+            click.echo(f"\n✅ Task completed successfully!")
+            
+            if task_type == 'script_generation' and 'scripts' in result:
+                scripts = result['scripts']
+                click.echo(f"📄 Generated {len(scripts)} scripts")
+                for i, script_obj in enumerate(scripts):
+                    click.echo(f"   Script {i+1}: {script_obj.script_type}")
+                    
+            elif task_type == 'vulnerability_analysis' and 'vulnerabilities' in result:
+                vulns = result['vulnerabilities']
+                click.echo(f"🔍 Found {len(vulns)} vulnerabilities")
+                for vuln in vulns[:5]:  # Show first 5
+                    click.echo(f"   • {vuln}")
+                    
+            elif task_type == 'script_testing' and 'test_results' in result:
+                test_result = result['test_results']
+                click.echo(f"🧪 Test completed in {test_result.get('runtime_ms', 0)}ms")
+                click.echo(f"   Exit code: {test_result.get('exit_code', 'N/A')}")
+            
+            # Save output if requested
+            if output:
+                with open(output, 'w', encoding='utf-8') as f:
+                    json.dump(result, f, indent=2, default=str)
+                click.echo(f"💾 Results saved to: {output}")
+            elif verbose:
+                click.echo("\n📊 Full results:")
+                click.echo(json.dumps(result, indent=2, default=str))
+                
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            click.echo(f"❌ Task failed: {error_msg}", err=True)
+            sys.exit(1)
+            
+    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
+        logger.error("Task execution failed: %s", e, exc_info=True)
         click.echo(f"❌ Error: {e}", err=True)
         sys.exit(1)
 

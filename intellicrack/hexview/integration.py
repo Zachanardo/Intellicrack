@@ -1,3 +1,11 @@
+import logging
+import os
+from typing import Optional
+
+from PyQt5.QtWidgets import QAction, QDialog, QMessageBox, QToolBar
+
+from intellicrack.logger import logger
+
 """
 Integration between enhanced hex viewer/editor and Intellicrack.
 
@@ -20,15 +28,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import logging
-import os
-from typing import Optional
 
-from PyQt5.QtWidgets import QAction, QDialog, QMessageBox, QToolBar
 
 try:
     from .hex_dialog import HexViewerDialog
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in integration: %s", e)
     HexViewerDialog = None
 
 try:
@@ -37,7 +42,8 @@ try:
         wrapper_ai_binary_edit_suggest,
         wrapper_ai_binary_pattern_search,
     )
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in integration: %s", e)
     # Provide dummy functions if AI bridge is not available
     def wrapper_ai_binary_analyze(*args, **kwargs):
         """

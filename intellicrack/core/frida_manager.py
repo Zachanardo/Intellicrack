@@ -21,19 +21,23 @@ from typing import Any, Callable, Dict, List, Set, Union
 
 # Import availability checks from shared utility
 from ..utils.core.import_checks import FRIDA_AVAILABLE, frida, psutil
+from .frida_constants import HookCategory, ProtectionType
 
 logger = logging.getLogger(__name__)
 
 
 # Import constants from separate module to avoid cyclic imports
-from .frida_constants import HookCategory, ProtectionType
 
 
 class FridaOperationLogger:
     """Comprehensive logging system for Frida operations"""
 
     def __init__(self, log_dir: str = None):
-        self.log_dir = Path(log_dir or "logs/frida_operations")
+        if log_dir:
+            self.log_dir = Path(log_dir)
+        else:
+            from intellicrack.utils.core.plugin_paths import get_frida_logs_dir
+            self.log_dir = get_frida_logs_dir()
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
         # Different log files for different types of operations
@@ -401,6 +405,7 @@ class HookBatcher:
 
     def __init__(self, max_batch_size: int = 50,
                  batch_timeout_ms: int = 100):
+        self.logger = logging.getLogger(__name__ + ".HookBatcher")
         self.max_batch_size = max_batch_size
         self.batch_timeout_ms = batch_timeout_ms
         self.pending_hooks = defaultdict(list)
@@ -439,7 +444,8 @@ class HookBatcher:
                     timeout = max(0, deadline - time.time())
                     hook = self.hook_queue.get(timeout=timeout)
                     batch.append(hook)
-                except queue.Empty:
+                except queue.Empty as e:
+                    self.logger.error("queue.Empty in frida_manager: %s", e)
                     break
 
             if batch:

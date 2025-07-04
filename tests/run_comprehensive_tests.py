@@ -6,10 +6,10 @@ Runs all validation tests and provides detailed reporting on the
 health and functionality of the exploitation capabilities.
 """
 
+import logging
 import os
 import sys
 import time
-import logging
 from pathlib import Path
 
 # Add project root to path
@@ -120,7 +120,7 @@ def run_quick_functionality_test():
     tests_total += 1
     try:
         from intellicrack.core.exploitation.payload_engine import PayloadEngine
-        from intellicrack.core.exploitation.payload_types import PayloadType, Architecture
+        from intellicrack.core.exploitation.payload_types import Architecture, PayloadType
 
         engine = PayloadEngine()
         # Quick test with minimal configuration

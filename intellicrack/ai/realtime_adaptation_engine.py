@@ -27,18 +27,19 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    psutil = None
-    PSUTIL_AVAILABLE = False
-
 from ..utils.logger import get_logger
 from .learning_engine import learning_engine
 from .performance_monitor import performance_monitor, profile_ai_operation
 
 logger = get_logger(__name__)
+
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError as e:
+    logger.error("Import error in realtime_adaptation_engine: %s", e)
+    psutil = None
+    PSUTIL_AVAILABLE = False
 
 
 class AdaptationType(Enum):
@@ -120,7 +121,8 @@ class RuntimeMonitor:
         self.monitor_interval = 0.5  # 500ms
 
         # Metric history for trend analysis
-        self.metric_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self.metric_history: Dict[str, deque] = defaultdict(
+            lambda: deque(maxlen=1000))
 
         # Adaptation rules for real-time response
         self.adaptation_rules: Dict[str, Dict] = {}
@@ -171,7 +173,8 @@ class RuntimeMonitor:
     def _collect_system_metrics(self):
         """Collect system metrics."""
         if not PSUTIL_AVAILABLE:
-            logger.debug("psutil not available - skipping system metrics collection")
+            logger.debug(
+                "psutil not available - skipping system metrics collection")
             return
 
         try:
@@ -182,19 +185,22 @@ class RuntimeMonitor:
             # Memory metrics
             memory = psutil.virtual_memory()
             self.record_metric("system.memory_usage", memory.percent, "system")
-            self.record_metric("system.memory_available", memory.available, "system")
+            self.record_metric("system.memory_available",
+                               memory.available, "system")
 
             # Process metrics
             process = psutil.Process()
             process_info = process.memory_info()
-            self.record_metric("process.memory_rss", process_info.rss, "process")
-            self.record_metric("process.memory_vms", process_info.vms, "process")
+            self.record_metric("process.memory_rss",
+                               process_info.rss, "process")
+            self.record_metric("process.memory_vms",
+                               process_info.vms, "process")
 
         except Exception as e:
             logger.error(f"Error collecting system metrics: {e}")
 
     def record_metric(self, metric_name: str, value: float, source: str,
-                     category: str = "general", metadata: Dict[str, Any] = None):
+                      category: str = "general", metadata: Dict[str, Any] = None):
         """Record a runtime metric."""
         metric = RuntimeMetric(
             metric_name=metric_name,
@@ -247,7 +253,8 @@ class RuntimeMonitor:
                 is_anomaly = detector.detect_anomaly(current_value)
 
                 if is_anomaly:
-                    logger.warning(f"Anomaly detected in {metric_name}: {current_value}")
+                    logger.warning(
+                        f"Anomaly detected in {metric_name}: {current_value}")
                     self._notify_anomaly(metric_name, current_value)
 
     def _notify_anomaly(self, metric_name: str, value: float):
@@ -261,7 +268,8 @@ class RuntimeMonitor:
         # Look for matching adaptation rules
         for rule_id, rule in self.adaptation_rules.items():
             if rule.get('metric_pattern') and metric_name in rule.get('metric_pattern', ''):
-                logger.info(f"Triggering adaptation rule {rule_id} for {metric_name}")
+                logger.info(
+                    f"Triggering adaptation rule {rule_id} for {metric_name}")
                 self._execute_adaptation_rule(rule_id, metric_name, value)
                 adaptation_triggered = True
 
@@ -288,7 +296,8 @@ class RuntimeMonitor:
                 return
 
             action_type = rule.get('action_type', 'log')
-            logger.info(f"Executing adaptation rule {rule_id}: {action_type} for {metric_name}={value}")
+            logger.info(
+                f"Executing adaptation rule {rule_id}: {action_type} for {metric_name}={value}")
 
             # Execute the adaptation action
             if action_type == 'adjust_threshold':
@@ -296,11 +305,14 @@ class RuntimeMonitor:
                 if metric_name in self.anomaly_detectors:
                     detector = self.anomaly_detectors[metric_name]
                     if hasattr(detector, 'threshold'):
-                        detector.threshold *= rule.get('threshold_multiplier', 1.1)
-                        logger.info(f"Adjusted threshold for {metric_name} to {detector.threshold}")
+                        detector.threshold *= rule.get(
+                            'threshold_multiplier', 1.1)
+                        logger.info(
+                            f"Adjusted threshold for {metric_name} to {detector.threshold}")
             elif action_type == 'restart_component':
                 # Signal component restart (would be handled by higher-level system)
-                logger.warning(f"Component restart requested for {metric_name} anomaly")
+                logger.warning(
+                    f"Component restart requested for {metric_name} anomaly")
             else:
                 logger.debug(f"Unknown adaptation action: {action_type}")
 
@@ -376,7 +388,8 @@ class AnomalyDetector:
         self.baseline_mean = sum(values) / len(values)
 
         # Calculate standard deviation
-        variance = sum((x - self.baseline_mean) ** 2 for x in values) / len(values)
+        variance = sum((x - self.baseline_mean) **
+                       2 for x in values) / len(values)
         self.baseline_std = variance ** 0.5
 
         self.calibrated = len(values) >= 20
@@ -407,12 +420,13 @@ class DynamicHookManager:
     def __init__(self):
         self.active_hooks: Dict[str, Dict[str, Any]] = {}
         self.hook_registry: Dict[str, Callable] = {}
-        self.hook_statistics: Dict[str, Dict[str, int]] = defaultdict(lambda: {"calls": 0, "modifications": 0})
+        self.hook_statistics: Dict[str, Dict[str, int]] = defaultdict(
+            lambda: {"calls": 0, "modifications": 0})
 
         logger.info("Dynamic hook manager initialized")
 
     def register_hook_point(self, hook_id: str, target_function: Callable,
-                          hook_type: str = "around"):
+                            hook_type: str = "around"):
         """Register a hook point."""
         self.hook_registry[hook_id] = {
             "target": target_function,
@@ -476,7 +490,7 @@ class DynamicHookManager:
         return False
 
     def _create_modified_function(self, original_function: Callable,
-                                modification: Dict[str, Any]) -> Callable:
+                                  modification: Dict[str, Any]) -> Callable:
         """Create modified function based on modification specification."""
         def modified_wrapper(*args, **kwargs):
             # Record hook call
@@ -493,7 +507,8 @@ class DynamicHookManager:
                 # Parameter modifications
                 if "parameter_modifications" in modification:
                     for param_mod in modification["parameter_modifications"]:
-                        args, kwargs = self._apply_parameter_modification(args, kwargs, param_mod)
+                        args, kwargs = self._apply_parameter_modification(
+                            args, kwargs, param_mod)
 
                 # Call original function
                 result = original_function(*args, **kwargs)
@@ -505,7 +520,8 @@ class DynamicHookManager:
                 # Result modifications
                 if "result_modifications" in modification:
                     for result_mod in modification["result_modifications"]:
-                        result = self._apply_result_modification(result, result_mod)
+                        result = self._apply_result_modification(
+                            result, result_mod)
 
                 self.hook_statistics[hook_id]["modifications"] += 1
                 return result
@@ -518,7 +534,7 @@ class DynamicHookManager:
         return modified_wrapper
 
     def _apply_parameter_modification(self, args: tuple, kwargs: dict,
-                                    modification: Dict[str, Any]) -> tuple:
+                                      modification: Dict[str, Any]) -> tuple:
         """Apply parameter modification."""
         mod_type = modification.get("type", "")
 
@@ -563,7 +579,7 @@ class DynamicHookManager:
         return result
 
     def _install_function_hook(self, target_function: Callable,
-                             modified_function: Callable) -> bool:
+                               modified_function: Callable) -> bool:
         """Install function hook using monkey patching."""
         try:
             # This is a simplified implementation
@@ -585,7 +601,7 @@ class DynamicHookManager:
         return False
 
     def _restore_original_function(self, target_function: Callable,
-                                 original_function: Callable) -> bool:
+                                   original_function: Callable) -> bool:
         """Restore original function."""
         try:
             module = target_function.__module__
@@ -616,12 +632,13 @@ class LiveDebuggingSystem:
         self.automated_fixes: Dict[str, Callable] = {}
 
         # Subscribe to runtime metrics
-        self.runtime_monitor.subscribe_to_metrics(self._analyze_metric_for_debugging)
+        self.runtime_monitor.subscribe_to_metrics(
+            self._analyze_metric_for_debugging)
 
         logger.info("Live debugging system initialized")
 
     def start_debug_session(self, session_id: str, target_component: str,
-                          debug_level: str = "info") -> bool:
+                            debug_level: str = "info") -> bool:
         """Start a live debugging session."""
         if session_id in self.active_debug_sessions:
             logger.warning(f"Debug session {session_id} already active")
@@ -639,7 +656,8 @@ class LiveDebuggingSystem:
         }
 
         self.active_debug_sessions[session_id] = session
-        logger.info(f"Started debug session {session_id} for {target_component}")
+        logger.info(
+            f"Started debug session {session_id} for {target_component}")
 
         return True
 
@@ -672,8 +690,10 @@ class LiveDebuggingSystem:
             "created_at": datetime.now()
         }
 
-        self.active_debug_sessions[session_id]["breakpoints"].append(breakpoint)
-        logger.info(f"Added breakpoint to session {session_id}: {component} - {condition}")
+        self.active_debug_sessions[session_id]["breakpoints"].append(
+            breakpoint)
+        logger.info(
+            f"Added breakpoint to session {session_id}: {component} - {condition}")
 
         return True
 
@@ -716,18 +736,22 @@ class LiveDebuggingSystem:
 
         if self.start_debug_session(debug_session_id, metric.source, "warning"):
             # Add relevant watches and breakpoints
-            self.add_watch(debug_session_id, metric.metric_name, f"> {metric.value}")
+            self.add_watch(debug_session_id, metric.metric_name,
+                           f"> {metric.value}")
 
             # Try automated fix if available
             if metric.metric_name in self.automated_fixes:
                 try:
-                    fix_result = self.automated_fixes[metric.metric_name](metric)
+                    fix_result = self.automated_fixes[metric.metric_name](
+                        metric)
                     self._log_debug_event(debug_session_id, "automated_fix", {
                         "metric": metric.metric_name,
                         "fix_applied": True,
                         "fix_result": fix_result
                     })
                 except Exception as e:
+                    self.logger.error(
+                        "Exception in realtime_adaptation_engine: %s", e)
                     self._log_debug_event(debug_session_id, "automated_fix_failed", {
                         "metric": metric.metric_name,
                         "error": str(e)
@@ -785,8 +809,8 @@ class LiveDebuggingSystem:
                             "value": watch["last_value"],
                             "condition": watch["alert_condition"]
                         })
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Error checking watch alert condition: {e}")
 
         return alerts
 
@@ -798,13 +822,16 @@ class LiveDebuggingSystem:
         event_types = [event["type"] for event in session["events"]]
 
         if "automated_fix_failed" in event_types:
-            recommendations.append("Consider manual intervention - automated fixes failed")
+            recommendations.append(
+                "Consider manual intervention - automated fixes failed")
 
         if len(session["events"]) > 50:
-            recommendations.append("High event activity - consider reducing debug verbosity")
+            recommendations.append(
+                "High event activity - consider reducing debug verbosity")
 
         if not session["breakpoints"]:
-            recommendations.append("Add breakpoints to capture specific conditions")
+            recommendations.append(
+                "Add breakpoints to capture specific conditions")
 
         return recommendations
 
@@ -834,7 +861,8 @@ class RealTimeAdaptationEngine:
         self._initialize_default_rules()
 
         # Subscribe to metrics for adaptation triggers
-        self.runtime_monitor.subscribe_to_metrics(self._check_adaptation_triggers)
+        self.runtime_monitor.subscribe_to_metrics(
+            self._check_adaptation_triggers)
 
         logger.info("Real-time adaptation engine initialized")
 
@@ -957,10 +985,12 @@ class RealTimeAdaptationEngine:
         start_time = time.time()
 
         try:
-            logger.info(f"Triggering adaptation: {rule.name} (trigger: {trigger_metric.metric_name}={trigger_metric.value})")
+            logger.info(
+                f"Triggering adaptation: {rule.name} (trigger: {trigger_metric.metric_name}={trigger_metric.value})")
 
             # Execute adaptation action
-            success = self._execute_adaptation_action(rule, trigger_metric, adaptation_id)
+            success = self._execute_adaptation_action(
+                rule, trigger_metric, adaptation_id)
 
             execution_time = time.time() - start_time
 
@@ -1036,12 +1066,13 @@ class RealTimeAdaptationEngine:
             logger.error(f"Adaptation failed: {rule.name} - {e}")
 
     def _execute_adaptation_action(self, rule: AdaptationRule, trigger_metric: RuntimeMetric,
-                                 adaptation_id: str) -> bool:
+                                   adaptation_id: str) -> bool:
         """Execute the adaptation action."""
         action = rule.action
 
         try:
-            logger.debug(f"Executing adaptation action '{action}' triggered by metric '{trigger_metric.name}' with value {trigger_metric.value}")
+            logger.debug(
+                f"Executing adaptation action '{action}' triggered by metric '{trigger_metric.name}' with value {trigger_metric.value}")
 
             if action == "reduce_concurrency":
                 return self._reduce_system_concurrency()
@@ -1089,7 +1120,8 @@ class RealTimeAdaptationEngine:
         try:
             import gc
             collected = gc.collect()
-            logger.info(f"Garbage collection triggered, collected {collected} objects")
+            logger.info(
+                f"Garbage collection triggered, collected {collected} objects")
             return True
         except Exception as e:
             logger.error(f"Failed to trigger garbage collection: {e}")
@@ -1111,7 +1143,8 @@ class RealTimeAdaptationEngine:
             }
 
             # Store the hook modification for later use
-            logger.info(f"Fallback mode enabled with hook: {hook_modification['hook_id']}")
+            logger.info(
+                f"Fallback mode enabled with hook: {hook_modification['hook_id']}")
 
             self.active_adaptations[adaptation_id] = {
                 "type": "fallback_mode",
@@ -1183,8 +1216,10 @@ class RealTimeAdaptationEngine:
             )
 
         # Add other relevant metrics
-        impact["system_cpu"] = current_aggregates.get("system.cpu_usage", {}).get("last", 0)
-        impact["system_memory"] = current_aggregates.get("system.memory_usage", {}).get("last", 0)
+        impact["system_cpu"] = current_aggregates.get(
+            "system.cpu_usage", {}).get("last", 0)
+        impact["system_memory"] = current_aggregates.get(
+            "system.memory_usage", {}).get("last", 0)
 
         return impact
 
@@ -1227,8 +1262,10 @@ class RealTimeAdaptationEngine:
                 by_type[event.adaptation_type].append(event)
 
             for adaptation_type, events in by_type.items():
-                success_rate = sum(1 for e in events if e.success) / len(events)
-                avg_execution_time = sum(e.execution_time for e in events) / len(events)
+                success_rate = sum(
+                    1 for e in events if e.success) / len(events)
+                avg_execution_time = sum(
+                    e.execution_time for e in events) / len(events)
 
                 insights["effectiveness"][adaptation_type.value] = {
                     "success_rate": success_rate,
@@ -1239,13 +1276,15 @@ class RealTimeAdaptationEngine:
         # Generate recommendations
         total_adaptations = self.adaptation_stats["total_adaptations"]
         success_rate = (self.adaptation_stats["successful_adaptations"] /
-                       max(1, total_adaptations))
+                        max(1, total_adaptations))
 
         if success_rate < 0.7:
-            insights["recommendations"].append("Low adaptation success rate - review rule thresholds")
+            insights["recommendations"].append(
+                "Low adaptation success rate - review rule thresholds")
 
         if total_adaptations > 100:
-            insights["recommendations"].append("High adaptation frequency - consider optimizing triggers")
+            insights["recommendations"].append(
+                "High adaptation frequency - consider optimizing triggers")
 
         # Pattern analysis
         recent_events = [

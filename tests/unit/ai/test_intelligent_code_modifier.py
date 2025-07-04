@@ -23,10 +23,14 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
-
 from intellicrack.ai.intelligent_code_modifier import (
-    IntelligentCodeModifier, ModificationRequest, CodeChange,
-    ModificationType, ChangeStatus, CodeAnalyzer, DiffGenerator
+    ChangeStatus,
+    CodeAnalyzer,
+    CodeChange,
+    DiffGenerator,
+    IntelligentCodeModifier,
+    ModificationRequest,
+    ModificationType,
 )
 from intellicrack.ai.llm_backends import LLMManager
 

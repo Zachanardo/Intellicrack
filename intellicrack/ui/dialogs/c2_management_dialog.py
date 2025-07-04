@@ -75,6 +75,7 @@ class C2ServerThread(QThread):
             loop.run_until_complete(self.server.start())
 
         except Exception as e:
+            self.logger.error("Exception in c2_management_dialog: %s", e)
             self.error.emit(str(e))
 
     def stop_server(self):
@@ -1126,6 +1127,7 @@ class C2ManagementDialog(QDialog):
                         file_data = f.read()
 
                     import base64
+
                     # Construct remote path
                     remote_path = f"{remote_base_path.rstrip('/')}/{file_name}"
 

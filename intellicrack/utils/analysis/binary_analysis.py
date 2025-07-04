@@ -23,6 +23,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import os
 import struct
+
+# Import subprocess for objdump fallback
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -32,46 +35,50 @@ logger = logging.getLogger(__name__)
 
 # Import performance optimizer
 try:
-    from .runtime.performance_optimizer import create_performance_optimizer
+    from ..runtime.performance_optimizer import create_performance_optimizer
     PERFORMANCE_OPTIMIZER_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in binary_analysis: %s", e)
     PERFORMANCE_OPTIMIZER_AVAILABLE = False
 
-# Import subprocess for objdump fallback
-import subprocess
 
 # Import binary analysis libraries with proper error handling
 try:
     import pefile
     PEFILE_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in binary_analysis: %s", e)
     pefile = None
     PEFILE_AVAILABLE = False
 
 try:
     import lief
     LIEF_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in binary_analysis: %s", e)
     lief = None
     LIEF_AVAILABLE = False
 
 try:
     from elftools.elf.elffile import ELFFile
     PYELFTOOLS_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in binary_analysis: %s", e)
     ELFFile = None
     PYELFTOOLS_AVAILABLE = False
 
 try:
     from macholib.MachO import MachO
     MACHOLIB_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in binary_analysis: %s", e)
     MACHOLIB_AVAILABLE = False
 
 try:
     import capstone
     HAS_CAPSTONE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in binary_analysis: %s", e)
     HAS_CAPSTONE = False
 
 
@@ -172,6 +179,7 @@ def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integratio
         # Convert to string if needed
         binary_path = str(binary_path)
     except (ValueError, TypeError, OverflowError) as e:
+        logger.error("Error in binary_analysis: %s", e)
         return {"error": f"Invalid path value: {str(e)}"}
 
     if not os.path.exists(binary_path):
@@ -924,7 +932,8 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
         if 'scapy' in sys.modules or _try_import_scapy():
             try:
                 from scapy.all import IP, TCP, UDP, rdpcap, sniff
-            except ImportError:
+            except ImportError as e:
+                logger.error("Import error in binary_analysis: %s", e)
                 return {'network_connections': [], 'protocols': [], 'error': 'scapy not available'}
 
             packets = []
@@ -1006,7 +1015,8 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
         elif 'pyshark' in sys.modules or _try_import_pyshark():
             try:
                 import pyshark
-            except ImportError:
+            except ImportError as e:
+                logger.error("Import error in binary_analysis: %s", e)
                 pyshark = None
 
             if pcap_file and os.path.exists(pcap_file):
@@ -1069,6 +1079,7 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
             results["error"] = "Neither scapy nor pyshark available for traffic analysis"
 
     except Exception as e:
+        logger.error("Exception in binary_analysis: %s", e)
         results["error"] = f"Traffic analysis failed: {str(e)}"
 
     return results
@@ -1079,7 +1090,8 @@ def _try_import_scapy():
     try:
         import scapy.all
         return True
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in binary_analysis: %s", e)
         return False
 
 
@@ -1088,7 +1100,8 @@ def _try_import_pyshark():
     try:
         import pyshark
         return True
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in binary_analysis: %s", e)
         return False
 
 
@@ -1151,6 +1164,7 @@ def get_basic_file_info(file_path: str) -> Dict[str, Any]:
             "permissions": oct(stat.st_mode)
         }
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in binary_analysis: %s", e)
         return {"error": str(e)}
 
 
@@ -1415,6 +1429,7 @@ def _optimized_basic_analysis(data, chunk_info=None) -> Dict[str, Any]:
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1454,6 +1469,7 @@ def _optimized_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1495,6 +1511,7 @@ def _optimized_entropy_analysis(data, chunk_info=None) -> Dict[str, Any]:
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1528,6 +1545,7 @@ def _optimized_section_analysis(data, chunk_info=None) -> Dict[str, Any]:
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1561,6 +1579,7 @@ def _optimized_import_analysis(data, chunk_info=None) -> Dict[str, Any]:
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1591,6 +1610,7 @@ def _optimized_pattern_analysis(data, chunk_info=None) -> Dict[str, Any]:
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1680,7 +1700,8 @@ def _get_basic_disassembly_info(binary_path: str) -> List[str]:
 
         return lines
 
-    except Exception:
+    except Exception as e:
+        logger.error("Exception in binary_analysis: %s", e)
         return [
             f"# Binary: {os.path.basename(binary_path)}",
             "# Unable to analyze - may be corrupted or unsupported format",
@@ -1693,7 +1714,8 @@ def _get_pe_entry_point(binary_path: str) -> int:
         if PEFILE_AVAILABLE:
             pe = pefile.PE(binary_path)
             return getattr(pe.OPTIONAL_HEADER, 'AddressOfEntryPoint', 0x1000)
-    except Exception:
+    except Exception as e:
+        logger.error("Exception in binary_analysis: %s", e)
         pass
     return 0x1000  # Default
 
@@ -1704,7 +1726,8 @@ def _get_elf_entry_point(binary_path: str) -> int:
             with open(binary_path, 'rb') as f:
                 elf = ELFFile(f)
                 return elf.header['e_entry']
-    except Exception:
+    except Exception as e:
+        logger.error("Exception in binary_analysis: %s", e)
         pass
     return 0x1000  # Default
 

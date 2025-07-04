@@ -8,16 +8,35 @@ perfect forward secrecy, and anti-analysis capabilities.
 import base64
 import hashlib
 import hmac
+import json
 import logging
 import os
 import time
 from typing import Any, Dict, Optional
 
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+# Create module logger
+logger = logging.getLogger(__name__)
+
+# Optional cryptography imports
+HAS_CRYPTOGRAPHY = False
+try:
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import padding, rsa
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    HAS_CRYPTOGRAPHY = True
+except ImportError as e:
+    logger.error("Import error in encryption_manager: %s", e)
+    default_backend = None
+    hashes = None
+    serialization = None
+    padding = None
+    rsa = None
+    Cipher = None
+    algorithms = None
+    modes = None
+    PBKDF2HMAC = None
 
 
 class EncryptionManager:
@@ -380,10 +399,14 @@ class EncryptionManager:
 
     def _derive_hmac_key(self, encryption_key: bytes) -> bytes:
         """Derive HMAC key from encryption key."""
+        # Use a proper salt derived from the encryption key itself
+        # This ensures each key has a unique salt while remaining deterministic
+        salt = hashlib.sha256(encryption_key + b'hmac_derivation').digest()[:16]
+        
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=b'hmac_salt_intellicrack_c2',
+            salt=salt,
             iterations=100000,
             backend=default_backend()
         )
@@ -494,7 +517,7 @@ class EncryptionManager:
                 'used_count': key_data['used_count']
             }
 
-            return base64.b64encode(str(exported_key).encode()).decode('utf-8')
+            return base64.b64encode(json.dumps(exported_key).encode()).decode('utf-8')
 
         except Exception as e:
             self.logger.error(f"Failed to export session key: {e}")
@@ -503,8 +526,8 @@ class EncryptionManager:
     def import_session_key(self, exported_key_data: str) -> bool:
         """Import session key from backup/transfer."""
         try:
-            # Decode and parse exported key
-            key_data = eval(base64.b64decode(exported_key_data).decode('utf-8'))
+            # Decode and parse exported key - use json.loads instead of eval for security
+            key_data = json.loads(base64.b64decode(exported_key_data).decode('utf-8'))
 
             session_id = key_data['session_id']
             session_key = base64.b64decode(key_data['key'])

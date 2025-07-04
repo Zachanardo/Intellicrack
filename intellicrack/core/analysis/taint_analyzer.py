@@ -1,3 +1,11 @@
+import logging
+import re
+from typing import Any, Dict, List, Optional, Set
+
+from intellicrack.logger import logger
+
+from ...utils.ui.ui_common import ask_open_report
+
 """
 Taint Analysis Engine Module
 
@@ -20,17 +28,14 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import logging
-import re
-from typing import Any, Dict, List, Optional, Set
 
 try:
     import importlib.util
     PYQT5_AVAILABLE = importlib.util.find_spec("PyQt5") is not None
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in taint_analyzer: %s", e)
     PYQT5_AVAILABLE = False
 
-from ...utils.ui.ui_common import ask_open_report
 
 
 class AdvancedTaintTracker:
@@ -567,8 +572,8 @@ class TaintAnalysisEngine:
                     if '0x' in op_str:
                         target = int(op_str.split('0x')[1].split()[0], 16)
                         successors.append(target)
-                except (ValueError, IndexError):
-                    pass
+                except (ValueError, IndexError) as e:
+                    logger.error("Error in taint_analyzer: %s", e)
             elif mnemonic == 'call':
                 # Call instructions have the return address as successor
                 if i + 1 < len(instructions):
@@ -1058,8 +1063,8 @@ class TaintAnalysisEngine:
         if hasattr(taint_tracker, 'get_taint_summary'):
             try:
                 _ = taint_tracker.get_taint_summary()
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Error getting taint summary: {e}")
 
         # Include sink instruction count in analysis
         sink_count = len(sink_instructions)
@@ -1215,8 +1220,8 @@ class TaintAnalysisEngine:
                 hex_match = re.search(r'0x[0-9a-fA-F]+', op_str)
                 if hex_match:
                     return int(hex_match.group(), 16)
-            except ValueError:
-                pass
+            except ValueError as e:
+                self.logger.error("Value error in taint_analyzer: %s", e)
 
         # Could implement more sophisticated call target resolution
         return None
@@ -1268,15 +1273,15 @@ class TaintAnalysisEngine:
     def analyze_with_sources(self, sources: List[str], **kwargs) -> Dict[str, Any]:
         """
         Analyze taint propagation from specific sources.
-        
+
         This method performs taint analysis starting from a specified list of sources,
         tracking how data flows through the program to identify security-critical sinks
         and potential validation bypass points.
-        
+
         Args:
             sources: List of source identifiers (function names, addresses, or patterns)
             **kwargs: Additional analysis parameters
-            
+
         Returns:
             Dictionary containing:
             - sources: Analyzed source locations
@@ -1285,10 +1290,10 @@ class TaintAnalysisEngine:
             - vulnerabilities: Identified security issues
         """
         self.logger.info(f"Starting taint analysis with {len(sources)} sources")
-        
+
         # Clear previous analysis
         self.clear_analysis()
-        
+
         # Process source specifications
         processed_sources = []
         for source_spec in sources:
@@ -1330,7 +1335,7 @@ class TaintAnalysisEngine:
                     'value': source_spec,
                     'spec': source_spec
                 })
-        
+
         # Add default sinks if none specified
         if 'sinks' not in kwargs:
             self._add_default_taint_sinks()
@@ -1341,7 +1346,7 @@ class TaintAnalysisEngine:
                 sink_loc = sink.get('location', 'unknown')
                 sink_desc = sink.get('description', f"Custom sink: {sink_loc}")
                 self.add_taint_sink(sink_type, sink_loc, sink_desc)
-        
+
         # Run the analysis
         if not self.run_analysis():
             return {
@@ -1351,27 +1356,27 @@ class TaintAnalysisEngine:
                 'vulnerabilities': [],
                 'error': 'Analysis failed'
             }
-        
+
         # Process results
         sinks_reached = []
         taint_flows = []
         vulnerabilities = []
-        
+
         # Analyze taint propagation paths
         for path in self.taint_propagation:
             if not path:
                 continue
-                
+
             # Find source and sink in path
             source_step = None
             sink_step = None
-            
+
             for step in path:
                 if step.get('taint_status') == 'source':
                     source_step = step
                 elif step.get('taint_status') == 'sink':
                     sink_step = step
-            
+
             if source_step and sink_step:
                 # Check if this path matches our requested sources
                 source_matches = False
@@ -1384,7 +1389,7 @@ class TaintAnalysisEngine:
                         if proc_source['value'] in str(source_step.get('instruction', '')):
                             source_matches = True
                             break
-                
+
                 if source_matches:
                     # Record sink reached
                     sink_info = {
@@ -1393,10 +1398,10 @@ class TaintAnalysisEngine:
                         'sink_type': sink_step.get('sink', {}).get('type', 'unknown'),
                         'confidence': self._calculate_path_confidence(path)
                     }
-                    
+
                     if sink_info not in sinks_reached:
                         sinks_reached.append(sink_info)
-                    
+
                     # Record taint flow
                     taint_flows.append({
                         'source': {
@@ -1409,7 +1414,7 @@ class TaintAnalysisEngine:
                         'path': [step['address'] for step in path],
                         'transformations': self._extract_transformations(path)
                     })
-        
+
         # Identify vulnerabilities based on taint flows
         for flow in taint_flows:
             vuln_type = self._classify_vulnerability(flow)
@@ -1422,7 +1427,7 @@ class TaintAnalysisEngine:
                     'description': self._generate_vuln_description(vuln_type, flow),
                     'mitigation': self._suggest_mitigation(vuln_type, flow)
                 })
-        
+
         # Compile final results
         results = {
             'sources': sources,
@@ -1438,15 +1443,15 @@ class TaintAnalysisEngine:
                 'high_vulnerabilities': sum(1 for v in vulnerabilities if v['severity'] == 'high')
             }
         }
-        
+
         self.logger.info(f"Analysis complete: {len(sinks_reached)} sinks reached, {len(vulnerabilities)} vulnerabilities found")
-        
+
         return results
-    
+
     def _calculate_path_confidence(self, path: List[Dict[str, Any]]) -> float:
         """Calculate confidence score for a taint propagation path."""
         confidence = 1.0
-        
+
         # Reduce confidence for longer paths
         path_length = len(path)
         if path_length > 10:
@@ -1455,21 +1460,21 @@ class TaintAnalysisEngine:
             confidence *= 0.8
         if path_length > 50:
             confidence *= 0.7
-        
+
         # Check for indirect propagation
         for step in path:
             if step.get('taint_status') == 'indirect':
                 confidence *= 0.95
-        
+
         return min(max(confidence, 0.1), 1.0)
-    
+
     def _extract_transformations(self, path: List[Dict[str, Any]]) -> List[str]:
         """Extract data transformations along a taint path."""
         transformations = []
-        
+
         for step in path:
             instruction = step.get('instruction', '').lower()
-            
+
             # Check for common transformations
             if 'xor' in instruction:
                 transformations.append('xor_operation')
@@ -1481,43 +1486,43 @@ class TaintAnalysisEngine:
                 transformations.append('function_call')
             elif 'cmp' in instruction or 'test' in instruction:
                 transformations.append('comparison')
-        
+
         return transformations
-    
+
     def _classify_vulnerability(self, flow: Dict[str, Any]) -> Optional[str]:
         """Classify vulnerability type based on taint flow."""
         sink_type = flow['sink'].get('sink_type', '')
         source_type = flow['source'].get('type', '')
         transformations = flow.get('transformations', [])
-        
+
         # License validation vulnerabilities
         if sink_type == 'comparison' and source_type in ['file_read', 'registry', 'network']:
             if 'xor_operation' in transformations or 'arithmetic' in transformations:
                 return 'license_validation_bypass'
             else:
                 return 'weak_license_check'
-        
+
         # Cryptographic vulnerabilities
         if sink_type == 'crypto':
             if source_type == 'hardware_id':
                 return 'predictable_crypto_key'
             elif 'comparison' in transformations:
                 return 'crypto_validation_bypass'
-        
+
         # Input validation vulnerabilities
         if source_type == 'network' and sink_type == 'conditional':
             return 'insufficient_input_validation'
-        
+
         # Hardware ID vulnerabilities
         if source_type == 'hardware_id' and sink_type in ['comparison', 'conditional']:
             return 'hardware_id_bypass'
-        
+
         return None
-    
+
     def _assess_severity(self, flow: Dict[str, Any]) -> str:
         """Assess vulnerability severity."""
         vuln_type = self._classify_vulnerability(flow)
-        
+
         if vuln_type in ['license_validation_bypass', 'crypto_validation_bypass']:
             return 'critical'
         elif vuln_type in ['weak_license_check', 'hardware_id_bypass']:
@@ -1526,7 +1531,7 @@ class TaintAnalysisEngine:
             return 'medium'
         else:
             return 'low'
-    
+
     def _generate_vuln_description(self, vuln_type: str, flow: Dict[str, Any]) -> str:
         """Generate vulnerability description."""
         descriptions = {
@@ -1537,9 +1542,9 @@ class TaintAnalysisEngine:
             'insufficient_input_validation': f"Insufficient input validation at {hex(flow['sink']['address'])}",
             'hardware_id_bypass': f"Hardware ID check can be bypassed at {hex(flow['sink']['address'])}"
         }
-        
+
         return descriptions.get(vuln_type, f"Security vulnerability at {hex(flow['sink']['address'])}")
-    
+
     def _suggest_mitigation(self, vuln_type: str, flow: Dict[str, Any]) -> str:
         """Suggest mitigation for vulnerability."""
         mitigations = {
@@ -1550,7 +1555,7 @@ class TaintAnalysisEngine:
             'insufficient_input_validation': "Add comprehensive input validation and sanitization",
             'hardware_id_bypass': "Combine multiple hardware identifiers and use secure hashing"
         }
-        
+
         return mitigations.get(vuln_type, "Review and strengthen the validation logic")
 
 

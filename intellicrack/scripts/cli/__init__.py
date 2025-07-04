@@ -20,39 +20,19 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-try:
-    from .ai_wrapper import IntellicrackAIInterface
-except ImportError:
-    IntellicrackAIInterface = None
-
-try:
-    from .config_profiles import ConfigProfileManager
-except ImportError:
-    ConfigProfileManager = None
-
-try:
-    from .enhanced_runner import EnhancedRunner
-except ImportError:
-    EnhancedRunner = None
-
-try:
-    from .interactive_mode import InteractiveMode
-except ImportError:
-    InteractiveMode = None
-
+from .ai_wrapper import AIWrapper
+from .config_profiles import ConfigProfileManager
+from .enhanced_runner import EnhancedRunner
+from .interactive_mode import InteractiveMode
 from .main import main as cli_main
-
-try:
-    from .pipeline import Pipeline
-except ImportError:
-    Pipeline = None
-
+from .pipeline import Pipeline, PipelineProcessor
 from .progress_manager import ProgressManager
 
 __all__ = [
     'cli_main',
-    'IntellicrackAIInterface',
+    'AIWrapper',
     'Pipeline',
+    'PipelineProcessor',
     'InteractiveMode',
     'ProgressManager',
     'ConfigProfileManager',

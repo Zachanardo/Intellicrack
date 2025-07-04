@@ -19,14 +19,18 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import pytest
 import time
-from unittest.mock import Mock
 from datetime import datetime
+from unittest.mock import Mock
+
+import pytest
 
 from intellicrack.ai.ai_script_generator import (
-    AIScriptGenerator, ScriptType, ProtectionType, 
-    ScriptMetadata, GeneratedScript
+    AIScriptGenerator,
+    GeneratedScript,
+    ProtectionType,
+    ScriptMetadata,
+    ScriptType,
 )
 
 

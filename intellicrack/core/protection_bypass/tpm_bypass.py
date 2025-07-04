@@ -67,6 +67,7 @@ class TPMProtectionBypass:
             self._hook_tpm_apis()
             results["methods_applied"].append("API Hooking")
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in tpm_bypass: %s", e)
             results["errors"].append(f"API hooking failed: {str(e)}")
 
         # Strategy 2: Create virtual TPM responses
@@ -74,6 +75,7 @@ class TPMProtectionBypass:
             self._create_virtual_tpm()
             results["methods_applied"].append("Virtual TPM")
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in tpm_bypass: %s", e)
             results["errors"].append(f"Virtual TPM creation failed: {str(e)}")
 
         # Strategy 3: Patch TPM check instructions
@@ -82,6 +84,7 @@ class TPMProtectionBypass:
                 self._patch_tpm_checks()
                 results["methods_applied"].append("Binary Patching")
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in tpm_bypass: %s", e)
             results["errors"].append(f"Binary patching failed: {str(e)}")
 
         # Strategy 4: Manipulate registry for TPM presence
@@ -89,6 +92,7 @@ class TPMProtectionBypass:
             self._manipulate_tpm_registry()
             results["methods_applied"].append("Registry Manipulation")
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in tpm_bypass: %s", e)
             results["errors"].append(f"Registry manipulation failed: {str(e)}")
 
         results["success"] = len(results["methods_applied"]) > 0
@@ -286,6 +290,7 @@ class TPMProtectionBypass:
     def _tpm_get_random(self, params: bytes) -> bytes:
         """Generate TPM2_GetRandom response."""
         import os
+
         # Extract requested byte count (first 2 bytes of params)
         if len(params) >= 2:
             count = int.from_bytes(params[0:2], 'big')
@@ -346,7 +351,8 @@ class TPMProtectionBypass:
                 self._tpm_keys = {}
             self._tpm_keys[handle] = private_key
 
-        except ImportError:
+        except ImportError as e:
+            self.logger.error("Import error in tpm_bypass: %s", e)
             # Fallback without cryptography library
             public_key = b'\x00\x3A'  # Size
             public_key += b'\x00\x01'  # TPM_ALG_RSA
@@ -961,18 +967,18 @@ class TPMAnalyzer:
     def generate_bypass(self, tpm_version: str) -> Dict[str, Any]:
         """
         Generate TPM bypass strategy.
-        
+
         This method analyzes the TPM version and usage patterns to generate
         an appropriate bypass strategy with success probability estimates.
-        
+
         Args:
             tpm_version: TPM version string (e.g., "1.2", "2.0")
-            
+
         Returns:
             Dictionary containing bypass strategy and metadata
         """
         self.logger.info(f"Generating TPM bypass strategy for version: {tpm_version}")
-        
+
         bypass_config = {
             "tpm_version": tpm_version,
             "bypass_method": "emulation",
@@ -983,7 +989,7 @@ class TPMAnalyzer:
             "risks": [],
             "recommendations": []
         }
-        
+
         # Analyze TPM version capabilities
         if tpm_version == "2.0":
             bypass_config["bypass_method"] = "advanced_emulation"
@@ -1013,7 +1019,7 @@ class TPMAnalyzer:
                     "complexity": "high"
                 }
             ]
-            
+
         elif tpm_version == "1.2":
             bypass_config["bypass_method"] = "legacy_emulation"
             bypass_config["success_probability"] = 0.85
@@ -1035,7 +1041,7 @@ class TPMAnalyzer:
                     "complexity": "low"
                 }
             ]
-            
+
         else:
             # Unknown or no TPM version
             bypass_config["bypass_method"] = "generic_bypass"
@@ -1058,19 +1064,19 @@ class TPMAnalyzer:
                     "complexity": "low"
                 }
             ]
-        
+
         # Add implementation details
         bypass_config["implementation"]["hook_script"] = self._generate_hook_script(tpm_version)
         bypass_config["implementation"]["patch_locations"] = self._identify_patch_points()
         bypass_config["implementation"]["emulator_config"] = self._generate_emulator_config(tpm_version)
-        
+
         # Add risk assessment
         bypass_config["risks"] = [
             "System instability if hooks fail",
             "Detection by anti-tampering mechanisms",
             "Potential legal implications"
         ]
-        
+
         # Add recommendations based on indicators
         if self.tpm_indicators:
             if "NCryptOpenStorageProvider" in self.tpm_indicators:
@@ -1079,15 +1085,15 @@ class TPMAnalyzer:
                 bypass_config["recommendations"].append("Implement command-level interception")
             if "TPM2" in str(self.tpm_indicators):
                 bypass_config["recommendations"].append("Use TPM 2.0 specific bypass techniques")
-        
+
         bypass_config["recommendations"].extend([
             "Test bypass in isolated environment first",
             "Monitor system stability after applying bypass",
             "Consider using virtual TPM for safer emulation"
         ])
-        
+
         return bypass_config
-    
+
     def _generate_hook_script(self, tpm_version: str) -> str:
         """Generate Frida hook script for TPM bypass."""
         if tpm_version == "2.0":
@@ -1123,11 +1129,11 @@ Interceptor.attach(tbs.getExportByName('Tbsi_Context_Create'), {
     }
 });
 """
-    
+
     def _identify_patch_points(self) -> List[Dict[str, Any]]:
         """Identify potential patch points in binary."""
         patch_points = []
-        
+
         if self.binary_path and self.tpm_indicators:
             # Simulate patch point identification
             for indicator in self.tpm_indicators:
@@ -1136,9 +1142,9 @@ Interceptor.attach(tbs.getExportByName('Tbsi_Context_Create'), {
                     "location": f"Call to {indicator}",
                     "patch": "Replace with NOP or return success"
                 })
-        
+
         return patch_points
-    
+
     def _generate_emulator_config(self, tpm_version: str) -> Dict[str, Any]:
         """Generate TPM emulator configuration."""
         return {

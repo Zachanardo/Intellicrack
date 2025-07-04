@@ -1,3 +1,20 @@
+import hashlib
+import os
+import queue
+import threading
+import time
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set
+
+from intellicrack.logger import logger
+
+from ...utils.logger import get_logger
+from .radare2_error_handler import get_error_handler, r2_error_context
+from .radare2_json_standardizer import standardize_r2_result
+from .radare2_performance_optimizer import OptimizationStrategy, create_performance_optimizer
+
 """
 Real-time Radare2 Analysis with Live Updating Capabilities
 
@@ -19,32 +36,21 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import hashlib
-import os
-import queue
-import threading
-import time
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
 
 try:
     import r2pipe
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in radare2_realtime_analyzer: %s", e)
     r2pipe = None
 
 try:
     from watchdog.events import FileSystemEventHandler
     from watchdog.observers import Observer
     WATCHDOG_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in radare2_realtime_analyzer: %s", e)
     WATCHDOG_AVAILABLE = False
 
-from ...utils.logger import get_logger
-from .radare2_error_handler import get_error_handler, r2_error_context
-from .radare2_json_standardizer import standardize_r2_result
-from .radare2_performance_optimizer import OptimizationStrategy, create_performance_optimizer
 
 logger = get_logger(__name__)
 error_handler = get_error_handler()
@@ -342,7 +348,8 @@ class R2RealtimeAnalyzer:
             while not self.analysis_queue.empty():
                 try:
                     self.analysis_queue.get_nowait()
-                except queue.Empty:
+                except queue.Empty as e:
+                    logger.error("queue.Empty in radare2_realtime_analyzer: %s", e)
                     break
 
             self.worker_threads.clear()
@@ -458,7 +465,8 @@ class R2RealtimeAnalyzer:
                     while not self.analysis_queue.empty():
                         try:
                             temp_items.append(self.analysis_queue.get_nowait())
-                        except queue.Empty:
+                        except queue.Empty as e:
+                            logger.error("queue.Empty in radare2_realtime_analyzer: %s", e)
                             break
 
                     # Add high priority item first
@@ -468,7 +476,8 @@ class R2RealtimeAnalyzer:
                     for item in temp_items:
                         try:
                             self.analysis_queue.put(item, timeout=0.1)
-                        except queue.Full:
+                        except queue.Full as e:
+                            logger.error("queue.Full in radare2_realtime_analyzer: %s", e)
                             break  # Queue is full, drop oldest items
                 else:
                     self.analysis_queue.put(analysis_task, timeout=1)
@@ -486,7 +495,8 @@ class R2RealtimeAnalyzer:
                 # Get task from queue with timeout
                 try:
                     task = self.analysis_queue.get(timeout=5)
-                except queue.Empty:
+                except queue.Empty as e:
+                    self.logger.error("queue.Empty in radare2_realtime_analyzer: %s", e)
                     continue
 
                 binary_path = task['binary_path']
@@ -623,7 +633,8 @@ class R2RealtimeAnalyzer:
 
         try:
             file_size = os.path.getsize(binary_path)
-        except Exception:
+        except Exception as e:
+            self.logger.error("Exception in radare2_realtime_analyzer: %s", e)
             pass
 
         # Check if this binary has been analyzed before
@@ -1058,7 +1069,8 @@ class R2RealtimeAnalyzer:
             try:
                 self.event_callbacks[event_type].remove(callback)
                 self.logger.debug(f"Unregistered callback for {event_type.value}")
-            except ValueError:
+            except ValueError as e:
+                self.logger.error("Value error in radare2_realtime_analyzer: %s", e)
                 pass
 
     def _emit_event(self, update: AnalysisUpdate):

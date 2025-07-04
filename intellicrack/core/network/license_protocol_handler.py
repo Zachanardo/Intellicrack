@@ -1,3 +1,10 @@
+import logging
+import threading
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
+
+from intellicrack.logger import logger
+
 """
 License Protocol Handler Base Class.
 
@@ -27,10 +34,6 @@ This module provides a base class for implementing protocol-specific handlers
 for various license verification protocols including FlexLM, HASP, Adobe, and others.
 """
 
-import logging
-import threading
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
 
 
 class LicenseProtocolHandler(ABC):
@@ -335,7 +338,8 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
                     )
                     client_thread.start()
 
-                except socket.timeout:
+                except socket.timeout as e:
+                    logger.error("socket.timeout in license_protocol_handler: %s", e)
                     continue  # Check self.running and continue
                 except Exception as e:
                     if self.running:
@@ -506,7 +510,8 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                     )
                     client_thread.start()
 
-                except socket.timeout:
+                except socket.timeout as e:
+                    logger.error("socket.timeout in license_protocol_handler: %s", e)
                     continue
                 except Exception as e:
                     if self.running:
@@ -685,7 +690,8 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         license_data = bytes((i + offset) % 256 for i in range(size))
 
                     return struct.pack('<I', 0x00000000) + license_data
-                except struct.error:
+                except struct.error as e:
+                    logger.error("struct.error in license_protocol_handler: %s", e)
                     # Fallback for malformed requests
                     return struct.pack('<I', 0x00000001)  # Error status
 
@@ -708,7 +714,8 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                 self.logger.debug("Unknown HASP command: 0x%08X", command_id)
                 return struct.pack('<I', 0x00000000)
 
-        except struct.error:
+        except struct.error as e:
+            logger.error("struct.error in license_protocol_handler: %s", e)
             # Malformed packet
             return b"\xFF\xFF\xFF\xFF"  # Error response
 
@@ -716,7 +723,8 @@ class HASPProtocolHandler(LicenseProtocolHandler):
 # Import generic implementation
 try:
     from .generic_protocol_handler import GenericProtocolHandler
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in license_protocol_handler: %s", e)
     GenericProtocolHandler = None
 
 # Export main classes

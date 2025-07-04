@@ -26,13 +26,14 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-try:
-    import pefile
-except ImportError:
-    pefile = None
-
 # Module logger
 logger = logging.getLogger(__name__)
+
+try:
+    import pefile
+except ImportError as e:
+    logger.error("Import error in protection_utils: %s", e)
+    pefile = None
 
 
 def calculate_entropy(data: bytes) -> float:
@@ -178,6 +179,7 @@ def detect_packing(binary_path: Union[str, Path]) -> List[str]:
         pe.close()
 
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in protection_utils: %s", e)
         results.append(f"Error analyzing for packing: {e}")
 
     return results
@@ -293,6 +295,7 @@ def bypass_protection(binary_path: Union[str, Path], protection_type: str) -> Di
             strategies['binary_analysis']['platform'] = 'Unknown'
 
     except Exception as e:
+        logger.error("Exception in protection_utils: %s", e)
         strategies['warnings'].append(f'Failed to analyze binary: {e}')
         strategies['binary_analysis']['error'] = str(e)
 

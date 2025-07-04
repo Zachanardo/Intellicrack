@@ -1,0 +1,12 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("protector", "nbuild");
+
+function detect() {
+    if (MSDOS.compareEP("B9....BB....C0....80....43E2")) {
+        sVersion = "1.0";
+        bDetected = true;
+    }
+
+    return result();
+}

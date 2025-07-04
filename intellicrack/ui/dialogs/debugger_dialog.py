@@ -1,3 +1,4 @@
+
 """
 Plugin Debugger Dialog for Intellicrack.
 
@@ -63,9 +64,11 @@ class DebuggerOutputThread(QThread):
             try:
                 msg_type, data = self.output_queue.get(timeout=0.1)
                 self.output_received.emit(msg_type, data)
-            except queue.Empty:
+            except queue.Empty as e:
+                self.logger.error("queue.Empty in debugger_dialog: %s", e)
                 continue
             except Exception as e:
+                self.logger.error("Exception in debugger_dialog: %s", e)
                 print(f"Debugger output error: {e}")
 
     def stop(self):

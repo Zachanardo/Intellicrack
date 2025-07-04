@@ -28,6 +28,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from ...utils.system.file_resolution import file_resolver
+from ...utils.system.program_discovery import ProgramDiscoveryEngine
 from .common_imports import (
     HAS_PYQT,
     QCheckBox,
@@ -61,8 +63,6 @@ else:
     QTimer = object
     pyqtSignal = lambda *args: lambda x: x
 
-from ...utils.system.file_resolution import file_resolver
-from ...utils.system.program_discovery import ProgramDiscoveryEngine
 
 logger = logging.getLogger(__name__)
 

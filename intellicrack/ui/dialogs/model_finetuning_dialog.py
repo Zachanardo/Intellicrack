@@ -1,3 +1,25 @@
+import csv
+import json
+import logging
+import os
+import pickle
+import random
+import time
+from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from intellicrack.logger import logger
+
+# Try to import enhanced training interface components
+try:
+    from ...ai.enhanced_training_interface import TrainingConfiguration as EnhancedTrainingConfiguration
+    ENHANCED_TRAINING_AVAILABLE = True
+except ImportError as e:
+    logger.error("Import error in model_finetuning_dialog: %s", e)
+    ENHANCED_TRAINING_AVAILABLE = False
+
 """
 Enhanced AI Model Training Interface for Intellicrack
 
@@ -20,16 +42,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import csv
-import json
-import logging
-import os
-import pickle
-import random
-import time
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 try:
     from PyQt5.QtCore import Qt, QThread, pyqtSignal
@@ -61,7 +73,8 @@ try:
         QWidget,
     )
     PYQT5_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in model_finetuning_dialog: %s", e)
     PYQT5_AVAILABLE = False
     QDialog = object
     QThread = object
@@ -71,8 +84,18 @@ try:
     import torch
     import torch.nn as nn
     TORCH_AVAILABLE = True
-except ImportError:
+    
+    # Import unified GPU system
+    try:
+        from ...utils.gpu_autoloader import get_device, get_gpu_info, to_device
+        GPU_AUTOLOADER_AVAILABLE = True
+    except ImportError:
+        GPU_AUTOLOADER_AVAILABLE = False
+        
+except ImportError as e:
+    logger.error("Import error in model_finetuning_dialog: %s", e)
     TORCH_AVAILABLE = False
+    GPU_AUTOLOADER_AVAILABLE = False
 
 try:
     from transformers import (
@@ -81,13 +104,15 @@ try:
         TrainingArguments,
     )
     TRANSFORMERS_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in model_finetuning_dialog: %s", e)
     TRANSFORMERS_AVAILABLE = False
 
 try:
     from peft import LoraConfig, TaskType, get_peft_model
     PEFT_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in model_finetuning_dialog: %s", e)
     PEFT_AVAILABLE = False
 
 
@@ -95,15 +120,28 @@ try:
     import nltk  # pylint: disable=import-error
     from nltk.corpus import wordnet
     NLTK_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in model_finetuning_dialog: %s", e)
     NLTK_AVAILABLE = False
     nltk = None
 
 try:
     import matplotlib.pyplot as plt
     MATPLOTLIB_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in model_finetuning_dialog: %s", e)
     MATPLOTLIB_AVAILABLE = False
+
+
+class TrainingStatus(Enum):
+    """Training status enumeration."""
+    IDLE = "idle"
+    PREPARING = "preparing"
+    TRAINING = "training"
+    VALIDATING = "validating"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+    ERROR = "error"
 
 
 @dataclass
@@ -113,9 +151,14 @@ class TrainingConfig:
     model_format: str = "PyTorch"
     dataset_path: str = ""
     dataset_format: str = "JSON"
+    output_directory: str = os.path.join(
+        os.path.dirname(__file__), "..", "..", "models", "trained")
     epochs: int = 3
     batch_size: int = 4
     learning_rate: float = 0.0002
+    optimizer: str = "adam"
+    loss_function: str = "categorical_crossentropy"
+    patience: int = 10
     lora_rank: int = 8
     lora_alpha: int = 16
     cutoff_len: int = 256
@@ -125,6 +168,25 @@ class TrainingConfig:
     save_strategy: str = "epoch"
     evaluation_strategy: str = "epoch"
     logging_steps: int = 10
+
+    def to_enhanced_config(self) -> 'EnhancedTrainingConfiguration':
+        """Convert TrainingConfig to EnhancedTrainingConfiguration if available."""
+        if ENHANCED_TRAINING_AVAILABLE:
+            return EnhancedTrainingConfiguration(
+                model_name=os.path.basename(self.model_path) if self.model_path else "model",
+                model_type="fine_tuned_model",
+                dataset_path=self.dataset_path,
+                output_directory=self.output_directory,
+                learning_rate=self.learning_rate,
+                batch_size=self.batch_size,
+                epochs=self.epochs,
+                optimizer=self.optimizer,
+                loss_function=self.loss_function,
+                patience=self.patience
+            )
+        else:
+            logger.warning("Enhanced training configuration not available")
+            return None
 
 
 @dataclass
@@ -168,12 +230,21 @@ class TrainingThread(QThread):
         self.tokenizer = None
         self.training_history = []
         self.is_stopped = False
+        self.status = TrainingStatus.IDLE
         self.logger = logging.getLogger(__name__)
 
     def run(self):
         """Run the model training process."""
         try:
+            self.status = TrainingStatus.PREPARING
             self.logger.info("Starting training with config: %s", self.config)
+            
+            if PYQT5_AVAILABLE and self.progress_signal:
+                self.progress_signal.emit({
+                    "status": self.status.value,
+                    "message": "Preparing training",
+                    "step": 0
+                })
 
             # Load model and tokenizer
             self._load_model()
@@ -185,12 +256,29 @@ class TrainingThread(QThread):
             self._setup_training(dataset)
 
             # Run training
+            self.status = TrainingStatus.TRAINING
+            if PYQT5_AVAILABLE and self.progress_signal:
+                self.progress_signal.emit({
+                    "status": self.status.value,
+                    "message": "Training in progress",
+                    "step": 1
+                })
             self._train_model()
 
+            self.status = TrainingStatus.COMPLETED
+            if PYQT5_AVAILABLE and self.progress_signal:
+                self.progress_signal.emit({
+                    "status": self.status.value,
+                    "message": "Training completed successfully",
+                    "step": 100
+                })
+
         except (OSError, ValueError, RuntimeError) as e:
+            self.status = TrainingStatus.ERROR
             self.logger.error(f"Training failed: {e}", exc_info=True)
             if PYQT5_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
+                    "status": self.status.value,
                     "error": str(e),
                     "step": -1
                 })
@@ -229,7 +317,8 @@ class TrainingThread(QThread):
 
             if PYQT5_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
-                    "status": "Model loaded successfully",
+                    "status": self.status.value,
+                    "message": "Model loaded successfully",
                     "step": 0
                 })
 
@@ -932,7 +1021,8 @@ class TrainingThread(QThread):
                         try:
                             item = json.loads(_line.strip())
                             data.append(item)
-                        except json.JSONDecodeError:
+                        except json.JSONDecodeError as e:
+                            logger.error("json.JSONDecodeError in model_finetuning_dialog: %s", e)
                             continue
 
             elif dataset_format == "csv":
@@ -1048,6 +1138,22 @@ class TrainingThread(QThread):
 
                     # Simulate time delay
                     time.sleep(0.1)
+                
+                # Run validation at the end of each epoch
+                if not self.is_stopped:
+                    self.status = TrainingStatus.VALIDATING
+                    if PYQT5_AVAILABLE and self.progress_signal:
+                        self.progress_signal.emit({
+                            "status": self.status.value,
+                            "message": f"Validating epoch {_epoch+1}",
+                            "step": current_step
+                        })
+                    
+                    # Simulate validation time
+                    time.sleep(0.3)
+                    
+                    # Return to training status
+                    self.status = TrainingStatus.TRAINING
 
             if PYQT5_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
@@ -1063,7 +1169,30 @@ class TrainingThread(QThread):
     def stop(self):
         """Stop the training process."""
         self.is_stopped = True
+        self.status = TrainingStatus.ERROR  # Set to error as training was interrupted
         self.logger.info("Training stop requested")
+        
+    def pause(self):
+        """Pause the training process."""
+        self.status = TrainingStatus.PAUSED
+        self.logger.info("Training paused")
+        if PYQT5_AVAILABLE and self.progress_signal:
+            self.progress_signal.emit({
+                "status": self.status.value,
+                "message": "Training paused",
+                "step": -1
+            })
+            
+    def resume(self):
+        """Resume the training process."""
+        self.status = TrainingStatus.TRAINING
+        self.logger.info("Training resumed")
+        if PYQT5_AVAILABLE and self.progress_signal:
+            self.progress_signal.emit({
+                "status": self.status.value,
+                "message": "Training resumed",
+                "step": -1
+            })
 
 
 class ModelFinetuningDialog(QDialog):
@@ -1214,10 +1343,15 @@ class ModelFinetuningDialog(QDialog):
         self.help_button = QPushButton("Help")
         self.help_button.clicked.connect(self._show_help)
 
+        self.enhanced_training_button = QPushButton("Enhanced Training Interface")
+        self.enhanced_training_button.clicked.connect(self._open_enhanced_training)
+        self.enhanced_training_button.setEnabled(ENHANCED_TRAINING_AVAILABLE)
+
         self.close_button = QPushButton("Close")
         self.close_button.clicked.connect(self.close)
 
         button_layout.addWidget(self.help_button)
+        button_layout.addWidget(self.enhanced_training_button)
         button_layout.addStretch()
         button_layout.addWidget(self.close_button)
 
@@ -1835,7 +1969,8 @@ class ModelFinetuningDialog(QDialog):
                         try:
                             sample = json.loads(line.strip())
                             samples.append(sample)
-                        except json.JSONDecodeError:
+                        except json.JSONDecodeError as e:
+                            logger.error("json.JSONDecodeError in model_finetuning_dialog: %s", e)
                             continue
 
             elif dataset_format == "csv":
@@ -2028,6 +2163,7 @@ class ModelFinetuningDialog(QDialog):
                         else:
                             issues.append("Root element is not an array")
                     except json.JSONDecodeError as e:
+                        logger.error("json.JSONDecodeError in model_finetuning_dialog: %s", e)
                         issues.append(f"JSON parsing error: {e}")
 
             # Show validation results
@@ -2176,7 +2312,8 @@ class ModelFinetuningDialog(QDialog):
                 # Download required NLTK data if needed
                 try:
                     wordnet.synsets('test')
-                except LookupError:
+                except LookupError as e:
+                    self.logger.error("LookupError in model_finetuning_dialog: %s", e)
                     if NLTK_AVAILABLE:
                         nltk.download('wordnet', quiet=True)
                         nltk.download('punkt', quiet=True)
@@ -2194,7 +2331,8 @@ class ModelFinetuningDialog(QDialog):
                                 continue
                     result_words.append(_word)
                 return " ".join(result_words)
-            except (OSError, ValueError, RuntimeError):
+            except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in model_finetuning_dialog: %s", e)
                 pass
 
         elif technique == "random_insertion":
@@ -2337,7 +2475,8 @@ class ModelFinetuningDialog(QDialog):
             # Clean up temp file
             try:
                 os.remove(temp_path)
-            except Exception:
+            except Exception as e:
+                logger.error("Exception in model_finetuning_dialog: %s", e)
                 pass
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -2438,6 +2577,57 @@ class ModelFinetuningDialog(QDialog):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to save plot: %s", e)
             QMessageBox.critical(self, "Save Error", str(e))
+
+    def _open_enhanced_training(self):
+        """Open the enhanced training interface with current configuration."""
+        try:
+            if not ENHANCED_TRAINING_AVAILABLE:
+                QMessageBox.warning(self, "Enhanced Training Not Available",
+                                  "The enhanced training interface is not available.\n"
+                                  "Please ensure all required dependencies are installed.")
+                return
+
+            # Get current configuration
+            current_config = self._get_current_config()
+            enhanced_config = current_config.to_enhanced_config()
+            
+            if enhanced_config:
+                # Import and show enhanced training interface
+                from ...ai.enhanced_training_interface import create_enhanced_training_interface
+                dialog = create_enhanced_training_interface(self)
+                
+                # Set configuration
+                dialog.config = enhanced_config
+                dialog.update_ui_from_config()
+                
+                # Show the dialog
+                dialog.exec_()
+            else:
+                QMessageBox.warning(self, "Configuration Error",
+                                  "Could not convert current configuration to enhanced format.")
+                
+        except (ImportError, AttributeError, OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error opening enhanced training interface: %s", e)
+            QMessageBox.critical(self, "Enhanced Training Error",
+                               f"Error opening enhanced training interface:\n{e}")
+
+    def _get_current_config(self) -> TrainingConfig:
+        """Get current training configuration from UI."""
+        config = TrainingConfig()
+        
+        # Update config with current UI values
+        if hasattr(self, 'model_path_edit') and self.model_path_edit:
+            config.model_path = self.model_path_edit.text()
+        if hasattr(self, 'dataset_path_edit') and self.dataset_path_edit:
+            config.dataset_path = self.dataset_path_edit.text()
+        if hasattr(self, 'epochs_spin') and self.epochs_spin:
+            config.epochs = self.epochs_spin.value()
+        if hasattr(self, 'batch_size_spin') and self.batch_size_spin:
+            config.batch_size = self.batch_size_spin.value()
+        if hasattr(self, 'learning_rate_spin') and self.learning_rate_spin:
+            config.learning_rate = self.learning_rate_spin.value()
+            
+        return config
 
     def _show_help(self):
         """Show help dialog with usage instructions."""

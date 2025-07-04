@@ -1,3 +1,11 @@
+import logging
+import re
+from typing import Any, Dict, List, Optional
+
+from intellicrack.logger import logger
+
+from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
+
 """
 Radare2 Advanced String Analysis Engine
 
@@ -19,11 +27,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
-import re
-from typing import Any, Dict, List, Optional
 
-from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 
 
 class R2StringAnalyzer:
@@ -157,7 +161,8 @@ class R2StringAnalyzer:
                         for wide_string in wide_strings:
                             if wide_string.get('vaddr', 0) not in existing_addrs:
                                 all_strings.append(wide_string)
-                except R2Exception:
+                except R2Exception as e:
+                    logger.error("R2Exception in radare2_strings: %s", e)
                     pass
 
             # For specific encodings, filter strings accordingly
@@ -172,7 +177,8 @@ class R2StringAnalyzer:
                             string_content.encode('utf-8')
                         string_data['encoding'] = encoding
                         filtered_strings.append(string_data)
-                    except UnicodeEncodeError:
+                    except UnicodeEncodeError as e:
+                        logger.error("UnicodeEncodeError in radare2_strings: %s", e)
                         continue
                 all_strings = filtered_strings
 
@@ -234,7 +240,8 @@ class R2StringAnalyzer:
                         'permissions': section.get('perm', ''),
                         'strings': []
                     }
-        except R2Exception:
+        except R2Exception as e:
+            self.logger.error("R2Exception in radare2_strings: %s", e)
             pass
 
         # Distribute strings to sections
@@ -540,7 +547,8 @@ class R2StringAnalyzer:
                             'string_content': string_data.get('content', ''),
                             'references': xref_data
                         }
-                except R2Exception:
+                except R2Exception as e:
+                    self.logger.error("R2Exception in radare2_strings: %s", e)
                     continue
 
         return xrefs
@@ -691,9 +699,11 @@ class R2StringAnalyzer:
                                                 'search_term': term,
                                                 'context': 'license_validation'
                                             })
-                                    except R2Exception:
+                                    except R2Exception as e:
+                                        logger.error("R2Exception in radare2_strings: %s", e)
                                         continue
-                    except R2Exception:
+                    except R2Exception as e:
+                        logger.error("R2Exception in radare2_strings: %s", e)
                         continue
 
                 return {
@@ -703,6 +713,7 @@ class R2StringAnalyzer:
                 }
 
         except R2Exception as e:
+            logger.error("R2Exception in radare2_strings: %s", e)
             return {'error': str(e)}
 
 

@@ -1,3 +1,8 @@
+import logging
+from typing import Optional
+
+from intellicrack.logger import logger
+
 """
 HexViewer Widget
 
@@ -20,8 +25,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import logging
-from typing import Optional
 
 try:
     from PyQt5.QtCore import Qt, QTimer, pyqtSignal
@@ -37,7 +40,8 @@ try:
         QWidget,
     )
     PYQT_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in hex_viewer: %s", e)
     PYQT_AVAILABLE = False
     QWidget = object
     pyqtSignal = None
@@ -45,10 +49,11 @@ except ImportError:
 # Import hex viewer components if available
 try:
     from ...hexview.data_inspector import DataInspector
-    from ...hexview.hex_widget import HexWidget
+    from ...hexview.hex_widget import HexViewerWidget
     from ...hexview.performance_monitor import PerformanceMonitor
     HEX_COMPONENTS_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in hex_viewer: %s", e)
     HEX_COMPONENTS_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
@@ -114,7 +119,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
 
         if HEX_COMPONENTS_AVAILABLE:
             # Use professional hex widget if available
-            self.hex_widget = HexWidget()
+            self.hex_widget = HexViewerWidget()
             hex_layout.addWidget(self.hex_widget)
         else:
             # Fallback to basic text display
@@ -212,7 +217,8 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
             try:
                 self.hex_widget.dataChanged.connect(self._on_data_changed)
                 self.hex_widget.selectionChanged.connect(self._on_selection_changed)
-            except AttributeError:
+            except AttributeError as e:
+                self.logger.error("Attribute error in hex_viewer: %s", e)
                 pass
 
     def load_data(self, data: bytes, file_path: Optional[str] = None):
@@ -343,7 +349,8 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
             # Use professional search if available
             try:
                 self.hex_widget.open_search_dialog()
-            except AttributeError:
+            except AttributeError as e:
+                self.logger.error("Attribute error in hex_viewer: %s", e)
                 self.status_label.setText("Search not available")
         else:
             # Implement basic search for fallback mode
@@ -369,7 +376,8 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
         if HEX_COMPONENTS_AVAILABLE and hasattr(self, 'hex_widget'):
             try:
                 self.hex_widget.set_read_only(read_only)
-            except AttributeError:
+            except AttributeError as e:
+                self.logger.error("Attribute error in hex_viewer: %s", e)
                 pass
 
     def get_selection(self):
@@ -377,7 +385,8 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
         if HEX_COMPONENTS_AVAILABLE and hasattr(self, 'hex_widget'):
             try:
                 return self.hex_widget.get_selection()
-            except AttributeError:
+            except AttributeError as e:
+                self.logger.error("Attribute error in hex_viewer: %s", e)
                 pass
         return (0, 0)
 
@@ -386,7 +395,8 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
         if HEX_COMPONENTS_AVAILABLE and hasattr(self, 'hex_widget'):
             try:
                 self.hex_widget.set_selection(start, length)
-            except AttributeError:
+            except AttributeError as e:
+                self.logger.error("Attribute error in hex_viewer: %s", e)
                 pass
 
     def _on_data_changed(self, offset: int, new_data: bytes):
@@ -404,7 +414,8 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
             try:
                 selected_data = self.data[start:start+length] if length > 0 else b''
                 self.data_inspector.update_selection(selected_data, start)
-            except (IndexError, AttributeError):
+            except (IndexError, AttributeError) as e:
+                self.logger.error("Error in hex_viewer: %s", e)
                 pass
 
     def _open_basic_search_dialog(self):
@@ -582,6 +593,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
                         search_state['last_pos'] = 0
 
                 except Exception as e:
+                    logger.error("Exception in hex_viewer: %s", e)
                     QMessageBox.warning(dialog, "Search Error", f"Search failed: {str(e)}")
 
             # Connect buttons
@@ -594,7 +606,8 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
 
             dialog.exec_()
 
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in hex_viewer: %s", e)
             self.status_label.setText("Search dialog requires PyQt5")
         except Exception as e:
             logger.error(f"Failed to open search dialog: {e}")

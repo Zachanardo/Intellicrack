@@ -6,19 +6,19 @@ for the Intellicrack framework. It includes basic functionality tests and
 serves as a template for other test modules.
 """
 
-import unittest
 import os
 import sys
 import tempfile
-from unittest.mock import patch, MagicMock
+import unittest
+from unittest.mock import MagicMock, patch
 
 # Add project root to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 try:
-    from intellicrack import IntellicrackApp, CONFIG
-    from intellicrack.utils import analyze_binary
+    from intellicrack import CONFIG, IntellicrackApp
     from intellicrack.core.analysis import VulnerabilityEngine
+    from intellicrack.utils import analyze_binary
 except ImportError:
     IntellicrackApp = None
     CONFIG = None

@@ -1,0 +1,14 @@
+// Intellicrack Protection Engine: detection rule file
+// Author: BJNFNE <bjnfne@web.de>
+// This Script supports following formats: Shockwave 3D -> W3D
+
+init("format", "Shockwave 3D");
+
+function detect() {
+    if (Binary.compare("'IFX'")) {
+        sVersion = "W3D";
+        bDetected = true;
+    }
+
+    return result();
+}

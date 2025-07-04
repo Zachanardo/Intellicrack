@@ -1,0 +1,61 @@
+{
+  "success_rate": 0.0,
+  "total_time": 0.911327600479126,
+  "phase_results": {
+    "phase_a": {
+      "status": "pending",
+      "details": [
+        "Testing die-python import...",
+        "\u2713 die-python imported successfully (v0.4.0)",
+        "\u2713 DIE engine version: 3.09",
+        "Testing basic die-python scan functionality...",
+        "\u2713 Basic scan successful: 1 detections",
+        "  Sample output: 'PE64\\n    Unknown: Unknown'",
+        "Testing ICP Backend direct import..."
+      ],
+      "errors": [
+        "\u2717 ICP Backend import failed: 'NumpyFallback' object has no attribute 'ndarray'"
+      ]
+    },
+    "phase_b": {
+      "status": "pending",
+      "details": [],
+      "errors": []
+    },
+    "phase_c": {
+      "status": "pending",
+      "details": [],
+      "errors": []
+    },
+    "phase_d": {
+      "status": "pending",
+      "details": [],
+      "errors": []
+    },
+    "phase_e": {
+      "status": "pending",
+      "details": [],
+      "errors": []
+    }
+  },
+  "test_binaries_count": 10,
+  "test_binaries": [
+    "/mnt/c/Intellicrack/backups/icp_engine_pre_rebrand/icp-engine.exe",
+    "/mnt/c/Intellicrack/backups/icp_engine_pre_rebrand/icp-gui.exe",
+    "/mnt/c/Intellicrack/backups/icp_engine_pre_rebrand/icp-lite.exe",
+    "/mnt/c/Intellicrack/backups/icp_engine_pre_rebrand/msvcp140.dll",
+    "/mnt/c/Intellicrack/backups/icp_engine_pre_rebrand/msvcp140_1.dll",
+    "/mnt/c/Intellicrack/backups/icp_engine_pre_rebrand/msvcp140_2.dll",
+    "/mnt/c/Intellicrack/backups/icp_engine_pre_rebrand/Qt5Core.dll",
+    "/mnt/c/Intellicrack/backups/icp_engine_pre_rebrand/Qt5Gui.dll",
+    "/mnt/c/Intellicrack/backups/icp_engine_pre_rebrand/Qt5Network.dll",
+    "/mnt/c/Intellicrack/backups/icp_engine_pre_rebrand/Qt5OpenGL.dll"
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "total": 5
+  },
+  "production_ready": false
+}

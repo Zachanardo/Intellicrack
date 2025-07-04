@@ -19,20 +19,23 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import unittest
-import tempfile
 import os
 import shutil
-from unittest.mock import patch, MagicMock
+import tempfile
+import unittest
+from unittest.mock import MagicMock, patch
 
 # Import modules to test
 try:
-    from intellicrack.core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
-    from intellicrack.core.analysis.radare2_ai_integration import R2AIIntegration
-    from intellicrack.core.analysis.radare2_bypass_generator import R2BypassGenerator, BypassStrategy
-    from intellicrack.core.analysis.radare2_binary_diff import R2BinaryDiff
-    from intellicrack.core.analysis.radare2_scripting import R2ScriptEngine
     from intellicrack.core.analysis.cfg_explorer import CFGExplorer
+    from intellicrack.core.analysis.radare2_ai_integration import R2AIIntegration
+    from intellicrack.core.analysis.radare2_binary_diff import R2BinaryDiff
+    from intellicrack.core.analysis.radare2_bypass_generator import (
+        BypassStrategy,
+        R2BypassGenerator,
+    )
+    from intellicrack.core.analysis.radare2_scripting import R2ScriptEngine
+    from intellicrack.core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
     MODULES_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Some modules not available for testing: {e}")

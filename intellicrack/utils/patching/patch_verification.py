@@ -1,3 +1,15 @@
+import os
+import shutil
+import tempfile
+import time
+import traceback
+from typing import Any, Dict, List
+
+from intellicrack.logger import logger
+
+from ..exploitation.exploitation import run_automated_patch_agent
+from ..logger import log_message
+
 """
 Patch verification and validation utilities for Intellicrack.
 
@@ -20,19 +32,14 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import os
-import shutil
-import tempfile
-import time
-import traceback
-from typing import Any, Dict, List
 
 # Import analysis dependencies with fallbacks
 try:
     import capstone
     from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
     CAPSTONE_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in patch_verification: %s", e)
     capstone = None
     CS_ARCH_X86 = CS_MODE_32 = CS_MODE_64 = Cs = None
     CAPSTONE_AVAILABLE = False
@@ -40,17 +47,17 @@ except ImportError:
 try:
     import pefile
     PEFILE_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in patch_verification: %s", e)
     pefile = None
     PEFILE_AVAILABLE = False
 
 try:
     import keystone
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in patch_verification: %s", e)
     keystone = None
 
-from ..exploitation.exploitation import run_automated_patch_agent
-from ..logger import log_message
 
 
 def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any]]) -> List[str]:
@@ -96,6 +103,7 @@ def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any
                 try:
                     offset = pe.get_offset_from_rva(rva)
                 except (OSError, ValueError, RuntimeError) as offset_error:
+                    logger.error("Error in patch_verification: %s", offset_error)
                     error_msg = f"Error calculating offset for address 0x{address:X}: {offset_error}"
                     app.update_output.emit(log_message(f"[Verify] {error_msg}"))
                     verification_results.append(error_msg)
@@ -125,6 +133,7 @@ def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any
                     verification_results.append(mismatch_msg)
                     fail_count += 1
             except (OSError, ValueError, RuntimeError) as read_error:
+                logger.error("Error in patch_verification: %s", read_error)
                 verification_results.append(
                     f"Error reading bytes at address 0x{address:X}: {read_error}")
                 fail_count += 1
@@ -136,6 +145,7 @@ def verify_patches(app: Any, patched_path: str, instructions: List[Dict[str, Any
         return verification_results
 
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in patch_verification: %s", e)
         return [f"Error during patch verification: {e}"]
 
 
@@ -195,6 +205,7 @@ def simulate_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -
                     (True,
                      f"Patch {i + 1}: Successfully applied at offset 0x{offset:X} ({description})"))
             except (OSError, ValueError, RuntimeError) as patch_error:
+                logger.error("Error in patch_verification: %s", patch_error)
                 patch_results.append((False, f"Patch {i + 1}: Failed - {patch_error}"))
 
         # Report patch results
@@ -211,6 +222,7 @@ def simulate_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -
             verification_pe = pefile.PE(temp_path)
             is_valid_pe = True
         except (OSError, ValueError, RuntimeError) as verification_error:
+            logger.error("Error in patch_verification: %s", verification_error)
             is_valid_pe = False
             results.append(
                 f"\nVerification failed: Invalid PE file after patching - {verification_error}")
@@ -280,15 +292,18 @@ def simulate_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -
                         results.append(f"  Expected: {new_bytes.hex().upper()}")
                         results.append(f"  Actual: {actual_bytes.hex().upper()}")
                 except (OSError, ValueError, RuntimeError) as verify_error:
+                    logger.error("Error in patch_verification: %s", verify_error)
                     results.append(f"✗ Patch {i + 1} verification failed: {verify_error}")
 
         try:
             shutil.rmtree(temp_dir)
             results.append("\nCleanup: Temporary files removed")
         except (OSError, ValueError, RuntimeError) as cleanup_error:
+            logger.error("Error in patch_verification: %s", cleanup_error)
             results.append(f"\nCleanup failed: {cleanup_error}")
 
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in patch_verification: %s", e)
         results.append(f"Error during patch simulation: {e}")
         results.append(traceback.format_exc())
 
@@ -334,6 +349,7 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
         app.update_output.emit(log_message(
             f"[Patch] Created backup: {backup_path}"))
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in patch_verification: %s", e)
         app.update_output.emit(log_message(
             f"[Patch] CRITICAL ERROR: Failed to create backup: {e}"))
         app.update_output.emit(log_message(
@@ -355,6 +371,7 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
             pe = pefile.PE(patched_path)
             image_base = pe.OPTIONAL_HEADER.ImageBase
         except pefile.PEFormatError as e:
+            logger.error("pefile.PEFormatError in patch_verification: %s", e)
             app.update_output.emit(
                 log_message(
                     f"[Patch] Error: Cannot parse PE structure of '{patched_path}': {e}"))
@@ -362,12 +379,15 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
             # Clean up the potentially corrupted patched file
             try:
                 os.remove(patched_path)
-            except FileNotFoundError:
+            except FileNotFoundError as e:
+                logger.error("File not found in patch_verification: %s", e)
                 # File already doesn't exist, which is fine
                 pass
             except PermissionError as perm_error:
+                logger.error("Permission error in patch_verification: %s", perm_error)
                 app.update_output.emit(log_message(f"[Patch] Warning: Cannot remove corrupted file due to permissions: {perm_error}"))
             except OSError as os_error:
+                logger.error("OS error in patch_verification: %s", os_error)
                 app.update_output.emit(log_message(f"[Patch] Warning: Failed to cleanup corrupted file: {os_error}"))
             return False
 
@@ -398,6 +418,7 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
                         try:
                             offset = pe.get_offset_from_rva(rva)
                         except Exception as e_rva:
+                            logger.error("Exception in patch_verification: %s", e_rva)
                             app.update_output.emit(
                                 log_message(
                                     f"[Patch {patch_num}] ERROR: Failed to get offset for RVA 0x{rva:X}: {e_rva}"))
@@ -420,15 +441,18 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
                     applied_count += 1
 
                 except pefile.PEFormatError as e_offset:
+                    logger.error("pefile.PEFormatError in patch_verification: %s", e_offset)
                     app.update_output.emit(
                         log_message(
                             f"[Patch {patch_num}] Skipped: Error getting offset for address 0x{address:X}: {e_offset}"))
                     error_count += 1
                 except IOError as e_io:
+                    logger.error("IO error in patch_verification: %s", e_io)
                     app.update_output.emit(log_message(
                         f"[Patch {patch_num}] Skipped: File I/O error applying patch at offset 0x{offset:X}: {e_io}"))
                     error_count += 1
                 except Exception as e_apply:
+                    logger.error("Exception in patch_verification: %s", e_apply)
                     app.update_output.emit(
                         log_message(
                             f"[Patch {patch_num}] Skipped: Unexpected error applying patch: {e_apply}"))
@@ -456,6 +480,7 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
                 app.update_output.emit(log_message(
                     "[Verify] Patched file is still a valid PE executable."))
             except pefile.PEFormatError as e_verify:
+                logger.error("pefile.PEFormatError in patch_verification: %s", e_verify)
                 app.update_output.emit(
                     log_message(
                         f"[Verify] CRITICAL ERROR: Patched file '{patched_path}' failed PE validation: {e_verify}"))
@@ -489,18 +514,22 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: List
             # Clean up the copied file if no patches applied
             try:
                 os.remove(patched_path)
-            except FileNotFoundError:
+            except FileNotFoundError as e:
+                logger.error("File not found in patch_verification: %s", e)
                 # File already doesn't exist, which is acceptable
                 pass
             except PermissionError as perm_error2:
+                logger.error("Permission error in patch_verification: %s", perm_error2)
                 app.update_output.emit(log_message(f"[Patch] Warning: Cannot remove unused patched file due to permissions: {perm_error2}"))
             except OSError as os_error2:
+                logger.error("OS error in patch_verification: %s", os_error2)
                 app.update_output.emit(log_message(f"[Patch] Warning: Failed to cleanup unused patched file: {os_error2}"))
         else:  # Errors occurred during patching
             app.update_output.emit(log_message(
                 f"[Patch] Patching completed with {error_count} errors. Review logs for details."))
 
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in patch_verification: %s", e)
         app.update_output.emit(log_message(
             f"[Patch] Error during patching process: {e}"))
         app.update_output.emit(log_message(traceback.format_exc()))
@@ -682,6 +711,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                                     f"[License Rewrite] Warning: Candidate address 0x{start_addr:X} is outside the .text section. Skipping."))
 
                     except Exception as e_check:
+                        logger.error("Exception in patch_verification: %s", e_check)
                         app.update_output.emit(
                             log_message(
                                 f"[License Rewrite] Error during safety check for 0x{start_addr:X}: {e_check}. Skipping patch for this candidate."))
@@ -704,11 +734,13 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                         # Log to analysis results for reporting
                         app.analyze_results.append(f"Manual review needed for potential license check at 0x{start_addr:X}")
 
-            except ImportError:
+            except ImportError as e:
+                logger.error("Import error in patch_verification: %s", e)
                 app.update_output.emit(log_message(
                     "[License Rewrite] Error: Required modules (pefile, capstone, keystone) not found."))
                 candidates = []  # Cannot proceed if imports fail
             except Exception as e_deep:
+                logger.error("Exception in patch_verification: %s", e_deep)
                 app.update_output.emit(
                     log_message(
                         f"[License Rewrite] Error processing deep analysis candidates: {e_deep}"))
@@ -813,6 +845,7 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
                 app.analyze_status.setText(original_status)
 
         except Exception as e_agent:
+            logger.error("Exception in patch_verification: %s", e_agent)
             app.update_output.emit(log_message(
                 f"[License Rewrite] Error running Automated Patch Agent: {e_agent}"))
             app.update_output.emit(log_message(traceback.format_exc()))

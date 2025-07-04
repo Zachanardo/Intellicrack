@@ -252,7 +252,8 @@ class ASLRBypass(MitigationBypassBase):
                         addr = int(match, 16)
                         if addr > 0x400000:  # Likely valid address
                             leaked_addresses[f"leak_{i}"] = addr
-                    except ValueError:
+                    except ValueError as e:
+                        self.logger.error("Value error in aslr_bypass: %s", e)
                         continue
 
             return leaked_addresses
@@ -394,8 +395,8 @@ class ASLRBypass(MitigationBypassBase):
                 # In a real implementation, we would attach to the process and read its memory maps
                 # For now, return a typical libc base for demonstration
                 return 0x7ffff7a00000  # Typical 64-bit libc base
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Failed to spawn process for libc detection: {e}")
 
             # Method 2: Bruteforce common libc bases
             common_bases = [
@@ -559,7 +560,8 @@ class ASLRBypass(MitigationBypassBase):
 
             # Look for format string patterns
             return b'printf' in data or b'sprintf' in data or b'fprintf' in data
-        except:
+        except Exception as e:
+            self.logger.debug(f"Failed to check format string vulnerability: {e}")
             return False
 
     def _has_stack_leak_potential(self, target_binary: str) -> bool:
@@ -570,7 +572,8 @@ class ASLRBypass(MitigationBypassBase):
 
             # Look for functions that might leak stack data
             return b'gets' in data or b'strcpy' in data or b'memcpy' in data
-        except:
+        except Exception as e:
+            self.logger.debug(f"Failed to check stack leak potential: {e}")
             return False
 
     def _has_uaf_potential(self, target_binary: str) -> bool:
@@ -581,7 +584,8 @@ class ASLRBypass(MitigationBypassBase):
 
             # Look for heap-related functions
             return b'malloc' in data or b'free' in data or b'realloc' in data
-        except:
+        except Exception as e:
+            self.logger.debug(f"Failed to check use-after-free potential: {e}")
             return False
 
     def analyze_aslr_bypass(self, binary_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -619,6 +623,7 @@ class ASLRBypass(MitigationBypassBase):
             }
 
         except Exception as e:
+            self.logger.error("Exception in aslr_bypass: %s", e)
             return {
                 "success": False,
                 "mitigation": self.mitigation_name,

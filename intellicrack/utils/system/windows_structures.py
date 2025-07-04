@@ -33,7 +33,8 @@ if WINDOWS_AVAILABLE:
     try:
         import ctypes.wintypes
         STRUCTURES_AVAILABLE = True
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in windows_structures: %s", e)
         STRUCTURES_AVAILABLE = False
 else:
     STRUCTURES_AVAILABLE = False
@@ -325,7 +326,8 @@ def parse_objdump_line(line: str) -> Optional[Dict[str, Any]]:
                     'op_str': operands,
                     'bytes': addr_part.strip()
                 }
-        except (ValueError, IndexError):
+        except (ValueError, IndexError) as e:
+            logger.error("Error in windows_structures: %s", e)
             pass
     return None
 
@@ -367,5 +369,6 @@ def create_ssl_certificate_builder():
                 critical=False,
             )
         )
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in windows_structures: %s", e)
         return None

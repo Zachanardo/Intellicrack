@@ -620,7 +620,8 @@ class R2JSONStandardizer:
             else:
                 try:
                     return f"0x{int(address):x}"
-                except ValueError:
+                except ValueError as e:
+                    self.logger.error("Value error in radare2_json_standardizer: %s", e)
                     return "0x0"
         elif isinstance(address, int):
             return f"0x{address:x}"
@@ -634,8 +635,8 @@ class R2JSONStandardizer:
             result = subprocess.run(['radare2', '-v'], capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 return result.stdout.split('\n')[0].strip()
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Failed to get radare2 version: {e}")
         return "unknown"
 
     def _calculate_file_hash(self, file_path: str) -> str:
@@ -644,8 +645,8 @@ class R2JSONStandardizer:
             if file_path and os.path.exists(file_path):
                 with open(file_path, 'rb') as f:
                     return hashlib.sha256(f.read()).hexdigest()
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Failed to calculate file hash for {file_path}: {e}")
         return "unknown"
 
     def _get_file_size(self, file_path: str) -> int:
@@ -653,8 +654,8 @@ class R2JSONStandardizer:
         try:
             if file_path and os.path.exists(file_path):
                 return os.path.getsize(file_path)
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Failed to get file size for {file_path}: {e}")
         return 0
 
     def _calculate_completeness_score(self, standardized: Dict[str, Any]) -> float:

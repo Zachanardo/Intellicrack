@@ -1,0 +1,14 @@
+// Intellicrack Protection Engine: detection rule file
+// Author: BJNFNE <bjnfne@web.de>
+// This Script supports following formats: ICN
+
+init("image", "Icon");
+
+function detect() {
+    if (Binary.compare("'SMDH'")) {
+        sVersion = "ICN";
+        bDetected = true;
+    }
+
+    return result();
+}

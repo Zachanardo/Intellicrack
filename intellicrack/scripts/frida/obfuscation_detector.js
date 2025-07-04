@@ -1,0 +1,1 @@
+/mnt/c/Intellicrack/intellicrack/plugins/frida_scripts/obfuscation_detector.js

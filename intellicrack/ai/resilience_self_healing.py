@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 import pickle
 import threading
 import time
@@ -30,18 +31,19 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set
 
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    psutil = None
-    PSUTIL_AVAILABLE = False
-
 from ..utils.logger import get_logger
 from .learning_engine import learning_engine
 from .performance_monitor import performance_monitor, profile_ai_operation
 
 logger = get_logger(__name__)
+
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError as e:
+    logger.error("Import error in resilience_self_healing: %s", e)
+    psutil = None
+    PSUTIL_AVAILABLE = False
 
 
 class FailureType(Enum):
@@ -127,6 +129,7 @@ class HealthMonitor:
     """Monitors system health and detects failures."""
 
     def __init__(self):
+        self.logger = logging.getLogger(__name__ + ".HealthMonitor")
         self.health_checks: Dict[str, Callable] = {}
         self.component_status: Dict[str, HealthStatus] = {}
         self.failure_history: deque = deque(maxlen=1000)
@@ -203,7 +206,8 @@ class HealthMonitor:
             memory = psutil.virtual_memory()
             try:
                 disk = psutil.disk_usage('/')
-            except (OSError, PermissionError):
+            except (OSError, PermissionError) as e:
+                self.logger.error("Error in resilience_self_healing: %s", e)
                 # Fallback for systems where '/' is not accessible
                 disk = type('', (), {'percent': 50.0})()
 
@@ -227,6 +231,7 @@ class HealthMonitor:
             }
 
         except Exception as e:
+            logger.error("Exception in resilience_self_healing: %s", e)
             return {
                 "status": "error",
                 "error": str(e),
@@ -245,16 +250,19 @@ class HealthMonitor:
             response_time = time.time() - start_time
 
             if response_time > 5.0:
-                issues.append(f"Learning engine slow response: {response_time:.2f}s")
+                issues.append(
+                    f"Learning engine slow response: {response_time:.2f}s")
                 component_status["learning_engine"] = "warning"
             elif not insights or len(insights) == 0:
                 issues.append("Learning engine returned empty insights")
                 component_status["learning_engine"] = "warning"
             else:
                 component_status["learning_engine"] = "healthy"
-                logger.debug(f"Learning engine healthy with {len(insights)} insights")
+                logger.debug(
+                    f"Learning engine healthy with {len(insights)} insights")
 
         except Exception as e:
+            logger.error("Exception in resilience_self_healing: %s", e)
             issues.append(f"Learning engine unresponsive: {e}")
             component_status["learning_engine"] = "failing"
 
@@ -265,22 +273,25 @@ class HealthMonitor:
             response_time = time.time() - start_time
 
             if response_time > 3.0:
-                issues.append(f"Performance monitor slow: {response_time:.2f}s")
+                issues.append(
+                    f"Performance monitor slow: {response_time:.2f}s")
                 component_status["performance_monitor"] = "warning"
             elif not metrics or len(metrics) == 0:
                 issues.append("Performance monitor returned empty metrics")
                 component_status["performance_monitor"] = "warning"
             else:
                 component_status["performance_monitor"] = "healthy"
-                logger.debug(f"Performance monitor healthy with {len(metrics)} metrics")
+                logger.debug(
+                    f"Performance monitor healthy with {len(metrics)} metrics")
 
         except Exception as e:
+            logger.error("Exception in resilience_self_healing: %s", e)
             issues.append(f"Performance monitor unresponsive: {e}")
             component_status["performance_monitor"] = "failing"
 
         return {
             "status": "critical" if any(s == "failing" for s in component_status.values()) else
-                     "warning" if issues else "healthy",
+            "warning" if issues else "healthy",
             "component_status": component_status,
             "issues": issues
         }
@@ -308,6 +319,7 @@ class HealthMonitor:
             }
 
         except Exception as e:
+            logger.error("Exception in resilience_self_healing: %s", e)
             return {
                 "status": "error",
                 "error": str(e),
@@ -342,6 +354,7 @@ class HealthMonitor:
             }
 
         except Exception as e:
+            logger.error("Exception in resilience_self_healing: %s", e)
             return {
                 "status": "error",
                 "error": str(e),
@@ -390,6 +403,7 @@ class HealthMonitor:
             }
 
         except Exception as e:
+            logger.error("Exception in resilience_self_healing: %s", e)
             return {
                 "status": "error",
                 "error": str(e),
@@ -422,7 +436,7 @@ class HealthMonitor:
                 )
 
     def _record_failure(self, failure_type: FailureType, component: str,
-                       description: str, severity: str):
+                        description: str, severity: str):
         """Record a failure event."""
         failure = FailureEvent(
             failure_id=str(uuid.uuid4()),
@@ -452,9 +466,10 @@ class HealthMonitor:
 
         # Recent failures
         recent_failures = [f for f in self.failure_history
-                          if f.timestamp > datetime.now() - timedelta(hours=1)]
+                           if f.timestamp > datetime.now() - timedelta(hours=1)]
 
-        critical_failures = [f for f in recent_failures if f.severity == "critical"]
+        critical_failures = [
+            f for f in recent_failures if f.severity == "critical"]
 
         if len(critical_failures) > 5:
             overall_status = HealthStatus.CRITICAL
@@ -577,11 +592,13 @@ class RecoverySystem:
     @profile_ai_operation("failure_recovery")
     def handle_failure(self, failure: FailureEvent):
         """Handle a failure event and attempt recovery."""
-        logger.info(f"Handling failure: {failure.failure_type.value} in {failure.component}")
+        logger.info(
+            f"Handling failure: {failure.failure_type.value} in {failure.component}")
 
         # Check if recovery is already in progress
         if self._is_recovery_in_progress(failure.component):
-            logger.info(f"Recovery already in progress for {failure.component}")
+            logger.info(
+                f"Recovery already in progress for {failure.component}")
             return
 
         # Check recovery cooldown
@@ -593,7 +610,8 @@ class RecoverySystem:
         strategies = self.recovery_strategies.get(failure.failure_type, [])
 
         if not strategies:
-            logger.warning(f"No recovery strategies for {failure.failure_type.value}")
+            logger.warning(
+                f"No recovery strategies for {failure.failure_type.value}")
             return
 
         # Select best recovery strategy
@@ -605,20 +623,20 @@ class RecoverySystem:
     def _is_recovery_in_progress(self, component: str) -> bool:
         """Check if recovery is already in progress for component."""
         recent_recoveries = [r for r in self.recovery_history
-                           if r.get("component") == component and
-                           r.get("status") == "in_progress"]
+                             if r.get("component") == component and
+                             r.get("status") == "in_progress"]
         return len(recent_recoveries) > 0
 
     def _is_in_cooldown(self, component: str) -> bool:
         """Check if component is in recovery cooldown."""
         recent_recoveries = [r for r in self.recovery_history
-                           if r.get("component") == component and
-                           r.get("timestamp", datetime.min) >
-                           datetime.now() - timedelta(seconds=self.recovery_cooldown)]
+                             if r.get("component") == component and
+                             r.get("timestamp", datetime.min) >
+                             datetime.now() - timedelta(seconds=self.recovery_cooldown)]
         return len(recent_recoveries) >= self.max_recovery_attempts
 
     def _select_recovery_strategy(self, strategies: List[RecoveryAction],
-                                failure: FailureEvent) -> Optional[RecoveryAction]:
+                                  failure: FailureEvent) -> Optional[RecoveryAction]:
         """Select the best recovery strategy for the failure."""
         if not strategies:
             return None
@@ -713,7 +731,8 @@ class RecoverySystem:
             if success:
                 logger.info(f"Recovery successful for {failure.component}")
             else:
-                logger.error(f"Recovery failed for {failure.component}: {error_message}")
+                logger.error(
+                    f"Recovery failed for {failure.component}: {error_message}")
 
         # Start recovery in background thread
         thread = threading.Thread(target=recovery_worker, daemon=True)
@@ -741,7 +760,8 @@ class RecoverySystem:
                 return self._execute_component_restart(failure.component)
 
             else:
-                logger.warning(f"Unknown recovery strategy: {strategy.strategy.value}")
+                logger.warning(
+                    f"Unknown recovery strategy: {strategy.strategy.value}")
                 return False
 
         except Exception as e:
@@ -760,7 +780,8 @@ class RecoverySystem:
             if hasattr(performance_monitor, 'clear_caches'):
                 performance_monitor.clear_caches()
 
-            logger.info(f"Garbage collection completed, collected {collected} objects")
+            logger.info(
+                f"Garbage collection completed, collected {collected} objects")
             return True
 
         except Exception as e:
@@ -787,8 +808,9 @@ class RecoverySystem:
                 try:
                     shutil.rmtree(temp_dir)
                     temp_dir.mkdir(exist_ok=True)
-                except Exception:
-                    pass  # Non-critical if cleanup fails
+                except Exception as e:
+                    logger.debug(
+                        f"Non-critical temp directory cleanup error: {e}")
 
             logger.info("Resource cleanup completed")
             return True
@@ -860,8 +882,10 @@ class RecoverySystem:
         if not self.recovery_history:
             return {"total_recoveries": 0}
 
-        completed_recoveries = [r for r in self.recovery_history if r.get("status") == "completed"]
-        successful_recoveries = [r for r in completed_recoveries if r.get("success", False)]
+        completed_recoveries = [
+            r for r in self.recovery_history if r.get("status") == "completed"]
+        successful_recoveries = [
+            r for r in completed_recoveries if r.get("success", False)]
 
         # Success rate by strategy
         strategy_stats = defaultdict(lambda: {"attempts": 0, "successes": 0})
@@ -876,10 +900,12 @@ class RecoverySystem:
         for strategy_name, stats in strategy_stats.items():
             if stats["attempts"] > 0:
                 stats["success_rate"] = stats["successes"] / stats["attempts"]
-                logger.debug(f"Strategy '{strategy_name}': {stats['successes']}/{stats['attempts']} success rate: {stats['success_rate']:.2f}")
+                logger.debug(
+                    f"Strategy '{strategy_name}': {stats['successes']}/{stats['attempts']} success rate: {stats['success_rate']:.2f}")
             else:
                 stats["success_rate"] = 0.0
-                logger.debug(f"Strategy '{strategy_name}': no attempts recorded")
+                logger.debug(
+                    f"Strategy '{strategy_name}': no attempts recorded")
 
         return {
             "total_recoveries": len(self.recovery_history),
@@ -895,6 +921,7 @@ class StateManager:
     """Manages system state persistence and recovery."""
 
     def __init__(self):
+        self.logger = logging.getLogger(__name__ + ".StateManager")
         self.state_history: deque = deque(maxlen=100)
         self.checkpoint_interval = 300  # 5 minutes
         self.state_file = Path.home() / ".intellicrack" / "system_state.pkl"
@@ -930,7 +957,9 @@ class StateManager:
                         "memory_percent": psutil.virtual_memory().percent,
                         "disk_percent": psutil.disk_usage('/').percent
                     }
-                except (OSError, PermissionError):
+                except (OSError, PermissionError) as e:
+                    self.logger.error(
+                        "Error in resilience_self_healing: %s", e)
                     resource_usage = {
                         "cpu_percent": 50.0,
                         "memory_percent": 50.0,
@@ -964,7 +993,8 @@ class StateManager:
                 state_id=str(uuid.uuid4()),
                 timestamp=datetime.now(),
                 health_status=health_status,
-                active_components={"learning_engine", "performance_monitor", "predictive_intelligence"},
+                active_components={
+                    "learning_engine", "performance_monitor", "predictive_intelligence"},
                 failed_components=set(),
                 resource_usage=resource_usage,
                 performance_metrics=performance_metrics
@@ -994,7 +1024,8 @@ class StateManager:
             checkpoint_data = {
                 "timestamp": datetime.now(),
                 "current_state": current_state,
-                "recent_states": list(self.state_history)[-10:]  # Last 10 states
+                # Last 10 states
+                "recent_states": list(self.state_history)[-10:]
             }
 
             with open(self.state_file, 'wb') as f:
@@ -1021,7 +1052,8 @@ class StateManager:
             # Restore state history
             self.state_history.extend(recent_states)
 
-            logger.info(f"Restored system state from checkpoint: {restored_state.state_id}")
+            logger.info(
+                f"Restored system state from checkpoint: {restored_state.state_id}")
             return restored_state
 
         except Exception as e:
@@ -1041,12 +1073,15 @@ class StateManager:
             status_counts[state.health_status.value] += 1
 
         # Resource usage trends
-        cpu_values = [s.resource_usage.get("cpu_percent", 0) for s in states if s.resource_usage]
-        memory_values = [s.resource_usage.get("memory_percent", 0) for s in states if s.resource_usage]
+        cpu_values = [s.resource_usage.get(
+            "cpu_percent", 0) for s in states if s.resource_usage]
+        memory_values = [s.resource_usage.get(
+            "memory_percent", 0) for s in states if s.resource_usage]
 
         return {
             "total_states": len(states),
-            "time_span": (states[-1].timestamp - states[0].timestamp).total_seconds() / 3600,  # hours
+            # hours
+            "time_span": (states[-1].timestamp - states[0].timestamp).total_seconds() / 3600,
             "health_distribution": dict(status_counts),
             "avg_cpu_usage": sum(cpu_values) / max(1, len(cpu_values)),
             "avg_memory_usage": sum(memory_values) / max(1, len(memory_values)),
@@ -1081,7 +1116,8 @@ class ResilienceSelfHealingSystem:
 
             # Check if we're recovering from a critical state
             if restored_state.health_status == HealthStatus.CRITICAL:
-                logger.warning("Recovering from critical state - enabling enhanced monitoring")
+                logger.warning(
+                    "Recovering from critical state - enabling enhanced monitoring")
                 self.health_monitor.check_interval = 10  # More frequent checks
 
         # Start monitoring
@@ -1094,7 +1130,8 @@ class ResilienceSelfHealingSystem:
         state_analytics = self.state_manager.get_state_analytics()
 
         # Calculate resilience score
-        resilience_score = self._calculate_resilience_score(health_status, recovery_stats)
+        resilience_score = self._calculate_resilience_score(
+            health_status, recovery_stats)
 
         return {
             "resilience_score": resilience_score,
@@ -1106,7 +1143,7 @@ class ResilienceSelfHealingSystem:
         }
 
     def _calculate_resilience_score(self, health_status: Dict[str, Any],
-                                  recovery_stats: Dict[str, Any]) -> float:
+                                    recovery_stats: Dict[str, Any]) -> float:
         """Calculate overall resilience score (0-100)."""
         score = 100.0
 

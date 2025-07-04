@@ -155,7 +155,7 @@ class BinaryAnalyzer:
         self.plugins.append(plugin)
         plugin.analyzer = self
 
-    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-branches,too-many-statements
     def run(self, timeout: Optional[int] = None, procs: int = 1):
         """
         Run the analysis

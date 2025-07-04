@@ -1,0 +1,1 @@
+/mnt/c/Intellicrack/intellicrack/plugins/frida_scripts/http3_quic_interceptor.js

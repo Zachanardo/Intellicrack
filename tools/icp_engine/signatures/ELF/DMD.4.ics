@@ -1,0 +1,31 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("compiler", "DMD");
+
+function getDMDVersion() {
+    var sResult = "",
+        nSection = ELF.getSectionNumber(".comment");
+
+    if (nSection != -1) {
+        var nSectionOffset = ELF.getSectionFileOffset(nSection),
+            nSectionSize = ELF.getSectionFileSize(nSection),
+            nOffset = ELF.findString(nSectionOffset, nSectionSize, "DMD v");
+
+        if (nOffset != -1) {
+            sResult = ELF.getString(nOffset + 5, 20);
+        }
+    }
+
+    return sResult;
+}
+
+function detect() {
+    var sDMDVersion = getDMDVersion();
+    if (sDMDVersion != "") {
+        bDetected = true;
+        sVersion = sDMDVersion;
+    }
+    _setLang("D", bDetected);
+
+    return result();
+}

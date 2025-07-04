@@ -1,27 +1,8 @@
-"""
-Script Generation Dialog for Intellicrack.
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
-
 import os
 import time
+
+from intellicrack.logger import logger
+from intellicrack.ai.ai_tools import AIAssistant
 
 from ..common_imports import (
     QCheckBox,
@@ -48,10 +29,35 @@ from ..common_imports import (
 )
 from .base_dialog import BinarySelectionDialog
 
+"""
+Script Generation Dialog for Intellicrack.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+
+
+
 try:
     from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat
     from PyQt5.QtWidgets import QPlainTextEdit
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in script_generator_dialog: %s", e)
     pass
 
 
@@ -105,6 +111,8 @@ class ScriptGeneratorWorker(QThread):
         self.binary_path = binary_path
         self.script_type = script_type
         self.kwargs = kwargs
+        self.logger = logger
+        self.ai_generator = None
 
     def run(self):
         """Execute the script generation."""
@@ -116,18 +124,51 @@ class ScriptGeneratorWorker(QThread):
             elif self.script_type == "strategy":
                 self._generate_exploit_strategy()
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in script_generator_dialog: %s", e)
             self.error_occurred.emit(str(e))
 
     def _generate_bypass_script(self):
         """Generate bypass script."""
-        from ...utils.exploitation import generate_bypass_script
-
-        result = generate_bypass_script(
-            self.binary_path,
-            protection_type=self.kwargs.get('protection_type', 'license'),
-            language=self.kwargs.get('language', 'python')
-        )
-        self.script_generated.emit(result)
+        # Try AI-powered generation first
+        try:
+            from ...ai.ai_script_generator import AIScriptGenerator
+            
+            if not self.ai_generator:
+                self.ai_generator = AIScriptGenerator()
+            
+            # Prepare protection info
+            protection_info = {
+                'type': self.kwargs.get('protection_type', 'license'),
+                'methods': self.kwargs.get('methods', ['patch']),
+                'target_platform': 'frida' if self.kwargs.get('language') == 'javascript' else 'python'
+            }
+            
+            # Generate script using AI
+            if self.kwargs.get('language') == 'javascript':
+                result = self.ai_generator.generate_frida_script(
+                    self.binary_path,
+                    protection_info
+                )
+            else:
+                # For Python/other languages, generate Ghidra script
+                result = self.ai_generator.generate_ghidra_script(
+                    self.binary_path,
+                    protection_info
+                )
+            
+            self.script_generated.emit(result)
+            
+        except Exception as e:
+            self.logger.warning(f"AI script generation failed: {e}. Falling back to template-based generation.")
+            # Fallback to template-based generation
+            from ...utils.exploitation import generate_bypass_script
+            
+            result = generate_bypass_script(
+                self.binary_path,
+                protection_type=self.kwargs.get('protection_type', 'license'),
+                language=self.kwargs.get('language', 'python')
+            )
+            self.script_generated.emit(result)
 
     def _generate_exploit_script(self):
         """Generate exploit script."""
@@ -158,6 +199,9 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
 
         # Initialize UI attributes
         self.analysis_depth = None
+        self.analyze_btn = None
+        self.bypass_config = None
+        self.bypass_language = None
         self.bypass_output = None
         self.close_btn = None
         self.copy_btn = None
@@ -433,10 +477,14 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
 
         self.test_btn = QPushButton("Test Script")
         self.test_btn.clicked.connect(self.test_script)
+        
+        self.analyze_btn = QPushButton("Analyze Script")
+        self.analyze_btn.clicked.connect(self.analyze_script)
 
         actions_layout.addWidget(self.copy_btn)
         actions_layout.addWidget(self.save_btn)
         actions_layout.addWidget(self.test_btn)
+        actions_layout.addWidget(self.analyze_btn)
         actions_layout.addStretch()
 
         right_layout.addLayout(actions_layout)
@@ -581,7 +629,8 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
                 from PyQt5.QtWidgets import QApplication
                 QApplication.clipboard().setText(script_content)
                 self.status_label.setText("Script copied to clipboard")
-            except (OSError, ValueError, RuntimeError):
+            except (OSError, ValueError, RuntimeError) as e:
+                self.logger.error("Error in script_generator_dialog: %s", e)
                 QMessageBox.information(self, "Copy", "Script copied to clipboard (fallback)")
 
     def save_script(self):
@@ -618,6 +667,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
                     f.write(script_content)
                 self.status_label.setText(f"Script saved to {os.path.basename(file_path)}")
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in script_generator_dialog: %s", e)
                 QMessageBox.critical(self, "Save Error", f"Failed to save script: {str(e)}")
 
     def test_script(self):
@@ -631,6 +681,115 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             "• Effectiveness testing\n"
             "• Performance analysis"
         )
+    
+    def analyze_script(self):
+        """Analyze the generated script for vulnerabilities, patterns, and improvements."""
+        script_content = self.script_display.toPlainText()
+        if not script_content:
+            QMessageBox.warning(self, "Warning", "No script to analyze. Generate a script first.")
+            return
+        
+        try:
+            # Create AI tools instance
+            ai_tools = AIAssistant()
+            
+            # Determine language based on script type or content
+            script_type = self.script_type_combo.currentText()
+            # Check if bypass_language exists and use it, otherwise detect from content
+            if hasattr(self, 'bypass_language') and self.bypass_language.isVisible():
+                language = "javascript" if "javascript" in self.bypass_language.currentText().lower() else "python"
+            else:
+                # Auto-detect language from content
+                language = "auto"
+            
+            # Update status
+            self.status_label.setText("Analyzing script...")
+            
+            # Perform analysis
+            analysis_result = ai_tools.analyze_code(script_content, language)
+            
+            # Format and display results
+            if analysis_result.get("status") == "success":
+                formatted_analysis = self._format_analysis_results(analysis_result)
+                
+                # Create a new tab for analysis results
+                analysis_display = QTextEdit()
+                analysis_display.setFont(QFont("Consolas", 10))
+                analysis_display.setReadOnly(True)
+                analysis_display.setPlainText(formatted_analysis)
+                
+                # Add the analysis tab
+                self.script_tabs.addTab(analysis_display, "Analysis Results")
+                self.script_tabs.setCurrentWidget(analysis_display)
+                
+                self.status_label.setText("Script analysis completed")
+                
+                # Show warning if security issues found
+                if analysis_result.get("security_issues"):
+                    QMessageBox.warning(
+                        self, "Security Issues",
+                        f"Found {len(analysis_result['security_issues'])} security issue(s) in the script.\n"
+                        "Please review the analysis results."
+                    )
+            else:
+                error_msg = analysis_result.get("error", "Unknown error occurred")
+                QMessageBox.critical(self, "Analysis Error", f"Script analysis failed: {error_msg}")
+                self.status_label.setText("Analysis failed")
+                
+        except Exception as e:
+            logger.error(f"Script analysis error: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to analyze script: {str(e)}")
+            self.status_label.setText("Error occurred")
+    
+    def _format_analysis_results(self, analysis_result):
+        """Format code analysis results for display."""
+        lines = ["Script Analysis Results", "=" * 50, ""]
+        
+        # Basic info
+        lines.append(f"Language: {analysis_result.get('language', 'Unknown')}")
+        lines.append(f"Lines of Code: {analysis_result.get('lines_of_code', 0)}")
+        lines.append(f"Complexity: {analysis_result.get('complexity', 'Unknown')}")
+        lines.append(f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}")
+        lines.append("")
+        
+        # Insights
+        insights = analysis_result.get('insights', [])
+        if insights:
+            lines.append("Insights:")
+            for insight in insights:
+                lines.append(f"  • {insight}")
+            lines.append("")
+        
+        # Security Issues
+        security_issues = analysis_result.get('security_issues', [])
+        if security_issues:
+            lines.append("SECURITY ISSUES:")
+            for issue in security_issues:
+                lines.append(f"  ⚠️  {issue}")
+            lines.append("")
+        
+        # Suggestions
+        suggestions = analysis_result.get('suggestions', [])
+        if suggestions:
+            lines.append("Suggestions:")
+            for suggestion in suggestions:
+                lines.append(f"  • {suggestion}")
+            lines.append("")
+        
+        # Patterns
+        patterns = analysis_result.get('patterns', [])
+        if patterns:
+            lines.append("Detected Patterns:")
+            for pattern in patterns:
+                lines.append(f"  • {pattern}")
+            lines.append("")
+        
+        # Timestamp
+        timestamp = analysis_result.get('analysis_timestamp', '')
+        if timestamp:
+            lines.append(f"\nAnalysis performed at: {timestamp}")
+        
+        return "\n".join(lines)
 
     def on_error(self, error_msg):
         """Handle worker thread errors."""

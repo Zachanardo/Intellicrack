@@ -1,0 +1,15 @@
+init("compiler", "Watcom");
+
+function detect() {
+    var nData = ELF.getSectionNumber(".data");
+
+    var nOffset = ELF.getSectionFileOffset(nData);
+    var nSize = ELF.getSectionFileSize(nData);
+    if (ELF.findString(nOffset, nSize, "WATCOM") != -1) {
+        bDetected = true;
+    }
+
+    _setLang("C/C++", bDetected);
+
+    return result();
+}

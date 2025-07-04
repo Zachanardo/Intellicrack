@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Enhanced Plugin Editor with syntax highlighting and validation.
 
@@ -59,6 +61,7 @@ class PluginValidator:
             ast.parse(code)
             return True, []
         except SyntaxError as e:
+            logger.error("SyntaxError in plugin_editor: %s", e)
             errors.append(f"Line {e.lineno}: {e.msg}")
             return False, errors
 
@@ -247,6 +250,7 @@ class PluginEditor(QWidget):
                 self.editor.document().setModified(False)
 
             except Exception as e:
+                logger.error("Exception in plugin_editor: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to open file:\n{str(e)}")
 
     def save_file(self):
@@ -270,6 +274,7 @@ class PluginEditor(QWidget):
             self.saveRequested.emit(self.current_file)
 
         except Exception as e:
+            logger.error("Exception in plugin_editor: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save file:\n{str(e)}")
 
     def on_text_changed(self):
@@ -368,8 +373,8 @@ class PluginEditor(QWidget):
                     item = QListWidgetItem(f"🔧 {node.name}")
                     self.outline_list.addItem(item)
 
-        except:
-            pass  # Ignore parsing errors during typing
+        except Exception as e:
+            logger.debug("Failed to parse code for outline: %s", e)
 
     def show_context_menu(self, position):
         """Show context menu"""

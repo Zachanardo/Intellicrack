@@ -34,16 +34,13 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
+from .ai_wrapper import ConfirmationManager, IntellicrackAIInterface
+
 # Add parent directories to path
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, '..', '..'))
 sys.path.insert(0, project_root)
 
-try:
-    from ai_wrapper import ConfirmationManager, IntellicrackAIInterface
-except ImportError:
-    ConfirmationManager = None
-    IntellicrackAIInterface = None
 
 logger = logging.getLogger(__name__)
 

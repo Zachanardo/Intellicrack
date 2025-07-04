@@ -201,7 +201,8 @@ class DataInterpreter:
                     else:
                         text_data = data
                     return text_data.decode('ascii', errors='replace')
-                except (UnicodeDecodeError, AttributeError):
+                except (UnicodeDecodeError, AttributeError) as e:
+                    logger.error("Error in data_inspector: %s", e)
                     return "Invalid ASCII"
 
             elif data_type == DataType.UTF8:
@@ -213,7 +214,8 @@ class DataInterpreter:
                     else:
                         text_data = data
                     return text_data.decode('utf-8', errors='replace')
-                except (UnicodeDecodeError, AttributeError):
+                except (UnicodeDecodeError, AttributeError) as e:
+                    logger.error("Error in data_inspector: %s", e)
                     return "Invalid UTF-8"
 
             elif data_type == DataType.UTF16_LE:
@@ -225,7 +227,8 @@ class DataInterpreter:
                     else:
                         text_data = data
                     return text_data.decode('utf-16le', errors='replace')
-                except (UnicodeDecodeError, AttributeError):
+                except (UnicodeDecodeError, AttributeError) as e:
+                    logger.error("Error in data_inspector: %s", e)
                     return "Invalid UTF-16 LE"
 
             elif data_type == DataType.UTF16_BE:
@@ -237,7 +240,8 @@ class DataInterpreter:
                     else:
                         text_data = data
                     return text_data.decode('utf-16be', errors='replace')
-                except (UnicodeDecodeError, AttributeError):
+                except (UnicodeDecodeError, AttributeError) as e:
+                    logger.error("Error in data_inspector: %s", e)
                     return "Invalid UTF-16 BE"
 
             elif data_type == DataType.UNIX_TIMESTAMP_32:
@@ -246,7 +250,8 @@ class DataInterpreter:
                     try:
                         dt = datetime.datetime.fromtimestamp(timestamp)
                         return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
-                    except (ValueError, OSError, OverflowError):
+                    except (ValueError, OSError, OverflowError) as e:
+                        logger.error("Error in data_inspector: %s", e)
                         return f"Invalid timestamp: {timestamp}"
 
             elif data_type == DataType.UNIX_TIMESTAMP_64:
@@ -258,7 +263,8 @@ class DataInterpreter:
                             timestamp = timestamp / 1000
                         dt = datetime.datetime.fromtimestamp(timestamp)
                         return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
-                    except (ValueError, OSError, OverflowError):
+                    except (ValueError, OSError, OverflowError) as e:
+                        logger.error("Error in data_inspector: %s", e)
                         return f"Invalid timestamp: {timestamp}"
 
             elif data_type == DataType.WINDOWS_FILETIME:
@@ -269,7 +275,8 @@ class DataInterpreter:
                         timestamp = (filetime - 116444736000000000) / 10000000
                         dt = datetime.datetime.fromtimestamp(timestamp)
                         return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
-                    except (ValueError, OSError, OverflowError):
+                    except (ValueError, OSError, OverflowError) as e:
+                        logger.error("Error in data_inspector: %s", e)
                         return f"Invalid FILETIME: {filetime}"
 
             elif data_type == DataType.DOS_DATETIME:
@@ -287,7 +294,8 @@ class DataInterpreter:
 
                         dt = datetime.datetime(year, month, day, hour, minute, second)
                         return dt.strftime("%Y-%m-%d %H:%M:%S")
-                    except (ValueError, OSError):
+                    except (ValueError, OSError) as e:
+                        logger.error("Error in data_inspector: %s", e)
                         return f"Invalid DOS datetime: {dos_date:04X} {dos_time:04X}"
 
             elif data_type == DataType.BINARY:

@@ -1,3 +1,32 @@
+import json
+from datetime import datetime
+
+from PyQt5.QtCore import Qt, pyqtSignal
+
+# Import missing class
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QFileDialog,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QTextEdit,
+    QVBoxLayout,
+    QWizard,
+    QWizardPage,
+)
+
+from intellicrack.logger import logger
+
 """
 Plugin Creation Wizard for Intellicrack.
 
@@ -17,28 +46,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import json
-from datetime import datetime
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QFileDialog,
-    QFormLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QListWidget,
-    QListWidgetItem,
-    QMessageBox,
-    QPushButton,
-    QTextEdit,
-    QVBoxLayout,
-    QWizard,
-    QWizardPage,
-)
 
 
 class PluginCreationWizard(QWizard):
@@ -148,6 +156,7 @@ class {info['name'].replace(' ', '')}Plugin:
             {self._generate_feature_code(features)}
 
         except Exception as e:
+            self.logger.error("Exception in plugin_creation_wizard: %s", e)
             results['status'] = 'error'
             results['error'] = str(e)
 
@@ -367,6 +376,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
                 return True
 
             except Exception as e:
+                logger.error("Exception in plugin_creation_wizard: %s", e)
                 QMessageBox.critical(
                     self,
                     "Error",
@@ -663,6 +673,7 @@ class CodeGenerationPage(QWizardPage):
                     "Python syntax is valid!"
                 )
         except SyntaxError as e:
+            logger.error("SyntaxError in plugin_creation_wizard: %s", e)
             QMessageBox.warning(
                 self,
                 "Syntax Error",
@@ -707,8 +718,3 @@ class SummaryPage(QWizardPage):
 <pre>{code[:500]}...</pre></p>
 """
         self.summary_text.setHtml(summary)
-
-
-# Import missing class
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication

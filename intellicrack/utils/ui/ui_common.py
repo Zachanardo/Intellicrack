@@ -8,6 +8,8 @@ import os
 import webbrowser
 from typing import Any, Callable, List, Optional, Tuple
 
+from intellicrack.logger import logger
+
 try:
     from PyQt5.QtWidgets import (
         QFileDialog,
@@ -19,7 +21,8 @@ try:
         QPushButton,
     )
     HAS_PYQT = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in ui_common: %s", e)
     HAS_PYQT = False
     QMessageBox = None
     QFileDialog = None
@@ -56,6 +59,7 @@ def ask_open_report(parent: Any, report_path: str) -> bool:
             webbrowser.open(f"file://{os.path.abspath(report_path)}")
             return True
     except Exception as e:
+        logger.error("Exception in ui_common: %s", e)
         # Log the error for debugging UI or file opening issues
         print(f"Error opening report dialog or file: {e}")
         return False
@@ -92,6 +96,7 @@ def get_save_filename(parent: Any, caption: str = "Save File",
 
         return filename
     except Exception as e:
+        logger.error("Exception in ui_common: %s", e)
         # Log the error for debugging Qt dialog issues
         print(f"Error opening save file dialog: {e}")
         return None

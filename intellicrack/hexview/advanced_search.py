@@ -27,8 +27,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from PyQt5.QtCore import QThread
-
 from ..ui.common_imports import (
     PYQT5_AVAILABLE,
     QButtonGroup,
@@ -853,6 +851,7 @@ class AdvancedSearchDialog(QDialog if PYQT5_AVAILABLE else object):
                     self.search_status_label.setText("Pattern not found")
 
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in advanced_search: %s", e)
                 self.search_status_label.setText(f"Search error: {e}")
 
     def find_previous(self):
@@ -881,6 +880,7 @@ class AdvancedSearchDialog(QDialog if PYQT5_AVAILABLE else object):
                     self.search_status_label.setText("Pattern not found")
 
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in advanced_search: %s", e)
                 self.search_status_label.setText(f"Search error: {e}")
 
     def replace_current(self):
@@ -909,6 +909,7 @@ class AdvancedSearchDialog(QDialog if PYQT5_AVAILABLE else object):
                 self.replace_status_label.setText(f"Replaced {len(replaced_ranges)} occurrences")
 
             except (OSError, ValueError, RuntimeError) as e:
+                self.logger.error("Error in advanced_search: %s", e)
                 self.replace_status_label.setText(f"Replace error: {e}")
 
     def find_all(self):

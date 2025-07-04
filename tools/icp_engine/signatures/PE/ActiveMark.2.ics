@@ -1,0 +1,14 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("protector", "ActiveMARK");
+
+function detect() {
+    if (PE.compareEP("8925........EB")) {
+        bDetected = true;
+    } else if (PE.compareOverlay("00'TMSAMVOH'")) {
+        sVersion = "5.X";
+        bDetected = true;
+    }
+
+    return result();
+}

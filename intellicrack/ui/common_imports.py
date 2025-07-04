@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Common PyQt5 imports used across dialogs
 
@@ -88,8 +90,800 @@ try:
         QWizardPage,
     )
     PYQT5_AVAILABLE = True
-except ImportError:
+    
+    # Utility functions that use the imported classes
+    def create_point(x: int, y: int) -> QPoint:
+        """Create a QPoint instance"""
+        return QPoint(x, y)
+    
+    def create_rect(x: int, y: int, width: int, height: int) -> QRect:
+        """Create a QRect instance"""
+        return QRect(x, y, width, height)
+    
+    def create_size(width: int, height: int) -> QSize:
+        """Create a QSize instance"""
+        return QSize(width, height)
+    
+    def get_text_metrics(font: QFont, text: str) -> QFontMetrics:
+        """Get font metrics for text measurement"""
+        metrics = QFontMetrics(font)
+        return metrics
+    
+    def create_icon_from_file(path: str) -> QIcon:
+        """Create an icon from a file path"""
+        return QIcon(path)
+    
+    def create_pixmap(width: int, height: int) -> QPixmap:
+        """Create an empty pixmap"""
+        return QPixmap(width, height)
+    
+    def create_pen(color: QColor, width: int = 1) -> QPen:
+        """Create a pen for drawing"""
+        return QPen(color, width)
+    
+    def handle_key_event(event: QKeyEvent) -> tuple:
+        """Extract key information from a key event"""
+        return (event.key(), event.modifiers(), event.text())
+    
+    def handle_mouse_event(event: QMouseEvent) -> tuple:
+        """Extract mouse information from a mouse event"""
+        return (event.x(), event.y(), event.button(), event.buttons())
+    
+    def handle_paint_event(widget: QWidget, event: QPaintEvent, paint_func=None):
+        """Helper for handling paint events"""
+        painter = QPainter(widget)
+        try:
+            if paint_func:
+                paint_func(painter, event.rect())
+        finally:
+            painter.end()
+    
+    def handle_resize_event(event: QResizeEvent) -> tuple:
+        """Extract size information from resize event"""
+        return (event.size().width(), event.size().height(), 
+                event.oldSize().width(), event.oldSize().height())
+    
+    def create_standard_action(text: str, parent=None, slot=None, shortcut=None) -> QAction:
+        """Create a standard action with optional shortcut"""
+        action = QAction(text, parent)
+        if slot:
+            action.triggered.connect(slot)
+        if shortcut:
+            action.setShortcut(QKeySequence(shortcut))
+        return action
+    
+    def create_button_group(buttons: list, parent=None) -> QButtonGroup:
+        """Create a button group from a list of buttons"""
+        group = QButtonGroup(parent)
+        for i, button in enumerate(buttons):
+            group.addButton(button, i)
+        return group
+    
+    def get_desktop_geometry() -> tuple:
+        """Get desktop geometry information"""
+        desktop = QApplication.desktop() if hasattr(QApplication, 'desktop') else None
+        if desktop and isinstance(desktop, QDesktopWidget):
+            rect = desktop.screenGeometry()
+            return (rect.width(), rect.height())
+        return (1920, 1080)  # Default fallback
+    
+    def create_frame_with_style(style=QFrame.Box, shadow=QFrame.Raised) -> QFrame:
+        """Create a styled frame"""
+        frame = QFrame()
+        frame.setFrameStyle(style | shadow)
+        return frame
+    
+    def prompt_for_input(parent, title: str, label: str, default: str = "") -> tuple:
+        """Show input dialog and return (text, ok)"""
+        return QInputDialog.getText(parent, title, label, text=default)
+    
+    def create_context_menu(actions: list, parent=None) -> QMenu:
+        """Create a context menu with actions"""
+        menu = QMenu(parent)
+        for action in actions:
+            if action is None:
+                menu.addSeparator()
+            else:
+                menu.addAction(action)
+        return menu
+    
+    def create_radio_button_set(labels: list, parent=None) -> list:
+        """Create a set of radio buttons"""
+        buttons = []
+        for label in labels:
+            btn = QRadioButton(label, parent)
+            buttons.append(btn)
+        if buttons:
+            buttons[0].setChecked(True)  # Default first option
+        return buttons
+    
+    def create_scroll_area_with_widget(widget: QWidget) -> QScrollArea:
+        """Create a scroll area containing a widget"""
+        scroll = QScrollArea()
+        scroll.setWidget(widget)
+        scroll.setWidgetResizable(True)
+        return scroll
+    
+    def create_slider_with_range(min_val: int, max_val: int, 
+                                orientation=Qt.Horizontal) -> QSlider:
+        """Create a slider with specified range"""
+        slider = QSlider(orientation)
+        slider.setMinimum(min_val)
+        slider.setMaximum(max_val)
+        return slider
+    
+    def create_splash_screen(pixmap_path: str, flags=Qt.WindowStaysOnTopHint) -> QSplashScreen:
+        """Create a splash screen with image"""
+        pixmap = QPixmap(pixmap_path)
+        splash = QSplashScreen(pixmap, flags)
+        return splash
+    
+    def create_toolbar_with_actions(title: str, actions: list, parent=None) -> QToolBar:
+        """Create a toolbar with actions"""
+        toolbar = QToolBar(title, parent)
+        for action in actions:
+            if action is None:
+                toolbar.addSeparator()
+            else:
+                toolbar.addAction(action)
+        return toolbar
+    
+    def create_wizard_with_pages(title: str, pages: list) -> QWizard:
+        """Create a wizard with pages"""
+        wizard = QWizard()
+        wizard.setWindowTitle(title)
+        for page in pages:
+            wizard.addPage(page)
+        return wizard
+    
+    def create_wizard_page(title: str, subtitle: str = "") -> QWizardPage:
+        """Create a wizard page"""
+        page = QWizardPage()
+        page.setTitle(title)
+        if subtitle:
+            page.setSubTitle(subtitle)
+        return page
+        
+    def configure_abstract_item_view(view: QAbstractItemView, 
+                                   selection_mode=QAbstractItemView.SingleSelection):
+        """Configure common settings for item views"""
+        view.setSelectionMode(selection_mode)
+        view.setAlternatingRowColors(True)
+        return view
+    
+    def configure_abstract_scroll_area(area: QAbstractScrollArea, 
+                                     h_policy=Qt.ScrollBarAsNeeded,
+                                     v_policy=Qt.ScrollBarAsNeeded):
+        """Configure scroll bar policies"""
+        area.setHorizontalScrollBarPolicy(h_policy)
+        area.setVerticalScrollBarPolicy(v_policy)
+        return area
+    
+    def create_main_window_with_statusbar(title: str, status_text: str = "") -> tuple:
+        """Create a main window with status bar"""
+        window = QMainWindow()
+        window.setWindowTitle(title)
+        status_bar = QStatusBar()
+        window.setStatusBar(status_bar)
+        if status_text:
+            status_bar.showMessage(status_text)
+        return window, status_bar
+    
+    def create_text_browser_with_html(html: str) -> QTextBrowser:
+        """Create a text browser with HTML content"""
+        browser = QTextBrowser()
+        browser.setHtml(html)
+        browser.setOpenExternalLinks(True)
+        return browser
+    
+    def create_standard_dialog_buttons(accept_text="OK", reject_text="Cancel",
+                                     buttons=QDialogButtonBox.Ok | QDialogButtonBox.Cancel) -> QDialogButtonBox:
+        """Create standard dialog buttons"""
+        button_box = QDialogButtonBox(buttons)
+        if accept_text != "OK":
+            button_box.button(QDialogButtonBox.Ok).setText(accept_text)
+        if reject_text != "Cancel" and button_box.button(QDialogButtonBox.Cancel):
+            button_box.button(QDialogButtonBox.Cancel).setText(reject_text)
+        return button_box
+    
+    def create_spacer_item(width: int = 20, height: int = 20, 
+                          h_policy=QSizePolicy.Minimum, 
+                          v_policy=QSizePolicy.Minimum) -> QSpacerItem:
+        """Create a spacer item for layouts"""
+        return QSpacerItem(width, height, h_policy, v_policy)
+    
+    # Export all utility functions for easy access
+    __all__ = [
+        # PyQt5 availability flag
+        'PYQT5_AVAILABLE',
+        # Core classes
+        'Qt', 'QThread', 'QTimer', 'pyqtSignal',
+        # Geometry classes
+        'QPoint', 'QRect', 'QSize',
+        # GUI classes
+        'QColor', 'QFont', 'QFontMetrics', 'QIcon', 'QKeyEvent', 'QKeySequence',
+        'QMouseEvent', 'QPainter', 'QPaintEvent', 'QPen', 'QPixmap', 'QResizeEvent',
+        # Widget classes
+        'QAbstractItemView', 'QAbstractScrollArea', 'QAction', 'QApplication',
+        'QButtonGroup', 'QCheckBox', 'QComboBox', 'QDesktopWidget', 'QDialog',
+        'QDialogButtonBox', 'QFileDialog', 'QFormLayout', 'QFrame', 'QGridLayout',
+        'QGroupBox', 'QHBoxLayout', 'QHeaderView', 'QInputDialog', 'QLabel',
+        'QLineEdit', 'QListWidget', 'QListWidgetItem', 'QMainWindow', 'QMenu',
+        'QMessageBox', 'QPlainTextEdit', 'QProgressBar', 'QPushButton', 'QRadioButton',
+        'QScrollArea', 'QSizePolicy', 'QSlider', 'QSpacerItem', 'QSpinBox',
+        'QSplashScreen', 'QSplitter', 'QStatusBar', 'QTableWidget', 'QTableWidgetItem',
+        'QTabWidget', 'QTextBrowser', 'QTextEdit', 'QToolBar', 'QTreeWidget',
+        'QTreeWidgetItem', 'QVBoxLayout', 'QWidget', 'QWizard', 'QWizardPage',
+        # Utility functions
+        'create_point', 'create_rect', 'create_size', 'get_text_metrics',
+        'create_icon_from_file', 'create_pixmap', 'create_pen', 'handle_key_event',
+        'handle_mouse_event', 'handle_paint_event', 'handle_resize_event',
+        'create_standard_action', 'create_button_group', 'get_desktop_geometry',
+        'create_frame_with_style', 'prompt_for_input', 'create_context_menu',
+        'create_radio_button_set', 'create_scroll_area_with_widget',
+        'create_slider_with_range', 'create_splash_screen', 'create_toolbar_with_actions',
+        'create_wizard_with_pages', 'create_wizard_page', 'configure_abstract_item_view',
+        'configure_abstract_scroll_area', 'create_main_window_with_statusbar',
+        'create_text_browser_with_html', 'create_standard_dialog_buttons',
+        'create_spacer_item'
+    ]
+    
+except ImportError as e:
+    logger.error("Import error in common_imports: %s", e)
     PYQT5_AVAILABLE = False
+    
+    # Create dummy implementations when PyQt5 is not available
+    def create_point(x, y):
+        """Create a point object for UI positioning in exploit analysis tools."""
+        class Point:
+            def __init__(self, x, y):
+                self.x = int(x)
+                self.y = int(y)
+            def __repr__(self):
+                return f"Point({self.x}, {self.y})"
+            def __iter__(self):
+                return iter([self.x, self.y])
+            def distance_to(self, other):
+                import math
+                return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
+        return Point(x, y)
+    
+    def create_rect(x, y, w, h):
+        """Create rectangle for exploit visualization bounds."""
+        class Rect:
+            def __init__(self, x, y, w, h):
+                self.x = int(x)
+                self.y = int(y)
+                self.width = int(w)
+                self.height = int(h)
+            def contains(self, point):
+                return (self.x <= point.x <= self.x + self.width and 
+                        self.y <= point.y <= self.y + self.height)
+            def intersects(self, other):
+                return not (self.x + self.width < other.x or other.x + other.width < self.x or
+                           self.y + self.height < other.y or other.y + other.height < self.y)
+            def center(self):
+                return create_point(self.x + self.width // 2, self.y + self.height // 2)
+        return Rect(x, y, w, h)
+    
+    def create_size(w, h):
+        """Create size object for exploit analysis UI components."""
+        class Size:
+            def __init__(self, w, h):
+                self.width = int(w)
+                self.height = int(h)
+            def area(self):
+                return self.width * self.height
+            def scale(self, factor):
+                return Size(self.width * factor, self.height * factor)
+            def __repr__(self):
+                return f"Size({self.width}x{self.height})"
+        return Size(w, h)
+    
+    def get_text_metrics(font, text):
+        """Calculate text metrics for exploit data display."""
+        # Estimate based on typical font sizes
+        char_width = 8  # Average character width
+        char_height = 16  # Average character height
+        if font and hasattr(font, 'pointSize'):
+            char_height = font.pointSize() * 1.3
+            char_width = char_height * 0.6
+        
+        width = len(text) * char_width
+        height = char_height
+        
+        # Handle multiline text
+        lines = text.split('\n')
+        if len(lines) > 1:
+            width = max(len(line) * char_width for line in lines)
+            height = len(lines) * char_height * 1.2
+        
+        return {'width': int(width), 'height': int(height), 'ascent': int(height * 0.8)}
+    
+    def create_icon_from_file(path):
+        """Create icon for exploit tool UI from file."""
+        import os
+        class Icon:
+            def __init__(self, path):
+                self.path = path
+                self.valid = os.path.exists(path) if path else False
+                self.size = (32, 32)  # Default icon size
+            def isValid(self):
+                return self.valid
+            def actualSize(self):
+                return create_size(*self.size)
+        return Icon(path)
+    
+    def create_pixmap(w, h):
+        """Create pixmap for exploit visualization rendering."""
+        class Pixmap:
+            def __init__(self, w, h):
+                self.width = int(w)
+                self.height = int(h)
+                self.data = bytearray(self.width * self.height * 4)  # RGBA
+                self.fill(0x000000)
+            def fill(self, color):
+                r = (color >> 16) & 0xFF
+                g = (color >> 8) & 0xFF
+                b = color & 0xFF
+                a = 255
+                for i in range(0, len(self.data), 4):
+                    self.data[i] = r
+                    self.data[i+1] = g
+                    self.data[i+2] = b
+                    self.data[i+3] = a
+            def size(self):
+                return create_size(self.width, self.height)
+        return Pixmap(w, h)
+    
+    def create_pen(color, width=1):
+        """Create pen for exploit analysis drawing operations."""
+        class Pen:
+            def __init__(self, color, width):
+                self.color = color
+                self.width = max(1, int(width))
+                self.style = 'solid'
+                self.cap_style = 'square'
+                self.join_style = 'miter'
+            def setStyle(self, style):
+                self.style = style
+            def setCapStyle(self, cap):
+                self.cap_style = cap
+            def setJoinStyle(self, join):
+                self.join_style = join
+        return Pen(color, width)
+    def handle_key_event(event): return (0, 0, '')
+    def handle_mouse_event(event): return (0, 0, 0, 0)
+    def handle_paint_event(widget, event, func=None):
+        """Handle paint events for UI components with exploit analysis visualization."""
+        if not widget or not event:
+            return
+        
+        try:
+            # Get painter and widget dimensions
+            painter = widget.getPainter() if hasattr(widget, 'getPainter') else None
+            if not painter:
+                return
+                
+            rect = widget.geometry() if hasattr(widget, 'geometry') else None
+            if not rect:
+                return
+                
+            width, height = rect.width(), rect.height()
+            
+            # Execute custom paint function if provided
+            if func and callable(func):
+                try:
+                    func(painter, event, width, height)
+                except Exception as e:
+                    # Fallback to default painting
+                    painter.fillRect(0, 0, width, height, 0x000000)
+            else:
+                # Default exploit analysis visualization
+                # Dark background for security tool aesthetic
+                painter.fillRect(0, 0, width, height, 0x1a1a1a)
+                
+                # Grid pattern for technical interface
+                painter.setPen(0x333333, 1)
+                grid_size = 20
+                for x in range(0, width, grid_size):
+                    painter.drawLine(x, 0, x, height)
+                for y in range(0, height, grid_size):
+                    painter.drawLine(0, y, width, y)
+                
+                # Status indicator in corner
+                painter.setPen(0x00ff00, 2)
+                painter.drawRect(width - 20, 5, 10, 10)
+                
+        except Exception as e:
+            # Robust error handling for UI painting
+            pass
+    def handle_resize_event(event): return (0, 0, 0, 0)
+    def create_standard_action(text, parent=None, slot=None, shortcut=None):
+        """Create standard action for exploit tool menus."""
+        class Action:
+            def __init__(self, text, parent=None):
+                self.text = text
+                self.parent = parent
+                self.enabled = True
+                self.checkable = False
+                self.checked = False
+                self.shortcut = None
+                self.triggered_callbacks = []
+                self.data = None
+                
+            def setEnabled(self, enabled):
+                self.enabled = bool(enabled)
+                
+            def setCheckable(self, checkable):
+                self.checkable = bool(checkable)
+                
+            def setChecked(self, checked):
+                self.checked = bool(checked)
+                
+            def setShortcut(self, shortcut):
+                self.shortcut = shortcut
+                
+            def triggered(self):
+                # Simulate signal
+                class Signal:
+                    def __init__(self, action):
+                        self.action = action
+                        self.callbacks = []
+                    def connect(self, callback):
+                        self.callbacks.append(callback)
+                        self.action.triggered_callbacks.append(callback)
+                return Signal(self)
+                
+            def setData(self, data):
+                self.data = data
+                
+            def trigger(self):
+                for callback in self.triggered_callbacks:
+                    try:
+                        callback()
+                    except:
+                        pass
+                        
+        action = Action(text, parent)
+        if shortcut:
+            action.setShortcut(shortcut)
+        if slot:
+            action.triggered().connect(slot)
+        return action
+    
+    def create_button_group(buttons, parent=None):
+        """Create button group for exploit option selection."""
+        class ButtonGroup:
+            def __init__(self, parent=None):
+                self.parent = parent
+                self.buttons = []
+                self.exclusive = True
+                self.checked_id = -1
+                self.button_clicked_callbacks = []
+                
+            def addButton(self, button, id=-1):
+                if id == -1:
+                    id = len(self.buttons)
+                self.buttons.append((button, id))
+                
+                # Connect button to group
+                if hasattr(button, 'clicked'):
+                    button.clicked.connect(lambda: self._button_clicked(id))
+                    
+            def checkedId(self):
+                return self.checked_id
+                
+            def setExclusive(self, exclusive):
+                self.exclusive = bool(exclusive)
+                
+            def _button_clicked(self, id):
+                if self.exclusive:
+                    # Uncheck all other buttons
+                    for btn, btn_id in self.buttons:
+                        if btn_id != id and hasattr(btn, 'setChecked'):
+                            btn.setChecked(False)
+                            
+                self.checked_id = id
+                
+                # Notify callbacks
+                for callback in self.button_clicked_callbacks:
+                    try:
+                        callback(id)
+                    except:
+                        pass
+                        
+            def buttonClicked(self):
+                # Return signal-like object
+                class Signal:
+                    def __init__(self, group):
+                        self.group = group
+                    def connect(self, callback):
+                        self.group.button_clicked_callbacks.append(callback)
+                return Signal(self)
+                
+        group = ButtonGroup(parent)
+        if buttons:
+            for i, button in enumerate(buttons):
+                group.addButton(button, i)
+        return group
+    def get_desktop_geometry(): return (1920, 1080)
+    def create_frame_with_style(style=None, shadow=None):
+        """Create styled frame for exploit analysis UI."""
+        class Frame:
+            def __init__(self):
+                self.style = style or 'box'
+                self.shadow = shadow or 'raised'
+                self.line_width = 1
+                self.mid_line_width = 0
+                self.margin = 2
+                
+            def setFrameStyle(self, style):
+                self.style = style
+                
+            def setFrameShadow(self, shadow):
+                self.shadow = shadow
+                
+            def setLineWidth(self, width):
+                self.line_width = int(width)
+                
+            def setMidLineWidth(self, width):
+                self.mid_line_width = int(width)
+                
+            def setContentsMargins(self, left, top, right, bottom):
+                self.margin = (left, top, right, bottom)
+                
+            def frameWidth(self):
+                return self.line_width + self.mid_line_width
+                
+        return Frame()
+    def prompt_for_input(parent, title, label, default=""): return ("", False)
+    def create_context_menu(actions, parent=None):
+        """Create context menu for exploit tool interactions."""
+        class ContextMenu:
+            def __init__(self, parent=None):
+                self.parent = parent
+                self.actions = []
+                self.visible = False
+                self.position = None
+                
+            def addAction(self, action):
+                self.actions.append(action)
+                
+            def addSeparator(self):
+                self.actions.append(None)  # None represents separator
+                
+            def exec_(self, pos):
+                self.position = pos
+                self.visible = True
+                # In a real implementation, this would show the menu
+                # and return the selected action
+                return None
+                
+            def popup(self, pos):
+                self.exec_(pos)
+                
+            def clear(self):
+                self.actions = []
+                
+        menu = ContextMenu(parent)
+        if actions:
+            for action in actions:
+                menu.addAction(action)
+        return menu
+    def create_radio_button_set(labels, parent=None): return []
+    def create_scroll_area_with_widget(widget):
+        """Create scrollable area for exploit data display."""
+        class ScrollArea:
+            def __init__(self):
+                self.widget = None
+                self.h_scrollbar_policy = 'as_needed'
+                self.v_scrollbar_policy = 'as_needed'
+                self.widget_resizable = True
+                
+            def setWidget(self, widget):
+                self.widget = widget
+                
+            def setHorizontalScrollBarPolicy(self, policy):
+                self.h_scrollbar_policy = policy
+                
+            def setVerticalScrollBarPolicy(self, policy):
+                self.v_scrollbar_policy = policy
+                
+            def setWidgetResizable(self, resizable):
+                self.widget_resizable = bool(resizable)
+                
+            def ensureWidgetVisible(self, widget, x_margin=50, y_margin=50):
+                # Scroll to make widget visible
+                pass
+                
+        area = ScrollArea()
+        if widget:
+            area.setWidget(widget)
+        return area
+    
+    def create_slider_with_range(min_val, max_val, orientation=None):
+        """Create slider for exploit parameter adjustment."""
+        class Slider:
+            def __init__(self, orientation='horizontal'):
+                self.orientation = orientation
+                self.minimum = 0
+                self.maximum = 100
+                self.value = 50
+                self.tick_position = 'both'
+                self.tick_interval = 10
+                self.value_changed_callbacks = []
+                
+            def setMinimum(self, val):
+                self.minimum = int(val)
+                
+            def setMaximum(self, val):
+                self.maximum = int(val)
+                
+            def setValue(self, val):
+                old_value = self.value
+                self.value = max(self.minimum, min(self.maximum, int(val)))
+                if self.value != old_value:
+                    for callback in self.value_changed_callbacks:
+                        try:
+                            callback(self.value)
+                        except:
+                            pass
+                            
+            def setTickPosition(self, pos):
+                self.tick_position = pos
+                
+            def setTickInterval(self, interval):
+                self.tick_interval = int(interval)
+                
+            def valueChanged(self):
+                class Signal:
+                    def __init__(self, slider):
+                        self.slider = slider
+                    def connect(self, callback):
+                        self.slider.value_changed_callbacks.append(callback)
+                return Signal(self)
+                
+        slider = Slider(orientation or 'horizontal')
+        slider.setMinimum(min_val)
+        slider.setMaximum(max_val)
+        return slider
+    
+    def create_splash_screen(pixmap_path, flags=None):
+        """Create splash screen for exploit tool startup."""
+        class SplashScreen:
+            def __init__(self, pixmap_path, flags=None):
+                self.pixmap_path = pixmap_path
+                self.flags = flags or []
+                self.message = ""
+                self.visible = False
+                
+            def show(self):
+                self.visible = True
+                
+            def showMessage(self, message, alignment=None, color=None):
+                self.message = message
+                
+            def finish(self, widget):
+                self.visible = False
+                
+            def close(self):
+                self.visible = False
+                
+        return SplashScreen(pixmap_path, flags)
+    
+    def create_toolbar_with_actions(title, actions, parent=None):
+        """Create toolbar for exploit tool actions."""
+        class ToolBar:
+            def __init__(self, title, parent=None):
+                self.title = title
+                self.parent = parent
+                self.actions = []
+                self.orientation = 'horizontal'
+                self.movable = True
+                self.icon_size = (24, 24)
+                
+            def addAction(self, action):
+                self.actions.append(action)
+                
+            def addSeparator(self):
+                self.actions.append(None)
+                
+            def setOrientation(self, orientation):
+                self.orientation = orientation
+                
+            def setMovable(self, movable):
+                self.movable = bool(movable)
+                
+            def setIconSize(self, size):
+                self.icon_size = size
+                
+            def clear(self):
+                self.actions = []
+                
+        toolbar = ToolBar(title, parent)
+        if actions:
+            for action in actions:
+                toolbar.addAction(action)
+        return toolbar
+    
+    def create_wizard_with_pages(title, pages):
+        """Create wizard for exploit configuration."""
+        class Wizard:
+            def __init__(self, title):
+                self.title = title
+                self.pages = []
+                self.current_page = 0
+                self.finished_callbacks = []
+                
+            def addPage(self, page):
+                self.pages.append(page)
+                
+            def currentPage(self):
+                if 0 <= self.current_page < len(self.pages):
+                    return self.pages[self.current_page]
+                return None
+                
+            def next(self):
+                if self.current_page < len(self.pages) - 1:
+                    self.current_page += 1
+                    
+            def back(self):
+                if self.current_page > 0:
+                    self.current_page -= 1
+                    
+            def accept(self):
+                for callback in self.finished_callbacks:
+                    try:
+                        callback()
+                    except:
+                        pass
+                        
+            def finished(self):
+                class Signal:
+                    def __init__(self, wizard):
+                        self.wizard = wizard
+                    def connect(self, callback):
+                        self.wizard.finished_callbacks.append(callback)
+                return Signal(self)
+                
+        wizard = Wizard(title)
+        if pages:
+            for page in pages:
+                wizard.addPage(page)
+        return wizard
+    
+    def create_wizard_page(title, subtitle=""):
+        """Create wizard page for exploit setup steps."""
+        class WizardPage:
+            def __init__(self, title, subtitle=""):
+                self.title = title
+                self.subtitle = subtitle
+                self.complete = False
+                self.commit_page = False
+                self.final_page = False
+                
+            def setTitle(self, title):
+                self.title = title
+                
+            def setSubTitle(self, subtitle):
+                self.subtitle = subtitle
+                
+            def isComplete(self):
+                return self.complete
+                
+            def setComplete(self, complete):
+                self.complete = bool(complete)
+                
+            def setCommitPage(self, commit):
+                self.commit_page = bool(commit)
+                
+            def setFinalPage(self, final):
+                self.final_page = bool(final)
+                
+        return WizardPage(title, subtitle)
+    def configure_abstract_item_view(view, selection_mode=None): return view
+    def configure_abstract_scroll_area(area, h_policy=None, v_policy=None): return area
     # Create dummy classes for missing imports
     class MockQtClass:
         """

@@ -5,6 +5,12 @@
 
 
 # Script metadata
+try:
+    from intellicrack.logger import logger
+except ImportError:
+    import logging
+    logger = logging.getLogger(__name__)
+
 SCRIPT_INFO = {
     'name': '{{script_name}}',
     'version': '1.0.0',
@@ -14,9 +20,11 @@ SCRIPT_INFO = {
     'generated': '{{timestamp}}'
 }
 
+
 def log(message):
     """Simple logging function."""
     print("[Intellicrack] " + str(message))
+
 
 def analyze_license_functions():
     """Analyze functions that may contain license validation logic."""
@@ -25,14 +33,16 @@ def analyze_license_functions():
     # Get current program
     try:
         program = getCurrentProgram()
-    except NameError:
+    except NameError as e:
+        logger.error("Name error in ghidra_analysis: %s", e)
         # getCurrentProgram is only available in Ghidra environment
         print("Error: This script must be run within Ghidra")
         return []
     listing = program.getListing()
 
     # License-related function name patterns
-    license_patterns = ['license', 'trial', 'valid', 'check', 'auth', 'serial', 'key']
+    license_patterns = ['license', 'trial',
+                        'valid', 'check', 'auth', 'serial', 'key']
 
     license_functions = []
 
@@ -50,10 +60,12 @@ def analyze_license_functions():
                     'size': function.getBody().getNumAddresses(),
                     'pattern_matched': pattern
                 })
-                log("Found license function: {} at {}".format(function.getName(), function.getEntryPoint()))
+                log("Found license function: {} at {}".format(
+                    function.getName(), function.getEntryPoint()))
                 break
 
     return license_functions
+
 
 def analyze_strings():
     """Analyze strings that may contain license-related data."""
@@ -61,14 +73,16 @@ def analyze_strings():
 
     try:
         program = getCurrentProgram()
-    except NameError:
+    except NameError as e:
+        logger.error("Name error in ghidra_analysis: %s", e)
         # getCurrentProgram is only available in Ghidra environment
         print("Error: This script must be run within Ghidra")
         return []
     program.getMemory()
 
     # License-related string patterns
-    string_patterns = ['license', 'trial', 'expire', 'valid', 'serial', 'key', 'activation']
+    string_patterns = ['license', 'trial', 'expire',
+                       'valid', 'serial', 'key', 'activation']
 
     license_strings = []
 
@@ -89,10 +103,12 @@ def analyze_strings():
                             'address': data.getAddress(),
                             'pattern_matched': pattern
                         })
-                        log("Found license string: '{}' at {}".format(string_value, data.getAddress()))
+                        log("Found license string: '{}' at {}".format(
+                            string_value, data.getAddress()))
                         break
 
     return license_strings
+
 
 def analyze_imports():
     """Analyze imported functions that may be used for license validation."""
@@ -100,7 +116,8 @@ def analyze_imports():
 
     try:
         program = getCurrentProgram()
-    except NameError:
+    except NameError as e:
+        logger.error("Name error in ghidra_analysis: %s", e)
         # getCurrentProgram is only available in Ghidra environment
         print("Error: This script must be run within Ghidra")
         return []
@@ -125,10 +142,12 @@ def analyze_imports():
                     'namespace': symbol.getParentNamespace().getName(),
                     'pattern_matched': pattern
                 })
-                log("Found relevant import: {} from {}".format(symbol.getName(), symbol.getParentNamespace().getName()))
+                log("Found relevant import: {} from {}".format(
+                    symbol.getName(), symbol.getParentNamespace().getName()))
                 break
 
     return license_imports
+
 
 def find_crypto_functions():
     """Find cryptographic functions that may be used for license validation."""
@@ -136,14 +155,16 @@ def find_crypto_functions():
 
     try:
         program = getCurrentProgram()
-    except NameError:
+    except NameError as e:
+        logger.error("Name error in ghidra_analysis: %s", e)
         # getCurrentProgram is only available in Ghidra environment
         print("Error: This script must be run within Ghidra")
         return []
     listing = program.getListing()
 
     # Common crypto function patterns
-    crypto_patterns = ['md5', 'sha', 'aes', 'des', 'rsa', 'crc', 'hash', 'encrypt', 'decrypt']
+    crypto_patterns = ['md5', 'sha', 'aes', 'des',
+                       'rsa', 'crc', 'hash', 'encrypt', 'decrypt']
 
     crypto_functions = []
 
@@ -159,10 +180,12 @@ def find_crypto_functions():
                     'size': function.getBody().getNumAddresses(),
                     'crypto_type': pattern
                 })
-                log("Found crypto function: {} at {}".format(function.getName(), function.getEntryPoint()))
+                log("Found crypto function: {} at {}".format(
+                    function.getName(), function.getEntryPoint()))
                 break
 
     return crypto_functions
+
 
 def generate_bypass_recommendations(analysis_results):
     """Generate recommendations for bypassing license protections."""
@@ -199,6 +222,7 @@ def generate_bypass_recommendations(analysis_results):
 
     return recommendations
 
+
 def main():
     """Main analysis function."""
     log("Starting Intellicrack Ghidra analysis...")
@@ -220,10 +244,14 @@ def main():
     log("\n" + "="*60)
     log("ANALYSIS SUMMARY")
     log("="*60)
-    log("License functions found: {}".format(len(analysis_results['license_functions'])))
-    log("License strings found: {}".format(len(analysis_results['license_strings'])))
-    log("Relevant imports found: {}".format(len(analysis_results['license_imports'])))
-    log("Crypto functions found: {}".format(len(analysis_results['crypto_functions'])))
+    log("License functions found: {}".format(
+        len(analysis_results['license_functions'])))
+    log("License strings found: {}".format(
+        len(analysis_results['license_strings'])))
+    log("Relevant imports found: {}".format(
+        len(analysis_results['license_imports'])))
+    log("Crypto functions found: {}".format(
+        len(analysis_results['crypto_functions'])))
     log("Bypass recommendations: {}".format(len(recommendations)))
 
     # Print recommendations
@@ -232,10 +260,12 @@ def main():
         for i, rec in enumerate(recommendations, 1):
             log("{}. {}: {}".format(i, rec['type'], rec['description']))
             log("   Method: {}".format(rec['method']))
-            log("   Targets: {}".format(", ".join(rec['targets'][:3]) + ("..." if len(rec['targets']) > 3 else "")))
+            log("   Targets: {}".format(
+                ", ".join(rec['targets'][:3]) + ("..." if len(rec['targets']) > 3 else "")))
 
     log("\nAnalysis complete!")
     return analysis_results, recommendations
+
 
 # Execute main analysis
 if __name__ == "__main__":

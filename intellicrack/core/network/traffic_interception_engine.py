@@ -1,3 +1,17 @@
+import logging
+import os
+import socket
+import struct
+import sys
+import threading
+import time
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
+from intellicrack.logger import logger
+
+from .base_network_analyzer import BaseNetworkAnalyzer
+
 """
 Traffic Interception Engine for Real License Server Communications
 
@@ -19,20 +33,12 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
-import os
-import socket
-import struct
-import sys
-import threading
-import time
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
 
 try:
     import scapy.all as scapy
     HAS_SCAPY = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in traffic_interception_engine: %s", e)
     HAS_SCAPY = False
 
 # Note: Removed pcap import - now using Scapy exclusively for packet capture
@@ -69,7 +75,6 @@ class AnalyzedTraffic:
     patterns_matched: List[str]
     analysis_metadata: Dict[str, Any]
 
-from .base_network_analyzer import BaseNetworkAnalyzer
 
 
 class TrafficInterceptionEngine(BaseNetworkAnalyzer):
@@ -365,7 +370,8 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 # Unix raw socket (requires root)
                 try:
                     sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
-                except (AttributeError, OSError):
+                except (AttributeError, OSError) as e:
+                    self.logger.error("Error in traffic_interception_engine: %s", e)
                     # Fallback to standard socket monitoring
                     self._monitor_local_connections()
                     return
@@ -377,7 +383,8 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                     raw_packet = sock.recv(65535)
                     self._parse_raw_packet(raw_packet)
 
-                except socket.timeout:
+                except socket.timeout as e:
+                    logger.error("socket.timeout in traffic_interception_engine: %s", e)
                     continue
                 except Exception as e:
                     if self.running:
@@ -420,7 +427,8 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
                         sock.close()
 
-                    except Exception:
+                    except Exception as e:
+                        logger.error("Exception in traffic_interception_engine: %s", e)
                         pass
 
                 time.sleep(1.0)

@@ -339,7 +339,8 @@ class FridaBypassWizard:
                     prot_type = ProtectionType(prot_type_str)
                     self.detected_protections[prot_type] = True
                     self.protection_evidence[prot_type] = evidence
-                except ValueError:
+                except ValueError as e:
+                    logger.error("Value error in frida_bypass_wizard: %s", e)
                     pass
 
             # If no protections detected, try common ones based on target

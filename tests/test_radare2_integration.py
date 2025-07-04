@@ -19,31 +19,45 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import unittest
-import tempfile
 import os
-import time
 import shutil
-from unittest.mock import patch, MagicMock
+import tempfile
+import time
+import unittest
+from unittest.mock import MagicMock, patch
 
 # Import modules to test
 try:
-    from intellicrack.utils.tools.radare2_utils import R2Session, R2Exception
-    from intellicrack.core.analysis.radare2_decompiler import R2DecompilationEngine
-    from intellicrack.core.analysis.radare2_esil import R2ESILEngine
-    from intellicrack.core.analysis.radare2_strings import R2StringAnalyzer
-    from intellicrack.core.analysis.radare2_signatures import R2SignatureAnalyzer
-    from intellicrack.core.analysis.radare2_imports import R2ImportAnalyzer
-    from intellicrack.core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
     from intellicrack.core.analysis.radare2_ai_integration import R2AIIntegration
-    from intellicrack.core.analysis.radare2_bypass_generator import R2BypassGenerator
     from intellicrack.core.analysis.radare2_binary_diff import R2BinaryDiff
-    from intellicrack.core.analysis.radare2_scripting import R2ScriptEngine
-    from intellicrack.core.analysis.radare2_json_standardizer import R2JSONStandardizer, standardize_r2_result
-    from intellicrack.core.analysis.radare2_error_handler import R2ErrorHandler, ErrorSeverity, RecoveryStrategy
-    from intellicrack.core.analysis.radare2_performance_optimizer import R2PerformanceOptimizer, OptimizationStrategy
-    from intellicrack.core.analysis.radare2_realtime_analyzer import R2RealtimeAnalyzer, UpdateMode, AnalysisEvent
+    from intellicrack.core.analysis.radare2_bypass_generator import R2BypassGenerator
+    from intellicrack.core.analysis.radare2_decompiler import R2DecompilationEngine
     from intellicrack.core.analysis.radare2_enhanced_integration import EnhancedR2Integration
+    from intellicrack.core.analysis.radare2_error_handler import (
+        ErrorSeverity,
+        R2ErrorHandler,
+        RecoveryStrategy,
+    )
+    from intellicrack.core.analysis.radare2_esil import R2ESILEngine
+    from intellicrack.core.analysis.radare2_imports import R2ImportAnalyzer
+    from intellicrack.core.analysis.radare2_json_standardizer import (
+        R2JSONStandardizer,
+        standardize_r2_result,
+    )
+    from intellicrack.core.analysis.radare2_performance_optimizer import (
+        OptimizationStrategy,
+        R2PerformanceOptimizer,
+    )
+    from intellicrack.core.analysis.radare2_realtime_analyzer import (
+        AnalysisEvent,
+        R2RealtimeAnalyzer,
+        UpdateMode,
+    )
+    from intellicrack.core.analysis.radare2_scripting import R2ScriptEngine
+    from intellicrack.core.analysis.radare2_signatures import R2SignatureAnalyzer
+    from intellicrack.core.analysis.radare2_strings import R2StringAnalyzer
+    from intellicrack.core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
+    from intellicrack.utils.tools.radare2_utils import R2Exception, R2Session
     MODULES_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Some modules not available for testing: {e}")

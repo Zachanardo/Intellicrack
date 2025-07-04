@@ -24,6 +24,7 @@ from typing import Any, Optional
 
 # Optional imports with graceful fallbacks
 from ..core.common_imports import HAS_PYQT
+from ..utils.logger import setup_logger
 
 if HAS_PYQT:
     from ..core.common_imports import (
@@ -58,18 +59,18 @@ else:
     QPushButton = QGroupBox = QTableWidget = QProgressBar = QTimer = MockQtClass
     QSpinBox = QSplitter = Qt = QPlainTextEdit = MockQtClass
 
+
+logger = setup_logger(__name__)
+
 try:
     import matplotlib
     matplotlib.use('Qt5Agg')
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
     HAS_MATPLOTLIB = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in ui_setup_functions: %s", e)
     HAS_MATPLOTLIB = False
-
-from ..utils.logger import setup_logger
-
-logger = setup_logger(__name__)
 
 
 def setup_dataset_tab(parent: Any) -> Optional[Any]:

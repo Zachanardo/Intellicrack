@@ -1,0 +1,1 @@
+/mnt/c/Intellicrack/intellicrack/plugins/frida_scripts/websocket_interceptor.js

@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import json
+import logging
 import os
 import time
 from dataclasses import dataclass
@@ -68,6 +69,7 @@ class ConfigManager:
         self.backup_dir = os.path.join(self.config_dir, "config_backups")
 
         self.console = Console() if RICH_AVAILABLE else None
+        self.logger = logging.getLogger(__name__)
 
         # Initialize configuration options
         self._init_config_options()
@@ -426,6 +428,40 @@ class ConfigManager:
         self.options[key].value = value
         return True
 
+    def update(self, updates: Dict[str, Any]) -> Dict[str, bool]:
+        """Update multiple configuration values at once.
+
+        Args:
+            updates: Dictionary of key-value pairs to update
+
+        Returns:
+            Dictionary mapping keys to success status
+        """
+        results = {}
+        
+        # First validate all updates
+        for key, value in updates.items():
+            if key not in self.options:
+                results[key] = False
+                self.logger.warning(f"Unknown configuration key: {key}")
+            elif not self._validate_value(key, value):
+                results[key] = False
+                self.logger.warning(f"Invalid value for {key}: {value}")
+            else:
+                results[key] = True
+        
+        # Apply valid updates
+        for key, value in updates.items():
+            if results.get(key, False):
+                self.config[key] = value
+                self.options[key].value = value
+        
+        # Save if any updates were successful
+        if any(results.values()):
+            self.save_config()
+        
+        return results
+
     def reset_to_defaults(self, category: Optional[str] = None):
         """Reset configuration to defaults.
 
@@ -510,10 +546,10 @@ class ConfigManager:
                 try:
                     os.remove(os.path.join(self.backup_dir, old_backup))
                 except OSError:
-                    pass
+                    self.logger.debug(f"Failed to remove old backup: {old_backup}")
 
-        except Exception:
-            pass  # Backup is optional
+        except Exception as e:
+            self.logger.debug(f"Failed to create config backup: {e}")
 
     def export_config(self, export_path: str, format_type: str = "json") -> bool:
         """Export configuration to file.
@@ -681,30 +717,6 @@ class ConfigManager:
                 if option.requires_restart:
                     print("    (Restart required)")
                 print()
-
-    def items(self):
-        """Return items from the configuration dictionary."""
-        return self.config.items()
-    
-    def keys(self):
-        """Return keys from the configuration dictionary."""
-        return self.config.keys()
-    
-    def values(self):
-        """Return values from the configuration dictionary."""
-        return self.config.values()
-    
-    def __getitem__(self, key):
-        """Allow dictionary-style access."""
-        return self.config[key]
-    
-    def __setitem__(self, key, value):
-        """Allow dictionary-style setting."""
-        self.set(key, value)
-    
-    def __contains__(self, key):
-        """Check if key exists in configuration."""
-        return key in self.config
 
 
 def get_config_manager() -> ConfigManager:

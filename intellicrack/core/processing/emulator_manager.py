@@ -1,3 +1,10 @@
+import logging
+import os
+import threading
+from typing import Any, Callable, Dict, Optional
+
+from intellicrack.logger import logger
+
 """
 Emulator Manager for automatic emulator lifecycle management.
 
@@ -19,26 +26,25 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
-import os
-import threading
-from typing import Any, Callable, Dict, Optional
 
 try:
     from PyQt5.QtCore import QObject, pyqtSignal
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in emulator_manager: %s", e)
     from PyQt6.QtCore import QObject, pyqtSignal
 
 try:
     from .qemu_emulator import QemuEmulator
     QEMU_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in emulator_manager: %s", e)
     QEMU_AVAILABLE = False
     QemuEmulator = None
 
 try:
     from .qiling_emulator import QILING_AVAILABLE, QilingEmulator
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in emulator_manager: %s", e)
     QILING_AVAILABLE = False
     QilingEmulator = None
 
@@ -238,6 +244,7 @@ def run_with_qemu(binary_path: str, analysis_func: Callable,
     try:
         return analysis_func()
     except Exception as e:
+        logger.error("Exception in emulator_manager: %s", e)
         return {
             "status": "error",
             "error": f"Analysis failed: {str(e)}"
@@ -268,6 +275,7 @@ def run_with_qiling(binary_path: str, analysis_func: Callable) -> Dict[str, Any]
     try:
         return analysis_func(qiling_instance)
     except Exception as e:
+        logger.error("Exception in emulator_manager: %s", e)
         return {
             "status": "error",
             "error": f"Analysis failed: {str(e)}"

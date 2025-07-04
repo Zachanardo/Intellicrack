@@ -30,14 +30,15 @@ from typing import Any, Dict, List
 
 import psutil
 
-try:
-    import r2pipe
-except ImportError:
-    r2pipe = None
-
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+try:
+    import r2pipe
+except ImportError as e:
+    logger.error("Import error in radare2_performance_optimizer: %s", e)
+    r2pipe = None
 
 
 class OptimizationStrategy(Enum):

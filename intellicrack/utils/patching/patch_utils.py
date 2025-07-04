@@ -27,13 +27,14 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-try:
-    import pefile
-except ImportError:
-    pefile = None
-
 # Module logger
 logger = logging.getLogger(__name__)
+
+try:
+    import pefile
+except ImportError as e:
+    logger.error("Import error in patch_utils: %s", e)
+    pefile = None
 
 
 def parse_patch_instructions(text: str) -> List[Dict[str, Any]]:

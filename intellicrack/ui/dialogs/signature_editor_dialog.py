@@ -1,0 +1,1188 @@
+"""
+ICP Signature Editor Dialog
+
+Provides comprehensive signature creation and editing capabilities for the 
+Intellicrack Protection Engine (ICP). Allows users to create custom signatures,
+modify existing ones, and test signatures against sample files.
+
+Copyright (C) 2025 Zachary Flint
+Licensed under GNU General Public License v3.0
+"""
+
+import os
+import re
+from pathlib import Path
+from typing import Dict, List, Optional
+
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import (
+    QColor,
+    QFont,
+    QStandardItem,
+    QStandardItemModel,
+    QSyntaxHighlighter,
+    QTextCharFormat,
+)
+from PyQt5.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    QTableView,
+    QTabWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+
+from ...protection.unified_protection_engine import get_unified_engine
+from ...utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+class SignatureSyntaxHighlighter(QSyntaxHighlighter):
+    """Syntax highlighter for ICP signature format"""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.highlighting_rules = []
+
+        # Define colors
+        keyword_color = QColor(86, 156, 214)      # Blue
+        string_color = QColor(206, 145, 120)      # Orange
+        comment_color = QColor(106, 153, 85)      # Green
+        number_color = QColor(181, 206, 168)      # Light green
+        operator_color = QColor(212, 212, 212)    # Light gray
+
+        # Keyword patterns
+        keyword_format = QTextCharFormat()
+        keyword_format.setForeground(keyword_color)
+        keyword_format.setFontWeight(QFont.Bold)
+
+        keywords = [
+            "init", "ep", "section", "header", "overlay", "entrypoint",
+            "size", "version", "options", "name", "type", "comment"
+        ]
+
+        for keyword in keywords:
+            pattern = f"\\b{keyword}\\b"
+            self.highlighting_rules.append((re.compile(pattern), keyword_format))
+
+        # String patterns (quoted text)
+        string_format = QTextCharFormat()
+        string_format.setForeground(string_color)
+        self.highlighting_rules.append((re.compile(r'"[^"]*"'), string_format))
+        self.highlighting_rules.append((re.compile(r"'[^']*'"), string_format))
+
+        # Comment patterns
+        comment_format = QTextCharFormat()
+        comment_format.setForeground(comment_color)
+        comment_format.setFontItalic(True)
+        self.highlighting_rules.append((re.compile(r'//.*'), comment_format))
+        self.highlighting_rules.append((re.compile(r'/\*.*\*/'), comment_format))
+
+        # Hex patterns
+        hex_format = QTextCharFormat()
+        hex_format.setForeground(number_color)
+        self.highlighting_rules.append((re.compile(r'\b[0-9A-Fa-f]{2,}\b'), hex_format))
+
+        # Operators
+        operator_format = QTextCharFormat()
+        operator_format.setForeground(operator_color)
+        operators = ['=', ':', '{', '}', '(', ')', '[', ']', '|', '&', '!']
+        for op in operators:
+            escaped_op = re.escape(op)
+            self.highlighting_rules.append((re.compile(escaped_op), operator_format))
+
+    def highlightBlock(self, text):
+        """Apply syntax highlighting to a block of text"""
+        for pattern, fmt in self.highlighting_rules:
+            for match in pattern.finditer(text):
+                start, end = match.span()
+                self.setFormat(start, end - start, fmt)
+
+
+class SignatureTestWorker(QThread):
+    """Worker thread for testing signatures against files"""
+
+    test_completed = pyqtSignal(str, bool, str)  # file_path, success, result
+    progress_update = pyqtSignal(int, str)       # progress, current_file
+
+    def __init__(self, signature_content: str, test_files: List[str]):
+        super().__init__()
+        self.signature_content = signature_content
+        self.test_files = test_files
+        self.unified_engine = get_unified_engine()
+
+    def run(self):
+        """Run signature tests"""
+        for i, file_path in enumerate(self.test_files):
+            try:
+                # Update progress
+                progress = int((i / len(self.test_files)) * 100)
+                self.progress_update.emit(progress, os.path.basename(file_path))
+
+                # Test signature against file
+                result = self._test_signature_on_file(file_path)
+
+                # Emit result
+                self.test_completed.emit(file_path, result['success'], result['message'])
+
+            except Exception as e:
+                self.logger.error("Exception in signature_editor_dialog: %s", e)
+                self.test_completed.emit(file_path, False, f"Error: {str(e)}")
+
+        # Final progress update
+        self.progress_update.emit(100, "Complete")
+
+    def _test_signature_on_file(self, file_path: str) -> Dict[str, any]:
+        """Test signature against a single file"""
+        try:
+            # Create temporary signature file
+            temp_sig_path = os.path.join(os.path.dirname(file_path), "temp_test_signature.sg")
+
+            with open(temp_sig_path, 'w', encoding='utf-8') as f:
+                f.write(self.signature_content)
+
+            # Analyze file with custom signature
+            # Note: Custom signatures need to be loaded through the engine configuration
+            result = self.unified_engine.analyze_file(
+                file_path,
+                deep_scan=True
+            )
+
+            # Clean up temp file
+            try:
+                os.remove(temp_sig_path)
+            except Exception as e:
+                logger.debug("Failed to remove temporary signature file: %s", e)
+
+            # Check if signature detected something
+            if result and result.icp_analysis:
+                for detection in result.icp_analysis.all_detections:
+                    if detection.name != "Unknown":
+                        return {
+                            'success': True,
+                            'message': f"Detected: {detection.name} (confidence: {detection.confidence:.1%})"
+                        }
+
+            return {
+                'success': False,
+                'message': "Signature did not match this file"
+            }
+
+        except Exception as e:
+            logger.error("Exception in signature_editor_dialog: %s", e)
+            return {
+                'success': False,
+                'message': f"Test failed: {str(e)}"
+            }
+
+
+class SignatureEditorDialog(QDialog):
+    """Main signature editor dialog"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("ICP Signature Editor")
+        self.setModal(True)
+        self.resize(1200, 800)
+
+        # Data
+        self.current_signature_path: Optional[str] = None
+        self.signature_databases: Dict[str, str] = {}  # name -> path
+        self.current_signatures: List[Dict] = []
+        self.test_worker: Optional[SignatureTestWorker] = None
+
+        # UI Components
+        self.signature_list: Optional[QListWidget] = None
+        self.signature_editor: Optional[QTextEdit] = None
+        self.syntax_highlighter: Optional[SignatureSyntaxHighlighter] = None
+        self.test_results_table: Optional[QTableView] = None
+        self.test_results_model: Optional[QStandardItemModel] = None
+
+        self.init_ui()
+        self.load_signature_databases()
+
+    def init_ui(self):
+        """Initialize the user interface"""
+        layout = QVBoxLayout()
+
+        # Toolbar
+        toolbar = self._create_toolbar()
+        layout.addLayout(toolbar)
+
+        # Main content area
+        main_splitter = QSplitter(Qt.Horizontal)
+
+        # Left panel: Signature browser
+        left_panel = self._create_signature_browser()
+        main_splitter.addWidget(left_panel)
+
+        # Right panel: Editor and testing
+        right_panel = self._create_editor_panel()
+        main_splitter.addWidget(right_panel)
+
+        # Set splitter proportions
+        main_splitter.setSizes([300, 900])
+        layout.addWidget(main_splitter)
+
+        # Button box
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.Save | QDialogButtonBox.Close
+        )
+        button_box.accepted.connect(self.save_signature)
+        button_box.rejected.connect(self.close)
+        layout.addWidget(button_box)
+
+        self.setLayout(layout)
+
+    def _create_toolbar(self) -> QHBoxLayout:
+        """Create toolbar with main actions"""
+        layout = QHBoxLayout()
+
+        # Database selection
+        layout.addWidget(QLabel("Database:"))
+        self.db_combo = QComboBox()
+        self.db_combo.currentTextChanged.connect(self.load_signatures_from_database)
+        layout.addWidget(self.db_combo)
+
+        layout.addWidget(QLabel("|"))
+
+        # File operations
+        self.new_sig_btn = QPushButton("New Signature")
+        self.new_sig_btn.clicked.connect(self.new_signature)
+        layout.addWidget(self.new_sig_btn)
+
+        self.load_sig_btn = QPushButton("Load Signature")
+        self.load_sig_btn.clicked.connect(self.load_signature_file)
+        layout.addWidget(self.load_sig_btn)
+
+        self.save_sig_btn = QPushButton("Save Signature")
+        self.save_sig_btn.clicked.connect(self.save_signature)
+        layout.addWidget(self.save_sig_btn)
+
+        layout.addWidget(QLabel("|"))
+
+        # Database operations
+        self.add_db_btn = QPushButton("Add Database")
+        self.add_db_btn.clicked.connect(self.add_signature_database)
+        layout.addWidget(self.add_db_btn)
+
+        self.refresh_btn = QPushButton("Refresh")
+        self.refresh_btn.clicked.connect(self.refresh_signatures)
+        layout.addWidget(self.refresh_btn)
+
+        layout.addStretch()
+        return layout
+
+    def _create_signature_browser(self) -> QWidget:
+        """Create signature browser panel"""
+        widget = QWidget()
+        layout = QVBoxLayout()
+
+        # Search
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(QLabel("Search:"))
+        self.search_input = QLineEdit()
+        self.search_input.textChanged.connect(self.filter_signatures)
+        self.search_input.setPlaceholderText("Filter signatures...")
+        search_layout.addWidget(self.search_input)
+        layout.addLayout(search_layout)
+
+        # Signature list
+        self.signature_list = QListWidget()
+        self.signature_list.itemClicked.connect(self.load_signature_from_list)
+        self.signature_list.setAlternatingRowColors(True)
+        layout.addWidget(self.signature_list)
+
+        # Signature info
+        info_group = QGroupBox("Signature Info")
+        info_layout = QVBoxLayout()
+
+        self.sig_info_text = QTextEdit()
+        self.sig_info_text.setReadOnly(True)
+        self.sig_info_text.setMaximumHeight(150)
+        self.sig_info_text.setFont(QFont("Consolas", 9))
+        info_layout.addWidget(self.sig_info_text)
+
+        info_group.setLayout(info_layout)
+        layout.addWidget(info_group)
+
+        widget.setLayout(layout)
+        return widget
+
+    def _create_editor_panel(self) -> QWidget:
+        """Create editor and testing panel"""
+        widget = QWidget()
+        layout = QVBoxLayout()
+
+        # Tab widget for editor and testing
+        tab_widget = QTabWidget()
+
+        # Editor tab
+        editor_tab = self._create_editor_tab()
+        tab_widget.addTab(editor_tab, "Signature Editor")
+
+        # Testing tab
+        testing_tab = self._create_testing_tab()
+        tab_widget.addTab(testing_tab, "Signature Testing")
+
+        # Template tab
+        template_tab = self._create_template_tab()
+        tab_widget.addTab(template_tab, "Templates")
+
+        layout.addWidget(tab_widget)
+        widget.setLayout(layout)
+        return widget
+
+    def _create_editor_tab(self) -> QWidget:
+        """Create signature editor tab"""
+        widget = QWidget()
+        layout = QVBoxLayout()
+
+        # Signature metadata
+        metadata_group = QGroupBox("Signature Metadata")
+        metadata_layout = QVBoxLayout()
+
+        # Basic info
+        info_layout = QHBoxLayout()
+        info_layout.addWidget(QLabel("Name:"))
+        self.sig_name_input = QLineEdit()
+        info_layout.addWidget(self.sig_name_input)
+
+        info_layout.addWidget(QLabel("Type:"))
+        self.sig_type_combo = QComboBox()
+        self.sig_type_combo.addItems([
+            "Packer", "Protector", "Compiler", "Installer",
+            "Cryptor", "Virus", "Trojan", "Other"
+        ])
+        info_layout.addWidget(self.sig_type_combo)
+
+        info_layout.addWidget(QLabel("Version:"))
+        self.sig_version_input = QLineEdit()
+        info_layout.addWidget(self.sig_version_input)
+
+        metadata_layout.addLayout(info_layout)
+
+        # Description
+        desc_layout = QHBoxLayout()
+        desc_layout.addWidget(QLabel("Description:"))
+        self.sig_description_input = QLineEdit()
+        desc_layout.addWidget(self.sig_description_input)
+        metadata_layout.addLayout(desc_layout)
+
+        metadata_group.setLayout(metadata_layout)
+        layout.addWidget(metadata_group)
+
+        # Signature content editor
+        editor_group = QGroupBox("Signature Content")
+        editor_layout = QVBoxLayout()
+
+        # Editor toolbar
+        editor_toolbar = QHBoxLayout()
+
+        self.validate_btn = QPushButton("Validate Syntax")
+        self.validate_btn.clicked.connect(self.validate_signature_syntax)
+        editor_toolbar.addWidget(self.validate_btn)
+
+        self.format_btn = QPushButton("Format")
+        self.format_btn.clicked.connect(self.format_signature)
+        editor_toolbar.addWidget(self.format_btn)
+
+        self.insert_template_btn = QPushButton("Insert Template")
+        self.insert_template_btn.clicked.connect(self.show_template_menu)
+        editor_toolbar.addWidget(self.insert_template_btn)
+
+        editor_toolbar.addStretch()
+        editor_layout.addLayout(editor_toolbar)
+
+        # Text editor
+        self.signature_editor = QTextEdit()
+        self.signature_editor.setFont(QFont("Consolas", 11))
+        self.signature_editor.setLineWrapMode(QTextEdit.NoWrap)
+
+        # Apply syntax highlighting
+        self.syntax_highlighter = SignatureSyntaxHighlighter(self.signature_editor.document())
+
+        editor_layout.addWidget(self.signature_editor)
+        editor_group.setLayout(editor_layout)
+        layout.addWidget(editor_group)
+
+        widget.setLayout(layout)
+        return widget
+
+    def _create_testing_tab(self) -> QWidget:
+        """Create signature testing tab"""
+        widget = QWidget()
+        layout = QVBoxLayout()
+
+        # Test setup
+        setup_group = QGroupBox("Test Setup")
+        setup_layout = QVBoxLayout()
+
+        # Test files selection
+        files_layout = QHBoxLayout()
+        files_layout.addWidget(QLabel("Test Files:"))
+
+        self.test_files_list = QListWidget()
+        self.test_files_list.setMaximumHeight(100)
+        files_layout.addWidget(self.test_files_list)
+
+        files_btn_layout = QVBoxLayout()
+        self.add_test_file_btn = QPushButton("Add File")
+        self.add_test_file_btn.clicked.connect(self.add_test_file)
+        files_btn_layout.addWidget(self.add_test_file_btn)
+
+        self.add_test_folder_btn = QPushButton("Add Folder")
+        self.add_test_folder_btn.clicked.connect(self.add_test_folder)
+        files_btn_layout.addWidget(self.add_test_folder_btn)
+
+        self.clear_test_files_btn = QPushButton("Clear")
+        self.clear_test_files_btn.clicked.connect(self.clear_test_files)
+        files_btn_layout.addWidget(self.clear_test_files_btn)
+
+        files_layout.addLayout(files_btn_layout)
+        setup_layout.addLayout(files_layout)
+
+        # Test controls
+        test_controls = QHBoxLayout()
+        self.run_test_btn = QPushButton("Run Tests")
+        self.run_test_btn.clicked.connect(self.run_signature_tests)
+        test_controls.addWidget(self.run_test_btn)
+
+        self.stop_test_btn = QPushButton("Stop Tests")
+        self.stop_test_btn.clicked.connect(self.stop_signature_tests)
+        self.stop_test_btn.setEnabled(False)
+        test_controls.addWidget(self.stop_test_btn)
+
+        test_controls.addStretch()
+        setup_layout.addLayout(test_controls)
+
+        setup_group.setLayout(setup_layout)
+        layout.addWidget(setup_group)
+
+        # Test results
+        results_group = QGroupBox("Test Results")
+        results_layout = QVBoxLayout()
+
+        # Results table
+        self.test_results_model = QStandardItemModel()
+        self.test_results_model.setHorizontalHeaderLabels([
+            "File", "Result", "Message", "File Size", "Time"
+        ])
+
+        self.test_results_table = QTableView()
+        self.test_results_table.setModel(self.test_results_model)
+        self.test_results_table.setAlternatingRowColors(True)
+        self.test_results_table.setSelectionBehavior(QTableView.SelectRows)
+
+        # Resize columns
+        header = self.test_results_table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.Stretch)
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+
+        results_layout.addWidget(self.test_results_table)
+
+        # Results summary
+        self.test_summary_label = QLabel("No tests run")
+        self.test_summary_label.setStyleSheet("color: #666; padding: 5px;")
+        results_layout.addWidget(self.test_summary_label)
+
+        results_group.setLayout(results_layout)
+        layout.addWidget(results_group)
+
+        widget.setLayout(layout)
+        return widget
+
+    def _create_template_tab(self) -> QWidget:
+        """Create signature template tab"""
+        widget = QWidget()
+        layout = QVBoxLayout()
+
+        # Template categories
+        categories_group = QGroupBox("Template Categories")
+        categories_layout = QHBoxLayout()
+
+        self.template_category_list = QListWidget()
+
+        # Load categories from templates module
+        try:
+            from ...data.signature_templates import SignatureTemplates
+            categories = SignatureTemplates.get_all_categories()
+        except ImportError:
+            logger.debug("Signature templates module not available, using fallback categories")
+            categories = [
+                "Basic Patterns", "PE Headers", "Section Signatures",
+                "Import Signatures", "String Signatures", "Complex Rules"
+            ]
+
+        self.template_category_list.addItems(categories)
+        self.template_category_list.currentItemChanged.connect(self.load_template_category)
+        categories_layout.addWidget(self.template_category_list)
+
+        # Template list
+        self.template_list = QListWidget()
+        self.template_list.itemDoubleClicked.connect(self.insert_template)
+        categories_layout.addWidget(self.template_list)
+
+        categories_group.setLayout(categories_layout)
+        layout.addWidget(categories_group)
+
+        # Template preview
+        preview_group = QGroupBox("Template Preview")
+        preview_layout = QVBoxLayout()
+
+        self.template_preview = QTextEdit()
+        self.template_preview.setReadOnly(True)
+        self.template_preview.setFont(QFont("Consolas", 10))
+        self.template_preview.setMaximumHeight(200)
+        preview_layout.addWidget(self.template_preview)
+
+        # Template actions
+        template_actions = QHBoxLayout()
+        self.insert_template_to_editor_btn = QPushButton("Insert to Editor")
+        self.insert_template_to_editor_btn.clicked.connect(self.insert_template)
+        template_actions.addWidget(self.insert_template_to_editor_btn)
+
+        template_actions.addStretch()
+        preview_layout.addLayout(template_actions)
+
+        preview_group.setLayout(preview_layout)
+        layout.addWidget(preview_group)
+
+        widget.setLayout(layout)
+
+        # Load initial template category
+        if self.template_category_list.count() > 0:
+            self.template_category_list.setCurrentRow(0)
+
+        return widget
+
+    def load_signature_databases(self):
+        """Load available signature databases"""
+        self.db_combo.clear()
+        self.signature_databases.clear()
+
+        # Look for signature databases in common locations
+        search_paths = [
+            Path(__file__).parent.parent.parent / "data" / "signatures",
+            Path.home() / ".intellicrack" / "signatures",
+            Path.cwd() / "signatures"
+        ]
+
+        for search_path in search_paths:
+            if search_path.exists():
+                for db_file in search_path.glob("*.sg"):
+                    db_name = db_file.stem
+                    self.signature_databases[db_name] = str(db_file)
+                    self.db_combo.addItem(db_name)
+
+        if self.signature_databases:
+            self.load_signatures_from_database(self.db_combo.currentText())
+
+    def load_signatures_from_database(self, db_name: str):
+        """Load signatures from selected database"""
+        if not db_name or db_name not in self.signature_databases:
+            return
+
+        db_path = self.signature_databases[db_name]
+
+        try:
+            with open(db_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Parse signatures from file
+            self.current_signatures = self._parse_signature_file(content)
+            self._update_signature_list()
+
+        except Exception as e:
+            self.logger.error("Exception in signature_editor_dialog: %s", e)
+            QMessageBox.warning(self, "Load Error", f"Failed to load database {db_name}: {str(e)}")
+
+    def _parse_signature_file(self, content: str) -> List[Dict]:
+        """Parse signature file content into individual signatures"""
+        signatures = []
+
+        # Split content by signature blocks
+        blocks = re.split(r'\n\s*\n', content.strip())
+
+        for block in blocks:
+            if not block.strip():
+                continue
+
+            sig_data = {
+                'name': 'Unknown',
+                'type': 'Other',
+                'version': '',
+                'description': '',
+                'content': block.strip()
+            }
+
+            # Extract metadata from comments
+            lines = block.split('\n')
+            for line in lines:
+                line = line.strip()
+                if line.startswith('//'):
+                    comment = line[2:].strip()
+                    if comment.startswith('Name:'):
+                        sig_data['name'] = comment[5:].strip()
+                    elif comment.startswith('Type:'):
+                        sig_data['type'] = comment[5:].strip()
+                    elif comment.startswith('Version:'):
+                        sig_data['version'] = comment[8:].strip()
+                    elif comment.startswith('Description:'):
+                        sig_data['description'] = comment[12:].strip()
+
+            signatures.append(sig_data)
+
+        return signatures
+
+    def _update_signature_list(self):
+        """Update signature list display"""
+        self.signature_list.clear()
+
+        search_term = self.search_input.text().lower()
+
+        for sig in self.current_signatures:
+            # Filter by search term
+            if search_term and search_term not in sig['name'].lower():
+                continue
+
+            item = QListWidgetItem(f"{sig['name']} ({sig['type']})")
+            item.setData(Qt.UserRole, sig)
+
+            # Color code by type
+            if sig['type'].lower() in ['packer', 'protector']:
+                item.setBackground(QColor(255, 200, 200, 50))
+            elif sig['type'].lower() in ['virus', 'trojan']:
+                item.setBackground(QColor(255, 150, 150, 80))
+            elif sig['type'].lower() == 'compiler':
+                item.setBackground(QColor(200, 255, 200, 50))
+
+            self.signature_list.addItem(item)
+
+    def filter_signatures(self, text: str):
+        """Filter signatures by search text"""
+        self._update_signature_list()
+
+    def load_signature_from_list(self, item: QListWidgetItem):
+        """Load signature from list selection"""
+        sig_data = item.data(Qt.UserRole)
+        if not sig_data:
+            return
+
+        # Load into editor
+        self.sig_name_input.setText(sig_data['name'])
+        self.sig_type_combo.setCurrentText(sig_data['type'])
+        self.sig_version_input.setText(sig_data['version'])
+        self.sig_description_input.setText(sig_data['description'])
+        self.signature_editor.setPlainText(sig_data['content'])
+
+        # Update info display
+        self._update_signature_info(sig_data)
+
+    def _update_signature_info(self, sig_data: Dict):
+        """Update signature info display"""
+        info_text = f"""Name: {sig_data['name']}
+Type: {sig_data['type']}
+Version: {sig_data['version']}
+Description: {sig_data['description']}
+
+Content Preview:
+{sig_data['content'][:200]}{'...' if len(sig_data['content']) > 200 else ''}"""
+
+        self.sig_info_text.setPlainText(info_text)
+
+    def new_signature(self):
+        """Create new signature"""
+        self.current_signature_path = None
+
+        # Clear editor
+        self.sig_name_input.clear()
+        self.sig_type_combo.setCurrentIndex(0)
+        self.sig_version_input.clear()
+        self.sig_description_input.clear()
+        self.signature_editor.clear()
+        self.sig_info_text.clear()
+
+        # Insert basic template
+        template = """// Name: New Signature
+// Type: Other
+// Version: 1.0
+// Description: Description of what this signature detects
+
+init:
+{
+    name = "New Signature";
+    type = "Other";
+    version = "1.0";
+    description = "Description";
+}
+
+ep:
+{
+    // Entry point signature
+    hex = "48 65 6C 6C 6F";  // "Hello" in hex
+}
+"""
+        self.signature_editor.setPlainText(template)
+
+    def load_signature_file(self):
+        """Load signature from file"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Load Signature File",
+            "",
+            "Signature Files (*.sg *.sig);;All Files (*.*)"
+        )
+
+        if file_path:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+
+                self.current_signature_path = file_path
+                self.signature_editor.setPlainText(content)
+
+                # Try to extract metadata
+                self._extract_metadata_from_content(content)
+
+            except Exception as e:
+                self.logger.error("Exception in signature_editor_dialog: %s", e)
+                QMessageBox.critical(self, "Load Error", f"Failed to load file: {str(e)}")
+
+    def _extract_metadata_from_content(self, content: str):
+        """Extract metadata from signature content"""
+        lines = content.split('\n')
+
+        for line in lines:
+            line = line.strip()
+            if line.startswith('//'):
+                comment = line[2:].strip()
+                if comment.startswith('Name:'):
+                    self.sig_name_input.setText(comment[5:].strip())
+                elif comment.startswith('Type:'):
+                    type_val = comment[5:].strip()
+                    index = self.sig_type_combo.findText(type_val)
+                    if index >= 0:
+                        self.sig_type_combo.setCurrentIndex(index)
+                elif comment.startswith('Version:'):
+                    self.sig_version_input.setText(comment[8:].strip())
+                elif comment.startswith('Description:'):
+                    self.sig_description_input.setText(comment[12:].strip())
+
+    def save_signature(self):
+        """Save current signature"""
+        if not self.signature_editor.toPlainText().strip():
+            QMessageBox.warning(self, "Save Error", "No signature content to save")
+            return
+
+        file_path = self.current_signature_path
+
+        if not file_path:
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save Signature",
+                f"{self.sig_name_input.text() or 'signature'}.sg",
+                "Signature Files (*.sg);;All Files (*.*)"
+            )
+
+        if file_path:
+            try:
+                # Build complete signature content
+                content = self._build_signature_content()
+
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+
+                self.current_signature_path = file_path
+                QMessageBox.information(self, "Save Successful", f"Signature saved to {file_path}")
+
+            except Exception as e:
+                logger.error("Exception in signature_editor_dialog: %s", e)
+                QMessageBox.critical(self, "Save Error", f"Failed to save file: {str(e)}")
+
+    def _build_signature_content(self) -> str:
+        """Build complete signature content with metadata"""
+        metadata_header = f"""// Name: {self.sig_name_input.text()}
+// Type: {self.sig_type_combo.currentText()}
+// Version: {self.sig_version_input.text()}
+// Description: {self.sig_description_input.text()}
+
+"""
+
+        signature_body = self.signature_editor.toPlainText()
+
+        # Remove existing metadata comments to avoid duplication
+        lines = signature_body.split('\n')
+        filtered_lines = []
+
+        for line in lines:
+            stripped = line.strip()
+            if not (stripped.startswith('// Name:') or
+                   stripped.startswith('// Type:') or
+                   stripped.startswith('// Version:') or
+                   stripped.startswith('// Description:')):
+                filtered_lines.append(line)
+
+        return metadata_header + '\n'.join(filtered_lines)
+
+    def validate_signature_syntax(self):
+        """Validate signature syntax"""
+        content = self.signature_editor.toPlainText()
+
+        if not content.strip():
+            QMessageBox.warning(self, "Validation", "No content to validate")
+            return
+
+        # Basic syntax validation
+        errors = []
+
+        # Check for required sections
+        if 'init:' not in content:
+            errors.append("Missing 'init:' section")
+
+        # Check for balanced braces
+        open_braces = content.count('{')
+        close_braces = content.count('}')
+        if open_braces != close_braces:
+            errors.append(f"Unbalanced braces: {open_braces} open, {close_braces} close")
+
+        # Check for hex pattern format
+        hex_patterns = re.findall(r'hex\s*=\s*"([^"]*)"', content)
+        for pattern in hex_patterns:
+            if not re.match(r'^[0-9A-Fa-f\s?*]*$', pattern):
+                errors.append(f"Invalid hex pattern: {pattern}")
+
+        if errors:
+            QMessageBox.warning(self, "Validation Errors", "\n".join(errors))
+        else:
+            QMessageBox.information(self, "Validation", "Signature syntax is valid")
+
+    def format_signature(self):
+        """Format signature content"""
+        content = self.signature_editor.toPlainText()
+
+        # Basic formatting
+        lines = content.split('\n')
+        formatted_lines = []
+        indent_level = 0
+
+        for line in lines:
+            stripped = line.strip()
+
+            if stripped.endswith('{'):
+                formatted_lines.append('    ' * indent_level + stripped)
+                indent_level += 1
+            elif stripped.startswith('}'):
+                indent_level = max(0, indent_level - 1)
+                formatted_lines.append('    ' * indent_level + stripped)
+            else:
+                formatted_lines.append('    ' * indent_level + stripped)
+
+        self.signature_editor.setPlainText('\n'.join(formatted_lines))
+
+    def show_template_menu(self):
+        """Show template insertion menu"""
+        # Switch to template tab
+        parent_widget = self.signature_editor.parent()
+        while parent_widget and not isinstance(parent_widget, QTabWidget):
+            parent_widget = parent_widget.parent()
+
+        if isinstance(parent_widget, QTabWidget):
+            parent_widget.setCurrentIndex(2)  # Template tab
+
+    def load_template_category(self, current_item, previous_item):
+        """Load templates for selected category"""
+        if not current_item:
+            return
+
+        # Save state from previous category if needed
+        if previous_item and hasattr(self, 'template_list'):
+            previous_category = previous_item.text()
+            selected_template = None
+            if self.template_list.currentItem():
+                selected_template = self.template_list.currentItem().text()
+            
+            # Store the last selected template for this category
+            if not hasattr(self, '_category_selections'):
+                self._category_selections = {}
+            if selected_template:
+                self._category_selections[previous_category] = selected_template
+                logger.debug(f"Saved template selection '{selected_template}' for category '{previous_category}'")
+
+        category = current_item.text()
+        self.template_list.clear()
+
+        templates = self._get_templates_for_category(category)
+
+        for template_name in templates.keys():
+            self.template_list.addItem(template_name)
+
+        # Restore previous selection for this category if available
+        if hasattr(self, '_category_selections') and category in self._category_selections:
+            previous_selection = self._category_selections[category]
+            for i in range(self.template_list.count()):
+                if self.template_list.item(i).text() == previous_selection:
+                    self.template_list.setCurrentRow(i)
+                    self._update_template_preview()
+                    logger.debug(f"Restored template selection '{previous_selection}' for category '{category}'")
+                    return
+
+        # Load first template preview if no previous selection
+        if self.template_list.count() > 0:
+            self.template_list.setCurrentRow(0)
+            self._update_template_preview()
+
+    def _get_templates_for_category(self, category: str) -> Dict[str, str]:
+        """Get templates for a specific category"""
+        try:
+            from ...data.signature_templates import SignatureTemplates
+
+            templates_data = SignatureTemplates.get_templates_for_category(category)
+            templates = {}
+
+            for template_name, template_info in templates_data.items():
+                templates[template_name] = template_info["template"]
+
+            return templates
+
+        except ImportError:
+            logger.warning("Signature templates module not available, using built-in templates")
+            return self._get_builtin_templates(category)
+
+    def _get_builtin_templates(self, category: str) -> Dict[str, str]:
+        """Fallback built-in templates"""
+        if category == "Basic Patterns":
+            return {
+                "Simple Hex Pattern": '''ep:
+{
+    hex = "48 65 6C 6C 6F";  // "Hello"
+}''',
+                "Wildcard Pattern": '''ep:
+{
+    hex = "48 ?? 6C ?? 6F";  // "H?l?o" with wildcards
+}'''
+            }
+
+        elif category == "PE Headers":
+            return {
+                "DOS Header Check": '''header:
+{
+    hex = "4D 5A";  // MZ signature
+    offset = 0;
+}''',
+                "PE Header Check": '''header:
+{
+    hex = "50 45 00 00";  // PE signature
+    offset = "PE_OFFSET";
+}'''
+            }
+
+        return {}
+
+    def _update_template_preview(self):
+        """Update template preview"""
+        current_item = self.template_list.currentItem()
+        if not current_item:
+            return
+
+        category_item = self.template_category_list.currentItem()
+        if not category_item:
+            return
+
+        category = category_item.text()
+        template_name = current_item.text()
+
+        templates = self._get_templates_for_category(category)
+        if template_name in templates:
+            self.template_preview.setPlainText(templates[template_name])
+
+    def insert_template(self):
+        """Insert selected template into editor"""
+        template_content = self.template_preview.toPlainText()
+        if template_content:
+            cursor = self.signature_editor.textCursor()
+            cursor.insertText(template_content + '\n\n')
+
+    def add_test_file(self):
+        """Add individual test file"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Add Test File",
+            "",
+            "Executable Files (*.exe *.dll *.sys);;All Files (*.*)"
+        )
+
+        if file_path:
+            self.test_files_list.addItem(file_path)
+
+    def add_test_folder(self):
+        """Add all files from folder for testing"""
+        folder_path = QFileDialog.getExistingDirectory(
+            self,
+            "Add Test Folder"
+        )
+
+        if folder_path:
+            # Add all executable files from folder
+            folder = Path(folder_path)
+            for file_path in folder.rglob("*"):
+                if file_path.is_file() and file_path.suffix.lower() in ['.exe', '.dll', '.sys']:
+                    self.test_files_list.addItem(str(file_path))
+
+    def clear_test_files(self):
+        """Clear test files list"""
+        self.test_files_list.clear()
+
+    def run_signature_tests(self):
+        """Run signature tests"""
+        signature_content = self.signature_editor.toPlainText()
+        if not signature_content.strip():
+            QMessageBox.warning(self, "Test Error", "No signature content to test")
+            return
+
+        test_files = []
+        for i in range(self.test_files_list.count()):
+            test_files.append(self.test_files_list.item(i).text())
+
+        if not test_files:
+            QMessageBox.warning(self, "Test Error", "No test files selected")
+            return
+
+        # Clear previous results
+        self.test_results_model.clear()
+        self.test_results_model.setHorizontalHeaderLabels([
+            "File", "Result", "Message", "File Size", "Time"
+        ])
+
+        # Disable test button, enable stop button
+        self.run_test_btn.setEnabled(False)
+        self.stop_test_btn.setEnabled(True)
+
+        # Start test worker
+        self.test_worker = SignatureTestWorker(signature_content, test_files)
+        self.test_worker.test_completed.connect(self._on_test_completed)
+        self.test_worker.progress_update.connect(self._on_test_progress)
+        self.test_worker.finished.connect(self._on_tests_finished)
+        self.test_worker.start()
+
+    def stop_signature_tests(self):
+        """Stop running signature tests"""
+        if self.test_worker and self.test_worker.isRunning():
+            self.test_worker.terminate()
+            self.test_worker.wait()
+
+        self._on_tests_finished()
+
+    @pyqtSlot(str, bool, str)
+    def _on_test_completed(self, file_path: str, success: bool, result: str):
+        """Handle individual test completion"""
+        row = self.test_results_model.rowCount()
+        self.test_results_model.insertRow(row)
+
+        # File name
+        file_item = QStandardItem(os.path.basename(file_path))
+        file_item.setToolTip(file_path)
+        self.test_results_model.setItem(row, 0, file_item)
+
+        # Result
+        result_item = QStandardItem("MATCH" if success else "NO MATCH")
+        result_item.setForeground(QColor("green") if success else QColor("red"))
+        self.test_results_model.setItem(row, 1, result_item)
+
+        # Message
+        message_item = QStandardItem(result)
+        self.test_results_model.setItem(row, 2, message_item)
+
+        # File size
+        try:
+            size = os.path.getsize(file_path)
+            size_str = f"{size:,} bytes"
+        except:
+            size_str = "Unknown"
+
+        size_item = QStandardItem(size_str)
+        self.test_results_model.setItem(row, 3, size_item)
+
+        # Time (placeholder)
+        time_item = QStandardItem("< 1s")
+        self.test_results_model.setItem(row, 4, time_item)
+
+    @pyqtSlot(int, str)
+    def _on_test_progress(self, progress: int, current_file: str):
+        """Handle test progress update"""
+        self.test_summary_label.setText(f"Testing: {current_file} ({progress}%)")
+
+    def _on_tests_finished(self):
+        """Handle test completion"""
+        # Re-enable test button, disable stop button
+        self.run_test_btn.setEnabled(True)
+        self.stop_test_btn.setEnabled(False)
+
+        # Update summary
+        total_tests = self.test_results_model.rowCount()
+        matches = 0
+
+        for row in range(total_tests):
+            result_item = self.test_results_model.item(row, 1)
+            if result_item and result_item.text() == "MATCH":
+                matches += 1
+
+        self.test_summary_label.setText(
+            f"Tests completed: {matches}/{total_tests} matches ({matches/total_tests*100:.1f}%)"
+            if total_tests > 0 else "No tests completed"
+        )
+
+        self.test_worker = None
+
+    def add_signature_database(self):
+        """Add new signature database"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Add Signature Database",
+            "",
+            "Signature Files (*.sg *.sig);;All Files (*.*)"
+        )
+
+        if file_path:
+            db_name = Path(file_path).stem
+            self.signature_databases[db_name] = file_path
+            self.db_combo.addItem(db_name)
+            self.db_combo.setCurrentText(db_name)
+
+    def refresh_signatures(self):
+        """Refresh signature list"""
+        current_db = self.db_combo.currentText()
+        if current_db:
+            self.load_signatures_from_database(current_db)
+
+
+def main():
+    """Test the signature editor dialog"""
+    app = QApplication([])
+
+    dialog = SignatureEditorDialog()
+    dialog.show()
+
+    app.exec_()
+
+
+if __name__ == "__main__":
+    main()

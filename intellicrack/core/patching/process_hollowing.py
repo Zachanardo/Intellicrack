@@ -34,7 +34,8 @@ if is_windows_available():
     try:
         import pefile
         AVAILABLE = True
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in process_hollowing: %s", e)
         AVAILABLE = False
         pefile = None
 else:
@@ -228,7 +229,8 @@ class ProcessHollowing(BaseWindowsPatcher):
             else:  # 32-bit
                 # PEB is at FS:[0x30]
                 return context.Ebx  # EBX contains PEB on process start
-        except (AttributeError, OSError, Exception):
+        except (AttributeError, OSError, Exception) as e:
+            self.logger.error("Error in process_hollowing: %s", e)
             return 0
 
     def _read_image_base_from_peb(self, process_handle: int, peb_addr: int) -> int:

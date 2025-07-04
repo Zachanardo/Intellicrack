@@ -74,9 +74,9 @@ autodoc_default_options = {
     'exclude-members': '__weakref__'
 }
 autodoc_mock_imports = [
-    'frida', 
-    'lief', 
-    'angr', 
+    'frida',
+    'lief',
+    'angr',
     'unicorn',
     'keystone',
     'capstone',

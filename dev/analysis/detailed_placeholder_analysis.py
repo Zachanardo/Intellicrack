@@ -4,9 +4,10 @@ Detailed analysis of placeholder vs real implementation code.
 Provides actionable insights for development priorities.
 """
 
-import os
 import ast
+import os
 from typing import Dict, List
+
 
 class PlaceholderAnalyzer:
     def __init__(self):
@@ -14,13 +15,16 @@ class PlaceholderAnalyzer:
         self.legitimate_implementations = []
         self.categories = {
             'critical_missing': [],      # Functions that should be implemented but aren't
-            'ui_placeholders': [],       # UI placeholder content (less critical)
+            # UI placeholder content (less critical)
+            'ui_placeholders': [],
             'mock_data_generators': [],  # Functions that generate test/mock data
             'empty_handlers': [],        # Event handlers that do nothing
             'stub_methods': [],          # Methods that exist but don't work
             'simulation_code': [],       # Code that simulates real functionality
-            'fallback_implementations': [], # Graceful degradation when dependencies unavailable
-            'legitimate_empty': []       # Legitimately empty (like __init__, error handlers)
+            # Graceful degradation when dependencies unavailable
+            'fallback_implementations': [],
+            # Legitimately empty (like __init__, error handlers)
+            'legitimate_empty': []
         }
 
     def analyze_function_body(self, filepath: str, func_name: str, body_lines: List[str], start_line: int) -> Dict:
@@ -136,8 +140,10 @@ class PlaceholderAnalyzer:
 
     def _is_empty_handler(self, body: str, func_name: str) -> bool:
         """Check if it's an event handler that does nothing."""
-        handler_patterns = ['_clicked', '_changed', '_pressed', '_released', 'on_']
-        empty_patterns = ['pass', 'return', 'return None', 'return {}', 'return []']
+        handler_patterns = ['_clicked', '_changed',
+                            '_pressed', '_released', 'on_']
+        empty_patterns = ['pass', 'return',
+                          'return None', 'return {}', 'return []']
 
         is_handler = any(pattern in func_name for pattern in handler_patterns)
         is_empty = any(pattern in body.strip() for pattern in empty_patterns)
@@ -192,10 +198,12 @@ class PlaceholderAnalyzer:
 
                     # Get function body lines
                     start_line = node.lineno
-                    end_line = node.end_lineno if hasattr(node, 'end_lineno') else start_line + 10
+                    end_line = node.end_lineno if hasattr(
+                        node, 'end_lineno') else start_line + 10
                     body_lines = lines[start_line-1:end_line]
 
-                    analysis = self.analyze_function_body(filepath, node.name, body_lines, start_line)
+                    analysis = self.analyze_function_body(
+                        filepath, node.name, body_lines, start_line)
 
                     issue_info = {
                         'function': node.name,
@@ -238,16 +246,24 @@ class PlaceholderAnalyzer:
         report.append("=" * 80)
 
         # Overall statistics
-        total_critical = sum(r['severity_counts']['critical'] for r in all_results.values())
-        total_high = sum(r['severity_counts']['high'] for r in all_results.values())
-        total_medium = sum(r['severity_counts']['medium'] for r in all_results.values())
-        total_low = sum(r['severity_counts']['low'] for r in all_results.values())
+        total_critical = sum(r['severity_counts']['critical']
+                             for r in all_results.values())
+        total_high = sum(r['severity_counts']['high']
+                         for r in all_results.values())
+        total_medium = sum(r['severity_counts']['medium']
+                           for r in all_results.values())
+        total_low = sum(r['severity_counts']['low']
+                        for r in all_results.values())
 
         report.append("\nOVERALL IMPLEMENTATION STATUS:")
-        report.append(f"🔴 CRITICAL: {total_critical} functions need immediate implementation")
-        report.append(f"🟠 HIGH:     {total_high} functions should be implemented soon")
-        report.append(f"🟡 MEDIUM:   {total_medium} functions could be improved")
-        report.append(f"🟢 LOW:      {total_low} functions are acceptable as-is")
+        report.append(
+            f"🔴 CRITICAL: {total_critical} functions need immediate implementation")
+        report.append(
+            f"🟠 HIGH:     {total_high} functions should be implemented soon")
+        report.append(
+            f"🟡 MEDIUM:   {total_medium} functions could be improved")
+        report.append(
+            f"🟢 LOW:      {total_low} functions are acceptable as-is")
 
         # Priority sections
         report.append("\n" + "=" * 60)
@@ -262,12 +278,15 @@ class PlaceholderAnalyzer:
 
         for filepath, issues in sorted(critical_files, key=lambda x: len(x[1]), reverse=True):
             if issues:
-                report.append(f"\n📁 {filepath} ({len(issues)} critical functions)")
+                report.append(
+                    f"\n📁 {filepath} ({len(issues)} critical functions)")
                 for issue in issues[:5]:  # Show top 5
-                    report.append(f"   • {issue['function']}() - Line {issue['line']}")
+                    report.append(
+                        f"   • {issue['function']}() - Line {issue['line']}")
                     report.append(f"     Preview: {issue['body_preview']}")
                 if len(issues) > 5:
-                    report.append(f"   ... and {len(issues) - 5} more critical functions")
+                    report.append(
+                        f"   ... and {len(issues) - 5} more critical functions")
 
         # High priority section
         report.append("\n" + "=" * 60)
@@ -276,16 +295,18 @@ class PlaceholderAnalyzer:
 
         high_files = []
         for filepath, results in all_results.items():
-            high_issues = (results['issues_by_category']['simulation_code'] + 
-                          results['issues_by_category']['stub_methods'])
+            high_issues = (results['issues_by_category']['simulation_code'] +
+                           results['issues_by_category']['stub_methods'])
             if high_issues:
                 high_files.append((filepath, high_issues))
 
         for filepath, issues in sorted(high_files, key=lambda x: len(x[1]), reverse=True)[:10]:
             if issues:
-                report.append(f"\n📁 {filepath} ({len(issues)} simulation/stub functions)")
+                report.append(
+                    f"\n📁 {filepath} ({len(issues)} simulation/stub functions)")
                 for issue in issues[:3]:  # Show top 3
-                    report.append(f"   • {issue['function']}() - Line {issue['line']}")
+                    report.append(
+                        f"   • {issue['function']}() - Line {issue['line']}")
 
         # Summary and recommendations
         report.append("\n" + "=" * 60)
@@ -294,25 +315,35 @@ class PlaceholderAnalyzer:
 
         if total_critical > 0:
             report.append("\n🎯 IMMEDIATE ACTION NEEDED:")
-            report.append(f"   • {total_critical} critical functions lack real implementation")
-            report.append("   • Focus on core analysis, patching, and security functions first")
-            report.append("   • These are blocking core Intellicrack functionality")
+            report.append(
+                f"   • {total_critical} critical functions lack real implementation")
+            report.append(
+                "   • Focus on core analysis, patching, and security functions first")
+            report.append(
+                "   • These are blocking core Intellicrack functionality")
 
         if total_high > 0:
             report.append("\n🔧 NEXT PHASE:")
-            report.append(f"   • {total_high} functions use simulation/placeholder code")
-            report.append("   • Replace random data generation with real analysis")
-            report.append("   • Implement actual algorithms instead of mock responses")
+            report.append(
+                f"   • {total_high} functions use simulation/placeholder code")
+            report.append(
+                "   • Replace random data generation with real analysis")
+            report.append(
+                "   • Implement actual algorithms instead of mock responses")
 
         report.append("\n✅ ACCEPTABLE:")
-        report.append(f"   • {total_low + total_medium} functions are either properly implemented")
-        report.append("     or are legitimate placeholders (UI content, fallbacks, etc.)")
+        report.append(
+            f"   • {total_low + total_medium} functions are either properly implemented")
+        report.append(
+            "     or are legitimate placeholders (UI content, fallbacks, etc.)")
 
         return "\n".join(report)
 
+
 def main():
     analyzer = PlaceholderAnalyzer()
-    report = analyzer.generate_priority_report("/mnt/c/Intellicrack/intellicrack")
+    report = analyzer.generate_priority_report(
+        "/mnt/c/Intellicrack/intellicrack")
 
     # Save report
     with open("/mnt/c/Intellicrack/implementation_priority_report.md", "w") as f:
@@ -320,6 +351,7 @@ def main():
 
     print(report)
     print("\n📄 Detailed report saved to: implementation_priority_report.md")
+
 
 if __name__ == "__main__":
     main()

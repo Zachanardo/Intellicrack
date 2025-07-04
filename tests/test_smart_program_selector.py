@@ -23,7 +23,7 @@ def test_file_resolver():
     print("Testing File Resolution Capabilities...")
     
     from intellicrack.utils.system.file_resolution import file_resolver
-    
+
     # Test supported file types
     print(f"Supported file types: {len(file_resolver.FILE_TYPES)}")
     
@@ -38,7 +38,7 @@ def test_program_discovery():
     print("Testing Program Discovery Engine...")
     
     from intellicrack.utils.system.program_discovery import program_discovery_engine
-    
+
     # Test desktop path discovery
     if sys.platform.startswith('win'):
         desktop_paths = [
@@ -75,7 +75,7 @@ def test_smart_dialog_components():
     try:
         from intellicrack.ui.dialogs.smart_program_selector_dialog import SmartProgramSelectorDialog
         from intellicrack.utils.system.program_discovery import ProgramDiscoveryEngine
-        
+
         # Test dialog class availability
         print(f"SmartProgramSelectorDialog class: {SmartProgramSelectorDialog}")
         
@@ -95,8 +95,11 @@ def test_with_gui():
     
     try:
         from PyQt5.QtWidgets import QApplication
-        from intellicrack.ui.dialogs.smart_program_selector_dialog import show_smart_program_selector
-        
+
+        from intellicrack.ui.dialogs.smart_program_selector_dialog import (
+            show_smart_program_selector,
+        )
+
         # Create QApplication
         app = QApplication(sys.argv)
         

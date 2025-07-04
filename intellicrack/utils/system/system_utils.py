@@ -31,21 +31,23 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 # Import consolidated process utilities
 from .process_utils import get_all_processes
 
+# Module logger
+logger = logging.getLogger(__name__)
+
 try:
     import psutil
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in system_utils: %s", e)
     psutil = None
 
 try:
     from PIL import Image, ImageDraw
     PIL_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in system_utils: %s", e)
     Image = None
     ImageDraw = None
     PIL_AVAILABLE = False
-
-# Module logger
-logger = logging.getLogger(__name__)
 
 
 def get_targetprocess_pid(binary_path: str) -> Optional[int]:

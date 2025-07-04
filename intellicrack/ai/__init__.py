@@ -39,19 +39,9 @@ except ImportError as e:
     AIAssistant = CodeAnalyzer = analyze_with_ai = None
     get_ai_suggestions = explain_code = None
 
-try:
-    from .ml_predictor import (
-        MLPredictor,
-        MLVulnerabilityPredictor,
-        VulnerabilityPredictor,
-        evaluate_model,
-        predict_vulnerabilities,
-        train_model,
-    )
-except ImportError as e:
-    logger.warning("Failed to import ml_predictor: %s", e)
-    MLVulnerabilityPredictor = MLPredictor = VulnerabilityPredictor = None
-    predict_vulnerabilities = train_model = evaluate_model = None
+# ML predictor removed - using LLM-only approach
+MLVulnerabilityPredictor = VulnerabilityPredictor = ml_predictor = None
+predict_vulnerabilities = train_model = evaluate_model = None
 
 try:
     from .model_manager_module import (
@@ -140,7 +130,8 @@ except ImportError as e:
 try:
     from .vulnerability_research_integration import VulnerabilityResearchAI
 except ImportError as e:
-    logger.warning("Failed to import vulnerability_research_integration: %s", e)
+    logger.warning(
+        "Failed to import vulnerability_research_integration: %s", e)
     VulnerabilityResearchAI = None
 
 try:
@@ -361,13 +352,7 @@ __all__ = [
     'get_ai_suggestions',
     'explain_code',
 
-    # From ml_predictor
-    'MLPredictor',
-    'VulnerabilityPredictor',
-    'MLVulnerabilityPredictor',
-    'predict_vulnerabilities',
-    'train_model',
-    'evaluate_model',
+    # ML predictor removed - using LLM-only approach
 
     # From model_manager_module
     'ModelManager',

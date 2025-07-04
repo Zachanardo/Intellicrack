@@ -1,0 +1,10 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("tool", "SingleJar");
+
+function detect() {
+
+    bDetected = APK.getManifestRecord("Created-By") == "singlejar";
+
+    return result();
+}

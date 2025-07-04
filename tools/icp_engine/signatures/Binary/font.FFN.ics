@@ -1,0 +1,14 @@
+// Intellicrack Protection Engine: detection rule file
+// Author: BJNFNE <bjnfne@web.de>
+// This Script supports following formats: FFN
+
+init("font", "FFN");
+
+function detect() {
+    if (Binary.compare("'FNTF'")) {
+        sVersion = "Font";
+        bDetected = true;
+    }
+
+    return result();
+}

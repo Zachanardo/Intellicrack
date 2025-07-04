@@ -33,7 +33,8 @@ if sys.platform == 'win32':
     try:
         import ctypes.wintypes
         AVAILABLE = True
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in syscalls: %s", e)
         AVAILABLE = False
 else:
     AVAILABLE = False

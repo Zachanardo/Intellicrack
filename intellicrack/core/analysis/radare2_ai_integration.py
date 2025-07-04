@@ -1,3 +1,13 @@
+import logging
+import os
+from typing import Any, Dict, List, Optional, Tuple
+
+from intellicrack.logger import logger
+
+from ...utils.tools.radare2_utils import R2Exception, r2_session
+from .radare2_imports import R2ImportExportAnalyzer
+from .radare2_strings import R2StringAnalyzer
+
 """
 Radare2 AI/ML Integration Engine for Advanced Pattern Recognition
 
@@ -19,9 +29,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
-import os
-from typing import Any, Dict, List, Optional, Tuple
 
 # Safe ML dependencies with comprehensive fallbacks
 try:
@@ -52,7 +59,8 @@ try:
         joblib = None
         SKLEARN_AVAILABLE = False
 
-except Exception:
+except Exception as e:
+    logger.error("Exception in radare2_ai_integration: %s", e)
     # Complete fallback
     np = None
     DBSCAN = None
@@ -63,9 +71,6 @@ except Exception:
     joblib = None
     SKLEARN_AVAILABLE = False
 
-from ...utils.tools.radare2_utils import R2Exception, r2_session
-from .radare2_imports import R2ImportExportAnalyzer
-from .radare2_strings import R2StringAnalyzer
 
 
 class R2AIEngine:
@@ -299,7 +304,8 @@ class R2AIEngine:
                         # Estimate depth (simplified)
                         max_depth = max(max_depth, len(blocks))
 
-                except R2Exception:
+                except R2Exception as e:
+                    logger.error("R2Exception in radare2_ai_integration: %s", e)
                     continue
 
         return {
@@ -344,7 +350,8 @@ class R2AIEngine:
                 'entropy_variance': abs(text_section_entropy - data_section_entropy)
             }
 
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_ai_integration: %s", e)
             return {
                 'text_section_entropy': 0.0,
                 'data_section_entropy': 0.0,

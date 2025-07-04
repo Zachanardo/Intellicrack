@@ -1,3 +1,12 @@
+import ast
+import os
+import re
+import sys
+from datetime import datetime
+from typing import Any, Dict, List
+
+from intellicrack.logger import logger
+
 """
 Plugin Unit Test Generator for Intellicrack.
 
@@ -17,12 +26,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import ast
-import os
-import re
-import sys
-from datetime import datetime
-from typing import Any, Dict, List
 
 
 class PluginTestGenerator:
@@ -529,7 +532,8 @@ class TestCoverageAnalyzer:
             else:
                 coverage_percent = 0
                 missing = []
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in plugin_test_generator: %s", e)
             coverage_percent = 0
             missing = []
 
@@ -559,7 +563,8 @@ class TestCoverageAnalyzer:
                         if line.startswith('def '):
                             func_name = line.split('(')[0].replace('def ', '')
                             report['uncovered_functions'].append(func_name)
-            except Exception:
+            except Exception as e:
+                logger.error("Exception in plugin_test_generator: %s", e)
                 pass
 
         # Parse test results

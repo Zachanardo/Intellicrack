@@ -53,6 +53,23 @@ except ImportError:
     MACHOLIB_AVAILABLE = False
     logger.debug("macholib not available")
 
+# Android/Java analysis tools
+try:
+    import zipfile
+    ZIPFILE_AVAILABLE = True
+except ImportError:
+    zipfile = None
+    ZIPFILE_AVAILABLE = False
+    logger.debug("zipfile not available")
+
+try:
+    import xml.etree.ElementTree as ET
+    XML_AVAILABLE = True
+except ImportError:
+    ET = None
+    XML_AVAILABLE = False
+    logger.debug("xml.etree.ElementTree not available")
+
 # System tools
 try:
     import psutil
@@ -100,6 +117,22 @@ def get_macholib():
     }
 
 
+def get_zipfile():
+    """Get zipfile module if available."""
+    return {
+        'zipfile': zipfile,
+        'available': ZIPFILE_AVAILABLE
+    }
+
+
+def get_xml():
+    """Get XML parsing components if available."""
+    return {
+        'ET': ET,
+        'available': XML_AVAILABLE
+    }
+
+
 def get_psutil():
     """Get psutil module if available."""
     return psutil
@@ -112,5 +145,7 @@ __all__ = [
     'LIEF_AVAILABLE', 'lief', 'get_lief',
     'PYELFTOOLS_AVAILABLE', 'ELFFile', 'get_elftools',
     'MACHOLIB_AVAILABLE', 'MachO', 'get_macholib',
+    'ZIPFILE_AVAILABLE', 'zipfile', 'get_zipfile',
+    'XML_AVAILABLE', 'ET', 'get_xml',
     'PSUTIL_AVAILABLE', 'psutil', 'get_psutil',
 ]

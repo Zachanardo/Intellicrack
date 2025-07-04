@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Common report generation utilities to avoid code duplication.
 """
@@ -18,7 +20,8 @@ def generate_analysis_report(app, report_type, results_data, generator_func=None
     """
     try:
         from ..ui.ui_common import ask_yes_no_question, show_file_dialog
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in report_common: %s", e)
         # Fallback if UI common not available
         return None
 
@@ -87,6 +90,7 @@ def _generate_default_report(filename, report_type, results_data):
             f.write(html_content)
         return filename
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in report_common: %s", e)
         print(f"Error generating report: {e}")
         return None
 
@@ -122,7 +126,8 @@ def handle_pyqt5_report_generation(app, report_type, generator):
         # Check if PyQt5 is available
         import importlib.util
         PYQT5_AVAILABLE = importlib.util.find_spec("PyQt5") is not None
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in report_common: %s", e)
         PYQT5_AVAILABLE = False
 
     if not PYQT5_AVAILABLE:

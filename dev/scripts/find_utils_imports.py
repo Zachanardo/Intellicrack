@@ -108,11 +108,13 @@ MOVED_FILES = {
     'network_api_common': 'templates.network_api_common',
 }
 
+
 def find_imports_to_update(root_dir='/mnt/c/Intellicrack'):
     """Find all Python files that import from intellicrack.utils"""
 
     files_to_update = []
-    import_pattern = re.compile(r'from\s+intellicrack\.utils\.(\w+)\s+import|import\s+intellicrack\.utils\.(\w+)')
+    import_pattern = re.compile(
+        r'from\s+intellicrack\.utils\.(\w+)\s+import|import\s+intellicrack\.utils\.(\w+)')
 
     for root, dirs, files in os.walk(root_dir):
         # Skip directories we don't want to search
@@ -132,7 +134,8 @@ def find_imports_to_update(root_dir='/mnt/c/Intellicrack'):
                         for match in matches:
                             module = match[0] or match[1]
                             if module in MOVED_FILES:
-                                imports_found.append((module, MOVED_FILES[module]))
+                                imports_found.append(
+                                    (module, MOVED_FILES[module]))
 
                         if imports_found:
                             files_to_update.append({
@@ -145,6 +148,7 @@ def find_imports_to_update(root_dir='/mnt/c/Intellicrack'):
 
     return files_to_update
 
+
 def main():
     files = find_imports_to_update()
 
@@ -156,6 +160,7 @@ def main():
             print(f"  {old} -> {new}")
 
     print(f"\nTotal files to update: {len(files)}")
+
 
 if __name__ == '__main__':
     main()

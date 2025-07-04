@@ -19,10 +19,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 # Import all functions from the patching patch_verification module
 from .patching.patch_verification import (
-    verify_patches,
-    simulate_patch_and_verify,
     apply_parsed_patch_instructions_with_validation,
-    rewrite_license_functions_with_parsing
+    rewrite_license_functions_with_parsing,
+    simulate_patch_and_verify,
+    verify_patches,
 )
 
 __all__ = ['verify_patches', 'simulate_patch_and_verify',

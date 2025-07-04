@@ -1,0 +1,17 @@
+// Intellicrack Protection Engine: detection rule file
+
+// Author: DosX
+// E-Mail: collab@kay-software.ru
+// GitHub: https://github.com/DosX-dev
+// Telegram: @DosX_dev
+
+// https://github.com/DosX-dev/BatchToApp
+init("compiler", "BatchToApp");
+
+function detect() {
+    bDetected = PE.isNetObjectPresent("GeneratedWithBatchToApp") && PE.isNetUStringPresent("Unable to execute.");
+
+    _setLang("Batch", bDetected);
+
+    return result();
+}

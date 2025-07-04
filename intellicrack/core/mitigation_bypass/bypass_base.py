@@ -1,3 +1,4 @@
+
 """
 Base classes for mitigation bypass techniques.
 
@@ -17,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
@@ -33,6 +35,7 @@ class MitigationBypassBase(ABC):
         """
         self.mitigation_name = mitigation_name
         self.techniques = []
+        self.logger = logging.getLogger(__name__ + ".MitigationBypassBase")
         self._initialize_techniques()
 
     @abstractmethod
@@ -74,6 +77,7 @@ class MitigationBypassBase(ABC):
                 "analysis": self._perform_detailed_analysis(binary_info),
             }
         except Exception as e:
+            self.logger.error("Exception in bypass_base: %s", e)
             return {
                 "success": False,
                 "mitigation": self.mitigation_name,

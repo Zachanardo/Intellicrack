@@ -29,6 +29,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict
 
+logger = logging.getLogger(__name__)
+
 try:
     from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
     from PyQt5.QtGui import QFont, QIcon, QPalette, QPixmap
@@ -60,7 +62,8 @@ try:
         QWidget,
     )
     PYQT5_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in enhanced_training_interface: %s", e)
     PYQT5_AVAILABLE = False
 
 try:
@@ -68,12 +71,12 @@ try:
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
     MATPLOTLIB_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in enhanced_training_interface: %s", e)
     MATPLOTLIB_AVAILABLE = False
 
-logger = logging.getLogger(__name__)
-
-__all__ = ['EnhancedTrainingInterface', 'TrainingConfiguration', 'ModelMetrics']
+__all__ = ['EnhancedTrainingInterface',
+           'TrainingConfiguration', 'ModelMetrics', 'TrainingStatus']
 
 
 class TrainingStatus(Enum):
@@ -93,7 +96,8 @@ class TrainingConfiguration:
     model_name: str = "intellicrack_model"
     model_type: str = "vulnerability_classifier"
     dataset_path: str = ""
-    output_directory: str = os.path.join(os.path.dirname(__file__), "..", "models", "trained")
+    output_directory: str = os.path.join(
+        os.path.dirname(__file__), "..", "models", "trained")
 
     # Training parameters
     learning_rate: float = 0.001
@@ -176,7 +180,8 @@ class TrainingThread(QThread):
 
                 # Simulated improvement over time
                 base_accuracy = 0.5 + (_epoch / self.config.epochs) * 0.4
-                noise = np.random.normal(0, 0.02) if 'numpy' in globals() else 0
+                noise = np.random.normal(
+                    0, 0.02) if 'numpy' in globals() else 0
                 accuracy = min(0.99, base_accuracy + noise)
 
                 metrics = {
@@ -190,7 +195,8 @@ class TrainingThread(QThread):
 
                 self.progress_updated.emit(progress)
                 self.metrics_updated.emit(metrics)
-                self.log_message.emit(f"Epoch {_epoch + 1}/{self.config.epochs} - Accuracy: {accuracy:.4f}")
+                self.log_message.emit(
+                    f"Epoch {_epoch + 1}/{self.config.epochs} - Accuracy: {accuracy:.4f}")
 
                 # Simulate early stopping
                 if self.config.use_early_stopping and _epoch > 20:
@@ -199,12 +205,14 @@ class TrainingThread(QThread):
                         break
 
             if not self.should_stop:
-                self.training_completed.emit({"status": "completed", "final_accuracy": accuracy})
+                self.training_completed.emit(
+                    {"status": "completed", "final_accuracy": accuracy})
                 self.log_message.emit("Training completed successfully!")
             else:
                 self.log_message.emit("Training stopped by user")
 
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in enhanced_training_interface: %s", e)
             self.error_occurred.emit(str(e))
 
     def stop_training(self):
@@ -282,8 +290,10 @@ class TrainingVisualizationWidget(QWidget):
         self.ax4.clear()
 
         # Accuracy plot
-        self.ax1.plot(epochs, accuracies, 'b-', label='Training Accuracy', linewidth=2)
-        self.ax1.plot(epochs, val_accuracies, 'r-', label='Validation Accuracy', linewidth=2)
+        self.ax1.plot(epochs, accuracies, 'b-',
+                      label='Training Accuracy', linewidth=2)
+        self.ax1.plot(epochs, val_accuracies, 'r-',
+                      label='Validation Accuracy', linewidth=2)
         self.ax1.set_title('Model Accuracy')
         self.ax1.set_xlabel('Epoch')
         self.ax1.set_ylabel('Accuracy')
@@ -292,7 +302,8 @@ class TrainingVisualizationWidget(QWidget):
 
         # Loss plot
         self.ax2.plot(epochs, losses, 'b-', label='Training Loss', linewidth=2)
-        self.ax2.plot(epochs, val_losses, 'r-', label='Validation Loss', linewidth=2)
+        self.ax2.plot(epochs, val_losses, 'r-',
+                      label='Validation Loss', linewidth=2)
         self.ax2.set_title('Model Loss')
         self.ax2.set_xlabel('Epoch')
         self.ax2.set_ylabel('Loss')
@@ -301,7 +312,8 @@ class TrainingVisualizationWidget(QWidget):
 
         # Learning rate plot
         if len(epochs) > 1:
-            lr_values = [_m.get("learning_rate", 0.001) for _m in self.metrics_history]
+            lr_values = [_m.get("learning_rate", 0.001)
+                         for _m in self.metrics_history]
             self.ax3.plot(epochs, lr_values, 'g-', linewidth=2)
             self.ax3.set_title('Learning Rate')
             self.ax3.set_xlabel('Epoch')
@@ -313,9 +325,11 @@ class TrainingVisualizationWidget(QWidget):
             # Calculate moving averages
             window_size = min(5, len(epochs) // 2)
             if window_size > 0:
-                ma_accuracy = np.convolve(accuracies, np.ones(window_size)/window_size, mode='valid')
+                ma_accuracy = np.convolve(accuracies, np.ones(
+                    window_size)/window_size, mode='valid')
                 ma_epochs = epochs[window_size-1:]
-                self.ax4.plot(ma_epochs, ma_accuracy, 'purple', linewidth=3, label=f'MA Accuracy ({window_size})')
+                self.ax4.plot(ma_epochs, ma_accuracy, 'purple',
+                              linewidth=3, label=f'MA Accuracy ({window_size})')
                 self.ax4.set_title('Smoothed Metrics')
                 self.ax4.set_xlabel('Epoch')
                 self.ax4.set_ylabel('Accuracy')
@@ -456,12 +470,15 @@ Recommendations:
             self.analysis_text.setText(analysis_text)
 
         except (OSError, ValueError, RuntimeError) as e:
-            QMessageBox.warning(self, "Analysis Error", f"Error analyzing dataset: {e}")
+            logger.error("Error in enhanced_training_interface: %s", e)
+            QMessageBox.warning(self, "Analysis Error",
+                                f"Error analyzing dataset: {e}")
 
     def analyze_quality(self):
         """Perform detailed quality analysis."""
         if self.dataset_path_label.text() == "No dataset loaded":
-            QMessageBox.warning(self, "No Dataset", "Please load a dataset first.")
+            QMessageBox.warning(self, "No Dataset",
+                                "Please load a dataset first.")
             return
 
         # Simulate quality analysis
@@ -469,7 +486,8 @@ Recommendations:
         self.analysis_text.append("DETAILED QUALITY ANALYSIS")
         self.analysis_text.append("="*50)
         self.analysis_text.append("\n1. Checking for duplicates... 0.3% found")
-        self.analysis_text.append("2. Analyzing feature distributions... Normal")
+        self.analysis_text.append(
+            "2. Analyzing feature distributions... Normal")
         self.analysis_text.append("3. Detecting outliers... 1.2% identified")
         self.analysis_text.append("4. Validating labels... 99.1% consistent")
         self.analysis_text.append("5. Measuring class balance... Acceptable")
@@ -478,7 +496,8 @@ Recommendations:
     def generate_report(self):
         """Generate a comprehensive dataset report."""
         if self.dataset_path_label.text() == "No dataset loaded":
-            QMessageBox.warning(self, "No Dataset", "Please load a dataset first.")
+            QMessageBox.warning(self, "No Dataset",
+                                "Please load a dataset first.")
             return
 
         file_path, _ = QFileDialog.getSaveFileName(
@@ -489,7 +508,8 @@ Recommendations:
         if file_path:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(self.analysis_text.toPlainText())
-            QMessageBox.information(self, "Report Saved", f"Report saved to {file_path}")
+            QMessageBox.information(
+                self, "Report Saved", f"Report saved to {file_path}")
 
 
 class HyperparameterOptimizationWidget(QWidget):
@@ -510,7 +530,8 @@ class HyperparameterOptimizationWidget(QWidget):
         settings_layout = QFormLayout()
 
         self.optimization_method = QComboBox()
-        self.optimization_method.addItems(["Grid Search", "Random Search", "Bayesian Optimization", "Genetic Algorithm"])
+        self.optimization_method.addItems(
+            ["Grid Search", "Random Search", "Bayesian Optimization", "Genetic Algorithm"])
 
         self.max_trials = QSpinBox()
         self.max_trials.setRange(10, 1000)
@@ -520,7 +541,8 @@ class HyperparameterOptimizationWidget(QWidget):
         self.timeout_hours.setRange(1, 48)
         self.timeout_hours.setValue(4)
 
-        settings_layout.addRow("Optimization Method:", self.optimization_method)
+        settings_layout.addRow("Optimization Method:",
+                               self.optimization_method)
         settings_layout.addRow("Maximum Trials:", self.max_trials)
         settings_layout.addRow("Timeout (hours):", self.timeout_hours)
 
@@ -613,7 +635,8 @@ class HyperparameterOptimizationWidget(QWidget):
         self.results_table.setRowCount(0)
 
         self.results_text.clear()
-        self.results_text.append(f"Starting {method} optimization with {max_trials} trials...")
+        self.results_text.append(
+            f"Starting {method} optimization with {max_trials} trials...")
 
         # Simulate optimization process
         self.optimization_timer = QTimer()
@@ -627,24 +650,31 @@ class HyperparameterOptimizationWidget(QWidget):
         max_trials = self.max_trials.value()
 
         # Simulate trial results
-        lr = self.lr_min.value() + (self.lr_max.value() - self.lr_min.value()) * (self.current_trial / max_trials)
-        batch_size = int(self.batch_min.value() + (self.batch_max.value() - self.batch_min.value()) * (self.current_trial / max_trials))
+        lr = self.lr_min.value() + (self.lr_max.value() - self.lr_min.value()) * \
+            (self.current_trial / max_trials)
+        batch_size = int(self.batch_min.value() + (self.batch_max.value() -
+                         self.batch_min.value()) * (self.current_trial / max_trials))
 
         # Simulate performance (best performance around trial 30-40)
         optimal_trial = max_trials * 0.7
-        distance_from_optimal = abs(self.current_trial - optimal_trial) / optimal_trial
-        performance = 0.9 - (distance_from_optimal * 0.3) + (np.random.random() * 0.05 if 'numpy' in globals() else 0.02)
+        distance_from_optimal = abs(
+            self.current_trial - optimal_trial) / optimal_trial
+        performance = 0.9 - (distance_from_optimal * 0.3) + \
+            (np.random.random() * 0.05 if 'numpy' in globals() else 0.02)
 
         # Add row to results table
         row = self.results_table.rowCount()
         self.results_table.insertRow(row)
 
         # Add items to the row
-        self.results_table.setItem(row, 0, QTableWidgetItem(str(self.current_trial)))
+        self.results_table.setItem(
+            row, 0, QTableWidgetItem(str(self.current_trial)))
         self.results_table.setItem(row, 1, QTableWidgetItem(f"{lr:.6f}"))
         self.results_table.setItem(row, 2, QTableWidgetItem(str(batch_size)))
-        self.results_table.setItem(row, 3, QTableWidgetItem(f"{performance:.4f}"))
-        self.results_table.setItem(row, 4, QTableWidgetItem("Running" if self.current_trial < max_trials else "Complete"))
+        self.results_table.setItem(
+            row, 3, QTableWidgetItem(f"{performance:.4f}"))
+        self.results_table.setItem(row, 4, QTableWidgetItem(
+            "Running" if self.current_trial < max_trials else "Complete"))
 
         # Scroll to the latest row
         self.results_table.scrollToBottom()
@@ -664,15 +694,18 @@ class HyperparameterOptimizationWidget(QWidget):
         # Update last row status
         last_row = self.results_table.rowCount() - 1
         if last_row >= 0:
-            self.results_table.setItem(last_row, 4, QTableWidgetItem("Complete"))
+            self.results_table.setItem(
+                last_row, 4, QTableWidgetItem("Complete"))
 
         # Display summary
         best_lr = self.lr_min.value() + (self.lr_max.value() - self.lr_min.value()) * 0.7
-        best_batch = int(self.batch_min.value() + (self.batch_max.value() - self.batch_min.value()) * 0.7)
+        best_batch = int(self.batch_min.value() +
+                         (self.batch_max.value() - self.batch_min.value()) * 0.7)
 
         self.results_text.clear()
         self.results_text.append("OPTIMIZATION COMPLETED")
-        self.results_text.append(f"Best parameters: LR={best_lr:.6f}, Batch={best_batch}")
+        self.results_text.append(
+            f"Best parameters: LR={best_lr:.6f}, Batch={best_batch}")
         self.results_text.append("Best score: 0.9234")
 
     def stop_optimization(self):
@@ -889,7 +922,8 @@ class EnhancedTrainingInterface(QDialog):
 
         self.validation_split_slider = QSlider(Qt.Horizontal)
         self.validation_split_slider.setRange(10, 50)  # 10% to 50%
-        self.validation_split_slider.setValue(int(self.config.validation_split * 100))
+        self.validation_split_slider.setValue(
+            int(self.config.validation_split * 100))
         self.validation_split_slider.setTickPosition(QSlider.TicksBelow)
         self.validation_split_slider.setTickInterval(5)
 
@@ -966,10 +1000,13 @@ class EnhancedTrainingInterface(QDialog):
 
         # Create and start training thread
         self.training_thread = TrainingThread(self.config)
-        self.training_thread.progress_updated.connect(self.progress_bar.setValue)
-        self.training_thread.metrics_updated.connect(self.viz_tab.update_metrics)
+        self.training_thread.progress_updated.connect(
+            self.progress_bar.setValue)
+        self.training_thread.metrics_updated.connect(
+            self.viz_tab.update_metrics)
         self.training_thread.log_message.connect(self.update_status)
-        self.training_thread.training_completed.connect(self.training_completed)
+        self.training_thread.training_completed.connect(
+            self.training_completed)
         self.training_thread.error_occurred.connect(self.training_error)
 
         self.training_thread.start()
@@ -1014,7 +1051,8 @@ class EnhancedTrainingInterface(QDialog):
         """Handle training completion."""
         self.reset_ui_state()
         accuracy = results.get("final_accuracy", 0)
-        self.status_label.setText(f"Training completed! Final accuracy: {accuracy:.4f}")
+        self.status_label.setText(
+            f"Training completed! Final accuracy: {accuracy:.4f}")
 
         QMessageBox.information(
             self, "Training Complete",
@@ -1025,7 +1063,8 @@ class EnhancedTrainingInterface(QDialog):
         """Handle training errors."""
         self.reset_ui_state()
         self.status_label.setText(f"Training error: {error_message}")
-        QMessageBox.critical(self, "Training Error", f"An error occurred during training:\n\n{error_message}")
+        QMessageBox.critical(
+            self, "Training Error", f"An error occurred during training:\n\n{error_message}")
 
     def reset_ui_state(self):
         """Reset UI to initial state."""
@@ -1037,7 +1076,8 @@ class EnhancedTrainingInterface(QDialog):
         # Reconnect pause button
         try:
             self.pause_btn.clicked.disconnect()
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError) as e:
+            logger.error("Error in enhanced_training_interface: %s", e)
             pass
         self.pause_btn.clicked.connect(self.pause_training)
 
@@ -1057,11 +1097,13 @@ class EnhancedTrainingInterface(QDialog):
     def validate_config(self) -> bool:
         """Validate the training configuration."""
         if not self.config.model_name.strip():
-            QMessageBox.warning(self, "Invalid Configuration", "Please enter a model name.")
+            QMessageBox.warning(self, "Invalid Configuration",
+                                "Please enter a model name.")
             return False
 
         if self.config.epochs <= 0:
-            QMessageBox.warning(self, "Invalid Configuration", "Epochs must be greater than 0.")
+            QMessageBox.warning(self, "Invalid Configuration",
+                                "Epochs must be greater than 0.")
             return False
 
         return True
@@ -1082,9 +1124,13 @@ class EnhancedTrainingInterface(QDialog):
             try:
                 with open(file_path, 'w', encoding='utf-8') as f:
                     json.dump(asdict(self.config), f, indent=2)
-                QMessageBox.information(self, "Configuration Saved", f"Configuration saved to {file_path}")
+                QMessageBox.information(
+                    self, "Configuration Saved", f"Configuration saved to {file_path}")
             except (OSError, ValueError, RuntimeError) as e:
-                QMessageBox.critical(self, "Save Error", f"Error saving configuration: {e}")
+                logger.error(
+                    "Error in enhanced_training_interface: %s", e)
+                QMessageBox.critical(self, "Save Error",
+                                     f"Error saving configuration: {e}")
 
     def load_configuration(self):
         """Load configuration from file."""
@@ -1106,9 +1152,12 @@ class EnhancedTrainingInterface(QDialog):
                 # Update UI
                 self.update_ui_from_config()
 
-                QMessageBox.information(self, "Configuration Loaded", f"Configuration loaded from {file_path}")
+                QMessageBox.information(
+                    self, "Configuration Loaded", f"Configuration loaded from {file_path}")
             except (OSError, ValueError, RuntimeError) as e:
-                QMessageBox.critical(self, "Load Error", f"Error loading configuration: {e}")
+                logger.error("Error in enhanced_training_interface: %s", e)
+                QMessageBox.critical(self, "Load Error",
+                                     f"Error loading configuration: {e}")
 
     def update_ui_from_config(self):
         """Update UI from configuration values."""
@@ -1130,6 +1179,7 @@ class EnhancedTrainingInterface(QDialog):
 def create_enhanced_training_interface(parent=None) -> 'EnhancedTrainingInterface':
     """Factory function to create the enhanced training interface."""
     if not PYQT5_AVAILABLE:
-        raise ImportError("PyQt5 is required for the enhanced training interface")
+        raise ImportError(
+            "PyQt5 is required for the enhanced training interface")
 
     return EnhancedTrainingInterface(parent)

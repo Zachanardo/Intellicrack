@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Compatibility module for pcapy functionality.
 
@@ -23,7 +25,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 try:
     import scapy.all as scapy
     SCAPY_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in pcapy_compat: %s", e)
     SCAPY_AVAILABLE = False
     scapy = None
 
@@ -32,11 +35,11 @@ class ScapyPacketReader:
     """
     Scapy-based packet capture reader that provides pcapy-compatible interface.
     """
-    
+
     def __init__(self, interface="any", promisc=True, immediate=True, timeout_ms=100):
         """
         Initialize Scapy packet reader.
-        
+
         Args:
             interface (str): Network interface to capture from
             promisc (bool): Enable promiscuous mode
@@ -48,29 +51,29 @@ class ScapyPacketReader:
         self.timeout = timeout_ms / 1000.0  # Convert to seconds
         self.filter = None
         self._running = False
-    
+
     def setfilter(self, filter_str):
         """
         Set BPF filter for packet capture.
-        
+
         Args:
             filter_str (str): BPF filter expression
         """
         self.filter = filter_str
-    
+
     def loop(self, count, callback):
         """
         Start packet capture loop.
-        
+
         Args:
             count (int): Number of packets to capture (0 = infinite)
             callback (callable): Function to call for each packet
         """
         if not SCAPY_AVAILABLE:
             raise RuntimeError("Scapy not available for packet capture")
-        
+
         self._running = True
-        
+
         def packet_handler(packet):
             if not self._running:
                 return
@@ -78,7 +81,7 @@ class ScapyPacketReader:
             timestamp = packet.time if hasattr(packet, 'time') else 0
             raw_packet = bytes(packet)
             callback(timestamp, raw_packet)
-        
+
         try:
             scapy.sniff(
                 iface=self.interface,
@@ -89,17 +92,18 @@ class ScapyPacketReader:
                 stop_filter=lambda x: not self._running
             )
         except Exception as e:
+            logger.error("Exception in pcapy_compat: %s", e)
             raise RuntimeError(f"Packet capture failed: {e}")
-    
+
     def __iter__(self):
         """
         Iterator interface for packet capture.
         """
         if not SCAPY_AVAILABLE:
             raise RuntimeError("Scapy not available for packet capture")
-        
+
         self._running = True
-        
+
         try:
             for packet in scapy.sniff(
                 iface=self.interface,
@@ -113,8 +117,9 @@ class ScapyPacketReader:
                 raw_packet = bytes(packet)
                 yield timestamp, raw_packet
         except Exception as e:
+            logger.error("Exception in pcapy_compat: %s", e)
             raise RuntimeError(f"Packet capture failed: {e}")
-    
+
     def stop(self):
         """
         Stop packet capture.
@@ -150,6 +155,7 @@ def create_pcap_reader(interface="any"):
         reader = ScapyPacketReader(interface=interface, promisc=True, immediate=True)
         return reader
     except Exception as e:
+        logger.error("Exception in pcapy_compat: %s", e)
         print(f"Warning: Failed to create packet capture reader: {e}")
         return None
 

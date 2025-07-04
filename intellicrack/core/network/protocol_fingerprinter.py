@@ -30,8 +30,6 @@ import traceback
 from collections import Counter
 from typing import Any, Dict, List, Optional, Union
 
-import pkg_resources
-
 # Import shared entropy calculation
 from ...utils.protection.protection_utils import calculate_entropy
 
@@ -59,7 +57,7 @@ class ProtocolFingerprinter:
             'max_fingerprints': 100,
             'learning_mode': True,
             'analysis_depth': 3,
-            'signature_db_path': pkg_resources.resource_filename('intellicrack', 'data/protocol_signatures.json')
+            'signature_db_path': os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data', 'protocol_signatures.json')
         }
 
         # Update with provided configuration
@@ -70,7 +68,7 @@ class ProtocolFingerprinter:
         self.signatures = {}
         self.learned_signatures = {}
         self.traffic_samples = []
-        
+
         # License server ports to monitor
         self.license_ports = [
             27000, 27001,  # FlexLM
@@ -378,41 +376,41 @@ class ProtocolFingerprinter:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error analyzing traffic: %s", e)
-    
+
     def fingerprint_packet(self, packet_data: Union[bytes, bytearray], port: Optional[int] = None) -> Optional[Dict[str, Any]]:
         """Fingerprint a single packet for protocol identification.
-        
+
         Args:
             packet_data: Raw packet data
             port: Port number (optional)
-            
+
         Returns:
             dict: Protocol fingerprint information, or None if not identified
         """
         try:
             self.logger.debug("Fingerprinting packet of %d bytes on port %s", len(packet_data), port)
-            
+
             # Use the existing analyze_traffic method for actual fingerprinting
             result = self.analyze_traffic(packet_data, port)
-            
+
             if result:
                 # Add fingerprinting specific metadata
                 result['fingerprint_timestamp'] = time.time()
                 result['packet_size'] = len(packet_data)
                 result['source_port'] = port
-                
+
                 # Enhance with packet-specific analysis
                 packet_analysis = self._analyze_packet_structure(packet_data)
                 result.update(packet_analysis)
-                
+
                 return result
-            
+
             return None
-            
+
         except Exception as e:
             self.logger.error("Packet fingerprinting failed: %s", e)
             return None
-    
+
     def _analyze_packet_structure(self, packet_data: Union[bytes, bytearray]) -> Dict[str, Any]:
         """Analyze packet structure for additional fingerprint information."""
         analysis = {
@@ -421,7 +419,7 @@ class ProtocolFingerprinter:
             'common_patterns': [],
             'protocol_hints': []
         }
-        
+
         try:
             # Calculate entropy
             if len(packet_data) > 0:
@@ -430,11 +428,11 @@ class ProtocolFingerprinter:
                     (count / len(packet_data)) * math.log2(count / len(packet_data))
                     for count in byte_counts if count > 0
                 )
-            
+
             # Calculate ASCII ratio
             ascii_bytes = sum(1 for b in packet_data if 32 <= b <= 126)
             analysis['ascii_ratio'] = ascii_bytes / len(packet_data) if packet_data else 0.0
-            
+
             # Look for common patterns
             if b'HTTP' in packet_data:
                 analysis['protocol_hints'].append('HTTP')
@@ -444,14 +442,14 @@ class ProtocolFingerprinter:
                 analysis['protocol_hints'].append('TLS')
             if b'SSH' in packet_data:
                 analysis['protocol_hints'].append('SSH')
-            
+
             # License-specific patterns
             if any(pattern in packet_data for pattern in [b'license', b'activation', b'key']):
                 analysis['protocol_hints'].append('License_Protocol')
-            
+
         except Exception as e:
             self.logger.debug("Packet structure analysis failed: %s", e)
-        
+
         return analysis
 
     def parse_packet(self, protocol_id: str, packet_data: Union[bytes, bytearray]) -> Optional[Dict[str, Any]]:
@@ -696,13 +694,13 @@ class ProtocolFingerprinter:
     def analyze_pcap(self, pcap_path: str) -> Dict[str, Any]:
         """
         Analyze PCAP file for protocol fingerprints.
-        
+
         This method processes a PCAP capture file to identify and fingerprint
         network protocols, particularly focusing on license-related communications.
-        
+
         Args:
             pcap_path: Path to PCAP file
-            
+
         Returns:
             Dictionary containing:
             - file: Path to analyzed file
@@ -710,7 +708,7 @@ class ProtocolFingerprinter:
             - fingerprints: Detailed protocol fingerprints
         """
         self.logger.info(f"Analyzing PCAP file: {pcap_path}")
-        
+
         results = {
             'file': pcap_path,
             'protocols': [],
@@ -723,50 +721,50 @@ class ProtocolFingerprinter:
                 'new_signatures_learned': 0
             }
         }
-        
+
         try:
             # Check if file exists
             if not os.path.exists(pcap_path):
                 self.logger.error(f"PCAP file not found: {pcap_path}")
                 results['error'] = 'File not found'
                 return results
-            
+
             # Try to use pyshark if available
             try:
                 import pyshark
-                
+
                 # Open PCAP file
                 capture = pyshark.FileCapture(pcap_path, keep_packets=False)
-                
+
                 packets_analyzed = 0
                 license_packets = 0
                 protocol_counts = Counter()
-                
+
                 # Process packets
                 for packet in capture:
                     packets_analyzed += 1
-                    
+
                     # Check for TCP packets
                     if hasattr(packet, 'tcp') and hasattr(packet, 'ip'):
                         src_port = int(packet.tcp.srcport)
                         dst_port = int(packet.tcp.dstport)
-                        
+
                         # Check if it's a license port
                         if dst_port in self.license_ports or src_port in self.license_ports:
                             license_packets += 1
-                            
+
                             # Extract payload if available
                             if hasattr(packet.tcp, 'payload'):
                                 try:
                                     payload = bytes.fromhex(packet.tcp.payload.replace(':', ''))
-                                    
+
                                     # Fingerprint the packet
                                     fingerprint_result = self.fingerprint_packet(payload, dst_port)
-                                    
+
                                     if fingerprint_result:
                                         protocol_id = fingerprint_result['protocol_id']
                                         protocol_counts[protocol_id] += 1
-                                        
+
                                         # Store detailed fingerprint
                                         if protocol_id not in results['fingerprints']:
                                             results['fingerprints'][protocol_id] = {
@@ -776,11 +774,11 @@ class ProtocolFingerprinter:
                                                 'ports': set(),
                                                 'sample_data': []
                                             }
-                                        
+
                                         fp = results['fingerprints'][protocol_id]
                                         fp['packets'] += 1
                                         fp['ports'].add(dst_port)
-                                        
+
                                         # Store sample data (limit to 5 samples)
                                         if len(fp['sample_data']) < 5:
                                             fp['sample_data'].append({
@@ -790,29 +788,29 @@ class ProtocolFingerprinter:
                                                 'size': len(payload),
                                                 'entropy': calculate_entropy(payload)
                                             })
-                                
+
                                 except Exception as e:
                                     self.logger.debug(f"Error processing packet payload: {e}")
-                
+
                 capture.close()
-                
+
                 # Convert sets to lists for JSON serialization
                 for fp in results['fingerprints'].values():
                     fp['ports'] = list(fp['ports'])
-                
+
                 # Update results
                 results['protocols'] = list(protocol_counts.keys())
                 results['summary']['total_packets'] = packets_analyzed
                 results['summary']['license_packets'] = license_packets
                 results['summary']['identified_protocols'] = len(results['protocols'])
-                
+
                 self.logger.info(f"PCAP analysis complete: {packets_analyzed} packets, {len(results['protocols'])} protocols identified")
-                
+
             except ImportError:
                 # Fallback to basic PCAP parsing
                 self.logger.warning("pyshark not available, using basic PCAP parsing")
                 results['error'] = 'Limited analysis - pyshark not available'
-                
+
                 # Basic PCAP file structure parsing
                 with open(pcap_path, 'rb') as f:
                     # Read PCAP header
@@ -820,7 +818,7 @@ class ProtocolFingerprinter:
                     if len(pcap_header) < 24:
                         results['error'] = 'Invalid PCAP file'
                         return results
-                    
+
                     # Simple packet counting
                     packet_count = 0
                     while True:
@@ -828,34 +826,34 @@ class ProtocolFingerprinter:
                         packet_header = f.read(16)
                         if len(packet_header) < 16:
                             break
-                        
+
                         # Get packet length
                         packet_len = int.from_bytes(packet_header[8:12], byteorder='little')
-                        
+
                         # Skip packet data
                         f.seek(packet_len, 1)
                         packet_count += 1
-                    
+
                     results['summary']['total_packets'] = packet_count
-                    
+
         except Exception as e:
             self.logger.error(f"Error analyzing PCAP file: {e}")
             self.logger.error(traceback.format_exc())
             results['error'] = str(e)
-        
+
         return results
-    
+
     def analyze_binary(self, binary_path: str) -> Dict[str, Any]:
         """
         Analyze binary for network protocols.
-        
+
         This method analyzes a binary file to identify hardcoded network protocols,
         license server addresses, and protocol-related strings that indicate
         network-based license verification.
-        
+
         Args:
             binary_path: Path to binary file
-            
+
         Returns:
             Dictionary containing:
             - binary: Path to analyzed file
@@ -863,7 +861,7 @@ class ProtocolFingerprinter:
             - protocols: List of likely protocols used
         """
         self.logger.info(f"Analyzing binary for network protocols: {binary_path}")
-        
+
         results = {
             'binary': binary_path,
             'network_functions': [],
@@ -877,18 +875,18 @@ class ProtocolFingerprinter:
                 'protocol_confidence': 0.0
             }
         }
-        
+
         try:
             # Check if file exists
             if not os.path.exists(binary_path):
                 self.logger.error(f"Binary file not found: {binary_path}")
                 results['error'] = 'File not found'
                 return results
-            
+
             # Read binary file
             with open(binary_path, 'rb') as f:
                 binary_data = f.read()
-            
+
             # 1. Search for network-related function imports
             network_functions = [
                 b'socket', b'connect', b'send', b'recv', b'WSAStartup',
@@ -896,11 +894,11 @@ class ProtocolFingerprinter:
                 b'WinHttpOpen', b'InternetOpen', b'URLDownload',
                 b'curl_easy_init', b'SSL_connect', b'TLS_'
             ]
-            
+
             for func in network_functions:
                 if func in binary_data:
                     results['network_functions'].append(func.decode('utf-8', errors='ignore'))
-            
+
             # 2. Search for protocol-specific strings
             protocol_indicators = {
                 'FlexLM': [b'lmgrd', b'flexlm', b'license.dat', b'@', b'SERVER', b'VENDOR', b'FEATURE'],
@@ -912,32 +910,32 @@ class ProtocolFingerprinter:
                 'Microsoft KMS': [b'KMSClient', b'SLMgr', b'1688', b'kms.'],
                 'Generic': [b'LICENSE', b'ACTIVATION', b'serial', b'product_key', b'registration']
             }
-            
+
             for protocol, indicators in protocol_indicators.items():
                 matches = 0
                 for indicator in indicators:
                     if indicator in binary_data:
                         matches += 1
-                        
+
                         # Extract context around the match
                         index = binary_data.find(indicator)
                         start = max(0, index - 20)
                         end = min(len(binary_data), index + len(indicator) + 20)
                         context = binary_data[start:end]
-                        
+
                         results['license_indicators'].append({
                             'protocol': protocol,
                             'indicator': indicator.decode('utf-8', errors='ignore'),
                             'context': context.hex()
                         })
-                
+
                 if matches >= 2:  # At least 2 indicators for confidence
                     results['protocols'].append(protocol)
-            
+
             # 3. Search for network-related strings
             # Extract ASCII strings
             ascii_strings = re.findall(b'[\x20-\x7e]{4,}', binary_data)
-            
+
             network_patterns = [
                 re.compile(br'(?:https?://|ftp://|tcp://|udp://)[^\s]+'),
                 re.compile(br'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'),  # IP addresses
@@ -947,7 +945,7 @@ class ProtocolFingerprinter:
                 re.compile(br'license[_\-]?server', re.IGNORECASE),
                 re.compile(br'activation[_\-]?server', re.IGNORECASE)
             ]
-            
+
             for string in ascii_strings[:1000]:  # Limit to first 1000 strings
                 for pattern in network_patterns:
                     if pattern.search(string):
@@ -955,7 +953,7 @@ class ProtocolFingerprinter:
                         if decoded not in results['network_strings']:
                             results['network_strings'].append(decoded)
                         break
-            
+
             # 4. Check for specific port numbers
             license_ports_bytes = [
                 b'\x69\x68',  # 27000 (FlexLM)
@@ -968,19 +966,19 @@ class ProtocolFingerprinter:
                 b'\x13\xd5',  # 5093 (Sentinel)
                 b'\x06\x90'   # 1688 (KMS)
             ]
-            
+
             for port_bytes in license_ports_bytes:
                 if port_bytes in binary_data:
                     port_num = int.from_bytes(port_bytes, byteorder='big')
                     self.logger.debug(f"Found license port number: {port_num}")
-                    
+
             # 5. Calculate summary
             results['summary']['has_network_code'] = len(results['network_functions']) > 0
             results['summary']['likely_license_client'] = (
-                len(results['protocols']) > 0 or 
+                len(results['protocols']) > 0 or
                 len(results['license_indicators']) > 0
             )
-            
+
             # Calculate confidence
             confidence = 0.0
             if results['network_functions']:
@@ -989,19 +987,19 @@ class ProtocolFingerprinter:
                 confidence += 0.4
             if results['license_indicators']:
                 confidence += 0.3
-            
+
             results['summary']['protocol_confidence'] = min(confidence, 1.0)
-            
+
             self.logger.info(
                 f"Binary analysis complete: {len(results['network_functions'])} network functions, "
                 f"{len(results['protocols'])} protocols identified"
             )
-            
+
         except Exception as e:
             self.logger.error(f"Error analyzing binary: {e}")
             self.logger.error(traceback.format_exc())
             results['error'] = str(e)
-        
+
         return results
 
 

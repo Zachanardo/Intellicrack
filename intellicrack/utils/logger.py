@@ -98,7 +98,8 @@ def log_function_call(func: F) -> F:
                     if len(r) > max_len:
                         return r[:max_len] + '...'
                     return r
-                except (TypeError, ValueError, AttributeError, RecursionError):
+                except (TypeError, ValueError, AttributeError, RecursionError) as e:
+                    logger.error("Error in logger: %s", e)
                     return '<repr_failed>'
 
             arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values)]
@@ -113,7 +114,8 @@ def log_function_call(func: F) -> F:
             # Don't use logger.exception to avoid recursion - just log the error
             try:
                 logger.error(f"Exception in {func_name}: {e}", exc_info=False)
-            except (RuntimeError, OSError):
+            except (RuntimeError, OSError) as e:
+                logger.error("Error in logger: %s", e)
                 print(f"Exception in {func_name}: {e}")
             raise
         finally:
@@ -146,7 +148,8 @@ def log_function_call(func: F) -> F:
                         if len(r) > max_len:
                             return r[:max_len] + '...'
                         return r
-                    except (TypeError, ValueError, AttributeError, RecursionError):
+                    except (TypeError, ValueError, AttributeError, RecursionError) as e:
+                        logger.error("Error in logger: %s", e)
                         return '<repr_failed>'
 
                 arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values)]
@@ -161,7 +164,8 @@ def log_function_call(func: F) -> F:
                 # Don't use logger.exception to avoid recursion
                 try:
                     logger.error(f"Exception in async {func_name}: {e}", exc_info=False)
-                except (RuntimeError, OSError):
+                except (RuntimeError, OSError) as e:
+                    logger.error("Error in logger: %s", e)
                     print(f"Exception in async {func_name}: {e}")
                 raise
             finally:
@@ -344,7 +348,8 @@ def setup_persistent_logging(log_dir: str = None, log_name: str = "intellicrack"
 
     # Default log directory
     if log_dir is None:
-        log_dir = os.path.join(os.path.expanduser("~"), "intellicrack", "logs")
+        from intellicrack.utils.core.plugin_paths import get_logs_dir
+        log_dir = str(get_logs_dir())
 
     # Create log directory if it doesn't exist
     os.makedirs(log_dir, exist_ok=True)
@@ -369,6 +374,11 @@ def setup_persistent_logging(log_dir: str = None, log_name: str = "intellicrack"
     return log_file
 
 
+# Alias for compatibility
+log_execution_time = log_function_call
+log_exception = log_function_call
+log_method_call = log_function_call
+
 # Exported functions and classes
 __all__ = [
     'log_function_call',
@@ -379,4 +389,8 @@ __all__ = [
     'setup_logging',
     'setup_persistent_logging',
     'log_message',
+    'log_execution_time',
+    'log_exception',
+    'log_method_call',
+    'logger',
 ]

@@ -17,15 +17,20 @@ from unittest.mock import MagicMock, patch
 
 # Import Frida components
 try:
+    from intellicrack.core.frida_bypass_wizard import BypassStrategy, FridaBypassWizard, WizardState
     from intellicrack.core.frida_manager import (
-        FridaManager, FridaOperationLogger, ProtectionDetector,
-        ProtectionType, HookCategory, HookBatcher, FridaPerformanceOptimizer
-    )
-    from intellicrack.core.frida_bypass_wizard import (
-        FridaBypassWizard, WizardState, BypassStrategy
+        FridaManager,
+        FridaOperationLogger,
+        FridaPerformanceOptimizer,
+        HookBatcher,
+        HookCategory,
+        ProtectionDetector,
+        ProtectionType,
     )
     from intellicrack.core.frida_presets import (
-        FRIDA_PRESETS, get_preset_by_software, get_scripts_for_protection
+        FRIDA_PRESETS,
+        get_preset_by_software,
+        get_scripts_for_protection,
     )
     FRIDA_AVAILABLE = True
 except ImportError:

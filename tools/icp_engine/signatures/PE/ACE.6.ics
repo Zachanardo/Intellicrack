@@ -1,0 +1,10 @@
+// Intellicrack Protection Engine: detection rule file
+// Author: Jason Hood <jadoxa@yahoo.com.au>
+
+includeScript("ACE");
+
+function detect() {
+    detect_ACE(0);
+
+    return result();
+}

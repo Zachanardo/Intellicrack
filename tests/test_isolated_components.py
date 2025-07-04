@@ -3,10 +3,10 @@
 Isolated component testing - direct imports without problematic dependencies
 """
 
+import importlib.util
+import logging
 import os
 import sys
-import logging
-import importlib.util
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

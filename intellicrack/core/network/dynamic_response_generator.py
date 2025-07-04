@@ -1,3 +1,15 @@
+import hashlib
+import json
+import logging
+import re
+import struct
+import time
+import uuid
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
+
+from intellicrack.logger import logger
+
 """
 Dynamic Response Generator for License Server Protocols
 
@@ -19,15 +31,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import hashlib
-import json
-import logging
-import re
-import struct
-import time
-import uuid
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -243,7 +246,8 @@ class AdobeProtocolHandler:
                     if 'product' in json_data:
                         request_info['product'] = json_data['product']
 
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as e:
+                    logger.error("json.JSONDecodeError in dynamic_response_generator: %s", e)
                     pass
 
             # Look for activation patterns
@@ -379,7 +383,8 @@ class AutodeskProtocolHandler:
                     json_str = text_data[json_start:json_end]
                     json_data = json.loads(json_str)
                     request_info.update(json_data)
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as e:
+                    logger.error("json.JSONDecodeError in dynamic_response_generator: %s", e)
                     pass
 
             return request_info
@@ -560,7 +565,9 @@ class DynamicResponseGenerator:
 
     def _generate_cache_key(self, context: ResponseContext) -> str:
         """Generate cache key for request"""
-        key_data = f"{context.protocol_type}:{context.target_port}:{hashlib.md5(context.request_data).hexdigest()}"
+        # Use SHA256 instead of MD5 for better security
+        request_hash = hashlib.sha256(context.request_data).hexdigest()
+        key_data = f"{context.protocol_type}:{context.target_port}:{request_hash}"
         return hashlib.sha256(key_data.encode()).hexdigest()[:32]
 
     def _get_cached_response(self, cache_key: str) -> Optional[bytes]:
@@ -640,7 +647,8 @@ class DynamicResponseGenerator:
                 hex_header = data[:4].hex()
                 patterns.append(f"hex:{hex_header}")
 
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in dynamic_response_generator: %s", e)
             pass
 
         return patterns[:20]  # Limit pattern count

@@ -9,13 +9,41 @@ import asyncio
 import json
 import logging
 import os
+import shutil
 import sqlite3
 import time
 import uuid
 from collections import defaultdict, deque
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+# Project root and data directory configuration
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+DATA_DIR = PROJECT_ROOT / "data"
+UPLOAD_DIR = DATA_DIR / "c2_uploads"
+DOWNLOAD_DIR = DATA_DIR / "c2_downloads"
+DB_PATH = DATA_DIR / "c2_sessions.db"
+
+def migrate_resource_if_needed(old_path: str, new_path: Path):
+    """
+    Checks for a resource at the old path. If found, moves it to the new path.
+    Logs a warning about the migration.
+    """
+    old_path_obj = Path(old_path)
+    if old_path_obj.exists() and not new_path.exists():
+        logger.warning(
+            f"Legacy path detected. Migrating '{old_path}' to '{new_path}'. "
+            "This is a one-time operation."
+        )
+        try:
+            # Ensure parent directory of the new path exists
+            new_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(old_path_obj), str(new_path))
+        except Exception as e:
+            logger.error(f"Could not migrate '{old_path}' to '{new_path}': {e}")
+            raise
 
 
 class Session:
@@ -103,6 +131,11 @@ class SessionManager:
     def __init__(self, db_path: str = None):
         self.logger = logging.getLogger("IntellicrackLogger.SessionManager")
 
+        # Run migration checks first
+        migrate_resource_if_needed("c2_sessions.db", DB_PATH)
+        migrate_resource_if_needed("c2_uploads", UPLOAD_DIR)
+        migrate_resource_if_needed("c2_downloads", DOWNLOAD_DIR)
+
         # Session storage
         self.sessions = {}
         self.session_history = deque(maxlen=10000)  # Historical sessions
@@ -113,12 +146,12 @@ class SessionManager:
         self.pending_tasks = defaultdict(list)
 
         # File management
-        self.upload_directory = "c2_uploads"
-        self.download_directory = "c2_downloads"
+        self.upload_directory = str(UPLOAD_DIR)
+        self.download_directory = str(DOWNLOAD_DIR)
         self._ensure_directories()
 
         # Database for persistence
-        self.db_path = db_path or "c2_sessions.db"
+        self.db_path = str(db_path or DB_PATH)
         self._initialize_database()
 
         # Statistics
@@ -133,8 +166,10 @@ class SessionManager:
     def _ensure_directories(self):
         """Ensure upload/download directories exist."""
         try:
-            os.makedirs(self.upload_directory, exist_ok=True)
-            os.makedirs(self.download_directory, exist_ok=True)
+            # Ensure data directory and subdirectories exist
+            DATA_DIR.mkdir(parents=True, exist_ok=True)
+            UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+            DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
         except Exception as e:
             self.logger.error(f"Failed to create directories: {e}")
 
@@ -495,9 +530,25 @@ class SessionManager:
 
     def _sanitize_filename(self, filename: str) -> str:
         """Sanitize filename for safe storage."""
+        import os
         import re
-        # Remove dangerous characters
-        safe_filename = re.sub(r'[<>:"/\\|?*]', '_', filename)
+
+        # Get just the basename to prevent path traversal
+        filename = os.path.basename(filename)
+        
+        # Remove any remaining path separators and dangerous characters
+        safe_filename = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', filename)
+        
+        # Remove any leading dots to prevent hidden files
+        safe_filename = safe_filename.lstrip('.')
+        
+        # Ensure filename is not empty
+        if not safe_filename:
+            safe_filename = 'unnamed_file'
+            
+        # Remove any directory traversal attempts
+        safe_filename = safe_filename.replace('..', '_')
+        
         return safe_filename[:255]  # Limit length
 
     async def _persist_session(self, session: Session):

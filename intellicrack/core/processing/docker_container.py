@@ -1,3 +1,12 @@
+import os
+import subprocess
+import time
+from typing import Any, Dict, Optional
+
+from intellicrack.logger import logger
+
+from .base_snapshot_handler import BaseSnapshotHandler
+
 """
 Docker Container Management for Distributed Analysis.
 
@@ -27,12 +36,7 @@ This module provides comprehensive Docker container operations for distributed b
 with container lifecycle management, state snapshots, and artifact collection.
 """
 
-import os
-import subprocess
-import time
-from typing import Any, Dict, Optional
 
-from .base_snapshot_handler import BaseSnapshotHandler
 
 
 class DockerContainer(BaseSnapshotHandler):
@@ -108,9 +112,11 @@ class DockerContainer(BaseSnapshotHandler):
             if result.returncode != 0:
                 raise RuntimeError("Docker daemon not running")
 
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            logger.error("Subprocess timeout in docker_container: %s", e)
             raise RuntimeError("Docker command timed out - daemon may not be running")
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            logger.error("File not found in docker_container: %s", e)
             raise RuntimeError("Docker command not found - Docker is not installed")
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Docker initialization error: {str(e)}")
@@ -265,7 +271,8 @@ class DockerContainer(BaseSnapshotHandler):
 
             return result.returncode == 0 and result.stdout.strip() == "true"
 
-        except (OSError, ValueError, RuntimeError):
+        except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in docker_container: %s", e)
             return False
 
     def execute_command(self, command: str, timeout: int = 60, working_dir: Optional[str] = None) -> str:

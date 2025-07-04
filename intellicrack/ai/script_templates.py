@@ -1,3 +1,4 @@
+
 """
 Script Templates for AI-Generated Frida and Ghidra Scripts
 
@@ -551,6 +552,7 @@ class {script_class_name}(GhidraScript):
             self.print_summary()
 
         except Exception as e:
+            self.logger.error("Exception in script_templates: %s", e)
             self.println("[ERROR] Script execution failed: {{}}".format(str(e)))
             import traceback
             traceback.print_exc()
@@ -573,6 +575,7 @@ class {script_class_name}(GhidraScript):
                 json.dump(self.analysis_results, f, indent=2, default=str)
             self.println("Results saved to: {{}}".format(results_file))
         except Exception as e:
+            self.logger.error("Exception in script_templates: %s", e)
             self.println("Could not save results: {{}}".format(str(e)))
 
 # Execute the script
@@ -758,6 +761,7 @@ class {script_class_name}(GhidraScript):
                             self.println("  No suitable patch strategy found")
 
             except Exception as e:
+                logger.error("Exception in script_templates: %s", e)
                 self.println("Failed to patch {{}}: {{}}".format(func_info["name"], str(e)))
 
         self.analysis_results["patches_applied"] = patches_applied
@@ -782,6 +786,7 @@ class {script_class_name}(GhidraScript):
             return True
 
         except Exception as e:
+            self.logger.error("Exception in script_templates: %s", e)
             self.println("Failed to apply return-success patch: {{}}".format(str(e)))
             return False
 
@@ -824,6 +829,7 @@ class {script_class_name}(GhidraScript):
                         patched_count += 1
 
                     except Exception as e:
+                        logger.error("Exception in script_templates: %s", e)
                         self.println("    Failed to patch jump: {{}}".format(str(e)))
 
                 instruction = instruction.getNext()
@@ -837,6 +843,7 @@ class {script_class_name}(GhidraScript):
             return False
 
         except Exception as e:
+            logger.error("Exception in script_templates: %s", e)
             self.println("Failed to patch conditional jumps: {{}}".format(str(e)))
             return False
 
@@ -879,6 +886,7 @@ class {script_class_name}(GhidraScript):
             return patched_count > 0
 
         except Exception as e:
+            logger.error("Exception in script_templates: %s", e)
             self.println("Failed to patch string comparisons: {{}}".format(str(e)))
             return False
 '''
@@ -917,16 +925,19 @@ class ScriptTemplateEngine:
         # Add specific bypass templates based on protection types
         bypass_code = []
         if 'license_check' in template_vars.get('protection_types', '').lower():
-            bypass_code.append(self.frida_templates.get_license_check_template())
+            bypass_code.append(
+                self.frida_templates.get_license_check_template())
 
         if 'time_bomb' in template_vars.get('protection_types', '').lower():
             bypass_code.append(self.frida_templates.get_time_bomb_template())
 
         if 'network' in template_vars.get('protection_types', '').lower():
-            bypass_code.append(self.frida_templates.get_network_validation_template())
+            bypass_code.append(
+                self.frida_templates.get_network_validation_template())
 
         if 'registry' in template_vars.get('protection_types', '').lower():
-            bypass_code.append(self.frida_templates.get_registry_bypass_template())
+            bypass_code.append(
+                self.frida_templates.get_registry_bypass_template())
 
         # Combine bypass logic
         template_vars['bypass_logic'] = '\n'.join(bypass_code)
@@ -1090,5 +1101,6 @@ class ScriptTemplateEngine:
                 f.write("\\n".join(report_lines))
             self.println("Report saved to: {}".format(report_file))
         except Exception as e:
+            logger.error("Exception in script_templates: %s", e)
             self.println("Could not save report: {}".format(str(e)))
 '''

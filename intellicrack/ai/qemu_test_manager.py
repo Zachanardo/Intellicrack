@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 import os
 import shutil
 import subprocess
@@ -38,7 +39,8 @@ try:
     # Try to import existing QEMU emulator
     from ..core.processing.qemu_emulator import QEMUSystemEmulator
     HAS_QEMU_EMULATOR = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in qemu_test_manager: %s", e)
     QEMUSystemEmulator = None
     HAS_QEMU_EMULATOR = False
 
@@ -71,23 +73,54 @@ class QEMUTestManager:
     """
 
     def __init__(self):
+        self.logger = logging.getLogger(__name__ + ".QEMUTestManager")
         self.snapshots = {}
         self.base_images = {
             'windows': self._get_windows_base_image(),
             'linux': self._get_linux_base_image()
         }
         self.qemu_executable = self._find_qemu_executable()
-        self.working_dir = Path(tempfile.gettempdir()) / "intellicrack_qemu_tests"
+        self.working_dir = Path(tempfile.gettempdir()) / \
+            "intellicrack_qemu_tests"
         self.working_dir.mkdir(exist_ok=True)
 
         # Integration with existing QEMU emulator if available
         self.qemu_emulator = None
         if HAS_QEMU_EMULATOR:
+            # Initialize QEMU emulator without a binary - it will be set when needed
             try:
-                self.qemu_emulator = QEMUSystemEmulator()
+                # Check if we have a test binary available
+                test_binaries = [
+                    os.path.join(self.working_dir, "test.exe"),
+                    "/bin/ls",  # Linux fallback
+                    "C:\\Windows\\System32\\cmd.exe",  # Windows fallback
+                ]
+
+                binary_to_use = None
+                for test_binary in test_binaries:
+                    if os.path.exists(test_binary):
+                        binary_to_use = test_binary
+                        break
+
+                if not binary_to_use:
+                    # Create a minimal test binary
+                    test_binary_path = os.path.join(
+                        self.working_dir, "test.exe")
+                    with open(test_binary_path, 'wb') as f:
+                        # Minimal PE header for Windows
+                        f.write(
+                            b'MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00')
+                        f.write(
+                            b'\xb8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+                    binary_to_use = test_binary_path
+
+                self.qemu_emulator = QEMUSystemEmulator(
+                    binary_path=binary_to_use)
                 logger.info("Integrated with existing QEMU emulator")
             except Exception as e:
-                logger.warning(f"Could not initialize existing QEMU emulator: {e}")
+                logger.warning(
+                    f"Could not initialize existing QEMU emulator: {e}")
+                self.qemu_emulator = None
 
     def _find_qemu_executable(self) -> str:
         """Find QEMU executable on the system."""
@@ -115,7 +148,8 @@ class QEMUTestManager:
         # Get base image for platform
         base_image = self.base_images.get(platform.lower())
         if not base_image:
-            raise ValueError(f"No base image available for platform: {platform}")
+            raise ValueError(
+                f"No base image available for platform: {platform}")
 
         # Create working copy of base image
         snapshot_disk = self.working_dir / f"{snapshot_id}.qcow2"
@@ -172,7 +206,8 @@ class QEMUTestManager:
         ]
 
         try:
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             # Wait a moment for VM to start
             time.sleep(5)
@@ -180,7 +215,8 @@ class QEMUTestManager:
             # Check if process is still running
             if process.poll() is None or process.returncode == 0:
                 snapshot.vm_process = process
-                logger.info(f"VM started successfully for snapshot: {snapshot.snapshot_id}")
+                logger.info(
+                    f"VM started successfully for snapshot: {snapshot.snapshot_id}")
 
                 # Wait for VM to be ready
                 self._wait_for_vm_ready(snapshot)
@@ -220,14 +256,15 @@ class QEMUTestManager:
                     logger.info(f"VM is ready: {snapshot.snapshot_id}")
                     return True
 
-            except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+            except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+                logger.error("Error in qemu_test_manager: %s", e)
                 pass
 
             time.sleep(2)
 
-        logger.warning(f"VM did not become ready within {timeout}s: {snapshot.snapshot_id}")
+        logger.warning(
+            f"VM did not become ready within {timeout}s: {snapshot.snapshot_id}")
         return False
-
 
     def _upload_file_to_vm(self, snapshot: QEMUSnapshot, content: str, remote_path: str):
         """Upload text content to VM as a file."""
@@ -260,8 +297,8 @@ class QEMUTestManager:
             # Cleanup local temp file
             try:
                 os.unlink(local_path)
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"Could not cleanup temp file {local_path}: {e}")
 
     def _upload_binary_to_vm(self, snapshot: QEMUSnapshot, local_binary: str, remote_path: str):
         """Upload binary file to VM."""
@@ -402,7 +439,6 @@ class QEMUTestManager:
         # Default to success if analysis completed without errors
         return "Analysis finished" in stdout or len(stderr.strip()) == 0
 
-
     def cleanup_snapshot(self, snapshot_id: str):
         """Clean up a test snapshot and stop associated VM."""
         if snapshot_id not in self.snapshots:
@@ -419,7 +455,9 @@ class QEMUTestManager:
                     # Try graceful shutdown first
                     snapshot.vm_process.terminate()
                     snapshot.vm_process.wait(timeout=10)
-                except subprocess.TimeoutExpired:
+                except subprocess.TimeoutExpired as e:
+                    self.logger.error(
+                        "Subprocess timeout in qemu_test_manager: %s", e)
                     # Force kill if needed
                     snapshot.vm_process.kill()
                     snapshot.vm_process.wait()
@@ -439,7 +477,8 @@ class QEMUTestManager:
                     try:
                         os.kill(pid, 0)  # Check if still running
                         os.kill(pid, 9)  # SIGKILL
-                    except OSError:
+                    except OSError as e:
+                        logger.error("OS error in qemu_test_manager: %s", e)
                         pass  # Process already dead
 
                     pid_file.unlink()
@@ -468,12 +507,16 @@ class QEMUTestManager:
                 snapshot.vm_process.terminate()
                 try:
                     snapshot.vm_process.wait(timeout=10)
-                except subprocess.TimeoutExpired:
+                except subprocess.TimeoutExpired as e:
+                    self.logger.error(
+                        "Subprocess timeout in qemu_test_manager: %s", e)
                     snapshot.vm_process.kill()
                     snapshot.vm_process.wait()
-                logger.info(f"Stopped VM process for snapshot {snapshot.snapshot_id}")
+                logger.info(
+                    f"Stopped VM process for snapshot {snapshot.snapshot_id}")
         except Exception as e:
-            logger.error(f"Error stopping VM for snapshot {snapshot.snapshot_id}: {e}")
+            logger.error(
+                f"Error stopping VM for snapshot {snapshot.snapshot_id}: {e}")
 
     def cleanup_all_snapshots(self):
         """Clean up all active snapshots."""
@@ -510,37 +553,52 @@ class QEMUTestManager:
         """Cleanup on destruction."""
         try:
             self.cleanup_all_snapshots()
-        except Exception:
-            pass  # Don't raise exceptions in destructor
+        except Exception as e:
+            logger.debug(f"Error during destructor cleanup: {e}")
 
     def _get_windows_base_image(self) -> Path:
         """Get path to Windows base image."""
+        # Use project-relative paths
+        # Go up to project root
+        project_root = Path(__file__).parent.parent.parent
+
         possible_paths = [
             Path("/var/lib/libvirt/images/windows_base.qcow2"),
             Path("~/VMs/windows_base.qcow2"),
-            Path("./qemu_images/windows_base.qcow2")
+            project_root / "data" / "qemu_images" / "windows_base.qcow2"
         ]
 
         for path in possible_paths:
-            if path.expanduser().exists():
-                return path.expanduser()
+            expanded_path = path.expanduser()
+            if expanded_path.exists():
+                return expanded_path
 
-        # Create placeholder path
-        return Path("./qemu_images/windows_base.qcow2")
+        # Create placeholder path in project directory
+        default_path = project_root / "data" / "qemu_images" / "windows_base.qcow2"
+        default_path.parent.mkdir(parents=True, exist_ok=True)
+        return default_path
 
     def _get_linux_base_image(self) -> Path:
         """Get path to Linux base image."""
+        # Use project-relative paths
+        # Go up to project root
+        project_root = Path(__file__).parent.parent.parent
+
         possible_paths = [
             Path("/var/lib/libvirt/images/linux_base.qcow2"),
             Path("~/VMs/linux_base.qcow2"),
-            Path("./qemu_images/linux_base.qcow2")
+            project_root / "data" / "qemu_images" / "linux_base.qcow2"
         ]
 
         for path in possible_paths:
-            if path.expanduser().exists():
-                return path.expanduser()
+            expanded_path = path.expanduser()
+            if expanded_path.exists():
+                return expanded_path
 
-        return Path("./qemu_images/linux_base.qcow2")
+        # Create placeholder path in project directory
+        default_path = project_root / "data" / "qemu_images" / "linux_base.qcow2"
+        default_path.parent.mkdir(parents=True, exist_ok=True)
+        return default_path
 
     def _detect_os_type(self, binary_path: str) -> str:
         """Detect operating system type from binary."""
@@ -567,7 +625,8 @@ class QEMUTestManager:
             if not base_image.exists():
                 # Create minimal test image if base doesn't exist
                 logger.warning(f"Base image not found: {base_image}")
-                temp_disk = self._create_minimal_test_image(snapshot_dir, os_type)
+                temp_disk = self._create_minimal_test_image(
+                    snapshot_dir, os_type)
             else:
                 temp_disk = self._copy_base_image(base_image, snapshot_dir)
 
@@ -620,7 +679,8 @@ class QEMUTestManager:
                 logger.info(f"Creating Linux test image ({image_size})")
             else:
                 image_size = "1.5G"  # Default for unknown OS types
-                logger.info(f"Creating generic test image for {os_type} ({image_size})")
+                logger.info(
+                    f"Creating generic test image for {os_type} ({image_size})")
 
             cmd = [
                 "qemu-img", "create", "-f", "qcow2",
@@ -657,7 +717,8 @@ class QEMUTestManager:
             if result.returncode == 0:
                 return temp_disk
             else:
-                logger.error(f"Failed to create snapshot image: {result.stderr}")
+                logger.error(
+                    f"Failed to create snapshot image: {result.stderr}")
                 # Fallback: copy the base image
                 shutil.copy2(base_image, temp_disk)
                 return temp_disk
@@ -785,6 +846,7 @@ fi
             )
 
         except Exception as e:
+            logger.error("Exception in qemu_test_manager: %s", e)
             runtime_ms = int((time.time() - start_time) * 1000)
             return ExecutionResult(
                 success=False,
@@ -859,6 +921,7 @@ fi
             )
 
         except Exception as e:
+            logger.error("Exception in qemu_test_manager: %s", e)
             runtime_ms = int((time.time() - start_time) * 1000)
             return ExecutionResult(
                 success=False,
@@ -917,18 +980,18 @@ fi
                 'stderr': ""
             }
 
-
-
     def create_versioned_snapshot(self, parent_snapshot_id: str, binary_path: str) -> str:
         """Create a new snapshot version based on an existing snapshot."""
         if parent_snapshot_id not in self.snapshots:
-            raise ValueError(f"Parent snapshot not found: {parent_snapshot_id}")
+            raise ValueError(
+                f"Parent snapshot not found: {parent_snapshot_id}")
 
         parent_snapshot = self.snapshots[parent_snapshot_id]
         new_version = parent_snapshot.version + 1
         snapshot_id = f"{parent_snapshot_id}_v{new_version}_{int(time.time())}"
 
-        logger.info(f"Creating versioned snapshot: {snapshot_id} from {parent_snapshot_id}")
+        logger.info(
+            f"Creating versioned snapshot: {snapshot_id} from {parent_snapshot_id}")
 
         # Create new snapshot based on parent
         snapshot_disk = self.working_dir / f"{snapshot_id}.qcow2"
@@ -978,8 +1041,10 @@ fi
         logger.info(f"Comparing snapshots: {snapshot_id1} vs {snapshot_id2}")
 
         # Calculate disk usage differences
-        disk1_size = os.path.getsize(snapshot1.disk_path) if os.path.exists(snapshot1.disk_path) else 0
-        disk2_size = os.path.getsize(snapshot2.disk_path) if os.path.exists(snapshot2.disk_path) else 0
+        disk1_size = os.path.getsize(snapshot1.disk_path) if os.path.exists(
+            snapshot1.disk_path) else 0
+        disk2_size = os.path.getsize(snapshot2.disk_path) if os.path.exists(
+            snapshot2.disk_path) else 0
 
         # Compare test results
         results1 = snapshot1.test_results
@@ -1041,7 +1106,8 @@ fi
                 target_snapshot = self.snapshots[target_state]
 
                 # Create new overlay based on target
-                rollback_disk = self.working_dir / f"{snapshot_id}_rollback_{int(time.time())}.qcow2"
+                rollback_disk = self.working_dir / \
+                    f"{snapshot_id}_rollback_{int(time.time())}.qcow2"
                 cmd = [
                     "qemu-img", "create", "-f", "qcow2",
                     "-b", target_snapshot.disk_path,
@@ -1054,10 +1120,12 @@ fi
                 os.remove(snapshot.disk_path)
                 os.rename(rollback_disk, snapshot.disk_path)
 
-                logger.info(f"Rolled back {snapshot_id} to state of {target_state}")
+                logger.info(
+                    f"Rolled back {snapshot_id} to state of {target_state}")
             else:
                 # Rollback to clean state (recreate from base)
-                base_image = self.base_images.get("windows")  # Default to Windows
+                base_image = self.base_images.get(
+                    "windows")  # Default to Windows
                 if not base_image:
                     raise RuntimeError("No base image available for rollback")
 
@@ -1096,7 +1164,8 @@ fi
 
         try:
             # Get disk usage
-            disk_size = os.path.getsize(snapshot.disk_path) if os.path.exists(snapshot.disk_path) else 0
+            disk_size = os.path.getsize(snapshot.disk_path) if os.path.exists(
+                snapshot.disk_path) else 0
 
             # Get memory usage from VM if running
             memory_usage = 0
@@ -1107,16 +1176,20 @@ fi
 
                 # Use ps to get memory and CPU usage
                 try:
-                    ps_cmd = ["ps", "-p", str(pid), "-o", "rss,pcpu", "--no-headers"]
-                    result = subprocess.run(ps_cmd, capture_output=True, text=True)
+                    ps_cmd = ["ps", "-p",
+                              str(pid), "-o", "rss,pcpu", "--no-headers"]
+                    result = subprocess.run(
+                        ps_cmd, capture_output=True, text=True)
 
                     if result.returncode == 0:
                         parts = result.stdout.strip().split()
                         if len(parts) >= 2:
-                            memory_usage = int(parts[0]) * 1024  # Convert KB to bytes
+                            # Convert KB to bytes
+                            memory_usage = int(parts[0]) * 1024
                             cpu_usage = float(parts[1])
 
-                except (subprocess.SubprocessError, ValueError):
+                except (subprocess.SubprocessError, ValueError) as e:
+                    logger.error("Error in qemu_test_manager: %s", e)
                     pass
 
             # Update snapshot metrics
@@ -1137,7 +1210,8 @@ fi
             return metrics
 
         except Exception as e:
-            logger.error(f"Performance monitoring failed for {snapshot_id}: {e}")
+            logger.error(
+                f"Performance monitoring failed for {snapshot_id}: {e}")
             return {"error": str(e)}
 
     def enable_network_isolation(self, snapshot_id: str, isolated: bool = True):
@@ -1157,7 +1231,8 @@ fi
 
             try:
                 self._execute_command_in_vm(snapshot, isolation_cmd)
-                logger.info(f"Network isolation {'enabled' if isolated else 'disabled'} for {snapshot_id}")
+                logger.info(
+                    f"Network isolation {'enabled' if isolated else 'disabled'} for {snapshot_id}")
             except Exception as e:
                 logger.warning(f"Failed to apply network isolation: {e}")
 
@@ -1214,7 +1289,8 @@ fi
                     snapshot.disk_path, temp_path
                 ]
 
-                result = subprocess.run(convert_cmd, capture_output=True, text=True)
+                result = subprocess.run(
+                    convert_cmd, capture_output=True, text=True)
                 if result.returncode == 0:
                     new_size = os.path.getsize(temp_path)
                     space_saved = original_size - new_size
@@ -1223,7 +1299,8 @@ fi
                         # Replace with optimized version
                         os.replace(temp_path, snapshot.disk_path)
                         optimization_results["space_saved_bytes"] += space_saved
-                        logger.info(f"Optimized {snapshot_id}: saved {space_saved} bytes")
+                        logger.info(
+                            f"Optimized {snapshot_id}: saved {space_saved} bytes")
                     else:
                         os.remove(temp_path)
 
@@ -1235,5 +1312,3 @@ fi
                 logger.error(error_msg)
 
         return optimization_results
-
-

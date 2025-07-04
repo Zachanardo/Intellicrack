@@ -6,8 +6,8 @@ This script thoroughly verifies that all new exploitation capabilities
 are properly wired and integrated throughout the entire Intellicrack system.
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add project root to path
@@ -43,7 +43,7 @@ class IntegrationVerifier:
             from intellicrack import core
 
             required_modules = [
-                'c2_infrastructure', 
+                'c2_infrastructure',
                 'evasion',
                 'post_exploitation',
                 'vulnerability_research'
@@ -60,7 +60,8 @@ class IntegrationVerifier:
                     missing_modules.append(f"{module_name} (None)")
 
             if missing_modules:
-                self.issues.append(f"Core module missing exports: {missing_modules}")
+                self.issues.append(
+                    f"Core module missing exports: {missing_modules}")
                 logger.warning(f"Missing core modules: {missing_modules}")
             else:
                 self.results['core_module_exports'] = True
@@ -93,7 +94,8 @@ class IntegrationVerifier:
                     missing_components.append(f"{component_name} (None)")
 
             if missing_components:
-                self.issues.append(f"AI module missing exports: {missing_components}")
+                self.issues.append(
+                    f"AI module missing exports: {missing_components}")
                 logger.warning(f"Missing AI components: {missing_components}")
             else:
                 self.results['ai_module_exports'] = True
@@ -128,12 +130,14 @@ class IntegrationVerifier:
             class MockCombo:
                 def __init__(self, text):
                     self._text = text
+
                 def currentText(self):
                     return self._text
 
             class MockEdit:
                 def __init__(self, text):
                     self._text = text
+
                 def text(self):
                     return self._text
 
@@ -161,17 +165,20 @@ class IntegrationVerifier:
                         handler(mock_ui)
                         working_handlers.append(handler_name)
                     except Exception as e:
-                        logger.debug(f"Handler {handler_name} failed (expected in test): {e}")
+                        logger.debug(
+                            f"Handler {handler_name} failed (expected in test): {e}")
                         working_handlers.append(f"{handler_name} (callable)")
                 else:
                     missing_handlers.append(handler_name)
 
             if missing_handlers:
-                self.issues.append(f"UI missing handler bindings: {missing_handlers}")
+                self.issues.append(
+                    f"UI missing handler bindings: {missing_handlers}")
                 logger.warning(f"Missing UI handlers: {missing_handlers}")
             else:
                 self.results['ui_handler_bindings'] = True
-                logger.info(f"✓ UI handler bindings verified ({len(working_handlers)} handlers)")
+                logger.info(
+                    f"✓ UI handler bindings verified ({len(working_handlers)} handlers)")
 
         except Exception as e:
             self.issues.append(f"UI handler binding verification failed: {e}")
@@ -182,8 +189,9 @@ class IntegrationVerifier:
         try:
             logger.info("Verifying CLI command availability...")
 
-            from intellicrack.cli.cli import cli
             from click.testing import CliRunner
+
+            from intellicrack.cli.cli import cli
 
             runner = CliRunner()
 
@@ -197,7 +205,7 @@ class IntegrationVerifier:
             test_commands = [
                 ['advanced', '--help'],
                 ['advanced', 'payload', '--help'],
-                ['advanced', 'c2', '--help'], 
+                ['advanced', 'c2', '--help'],
                 ['advanced', 'research', '--help'],
                 ['advanced', 'post-exploit', '--help']
             ]
@@ -221,7 +229,8 @@ class IntegrationVerifier:
 
             if working_commands:
                 self.results['cli_command_availability'] = True
-                logger.info(f"✓ CLI commands verified ({len(working_commands)} working)")
+                logger.info(
+                    f"✓ CLI commands verified ({len(working_commands)} working)")
 
         except Exception as e:
             self.issues.append(f"CLI command verification failed: {e}")
@@ -252,8 +261,10 @@ class IntegrationVerifier:
                     missing_methods.append(f"{method_name} (not callable)")
 
             if missing_methods:
-                self.issues.append(f"Orchestrator missing methods: {missing_methods}")
-                logger.warning(f"Missing orchestrator methods: {missing_methods}")
+                self.issues.append(
+                    f"Orchestrator missing methods: {missing_methods}")
+                logger.warning(
+                    f"Missing orchestrator methods: {missing_methods}")
             else:
                 # Test orchestrator status
                 status = orchestrator.get_orchestrator_status()
@@ -261,10 +272,12 @@ class IntegrationVerifier:
                     self.results['orchestrator_integration'] = True
                     logger.info("✓ Orchestrator integration verified")
                 else:
-                    self.issues.append("Orchestrator status method returned invalid data")
+                    self.issues.append(
+                        "Orchestrator status method returned invalid data")
 
         except Exception as e:
-            self.issues.append(f"Orchestrator integration verification failed: {e}")
+            self.issues.append(
+                f"Orchestrator integration verification failed: {e}")
             logger.error(f"Orchestrator verification failed: {e}")
 
     def verify_component_cross_references(self):
@@ -280,15 +293,19 @@ class IntegrationVerifier:
                 engine = PayloadEngine()
                 cross_references_tested += 1
             except Exception as e:
-                self.issues.append(f"PayloadEngine cross-reference failed: {e}")
+                self.issues.append(
+                    f"PayloadEngine cross-reference failed: {e}")
 
-            # Test 2: VulnerabilityResearchAI can be imported and initialized  
+            # Test 2: VulnerabilityResearchAI can be imported and initialized
             try:
-                from intellicrack.ai.vulnerability_research_integration import VulnerabilityResearchAI
+                from intellicrack.ai.vulnerability_research_integration import (
+                    VulnerabilityResearchAI,
+                )
                 ai_research = VulnerabilityResearchAI()
                 cross_references_tested += 1
             except Exception as e:
-                self.issues.append(f"VulnerabilityResearchAI cross-reference failed: {e}")
+                self.issues.append(
+                    f"VulnerabilityResearchAI cross-reference failed: {e}")
 
             # Test 3: C2Manager can be imported
             try:
@@ -296,29 +313,37 @@ class IntegrationVerifier:
                 c2_manager = C2Manager()
                 cross_references_tested += 1
             except Exception as e:
-                logger.debug(f"C2Manager cross-reference failed (expected): {e}")
+                logger.debug(
+                    f"C2Manager cross-reference failed (expected): {e}")
                 # C2Manager may fail due to missing aiohttp, but structure should be correct
                 if "aiohttp" not in str(e):
-                    self.issues.append(f"C2Manager cross-reference failed: {e}")
+                    self.issues.append(
+                        f"C2Manager cross-reference failed: {e}")
                 else:
                     cross_references_tested += 1  # Structure is correct
 
             # Test 4: ResearchManager can be imported
             try:
-                from intellicrack.core.vulnerability_research.research_manager import ResearchManager
+                from intellicrack.core.vulnerability_research.research_manager import (
+                    ResearchManager,
+                )
                 research_manager = ResearchManager()
                 cross_references_tested += 1
             except Exception as e:
-                self.issues.append(f"ResearchManager cross-reference failed: {e}")
+                self.issues.append(
+                    f"ResearchManager cross-reference failed: {e}")
 
             if cross_references_tested >= 3:  # Allow some flexibility
                 self.results['component_cross_references'] = True
-                logger.info(f"✓ Component cross-references verified ({cross_references_tested}/4)")
+                logger.info(
+                    f"✓ Component cross-references verified ({cross_references_tested}/4)")
             else:
-                logger.warning(f"Only {cross_references_tested}/4 cross-references working")
+                logger.warning(
+                    f"Only {cross_references_tested}/4 cross-references working")
 
         except Exception as e:
-            self.issues.append(f"Component cross-reference verification failed: {e}")
+            self.issues.append(
+                f"Component cross-reference verification failed: {e}")
             logger.error(f"Cross-reference verification failed: {e}")
 
     def verify_end_to_end_workflow(self):
@@ -386,7 +411,8 @@ class IntegrationVerifier:
             logger.info(f"  {test_name.replace('_', ' ').title()}: {status}")
 
         logger.info("")
-        logger.info(f"Overall Success Rate: {success_rate:.1f}% ({passed_tests}/{total_tests})")
+        logger.info(
+            f"Overall Success Rate: {success_rate:.1f}% ({passed_tests}/{total_tests})")
 
         if self.issues:
             logger.info("")
@@ -400,8 +426,9 @@ class IntegrationVerifier:
             logger.info("🎉 INTEGRATION VERIFICATION: EXCELLENT")
             logger.info("   All critical components are properly integrated!")
         elif success_rate >= 70:
-            logger.info("✅ INTEGRATION VERIFICATION: GOOD") 
-            logger.info("   Most components are properly integrated with minor issues.")
+            logger.info("✅ INTEGRATION VERIFICATION: GOOD")
+            logger.info(
+                "   Most components are properly integrated with minor issues.")
         elif success_rate >= 50:
             logger.info("⚠️  INTEGRATION VERIFICATION: NEEDS ATTENTION")
             logger.info("   Some integration issues need to be addressed.")

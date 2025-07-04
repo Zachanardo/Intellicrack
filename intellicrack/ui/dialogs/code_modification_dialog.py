@@ -124,6 +124,7 @@ class ModificationAnalysisThread(QThread):
             changes = self.modifier.analyze_modification_request(self.request)
             self.analysis_complete.emit(changes)
         except Exception as e:
+            self.logger.error("Exception in code_modification_dialog: %s", e)
             self.error_occurred.emit(str(e))
 
 
@@ -471,7 +472,8 @@ class CodeModificationDialog(QDialog):
             try:
                 rel_path = Path(file_path).relative_to(self.project_root)
                 self.target_files_list.addItem(str(rel_path))
-            except ValueError:
+            except ValueError as e:
+                self.logger.error("Value error in code_modification_dialog: %s", e)
                 # File is outside project root
                 self.target_files_list.addItem(file_path)
 

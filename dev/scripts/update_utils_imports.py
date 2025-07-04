@@ -108,6 +108,7 @@ MOVED_FILES = {
     'network_api_common': 'templates.network_api_common',
 }
 
+
 def update_imports_in_file(file_path):
     """Update imports in a single file"""
 
@@ -153,6 +154,7 @@ def update_imports_in_file(file_path):
 
     return False
 
+
 def update_all_imports(root_dir='/mnt/c/Intellicrack'):
     """Update imports in all Python files"""
 
@@ -171,6 +173,7 @@ def update_all_imports(root_dir='/mnt/c/Intellicrack'):
 
     return updated_files
 
+
 def main():
     print("Updating imports throughout the codebase...")
 
@@ -179,6 +182,7 @@ def main():
     print(f"\nUpdated {len(updated)} files:")
     for file in sorted(updated):
         print(f"  {file}")
+
 
 if __name__ == '__main__':
     main()

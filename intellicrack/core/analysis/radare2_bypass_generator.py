@@ -27,6 +27,8 @@ from .radare2_ai_integration import R2AIEngine
 from .radare2_decompiler import R2DecompilationEngine
 from .radare2_vulnerability_engine import R2VulnerabilityEngine
 
+logger = logging.getLogger(__name__)
+
 
 class R2BypassGenerator:
     """
@@ -291,10 +293,12 @@ class R2BypassGenerator:
                                         'context': 'license_string',
                                         'bypass_potential': self._assess_string_bypass_potential(string_content)
                                     })
-                except R2Exception:
+                except R2Exception as e:
+                    logger.error("R2Exception in radare2_bypass_generator: %s", e)
                     continue
 
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_bypass_generator: %s", e)
             pass
 
         return patterns
@@ -357,7 +361,8 @@ class R2BypassGenerator:
                             'bypass_method': 'hardware_spoofing'
                         })
 
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_bypass_generator: %s", e)
             pass
 
         return api_analysis
@@ -782,7 +787,8 @@ class R2BypassGenerator:
 
             return patch
 
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_bypass_generator: %s", e)
             return None
 
     def _generate_keygen_implementation(self, crypto_op: Dict[str, Any]) -> Dict[str, str]:
@@ -930,7 +936,8 @@ Valid=True"""
             # Get first few bytes of function
             bytes_data = r2._execute_command(f'p8 16 @ {hex(func_addr)}')
             return bytes_data.strip() if bytes_data else '00' * 16
-        except R2Exception:
+        except R2Exception as e:
+            self.logger.error("R2Exception in radare2_bypass_generator: %s", e)
             return '00' * 16
 
     def _generate_patch_bytes(self, func_info: Dict[str, Any]) -> str:

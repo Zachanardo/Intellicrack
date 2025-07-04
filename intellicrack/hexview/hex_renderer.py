@@ -1,3 +1,11 @@
+import logging
+import re
+import struct
+from enum import Enum, auto
+from typing import Any, Dict, List, Optional, Tuple
+
+from intellicrack.logger import logger
+
 """
 Hex data rendering module for the hex viewer/editor.
 
@@ -20,10 +28,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import re
-import struct
-from enum import Enum, auto
-from typing import Any, Dict, List, Optional, Tuple
 
 
 class ViewMode(Enum):
@@ -62,6 +66,7 @@ class HexViewRenderer:
         self.group_size = group_size
         self.show_ascii = show_ascii
         self.show_address = show_address
+        self.logger = logging.getLogger(__name__ + ".HexViewRenderer")
 
         # Validate and adjust the group_size
         if group_size not in (1, 2, 4, 8):
@@ -101,7 +106,7 @@ class HexViewRenderer:
                 self.bytes_per_row = self.group_size
 
     def render_hex_view(self, data: bytes, offset: int = 0,
-                        highlight_ranges: Optional[List[Tuple[int, int, str]]] = None) -> str:  # pylint: disable=unused-argument
+                        highlight_ranges: Optional[List[Tuple[int, int, str]]] = None) -> str:
         """
         Render data in traditional hex view format.
 
@@ -133,20 +138,43 @@ class HexViewRenderer:
             hex_parts = []
             for j in range(0, len(chunk), self.group_size):
                 group = chunk[j:j + self.group_size]
+                
+                # Check if this byte range should be highlighted
+                highlight_prefix = ""
+                highlight_suffix = ""
+                if highlight_ranges:
+                    current_pos = line_offset + j
+                    for start, end, color in highlight_ranges:
+                        if start <= current_pos < end:
+                            # Apply highlighting (using ANSI color codes or markers)
+                            if color == 'red':
+                                highlight_prefix = "["
+                                highlight_suffix = "]"
+                            elif color == 'blue':
+                                highlight_prefix = "<"
+                                highlight_suffix = ">"
+                            elif color == 'green':
+                                highlight_prefix = "{"
+                                highlight_suffix = "}"
+                            break
 
                 # Format the group based on its size
+                group_str = ""
                 if self.group_size == 1:
-                    hex_parts.append(f"{group[0]:02X}")
+                    group_str = f"{group[0]:02X}"
                 elif self.group_size == 2 and len(group) == 2:
-                    hex_parts.append(f"{group[0]:02X}{group[1]:02X}")
+                    group_str = f"{group[0]:02X}{group[1]:02X}"
                 elif self.group_size == 4 and len(group) == 4:
-                    hex_parts.append(f"{group[0]:02X}{group[1]:02X}{group[2]:02X}{group[3]:02X}")
+                    group_str = f"{group[0]:02X}{group[1]:02X}{group[2]:02X}{group[3]:02X}"
                 elif self.group_size == 8 and len(group) == 8:
-                    hex_parts.append(f"{group[0]:02X}{group[1]:02X}{group[2]:02X}{group[3]:02X}"
-                                     f"{group[4]:02X}{group[5]:02X}{group[6]:02X}{group[7]:02X}")
+                    group_str = (f"{group[0]:02X}{group[1]:02X}{group[2]:02X}{group[3]:02X}"
+                                 f"{group[4]:02X}{group[5]:02X}{group[6]:02X}{group[7]:02X}")
                 else:
                     # Handle incomplete groups at the end
-                    hex_parts.append("".join(f"{b:02X}" for b in group))
+                    group_str = "".join(f"{b:02X}" for b in group)
+                
+                # Apply highlighting and add to hex_parts
+                hex_parts.append(highlight_prefix + group_str + highlight_suffix)
 
             # Join hex parts with spaces
             hex_str = " ".join(hex_parts)
@@ -343,7 +371,8 @@ class HexViewRenderer:
                             return f'"{data[:null_pos].decode("ascii", errors="replace")}"'
                         else:
                             return f'"{data.decode("ascii", errors="replace")}"'
-                    except Exception:
+                    except Exception as e:
+                        self.logger.error("Exception in hex_renderer: %s", e)
                         return " ".join(f"{b:02X}" for b in data)
 
                 # Other array types
@@ -393,6 +422,7 @@ class HexViewRenderer:
                 # Default to hex representation
                 return " ".join(f"{b:02X}" for b in data)
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in hex_renderer: %s", e)
             return f"<error: {str(e)}>"
 
 

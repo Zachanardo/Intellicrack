@@ -1,0 +1,13 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("library", "Carbon");
+
+function detect() {
+    if (MACH.isLibraryPresent("Carbon")) {
+        bDetected = true;
+    } else if (MACH.isLibraryPresent("CarbonCore")) {
+        bDetected = true;
+    }
+
+    return result();
+}

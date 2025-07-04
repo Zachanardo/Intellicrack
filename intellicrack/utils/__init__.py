@@ -439,6 +439,18 @@ try:
 except ImportError as e:
     _init_logger.warning("Failed to import path_discovery functions: %s", e)
 
+# Import GPU autoloader functions
+try:
+    from .gpu_autoloader import (
+        gpu_autoloader,
+        get_device,
+        get_gpu_info,
+        to_device,
+        optimize_for_gpu,
+    )
+except ImportError as e:
+    _init_logger.warning("Failed to import gpu_autoloader functions: %s", e)
+
 # Import exploit common functions
 try:
     from .exploitation.exploit_common import (
@@ -709,6 +721,13 @@ __all__ = [
     'SeverityLevel',
     'SecurityRelevance',
     'VulnerabilityLevel',
+
+    # From gpu_autoloader
+    'gpu_autoloader',
+    'get_device',
+    'get_gpu_info',
+    'to_device',
+    'optimize_for_gpu',
 ]
 
 # Package metadata

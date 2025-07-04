@@ -54,6 +54,7 @@ from PyQt5.QtWidgets import (
 )
 
 from ...ai.ai_assistant_enhanced import IntellicrackAIAssistant
+from ...ai.ai_tools import AIAssistant
 from ...ai.llm_backends import LLMManager
 from ...utils.logger import get_logger
 
@@ -245,7 +246,8 @@ class FileTreeWidget(QTreeWidget):
                         tree_item.setIcon(0, self.style().standardIcon(self.style().SP_FileIcon))
                     else:
                         tree_item.setIcon(0, self.style().standardIcon(self.style().SP_ComputerIcon))
-        except PermissionError:
+        except PermissionError as e:
+            logger.error("Permission error in ai_coding_assistant_dialog: %s", e)
             # Skip directories we can't read
             pass
 
@@ -290,14 +292,14 @@ class FileTreeWidget(QTreeWidget):
 
     def on_item_clicked(self, item: QTreeWidgetItem, column: int):
         """Handle item click."""
-        self.logger.debug(f"Item clicked in column {column}")
+        logger.debug(f"Item clicked in column {column}")
         path = item.data(0, Qt.UserRole)
         if path and Path(path).is_file():
             self.file_selected.emit(path)
 
     def on_item_double_clicked(self, item: QTreeWidgetItem, column: int):
         """Handle item double click."""
-        self.logger.debug(f"Item double-clicked in column {column}")
+        logger.debug(f"Item double-clicked in column {column}")
         path = item.data(0, Qt.UserRole)
         if path and Path(path).is_file():
             self.file_selected.emit(path)
@@ -510,7 +512,11 @@ class AICodingAssistantDialog(QDialog):
 
         # Initialize components
         self.ai_assistant = IntellicrackAIAssistant()
+        self.ai_tools = AIAssistant()  # Initialize AI tools for code analysis
         self.llm_manager = LLMManager()
+        
+        # Configure LLM with system prompt
+        self.system_prompt = self.ai_assistant.get_system_prompt()
         self.current_project = None
         self.modified_files = set()
 
@@ -902,21 +908,55 @@ class AICodingAssistantDialog(QDialog):
 
     def process_ai_request(self, message: str, context: Dict[str, Any]) -> str:
         """Process AI request and return response."""
-        # This would integrate with the actual AI system
-        # For now, return a placeholder response
-
-        if "explain" in message.lower():
-            if context.get("selected_text"):
-                return f"The selected code appears to be: {context['selected_text'][:100]}..."
+        try:
+            # Handle specific commands first
+            if "explain" in message.lower() and context.get("selected_text"):
+                # Create a more specific question with context
+                code_snippet = context['selected_text'][:500]  # Limit code length
+                question = f"Please explain this code:\n```\n{code_snippet}\n```"
+                response = self.ai_tools.ask_question(question)
+                return response
+            
+            elif "generate" in message.lower():
+                # Handle code generation requests
+                script_type = self.script_type_combo.currentText()
+                if context.get("file_content"):
+                    # Include current file context
+                    question = f"Generate a {script_type} based on this context:\n{context['file_content'][:1000]}"
+                else:
+                    question = f"Generate a {script_type} for: {message}"
+                response = self.ai_tools.ask_question(question)
+                return response
+            
+            elif "optimize" in message.lower() and context.get("selected_text"):
+                # Handle optimization requests
+                code_snippet = context['selected_text'][:500]
+                question = f"Please optimize this code:\n```\n{code_snippet}\n```"
+                response = self.ai_tools.ask_question(question)
+                return response
+            
+            elif "debug" in message.lower() and context.get("selected_text"):
+                # Handle debugging requests
+                code_snippet = context['selected_text'][:500]
+                question = f"Help me debug this code:\n```\n{code_snippet}\n```"
+                response = self.ai_tools.ask_question(question)
+                return response
+            
             else:
+                # For general questions, use ask_question directly
+                response = self.ai_tools.ask_question(message)
+                return response
+                
+        except Exception as e:
+            logger.error(f"Error processing AI request: {e}")
+            # Fallback to basic responses if AI fails
+            if "explain" in message.lower():
                 return "Please select some code to explain."
-
-        elif "generate" in message.lower():
-            script_type = self.script_type_combo.currentText()
-            return f"Generating {script_type} based on your request..."
-
-        else:
-            return f"I understand you want: {message}. This would integrate with the full AI system."
+            elif "generate" in message.lower():
+                script_type = self.script_type_combo.currentText()
+                return f"AI generation temporarily unavailable for {script_type}."
+            else:
+                return f"AI processing error: {str(e)}"
 
     def ai_generate_code(self):
         """Generate code using AI."""
@@ -944,20 +984,62 @@ def example_function():
         self.chat_widget.add_message("AI", f"Generated {script_type} code and inserted into editor.")
 
     def run_current_script(self):
-        """Run the current script."""
+        """Run the current script with optional QEMU testing."""
         current_editor = self.get_current_editor()
         if not current_editor or not current_editor.current_file:
             QMessageBox.information(self, "Info", "No file to run.")
             return
 
         file_path = Path(current_editor.current_file)
+        
+        # Initialize ScriptExecutionManager if not already done
+        if not hasattr(self, 'script_execution_manager'):
+            from ...core.execution import ScriptExecutionManager
+            self.script_execution_manager = ScriptExecutionManager(self)
 
+        # Determine script type based on file extension
+        script_type = None
         if file_path.suffix == '.py':
-            self.run_python_script(str(file_path))
+            script_type = 'python'
         elif file_path.suffix == '.js':
-            self.run_javascript_script(str(file_path))
+            script_type = 'frida'
         else:
             QMessageBox.information(self, "Info", f"Don't know how to run {file_path.suffix} files.")
+            return
+        
+        # Read script content
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                script_content = f.read()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to read script: {str(e)}")
+            return
+        
+        # Get target binary if available
+        target_binary = getattr(self, 'target_binary', '') or ''
+        
+        # Execute through ScriptExecutionManager
+        result = self.script_execution_manager.execute_script(
+            script_type=script_type,
+            script_content=script_content,
+            target_binary=target_binary,
+            options={
+                'file_path': str(file_path),
+                'from_editor': True
+            }
+        )
+        
+        # Show result in chat widget
+        if result.get('success'):
+            output_msg = f"Script executed successfully: {file_path.name}"
+            if 'output' in result:
+                output_msg += f"\n\nOutput:\n{result['output']}"
+            if result.get('qemu_tested'):
+                output_msg += "\n\n[Script was tested in QEMU before execution]"
+            self.chat_widget.add_message("System", output_msg)
+        else:
+            error_msg = f"Script execution failed: {result.get('error', 'Unknown error')}"
+            self.chat_widget.add_message("System", error_msg)
 
     def run_python_script(self, file_path: str):
         """Run a Python script."""
@@ -972,9 +1054,11 @@ def example_function():
             output = f"Exit code: {result.returncode}\n\nStdout:\n{result.stdout}\n\nStderr:\n{result.stderr}"
             self.chat_widget.add_message("System", f"Script execution result:\n{output}")
 
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            logger.error("Subprocess timeout in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", "Script execution timed out.")
         except Exception as e:
+            logger.error("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Script execution error: {e}")
 
     def run_javascript_script(self, file_path: str):
@@ -990,11 +1074,14 @@ def example_function():
             output = f"Exit code: {result.returncode}\n\nOutput:\n{result.stdout}\n\nErrors:\n{result.stderr}"
             self.chat_widget.add_message("System", f"Script execution result:\n{output}")
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            logger.error("File not found in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", "Node.js not found. Cannot run JavaScript files.")
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            logger.error("Subprocess timeout in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", "Script execution timed out.")
         except Exception as e:
+            logger.error("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Script execution error: {e}")
 
     def format_current_code(self):
@@ -1040,9 +1127,11 @@ def example_function():
             finally:
                 os.unlink(temp_file_path)
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            logger.error("File not found in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", "Black formatter not found. Please install: pip install black")
         except Exception as e:
+            logger.error("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Formatting error: {e}")
 
     def analyze_current_code(self):
@@ -1052,21 +1141,122 @@ def example_function():
             QMessageBox.information(self, "Info", "No file to analyze.")
             return
 
-        # This would integrate with the AI analysis system
-        file_type = Path(current_editor.current_file).suffix if current_editor.current_file else "unknown"
-        content_length = len(current_editor.toPlainText())
+        try:
+            # Get the current code content
+            code_content = current_editor.toPlainText()
+            file_path = current_editor.current_file
+            
+            # Determine language from file extension
+            language = "auto"
+            if file_path:
+                file_ext = Path(file_path).suffix.lower()
+                ext_to_lang = {
+                    '.py': 'python',
+                    '.js': 'javascript',
+                    '.c': 'c',
+                    '.cpp': 'cpp',
+                    '.h': 'c',
+                    '.hpp': 'cpp',
+                    '.java': 'java'
+                }
+                language = ext_to_lang.get(file_ext, "auto")
+            
+            # Update status
+            self.ai_status_label.setText("Analyzing code...")
+            self.chat_widget.add_message("AI", "Analyzing code, please wait...")
+            
+            # Perform analysis using ai_tools
+            analysis_result = self.ai_tools.analyze_code(code_content, language)
+            
+            # Format and display results
+            if analysis_result.get("status") == "success":
+                formatted_analysis = self._format_analysis_results(analysis_result)
+                self.chat_widget.add_message("AI", formatted_analysis)
+                
+                # If there are security issues or suggestions, highlight them
+                if analysis_result.get("security_issues"):
+                    self._highlight_security_issues(analysis_result["security_issues"])
+                    
+            else:
+                error_msg = analysis_result.get("error", "Unknown error occurred")
+                self.chat_widget.add_message("AI", f"Analysis failed: {error_msg}")
+            
+            self.ai_status_label.setText("AI Ready")
+            
+        except Exception as e:
+            logger.error(f"Code analysis error: {e}")
+            self.chat_widget.add_message("AI", f"Error during code analysis: {str(e)}")
+            self.ai_status_label.setText("AI Error")
 
-        analysis = f"""Code Analysis Results:
-- File type: {file_type}
-- Content length: {content_length} characters
-- This would include AI-powered analysis of:
-  * Code quality
-  * Security issues
-  * Optimization suggestions
-  * Best practices
-"""
-
-        self.chat_widget.add_message("AI", analysis)
+    def _format_analysis_results(self, analysis_result: Dict[str, Any]) -> str:
+        """Format code analysis results for display."""
+        lines = ["📊 **Code Analysis Results**\n"]
+        
+        # Basic info
+        lines.append(f"**Language:** {analysis_result.get('language', 'Unknown')}")
+        lines.append(f"**Lines of Code:** {analysis_result.get('lines_of_code', 0)}")
+        lines.append(f"**Complexity:** {analysis_result.get('complexity', 'Unknown')}")
+        lines.append(f"**AI Analysis:** {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}")
+        lines.append("")
+        
+        # Insights
+        insights = analysis_result.get('insights', [])
+        if insights:
+            lines.append("**🔍 Insights:**")
+            for insight in insights:
+                lines.append(f"  • {insight}")
+            lines.append("")
+        
+        # Security Issues
+        security_issues = analysis_result.get('security_issues', [])
+        if security_issues:
+            lines.append("**🔒 Security Issues:**")
+            for issue in security_issues:
+                lines.append(f"  ⚠️ {issue}")
+            lines.append("")
+        
+        # Suggestions
+        suggestions = analysis_result.get('suggestions', [])
+        if suggestions:
+            lines.append("**💡 Suggestions:**")
+            for suggestion in suggestions:
+                lines.append(f"  • {suggestion}")
+            lines.append("")
+        
+        # Patterns
+        patterns = analysis_result.get('patterns', [])
+        if patterns:
+            lines.append("**🎯 Detected Patterns:**")
+            for pattern in patterns:
+                lines.append(f"  • {pattern}")
+            lines.append("")
+        
+        # Timestamp
+        timestamp = analysis_result.get('analysis_timestamp', '')
+        if timestamp:
+            lines.append(f"\n_Analysis performed at: {timestamp}_")
+        
+        return "\n".join(lines)
+    
+    def _highlight_security_issues(self, security_issues: List[str]):
+        """Highlight security issues in the code editor."""
+        current_editor = self.get_current_editor()
+        if not current_editor:
+            return
+        
+        # For now, just log the security issues
+        # In a full implementation, this would highlight the relevant lines in the editor
+        for issue in security_issues:
+            logger.warning(f"Security issue detected: {issue}")
+        
+        # Show a warning dialog if there are critical security issues
+        if any("critical" in issue.lower() or "vulnerability" in issue.lower() for issue in security_issues):
+            QMessageBox.warning(
+                self,
+                "Security Issues Detected",
+                f"Found {len(security_issues)} security issue(s) in the code.\n"
+                "Please review the analysis results in the chat panel."
+            )
 
     def generate_script_dialog(self):
         """Open script generation dialog."""

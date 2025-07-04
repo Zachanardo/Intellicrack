@@ -1,3 +1,21 @@
+import hashlib
+import json
+import math
+import os
+import struct
+import subprocess
+import threading
+import time
+from typing import Any, Callable, Dict, List, Optional
+
+from intellicrack.logger import logger
+
+from ..utils.logger import setup_logger
+
+# Import availability flags from common imports
+from .common_imports import HAS_NUMPY, HAS_OPENCL, HAS_TENSORFLOW, HAS_TORCH
+from .common_imports import PSUTIL_AVAILABLE as HAS_PSUTIL
+
 """
 Internal helper functions for Intellicrack.
 
@@ -20,21 +38,14 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import hashlib
-import json
-import math
-import os
-import struct
-import subprocess
-import threading
-import time
-from typing import Any, Callable, Dict, List, Optional
 
-# Import availability flags from common imports
-from .common_imports import HAS_OPENCL, HAS_TENSORFLOW, HAS_TORCH
-from .common_imports import PSUTIL_AVAILABLE as HAS_PSUTIL
 
 # Import actual modules when available
+if HAS_NUMPY:
+    import numpy as np
+else:
+    np = None
+
 if HAS_PSUTIL:
     import psutil
 else:
@@ -43,7 +54,8 @@ else:
 try:
     import torch
     HAS_TORCH = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in internal_helpers: %s", e)
     torch = None
     HAS_TORCH = False
 
@@ -53,7 +65,6 @@ else:
     tf = None
 
 
-from ..utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -159,7 +170,8 @@ def _handle_check_license(request_data: Dict[str, Any]) -> Dict[str, Any]:
             features.extend(['advanced_analysis', 'plugin_support'])
         if major_version >= 3:
             features.extend(['ai_assistance', 'cloud_sync'])
-    except (ValueError, IndexError):
+    except (ValueError, IndexError) as e:
+        logger.error("Error in internal_helpers: %s", e)
         pass
 
     # Generate realistic license details
@@ -782,7 +794,8 @@ def _handle_license_release(license_id: str) -> Dict[str, Any]:
             last_checkin = datetime.strptime(last_checkin_str, '%Y-%m-%d %H:%M:%S')
             session_duration = release_datetime - last_checkin
             session_hours = session_duration.total_seconds() / 3600
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            logger.error("Error in internal_helpers: %s", e)
             session_hours = 0.5  # Default session time
     else:
         session_hours = 0
@@ -1173,7 +1186,8 @@ def _get_filesystem_state() -> Dict[str, Any]:
                 try:
                     with open(filepath, 'rb') as f:
                         state['hashes'][filepath] = hashlib.sha256(f.read(1024)).hexdigest()
-                except (OSError, IOError, PermissionError):
+                except (OSError, IOError, PermissionError) as e:
+                    logger.error("Error in internal_helpers: %s", e)
                     pass
             break  # Only process current directory
     except (OSError, ValueError, RuntimeError) as e:
@@ -1296,7 +1310,8 @@ def _browse_for_source() -> Optional[str]:
             logger.warning("Invalid path: potential path traversal detected")
             return None
         return sanitized
-    except (KeyboardInterrupt, EOFError):
+    except (KeyboardInterrupt, EOFError) as e:
+        logger.error("Error in internal_helpers: %s", e)
         return None
 
 
@@ -1770,7 +1785,8 @@ def _validate_gpu_memory(required_mb: int) -> bool:
         try:
             available = torch.cuda.get_device_properties(0).total_memory / 1024 / 1024
             return available >= required_mb
-        except (RuntimeError, AttributeError):
+        except (RuntimeError, AttributeError) as e:
+            logger.error("Error in internal_helpers: %s", e)
             pass
 
     # Check TensorFlow
@@ -1779,7 +1795,8 @@ def _validate_gpu_memory(required_mb: int) -> bool:
             gpus = tf.config.list_physical_devices('GPU')
             if gpus:
                 return True  # Assume sufficient memory if GPU available
-        except (RuntimeError, AttributeError):
+        except (RuntimeError, AttributeError) as e:
+            logger.error("Error in internal_helpers: %s", e)
             pass
 
     return False
@@ -1979,6 +1996,8 @@ def _generate_weight_data(dims: List[int], data_type: str, total_elements: int) 
     if len(dims) >= 2:
         fan_in = dims[-2] if len(dims) > 1 else dims[0]
         fan_out = dims[-1]
+
+        logger.debug("Tensor dimensions - fan_in: %d, fan_out: %d", fan_in, fan_out)
 
         # He initialization (better for ReLU)
         he_std = math.sqrt(2.0 / fan_in)

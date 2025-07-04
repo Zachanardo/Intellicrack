@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Common license response templates for _network interception.
 
@@ -248,7 +250,8 @@ def get_jetbrains_response_templates():
             for item in os.listdir(user_jetbrains_path):
                 if 'IntelliJ' in item and ('II', 'IntelliJ IDEA') not in [(p['code'], p['name']) for p in detected_products]:
                     detected_products.append({'code': 'II', 'name': 'IntelliJ IDEA', 'status': 'TRIAL'})
-        except (OSError, PermissionError):
+        except (OSError, PermissionError) as e:
+            logger.error("Error in license_response_templates: %s", e)
             pass
 
     # Default if no products detected
@@ -322,12 +325,14 @@ def get_microsoft_response_templates():
                             grace_match = re.search(r'(\d+)\s+day', output)
                             if grace_match:
                                 grace_period_days = int(grace_match.group(1))
-                        except (ValueError, AttributeError):
+                        except (ValueError, AttributeError) as e:
+                            logger.error("Error in license_response_templates: %s", e)
                             grace_period_days = 30  # Default grace period
                     else:
                         detected_products.append({'id': 'WINPRO', 'name': f'Windows {platform.release()}', 'status': 'TRIAL'})
 
-            except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+            except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
+                logger.error("Error in license_response_templates: %s", e)
                 # Windows activation check failed
                 detected_products.append({'id': 'WINPRO', 'name': f'Windows {platform.release()}', 'status': 'UNKNOWN'})
                 error_code = 1
@@ -363,7 +368,8 @@ def get_microsoft_response_templates():
                                 if result.returncode == 0 and 'license status: ---licensed---' in result.stdout.lower():
                                     office_licensed = True
                                     break
-                            except (subprocess.TimeoutExpired, OSError):
+                            except (subprocess.TimeoutExpired, OSError) as e:
+                                logger.error("Error in license_response_templates: %s", e)
                                 continue
 
                     status = 'ACTIVATED' if office_licensed else 'TRIAL'
@@ -372,7 +378,8 @@ def get_microsoft_response_templates():
                         if office_licensed and license_status != 'licensed':
                             license_status = 'licensed' if license_status == 'unlicensed' else license_status
 
-                except (OSError, subprocess.SubprocessError):
+                except (OSError, subprocess.SubprocessError) as e:
+                    logger.error("Error in license_response_templates: %s", e)
                     # Office check failed
                     detected_products.append({'id': product_id, 'name': name, 'status': 'UNKNOWN'})
                 break  # Only add one Office entry
@@ -389,6 +396,7 @@ def get_microsoft_response_templates():
                 break
 
     except Exception as e:
+        logger.error("Exception in license_response_templates: %s", e)
         error_code = 2
         error_message = f'Microsoft license validation error: {str(e)}'
 

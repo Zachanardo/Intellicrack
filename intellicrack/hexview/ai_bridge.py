@@ -29,14 +29,15 @@ import struct
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional
 
+logger = logging.getLogger('Intellicrack.HexView.AI')
+
 # Import LLM backend support
 try:
     from ..ai.llm_backends import LLMMessage, get_llm_manager
     LLM_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in ai_bridge: %s", e)
     LLM_AVAILABLE = False
-
-logger = logging.getLogger('Intellicrack.HexView.AI')
 
 
 class AIFeatureType(Enum):
@@ -198,7 +199,8 @@ class BinaryContextBuilder:
                     "value": string_value,
                     "encoding": "ASCII"
                 })
-            except (UnicodeDecodeError, ValueError):
+            except (UnicodeDecodeError, ValueError) as e:
+                logger.error("Error in ai_bridge: %s", e)
                 pass
 
         # UTF-16LE strings (Windows)
@@ -225,7 +227,8 @@ class BinaryContextBuilder:
                                 "value": string_value,
                                 "encoding": "UTF-16LE"
                             })
-                        except (ValueError, OverflowError):
+                        except (ValueError, OverflowError) as e:
+                            logger.error("Error in ai_bridge: %s", e)
                             pass
                     utf16_chars = []
                     in_utf16 = False
@@ -239,7 +242,8 @@ class BinaryContextBuilder:
                                 "value": string_value,
                                 "encoding": "UTF-16LE"
                             })
-                        except (ValueError, OverflowError):
+                        except (ValueError, OverflowError) as e:
+                            logger.error("Error in ai_bridge: %s", e)
                             pass
                     utf16_chars = []
                     in_utf16 = False
@@ -407,7 +411,8 @@ class BinaryContextBuilder:
         # Try to interpret as a utf-8 string
         try:
             result["utf8_string"] = data.decode("utf-8")
-        except UnicodeDecodeError:
+        except UnicodeDecodeError as e:
+            logger.error("UnicodeDecodeError in ai_bridge: %s", e)
             pass
 
         # Try to interpret as a timestamp
@@ -418,7 +423,8 @@ class BinaryContextBuilder:
                 import datetime
                 try:
                     result["unix_timestamp"] = datetime.datetime.fromtimestamp(uint32).isoformat()
-                except (ValueError, OSError, OverflowError):
+                except (ValueError, OSError, OverflowError) as e:
+                    logger.error("Error in ai_bridge: %s", e)
                     pass
 
             # Windows FILETIME (64-bit value representing 100-nanosecond intervals since January 1, 1601)
@@ -431,7 +437,8 @@ class BinaryContextBuilder:
                         import datetime
                         try:
                             result["windows_filetime"] = datetime.datetime.fromtimestamp(unix_time).isoformat()
-                        except (ValueError, OSError, OverflowError):
+                        except (ValueError, OSError, OverflowError) as e:
+                            logger.error("Error in ai_bridge: %s", e)
                             pass
 
         return result
@@ -1062,13 +1069,15 @@ class AIBinaryBridge:
             if "original_bytes" in result:
                 try:
                     result["original_bytes_raw"] = bytes.fromhex(result["original_bytes"].replace(" ", ""))
-                except ValueError:
+                except ValueError as e:
+                    logger.error("Value error in ai_bridge: %s", e)
                     result["original_bytes_raw"] = b""
 
             if "new_bytes" in result:
                 try:
                     result["new_bytes_raw"] = bytes.fromhex(result["new_bytes"].replace(" ", ""))
-                except ValueError:
+                except ValueError as e:
+                    logger.error("Value error in ai_bridge: %s", e)
                     result["new_bytes_raw"] = b""
 
             return result

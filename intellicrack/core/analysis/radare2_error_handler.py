@@ -29,14 +29,16 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List
 
-try:
-    import r2pipe
-except ImportError:
-    r2pipe = None
-
 from ...utils.logger import get_logger
 
+# Module logger
 logger = get_logger(__name__)
+
+try:
+    import r2pipe
+except ImportError as e:
+    logger.error("Import error in radare2_error_handler: %s", e)
+    r2pipe = None
 
 
 class ErrorSeverity(Enum):
@@ -175,6 +177,7 @@ class R2ErrorHandler:
         try:
             yield
         except Exception as e:
+            self.logger.error("Exception in radare2_error_handler: %s", e)
             duration = time.time() - start_time
             self._record_performance(operation_name, duration, success=False)
             self.handle_error(e, operation_name, context)
@@ -398,8 +401,8 @@ class R2ErrorHandler:
                 # Close existing session
                 try:
                     r2_session.quit()
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error closing r2 session during recovery: {e}")
 
                 # Create new session
                 new_session = r2pipe.open(binary_path, flags=['-2'])
@@ -461,8 +464,8 @@ class R2ErrorHandler:
                 try:
                     r2_session.cmd('af-*')
                     r2_session.cmd('fs-*')
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error closing r2 session during recovery: {e}")
 
             # Clean up temporary files
             temp_files = error_event.context.get('temp_files', [])
@@ -470,8 +473,8 @@ class R2ErrorHandler:
                 try:
                     if os.path.exists(temp_file):
                         os.remove(temp_file)
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error removing temp file during recovery: {e}")
 
             self.logger.info("Memory cleanup completed")
             return True

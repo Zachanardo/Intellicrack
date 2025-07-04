@@ -1,0 +1,14 @@
+// Intellicrack Protection Engine: detection rule file
+// Author: BJNFNE <bjnfne@web.de>
+// This Script supports following formats: OGG
+
+init("audio", "Vorbis");
+
+function detect() {
+    if (Binary.compare("'OggS'")) {
+        sVersion = "OGG";
+        bDetected = true;
+    }
+
+    return result();
+}

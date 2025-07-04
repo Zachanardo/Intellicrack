@@ -313,8 +313,8 @@ class TimingAttackDefense:
             if platform.system() == 'Windows':
                 kernel32 = ctypes.windll.kernel32
                 return kernel32.GetTickCount64()
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error getting system tick count: {e}")
         return None
 
     def _quick_debugger_check(self) -> bool:
@@ -330,8 +330,8 @@ class TimingAttackDefense:
                     for line in f:
                         if line.startswith('TracerPid:'):
                             return int(line.split()[1]) != 0
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error checking for debugger presence: {e}")
         return False
 
     def generate_timing_defense_code(self) -> str:

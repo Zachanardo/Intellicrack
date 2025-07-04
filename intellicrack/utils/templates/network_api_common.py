@@ -5,6 +5,8 @@ Common network API analysis utilities to avoid code duplication.
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
+from intellicrack.logger import logger
+
 
 def analyze_network_apis(pe_binary, network_apis, logger_func=None):
     """
@@ -87,13 +89,15 @@ def get_scapy_layers(scapy_module) -> Optional[Tuple]:
         ip_layer = scapy_module.IP
         tcp_layer = scapy_module.TCP
         return ip_layer, tcp_layer
-    except AttributeError:
+    except AttributeError as e:
+        logger.error("Attribute error in network_api_common: %s", e)
         # Fall back to scapy.layers if needed
         try:
             from scapy.layers.inet import IP as ip_layer
             from scapy.layers.inet import TCP as tcp_layer
             return ip_layer, tcp_layer
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in network_api_common: %s", e)
             # Unable to access IP/TCP layers
             return None
 

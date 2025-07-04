@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Plugin Path Discovery Utility
 Provides centralized path management for Intellicrack components
@@ -26,21 +28,63 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import pkg_resources
+from ..resource_helper import get_resource_path
+
+
+def _resolve_path_with_fallback(
+    new_relative_path: str,
+    old_absolute_path: Optional[str] = None,
+    create_if_missing: bool = True
+) -> Path:
+    """
+    Resolve path with graceful fallback from new to old location.
+
+    Args:
+        new_relative_path: New path relative to project root
+        old_absolute_path: Old absolute path to fall back to
+        create_if_missing: Whether to create the new path if neither exists
+
+    Returns:
+        Path: Resolved path (new preferred, old as fallback)
+    """
+    project_root = get_project_root()
+    new_path = (project_root / new_relative_path).resolve()
+
+    # Try new path first
+    if new_path.exists():
+        return new_path
+
+    # Fall back to old path if provided and exists
+    if old_absolute_path:
+        old_path = Path(old_absolute_path).resolve()
+        if old_path.exists():
+            logger.warning(
+                f"Using fallback path for '{new_relative_path}': {old_path}. "
+                f"Consider migrating to new location: {new_path}"
+            )
+            return old_path
+
+    # If neither exists and create_if_missing is True, create new path
+    if create_if_missing:
+        new_path.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Created new directory: {new_path}")
+
+    return new_path
 
 
 def get_project_root() -> Path:
     """
-    Get the project root directory using pkg_resources.
+    Get the project root directory.
 
     Returns:
         Path: Absolute path to the Intellicrack project root
     """
     try:
-        # Use pkg_resources to find the package root
-        intellicrack_root = Path(pkg_resources.resource_filename('intellicrack', ''))
+        # Use resource helper to find the package root
+        intellicrack_root = Path(get_resource_path(''))
         return intellicrack_root.parent
-    except Exception:
+    except Exception as e:
+        logger.error("Exception in plugin_paths: %s", e)
         # Fallback to relative path calculation
         current_file = Path(__file__)
         # Go up from utils -> intellicrack -> project root
@@ -54,7 +98,7 @@ def get_scripts_dir() -> Path:
     Returns:
         Path: Absolute path to the scripts directory
     """
-    return Path(pkg_resources.resource_filename('intellicrack', 'scripts'))
+    return Path(get_resource_path('scripts'))
 
 
 def get_frida_scripts_dir() -> Path:
@@ -64,7 +108,7 @@ def get_frida_scripts_dir() -> Path:
     Returns:
         Path: Absolute path to the Frida scripts directory
     """
-    return Path(pkg_resources.resource_filename('intellicrack', 'plugins/frida_scripts'))
+    return Path(get_resource_path('plugins/frida_scripts'))
 
 
 def get_ghidra_scripts_dir() -> Path:
@@ -74,7 +118,7 @@ def get_ghidra_scripts_dir() -> Path:
     Returns:
         Path: Absolute path to the Ghidra scripts directory
     """
-    return Path(pkg_resources.resource_filename('intellicrack', 'plugins/ghidra_scripts'))
+    return Path(get_resource_path('plugins/ghidra_scripts'))
 
 
 def get_plugin_modules_dir() -> Path:
@@ -89,7 +133,7 @@ def get_plugin_modules_dir() -> Path:
 
 def get_config_dir() -> Path:
     """
-    Get the configuration directory using modern config system.
+    Get the configuration directory using modern config system with fallback.
 
     Returns:
         Path: Absolute path to the configuration directory
@@ -98,9 +142,12 @@ def get_config_dir() -> Path:
         from intellicrack.core.config_manager import get_config
         config = get_config()
         return config.config_dir
-    except ImportError:
-        # Fallback to legacy behavior
-        return get_project_root() / "config"
+    except ImportError as e:
+        logger.error("Import error in plugin_paths: %s", e)
+        # Fallback with graceful transition support
+        project_root = get_project_root()
+        old_path = str(project_root / "config")
+        return _resolve_path_with_fallback("data/config", old_path)
 
 
 def get_main_config_file() -> Path:
@@ -114,7 +161,8 @@ def get_main_config_file() -> Path:
         from intellicrack.core.config_manager import get_config
         config = get_config()
         return config.config_file
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in plugin_paths: %s", e)
         # Fallback to legacy behavior
         return get_config_dir() / "intellicrack_config.json"
 
@@ -127,6 +175,107 @@ def get_tests_dir() -> Path:
         Path: Absolute path to the tests directory
     """
     return get_project_root() / "tests"
+
+
+# New path getters for reorganized structure with graceful fallback
+def get_data_dir() -> Path:
+    """
+    Get the main data directory.
+
+    Returns:
+        Path: Absolute path to the data directory
+    """
+    return _resolve_path_with_fallback("data")
+
+
+def get_logs_dir() -> Path:
+    """
+    Get the logs directory with fallback support.
+
+    Returns:
+        Path: Absolute path to the logs directory
+    """
+    project_root = get_project_root()
+    old_path = str(project_root / "logs")
+    return _resolve_path_with_fallback("data/logs", old_path)
+
+
+def get_plugin_cache_dir() -> Path:
+    """
+    Get the plugin cache directory with fallback support.
+
+    Returns:
+        Path: Absolute path to the plugin cache directory
+    """
+    project_root = get_project_root()
+    old_path = str(project_root / "plugin_cache")
+    return _resolve_path_with_fallback("data/plugin_cache", old_path)
+
+
+def get_visualizations_dir() -> Path:
+    """
+    Get the visualizations directory with fallback support.
+
+    Returns:
+        Path: Absolute path to the visualizations directory
+    """
+    project_root = get_project_root()
+    old_path = str(project_root / "visualizations")
+    return _resolve_path_with_fallback("data/visualizations", old_path)
+
+
+def get_reports_dir() -> Path:
+    """
+    Get the reports directory with fallback support.
+
+    Returns:
+        Path: Absolute path to the reports directory
+    """
+    project_root = get_project_root()
+    old_path = str(project_root / "reports")
+    return _resolve_path_with_fallback("data/reports", old_path)
+
+
+def get_dev_dir() -> Path:
+    """
+    Get the development directory.
+
+    Returns:
+        Path: Absolute path to the dev directory
+    """
+    return _resolve_path_with_fallback("dev")
+
+
+def get_project_docs_dir() -> Path:
+    """
+    Get the project documentation directory with fallback support.
+
+    Returns:
+        Path: Absolute path to the project docs directory
+    """
+    project_root = get_project_root()
+    old_path = str(project_root / "project-docs")
+    return _resolve_path_with_fallback("dev/project-docs", old_path)
+
+
+def get_dev_scripts_dir() -> Path:
+    """
+    Get the development scripts directory.
+
+    Returns:
+        Path: Absolute path to the dev scripts directory
+    """
+    return _resolve_path_with_fallback("dev/scripts")
+
+
+def get_frida_logs_dir() -> Path:
+    """
+    Get the Frida operations logs directory.
+
+    Returns:
+        Path: Absolute path to the Frida logs directory
+    """
+    return get_logs_dir() / "frida_operations"
 
 
 def list_frida_scripts() -> List[Path]:
@@ -214,7 +363,17 @@ def get_path_info() -> Dict[str, str]:
         "plugin_modules": str(get_plugin_modules_dir()),
         "config_dir": str(get_config_dir()),
         "main_config": str(get_main_config_file()),
-        "tests_dir": str(get_tests_dir())
+        "tests_dir": str(get_tests_dir()),
+        # New reorganized paths
+        "data_dir": str(get_data_dir()),
+        "logs_dir": str(get_logs_dir()),
+        "plugin_cache": str(get_plugin_cache_dir()),
+        "visualizations": str(get_visualizations_dir()),
+        "reports_dir": str(get_reports_dir()),
+        "dev_dir": str(get_dev_dir()),
+        "project_docs": str(get_project_docs_dir()),
+        "dev_scripts": str(get_dev_scripts_dir()),
+        "frida_logs": str(get_frida_logs_dir())
     }
 
 
@@ -228,7 +387,17 @@ def ensure_directories_exist() -> None:
         get_ghidra_scripts_dir(),
         get_plugin_modules_dir(),
         get_config_dir(),
-        get_tests_dir()
+        get_tests_dir(),
+        # New reorganized directories
+        get_data_dir(),
+        get_logs_dir(),
+        get_plugin_cache_dir(),
+        get_visualizations_dir(),
+        get_reports_dir(),
+        get_dev_dir(),
+        get_project_docs_dir(),
+        get_dev_scripts_dir(),
+        get_frida_logs_dir()
     ]
 
     for directory in directories:

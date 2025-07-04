@@ -1,3 +1,10 @@
+import logging
+from typing import Any, Dict, List, Optional
+
+from intellicrack.logger import logger
+
+from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
+
 """
 Radare2 Advanced Import/Export Analysis Engine
 
@@ -19,10 +26,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
-from typing import Any, Dict, List, Optional
 
-from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 
 
 class R2ImportExportAnalyzer:
@@ -171,7 +175,8 @@ class R2ImportExportAnalyzer:
                 plt_data = r2._execute_command('iP', expect_json=False)
                 if plt_data:
                     self._parse_plt_data(plt_data, imports)
-            except R2Exception:
+            except R2Exception as e:
+                logger.error("R2Exception in radare2_imports: %s", e)
                 pass
 
         except R2Exception as e:
@@ -1303,7 +1308,8 @@ class R2ImportExportAnalyzer:
                 xref_data = r2._execute_command(f'axt sym.imp.{api_name}', expect_json=False)
                 if xref_data:
                     xrefs[api_name] = xref_data.strip().split('\n')
-            except R2Exception:
+            except R2Exception as e:
+                self.logger.error("R2Exception in radare2_imports: %s", e)
                 continue
 
         return xrefs

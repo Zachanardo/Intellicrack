@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report to help us improve
 title: '[BUG] '
-labels: bug
+labels: 'bug'
 assignees: ''
 
 ---
@@ -24,9 +24,14 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Desktop (please complete the following information):**
- - OS: [e.g. Windows 10, Ubuntu 20.04]
+ - OS: [e.g. Windows 10, Ubuntu 22.04]
  - Python Version: [e.g. 3.11]
- - Intellicrack Version: [e.g. 1.0.0]
+ - Intellicrack Version: [e.g. 0.1.0]
 
 **Additional context**
 Add any other context about the problem here.
+
+**Log output**
+```
+Please paste any relevant log output here
+```

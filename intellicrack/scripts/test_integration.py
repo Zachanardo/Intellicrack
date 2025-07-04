@@ -89,6 +89,7 @@ def test_vulnerability_engine_integration():
         # Test vulnerability engine creation
         engine = AdvancedVulnerabilityEngine()
         print("✓ AdvancedVulnerabilityEngine created successfully")
+        print(f"  Engine capabilities: {len(engine.vulnerability_patterns) if hasattr(engine, 'vulnerability_patterns') else 'N/A'}")
 
         # Test report generation (without actual binary)
         fake_vulnerabilities = [
@@ -198,6 +199,7 @@ def test_cross_module_integration():
         # Test vulnerability engine + config integration
         from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
         engine = AdvancedVulnerabilityEngine()
+        print(f"  Engine plugin support: {hasattr(engine, 'load_plugins')}")
 
         # Test config-based initialization
         plugin_dir = config_manager.get("plugin_directory", "plugins")

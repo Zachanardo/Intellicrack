@@ -3,9 +3,9 @@
 Standalone hex viewer functionality test
 """
 
+import logging
 import os
 import sys
-import logging
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List

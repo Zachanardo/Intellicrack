@@ -26,9 +26,9 @@ import os
 import sys
 from typing import Any, Dict, Optional
 
-logger = logging.getLogger(__name__)
-
 from ..system.driver_utils import get_driver_path
+
+logger = logging.getLogger(__name__)
 
 
 def _get_driver_path(driver_name: str) -> str:
@@ -93,7 +93,8 @@ def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[
                         results["indicators"].append(f"VM registry key found: {_key_path}")
                         results["virtualization_detected"] = True
                         winreg.CloseKey(key)
-                    except FileNotFoundError:
+                    except FileNotFoundError as e:
+                        logger.error("File not found in protection_detection: %s", e)
                         pass
 
             except ImportError:
@@ -116,7 +117,8 @@ def detect_virtualization_protection(binary_path: Optional[str] = None) -> Dict[
                             if _indicator.lower() in content:
                                 results["indicators"].append(f"VM indicator in {_vm_file}: {_indicator}")
                                 results["virtualization_detected"] = True
-                except Exception:
+                except Exception as e:
+                    logger.error("Exception in protection_detection: %s", e)
                     pass
 
         # Calculate confidence

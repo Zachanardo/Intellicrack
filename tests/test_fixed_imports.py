@@ -3,9 +3,9 @@
 Test fixed imports and dependency fallbacks
 """
 
-import sys
-import os
 import logging
+import os
+import sys
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -22,8 +22,10 @@ def test_safe_imports():
     try:
         # Test dependency fallbacks
         from intellicrack.utils.dependency_fallbacks import (
-            safe_import_numpy, safe_import_pandas, safe_import_sklearn,
-            get_dependency_status
+            get_dependency_status,
+            safe_import_numpy,
+            safe_import_pandas,
+            safe_import_sklearn,
         )
         
         print("✅ Safe import system loaded")

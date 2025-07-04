@@ -49,7 +49,6 @@ class ASCIIChartGenerator:
         self.width = width
         self.height = height
         self.console = Console() if RICH_AVAILABLE else None
-        self.has_color_support = RICH_AVAILABLE
 
         # Chart symbols
         self.symbols = {
@@ -100,9 +99,6 @@ class ASCIIChartGenerator:
         lines = []
         lines.append(f" {title} ")
         lines.append("=" * len(lines[0]))
-
-        # Use color coding for enhanced visualization if requested
-        use_colors = color_coding and hasattr(self, 'has_color_support') and self.has_color_support
         lines.append("")
 
         # Sort data by value (descending)

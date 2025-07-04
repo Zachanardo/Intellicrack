@@ -1,0 +1,15 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("operation system", "AmigaOS");
+
+function detect() {
+    if (Amiga.isVerbose()) {
+        sName = Amiga.getOperationSystemName();
+        sVersion = Amiga.getOperationSystemVersion();
+        sOptions = Amiga.getOperationSystemOptions();
+
+        bDetected = true;
+    }
+
+    return result();
+}

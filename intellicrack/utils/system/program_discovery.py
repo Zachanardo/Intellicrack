@@ -45,7 +45,8 @@ if IS_WINDOWS:
     try:
         import winreg
         HAS_WINREG = True
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in program_discovery: %s", e)
         HAS_WINREG = False
         winreg = None
 else:
@@ -185,10 +186,10 @@ class ProgramDiscoveryEngine:
     def analyze_program_from_path(self, program_path: str) -> Optional[ProgramInfo]:
         """
         Analyze a program from its installation path.
-        
+
         Args:
             program_path: Path to analyze (can be executable or installation folder)
-            
+
         Returns:
             ProgramInfo object if analysis successful, None otherwise
         """
@@ -255,10 +256,10 @@ class ProgramDiscoveryEngine:
     def discover_programs_from_path(self, search_path: str) -> List[ProgramInfo]:
         """
         Discover programs from a specific path (like desktop folder).
-        
+
         Args:
             search_path: Path to search for programs
-            
+
         Returns:
             List of discovered programs
         """
@@ -414,7 +415,8 @@ class ProgramDiscoveryEngine:
                             if arch != 'Unknown':
                                 analysis['architecture'] = arch
 
-                    except (OSError, PermissionError):
+                    except (OSError, PermissionError) as e:
+                        logger.error("Error in program_discovery: %s", e)
                         continue
 
             analysis['total_size'] = total_size
@@ -461,7 +463,8 @@ class ProgramDiscoveryEngine:
 
                 return arch_map.get(machine_type, 'Unknown')
 
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in program_discovery: %s", e)
             return 'Unknown'
 
     def _get_windows_version_info(self, exe_path: Path) -> Tuple[str, str]:
@@ -473,7 +476,8 @@ class ProgramDiscoveryEngine:
                     version_info = win32api.GetFileVersionInfo(str(exe_path), "\\")
 
                     version = f"{version_info['FileVersionMS'] >> 16}.{version_info['FileVersionMS'] & 0xFFFF}.{version_info['FileVersionLS'] >> 16}.{version_info['FileVersionLS'] & 0xFFFF}"
-                except ImportError:
+                except ImportError as e:
+                    self.logger.error("Import error in program_discovery: %s", e)
                     return "Unknown", "Unknown"
 
                 string_info = version_info.get('StringFileInfo', {})
@@ -485,8 +489,8 @@ class ProgramDiscoveryEngine:
                     publisher = 'Unknown'
 
                 return version, publisher
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error getting Windows version info for {exe_path}: {e}")
 
         return "Unknown", "Unknown"
 
@@ -502,8 +506,8 @@ class ProgramDiscoveryEngine:
                 version_match = re.search(r'(\d+\.\d+\.\d+)', version_line)
                 if version_match:
                     return version_match.group(1), "Unknown"
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error getting Unix version info for {exe_path}: {e}")
 
         return "Unknown", "Unknown"
 
@@ -544,16 +548,16 @@ class ProgramDiscoveryEngine:
             result = subprocess.run(['dpkg', '-l'], capture_output=True, text=True, timeout=30)
             if result.returncode == 0:
                 programs.extend(self._parse_dpkg_output(result.stdout))
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            pass
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            self.logger.error("Error in program_discovery: %s", e)
 
         try:
             # Red Hat/CentOS - rpm
             result = subprocess.run(['rpm', '-qa'], capture_output=True, text=True, timeout=30)
             if result.returncode == 0:
                 programs.extend(self._parse_rpm_output(result.stdout))
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            pass
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            self.logger.error("Error in program_discovery: %s", e)
 
         return programs
 
@@ -575,7 +579,8 @@ class ProgramDiscoveryEngine:
                             program = self.analyze_program_from_path(app_path)
                             if program:
                                 programs.append(program)
-                except PermissionError:
+                except PermissionError as e:
+                    self.logger.error("Permission error in program_discovery: %s", e)
                     continue
 
         return programs
@@ -738,7 +743,8 @@ class ProgramDiscoveryEngine:
         try:
             value, _ = winreg.QueryValueEx(key, value_name)
             return str(value) if value else None
-        except (OSError, ValueError):
+        except (OSError, ValueError) as e:
+            self.logger.error("Error in program_discovery: %s", e)
             return None
 
     def _is_system_component(self, display_name: str, subkey_name: str) -> bool:

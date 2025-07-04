@@ -21,23 +21,24 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
 import os
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
+
 from intellicrack.ai.llm_backends import (
-    LLMManager,
-    LLMConfig,
-    LLMMessage,
-    LLMResponse,
-    LLMProvider,
-    OpenAIBackend,
     AnthropicBackend,
     LlamaCppBackend,
+    LLMConfig,
+    LLMManager,
+    LLMMessage,
+    LLMProvider,
+    LLMResponse,
     OllamaBackend,
-    create_openai_config,
+    OpenAIBackend,
     create_anthropic_config,
     create_gguf_config,
-    create_ollama_config
+    create_ollama_config,
+    create_openai_config,
 )
 
 

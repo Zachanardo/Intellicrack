@@ -1,3 +1,9 @@
+import logging
+import os
+from typing import Any, Dict, List, Optional
+
+from intellicrack.logger import logger
+
 """
 Distributed Analysis Manager
 
@@ -20,20 +26,19 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import logging
-import os
-from typing import Any, Dict, List, Optional
 
 try:
     from ..processing.docker_container import DockerContainer
     HAS_DOCKER = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in distributed_analysis_manager: %s", e)
     HAS_DOCKER = False
 
 try:
     from ..processing.qemu_emulator import QEMUSystemEmulator
     HAS_QEMU = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in distributed_analysis_manager: %s", e)
     HAS_QEMU = False
 
 __all__ = ['DistributedAnalysisManager']

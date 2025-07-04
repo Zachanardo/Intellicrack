@@ -18,7 +18,8 @@ if sys.platform == 'win32':
         import ctypes
         import ctypes.wintypes
         WINDOWS_AVAILABLE = True
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in windows_common: %s", e)
         WINDOWS_AVAILABLE = False
         ctypes = None
 

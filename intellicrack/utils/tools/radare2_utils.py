@@ -25,7 +25,7 @@ import time
 from contextlib import contextmanager
 from typing import Any, Dict, List, Optional, Union
 
-logger = logging.getLogger(__name__)
+from ...core.analysis.radare2_error_handler import get_error_handler, r2_error_context
 
 try:
     import r2pipe
@@ -33,8 +33,8 @@ try:
 except ImportError:
     R2PIPE_AVAILABLE = False
 
-from ...core.analysis.radare2_error_handler import get_error_handler, r2_error_context
 
+logger = logging.getLogger(__name__)
 error_handler = get_error_handler()
 
 
@@ -122,7 +122,8 @@ class R2Session:
         if self.r2:
             try:
                 self.r2.quit()
-            except Exception:
+            except Exception as e:
+                self.logger.error("Exception in radare2_utils: %s", e)
                 pass
             self.r2 = None
             self.is_connected = False
@@ -170,7 +171,8 @@ class R2Session:
         try:
             self._execute_command(level)
             return True
-        except R2Exception:
+        except R2Exception as e:
+            self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
     def get_info(self) -> Dict[str, Any]:
@@ -261,7 +263,8 @@ class R2Session:
                 results = self.search_strings(pattern)
                 if results:
                     all_strings.extend(results)
-            except R2Exception:
+            except R2Exception as e:
+                self.logger.error("R2Exception in radare2_utils: %s", e)
                 continue
 
         return all_strings
@@ -336,7 +339,8 @@ class R2Session:
         try:
             self._execute_command('aeim')
             return True
-        except R2Exception:
+        except R2Exception as e:
+            self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
     def step_esil(self, address: Union[str, int], steps: int = 1) -> str:
@@ -398,6 +402,7 @@ class R2Session:
             results['final_registers'] = self.get_esil_registers()
 
         except R2Exception as e:
+            logger.error("R2Exception in radare2_utils: %s", e)
             results['error'] = str(e)
 
         return results
@@ -408,7 +413,8 @@ class R2Session:
         try:
             self._execute_command('zf')
             return True
-        except R2Exception:
+        except R2Exception as e:
+            self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
     def get_identified_functions(self) -> List[Dict[str, Any]]:
@@ -520,7 +526,8 @@ class R2Session:
                         'line_number': i
                     })
 
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_utils: %s", e)
             pass
 
         return vulns
@@ -543,7 +550,8 @@ class R2Session:
             self._execute_command(f'afv @ {addr}')  # Analyze function variables
             self._execute_command(f'aft @ {addr}')  # Analyze function types
             return True
-        except R2Exception:
+        except R2Exception as e:
+            self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
     def run_optimization_passes(self, address: Union[str, int]) -> bool:
@@ -563,7 +571,8 @@ class R2Session:
             self._execute_command(f'aac @ {addr}')  # Analyze function calls
             self._execute_command(f'aar @ {addr}')  # Analyze references
             return True
-        except R2Exception:
+        except R2Exception as e:
+            self.logger.error("R2Exception in radare2_utils: %s", e)
             return False
 
 
@@ -739,7 +748,8 @@ def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] =
                         decompiled = r2.decompile_function(addr)
                         if decompiled:
                             results['decompiled_samples'][func['name']] = decompiled
-                    except R2Exception:
+                    except R2Exception as e:
+                        logger.error("R2Exception in radare2_utils: %s", e)
                         continue
 
             # ESIL analysis on main function if available
@@ -748,7 +758,8 @@ def analyze_binary_comprehensive(binary_path: str, radare2_path: Optional[str] =
                 try:
                     esil_result = r2.emulate_function(main_func['offset'])
                     results['esil_analysis'] = esil_result
-                except R2Exception:
+                except R2Exception as e:
+                    logger.error("R2Exception in radare2_utils: %s", e)
                     pass
 
     except Exception as e:

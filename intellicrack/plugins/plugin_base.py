@@ -1,3 +1,11 @@
+import os
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, Tuple
+
+from intellicrack.logger import logger
+
+from ..utils.analysis.entropy_utils import calculate_byte_entropy
+
 """
 Base Plugin Framework for Intellicrack
 
@@ -5,11 +13,7 @@ This module provides a base class and utilities for plugin development
 to reduce code duplication and standardize plugin initialization.
 """
 
-import os
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
 
-from ..utils.analysis.entropy_utils import calculate_byte_entropy
 
 
 class PluginMetadata:
@@ -152,6 +156,7 @@ class BasePlugin(ABC):
             if file_size > max_size:
                 return False, f"File too large: {file_size} bytes (max: {max_size})"
         except OSError as e:
+            logger.error("OS error in plugin_base: %s", e)
             return False, f"Could not get file size: {str(e)}"
 
         return True, "Valid"

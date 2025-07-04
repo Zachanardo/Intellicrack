@@ -27,13 +27,14 @@ import sys
 import traceback
 from typing import Any, Dict, Optional
 
+logger = logging.getLogger(__name__)
+
 try:
     from PyQt5.QtWidgets import QApplication, QMessageBox
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in exception_utils: %s", e)
     QMessageBox = None
     QApplication = None
-
-logger = logging.getLogger(__name__)
 
 
 def handle_exception(exc_type, exc_value, exc_traceback) -> None:

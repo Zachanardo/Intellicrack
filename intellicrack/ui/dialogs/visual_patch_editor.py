@@ -1,25 +1,3 @@
-"""
-Visual Patch Editor Dialog
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
-
 import os
 from typing import Any, Dict, List
 
@@ -42,16 +20,44 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from intellicrack.logger import logger
+
+"""
+Visual Patch Editor Dialog
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+
+
+
 try:
     import pefile
     HAS_PEFILE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in visual_patch_editor: %s", e)
     HAS_PEFILE = False
 
 try:
     from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
     HAS_CAPSTONE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in visual_patch_editor: %s", e)
     HAS_CAPSTONE = False
 
 __all__ = ['VisualPatchEditorDialog']
@@ -294,7 +300,8 @@ class VisualPatchEditorDialog(QDialog):
                 address = int(address_text, 16)
             else:
                 address = int(address_text)
-        except ValueError:
+        except ValueError as e:
+            logger.error("Value error in visual_patch_editor: %s", e)
             QMessageBox.warning(self, "Invalid Address", "Please enter a valid hexadecimal address.")
             return
 
@@ -306,7 +313,8 @@ class VisualPatchEditorDialog(QDialog):
                 new_bytes = bytes.fromhex(bytes_text)
             else:
                 new_bytes = b""
-        except ValueError:
+        except ValueError as e:
+            logger.error("Value error in visual_patch_editor: %s", e)
             QMessageBox.warning(self, "Invalid Bytes", "Please enter valid hexadecimal bytes.")
             return
 
@@ -380,6 +388,7 @@ class VisualPatchEditorDialog(QDialog):
             self.disasm_view.setText(disasm_text)
 
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in visual_patch_editor: %s", e)
             self.disasm_view.setText(f"Error disassembling: {e}")
 
     def update_byte_preview(self, address: int, new_bytes: bytes) -> None:
@@ -425,6 +434,7 @@ class VisualPatchEditorDialog(QDialog):
                 self.patched_bytes_view.setText(str(new_bytes))
 
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in visual_patch_editor: %s", e)
             self.original_bytes_view.setText(f"Error: {e}")
             self.patched_bytes_view.setText(f"Error: {e}")
 

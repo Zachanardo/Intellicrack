@@ -457,7 +457,8 @@ class APIRepositoryBase(ModelRepositoryInterface):
             # Parse response data (assume JSON)
             try:
                 response_data = response.json()
-            except ValueError:
+            except ValueError as e:
+                logger.error("Value error in base: %s", e)
                 # Not JSON, return raw text
                 response_data = response.text
 
@@ -547,10 +548,12 @@ class APIRepositoryBase(ModelRepositoryInterface):
                 return True, "Download complete"
 
         except requests.RequestException as e:
+            logger.error("requests.RequestException in base: %s", e)
             if progress_callback:
                 progress_callback.on_complete(False, f"Download failed: {str(e)}")
             return False, f"Download failed: {str(e)}"
         except IOError as e:
+            logger.error("IO error in base: %s", e)
             if progress_callback:
                 progress_callback.on_complete(False, f"File I/O error: {str(e)}")
             return False, f"File I/O error: {str(e)}"

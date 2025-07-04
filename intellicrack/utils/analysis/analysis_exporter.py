@@ -204,6 +204,9 @@ class AnalysisExporter:
         vulns = result.get('vulnerabilities', [])
         stats = result.get('statistics', {})
 
+        logger.debug("Exporting HTML report with %d vulnerabilities and stats: %s",
+                    len(vulns), stats)
+
         # Count by severity
         high_count = len([v for v in vulns if v.get('severity') == 'high'])
         medium_count = len([v for v in vulns if v.get('severity') == 'medium'])

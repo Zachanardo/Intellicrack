@@ -1,0 +1,16 @@
+// Intellicrack Protection Engine: detection rule file
+
+// Author: DosX
+// E-Mail: collab@kay-software.ru
+// GitHub: https://github.com/DosX-dev
+// Telegram: @DosX_dev
+
+init("library", "Chromium WebView");
+
+function detect() {
+    if (PE.isLibraryPresent("chrome_elf.dll")) {
+        bDetected = true;
+    }
+
+    return result();
+}

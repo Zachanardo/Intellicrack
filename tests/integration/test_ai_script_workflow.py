@@ -20,12 +20,13 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import json
-import pytest
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
-from intellicrack.ai.ai_script_generator import AIScriptGenerator, ScriptType, ProtectionType
+import pytest
+
+from intellicrack.ai.ai_script_generator import AIScriptGenerator, ProtectionType, ScriptType
 from intellicrack.ai.orchestrator import AIOrchestrator
 from intellicrack.ai.script_generation_prompts import get_prompt_manager
 

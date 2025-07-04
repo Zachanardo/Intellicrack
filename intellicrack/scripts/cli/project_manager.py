@@ -22,11 +22,14 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import glob
 import json
+import logging
 import os
 import shutil
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 # Optional imports for enhanced project management
 try:
@@ -52,6 +55,7 @@ class IntellicrackProject:
             path: Project directory path
             description: Project description
         """
+        self.logger = logging.getLogger("IntellicrackLogger.IntellicrackProject")
         self.name = name
         self.path = path
         self.description = description
@@ -150,7 +154,7 @@ class IntellicrackProject:
                     if os.path.exists(file_path):
                         total_size += os.path.getsize(file_path)
         except OSError:
-            pass
+            logger.debug("Failed to calculate project size")
         return total_size
 
     def get_binary_count(self) -> int:
@@ -171,6 +175,7 @@ class ProjectManager:
         Args:
             workspace_root: Root directory for workspaces
         """
+        self.logger = logging.getLogger("IntellicrackLogger.ProjectManager")
         self.workspace_root = os.path.expanduser(f"~/{workspace_root}")
         self.projects_dir = os.path.join(self.workspace_root, "projects")
         self.templates_dir = os.path.join(self.workspace_root, "templates")
@@ -210,8 +215,8 @@ class ProjectManager:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     config = json.load(f)
                 self.settings.update(config.get('manager_settings', {}))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Non-critical operation failed: {e}")
 
     def _save_config(self):
         """Save manager configuration."""
@@ -222,8 +227,8 @@ class ProjectManager:
             }
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=2)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Non-critical operation failed: {e}")
 
     def create_project(self, name: str, description: str = "",
                       template: Optional[str] = None) -> Optional[IntellicrackProject]:
@@ -267,8 +272,9 @@ class ProjectManager:
 
             return project
 
-        except Exception:
+        except Exception as e:
             # Cleanup on failure
+            logger.error(f"Failed to create project: {e}")
             if os.path.exists(project_path):
                 shutil.rmtree(project_path, ignore_errors=True)
             return None
@@ -393,8 +399,8 @@ class ProjectManager:
                     except Exception:
                         continue
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Non-critical operation failed: {e}")
 
         return sorted(projects, key=lambda x: x['modified_time'], reverse=True)
 
@@ -544,8 +550,8 @@ class ProjectManager:
                     with open(file_path, 'w', encoding='utf-8') as f:
                         f.write(file_info.get('content', ''))
 
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Failed to restore project file: {e}")
 
     def _backup_project(self, project: IntellicrackProject):
         """Create project backup."""
@@ -566,10 +572,10 @@ class ProjectManager:
                     try:
                         os.remove(old_backup)
                     except OSError:
-                        pass
+                        logger.debug("Failed to remove backup or temp file")
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Non-critical operation failed: {e}")
 
     def _get_directory_size(self, path: str) -> int:
         """Get directory size in bytes."""
@@ -581,7 +587,7 @@ class ProjectManager:
                     if os.path.exists(file_path):
                         total_size += os.path.getsize(file_path)
         except OSError:
-            pass
+            logger.debug("Failed to calculate project size")
         return total_size
 
     def display_projects_table(self) -> None:
@@ -660,7 +666,7 @@ class ProjectManager:
                             shutil.rmtree(item_path)
                             cleaned_count += 1
                     except OSError:
-                        pass
+                        logger.debug("Failed to remove backup or temp file")
 
             # Clean old backups (older than 30 days)
             backup_dir = os.path.join(self.workspace_root, "backups")
@@ -674,10 +680,10 @@ class ProjectManager:
                             os.remove(backup_path)
                             cleaned_count += 1
                     except OSError:
-                        pass
+                        logger.debug("Failed to remove backup or temp file")
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Non-critical operation failed: {e}")
 
         return cleaned_count
 

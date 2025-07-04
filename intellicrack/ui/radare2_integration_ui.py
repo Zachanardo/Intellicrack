@@ -1,3 +1,4 @@
+
 """
 Comprehensive Radare2 UI Integration for Intellicrack
 
@@ -608,6 +609,7 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
             formatted_json = json.dumps(data, indent=2, default=str)
             text_widget.setPlainText(formatted_json)
         except Exception as e:
+            self.logger.error("Exception in radare2_integration_ui: %s", e)
             text_widget.setPlainText(f"Error formatting results: {e}\n\n{str(data)}")
 
         layout.addWidget(text_widget)
@@ -636,6 +638,7 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
                     json.dump(self.results_data, f, indent=2, default=str)
                 QMessageBox.information(self, "Export", f"Results exported to {file_path}")
             except Exception as e:
+                self.logger.error("Exception in radare2_integration_ui: %s", e)
                 QMessageBox.critical(self, "Export Error", f"Failed to export results: {e}")
 
 

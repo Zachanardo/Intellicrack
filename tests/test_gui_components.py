@@ -3,9 +3,9 @@
 Test GUI components without requiring display
 """
 
+import logging
 import os
 import sys
-import logging
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -83,9 +83,9 @@ def test_gui_initialization():
         # We can't test actual GUI creation in WSL without X11
         # But we can test Qt application creation
         
-        import PyQt5.QtWidgets
         import PyQt5.QtCore
-        
+        import PyQt5.QtWidgets
+
         # Create QApplication without GUI (headless mode)
         if not PyQt5.QtWidgets.QApplication.instance():
             # Set headless mode

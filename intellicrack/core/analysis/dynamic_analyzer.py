@@ -618,7 +618,8 @@ class AdvancedDynamicAnalyzer:
                     session = frida.attach(pid)
                     frida.resume(pid)
                     time.sleep(2)  # Allow process to initialize
-                except Exception:
+                except Exception as e:
+                    logger.error("Exception in dynamic_analyzer: %s", e)
                     return {
                         'status': 'error',
                         'error': f'Could not attach to or spawn process: {process_name}',
@@ -750,7 +751,8 @@ class AdvancedDynamicAnalyzer:
                     if process_name.lower() in proc.info['name'].lower():
                         target_proc = proc
                         break
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    self.logger.error("Error in dynamic_analyzer: %s", e)
                     continue
 
             if not target_proc:
@@ -759,7 +761,8 @@ class AdvancedDynamicAnalyzer:
                     proc = subprocess.Popen([str(self.binary_path)])
                     time.sleep(2)
                     target_proc = psutil.Process(proc.pid)
-                except Exception:
+                except Exception as e:
+                    logger.error("Exception in dynamic_analyzer: %s", e)
                     return {
                         'status': 'error',
                         'error': f'Could not find or start process: {process_name}',
@@ -803,6 +806,7 @@ class AdvancedDynamicAnalyzer:
                 }
 
             except (psutil.AccessDenied, psutil.NoSuchProcess) as e:
+                logger.error("Error in dynamic_analyzer: %s", e)
                 return {
                     'status': 'error',
                     'error': f'Access denied or process not found: {e}',
@@ -1082,6 +1086,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> List[str]
         logs.append("Runtime monitoring complete")
 
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in dynamic_analyzer: %s", e)
         logs.append(f"Error during runtime monitoring: {e}")
 
     return logs
@@ -1115,3 +1120,5 @@ def run_quick_analysis(binary_path: Union[str, Path], payload: Optional[bytes] =
     return analyzer.run_comprehensive_analysis(payload)
 
 
+# Create alias for backward compatibility
+DynamicAnalyzer = AdvancedDynamicAnalyzer

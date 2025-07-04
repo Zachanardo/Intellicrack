@@ -5,6 +5,7 @@ Minimal test of specific functions without full import chain
 
 import sys
 
+
 def test_binary_analysis_direct():
     """Test binary analysis by importing the specific module directly."""
     try:

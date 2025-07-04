@@ -526,8 +526,8 @@ class GhidraScriptSelector(QDialog):
 
         system = platform.system()
         try:
-            if system == "Windows":
-                os.startfile(user_scripts_dir)
+            if system == "Windows" and hasattr(os, 'startfile'):
+                os.startfile(user_scripts_dir)  # pylint: disable=no-member
             elif system == "Darwin":  # macOS
                 subprocess.run(["open", user_scripts_dir])
             else:  # Linux and others

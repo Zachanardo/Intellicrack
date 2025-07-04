@@ -12,6 +12,7 @@ from typing import Dict, Tuple
 
 try:
     import frida
+
     from intellicrack.core.frida_manager import FridaManager
     from intellicrack.core.frida_presets import FRIDA_PRESETS
     FRIDA_AVAILABLE = True

@@ -1,3 +1,22 @@
+import json
+import logging
+import os
+import time
+import traceback
+from typing import Any, Dict, List, Optional
+
+from intellicrack.logger import logger
+
+from ...utils.tools.radare2_utils import R2Exception, r2_session
+from .radare2_ai_integration import R2AIEngine
+
+# Import our advanced radare2 analysis engines
+from .radare2_decompiler import R2DecompilationEngine
+from .radare2_imports import R2ImportExportAnalyzer
+from .radare2_scripting import R2ScriptingEngine
+from .radare2_strings import R2StringAnalyzer
+from .radare2_vulnerability_engine import R2VulnerabilityEngine
+
 """
 Control Flow Graph (CFG) Explorer for Binary Analysis
 
@@ -20,17 +39,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import json
-import logging
-import os
-import time
-import traceback
-from typing import Any, Dict, List, Optional
 
 try:
     import numpy as np
     NUMPY_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cfg_explorer: %s", e)
     np = None
     NUMPY_AVAILABLE = False
 
@@ -40,7 +54,8 @@ except ImportError:
 try:
     import networkx as nx
     NETWORKX_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cfg_explorer: %s", e)
     NETWORKX_AVAILABLE = False
     # Create a mock nx class for type annotations when not available
     class _MockNetworkX:
@@ -52,14 +67,16 @@ except ImportError:
 try:
     import matplotlib.pyplot as plt
     MATPLOTLIB_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cfg_explorer: %s", e)
     MATPLOTLIB_AVAILABLE = False
 
 try:
     import capstone
     from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
     CAPSTONE_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cfg_explorer: %s", e)
     capstone = None
     CS_ARCH_X86 = CS_MODE_32 = CS_MODE_64 = Cs = None
     CAPSTONE_AVAILABLE = False
@@ -67,31 +84,26 @@ except ImportError:
 try:
     import pefile
     PEFILE_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cfg_explorer: %s", e)
     pefile = None
     PEFILE_AVAILABLE = False
 
-from ...utils.tools.radare2_utils import R2Exception, r2_session
-from .radare2_ai_integration import R2AIEngine
 
-# Import our advanced radare2 analysis engines
-from .radare2_decompiler import R2DecompilationEngine
-from .radare2_imports import R2ImportExportAnalyzer
-from .radare2_scripting import R2ScriptingEngine
-from .radare2_strings import R2StringAnalyzer
-from .radare2_vulnerability_engine import R2VulnerabilityEngine
 
 try:
     import subprocess
     SUBPROCESS_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cfg_explorer: %s", e)
     SUBPROCESS_AVAILABLE = False
 
 # UI dependencies
 try:
     from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
     PYQT_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cfg_explorer: %s", e)
     PYQT_AVAILABLE = False
 
 
@@ -253,7 +265,8 @@ class CFGExplorer:
                     function_graph.graph['function_name'] = func_info[0].get('name', f'func_{function_addr:x}')
                     function_graph.graph['function_size'] = func_info[0].get('realsz', 0)
                     function_graph.graph['function_addr'] = function_addr
-            except Exception:
+            except Exception as e:
+                self.logger.error("Exception in cfg_explorer: %s", e)
                 # Fallback if r2 command fails
                 function_graph.graph['function_addr'] = function_addr
                 function_graph.graph['function_name'] = f'func_{function_addr:x}'
@@ -569,6 +582,7 @@ class CFGExplorer:
                 "cyclomatic_complexity": len(list(nx.simple_cycles(self.graph))) + 1
             }
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in cfg_explorer: %s", e)
             return {"error": str(e)}
 
     def get_graph_layout(self, layout_type: str = 'spring') -> Optional[Dict]:
@@ -693,8 +707,8 @@ class CFGExplorer:
             cycles = list(nx.simple_cycles(self.call_graph))
             for cycle in cycles:
                 recursive_funcs.extend(cycle)
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Failed to detect indirect recursion cycles: {e}")
 
         return list(set(recursive_funcs))
 
@@ -909,8 +923,8 @@ class CFGExplorer:
         try:
             cycles = list(nx.simple_cycles(self.call_graph))
             xref_analysis['circular_dependencies'] = cycles
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Failed to detect circular dependencies: {e}")
 
         return xref_analysis
 
@@ -1328,10 +1342,10 @@ class CFGExplorer:
                 self.logger.error(f"Failed to show error dialog: {e}")
         # Always log the error regardless of dialog display
         self.logger.error(f"{title}: {message}")
-    
+
     def export_json(self, output_path: str) -> bool:
         """Export comprehensive CFG analysis to JSON format.
-        
+
         This exports all analysis data including:
         - Function graphs with full node/edge data
         - Call graph relationships
@@ -1340,16 +1354,16 @@ class CFGExplorer:
         - License validation analysis
         - AI analysis results
         - Cross-reference data
-        
+
         Args:
             output_path: Path to save the JSON file
-            
+
         Returns:
             bool: True if export successful, False otherwise
         """
         try:
             self.logger.info(f"Exporting CFG analysis to JSON: {output_path}")
-            
+
             # Prepare comprehensive export data
             export_data = {
                 "metadata": {
@@ -1372,7 +1386,7 @@ class CFGExplorer:
                 "analysis_results": self.analysis_cache,
                 "comprehensive_metrics": {}
             }
-            
+
             # Export function data with full graph information
             for func_name, func_data in self.functions.items():
                 function_export = {
@@ -1385,7 +1399,7 @@ class CFGExplorer:
                     "edges": [],
                     "enhanced_data": func_data.get('enhanced_data', {})
                 }
-                
+
                 # Export graph data if available
                 graph = func_data.get('graph')
                 if graph and NETWORKX_AVAILABLE:
@@ -1404,7 +1418,7 @@ class CFGExplorer:
                             "complexity_score": node_data.get('complexity_score', 0.0),
                             "instructions": []
                         }
-                        
+
                         # Export individual instructions
                         ops = node_data.get('ops', [])
                         for op in ops:
@@ -1416,9 +1430,9 @@ class CFGExplorer:
                                 "bytes": op.get('bytes', '').hex() if 'bytes' in op and hasattr(op['bytes'], 'hex') else ''
                             }
                             block_export["instructions"].append(instruction_export)
-                        
+
                         function_export["blocks"].append(block_export)
-                    
+
                     # Export edges with attributes
                     for source, target, edge_data in graph.edges(data=True):
                         edge_export = {
@@ -1428,16 +1442,16 @@ class CFGExplorer:
                             "condition": edge_data.get('condition', '')
                         }
                         function_export["edges"].append(edge_export)
-                
+
                 export_data["functions"][func_name] = function_export
-            
+
             # Export call graph
             if self.call_graph and NETWORKX_AVAILABLE:
                 call_graph_export = {
                     "nodes": [],
                     "edges": []
                 }
-                
+
                 # Export call graph nodes
                 for node, node_data in self.call_graph.nodes(data=True):
                     call_graph_export["nodes"].append({
@@ -1446,7 +1460,7 @@ class CFGExplorer:
                         "size": node_data.get('size', 0),
                         "complexity": node_data.get('complexity', 1)
                     })
-                
+
                 # Export call graph edges
                 for source, target, edge_data in self.call_graph.edges(data=True):
                     call_graph_export["edges"].append({
@@ -1456,9 +1470,9 @@ class CFGExplorer:
                         "from_addr": edge_data.get('from_addr', ''),
                         "to_addr": edge_data.get('to_addr', '')
                     })
-                
+
                 export_data["call_graph"] = call_graph_export
-            
+
             # Get comprehensive metrics
             try:
                 export_data["comprehensive_metrics"] = {
@@ -1470,7 +1484,7 @@ class CFGExplorer:
                 }
             except Exception as e:
                 self.logger.warning(f"Failed to export some metrics: {e}")
-            
+
             # Handle special types in the export data
             def json_serializable(obj):
                 """Convert non-serializable objects to JSON-friendly format."""
@@ -1493,26 +1507,26 @@ class CFGExplorer:
                 else:
                     # Default to string representation
                     return str(obj)
-            
+
             # Write JSON file with proper formatting
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(export_data, f, indent=2, sort_keys=True, default=json_serializable)
-            
+
             # Verify the file was written successfully
             if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
                 self.logger.info(f"Successfully exported CFG analysis to {output_path}")
-                
+
                 # Log export statistics
                 num_functions = len(export_data["functions"])
                 num_blocks = sum(len(func.get("blocks", [])) for func in export_data["functions"].values())
                 file_size_kb = os.path.getsize(output_path) / 1024
-                
+
                 self.logger.info(f"Export statistics: {num_functions} functions, {num_blocks} blocks, {file_size_kb:.2f} KB")
                 return True
             else:
                 self.logger.error("Export file verification failed")
                 return False
-                
+
         except Exception as e:
             self.logger.error(f"Failed to export CFG to JSON: {e}")
             self.logger.debug(f"Export error traceback: {traceback.format_exc()}")
@@ -1616,6 +1630,7 @@ def run_deep_cfg_analysis(app):
                         jump_target = int(insn.op_str.split("0x")[1], 16)
                         G.add_edge(insn.address, jump_target, type="jump")
                 except (OSError, ValueError, RuntimeError) as e:
+                    logger.error("Error in cfg_explorer: %s", e)
                     app.update_output.emit(
                         log_message(
                             f"[CFG Analysis] Error parsing jump: {e}"))
@@ -1628,6 +1643,7 @@ def run_deep_cfg_analysis(app):
         try:
             nx.drawing.nx_pydot.write_dot(G, "full_cfg.dot")
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in cfg_explorer: %s", e)
             app.update_output.emit(
                 log_message(f"[CFG Analysis] Could not write DOT file: {e}"))
 
@@ -1679,6 +1695,7 @@ def run_deep_cfg_analysis(app):
             try:
                 nx.drawing.nx_pydot.write_dot(license_subgraph, "license_cfg.dot")
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in cfg_explorer: %s", e)
                 app.update_output.emit(
                     log_message(f"[CFG Analysis] Could not write license DOT file: {e}"))
 
@@ -1690,6 +1707,7 @@ def run_deep_cfg_analysis(app):
                     app.update_output.emit(
                         log_message("[CFG Analysis] Generated license_cfg.svg"))
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in cfg_explorer: %s", e)
                 app.update_output.emit(
                     log_message(
                         f"[CFG Analysis] Could not generate SVG: {e}"))
@@ -1698,6 +1716,7 @@ def run_deep_cfg_analysis(app):
         app.analyze_status.setText("CFG analysis complete")
 
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in cfg_explorer: %s", e)
         app.update_output.emit(log_message(f"[CFG Analysis] Error: {e}"))
         app.analyze_status.setText(f"CFG analysis error: {str(e)}")
 

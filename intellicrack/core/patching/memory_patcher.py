@@ -42,7 +42,8 @@ def _get_wintypes():
     try:
         from ctypes import wintypes
         return wintypes, True
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in memory_patcher: %s", e)
         # Create basic wintypes replacement
         class MockWintypes:
             """Mock Windows types for cross-platform compatibility."""
@@ -128,7 +129,8 @@ import threading
 
 try:
     import frida
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in memory_patcher: %s", e)
     print("Error: Frida is required. Install with: pip install frida-tools")
     sys.exit(1)
 
@@ -212,11 +214,13 @@ def launch_with_frida():
         try:
             while True:
                 time.sleep(1)
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
+            logger.error("KeyboardInterrupt in memory_patcher: %s", e)
             print("\\n[*] Detaching...")
             session.detach()
 
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in memory_patcher: %s", e)
         print("[-] Error: " + str(e))
         return 1
 
@@ -229,6 +233,7 @@ def launch_normal():
         subprocess.Popen([TARGET_BINARY], encoding='utf-8')
         print("[+] Process launched")
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in memory_patcher: %s", e)
         print("[-] Error: " + str(e))
         return 1
     return 0
@@ -248,7 +253,8 @@ def main():
             import frida
             print("[+] Frida is available")
             return launch_with_frida()
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in memory_patcher: %s", e)
             print("[-] Frida not available, falling back to normal launch")
             return launch_normal()
     else:
@@ -305,6 +311,7 @@ if __name__ == "__main__":
         return launcher_path
 
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in memory_patcher: %s", e)
         app.update_output.emit(log_message(
             f"[Launcher] Error creating launcher script: {e}"))
         return None
@@ -856,7 +863,8 @@ def _handle_guard_pages_windows(address: int, size: int,
                         # Read first byte to trigger guard
                         dummy = ctypes.c_byte()
                         ctypes.memmove(ctypes.byref(dummy), address, 1)
-                    except (OSError, ValueError, Exception):
+                    except (OSError, ValueError, Exception) as e:
+                        logger.error("Error in memory_patcher: %s", e)
                         pass
 
                 return True

@@ -30,19 +30,20 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    psutil = None
-    PSUTIL_AVAILABLE = False
-
 from ..utils.logger import get_logger
 from .exploit_chain_builder import ChainComplexity, ExploitType
 from .learning_engine import learning_engine
 from .performance_monitor import performance_monitor, profile_ai_operation
 
 logger = get_logger(__name__)
+
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError as e:
+    logger.error("Import error in visualization_analytics: %s", e)
+    psutil = None
+    PSUTIL_AVAILABLE = False
 
 
 class ChartType(Enum):
@@ -113,7 +114,8 @@ class DataCollector:
     """Collects data from various AI components for visualization."""
 
     def __init__(self):
-        self.data_store: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self.data_store: Dict[str, deque] = defaultdict(
+            lambda: deque(maxlen=1000))
         self.collectors: Dict[MetricType, Callable] = {}
         self.collection_enabled = True
         self.collection_interval = 10  # seconds
@@ -203,7 +205,8 @@ class DataCollector:
             if "success_rate" in insights:
                 data_points.append(DataPoint(
                     timestamp=datetime.now(),
-                    value=insights["success_rate"] * 100,  # Convert to percentage
+                    value=insights["success_rate"] *
+                    100,  # Convert to percentage
                     label="Overall Success Rate",
                     category="success_rate"
                 ))
@@ -474,7 +477,8 @@ class ChartGenerator:
         # Collect data for all metrics in template
         all_data_points = []
         for metric_type in template["metrics"]:
-            data_points = self.data_collector.get_data(metric_type, template["time_range"])
+            data_points = self.data_collector.get_data(
+                metric_type, template["time_range"])
             all_data_points.extend(data_points)
 
         # Merge custom options
@@ -530,15 +534,18 @@ class ChartGenerator:
         # Add nodes for each exploit type with stats-based sizing
         for exploit_type in ExploitType:
             # Use stats to determine node size based on usage frequency
-            usage_count = stats.get('exploit_types', {}).get(exploit_type.value, 0)
-            node_size = min(1.0 + (usage_count * 0.1), 3.0)  # Scale based on usage
+            usage_count = stats.get('exploit_types', {}).get(
+                exploit_type.value, 0)
+            node_size = min(1.0 + (usage_count * 0.1),
+                            3.0)  # Scale based on usage
 
             network_data.append(DataPoint(
                 timestamp=datetime.now(),
                 value=node_size,  # Node size based on stats
                 label=exploit_type.value,
                 category="exploit_type",
-                metadata={"node_type": "exploit", "color": "#ff6b6b", "usage_count": usage_count}
+                metadata={"node_type": "exploit",
+                          "color": "#ff6b6b", "usage_count": usage_count}
             ))
 
         # Add nodes for complexity levels
@@ -573,7 +580,8 @@ class ChartGenerator:
         heatmap_data = []
         severities = ["low", "medium", "high", "critical"]
 
-        for i, exploit_type in enumerate(list(ExploitType)[:10]):  # Limit to first 10
+        # Limit to first 10
+        for i, exploit_type in enumerate(list(ExploitType)[:10]):
             for j, severity in enumerate(severities):
                 # Mock frequency data
                 frequency = max(0, 100 - abs(i - j) * 20 + (i + j) * 5)
@@ -583,7 +591,8 @@ class ChartGenerator:
                     value=frequency,
                     label=f"{exploit_type.value}-{severity}",
                     category="heatmap_cell",
-                    metadata={"x": i, "y": j, "exploit_type": exploit_type.value, "severity": severity}
+                    metadata={
+                        "x": i, "y": j, "exploit_type": exploit_type.value, "severity": severity}
                 ))
 
         chart_data = ChartData(
@@ -694,13 +703,14 @@ class DashboardManager:
         return dashboard
 
     def create_custom_dashboard(self, name: str, description: str,
-                              chart_configs: List[Dict[str, Any]]) -> Dashboard:
+                                chart_configs: List[Dict[str, Any]]) -> Dashboard:
         """Create custom dashboard."""
         charts = []
 
         for chart_config in chart_configs:
             try:
-                chart = self.chart_generator.generate_custom_chart(chart_config)
+                chart = self.chart_generator.generate_custom_chart(
+                    chart_config)
                 charts.append(chart)
             except Exception as e:
                 logger.error(f"Error generating custom chart: {e}")
@@ -817,7 +827,8 @@ class AnalyticsEngine:
     @profile_ai_operation("trend_analysis")
     def analyze_performance_trends(self, time_range: int = 86400) -> Dict[str, Any]:
         """Analyze performance trends over time."""
-        performance_data = self.data_collector.get_data(MetricType.PERFORMANCE, time_range)
+        performance_data = self.data_collector.get_data(
+            MetricType.PERFORMANCE, time_range)
 
         if not performance_data:
             return {"trend": "no_data", "analysis": "Insufficient data for trend analysis"}
@@ -868,7 +879,8 @@ class AnalyticsEngine:
     @profile_ai_operation("success_rate_analysis")
     def analyze_success_patterns(self) -> Dict[str, Any]:
         """Analyze success rate patterns."""
-        success_data = self.data_collector.get_data(MetricType.SUCCESS_RATE, 86400)
+        success_data = self.data_collector.get_data(
+            MetricType.SUCCESS_RATE, 86400)
 
         if not success_data:
             return {"analysis": "No success rate data available"}
@@ -925,7 +937,8 @@ class AnalyticsEngine:
     @profile_ai_operation("resource_efficiency_analysis")
     def analyze_resource_efficiency(self) -> Dict[str, Any]:
         """Analyze resource usage efficiency."""
-        resource_data = self.data_collector.get_data(MetricType.RESOURCE_USAGE, 3600)
+        resource_data = self.data_collector.get_data(
+            MetricType.RESOURCE_USAGE, 3600)
 
         if not resource_data:
             return {"analysis": "No resource usage data available"}
@@ -976,7 +989,8 @@ class AnalyticsEngine:
 
     def _calculate_overall_efficiency(self, efficiency_analysis: Dict[str, Dict[str, Any]]) -> str:
         """Calculate overall efficiency rating."""
-        ratings = [analysis["efficiency_rating"] for analysis in efficiency_analysis.values()]
+        ratings = [analysis["efficiency_rating"]
+                   for analysis in efficiency_analysis.values()]
 
         if "concerning" in ratings:
             return "needs_optimization"
@@ -998,21 +1012,27 @@ class AnalyticsEngine:
         }
 
         # Generate overall recommendations
-        performance_trend = report["performance_trends"].get("trend", "unknown")
+        performance_trend = report["performance_trends"].get(
+            "trend", "unknown")
         success_rate = report["success_patterns"].get("mean_success_rate", 0)
-        efficiency_rating = report["resource_efficiency"].get("overall_rating", "unknown")
+        efficiency_rating = report["resource_efficiency"].get(
+            "overall_rating", "unknown")
 
         if performance_trend == "declining":
-            report["recommendations"].append("Performance is declining - investigate bottlenecks")
+            report["recommendations"].append(
+                "Performance is declining - investigate bottlenecks")
 
         if success_rate < 80:
-            report["recommendations"].append("Success rate below target - review error handling")
+            report["recommendations"].append(
+                "Success rate below target - review error handling")
 
         if efficiency_rating == "needs_optimization":
-            report["recommendations"].append("Resource usage needs optimization")
+            report["recommendations"].append(
+                "Resource usage needs optimization")
 
         if not report["recommendations"]:
-            report["recommendations"].append("System performing well - continue monitoring")
+            report["recommendations"].append(
+                "System performing well - continue monitoring")
 
         return report
 
@@ -1040,7 +1060,7 @@ class VisualizationAnalytics:
         return self.dashboard_manager.refresh_dashboard(dashboard_id)
 
     def create_custom_dashboard(self, name: str, description: str,
-                              chart_configs: List[Dict[str, Any]]) -> Dashboard:
+                                chart_configs: List[Dict[str, Any]]) -> Dashboard:
         """Create custom dashboard."""
         return self.dashboard_manager.create_custom_dashboard(name, description, chart_configs)
 

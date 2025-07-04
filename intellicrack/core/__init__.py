@@ -1,3 +1,10 @@
+import logging
+
+from intellicrack.logger import logger
+
+# Import all core modules
+from . import analysis, network, patching, processing, protection_bypass, reporting
+
 """
 Core analysis and processing modules for Intellicrack.
 
@@ -19,10 +26,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
 
-# Import all core modules
-from . import analysis, network, patching, processing, protection_bypass, reporting
 
 # Import new exploitation modules
 try:
@@ -62,7 +66,8 @@ def get_frida_presets():
         try:
             from .frida_presets import FRIDA_PRESETS as _PRESETS
             FRIDA_PRESETS = _PRESETS
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in __init__: %s", e)
             pass
     return FRIDA_PRESETS
 
@@ -73,7 +78,8 @@ def get_frida_bypass_wizard():
         try:
             from .frida_bypass_wizard import FridaBypassWizard as _Wizard
             FridaBypassWizard = _Wizard
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in __init__: %s", e)
             pass
     return FridaBypassWizard
 

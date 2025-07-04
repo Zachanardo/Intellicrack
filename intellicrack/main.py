@@ -1,3 +1,10 @@
+import logging
+import os
+import sys
+
+# Initialize logger before it's used
+logger = logging.getLogger(__name__)
+
 """
 Main Entry Point for Intellicrack
 
@@ -17,12 +24,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import os
-import sys
 
 # Set Qt to offscreen mode for WSL/headless environments if no display
 if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:
-    os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+    # Check if we're in WSL
+    if os.path.exists('/proc/version'):
+        try:
+            with open('/proc/version', 'r', encoding='utf-8') as f:
+                if 'microsoft' in f.read().lower():
+                    os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+        except:
+            pass
+    # Don't set offscreen mode on Windows
+    elif os.name != 'nt':
+        os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 # Configure Qt font handling for Windows
 if os.name == 'nt':
@@ -32,6 +47,10 @@ if os.name == 'nt':
 
     # Suppress Qt font warnings
     os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.fonts=false'
+    
+    # Force software rendering if not already set (for compatibility)
+    if 'QT_OPENGL' not in os.environ:
+        os.environ['QT_OPENGL'] = 'software'
 
 # Comprehensive logging disabled for Qt compatibility
 # The comprehensive logging system interferes with Qt's window display mechanisms
@@ -45,17 +64,36 @@ def main() -> int:
         Application exit code
     """
     try:
+        # Perform startup checks and auto-configuration
+        from intellicrack.core.startup_checks import perform_startup_checks
+        print("Initializing Intellicrack...")
+        perform_startup_checks()
+        print("Startup checks completed.")
+
         # Import and launch the GUI
-        from .ui.main_app import launch
-        return launch()
+        # Always use absolute import to avoid issues
+        print("Importing launch function...")
+        from intellicrack.ui.main_app import launch
+        print("Launch function imported successfully.")
+        
+        print("Calling launch()...")
+        sys.stdout.flush()  # Force output to display
+        result = launch()
+        print(f"Launch() returned: {result}")
+        sys.stdout.flush()
+        return result
 
     except ImportError as e:
+        logger.error("Import error in main: %s", e)
         print(f"Error: Failed to import Intellicrack components: {e}")
         print("\nPlease ensure all dependencies are installed:")
         print("  pip install -r requirements.txt")
+        import traceback
+        traceback.print_exc()
         return 1
 
     except (OSError, ValueError, RuntimeError) as e:  # pylint: disable=broad-exception-caught
+        logger.error("Error launching Intellicrack: %s", e)
         print(f"Error launching Intellicrack: {e}")
         import traceback
         traceback.print_exc()

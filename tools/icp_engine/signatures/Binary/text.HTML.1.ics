@@ -1,0 +1,14 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("source", "HTML");
+
+function detect() {
+    var sText = Binary.getHeaderString();
+    if (/^<(!DOCTYPE )?html/m.test(sText)) {
+        bDetected = true;
+    }
+
+    _setLang("HTML", bDetected);
+
+    return result();
+}

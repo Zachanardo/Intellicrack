@@ -25,7 +25,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from ....utils.logger import get_logger
+from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -286,7 +286,8 @@ class FlexLMProtocolParser:
             if end == -1:
                 end = len(data)
             return data[offset:end].decode('utf-8', errors='ignore')
-        except (UnicodeDecodeError, IndexError, Exception):
+        except (UnicodeDecodeError, IndexError, Exception) as e:
+            self.logger.error("Error in flexlm_parser: %s", e)
             return ""
 
     def _parse_additional_data(self, data: bytes) -> Dict[str, Any]:

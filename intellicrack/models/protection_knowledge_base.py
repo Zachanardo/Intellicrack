@@ -6,10 +6,10 @@ Comprehensive database of software protection schemes, bypass techniques,
 and analysis strategies for the ML system.
 """
 
-from typing import Dict, List, Optional, Any
+import json
 from dataclasses import dataclass, field
 from enum import Enum
-import json
+from typing import Dict, List, Optional
 
 
 class BypassDifficulty(Enum):
@@ -67,16 +67,16 @@ class ProtectionSchemeInfo:
 
 class ProtectionKnowledgeBase:
     """Knowledge base for software protection schemes"""
-    
+
     def __init__(self):
         self.protection_schemes = self._initialize_protection_schemes()
         self.bypass_strategies = self._initialize_bypass_strategies()
         self.analysis_workflows = self._initialize_analysis_workflows()
-    
+
     def _initialize_protection_schemes(self) -> Dict[str, ProtectionSchemeInfo]:
         """Initialize comprehensive protection scheme database"""
         schemes = {}
-        
+
         # Sentinel HASP
         schemes['sentinel_hasp'] = ProtectionSchemeInfo(
             name="Sentinel HASP",
@@ -140,7 +140,7 @@ class ProtectionKnowledgeBase:
                 "Dongle emulation forums"
             ]
         )
-        
+
         # FlexLM/FlexNet
         schemes['flexlm'] = ProtectionSchemeInfo(
             name="FlexLM/FlexNet Publisher",
@@ -204,7 +204,7 @@ class ProtectionKnowledgeBase:
                 "License administration guides"
             ]
         )
-        
+
         # WinLicense/Themida
         schemes['winlicense'] = ProtectionSchemeInfo(
             name="WinLicense/Themida",
@@ -268,7 +268,7 @@ class ProtectionKnowledgeBase:
                 "Advanced unpacking tutorials"
             ]
         )
-        
+
         # VMProtect
         schemes['vmprotect'] = ProtectionSchemeInfo(
             name="VMProtect",
@@ -332,7 +332,7 @@ class ProtectionKnowledgeBase:
                 "Devirtualization research"
             ]
         )
-        
+
         # Steam CEG
         schemes['steam_ceg'] = ProtectionSchemeInfo(
             name="Steam CEG",
@@ -396,7 +396,7 @@ class ProtectionKnowledgeBase:
                 "Steam API documentation"
             ]
         )
-        
+
         # Denuvo
         schemes['denuvo'] = ProtectionSchemeInfo(
             name="Denuvo Anti-Tamper",
@@ -450,7 +450,7 @@ class ProtectionKnowledgeBase:
                 "Performance analysis papers"
             ]
         )
-        
+
         # Microsoft Activation
         schemes['microsoft_activation'] = ProtectionSchemeInfo(
             name="Microsoft Activation Technologies",
@@ -514,9 +514,9 @@ class ProtectionKnowledgeBase:
                 "Volume activation guides"
             ]
         )
-        
+
         return schemes
-    
+
     def _initialize_bypass_strategies(self) -> Dict[str, List[str]]:
         """Initialize general bypass strategies by category"""
         return {
@@ -556,7 +556,7 @@ class ProtectionKnowledgeBase:
                 "Reset trial data"
             ]
         }
-    
+
     def _initialize_analysis_workflows(self) -> Dict[str, List[str]]:
         """Initialize standard analysis workflows"""
         return {
@@ -596,67 +596,67 @@ class ProtectionKnowledgeBase:
                 "Ensure stability"
             ]
         }
-    
+
     def get_protection_info(self, protection_name: str) -> Optional[ProtectionSchemeInfo]:
         """Get detailed information about a protection scheme"""
         # Normalize name
         normalized_name = protection_name.lower().replace(" ", "_").replace("/", "_")
-        
+
         # Check exact match
         if normalized_name in self.protection_schemes:
             return self.protection_schemes[normalized_name]
-        
+
         # Check partial matches
         for key, scheme in self.protection_schemes.items():
             if normalized_name in key or key in normalized_name:
                 return scheme
             if protection_name.lower() in scheme.name.lower():
                 return scheme
-        
+
         return None
-    
+
     def get_bypass_techniques(self, protection_name: str) -> List[BypassTechnique]:
         """Get bypass techniques for a specific protection"""
         info = self.get_protection_info(protection_name)
         if info:
             return info.bypass_techniques
         return []
-    
+
     def get_analysis_workflow(self, workflow_type: str) -> List[str]:
         """Get a standard analysis workflow"""
         return self.analysis_workflows.get(workflow_type, [])
-    
+
     def search_by_signature(self, signature: str) -> List[ProtectionSchemeInfo]:
         """Search for protections containing a specific signature"""
         results = []
         signature_lower = signature.lower()
-        
+
         for scheme in self.protection_schemes.values():
             for sig in scheme.detection_signatures:
                 if signature_lower in sig.lower():
                     results.append(scheme)
                     break
-        
+
         return results
-    
+
     def get_tools_for_protection(self, protection_name: str) -> List[str]:
         """Get all tools needed for bypassing a protection"""
         info = self.get_protection_info(protection_name)
         if not info:
             return []
-        
+
         tools = set()
         for technique in info.bypass_techniques:
             tools.update(technique.tools_required)
-        
+
         return sorted(list(tools))
-    
+
     def estimate_bypass_time(self, protection_name: str, skill_level: str = "intermediate") -> str:
         """Estimate time to bypass a protection based on skill level"""
         info = self.get_protection_info(protection_name)
         if not info:
             return "Unknown"
-        
+
         # Skill multipliers
         skill_multipliers = {
             "beginner": 3.0,
@@ -664,13 +664,13 @@ class ProtectionKnowledgeBase:
             "advanced": 1.0,
             "expert": 0.7
         }
-        
+
         multiplier = skill_multipliers.get(skill_level, 1.5)
-        
+
         # Get average time from techniques
         total_hours = 0
         count = 0
-        
+
         for technique in info.bypass_techniques:
             time_str = technique.time_estimate
             # Parse time estimates (simplified)
@@ -684,13 +684,13 @@ class ProtectionKnowledgeBase:
                 hours = 24 * 30
             else:
                 hours = 8
-            
+
             total_hours += hours * technique.success_rate
             count += 1
-        
+
         if count > 0:
             avg_hours = (total_hours / count) * multiplier
-            
+
             if avg_hours < 24:
                 return f"{int(avg_hours)} hours"
             elif avg_hours < 168:
@@ -699,9 +699,9 @@ class ProtectionKnowledgeBase:
                 return f"{int(avg_hours / 168)} weeks"
             else:
                 return f"{int(avg_hours / 720)} months"
-        
+
         return "Variable"
-    
+
     def export_knowledge_base(self, output_path: str):
         """Export knowledge base to JSON"""
         data = {
@@ -709,7 +709,7 @@ class ProtectionKnowledgeBase:
             "bypass_strategies": self.bypass_strategies,
             "analysis_workflows": self.analysis_workflows
         }
-        
+
         # Convert dataclasses to dicts
         for name, scheme in self.protection_schemes.items():
             scheme_dict = {
@@ -726,7 +726,7 @@ class ProtectionKnowledgeBase:
                 "resources": scheme.resources,
                 "bypass_techniques": []
             }
-            
+
             for technique in scheme.bypass_techniques:
                 technique_dict = {
                     "name": technique.name,
@@ -739,9 +739,9 @@ class ProtectionKnowledgeBase:
                     "prerequisites": technique.prerequisites
                 }
                 scheme_dict["bypass_techniques"].append(technique_dict)
-            
+
             data["protection_schemes"][name] = scheme_dict
-        
+
         with open(output_path, 'w') as f:
             json.dump(data, f, indent=2)
 
@@ -761,7 +761,7 @@ def get_protection_knowledge_base() -> ProtectionKnowledgeBase:
 if __name__ == "__main__":
     # Example usage
     kb = get_protection_knowledge_base()
-    
+
     # Get info about Sentinel HASP
     hasp_info = kb.get_protection_info("Sentinel HASP")
     if hasp_info:
@@ -769,19 +769,19 @@ if __name__ == "__main__":
         print(f"Vendor: {hasp_info.vendor}")
         print(f"Difficulty: {hasp_info.bypass_difficulty.value}")
         print(f"Common in: {', '.join(hasp_info.common_applications[:3])}")
-        
+
         print("\nBypass Techniques:")
         for technique in hasp_info.bypass_techniques:
             print(f"  - {technique.name}: {technique.description}")
             print(f"    Success Rate: {technique.success_rate:.0%}")
             print(f"    Time: {technique.time_estimate}")
-    
+
     # Search by signature
     print("\n\nSearching for 'steam' signatures:")
     results = kb.search_by_signature("steam")
     for scheme in results:
         print(f"  - {scheme.name}: {scheme.description}")
-    
+
     # Export knowledge base
     kb.export_knowledge_base("protection_knowledge_base.json")
     print("\nKnowledge base exported to protection_knowledge_base.json")

@@ -109,7 +109,6 @@ class AutonomousAgent:
 
         # Agent identifier for session tracking
         self.agent_id = f"agent_{int(time.time())}_{id(self)}"
-        self.logger = logger
 
     def process_request(self, user_request: str) -> Dict[str, Any]:
         """
@@ -119,7 +118,8 @@ class AutonomousAgent:
         """
         try:
             self.workflow_state = WorkflowState.ANALYZING
-            self._log_to_user("Starting autonomous script generation workflow...")
+            self._log_to_user(
+                "Starting autonomous script generation workflow...")
 
             # Parse the user request
             self.current_task = self._parse_request(user_request)
@@ -130,7 +130,8 @@ class AutonomousAgent:
             })
 
             # Analyze the target
-            self._log_to_user(f"Analyzing target application: {self.current_task.binary_path}")
+            self._log_to_user(
+                f"Analyzing target application: {self.current_task.binary_path}")
             analysis = self._analyze_target(self.current_task.binary_path)
 
             if not analysis:
@@ -167,9 +168,21 @@ class AutonomousAgent:
                 "analysis": analysis
             }
 
-        except Exception as e:
+        except FileNotFoundError as e:
             self.workflow_state = WorkflowState.ERROR
-            logger.error(f"Autonomous workflow failed: {e}")
+            logger.error(f"Binary file not found: {e}", exc_info=True)
+            return self._error_result(f"File not found: {str(e)}")
+        except TimeoutError as e:
+            self.workflow_state = WorkflowState.ERROR
+            logger.error(f"Operation timed out: {e}", exc_info=True)
+            return self._error_result(f"Operation timed out: {str(e)}")
+        except (PermissionError, OSError) as e:
+            self.workflow_state = WorkflowState.ERROR
+            logger.error(f"File access error: {e}", exc_info=True)
+            return self._error_result(f"File access error: {str(e)}")
+        except (AttributeError, KeyError, ValueError) as e:
+            self.workflow_state = WorkflowState.ERROR
+            logger.error(f"Autonomous workflow failed: {e}", exc_info=True)
             return self._error_result(f"Workflow error: {str(e)}")
 
     def _parse_request(self, request: str) -> TaskRequest:
@@ -239,11 +252,16 @@ class AutonomousAgent:
                 "network_activity": self._check_network_activity(binary_path)
             }
 
-            self._log_to_user(f"Analysis complete - found {len(analysis_results.get('protections', []))} protection mechanisms")
+            self._log_to_user(
+                f"Analysis complete - found {len(analysis_results.get('protections', []))} protection mechanisms")
             return analysis_results
 
-        except Exception as e:
-            logger.error(f"Target analysis failed: {e}")
+        except (FileNotFoundError, PermissionError, OSError) as e:
+            logger.error(f"Binary file access error: {e}", exc_info=True)
+            self._log_to_user(f"File access error: {e}")
+            return None
+        except (AttributeError, KeyError, ValueError) as e:
+            logger.error(f"Target analysis failed: {e}", exc_info=True)
             self._log_to_user(f"Analysis failed: {e}")
             return None
 
@@ -258,7 +276,8 @@ class AutonomousAgent:
                 "arch": "x64",  # Default assumption
                 "platform": "windows" if binary_path.endswith('.exe') else "unknown"
             }
-        except Exception:
+        except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
+            logger.debug(f"Failed to get binary info: {e}", exc_info=True)
             return {"name": "unknown", "size": 0, "type": "unknown"}
 
     def _extract_strings(self, binary_path: str) -> List[str]:
@@ -276,20 +295,37 @@ class AutonomousAgent:
             import subprocess
             try:
                 result = subprocess.run(['strings', binary_path],
-                                      capture_output=True, text=True, timeout=30)
+                                        capture_output=True, text=True, timeout=30, check=False)
                 if result.returncode == 0:
                     all_strings = result.stdout.split('\n')
                     # Filter for license-related strings
                     for string in all_strings:
                         if any(keyword.lower() in string.lower() for keyword in license_related):
                             strings.append(string.strip())
-            except (subprocess.SubprocessError, FileNotFoundError):
+            except (subprocess.SubprocessError, FileNotFoundError) as e:
+                logger.error("Error in autonomous_agent: %s", e)
                 pass
 
             # Method 2: Read binary file directly and extract printable strings
             if not strings:
-                with open(binary_path, 'rb') as f:
-                    data = f.read()
+                data = None
+                try:
+                    from .ai_file_tools import get_ai_file_tools
+                    ai_file_tools = get_ai_file_tools(getattr(self, 'app_instance', None))
+                    file_data = ai_file_tools.read_file(binary_path, purpose="Extract license-related strings from binary")
+                    if file_data.get("status") == "success" and file_data.get("content"):
+                        content = file_data["content"]
+                        if isinstance(content, str):
+                            data = content.encode('latin-1', errors='ignore')
+                        else:
+                            data = content
+                except (ImportError, AttributeError, KeyError):
+                    pass
+                
+                # Fallback to direct file reading if AIFileTools not available
+                if data is None:
+                    with open(binary_path, 'rb') as f:
+                        data = f.read()
                     current_string = ""
                     for byte in data:
                         if 32 <= byte <= 126:  # Printable ASCII
@@ -309,8 +345,8 @@ class AutonomousAgent:
                 "Demo version - limited functionality"
             ])
 
-        except Exception as e:
-            logger.error(f"String extraction failed: {e}")
+        except (FileNotFoundError, PermissionError, OSError, IOError) as e:
+            logger.error(f"String extraction failed: {e}", exc_info=True)
 
         return strings
 
@@ -325,17 +361,22 @@ class AutonomousAgent:
 
             # Get file size to determine analysis depth
             file_size = Path(binary_path).stat().st_size
-            analysis_depth = "full" if file_size < 10 * 1024 * 1024 else "limited"  # 10MB threshold
+            analysis_depth = "full" if file_size < 10 * \
+                1024 * 1024 else "limited"  # 10MB threshold
 
             # Extract filename for context-aware analysis
             filename = Path(binary_path).name.lower()
 
             # Base license-related functions
             license_functions = [
-                {"name": "CheckLicense", "address": "0x401000", "type": "license_check", "binary": filename},
-                {"name": "ValidateSerial", "address": "0x401200", "type": "license_check", "binary": filename},
-                {"name": "GetSystemTime", "address": "0x401400", "type": "time_check", "binary": filename},
-                {"name": "TrialExpired", "address": "0x401600", "type": "trial_check", "binary": filename}
+                {"name": "CheckLicense", "address": "0x401000",
+                    "type": "license_check", "binary": filename},
+                {"name": "ValidateSerial", "address": "0x401200",
+                    "type": "license_check", "binary": filename},
+                {"name": "GetSystemTime", "address": "0x401400",
+                    "type": "time_check", "binary": filename},
+                {"name": "TrialExpired", "address": "0x401600",
+                    "type": "trial_check", "binary": filename}
             ]
 
             # Add context-specific functions based on filename patterns
@@ -357,10 +398,12 @@ class AutonomousAgent:
                 func["file_size"] = file_size
 
             functions.extend(license_functions)
-            logger.info(f"Analyzed {len(functions)} functions in {binary_path} ({analysis_depth} analysis)")
+            logger.info(
+                f"Analyzed {len(functions)} functions in {binary_path} ({analysis_depth} analysis)")
 
-        except Exception as e:
-            logger.error(f"Function analysis failed for {binary_path}: {e}")
+        except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
+            logger.error(
+                f"Function analysis failed for {binary_path}: {e}", exc_info=True)
 
         return functions
 
@@ -414,10 +457,12 @@ class AutonomousAgent:
                 ])
 
             imports.extend(protection_imports)
-            logger.info(f"Analyzed {len(imports)} imports from {binary_path} ({file_ext} binary)")
+            logger.info(
+                f"Analyzed {len(imports)} imports from {binary_path} ({file_ext} binary)")
 
-        except Exception as e:
-            logger.error(f"Import analysis failed for {binary_path}: {e}")
+        except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
+            logger.error(
+                f"Import analysis failed for {binary_path}: {e}", exc_info=True)
 
         return imports
 
@@ -456,7 +501,8 @@ class AutonomousAgent:
             ]
 
             # Enhanced detection based on file characteristics
-            if file_size > 5 * 1024 * 1024:  # Large files (>5MB) likely have more protections
+            # Large files (>5MB) likely have more protections
+            if file_size > 5 * 1024 * 1024:
                 detected_protections.append({
                     "type": "packer_detection",
                     "confidence": 0.7,
@@ -499,10 +545,12 @@ class AutonomousAgent:
                 })
 
             protections.extend(detected_protections)
-            logger.info(f"Detected {len(protections)} protection mechanisms in {binary_path}")
+            logger.info(
+                f"Detected {len(protections)} protection mechanisms in {binary_path}")
 
-        except Exception as e:
-            logger.error(f"Protection detection failed for {binary_path}: {e}")
+        except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
+            logger.error(
+                f"Protection detection failed for {binary_path}: {e}", exc_info=True)
 
         return protections
 
@@ -518,8 +566,10 @@ class AutonomousAgent:
             file_size = Path(binary_path).stat().st_size
 
             # Analyze filename for network indicators
-            network_indicators = ["online", "connect", "update", "license", "activation", "server"]
-            has_network_hints = any(indicator in filename for indicator in network_indicators)
+            network_indicators = ["online", "connect",
+                                  "update", "license", "activation", "server"]
+            has_network_hints = any(
+                indicator in filename for indicator in network_indicators)
 
             # Simulate network activity detection based on file characteristics
             result = {
@@ -540,15 +590,18 @@ class AutonomousAgent:
                 ]
                 result["protocols"] = ["HTTPS", "HTTP", "TCP"]
                 result["confidence"] = 0.7
-                logger.info(f"Network activity suspected in {binary_path} based on filename analysis")
+                logger.info(
+                    f"Network activity suspected in {binary_path} based on filename analysis")
             else:
                 result["confidence"] = 0.2
-                logger.info(f"No obvious network indicators found in {binary_path}")
+                logger.info(
+                    f"No obvious network indicators found in {binary_path}")
 
             return result
 
-        except Exception as e:
-            logger.error(f"Network activity check failed for {binary_path}: {e}")
+        except (FileNotFoundError, PermissionError, OSError, AttributeError) as e:
+            logger.error(
+                f"Network activity check failed for {binary_path}: {e}", exc_info=True)
             return {
                 "has_network": False,
                 "endpoints": [],
@@ -565,19 +618,22 @@ class AutonomousAgent:
                 self._log_to_user(f"Generating {script_type.value} script...")
 
                 if script_type == ScriptType.FRIDA:
-                    script = self.script_generator.generate_frida_script(analysis)
+                    script = self.script_generator.generate_frida_script(
+                        analysis)
                 elif script_type == ScriptType.GHIDRA:
-                    script = self.script_generator.generate_ghidra_script(analysis)
+                    script = self.script_generator.generate_ghidra_script(
+                        analysis)
                 else:
                     continue
 
                 if script:
                     scripts.append(script)
                     self.generated_scripts.append(script)
-                    self._log_to_user(f"Generated {script_type.value} script successfully")
+                    self._log_to_user(
+                        f"Generated {script_type.value} script successfully")
 
-        except Exception as e:
-            logger.error(f"Script generation failed: {e}")
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError) as e:
+            logger.error(f"Script generation failed: {e}", exc_info=True)
             self._log_to_user(f"Script generation error: {e}")
 
         return scripts
@@ -591,7 +647,8 @@ class AutonomousAgent:
 
         for iteration in range(self.max_iterations):
             self.iteration_count = iteration + 1
-            self._log_to_user(f"Testing iteration {self.iteration_count} for {script.metadata.script_type.value} script...")
+            self._log_to_user(
+                f"Testing iteration {self.iteration_count} for {script.metadata.script_type.value} script...")
 
             # Test the script
             test_result = self._test_script(current_script, analysis)
@@ -605,14 +662,16 @@ class AutonomousAgent:
                     self._log_to_user("✓ Protection bypass confirmed!")
                     return current_script
                 else:
-                    self._log_to_user("✗ Script ran but didn't achieve bypass goal")
+                    self._log_to_user(
+                        "✗ Script ran but didn't achieve bypass goal")
             else:
                 self._log_to_user(f"✗ Script failed: {test_result.error}")
 
             # Refine the script for next iteration
             if iteration < self.max_iterations - 1:
                 self._log_to_user("Refining script based on test results...")
-                refined_script = self._refine_script(current_script, test_result, analysis)
+                refined_script = self._refine_script(
+                    current_script, test_result, analysis)
                 if refined_script:
                     current_script = refined_script
                     self.refinement_history.append({
@@ -624,7 +683,8 @@ class AutonomousAgent:
                     self._log_to_user("Failed to refine script")
                     break
 
-        self._log_to_user(f"Maximum iterations ({self.max_iterations}) reached. Script may need manual review.")
+        self._log_to_user(
+            f"Maximum iterations ({self.max_iterations}) reached. Script may need manual review.")
         return current_script
 
     def _test_script(self, script: GeneratedScript, analysis: Dict[str, Any]) -> ExecutionResult:
@@ -641,7 +701,8 @@ class AutonomousAgent:
             else:
                 return self._test_direct(script, analysis)
 
-        except Exception as e:
+        except (OSError, IOError, RuntimeError, AttributeError, ValueError, TypeError) as e:
+            logger.error("Error in autonomous_agent: %s", e)
             runtime_ms = int((time.time() - start_time) * 1000)
             return ExecutionResult(
                 success=False,
@@ -662,9 +723,11 @@ class AutonomousAgent:
 
         # Determine test complexity based on analysis
         protection_count = len(protections)
-        test_duration = 1000 + (protection_count * 500)  # Base 1s + 0.5s per protection
+        # Base 1s + 0.5s per protection
+        test_duration = 1000 + (protection_count * 500)
 
-        self._log_to_user(f"Testing {script.metadata.script_type.value} script against {protection_count} protections...")
+        self._log_to_user(
+            f"Testing {script.metadata.script_type.value} script against {protection_count} protections...")
 
         # Simulate testing delay based on analysis complexity
         time.sleep(min(test_duration / 1000, 3))  # Cap at 3 seconds
@@ -679,9 +742,11 @@ class AutonomousAgent:
             base_probability *= 0.9
 
         # Check if script targets match analysis findings
-        script_protections = [p.value for p in script.metadata.protection_types]
+        script_protections = [
+            p.value for p in script.metadata.protection_types]
         analysis_protection_types = [p.get("type") for p in protections]
-        protection_match = any(sp in analysis_protection_types for sp in script_protections)
+        protection_match = any(
+            sp in analysis_protection_types for sp in script_protections)
 
         if protection_match:
             base_probability *= 1.2  # Bonus for targeting right protections
@@ -720,12 +785,13 @@ class AutonomousAgent:
         binary_path = analysis.get("binary_path", "unknown")
         protections = analysis.get("protections", [])
 
-        self._log_to_user(f"Testing {script.metadata.script_type.value} script in Docker container...")
+        self._log_to_user(
+            f"Testing {script.metadata.script_type.value} script in Docker container...")
 
         # Configure Docker environment based on binary type
         platform = binary_info.get("platform", "unknown")
         if platform == "windows":
-            container_type = "wine" # Use Wine for Windows binaries
+            container_type = "wine"  # Use Wine for Windows binaries
         else:
             container_type = "native"
 
@@ -768,7 +834,8 @@ class AutonomousAgent:
         protections = analysis.get("protections", [])
         network_activity = analysis.get("network_activity", {})
 
-        self._log_to_user(f"Testing {script.metadata.script_type.value} script in isolated sandbox...")
+        self._log_to_user(
+            f"Testing {script.metadata.script_type.value} script in isolated sandbox...")
 
         # Configure sandbox based on analysis
         has_network = network_activity.get("has_network", False)
@@ -780,7 +847,8 @@ class AutonomousAgent:
 
         # Calculate test parameters based on analysis
         test_duration = 600 + len(protections) * 150
-        protection_complexity = sum(p.get("confidence", 0) for p in protections)
+        protection_complexity = sum(p.get("confidence", 0)
+                                    for p in protections)
 
         # Sandbox success rate based on script and analysis match
         base_success = 0.9  # Sandbox generally safe and reliable
@@ -794,8 +862,10 @@ class AutonomousAgent:
         # Check script targeting accuracy
         script_types = script.metadata.protection_types
         analysis_types = {p.get("type") for p in protections}
-        targeting_accuracy = len(set(st.value for st in script_types) & analysis_types) / max(len(script_types), 1)
-        base_success *= (0.8 + 0.4 * targeting_accuracy)  # Bonus for accurate targeting
+        targeting_accuracy = len(
+            set(st.value for st in script_types) & analysis_types) / max(len(script_types), 1)
+        # Bonus for accurate targeting
+        base_success *= (0.8 + 0.4 * targeting_accuracy)
 
         simulated_success = base_success > 0.8
 
@@ -829,11 +899,14 @@ class AutonomousAgent:
         binary_path = analysis.get("binary_path", "unknown")
         protections = analysis.get("protections", [])
 
-        self._log_to_user(f"WARNING: Direct testing against {binary_path} is high risk!")
-        self._log_to_user(f"Analysis found {len(protections)} protection mechanisms")
+        self._log_to_user(
+            f"WARNING: Direct testing against {binary_path} is high risk!")
+        self._log_to_user(
+            f"Analysis found {len(protections)} protection mechanisms")
 
         # Enhanced validation using analysis context
-        is_valid, errors = self.script_generator.validator.validate_script(script)
+        is_valid, errors = self.script_generator.validator.validate_script(
+            script)
 
         if not is_valid:
             return ExecutionResult(
@@ -849,10 +922,12 @@ class AutonomousAgent:
         safety_warnings = []
 
         # Check for dangerous protections
-        dangerous_protections = [p for p in protections if p.get("type") in ["anti_debug", "packer_detection"]]
+        dangerous_protections = [p for p in protections if p.get(
+            "type") in ["anti_debug", "packer_detection"]]
         if dangerous_protections:
             safety_score *= 0.5
-            safety_warnings.append(f"Detected {len(dangerous_protections)} dangerous protections")
+            safety_warnings.append(
+                f"Detected {len(dangerous_protections)} dangerous protections")
 
         # Check binary size (large binaries may be more complex)
         binary_info = analysis.get("binary_info", {})
@@ -862,7 +937,8 @@ class AutonomousAgent:
 
         # For safety, only proceed with validation-level testing
         if safety_score < 0.8:
-            warning_msg = "Direct testing too risky: " + "; ".join(safety_warnings)
+            warning_msg = "Direct testing too risky: " + \
+                "; ".join(safety_warnings)
             return ExecutionResult(
                 success=False,
                 output=f"Direct testing blocked for safety (safety score: {safety_score:.2f})",
@@ -909,14 +985,18 @@ class AutonomousAgent:
         for protection in protections:
             prot_type = protection.get("type", "")
             if prot_type == "license_check":
-                success_indicators.extend(["license valid", "key accepted", "registration successful"])
+                success_indicators.extend(
+                    ["license valid", "key accepted", "registration successful"])
             elif prot_type == "trial_timer":
-                success_indicators.extend(["trial extended", "time bypassed", "unlimited time"])
+                success_indicators.extend(
+                    ["trial extended", "time bypassed", "unlimited time"])
             elif prot_type == "anti_debug":
-                success_indicators.extend(["debug detected", "debugger hidden", "anti-debug bypassed"])
+                success_indicators.extend(
+                    ["debug detected", "debugger hidden", "anti-debug bypassed"])
 
         output_lower = test_result.output.lower()
-        basic_success = any(indicator in output_lower for indicator in success_indicators)
+        basic_success = any(
+            indicator in output_lower for indicator in success_indicators)
 
         # Additional verification based on analysis context
         verification_score = 0.0
@@ -940,7 +1020,7 @@ class AutonomousAgent:
 
         # Log verification details
         logger.info(f"Bypass verification for {binary_path}: score={verification_score:.2f}, "
-                   f"protections={len(protections)}, duration={test_result.runtime_ms}ms")
+                    f"protections={len(protections)}, duration={test_result.runtime_ms}ms")
 
         return verification_score >= 0.8
 
@@ -965,16 +1045,19 @@ class AutonomousAgent:
                             stealth_code = "\n        // Stealth mode enhancements\n        Process.setExceptionHandler(function(details) { return true; });\n"
                             refined_content = refined_content.replace(
                                 "console.log(\"[AI-Generated]",
-                                stealth_code + "        console.log(\"[AI-Generated]"
+                                stealth_code +
+                                "        console.log(\"[AI-Generated]"
                             )
-                            refinement_notes.append("Added stealth exception handling")
+                            refinement_notes.append(
+                                "Added stealth exception handling")
 
                     elif script.metadata.script_type == ScriptType.GHIDRA:
                         # Add analysis depth for Ghidra
                         if "analyzeAll" not in refined_content:
                             analysis_code = "\n        // Enhanced analysis\n        analyzeAll(currentProgram);\n"
                             refined_content = analysis_code + refined_content
-                            refinement_notes.append("Added comprehensive analysis")
+                            refinement_notes.append(
+                                "Added comprehensive analysis")
 
                 # Target specific protections found in analysis
                 for protection in protections:
@@ -985,12 +1068,14 @@ class AutonomousAgent:
                         if prot_type == "license_check" and script.metadata.script_type == ScriptType.FRIDA:
                             license_bypass = "\n        // Target license check\n        Interceptor.attach(Module.findExportByName(null, 'strcmp'), {\n            onEnter: function(args) {\n                this.str1 = args[0].readUtf8String();\n                this.str2 = args[1].readUtf8String();\n            },\n            onLeave: function(retval) {\n                if (this.str1 && this.str1.includes('license')) {\n                    retval.replace(0);\n                }\n            }\n        });\n"
                             refined_content += license_bypass
-                            refinement_notes.append(f"Added {prot_type} bypass targeting")
+                            refinement_notes.append(
+                                f"Added {prot_type} bypass targeting")
 
                         elif prot_type == "trial_timer" and script.metadata.script_type == ScriptType.FRIDA:
                             time_bypass = "\n        // Bypass trial timer\n        Interceptor.attach(Module.findExportByName(null, 'GetSystemTime'), {\n            onLeave: function(retval) {\n                // Return a fixed early date\n                Memory.writeU64(retval, ptr(0x01D2C8B5C0000000));\n            }\n        });\n"
                             refined_content += time_bypass
-                            refinement_notes.append(f"Added {prot_type} bypass targeting")
+                            refinement_notes.append(
+                                f"Added {prot_type} bypass targeting")
 
             # Add error handling if missing
             if "try {" not in refined_content and script.metadata.script_type == ScriptType.FRIDA:
@@ -1029,13 +1114,16 @@ class AutonomousAgent:
             if refinement_notes:
                 improvement_factor = min(1.2, 1 + len(refinement_notes) * 0.05)
                 refined_script.metadata.success_probability *= improvement_factor
-                refined_script.metadata.success_probability = min(0.95, refined_script.metadata.success_probability)
+                refined_script.metadata.success_probability = min(
+                    0.95, refined_script.metadata.success_probability)
 
-            logger.info(f"Refined script for {binary_path}: {len(refinement_notes)} improvements")
+            logger.info(
+                f"Refined script for {binary_path}: {len(refinement_notes)} improvements")
             return refined_script
 
-        except Exception as e:
-            logger.error(f"Script refinement failed for {analysis.get('binary_path', 'unknown')}: {e}")
+        except (AttributeError, ValueError, TypeError, KeyError) as e:
+            logger.error(
+                f"Script refinement failed for {analysis.get('binary_path', 'unknown')}: {e}", exc_info=True)
             return None
 
     def _deploy_scripts(self, scripts: List[GeneratedScript]) -> List[Dict[str, Any]]:
@@ -1066,7 +1154,8 @@ class AutonomousAgent:
 
                 self._log_to_user(f"✓ Script deployed: {script_path}")
 
-            except Exception as e:
+            except (FileNotFoundError, PermissionError, OSError, IOError, AttributeError) as e:
+                logger.error("Error in autonomous_agent: %s", e)
                 deployment_results.append({
                     "script_id": script.metadata.script_id,
                     "status": "error",
@@ -1079,10 +1168,14 @@ class AutonomousAgent:
         """Get user confirmation for script deployment."""
         if self.cli_interface:
             # CLI confirmation
-            self.cli_interface.print_info(f"Generated {script.metadata.script_type.value} script:")
-            self.cli_interface.print_info(f"Target: {script.metadata.target_binary}")
-            self.cli_interface.print_info(f"Protections: {[p.value for p in script.metadata.protection_types]}")
-            self.cli_interface.print_info(f"Success probability: {script.metadata.success_probability:.0%}")
+            self.cli_interface.print_info(
+                f"Generated {script.metadata.script_type.value} script:")
+            self.cli_interface.print_info(
+                f"Target: {script.metadata.target_binary}")
+            self.cli_interface.print_info(
+                f"Protections: {[p.value for p in script.metadata.protection_types]}")
+            self.cli_interface.print_info(
+                f"Success probability: {script.metadata.success_probability:.0%}")
 
             response = input("Deploy this script? (y/n): ").lower().strip()
             return response in ['y', 'yes']
@@ -1123,9 +1216,10 @@ class AutonomousAgent:
         try:
             with tempfile.NamedTemporaryFile(mode='w', suffix='_error.json', delete=False) as f:
                 json.dump(result, f, indent=2)
-                self.logger.info(f"Error result saved to: {f.name}")
-        except Exception as e:
-            self.logger.warning(f"Failed to save error result: {e}")
+                logger.info(f"Error result saved to: {f.name}")
+        except (OSError, IOError, json.JSONDecodeError, AttributeError) as e:
+            logger.warning(
+                f"Failed to save error result: {e}", exc_info=True)
 
         return result
 
@@ -1135,7 +1229,8 @@ class AutonomousAgent:
             # Try to use QEMU test manager if available
             if hasattr(self, 'qemu_manager') and self.qemu_manager:
                 # Use existing QEMU manager
-                result = self.qemu_manager.test_script_in_vm(script, target_binary)
+                result = self.qemu_manager.test_script_in_vm(
+                    script, target_binary)
                 return ExecutionResult(
                     success=result.get('success', False),
                     output=result.get('output', ''),
@@ -1145,7 +1240,8 @@ class AutonomousAgent:
                 )
             else:
                 # Fallback: simulate testing without actual QEMU
-                self.logger.warning("QEMU testing not available, using fallback simulation")
+                logger.warning(
+                    "QEMU testing not available, using fallback simulation")
                 return ExecutionResult(
                     success=True,
                     output=f"[QEMU Simulation] Testing script on {target_binary}\n[QEMU Simulation] Script execution completed\nTest type: qemu_simulation\nTarget: {target_binary}\nScript length: {len(script)}\nSimulated: True",
@@ -1153,8 +1249,9 @@ class AutonomousAgent:
                     exit_code=0,
                     runtime_ms=100  # Simulated runtime
                 )
-        except Exception as e:
-            self.logger.error(f"QEMU script testing failed: {e}")
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError) as e:
+            logger.error(
+                f"QEMU script testing failed: {e}", exc_info=True)
             return ExecutionResult(
                 success=False,
                 output="",
@@ -1166,14 +1263,16 @@ class AutonomousAgent:
     def execute_autonomous_task(self, task_config: Dict[str, Any]) -> Dict[str, Any]:
         """Execute an autonomous task based on configuration."""
         try:
-            self.logger.info(f"Starting autonomous task: {task_config.get('type', 'unknown')}")
+            logger.info(
+                f"Starting autonomous task: {task_config.get('type', 'unknown')}")
 
             task_type = task_config.get('type', 'analysis')
             target_binary = task_config.get('target_binary', '')
 
             if task_type == 'script_generation':
                 # Generate scripts based on task configuration
-                user_request = task_config.get('request', f"Analyze and create scripts for {target_binary}")
+                user_request = task_config.get(
+                    'request', f"Analyze and create scripts for {target_binary}")
                 return self.process_request(user_request)
 
             elif task_type == 'vulnerability_analysis':
@@ -1207,7 +1306,7 @@ class AutonomousAgent:
                 return self._error_result(f"Unknown task type: {task_type}")
 
         except Exception as e:
-            self.logger.error(f"Error executing autonomous task: {e}")
+            logger.error(f"Error executing autonomous task: {e}")
             return self._error_result(f"Task execution failed: {str(e)}")
 
     def get_status(self) -> Dict[str, Any]:
@@ -1237,7 +1336,8 @@ class AutonomousAgent:
                 "total_iterations": self.iteration_count,
                 "scripts_generated": len(self.generated_scripts),
                 "tests_completed": len(self.test_results),
-                "session_duration": (datetime.now() - datetime.now()).total_seconds()  # Would track actual start time
+                # Would track actual start time
+                "session_duration": (datetime.now() - datetime.now()).total_seconds()
             }
         }
 
@@ -1250,7 +1350,7 @@ class AutonomousAgent:
             with open(output_path, 'w') as f:
                 json.dump(session_data, f, indent=2)
 
-        self.logger.info(f"Session data saved to: {output_path}")
+        logger.info(f"Session data saved to: {output_path}")
         return output_path
 
     def reset(self):

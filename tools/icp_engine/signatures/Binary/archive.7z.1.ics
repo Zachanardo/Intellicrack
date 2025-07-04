@@ -1,0 +1,14 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("archive", "7-Zip");
+
+function detect() {
+    if (Binary.getSize() >= 64) {
+        if (Binary.compare("'7z'BCAF271C")) {
+            sVersion = Binary.readByte(6) + "." + Binary.readByte(7);
+            bDetected = true;
+        }
+    }
+
+    return result();
+}

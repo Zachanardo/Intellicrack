@@ -39,7 +39,8 @@ if IS_WINDOWS:
         import win32com.client
         from win32com.shell import shell, shellcon
         HAS_WIN32 = True
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in file_resolution: %s", e)
         HAS_WIN32 = False
         pythoncom = win32com = shell = shellcon = None
 else:
@@ -127,10 +128,10 @@ class FileResolver:
     def resolve_file_path(self, file_path: Union[str, Path]) -> Tuple[str, Dict[str, any]]:
         """
         Resolve a file path, handling shortcuts and returning target information.
-        
+
         Args:
             file_path: Path to resolve (may be shortcut or direct file)
-            
+
         Returns:
             Tuple of (resolved_path, metadata_dict)
         """
@@ -317,7 +318,8 @@ class FileResolver:
                 timeout=5
             )
             return 'alias' in result.stdout.lower()
-        except:
+        except Exception as e:
+            self.logger.debug(f"Error checking macOS alias for {file_path}: {e}")
             return False
 
     def _resolve_macos_alias(self, alias_path: Path) -> Optional[str]:
@@ -327,6 +329,7 @@ class FileResolver:
 
         try:
             import subprocess
+
             # Use osascript to resolve alias
             script = f'''
             tell application "Finder"
@@ -419,10 +422,10 @@ class FileResolver:
                     try:
                         version_info = win32api.GetFileVersionInfo(str(file_path), "\\")
                         metadata["version_info"] = version_info
-                    except:
-                        pass
-                except ImportError:
-                    pass
+                    except Exception as e:
+                        self.logger.debug(f"Failed to get version info for {file_path}: {e}")
+                except ImportError as e:
+                    self.logger.error("Import error in file_resolution: %s", e)
 
             # Check if it's a PE file
             if file_path.suffix.lower() in ['.exe', '.dll', '.sys']:
@@ -482,8 +485,8 @@ class FileResolver:
                 attrs = list(xattr.xattr(file_path))
                 if attrs:
                     metadata["extended_attributes"] = attrs
-            except ImportError:
-                pass
+            except ImportError as e:
+                self.logger.error("Import error in file_resolution: %s", e)
 
         except Exception as e:
             self.logger.debug(f"Error getting macOS metadata: {e}")

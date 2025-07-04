@@ -1,3 +1,11 @@
+import logging
+import math
+import mmap
+import os
+from typing import Any, Dict, Iterator, Optional, Tuple, Union
+
+from intellicrack.logger import logger
+
 """
 Memory-Optimized Binary Loader
 
@@ -20,16 +28,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import logging
-import math
-import mmap
-import os
-from typing import Any, Dict, Iterator, Optional, Tuple, Union
 
 try:
     import psutil
     HAS_PSUTIL = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in memory_loader: %s", e)
     HAS_PSUTIL = False
 
 __all__ = ['MemoryOptimizedBinaryLoader']
@@ -107,7 +111,8 @@ class MemoryOptimizedBinaryLoader:
         if self.mapped_file:
             try:
                 self.mapped_file.close()
-            except (OSError, ValueError, RuntimeError):
+            except (OSError, ValueError, RuntimeError) as e:
+                self.logger.error("Error in memory_loader: %s", e)
                 pass
             self.mapped_file = None
 
@@ -115,7 +120,8 @@ class MemoryOptimizedBinaryLoader:
         if self.current_file:
             try:
                 self.current_file.close()
-            except (OSError, ValueError, RuntimeError):
+            except (OSError, ValueError, RuntimeError) as e:
+                self.logger.error("Error in memory_loader: %s", e)
                 pass
             self.current_file = None
 

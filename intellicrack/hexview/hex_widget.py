@@ -466,6 +466,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 painter.drawText(20, 75, f"Invalid read size: {size} (rows {start_row}-{end_row})")
                 return
         except Exception as calc_error:
+            logger.error("Exception in hex_widget: %s", calc_error)
             painter.setPen(Qt.red)
             painter.drawText(20, 60, f"Calculation error: {str(calc_error)}")
             return
@@ -1020,7 +1021,8 @@ class HexViewerWidget(QAbstractScrollArea):
             try:
                 # Try to decode as hex string
                 pattern_bytes = bytes.fromhex(pattern.replace(" ", ""))
-            except ValueError:
+            except ValueError as e:
+                logger.error("Value error in hex_widget: %s", e)
                 # Treat as regular string
                 pattern_bytes = pattern.encode('utf-8')
         else:
@@ -1216,7 +1218,7 @@ class HexViewerWidget(QAbstractScrollArea):
             action = view_mode_menu.addAction(mode.name.capitalize())
             action.setCheckable(True)
             action.setChecked(mode == self.view_mode)
-            action.triggered.connect(lambda checked, m=mode: self.set_view_mode(m))
+            action.triggered.connect(lambda checked, m=mode: self.set_view_mode(m) if checked else None)
 
         # Bytes per row submenu
         bytes_row_menu = menu.addMenu("Bytes per Row")
@@ -1224,7 +1226,7 @@ class HexViewerWidget(QAbstractScrollArea):
             action = bytes_row_menu.addAction(str(bpr))
             action.setCheckable(True)
             action.setChecked(bpr == self.bytes_per_row)
-            action.triggered.connect(lambda checked, b=bpr: self.set_bytes_per_row(b))
+            action.triggered.connect(lambda checked, b=bpr: self.set_bytes_per_row(b) if checked else None)
 
         # Grouping submenu
         group_menu = menu.addMenu("Byte Grouping")
@@ -1232,7 +1234,7 @@ class HexViewerWidget(QAbstractScrollArea):
             action = group_menu.addAction(str(gs))
             action.setCheckable(True)
             action.setChecked(gs == self.group_size)
-            action.triggered.connect(lambda checked, g=gs: self.set_group_size(g))
+            action.triggered.connect(lambda checked, g=gs: self.set_group_size(g) if checked else None)
 
         menu.addSeparator()
 
@@ -1307,7 +1309,8 @@ class HexViewerWidget(QAbstractScrollArea):
 
                 # Jump to the offset
                 self.jump_to_offset(offset)
-            except ValueError:
+            except ValueError as e:
+                self.logger.error("Value error in hex_widget: %s", e)
                 QMessageBox.warning(self, "Invalid Offset",
                                    "Please enter a valid offset in decimal or hex (0x...) format.")
 
@@ -1365,7 +1368,8 @@ class HexViewerWidget(QAbstractScrollArea):
             if search_type == "hex":
                 try:
                     pattern_bytes = bytes.fromhex(pattern.replace(" ", ""))
-                except ValueError:
+                except ValueError as e:
+                    logger.error("Value error in hex_widget: %s", e)
                     QMessageBox.warning(self, "Invalid Hex Pattern",
                                        "Please enter a valid hex pattern (e.g., 'FF 00 AB').")
                     return
@@ -1441,7 +1445,8 @@ class HexViewerWidget(QAbstractScrollArea):
 
                 # Add the bookmark
                 self.add_bookmark(offset, size, description)
-            except ValueError:
+            except ValueError as e:
+                logger.error("Value error in hex_widget: %s", e)
                 QMessageBox.warning(self, "Invalid Offset",
                                    "Please enter a valid offset in decimal or hex (0x...) format.")
 
@@ -1467,7 +1472,8 @@ class HexViewerWidget(QAbstractScrollArea):
         # Try to decode as UTF-8, falling back to escaped string
         try:
             text = data.decode('utf-8')
-        except UnicodeDecodeError:
+        except UnicodeDecodeError as e:
+            self.logger.error("UnicodeDecodeError in hex_widget: %s", e)
             # Fall back to printable ASCII
             text = "".join(chr(b) if 32 <= b <= 126 else f"\\x{b:02X}" for b in data)
 
@@ -1523,7 +1529,8 @@ class HexViewerWidget(QAbstractScrollArea):
 
                 # Write the data
                 self.edit_selection(fill_data)
-            except ValueError:
+            except ValueError as e:
+                logger.error("Value error in hex_widget: %s", e)
                 QMessageBox.warning(self, "Invalid Value",
                                    "Please enter a valid byte value in decimal or hex (0x...) format.")
 

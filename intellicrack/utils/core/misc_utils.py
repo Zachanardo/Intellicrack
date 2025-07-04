@@ -168,7 +168,8 @@ def safe_str(obj: Any, max_length: int = 100) -> str:
     try:
         result = str(obj)
         return truncate_string(result, max_length)
-    except (OSError, ValueError, RuntimeError):
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in misc_utils: %s", e)
         return '<str_conversion_failed>'
 
 
@@ -287,7 +288,8 @@ def is_valid_port(port: Union[str, int]) -> bool:
     try:
         port_num = int(port)
         return 1 <= port_num <= 65535
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
+        logger.error("Error in misc_utils: %s", e)
         return False
 
 

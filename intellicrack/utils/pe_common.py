@@ -19,9 +19,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 # Import all functions from the binary pe_common module
 from .binary.pe_common import (
+    analyze_pe_import_security,
     extract_pe_imports,
     iterate_pe_imports_with_dll,
-    analyze_pe_import_security
 )
 
 __all__ = ['extract_pe_imports', 'iterate_pe_imports_with_dll', 'analyze_pe_import_security']

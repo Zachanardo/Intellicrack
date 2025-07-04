@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import ast
 import hashlib
+import logging
 import re
 from collections import Counter
 from dataclasses import dataclass, field
@@ -282,7 +283,8 @@ class NLPCodeProcessor:
 
         # Extract vocabulary matches
         for category, keywords in self.vocabulary.items():
-            matches = sum(1 for keyword in keywords if keyword.lower() in normalized_code.lower())
+            matches = sum(1 for keyword in keywords if keyword.lower()
+                          in normalized_code.lower())
             features["vocabulary_matches"][category] = matches
 
         # Extract pattern matches
@@ -294,19 +296,23 @@ class NLPCodeProcessor:
 
         # Calculate intent scores
         for intent, keywords in self.intent_keywords.items():
-            score = sum(1 for keyword in keywords if keyword.lower() in normalized_code.lower())
+            score = sum(1 for keyword in keywords if keyword.lower()
+                        in normalized_code.lower())
             features["intent_scores"][intent.value] = score
 
         # Calculate business pattern scores
         for pattern, keywords in self.business_keywords.items():
-            score = sum(1 for keyword in keywords if keyword.lower() in normalized_code.lower())
+            score = sum(1 for keyword in keywords if keyword.lower()
+                        in normalized_code.lower())
             features["business_scores"][pattern.value] = score
 
         # Extract complexity indicators
-        features["complexity_indicators"] = self._extract_complexity_indicators(code)
+        features["complexity_indicators"] = self._extract_complexity_indicators(
+            code)
 
         # Extract semantic tokens
-        features["semantic_tokens"] = self._extract_semantic_tokens(code, function_name)
+        features["semantic_tokens"] = self._extract_semantic_tokens(
+            code, function_name)
 
         return features
 
@@ -391,6 +397,7 @@ class SemanticCodeAnalyzer:
     """Deep semantic code analysis system."""
 
     def __init__(self, llm_manager: Optional[LLMManager] = None):
+        self.logger = logging.getLogger(__name__ + ".SemanticCodeAnalyzer")
         self.llm_manager = llm_manager or LLMManager()
         self.nlp_processor = NLPCodeProcessor()
 
@@ -417,17 +424,35 @@ class SemanticCodeAnalyzer:
 
         # Read content if not provided
         if content is None:
+            # Try to use AIFileTools for file reading if available
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
+                from .ai_file_tools import get_ai_file_tools
+                ai_file_tools = get_ai_file_tools(getattr(self, 'app_instance', None))
+                file_data = ai_file_tools.read_file(file_path, purpose="Semantic code analysis for protection patterns")
+                if file_data.get("status") == "success" and file_data.get("content"):
+                    content = file_data["content"]
+                else:
+                    # Fallback to direct file reading
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+            except (ImportError, AttributeError, KeyError):
+                # AIFileTools not available, use direct file reading
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                except Exception as e:
+                    logger.error(f"Failed to read file {file_path}: {e}")
+                    return self._create_empty_result(file_path)
             except Exception as e:
                 logger.error(f"Failed to read file {file_path}: {e}")
                 return self._create_empty_result(file_path)
 
         # Perform analysis
         try:
-            analysis_result = self._perform_semantic_analysis(file_path, content)
-            analysis_result.analysis_time = (datetime.now() - start_time).total_seconds()
+            analysis_result = self._perform_semantic_analysis(
+                file_path, content)
+            analysis_result.analysis_time = (
+                datetime.now() - start_time).total_seconds()
 
             # Cache result
             self.analysis_cache[file_hash] = analysis_result
@@ -435,7 +460,8 @@ class SemanticCodeAnalyzer:
             # Record learning experience
             learning_engine.record_experience(
                 task_type="semantic_code_analysis",
-                input_data={"file_path": file_path, "content_length": len(content)},
+                input_data={"file_path": file_path,
+                            "content_length": len(content)},
                 output_data={
                     "nodes_found": len(analysis_result.semantic_nodes),
                     "relationships_found": len(analysis_result.relationships),
@@ -445,7 +471,8 @@ class SemanticCodeAnalyzer:
                 confidence=analysis_result.confidence,
                 execution_time=analysis_result.analysis_time,
                 memory_usage=0,
-                context={"analyzer": "semantic", "file_type": Path(file_path).suffix}
+                context={"analyzer": "semantic",
+                         "file_type": Path(file_path).suffix}
             )
 
             return analysis_result
@@ -463,7 +490,8 @@ class SemanticCodeAnalyzer:
                 execution_time=(datetime.now() - start_time).total_seconds(),
                 memory_usage=0,
                 error_message=str(e),
-                context={"analyzer": "semantic", "file_type": Path(file_path).suffix}
+                context={"analyzer": "semantic",
+                         "file_type": Path(file_path).suffix}
             )
 
             return self._create_empty_result(file_path)
@@ -486,19 +514,23 @@ class SemanticCodeAnalyzer:
         relationships = self._analyze_relationships(semantic_nodes)
 
         # Detect intent mismatches
-        intent_mismatches = self._detect_intent_mismatches(semantic_nodes, content)
+        intent_mismatches = self._detect_intent_mismatches(
+            semantic_nodes, content)
 
         # Map business logic patterns
         business_logic_map = self._map_business_logic(semantic_nodes)
 
         # Calculate complexity metrics
-        complexity_metrics = self._calculate_complexity_metrics(semantic_nodes, content)
+        complexity_metrics = self._calculate_complexity_metrics(
+            semantic_nodes, content)
 
         # Generate semantic summary
-        semantic_summary = self._generate_semantic_summary(semantic_nodes, relationships)
+        semantic_summary = self._generate_semantic_summary(
+            semantic_nodes, relationships)
 
         # Calculate overall confidence
-        confidence = self._calculate_analysis_confidence(semantic_nodes, relationships)
+        confidence = self._calculate_analysis_confidence(
+            semantic_nodes, relationships)
 
         return SemanticAnalysisResult(
             analysis_id=analysis_id,
@@ -535,12 +567,14 @@ class SemanticCodeAnalyzer:
 
             else:
                 # For non-Python files, use regex-based parsing
-                ast_nodes.extend(self._parse_non_python_structure(content, file_path))
+                ast_nodes.extend(
+                    self._parse_non_python_structure(content, file_path))
 
         except Exception as e:
             logger.warning(f"Failed to parse AST for {file_path}: {e}")
             # Fallback to regex-based parsing
-            ast_nodes.extend(self._parse_non_python_structure(content, file_path))
+            ast_nodes.extend(
+                self._parse_non_python_structure(content, file_path))
 
         return ast_nodes
 
@@ -630,16 +664,20 @@ class SemanticCodeAnalyzer:
             node_name = ast_node.get("name", "")
 
             # Extract NLP features
-            nlp_features = self.nlp_processor.extract_semantic_features(node_content, node_name)
+            nlp_features = self.nlp_processor.extract_semantic_features(
+                node_content, node_name)
 
             # Determine semantic intent
-            semantic_intent = self._determine_semantic_intent(nlp_features, node_name, node_content)
+            semantic_intent = self._determine_semantic_intent(
+                nlp_features, node_name, node_content)
 
             # Determine business pattern
-            business_pattern = self._determine_business_pattern(nlp_features, node_name, node_content)
+            business_pattern = self._determine_business_pattern(
+                nlp_features, node_name, node_content)
 
             # Calculate confidence
-            confidence = self._calculate_node_confidence(nlp_features, semantic_intent)
+            confidence = self._calculate_node_confidence(
+                nlp_features, semantic_intent)
 
             node_id = f"{ast_node.get('type', 'unknown')}_{node_name}_{ast_node.get('line', 0)}"
 
@@ -667,7 +705,7 @@ class SemanticCodeAnalyzer:
             return None
 
     def _determine_semantic_intent(self, nlp_features: Dict[str, Any],
-                                 node_name: str, content: str) -> SemanticIntent:
+                                   node_name: str, content: str) -> SemanticIntent:
         """Determine semantic intent of code node."""
         intent_scores = nlp_features.get("intent_scores", {})
 
@@ -677,7 +715,9 @@ class SemanticCodeAnalyzer:
             if max_intent[1] > 0:
                 try:
                     return SemanticIntent(max_intent[0])
-                except ValueError:
+                except ValueError as e:
+                    self.logger.error(
+                        "Value error in semantic_code_analyzer: %s", e)
                     pass
 
         # Fallback to name and content-based analysis
@@ -704,7 +744,7 @@ class SemanticCodeAnalyzer:
             return SemanticIntent.BUSINESS_LOGIC
 
     def _determine_business_pattern(self, nlp_features: Dict[str, Any],
-                                  node_name: str, content: str) -> Optional[BusinessLogicPattern]:
+                                    node_name: str, content: str) -> Optional[BusinessLogicPattern]:
         """Determine business logic pattern."""
         business_scores = nlp_features.get("business_scores", {})
 
@@ -714,7 +754,9 @@ class SemanticCodeAnalyzer:
             if max_pattern[1] > 0:
                 try:
                     return BusinessLogicPattern(max_pattern[0])
-                except ValueError:
+                except ValueError as e:
+                    self.logger.error(
+                        "Value error in semantic_code_analyzer: %s", e)
                     pass
 
         # Fallback to name-based analysis
@@ -735,13 +777,13 @@ class SemanticCodeAnalyzer:
         return None
 
     def _calculate_node_confidence(self, nlp_features: Dict[str, Any],
-                                 semantic_intent: SemanticIntent) -> float:
+                                   semantic_intent: SemanticIntent) -> float:
         """Calculate confidence score for semantic node."""
         confidence = 0.5  # Base confidence
 
         # Add confidence boost for high-value intents
         high_value_intents = [SemanticIntent.AUTHENTICATION, SemanticIntent.ENCRYPTION,
-                             SemanticIntent.AUTHORIZATION, SemanticIntent.VALIDATION]
+                              SemanticIntent.AUTHORIZATION, SemanticIntent.VALIDATION]
         if semantic_intent in high_value_intents:
             confidence += 0.1
 
@@ -808,7 +850,7 @@ class SemanticCodeAnalyzer:
         )
 
     def _detect_intent_mismatches(self, semantic_nodes: List[SemanticNode],
-                                content: str) -> List[IntentMismatch]:
+                                  content: str) -> List[IntentMismatch]:
         """Detect mismatches between intent and implementation."""
         mismatches = []
 
@@ -941,7 +983,7 @@ class SemanticCodeAnalyzer:
         return business_map
 
     def _calculate_complexity_metrics(self, semantic_nodes: List[SemanticNode],
-                                    content: str) -> Dict[str, float]:
+                                      content: str) -> Dict[str, float]:
         """Calculate complexity metrics."""
         return {
             "semantic_complexity": len(semantic_nodes),
@@ -953,10 +995,12 @@ class SemanticCodeAnalyzer:
         }
 
     def _generate_semantic_summary(self, semantic_nodes: List[SemanticNode],
-                                 relationships: List[SemanticRelationship]) -> Dict[str, Any]:
+                                   relationships: List[SemanticRelationship]) -> Dict[str, Any]:
         """Generate semantic summary."""
-        intent_counts = Counter(node.semantic_intent for node in semantic_nodes)
-        pattern_counts = Counter(node.business_pattern for node in semantic_nodes if node.business_pattern)
+        intent_counts = Counter(
+            node.semantic_intent for node in semantic_nodes)
+        pattern_counts = Counter(
+            node.business_pattern for node in semantic_nodes if node.business_pattern)
 
         return {
             "total_nodes": len(semantic_nodes),
@@ -977,7 +1021,7 @@ class SemanticCodeAnalyzer:
             return "high"
 
     def _calculate_analysis_confidence(self, semantic_nodes: List[SemanticNode],
-                                     relationships: List[SemanticRelationship]) -> float:
+                                       relationships: List[SemanticRelationship]) -> float:
         """Calculate overall analysis confidence."""
         if not semantic_nodes:
             return 0.0
@@ -986,10 +1030,12 @@ class SemanticCodeAnalyzer:
         relationship_confidences = [rel.confidence for rel in relationships]
 
         avg_node_confidence = sum(node_confidences) / len(node_confidences)
-        avg_rel_confidence = sum(relationship_confidences) / len(relationship_confidences) if relationship_confidences else 0.5
+        avg_rel_confidence = sum(relationship_confidences) / len(
+            relationship_confidences) if relationship_confidences else 0.5
 
         # Weight node confidence more heavily
-        overall_confidence = (avg_node_confidence * 0.7) + (avg_rel_confidence * 0.3)
+        overall_confidence = (avg_node_confidence * 0.7) + \
+            (avg_rel_confidence * 0.3)
 
         return min(1.0, overall_confidence)
 
@@ -997,9 +1043,25 @@ class SemanticCodeAnalyzer:
         """Calculate hash for caching."""
         if content is None:
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-            except Exception:
+                from .ai_file_tools import get_ai_file_tools
+                ai_file_tools = get_ai_file_tools(getattr(self, 'app_instance', None))
+                file_data = ai_file_tools.read_file(file_path, purpose="File hash calculation for caching")
+                if file_data.get("status") == "success" and file_data.get("content"):
+                    content = file_data["content"]
+                else:
+                    # Fallback to direct file reading
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+            except (ImportError, AttributeError, KeyError):
+                # AIFileTools not available, use direct file reading
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                except Exception as e:
+                    self.logger.error("Exception in semantic_code_analyzer: %s", e)
+                    content = ""
+            except Exception as e:
+                self.logger.error("Exception in semantic_code_analyzer: %s", e)
                 content = ""
 
         return hashlib.md5(f"{file_path}:{content}".encode()).hexdigest()
@@ -1056,7 +1118,8 @@ class SemanticCodeAnalyzer:
 
         # Calculate average confidence
         if all_results:
-            insights["avg_confidence"] = sum(r.confidence for r in all_results) / len(all_results)
+            insights["avg_confidence"] = sum(
+                r.confidence for r in all_results) / len(all_results)
 
         # Complexity overview
         insights["complexity_overview"] = {

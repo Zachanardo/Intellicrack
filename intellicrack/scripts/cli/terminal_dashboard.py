@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 import os
 import time
 from dataclasses import dataclass, field
@@ -97,6 +98,7 @@ class TerminalDashboard:
         self.update_interval = update_interval
         self.running = False
         self.update_thread = None
+        self.logger = logging.getLogger(__name__)
 
         # Dashboard data
         self.system_metrics = SystemMetrics()
@@ -223,8 +225,8 @@ class TerminalDashboard:
             if len(self.memory_history) > self.max_history:
                 self.memory_history.pop(0)
 
-        except Exception:
-            pass  # Ignore errors in metrics collection
+        except Exception as e:
+            self.logger.debug(f"Failed to collect system metrics: {e}")
 
     def _create_system_panel(self) -> Panel:
         """Create system metrics panel."""
@@ -498,7 +500,7 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
                     time.sleep(self.update_interval)
 
         except KeyboardInterrupt:
-            pass
+            self.logger.debug("Dashboard update thread interrupted")
 
     def _create_dashboard_layout(self) -> Layout:
         """Create dashboard layout."""
@@ -604,7 +606,7 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
                 time.sleep(self.update_interval)
 
         except KeyboardInterrupt:
-            pass
+            self.logger.debug("Dashboard update thread interrupted")
 
     def create_status_summary(self) -> str:
         """Create brief status summary.

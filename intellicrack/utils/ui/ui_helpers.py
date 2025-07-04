@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Common UI helper functions to reduce code duplication.
 
@@ -34,7 +36,8 @@ def check_binary_path_and_warn(app_instance):
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.warning(app_instance, "No File Selected",
                               "Please select a program first.")
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in ui_helpers: %s", e)
             pass
         return False
     return True
@@ -50,7 +53,8 @@ def emit_log_message(app_instance, message):
         try:
             from ..utils.logger import log_message
             app_instance.update_output.emit(log_message(message))
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in ui_helpers: %s", e)
             app_instance.update_output.emit(message)
     elif hasattr(app_instance, 'update_output'):
         app_instance.update_output.emit(message)
@@ -70,7 +74,8 @@ def show_file_dialog(parent, title, file_filter="HTML Files (*.html);;All Files 
         from PyQt5.QtWidgets import QFileDialog
         filename, _ = QFileDialog.getSaveFileName(parent, title, "", file_filter)
         return filename if filename else ""
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in ui_helpers: %s", e)
         return ""
 
 def ask_yes_no_question(parent, title, question):
@@ -90,7 +95,8 @@ def ask_yes_no_question(parent, title, question):
             parent, title, question,
             QMessageBox.Yes | QMessageBox.No
         ) == QMessageBox.Yes
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in ui_helpers: %s", e)
         return False
 
 def generate_exploit_payload_common(payload_type, target_path="target_software"):
@@ -128,6 +134,7 @@ def generate_exploit_payload_common(payload_type, target_path="target_software")
         return payload_result
 
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in ui_helpers: %s", e)
         return {"error": str(e)}
 
 def generate_exploit_strategy_common(binary_path, vulnerability_type="buffer_overflow"):
@@ -149,4 +156,5 @@ def generate_exploit_strategy_common(binary_path, vulnerability_type="buffer_ove
         return strategy
 
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in ui_helpers: %s", e)
         return {"error": str(e)}

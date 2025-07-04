@@ -40,7 +40,8 @@ logger = logging.getLogger(__name__)
 try:
     import psutil
     PSUTIL_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in process_utils: %s", e)
     PSUTIL_AVAILABLE = False
 
 
@@ -112,7 +113,8 @@ def get_process_list() -> List[Dict[str, Any]]:
             for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
                 try:
                     processes.append(proc.info)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    logger.error("Error in process_utils: %s", e)
                     continue
         else:
             # Fallback implementation
@@ -182,7 +184,8 @@ def _get_process_list_unix() -> List[Dict[str, Any]]:
                                 'cpu_percent': float(parts[2]),
                                 'memory_percent': float(parts[3])
                             })
-                        except (ValueError, IndexError):
+                        except (ValueError, IndexError) as e:
+                            logger.error("Error in process_utils: %s", e)
                             continue
 
     except Exception as e:
@@ -263,7 +266,8 @@ def is_process_running(pid: int) -> bool:
                 os.kill(pid, 0)
                 return True
 
-    except (OSError, subprocess.SubprocessError):
+    except (OSError, subprocess.SubprocessError) as e:
+        logger.error("Error in process_utils: %s", e)
         return False
     except Exception as e:
         logger.debug(f"Process check failed for PID {pid}: {e}")
@@ -367,9 +371,11 @@ def run_as_admin(command: List[str]) -> Tuple[bool, str]:
         else:
             return False, result.stderr
 
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as e:
+        logger.error("Subprocess timeout in process_utils: %s", e)
         return False, "Command timed out"
     except Exception as e:
+        logger.error("Exception in process_utils: %s", e)
         return False, str(e)
 
 

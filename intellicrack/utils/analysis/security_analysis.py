@@ -24,20 +24,33 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-logger = logging.getLogger(__name__)
-
 # Import availability checks from common module
 from ..core.common_imports import (
     CAPSTONE_AVAILABLE,
     PEFILE_AVAILABLE,
     PSUTIL_AVAILABLE,
-    capstone,
-    psutil,
 )
+
+logger = logging.getLogger(__name__)
+
+
+# Import optional dependencies
+try:
+    import capstone
+except ImportError as e:
+    logger.error("Import error in security_analysis: %s", e)
+    capstone = None
+
+try:
+    import psutil
+except ImportError as e:
+    logger.error("Import error in security_analysis: %s", e)
+    psutil = None
 
 try:
     import pefile
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in security_analysis: %s", e)
     pefile = None
 
 
@@ -225,7 +238,8 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
                 for section in pe.sections:
                     if section.Characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
                         code_sections.append((section.VirtualAddress, section.get_data()))
-            except (pefile.PEFormatError, IOError, Exception):
+            except (pefile.PEFormatError, IOError, Exception) as e:
+                logger.error("Error in security_analysis: %s", e)
                 code_sections = [(0, data)]
         else:
             code_sections = [(0, data)]
@@ -246,7 +260,8 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
                                 "risk": "high" if size > 0x10000 else "medium"
                             })
                             dangerous_stack_ops += 1
-                    except (ValueError, AttributeError, Exception):
+                    except (ValueError, AttributeError, Exception) as e:
+                        logger.error("Error in security_analysis: %s", e)
                         pass
 
         if dangerous_stack_ops > 0:
@@ -746,7 +761,8 @@ def check_memory_usage(process_pid: int) -> Dict[str, Any]:
 
         return results
 
-    except psutil.NoSuchProcess:
+    except psutil.NoSuchProcess as e:
+        logger.error("No such process in security_analysis: %s", e)
         return {"error": f"Process {process_pid} not found"}
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error checking memory usage: %s", e)

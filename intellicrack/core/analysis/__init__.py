@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Advanced binary analysis engines for Intellicrack.
 
@@ -28,7 +30,8 @@ try:
         detect_packing,
         enhanced_deep_license_analysis,
     )
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     calculate_entropy = None
     analyze_binary_internal = None
     enhanced_deep_license_analysis = None
@@ -36,54 +39,64 @@ except ImportError:
 
 try:
     from .vulnerability_engine import VulnerabilityEngine
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     VulnerabilityEngine = None
 
 try:
     from .dynamic_analyzer import AdvancedDynamicAnalyzer, DynamicAnalyzer
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     DynamicAnalyzer = None
     AdvancedDynamicAnalyzer = None
 
 try:
     from .symbolic_executor import SymbolicExecutionEngine
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     SymbolicExecutionEngine = None
 
 try:
     from .concolic_executor import ConcolicExecutionEngine
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     ConcolicExecutionEngine = None
 
 try:
     from .taint_analyzer import TaintAnalysisEngine, run_taint_analysis
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     TaintAnalysisEngine = None
     run_taint_analysis = None
 
 try:
     from .rop_generator import ROPChainGenerator
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     ROPChainGenerator = None
 
 try:
     from .multi_format_analyzer import MultiFormatBinaryAnalyzer
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     MultiFormatBinaryAnalyzer = None
 
 try:
     from .cfg_explorer import CFGExplorer
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     CFGExplorer = None
 
 try:
     from .incremental_manager import IncrementalAnalysisManager
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     IncrementalAnalysisManager = None
 
 try:
     from .similarity_searcher import SimilaritySearcher
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     SimilaritySearcher = None
 
 __all__ = [

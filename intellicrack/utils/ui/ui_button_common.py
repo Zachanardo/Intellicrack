@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Common UI button utilities to avoid code duplication.
 """
@@ -5,7 +7,8 @@ Common UI button utilities to avoid code duplication.
 try:
     from PyQt5.QtWidgets import QPushButton
     PYQT_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in ui_button_common: %s", e)
     PYQT_AVAILABLE = False
 
 

@@ -1,0 +1,13 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("protector", "Enigma");
+
+function detect() {
+
+
+    if (bDetected) {
+        sVersion = "Virtual Box";
+    }
+
+    return result();
+}

@@ -476,5 +476,9 @@ def main():
     print(f"  Declined: {summary['declined_actions']}")
 
 
+# Alias for easier importing
+AIWrapper = IntellicrackAIInterface
+
+
 if __name__ == "__main__":
     main()

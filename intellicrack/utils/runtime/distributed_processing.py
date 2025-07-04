@@ -36,13 +36,39 @@ logger = logging.getLogger(__name__)
 try:
     import numpy as np
     NUMPY_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in distributed_processing: %s", e)
     NUMPY_AVAILABLE = False
+
+# Try to import GPU autoloader
+GPU_AUTOLOADER_AVAILABLE = False
+get_device = None
+get_gpu_info = None
+to_device = None
+memory_allocated = None
+memory_reserved = None
+empty_cache = None
+gpu_autoloader = None
+
+try:
+    from ..gpu_autoloader import (
+        gpu_autoloader,
+        get_device,
+        get_gpu_info,
+        to_device,
+        memory_allocated,
+        memory_reserved,
+        empty_cache
+    )
+    GPU_AUTOLOADER_AVAILABLE = True
+except ImportError:
+    pass
 
 try:
     import torch
     TORCH_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in distributed_processing: %s", e)
     torch = None
     TORCH_AVAILABLE = False
 
@@ -159,6 +185,7 @@ def process_chunk(binary_path: str, chunk_info: Dict[str, Any],
         }
 
     except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in distributed_processing: %s", e)
         return {
             "chunk": chunk_info,
             "error": str(e),
@@ -744,7 +771,8 @@ def run_pdf_report_generator(analysis_results: Dict[str, Any],
         results["status"] = "success"
         results["message"] = f"Report generated: {output_path}"
 
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in distributed_processing: %s", e)
         results["status"] = "error"
         results["message"] = "PDF generation not available"
     except (OSError, ValueError, RuntimeError) as e:
@@ -857,7 +885,6 @@ def _distributed_hash_calculation(binary_path: str,
 
     # For hash calculation, we need sequential processing
     # but can parallelize multiple hash algorithms
-
     # Get algorithms from config or use defaults
     algorithms = config.get('hash_algorithms', ["md5", "sha1", "sha256", "sha512"])
     chunk_size = config.get('chunk_size', 8192)
@@ -985,21 +1012,41 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
 
     try:
         # Check if GPU libraries are available
-        if TORCH_AVAILABLE and torch.cuda.is_available():
+        gpu_available = False
+        device_str = "cpu"
+        
+        if GPU_AUTOLOADER_AVAILABLE:
+            gpu_info = get_gpu_info()
+            if gpu_info['available']:
+                gpu_available = True
+                device_str = get_device()
+        elif TORCH_AVAILABLE and torch.cuda.is_available():
+            gpu_available = True
+            device_str = "cuda"
+            
+        if gpu_available:
             # Convert patterns and data to GPU tensors for fast matching
             patterns = config.get('patterns', [])
             search_data = data.get('data', b'')
 
             if patterns and search_data:
                 # Simple GPU pattern matching using PyTorch
-                device = torch.device('cuda')
+                device = torch.device(device_str)
 
                 # Convert data to tensor
-                data_tensor = torch.tensor(list(search_data), dtype=torch.uint8, device=device)
+                data_tensor = torch.tensor(list(search_data), dtype=torch.uint8)
+                if GPU_AUTOLOADER_AVAILABLE and to_device:
+                    data_tensor = to_device(data_tensor)
+                else:
+                    data_tensor = data_tensor.to(device)
 
                 for pattern in patterns:
                     if isinstance(pattern, (bytes, bytearray)):
-                        pattern_tensor = torch.tensor(list(pattern), dtype=torch.uint8, device=device)
+                        pattern_tensor = torch.tensor(list(pattern), dtype=torch.uint8)
+                        if GPU_AUTOLOADER_AVAILABLE and to_device:
+                            pattern_tensor = to_device(pattern_tensor)
+                        else:
+                            pattern_tensor = pattern_tensor.to(device)
                         # Use convolution for pattern matching
                         if len(pattern) <= len(search_data):
                             for i in range(len(search_data) - len(pattern) + 1):
@@ -1007,7 +1054,7 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
                                     patterns_found += 1
                                     break
 
-            backend = 'cuda'
+            backend = device_str
         else:
             # Fall back to CPU pattern matching
             patterns = config.get('patterns', [])
@@ -1019,7 +1066,8 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
 
             backend = 'cpu'
 
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in distributed_processing: %s", e)
         # No PyTorch, use basic pattern matching
         patterns = config.get('patterns', [])
         search_data = data.get('data', b'')
@@ -1062,7 +1110,8 @@ def _gpu_crypto_operations(data: Dict[str, Any], config: Dict[str, Any]) -> Dict
             result = hashlib.sha256(input_data).hexdigest()
             backend = 'cuda'
 
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in distributed_processing: %s", e)
         # Fall back to CPU crypto
         if operation == 'hash':
             result = hashlib.sha256(input_data).hexdigest()
@@ -1095,8 +1144,18 @@ def _gpu_ml_inference(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
             }
 
         # Check for GPU availability
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        backend = 'cuda' if torch.cuda.is_available() else 'cpu'
+        if GPU_AUTOLOADER_AVAILABLE:
+            device_str = get_device()
+            gpu_info = get_gpu_info()
+            backend = gpu_info.get('gpu_type', device_str)
+        elif torch.cuda.is_available():
+            device_str = 'cuda'
+            backend = 'cuda'
+        else:
+            device_str = 'cpu'
+            backend = 'cpu'
+            
+        device = torch.device(device_str)
 
         # Get model and features
         model_path = config.get('model_path')
@@ -1108,7 +1167,11 @@ def _gpu_ml_inference(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
             model.eval()
 
             # Convert features to tensor
-            features_tensor = torch.tensor(features, dtype=torch.float32, device=device)
+            features_tensor = torch.tensor(features, dtype=torch.float32)
+            if GPU_AUTOLOADER_AVAILABLE and to_device:
+                features_tensor = to_device(features_tensor)
+            else:
+                features_tensor = features_tensor.to(device)
             if len(features_tensor.shape) == 1:
                 features_tensor = features_tensor.unsqueeze(0)
 

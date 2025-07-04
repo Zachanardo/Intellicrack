@@ -21,7 +21,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import json
-import logging
 import os
 import sys
 import time
@@ -67,7 +66,6 @@ class AITerminalChat:
         self.analysis_results = analysis_results or {}
         self.conversation_history = []
         self.ai_backend = None
-        self.logger = logging.getLogger(__name__)
         self.session_start = datetime.now()
 
         # Chat configuration
@@ -221,6 +219,7 @@ class AITerminalChat:
         # Show thinking indicator
         with self.console.status("[bold green]AI is thinking...", spinner="dots") as status:
             response = self._get_ai_response(user_input)
+            status.update(f"[bold green]Processing response... {len(response)} characters")
 
         # Display response with typing effect
         self._display_ai_response(response)
@@ -261,6 +260,29 @@ class AITerminalChat:
         """Get AI response from backend or mock."""
         context = self._build_context()
 
+        # Try using AI tools ask_question method first
+        try:
+            from intellicrack.ai.ai_tools import AIAssistant
+            ai_tools = AIAssistant()
+            
+            # Build contextual question with binary and analysis info
+            contextual_question = user_input
+            if self.binary_path:
+                contextual_question = f"Binary: {os.path.basename(self.binary_path)}\n{user_input}"
+            
+            if self.analysis_results:
+                # Add key analysis findings to context
+                vuln_count = len(self.analysis_results.get('vulnerabilities', {}).get('vulnerabilities', []))
+                if vuln_count > 0:
+                    contextual_question = f"Context: Found {vuln_count} vulnerabilities\n{contextual_question}"
+            
+            response = ai_tools.ask_question(contextual_question)
+            return response
+            
+        except Exception as e:
+            # Log the error but continue to fallback methods
+            pass
+
         if self.ai_backend:
             try:
                 # Use real AI backend
@@ -283,7 +305,6 @@ class AITerminalChat:
 
     def _get_mock_response(self, user_input: str, context: Dict[str, Any]) -> str:
         """Generate mock AI responses based on input patterns."""
-        self.logger.debug(f"Generating mock response with context keys: {list(context.keys()) if context else 'none'}")
         user_lower = user_input.lower()
 
         # Binary analysis questions
@@ -419,7 +440,6 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
     def _show_help(self, args: List[str]) -> Optional[str]:
         """Show help information."""
-        self.logger.debug(f"Help command called with args: {args}")
         if self.console:
             help_table = Table(title="AI Chat Commands")
             help_table.add_column("Command", style="cyan")
@@ -450,7 +470,6 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
     def _clear_history(self, args: List[str]) -> Optional[str]:
         """Clear conversation history."""
-        self.logger.debug(f"Clear history called with args: {args}")
         self.conversation_history.clear()
 
         if self.console:
@@ -492,7 +511,6 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
     def _analyze_current_binary(self, args: List[str]) -> Optional[str]:
         """Provide analysis overview of current binary."""
-        self.logger.debug(f"Analyze current binary called with args: {args}")
         if not self.binary_path:
             if self.console:
                 self.console.print("[yellow]No binary currently loaded[/yellow]")
@@ -533,7 +551,6 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
     def _show_context(self, args: List[str]) -> Optional[str]:
         """Show current analysis context."""
-        self.logger.debug(f"Show context called with args: {args}")
         context = self._build_context()
 
         if self.console:
@@ -552,17 +569,66 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
     def _switch_backend(self, args: List[str]) -> Optional[str]:
         """Switch AI backend."""
-        self.logger.debug(f"Switch backend called with args: {args}")
-        if self.console:
-            self.console.print("[yellow]Backend switching not implemented yet[/yellow]")
-        else:
-            print("Backend switching not implemented yet")
+        if not args:
+            # Show available backends
+            available_backends = self.ai_assistant.llm_manager.list_backends()
+            current_backend = self.ai_assistant.llm_manager.current_backend
+            
+            if self.console:
+                self.console.print("\n[bold cyan]Available AI Backends:[/bold cyan]")
+                for backend in available_backends:
+                    if backend == current_backend:
+                        self.console.print(f"  • {backend} [green](current)[/green]")
+                    else:
+                        self.console.print(f"  • {backend}")
+                self.console.print("\n[dim]Usage: /backend <name>[/dim]")
+            else:
+                print("\nAvailable AI Backends:")
+                for backend in available_backends:
+                    if backend == current_backend:
+                        print(f"  • {backend} (current)")
+                    else:
+                        print(f"  • {backend}")
+                print("\nUsage: /backend <name>")
+                
+            return None
+            
+        # Switch to specified backend
+        backend_name = args[0].lower()
+        
+        try:
+            # Attempt to switch backend
+            success = self.ai_assistant.llm_manager.switch_backend(backend_name)
+            
+            if success:
+                msg = f"Switched to {backend_name} backend successfully!"
+                if self.console:
+                    self.console.print(f"[green]{msg}[/green]")
+                else:
+                    print(msg)
+                    
+                # Update context with new backend info
+                self.context['ai_backend'] = backend_name
+                self.context['backend_capabilities'] = self.ai_assistant.llm_manager.get_backend_capabilities(backend_name)
+                
+            else:
+                msg = f"Failed to switch to {backend_name} backend. Check configuration."
+                if self.console:
+                    self.console.print(f"[red]{msg}[/red]")
+                else:
+                    print(msg)
+                    
+        except Exception as e:
+            error_msg = f"Error switching backend: {str(e)}"
+            if self.console:
+                self.console.print(f"[red]{error_msg}[/red]")
+            else:
+                print(error_msg)
 
         return None
 
     def _quit_chat(self, args: List[str]) -> str:
         """Exit chat session."""
-        self.logger.debug(f"Quit chat called with args: {args}")
         if self.auto_save and self.conversation_history:
             self._save_conversation([f"auto_save_{int(time.time())}.json"])
 

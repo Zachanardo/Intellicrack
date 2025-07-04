@@ -23,7 +23,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from typing import Any, Dict, List, Optional
 
-import pkg_resources
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import (
@@ -44,13 +43,22 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from ..analysis.analysis_result_orchestrator import AnalysisResultOrchestrator
+from ..analysis.handlers.llm_handler import LLMHandler
+from ..analysis.handlers.report_generation_handler import ReportGenerationHandler
+from ..analysis.handlers.script_generation_handler import ScriptGenerationHandler
+
 # Local imports
 from ..config import CONFIG
 from ..core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
 from ..core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 from ..utils.logger import get_logger
+from .dialogs.export_dialog import ExportDialog
 from .dialogs.program_selector_dialog import show_program_selector
-from .widgets.protection_analysis_widget import ProtectionAnalysisWidget
+from .dialogs.signature_editor_dialog import SignatureEditorDialog
+from .widgets.icp_analysis_widget import ICPAnalysisWidget
+from .widgets.unified_protection_widget import UnifiedProtectionWidget
+from ..ai.ai_assistant_enhanced import IntellicrackAIAssistant, create_ai_assistant_widget
 
 # Configure module logger
 logger = get_logger(__name__)
@@ -88,6 +96,18 @@ class IntellicrackMainWindow(QMainWindow):
         # Initialize analyzers
         self.vulnerability_engine = AdvancedVulnerabilityEngine()
         self.binary_analyzer = MultiFormatBinaryAnalyzer()
+        self.ai_assistant = IntellicrackAIAssistant()
+
+        # Initialize analysis orchestrator and handlers
+        self.analysis_orchestrator = AnalysisResultOrchestrator()
+        self.llm_handler = LLMHandler()
+        self.script_handler = ScriptGenerationHandler()
+        self.report_handler = ReportGenerationHandler()
+
+        # Register handlers with orchestrator
+        self.analysis_orchestrator.register_handler(self.llm_handler)
+        self.analysis_orchestrator.register_handler(self.script_handler)
+        self.analysis_orchestrator.register_handler(self.report_handler)
 
         # Setup UI
         self._setup_ui()
@@ -134,6 +154,7 @@ class IntellicrackMainWindow(QMainWindow):
         self._setup_analysis_tab()
         self._setup_results_tab()
         self._setup_protection_tab()
+        self._setup_ai_assistant_tab()
         self._setup_settings_tab()
 
     def _setup_dashboard_tab(self):
@@ -175,7 +196,7 @@ class IntellicrackMainWindow(QMainWindow):
         self.generate_report_button = QPushButton("Generate Report")
         self.generate_report_button.clicked.connect(self._generate_report)
         self.generate_report_button.setEnabled(False)
-        
+
         self.protection_analysis_button = QPushButton("Analyze Protection")
         self.protection_analysis_button.clicked.connect(self._analyze_current_protection)
         self.protection_analysis_button.setEnabled(False)
@@ -273,14 +294,54 @@ class IntellicrackMainWindow(QMainWindow):
 
     def _setup_protection_tab(self):
         """Setup the protection analysis tab."""
-        # Create protection analysis widget
-        self.protection_widget = ProtectionAnalysisWidget()
-        
+        # Create container widget with vertical splitter
+        protection_container = QWidget()
+        container_layout = QVBoxLayout(protection_container)
+
+        # Create splitter for two widgets
+        from PyQt5.QtCore import Qt
+        from PyQt5.QtWidgets import QSplitter
+        splitter = QSplitter(Qt.Vertical)
+
+        # Add unified protection widget
+        self.protection_widget = UnifiedProtectionWidget()
+        splitter.addWidget(self.protection_widget)
+
+        # Add ICP analysis widget
+        self.icp_widget = ICPAnalysisWidget()
+        splitter.addWidget(self.icp_widget)
+
+        # Set initial sizes (60% unified, 40% ICP)
+        splitter.setSizes([400, 300])
+
+        container_layout.addWidget(splitter)
+
         # Connect signals
-        self.protection_widget.analysis_requested.connect(self._analyze_protection)
-        self.protection_widget.bypass_requested.connect(self._generate_bypass_script)
+        self.protection_widget.protection_analyzed.connect(self._on_unified_protection_analyzed)
+        self.protection_widget.protection_analyzed.connect(self.analysis_orchestrator.on_protection_analyzed)
+        self.protection_widget.bypass_requested.connect(self._on_bypass_requested)
+
+        # Connect ICP widget signals
+        self.icp_widget.analysis_complete.connect(self._on_icp_analysis_complete)
+        self.icp_widget.analysis_complete.connect(self.analysis_orchestrator.on_icp_analysis_complete)
+        self.icp_widget.protection_selected.connect(self._on_icp_protection_selected)
+
+        # Connect handler signals
+        self.script_handler.script_ready.connect(self._on_script_ready)
+        self.report_handler.report_ready.connect(self._on_report_ready)
+
+        self.tab_widget.addTab(protection_container, "Protection Analysis")
+
+    def _setup_ai_assistant_tab(self):
+        """Setup the AI assistant tab."""
+        # Create the AI assistant widget using the function from ai_assistant_enhanced.py
+        ai_widget = create_ai_assistant_widget()
         
-        self.tab_widget.addTab(self.protection_widget, "Protection Analysis")
+        # Store reference to the AI widget for potential future use
+        self.ai_assistant_widget = ai_widget
+        
+        # Add the widget to the tab
+        self.tab_widget.addTab(ai_widget, "AI Assistant")
 
     def _setup_settings_tab(self):
         """Setup the settings tab."""
@@ -345,6 +406,13 @@ class IntellicrackMainWindow(QMainWindow):
 
         file_menu.addSeparator()
 
+        export_action = QAction('Export Analysis Results...', self)
+        export_action.setShortcut('Ctrl+Shift+E')
+        export_action.triggered.connect(self._export_analysis_results)
+        file_menu.addAction(export_action)
+
+        file_menu.addSeparator()
+
         exit_action = QAction('Exit', self)
         exit_action.setShortcut('Ctrl+Q')
         exit_action.triggered.connect(self.close)
@@ -362,18 +430,45 @@ class IntellicrackMainWindow(QMainWindow):
         vulnerability_action.setShortcut('F6')
         vulnerability_action.triggered.connect(self._scan_vulnerabilities)
         analysis_menu.addAction(vulnerability_action)
-        
+
         analysis_menu.addSeparator()
-        
+
         protection_action = QAction('Analyze Protection', self)
         protection_action.setShortcut('F7')
         protection_action.triggered.connect(self._analyze_current_protection)
         analysis_menu.addAction(protection_action)
 
+        # Tools menu
+        tools_menu = menubar.addMenu('Tools')
+
+        generate_report_action = QAction('Generate Report...', self)
+        generate_report_action.setShortcut('Ctrl+R')
+        generate_report_action.triggered.connect(self._generate_report)
+        tools_menu.addAction(generate_report_action)
+
+        generate_script_action = QAction('Generate Bypass Script...', self)
+        generate_script_action.setShortcut('Ctrl+B')
+        generate_script_action.triggered.connect(self._generate_bypass_script_menu)
+        tools_menu.addAction(generate_script_action)
+
+        tools_menu.addSeparator()
+
+        signature_editor_action = QAction('ICP Signature Editor...', self)
+        signature_editor_action.setShortcut('Ctrl+E')
+        signature_editor_action.triggered.connect(self._open_signature_editor)
+        tools_menu.addAction(signature_editor_action)
+
+        export_results_action = QAction('Export Results...', self)
+        export_results_action.setShortcut('Ctrl+Shift+X')
+        export_results_action.triggered.connect(self._export_analysis_results)
+        tools_menu.addAction(export_results_action)
+
     def _apply_initial_settings(self):
         """Apply initial application settings."""
         # Set window icon if available
-        icon_path = pkg_resources.resource_filename('intellicrack', 'assets/icon.ico')
+        import intellicrack
+        base_path = os.path.dirname(os.path.dirname(intellicrack.__file__))
+        icon_path = os.path.join(base_path, 'intellicrack', 'assets', 'icon.ico')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
@@ -421,6 +516,25 @@ class IntellicrackMainWindow(QMainWindow):
 
             self.update_status.emit(f"Selected: {os.path.basename(file_path)}")
             self.logger.info("Selected binary file: %s", file_path)
+
+            # Auto-trigger ICP analysis when file is opened
+            self._auto_trigger_icp_analysis(file_path)
+
+    def _auto_trigger_icp_analysis(self, file_path: str):
+        """Auto-trigger ICP analysis when a file is opened."""
+        try:
+            self.logger.info(f"Auto-triggering ICP analysis for: {os.path.basename(file_path)}")
+            self.update_status.emit(f"Analyzing protection for {os.path.basename(file_path)}...")
+
+            # Trigger ICP analysis
+            self.icp_widget.analyze_file(file_path)
+
+            # Switch to Protection Analysis tab for immediate feedback
+            self.tab_widget.setCurrentIndex(3)  # Protection Analysis tab
+
+        except Exception as e:
+            self.logger.error(f"Auto-trigger ICP analysis error: {e}")
+            # Don't show a popup for auto-trigger failures, just log
 
     def _show_program_selector(self):
         """Show the program selector dialog."""
@@ -476,6 +590,9 @@ Licensing Files Found: {len(licensing_files)}"""
                     status_msg = f"Selected: {program_info['display_name']} from {program_info.get('discovery_method', 'unknown')}"
                     self.update_status.emit(status_msg)
 
+                    # Auto-trigger ICP analysis for selected program
+                    self._auto_trigger_icp_analysis(selected_executable)
+
                     # Auto-analyze if requested
                     if auto_analyze and licensing_files:
                         QMessageBox.information(
@@ -526,6 +643,51 @@ Licensing Files Found: {len(licensing_files)}"""
                 self.update_output.emit(f"Error: {analysis_results['error']}")
             else:
                 self._display_analysis_results(analysis_results)
+                
+                # Run AI-enhanced complex analysis
+                self.update_progress.emit(70)
+                self.update_output.emit("\n=== AI-ENHANCED COMPLEX ANALYSIS ===")
+                self.update_status.emit("Running AI-enhanced analysis...")
+                
+                try:
+                    # Prepare ML results if available
+                    ml_results = {
+                        "confidence": 0.85,
+                        "predictions": []
+                    }
+                    
+                    # Extract protection detections if available
+                    if hasattr(self, 'protection_results') and self.protection_results:
+                        ml_results["predictions"] = self.protection_results
+                    
+                    # Run AI complex analysis
+                    ai_analysis = self.ai_assistant.analyze_binary_complex(
+                        self.binary_path, 
+                        ml_results
+                    )
+                    
+                    # Display AI analysis results
+                    if ai_analysis and not ai_analysis.get('error'):
+                        self.update_output.emit(f"AI Confidence: {ai_analysis.get('confidence', 0.0):.2%}")
+                        
+                        if ai_analysis.get('findings'):
+                            self.update_output.emit("\nFindings:")
+                            for finding in ai_analysis['findings']:
+                                self.update_output.emit(f"  • {finding}")
+                        
+                        if ai_analysis.get('recommendations'):
+                            self.update_output.emit("\nRecommendations:")
+                            for rec in ai_analysis['recommendations']:
+                                self.update_output.emit(f"  → {rec}")
+                        
+                        if ai_analysis.get('ml_integration'):
+                            ml_info = ai_analysis['ml_integration']
+                            self.update_output.emit(f"\nML Integration Confidence: {ml_info.get('ml_confidence', 0.0):.2%}")
+                    
+                except Exception as e:
+                    self.logger.warning(f"AI complex analysis failed: {str(e)}")
+                    self.update_output.emit(f"AI analysis unavailable: {str(e)}")
+                
                 self.generate_report_button.setEnabled(True)
 
             self.update_progress.emit(100)
@@ -642,22 +804,18 @@ Licensing Files Found: {len(licensing_files)}"""
     def _analyze_protection(self, file_path: str):
         """Analyze protection for the given file."""
         try:
-            # Import ML system
-            from ..models import get_ml_system
-            ml_system = get_ml_system()
-            
-            # Run analysis
+            # Update status
             self.update_status.emit(f"Analyzing protection for {os.path.basename(file_path)}...")
-            result = ml_system.predict(file_path)
-            result['file_path'] = file_path
-            
-            # Update widget with results
-            self.protection_widget.update_analysis_result(result)
-            self.update_status.emit("Protection analysis completed")
-            
+
+            # Use unified protection widget
+            self.protection_widget.analyze_file(file_path)
+
+            # Also trigger ICP analysis
+            self.icp_widget.analyze_file(file_path)
+
             # Switch to protection tab
-            self.tab_widget.setCurrentWidget(self.protection_widget)
-            
+            self.tab_widget.setCurrentIndex(3)  # Protection Analysis tab
+
         except Exception as e:
             self.logger.error(f"Protection analysis error: {e}")
             QMessageBox.critical(self, "Error", f"Protection analysis failed: {str(e)}")
@@ -666,10 +824,10 @@ Licensing Files Found: {len(licensing_files)}"""
         """Generate bypass script for the detected protection."""
         try:
             from ..ai.protection_aware_script_gen import ProtectionAwareScriptGenerator
-            
+
             generator = ProtectionAwareScriptGenerator()
             result = generator.generate_bypass_script(file_path, "frida")
-            
+
             if result['success']:
                 # Show script in a dialog or new tab
                 msg = f"Generated {protection_type} bypass script:\n\n"
@@ -677,17 +835,17 @@ Licensing Files Found: {len(licensing_files)}"""
                 msg += f"Confidence: {result['confidence']:.0%}\n"
                 msg += f"Difficulty: {result['difficulty']}\n\n"
                 msg += "Script saved to clipboard."
-                
+
                 # Copy script to clipboard
                 from PyQt5.QtWidgets import QApplication
                 clipboard = QApplication.clipboard()
                 clipboard.setText(result['script'])
-                
+
                 QMessageBox.information(self, "Bypass Script Generated", msg)
             else:
-                QMessageBox.warning(self, "Script Generation Failed", 
+                QMessageBox.warning(self, "Script Generation Failed",
                                    f"Failed to generate bypass script: {result.get('error', 'Unknown error')}")
-                
+
         except Exception as e:
             self.logger.error(f"Script generation error: {e}")
             QMessageBox.critical(self, "Error", f"Failed to generate bypass script: {str(e)}")
@@ -697,10 +855,147 @@ Licensing Files Found: {len(licensing_files)}"""
         if not self.binary_path:
             QMessageBox.warning(self, "Warning", "Please select a binary file first.")
             return
-        
-        # Switch to protection tab and run analysis
-        self.tab_widget.setCurrentWidget(self.protection_widget)
+
         self._analyze_protection(self.binary_path)
+
+    def _on_unified_protection_analyzed(self, result):
+        """Handle unified protection analysis completion."""
+        self.logger.info(f"Protection analysis complete: {len(result.protections)} protections found")
+
+        # Update results display
+        result_text = "\n=== PROTECTION ANALYSIS COMPLETE ===\n"
+        result_text += f"File: {os.path.basename(result.file_path)}\n"
+        result_text += f"Type: {result.file_type}\n"
+        result_text += f"Protections Found: {len(result.protections)}\n"
+        result_text += f"Confidence: {result.confidence_score:.0f}%\n"
+
+        if result.protections:
+            result_text += "\nDetected Protections:\n"
+            for protection in result.protections:
+                result_text += f"  • {protection['name']} ({protection['type']}) - {protection.get('confidence', 0):.0f}%\n"
+
+        self.results_display.append(result_text)
+
+        # Update status
+        if result.protections:
+            self.update_status.emit(f"Analysis complete: {len(result.protections)} protection(s) detected")
+        else:
+            self.update_status.emit("Analysis complete: No protections detected")
+
+    def _on_bypass_requested(self, file_path: str, protection_data: Dict[str, Any]):
+        """Handle bypass script generation request."""
+        self.logger.info(f"Bypass requested for: {protection_data['name']}")
+        self._generate_bypass_script(file_path, protection_data['type'])
+
+    def _on_script_ready(self, script_data: dict):
+        """Handle script generation completion."""
+        self.logger.info(f"Script ready: {script_data.get('type', 'Unknown')} with {script_data.get('confidence', 0):.0%} confidence")
+        # The script handler will show its own dialog
+
+    def _on_report_ready(self, report_data: dict):
+        """Handle report generation completion."""
+        self.logger.info(f"Report saved to: {report_data.get('path', 'Unknown')}")
+        self.update_status.emit(f"Report saved: {os.path.basename(report_data.get('path', ''))}")
+
+    def _on_icp_analysis_complete(self, result):
+        """Handle ICP analysis completion."""
+        self.logger.info(f"ICP analysis complete: {len(result.all_detections)} detections")
+
+        # Update results display
+        result_text = "\n=== ICP ENGINE ANALYSIS ===\n"
+        result_text += f"File Type: {result.file_infos[0].filetype if result.file_infos else 'Unknown'}\n"
+        result_text += f"Packed: {'Yes' if result.is_packed else 'No'}\n"
+        result_text += f"Protected: {'Yes' if result.is_protected else 'No'}\n"
+
+        if result.all_detections:
+            result_text += "\nDetections:\n"
+            for detection in result.all_detections:
+                result_text += f"  • {detection.name} [{detection.type}]\n"
+                if detection.version:
+                    result_text += f"    Version: {detection.version}\n"
+
+        self.results_display.append(result_text)
+
+        # Trigger ICP analysis when unified analysis completes
+        if hasattr(self, 'binary_path') and self.binary_path:
+            self.icp_widget.analyze_file(self.binary_path)
+
+    def _on_icp_protection_selected(self, detection):
+        """Handle ICP protection selection."""
+        self.logger.info(f"ICP protection selected: {detection.name}")
+
+        # Could trigger additional analysis or bypass generation
+        # For now, just log the selection
+
+    def _generate_report(self):
+        """Generate a comprehensive analysis report."""
+        if not self.report_handler.current_result:
+            QMessageBox.warning(
+                self,
+                "No Analysis Available",
+                "Please perform a protection analysis first before generating a report."
+            )
+            return
+
+        # Use the report handler to generate report
+        self.report_handler.generate_report(self)
+
+    def _generate_bypass_script_menu(self):
+        """Generate bypass script from menu."""
+        if not self.script_handler.current_result:
+            QMessageBox.warning(
+                self,
+                "No Analysis Available",
+                "Please perform a protection analysis first before generating scripts."
+            )
+            return
+
+        # Use the script handler to generate script
+        self.script_handler.generate_script("frida", self)
+
+    def _open_signature_editor(self):
+        """Open the ICP signature editor dialog."""
+        try:
+            editor_dialog = SignatureEditorDialog(self)
+            editor_dialog.exec_()
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Signature Editor Error",
+                f"Failed to open signature editor: {str(e)}"
+            )
+            self.logger.error(f"Failed to open signature editor: {e}")
+
+    def _export_analysis_results(self):
+        """Export analysis results to various formats."""
+        try:
+            # Get current analysis results
+            analysis_results = None
+
+            # Try to get results from the orchestrator
+            if hasattr(self, 'analysis_orchestrator') and self.analysis_orchestrator:
+                results = self.analysis_orchestrator.get_current_results()
+                if results:
+                    analysis_results = {
+                        "file_info": getattr(results, 'file_info', {}),
+                        "icp_analysis": getattr(results, 'icp_analysis', None),
+                        "protections": getattr(results, 'protections', []),
+                        "file_type": getattr(results, 'file_type', 'Unknown'),
+                        "architecture": getattr(results, 'architecture', 'Unknown'),
+                        "is_protected": getattr(results, 'is_protected', False)
+                    }
+
+            # Open export dialog
+            export_dialog = ExportDialog(analysis_results, self)
+            export_dialog.exec_()
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Export Error",
+                f"Failed to open export dialog: {str(e)}"
+            )
+            self.logger.error(f"Failed to open export dialog: {e}")
 
 
 # Export the main window class

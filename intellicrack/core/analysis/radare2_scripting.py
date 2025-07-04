@@ -27,6 +27,8 @@ from typing import Any, Dict, List, Optional
 
 from ...utils.tools.radare2_utils import R2Exception, r2_session
 
+logger = logging.getLogger(__name__)
+
 
 class R2ScriptingEngine:
     """
@@ -81,6 +83,7 @@ class R2ScriptingEngine:
                         })
 
                     except R2Exception as e:
+                        logger.error("R2Exception in radare2_scripting: %s", e)
                         result['command_results'].append({
                             'command': command,
                             'error': str(e),
@@ -372,7 +375,8 @@ class R2ScriptingEngine:
             result['return_code'] = process.returncode
             result['execution_successful'] = process.returncode == 0
 
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            logger.error("Subprocess timeout in radare2_scripting: %s", e)
             result['errors'] = 'Script execution timed out'
         except Exception as e:
             result['errors'] = str(e)

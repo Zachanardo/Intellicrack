@@ -26,6 +26,8 @@ from typing import Any, Dict, List, Optional, Set
 
 from ...utils.tools.radare2_utils import R2Exception, r2_session
 
+logger = logging.getLogger(__name__)
+
 
 class R2BinaryDiff:
     """
@@ -146,7 +148,8 @@ class R2BinaryDiff:
                     }
                 }
             }
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {'error': 'Failed to compare metadata'}
 
     def _compare_functions(self, r2_1, r2_2) -> Dict[str, Any]:
@@ -196,7 +199,8 @@ class R2BinaryDiff:
                 'function_similarity': len(unchanged_functions) / max(1, len(common_functions)),
                 'major_changes': len(modified_functions) > len(common_functions) * 0.3
             }
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {'error': 'Failed to compare functions'}
 
     def _compare_function_details(self, r2_1, r2_2, func1: Dict[str, Any], func2: Dict[str, Any]) -> Dict[str, Any]:
@@ -223,7 +227,8 @@ class R2BinaryDiff:
 
                 changes['instruction_changes'] = self._diff_instructions(instructions1, instructions2)
 
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_binary_diff: %s", e)
             changes['instruction_comparison_failed'] = True
 
         return changes
@@ -266,7 +271,8 @@ class R2BinaryDiff:
             opcodes2 = self._extract_opcode_distribution(r2_2, functions2)
             instruction_diff['opcode_distribution_change'] = self._compare_opcode_distributions(opcodes1, opcodes2)
 
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_binary_diff: %s", e)
             instruction_diff['error'] = 'Failed to compare instructions'
 
         return instruction_diff
@@ -311,7 +317,8 @@ class R2BinaryDiff:
                 'significant_additions': self._identify_significant_string_additions(added_strings),
                 'significant_removals': self._identify_significant_string_removals(removed_strings)
             }
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {'error': 'Failed to compare strings'}
 
     def _compare_imports_exports(self, r2_1, r2_2) -> Dict[str, Any]:
@@ -356,7 +363,8 @@ class R2BinaryDiff:
                 'dll_dependency_changes': self._analyze_dll_dependency_changes(imports1, imports2),
                 'api_usage_changes': self._analyze_api_usage_changes(import_names1, import_names2)
             }
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {'error': 'Failed to compare imports/exports'}
 
     def _compare_sections(self, r2_1, r2_2) -> Dict[str, Any]:
@@ -411,7 +419,8 @@ class R2BinaryDiff:
                 },
                 'section_layout_change': len(added_sections) > 0 or len(removed_sections) > 0 or len(modified_sections) > 0
             }
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {'error': 'Failed to compare sections'}
 
     def _compare_entry_points(self, r2_1, r2_2) -> Dict[str, Any]:
@@ -429,7 +438,8 @@ class R2BinaryDiff:
                 'entry_point_binary2': hex(entry2) if entry2 else '0x0',
                 'address_diff': entry2 - entry1 if entry1 and entry2 else 0
             }
-        except R2Exception:
+        except R2Exception as e:
+            self.logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {'error': 'Failed to compare entry points'}
 
     def _compare_security_features(self, r2_1, r2_2) -> Dict[str, Any]:
@@ -463,7 +473,8 @@ class R2BinaryDiff:
                     c.get('security_impact') == 'degraded' for c in changes.values()
                 ) else 'unchanged'
             }
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_binary_diff: %s", e)
             return {'error': 'Failed to compare security features'}
 
     def _analyze_patches(self, r2_1, r2_2) -> Dict[str, Any]:
@@ -517,7 +528,8 @@ class R2BinaryDiff:
             patch_analysis['total_patches'] = len(patch_analysis['potential_patches'])
             patch_analysis['patch_density'] = len(patch_analysis['potential_patches']) / max(1, len(functions1))
 
-        except R2Exception:
+        except R2Exception as e:
+            logger.error("R2Exception in radare2_binary_diff: %s", e)
             patch_analysis['error'] = 'Failed to analyze patches'
 
         return patch_analysis
@@ -554,7 +566,8 @@ class R2BinaryDiff:
             file_size_change = abs(metadata_diff.get('file_size_diff', 0))
             metrics['change_magnitude'] = min(1.0, file_size_change / 1000000)  # Normalize by MB
 
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in radare2_binary_diff: %s", e)
             metrics = {'error': 'Failed to calculate similarity metrics'}
 
         return metrics
@@ -604,7 +617,8 @@ class R2BinaryDiff:
             if patch_analysis.get('total_patches', 0) > 10:
                 summary['recommended_actions'].append('Detailed patch analysis recommended')
 
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in radare2_binary_diff: %s", e)
             summary['error'] = 'Failed to generate change summary'
 
         return summary
@@ -676,7 +690,8 @@ class R2BinaryDiff:
             if len(impact['new_vulnerabilities']) > 0:
                 impact['security_recommendations'].append('Vulnerability assessment recommended')
 
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in radare2_binary_diff: %s", e)
             impact['error'] = 'Failed to assess vulnerability impact'
 
         return impact
@@ -687,7 +702,8 @@ class R2BinaryDiff:
         try:
             with open(file_path, 'rb') as f:
                 return hashlib.sha256(f.read()).hexdigest()
-        except Exception:
+        except Exception as e:
+            self.logger.error("Exception in radare2_binary_diff: %s", e)
             return 'error_calculating_hash'
 
     def _extract_instructions(self, disasm: str) -> List[str]:
@@ -751,7 +767,8 @@ class R2BinaryDiff:
                         if len(parts) >= 2 and '0x' in parts[0]:
                             opcode = parts[1]
                             opcodes[opcode] = opcodes.get(opcode, 0) + 1
-                except R2Exception:
+                except R2Exception as e:
+                    self.logger.error("R2Exception in radare2_binary_diff: %s", e)
                     continue
 
         return opcodes

@@ -128,7 +128,8 @@ def main():
     print(f"  Files processed: {len(files_with_tuple)}")
     print(f"  Files fixed: {fixed_count}")
     print(f"  Files with errors: {error_count}")
-    print(f"  Files already correct: {len(files_with_tuple) - fixed_count - error_count}")
+    print(
+        f"  Files already correct: {len(files_with_tuple) - fixed_count - error_count}")
 
     return 0 if error_count == 0 else 1
 

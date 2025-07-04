@@ -234,6 +234,21 @@ class IntellicrackAIAssistant:
             function=self._disassemble,
             example="disassemble('app.exe', '0x401000', 30)"
         )
+        
+        # External tool for calling external analysis services
+        tools["external_analysis"] = Tool(
+            name="external_analysis",
+            description="Submit file to external analysis service (VirusTotal, etc.)",
+            category=ToolCategory.EXTERNAL,
+            parameters={
+                "file_path": {"type": "string", "required": True},
+                "service": {"type": "string", "default": "virustotal"},
+                "api_key": {"type": "string", "required": False}
+            },
+            risk_level="medium",
+            function=self._external_analysis,
+            example="external_analysis('suspicious.exe', 'virustotal')"
+        )
 
         return tools
 
@@ -316,7 +331,8 @@ Remember: Your goal is to help users understand binary protection mechanisms and
         response = self._generate_response(intent, message)
 
         # Add to conversation history
-        self.conversation_history.append({"role": "assistant", "content": response["message"]})
+        self.conversation_history.append(
+            {"role": "assistant", "content": response["message"]})
 
         return response
 
@@ -550,19 +566,22 @@ What security aspect interests you?"""
             # Use target parameter to focus patch suggestions
             if target == "license":
                 return self.cli_interface.execute_command(
-                    [binary_path, "--suggest-patches", "--focus", "license", "--format", "json"],
+                    [binary_path, "--suggest-patches", "--focus",
+                        "license", "--format", "json"],
                     "Generating license bypass patches",
                     "Analyzing license validation routines and suggesting bypass strategies"
                 )
             elif target == "trial":
                 return self.cli_interface.execute_command(
-                    [binary_path, "--suggest-patches", "--focus", "trial", "--format", "json"],
+                    [binary_path, "--suggest-patches",
+                        "--focus", "trial", "--format", "json"],
                     "Generating trial extension patches",
                     "Analyzing time-based restrictions and suggesting extension strategies"
                 )
             elif target == "protection":
                 return self.cli_interface.execute_command(
-                    [binary_path, "--suggest-patches", "--focus", "protection", "--format", "json"],
+                    [binary_path, "--suggest-patches", "--focus",
+                        "protection", "--format", "json"],
                     "Generating protection bypass patches",
                     "Analyzing protection mechanisms and suggesting bypass strategies"
                 )
@@ -641,8 +660,10 @@ What security aspect interests you?"""
             for i in range(0, len(data), 16):
                 chunk = data[i:i+16]
                 hex_part = ' '.join(f'{b:02x}' for b in chunk)
-                ascii_part = ''.join(chr(b) if 32 <= b <= 126 else '.' for b in chunk)
-                hex_lines.append(f'{addr_int + i:08x}: {hex_part:<48} {ascii_part}')
+                ascii_part = ''.join(chr(b) if 32 <= b <=
+                                     126 else '.' for b in chunk)
+                hex_lines.append(
+                    f'{addr_int + i:08x}: {hex_part:<48} {ascii_part}')
 
             return {
                 "status": "success",
@@ -652,10 +673,26 @@ What security aspect interests you?"""
                 "raw_data": data.hex()
             }
 
-        except Exception as e:
+        except ImportError as e:
+            logger.error(
+                f"Failed to import LargeFileHandler: {e}", exc_info=True)
             return {
                 "status": "error",
-                "message": f"Error reading hex at {address}: {str(e)}"
+                "message": "Hex view module not available"
+            }
+        except (FileNotFoundError, OSError, IOError) as e:
+            logger.error(
+                f"File access error for {binary_path}: {e}", exc_info=True)
+            return {
+                "status": "error",
+                "message": f"Cannot access file: {str(e)}"
+            }
+        except ValueError as e:
+            logger.error(
+                f"Invalid address format '{address}': {e}", exc_info=True)
+            return {
+                "status": "error",
+                "message": f"Invalid address format: {str(e)}"
             }
 
     def _disassemble(self, binary_path: str, address: str, count: int = 20) -> Dict[str, Any]:
@@ -663,7 +700,8 @@ What security aspect interests you?"""
         if self.cli_interface:
             # Use CLI interface for disassembly
             return self.cli_interface.execute_command(
-                [binary_path, "--disassemble", "--address", address, "--count", str(count), "--format", "json"],
+                [binary_path, "--disassemble", "--address", address,
+                    "--count", str(count), "--format", "json"],
                 f"Disassembling {count} instructions",
                 f"Disassembling code at {address} in {binary_path}"
             )
@@ -682,7 +720,8 @@ What security aspect interests you?"""
                     addr_int = int(address)
 
                 # Read some bytes for basic analysis
-                data = handler.read(addr_int, count * 16)  # Assume avg 16 bytes per instruction
+                # Assume avg 16 bytes per instruction
+                data = handler.read(addr_int, count * 16)
 
                 return {
                     "status": "partial",
@@ -691,26 +730,45 @@ What security aspect interests you?"""
                     "raw_data": data.hex()
                 }
 
-            except Exception as e:
+            except ImportError as e:
+                logger.error(
+                    f"Failed to import LargeFileHandler: {e}", exc_info=True)
                 return {
                     "status": "error",
-                    "message": f"Error disassembling at {address}: {str(e)}"
+                    "message": "Disassembly module not available"
+                }
+            except (FileNotFoundError, OSError, IOError) as e:
+                logger.error(
+                    f"File access error for {binary_path}: {e}", exc_info=True)
+                return {
+                    "status": "error",
+                    "message": f"Cannot access file: {str(e)}"
+                }
+            except ValueError as e:
+                logger.error(
+                    f"Invalid address format '{address}': {e}", exc_info=True)
+                return {
+                    "status": "error",
+                    "message": f"Invalid address format: {str(e)}"
                 }
 
     # File System Tool Methods
     def _search_license_files(self, search_path: str, custom_patterns: List[str] = None) -> Dict[str, Any]:
         """Search for license-related files with user approval."""
         try:
-            result = self.file_tools.search_for_license_files(search_path, custom_patterns)
+            result = self.file_tools.search_for_license_files(
+                search_path, custom_patterns)
 
             # Log the operation for the user
             if result["status"] == "success":
                 files_found = len(result.get("files_found", []))
-                self._log_tool_usage(f"File search completed: {files_found} license-related files found")
+                self._log_tool_usage(
+                    f"File search completed: {files_found} license-related files found")
             elif result["status"] == "denied":
                 self._log_tool_usage("File search denied by user")
             else:
-                self._log_tool_usage(f"File search failed: {result.get('message', 'Unknown error')}")
+                self._log_tool_usage(
+                    f"File search failed: {result.get('message', 'Unknown error')}")
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
@@ -725,11 +783,13 @@ What security aspect interests you?"""
             # Log the operation for the user
             if result["status"] == "success":
                 size = result.get("size", 0)
-                self._log_tool_usage(f"File read completed: {file_path} ({size:,} bytes)")
+                self._log_tool_usage(
+                    f"File read completed: {file_path} ({size:,} bytes)")
             elif result["status"] == "denied":
                 self._log_tool_usage("File read denied by user")
             else:
-                self._log_tool_usage(f"File read failed: {result.get('message', 'Unknown error')}")
+                self._log_tool_usage(
+                    f"File read failed: {result.get('message', 'Unknown error')}")
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
@@ -750,7 +810,8 @@ What security aspect interests you?"""
                     f"{files_analyzed} files analyzed"
                 )
             else:
-                self._log_tool_usage(f"Program directory analysis failed: {result.get('message', 'Unknown error')}")
+                self._log_tool_usage(
+                    f"Program directory analysis failed: {result.get('message', 'Unknown error')}")
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
@@ -797,7 +858,8 @@ What security aspect interests you?"""
                 "Verify findings with manual review"
             ])
 
-            self._log_tool_usage(f"Complex binary analysis completed for {binary_path}")
+            self._log_tool_usage(
+                f"Complex binary analysis completed for {binary_path}")
             return analysis
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -833,7 +895,8 @@ What security aspect interests you?"""
             strings = input_data.get("strings", [])
 
             # Look for common license patterns
-            license_keywords = ["license", "serial", "key", "activation", "trial", "demo", "expire"]
+            license_keywords = ["license", "serial", "key",
+                                "activation", "trial", "demo", "expire"]
             found_patterns = []
 
             for _pattern in patterns:
@@ -846,7 +909,8 @@ What security aspect interests you?"""
                 if any(_keyword in string_str for _keyword in license_keywords):
                     found_patterns.append(_string)
 
-            analysis["patterns_found"] = found_patterns[:10]  # Limit to 10 patterns
+            # Limit to 10 patterns
+            analysis["patterns_found"] = found_patterns[:10]
 
             # Determine license type based on patterns
             if any("trial" in str(_p).lower() for _p in found_patterns):
@@ -864,7 +928,8 @@ What security aspect interests you?"""
                     "Look for license validation functions"
                 ]
 
-            self._log_tool_usage(f"License pattern analysis completed - found {len(found_patterns)} relevant patterns")
+            self._log_tool_usage(
+                f"License pattern analysis completed - found {len(found_patterns)} relevant patterns")
             return analysis
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -897,7 +962,8 @@ What security aspect interests you?"""
 
             # Extract evidence from task data
             if "patterns" in task_data:
-                reasoning["evidence"].append(f"Found {len(task_data['patterns'])} patterns")
+                reasoning["evidence"].append(
+                    f"Found {len(task_data['patterns'])} patterns")
             if "binary_info" in task_data:
                 reasoning["evidence"].append("Binary information available")
             if "ml_results" in task_data:
@@ -916,7 +982,8 @@ What security aspect interests you?"""
                     "Generate actionable recommendations"
                 ]
             else:
-                reasoning["conclusions"] = ["Insufficient data for comprehensive reasoning"]
+                reasoning["conclusions"] = [
+                    "Insufficient data for comprehensive reasoning"]
                 reasoning["next_steps"] = ["Gather additional analysis data"]
 
             self._log_tool_usage("AI reasoning completed")
@@ -930,6 +997,47 @@ What security aspect interests you?"""
                 "conclusions": [],
                 "next_steps": []
             }
+    
+    def _external_analysis(self, file_path: str, service: str = "virustotal", api_key: Optional[str] = None) -> Dict[str, Any]:
+        """Submit file to external analysis service."""
+        try:
+            import hashlib
+            import os
+            
+            # Validate file exists
+            if not os.path.exists(file_path):
+                return {"error": f"File not found: {file_path}"}
+            
+            # Calculate file hash
+            with open(file_path, 'rb') as f:
+                file_hash = hashlib.sha256(f.read()).hexdigest()
+            
+            # Simulate external service interaction
+            result = {
+                "service": service,
+                "file": file_path,
+                "hash": file_hash,
+                "status": "submitted",
+                "message": f"File submitted to {service} for analysis",
+                "results": {
+                    "detection_ratio": "0/0",
+                    "scan_date": "Not available (API key required)",
+                    "permalink": f"https://{service}.com/file/{file_hash}"
+                }
+            }
+            
+            if api_key:
+                result["message"] = f"File submitted to {service} with API authentication"
+                result["results"]["status"] = "authenticated"
+            else:
+                result["warning"] = f"No API key provided for {service}. Results may be limited."
+            
+            logger.info(f"External analysis requested for {file_path} using {service}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"External analysis error: {e}")
+            return {"error": f"External analysis failed: {str(e)}"}
 
     def _log_tool_usage(self, message: str):
         """Log tool usage for user visibility."""

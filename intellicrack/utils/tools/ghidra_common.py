@@ -4,6 +4,8 @@ Common Ghidra plugin execution utilities to avoid code duplication.
 
 import os
 
+from intellicrack.logger import logger
+
 from ..core.misc_utils import log_message
 
 
@@ -49,7 +51,8 @@ def run_ghidra_plugin(ghidra_path, temp_dir, project_name, binary_path, plugin_d
         from .system.process_helpers import run_ghidra_process
         returncode, stdout, stderr = run_ghidra_process(cmd)
         return returncode, stdout, stderr
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in ghidra_common: %s", e)
         # Fallback to common subprocess utility
         from .system.subprocess_utils import run_subprocess
         return run_subprocess(cmd, cwd=os.path.dirname(ghidra_path) if ghidra_path else None)

@@ -147,11 +147,16 @@ class AILearningDatabase:
             """)
 
             # Create indexes for better performance
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_task_type ON learning_records(task_type)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_success ON learning_records(success)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON learning_records(timestamp)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_pattern_name ON pattern_rules(pattern_name)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_failure_type ON failure_analyses(failure_type)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_task_type ON learning_records(task_type)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_success ON learning_records(success)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_timestamp ON learning_records(timestamp)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_pattern_name ON pattern_rules(pattern_name)")
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_failure_type ON failure_analyses(failure_type)")
 
             conn.commit()
 
@@ -223,8 +228,8 @@ class AILearningDatabase:
                 conn.commit()
 
     def get_learning_records(self, task_type: Optional[str] = None,
-                           success: Optional[bool] = None,
-                           limit: int = 1000) -> List[LearningRecord]:
+                             success: Optional[bool] = None,
+                             limit: int = 1000) -> List[LearningRecord]:
         """Get learning records from database."""
         with sqlite3.connect(self.db_path) as conn:
             query = "SELECT * FROM learning_records WHERE 1=1"
@@ -259,7 +264,8 @@ class AILearningDatabase:
                     metadata=json.loads(row[10]) if row[10] else {},
                     timestamp=datetime.fromisoformat(row[11]),
                     learned_patterns=json.loads(row[12]) if row[12] else [],
-                    improvement_suggestions=json.loads(row[13]) if row[13] else []
+                    improvement_suggestions=json.loads(
+                        row[13]) if row[13] else []
                 )
                 records.append(record)
 
@@ -274,7 +280,8 @@ class AILearningDatabase:
                     (pattern_name,)
                 )
             else:
-                cursor = conn.execute("SELECT * FROM pattern_rules ORDER BY effectiveness_score DESC")
+                cursor = conn.execute(
+                    "SELECT * FROM pattern_rules ORDER BY effectiveness_score DESC")
 
             rules = []
             for row in cursor.fetchall():
@@ -287,7 +294,8 @@ class AILearningDatabase:
                     success_rate=row[5],
                     usage_count=row[6],
                     created_at=datetime.fromisoformat(row[7]),
-                    last_used=datetime.fromisoformat(row[8]) if row[8] else None,
+                    last_used=datetime.fromisoformat(
+                        row[8]) if row[8] else None,
                     effectiveness_score=row[9]
                 )
                 rules.append(rule)
@@ -295,7 +303,7 @@ class AILearningDatabase:
             return rules
 
     def get_failure_analyses(self, failure_type: Optional[str] = None,
-                           resolution_status: str = "open") -> List[FailureAnalysis]:
+                             resolution_status: str = "open") -> List[FailureAnalysis]:
         """Get failure analyses from database."""
         with sqlite3.connect(self.db_path) as conn:
             query = "SELECT * FROM failure_analyses WHERE resolution_status = ?"
@@ -382,7 +390,8 @@ class PatternEvolutionEngine:
 
     def _analyze_success_patterns(self, records: List[LearningRecord]) -> Dict[str, Any]:
         """Analyze patterns in successful operations."""
-        success_records = [r for r in records if r.success and r.confidence > 0.7]
+        success_records = [
+            r for r in records if r.success and r.confidence > 0.7]
 
         patterns = {
             "task_type_success": defaultdict(list),
@@ -468,8 +477,10 @@ class PatternEvolutionEngine:
         # Task type success patterns
         for task_type, records in patterns["task_type_success"].items():
             if len(records) >= 5:  # Minimum threshold for pattern
-                success_rate = len([r for r in records if r.success]) / len(records)
-                avg_confidence = sum(r.confidence for r in records) / len(records)
+                success_rate = len(
+                    [r for r in records if r.success]) / len(records)
+                avg_confidence = sum(
+                    r.confidence for r in records) / len(records)
 
                 if success_rate > 0.8 and avg_confidence > 0.8:
                     rule = PatternRule(
@@ -487,8 +498,10 @@ class PatternEvolutionEngine:
         # Context patterns
         for pattern_key, records in patterns["context_patterns"].items():
             if len(records) >= 3:
-                success_rate = len([r for r in records if r.success]) / len(records)
-                avg_confidence = sum(r.confidence for r in records) / len(records)
+                success_rate = len(
+                    [r for r in records if r.success]) / len(records)
+                avg_confidence = sum(
+                    r.confidence for r in records) / len(records)
 
                 if success_rate > 0.85:
                     rule = PatternRule(
@@ -516,8 +529,10 @@ class PatternEvolutionEngine:
 
             if len(matching_records) >= 5:
                 # Calculate new metrics
-                success_rate = len([r for r in matching_records if r.success]) / len(matching_records)
-                avg_confidence = sum(r.confidence for r in matching_records) / len(matching_records)
+                success_rate = len(
+                    [r for r in matching_records if r.success]) / len(matching_records)
+                avg_confidence = sum(
+                    r.confidence for r in matching_records) / len(matching_records)
                 new_effectiveness = success_rate * avg_confidence
 
                 # Update rule if improved
@@ -563,7 +578,8 @@ class PatternEvolutionEngine:
                     return key in record.context and str(record.context[key]) == value
 
             return False
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in learning_engine: %s", e)
             return False
 
     def _deprecate_ineffective_patterns(self) -> List[PatternRule]:
@@ -574,7 +590,7 @@ class PatternEvolutionEngine:
         for rule in all_rules:
             # Deprecate rules with low effectiveness or usage
             if (rule.effectiveness_score < 0.5 or
-                (rule.usage_count > 10 and rule.success_rate < 0.6)):
+                    (rule.usage_count > 10 and rule.success_rate < 0.6)):
 
                 # Mark as deprecated (could delete or move to archive)
                 rule.effectiveness_score = 0.0
@@ -590,26 +606,31 @@ class PatternEvolutionEngine:
         # Success rate analysis
         total_records = len(records)
         successful_records = len([r for r in records if r.success])
-        overall_success_rate = successful_records / total_records if total_records > 0 else 0
+        overall_success_rate = successful_records / \
+            total_records if total_records > 0 else 0
 
         insights.append(f"Overall success rate: {overall_success_rate:.2%}")
 
         # Task type analysis
         task_types = Counter(r.task_type for r in records)
-        most_common_task = task_types.most_common(1)[0] if task_types else ("unknown", 0)
-        insights.append(f"Most common task type: {most_common_task[0]} ({most_common_task[1]} occurrences)")
+        most_common_task = task_types.most_common(
+            1)[0] if task_types else ("unknown", 0)
+        insights.append(
+            f"Most common task type: {most_common_task[0]} ({most_common_task[1]} occurrences)")
 
         # Performance analysis
-        avg_execution_time = sum(r.execution_time for r in records) / len(records) if records else 0
+        avg_execution_time = sum(
+            r.execution_time for r in records) / len(records) if records else 0
         insights.append(f"Average execution time: {avg_execution_time:.3f}s")
 
         # Error analysis
         failed_records = [r for r in records if not r.success]
         if failed_records:
             error_types = Counter(r.error_message.split(':')[0] if r.error_message else "Unknown"
-                                for r in failed_records)
+                                  for r in failed_records)
             most_common_error = error_types.most_common(1)[0]
-            insights.append(f"Most common error: {most_common_error[0]} ({most_common_error[1]} occurrences)")
+            insights.append(
+                f"Most common error: {most_common_error[0]} ({most_common_error[1]} occurrences)")
 
         return insights
 
@@ -638,7 +659,8 @@ class PatternEvolutionEngine:
         platform = context.get('platform', 'unknown')
         complexity = context.get('complexity', 'medium')
 
-        logger.debug(f"Finding patterns for context: target={target_type}, platform={platform}, complexity={complexity}")
+        logger.debug(
+            f"Finding patterns for context: target={target_type}, platform={platform}, complexity={complexity}")
 
         for pattern_list in self.pattern_cache.values():
             for pattern in pattern_list:
@@ -646,7 +668,8 @@ class PatternEvolutionEngine:
                     applicable_patterns.append(pattern)
 
         # Sort by effectiveness
-        applicable_patterns.sort(key=lambda p: p.effectiveness_score, reverse=True)
+        applicable_patterns.sort(
+            key=lambda p: p.effectiveness_score, reverse=True)
 
         return applicable_patterns[:10]  # Return top 10
 
@@ -666,7 +689,8 @@ class PatternEvolutionEngine:
                 }
 
             # Analyze patterns in cache
-            total_patterns = sum(len(patterns) for patterns in self.pattern_cache.values())
+            total_patterns = sum(len(patterns)
+                                 for patterns in self.pattern_cache.values())
             effective_patterns = []
 
             for pattern_list in self.pattern_cache.values():
@@ -676,7 +700,8 @@ class PatternEvolutionEngine:
 
             # Calculate statistics
             avg_effectiveness = (
-                sum(p.effectiveness_score for p in effective_patterns) / len(effective_patterns)
+                sum(p.effectiveness_score for p in effective_patterns) /
+                len(effective_patterns)
                 if effective_patterns else 0.0
             )
 
@@ -692,11 +717,14 @@ class PatternEvolutionEngine:
             # Generate recommendations
             recommendations = []
             if avg_effectiveness < 0.7:
-                recommendations.append("Consider collecting more training data to improve pattern effectiveness")
+                recommendations.append(
+                    "Consider collecting more training data to improve pattern effectiveness")
             if total_patterns < 10:
-                recommendations.append("Pattern library is small - more diverse scenarios needed")
+                recommendations.append(
+                    "Pattern library is small - more diverse scenarios needed")
             if len(effective_patterns) == 0:
-                recommendations.append("No highly effective patterns found - review learning criteria")
+                recommendations.append(
+                    "No highly effective patterns found - review learning criteria")
 
             return {
                 "total_patterns": total_patterns,
@@ -732,7 +760,8 @@ class FailureAnalysisEngine:
         logger.info("Starting failure analysis")
 
         # Get failed learning records
-        failed_records = self.database.get_learning_records(success=False, limit=2000)
+        failed_records = self.database.get_learning_records(
+            success=False, limit=2000)
 
         if len(failed_records) < self.analysis_threshold:
             return {"message": "Insufficient failure data for analysis"}
@@ -747,7 +776,8 @@ class FailureAnalysisEngine:
 
         # Categorize failures
         failure_categories = self._categorize_failures(failed_records)
-        analysis_results["failure_types"] = {k: len(v) for k, v in failure_categories.items()}
+        analysis_results["failure_types"] = {
+            k: len(v) for k, v in failure_categories.items()}
 
         # Analyze each category
         for failure_type, records in failure_categories.items():
@@ -758,7 +788,8 @@ class FailureAnalysisEngine:
                     analysis_results["new_analyses"] += 1
 
                     if analysis.impact_level in ["high", "critical"]:
-                        analysis_results["critical_patterns"].append(analysis.pattern_signature)
+                        analysis_results["critical_patterns"].append(
+                            analysis.pattern_signature)
 
         # Generate improvement strategies
         strategies = self._generate_improvement_strategies(failed_records)
@@ -798,7 +829,8 @@ class FailureAnalysisEngine:
             return "validation_error"
         else:
             # Use first word of error as type
-            first_word = error_message.split()[0] if error_message.split() else "unknown"
+            first_word = error_message.split(
+            )[0] if error_message.split() else "unknown"
             return f"{first_word.lower()}_error"
 
     def _create_failure_analysis(self, failure_type: str, records: List[LearningRecord]) -> Optional[FailureAnalysis]:
@@ -822,7 +854,8 @@ class FailureAnalysisEngine:
         affected_components = self._identify_affected_components(records)
 
         # Generate mitigation strategies
-        mitigation_strategies = self._generate_mitigation_strategies(failure_type, records)
+        mitigation_strategies = self._generate_mitigation_strategies(
+            failure_type, records)
 
         failure_id = f"{failure_type}_{hashlib.md5(pattern_signature.encode()).hexdigest()[:8]}"
 
@@ -845,8 +878,10 @@ class FailureAnalysisEngine:
         frequency = len(records)
 
         # Check if failures affect critical operations
-        critical_tasks = ["generate_script", "modify_code", "autonomous_analysis"]
-        critical_failures = sum(1 for r in records if r.task_type in critical_tasks)
+        critical_tasks = ["generate_script",
+                          "modify_code", "autonomous_analysis"]
+        critical_failures = sum(
+            1 for r in records if r.task_type in critical_tasks)
 
         if frequency >= 50 or critical_failures >= 20:
             return "critical"
@@ -872,7 +907,8 @@ class FailureAnalysisEngine:
 
         # Find most common context/metadata patterns
         if common_contexts:
-            most_common_context = max(common_contexts.items(), key=lambda x: x[1])
+            most_common_context = max(
+                common_contexts.items(), key=lambda x: x[1])
             if most_common_context[1] >= len(records) * 0.5:  # 50% threshold
                 return f"Common context pattern: {most_common_context[0]}"
 
@@ -893,7 +929,7 @@ class FailureAnalysisEngine:
         # Create signature based on task types, error messages, and contexts
         task_types = sorted(set(r.task_type for r in records))
         error_types = sorted(set(self._extract_error_type(r.error_message)
-                                for r in records if r.error_message))
+                                 for r in records if r.error_message))
 
         signature_parts = [
             f"tasks:{','.join(task_types)}",
@@ -913,9 +949,11 @@ class FailureAnalysisEngine:
         for record in records:
             if record.success_rate < 0.5:  # Failed more than succeeded
                 pattern = record.context.get('pattern_used', 'unknown')
-                failure_patterns[pattern] = failure_patterns.get(pattern, 0) + 1
+                failure_patterns[pattern] = failure_patterns.get(
+                    pattern, 0) + 1
 
-        logger.debug(f"Analyzed {len(records)} records, found {len(failure_patterns)} failure patterns")
+        logger.debug(
+            f"Analyzed {len(records)} records, found {len(failure_patterns)} failure patterns")
 
         if "timeout" in failure_type:
             fixes.extend([
@@ -988,11 +1026,14 @@ class FailureAnalysisEngine:
 
         for record in records:
             if record.success_rate > 0.7:
-                successful_patterns.append(record.context.get('strategy', 'unknown'))
+                successful_patterns.append(
+                    record.context.get('strategy', 'unknown'))
             elif record.success_rate < 0.3:
-                failed_patterns.append(record.context.get('strategy', 'unknown'))
+                failed_patterns.append(
+                    record.context.get('strategy', 'unknown'))
 
-        logger.debug(f"Analyzed {len(records)} records for {failure_type}: {len(successful_patterns)} successful, {len(failed_patterns)} failed patterns")
+        logger.debug(
+            f"Analyzed {len(records)} records for {failure_type}: {len(successful_patterns)} successful, {len(failed_patterns)} failed patterns")
 
         # Add type-specific strategies based on failure_type
         if 'timeout' in failure_type.lower():
@@ -1035,10 +1076,11 @@ class FailureAnalysisEngine:
 
         # Analyze failure trends
         recent_failures = [r for r in failed_records
-                          if r.timestamp > datetime.now() - timedelta(days=7)]
+                           if r.timestamp > datetime.now() - timedelta(days=7)]
 
         if len(recent_failures) > len(failed_records) * 0.3:
-            strategies.append("Failure rate increasing - immediate attention required")
+            strategies.append(
+                "Failure rate increasing - immediate attention required")
 
         # Task-specific strategies
         task_failures = defaultdict(int)
@@ -1047,7 +1089,8 @@ class FailureAnalysisEngine:
 
         for task_type, count in task_failures.items():
             if count >= 10:
-                strategies.append(f"Focus on improving {task_type} reliability ({count} failures)")
+                strategies.append(
+                    f"Focus on improving {task_type} reliability ({count} failures)")
 
         # General strategies
         strategies.extend([
@@ -1082,10 +1125,10 @@ class AILearningEngine:
 
     @profile_ai_operation("record_learning")
     def record_experience(self, task_type: str, input_data: Any, output_data: Any,
-                         success: bool, confidence: float, execution_time: float,
-                         memory_usage: int, error_message: Optional[str] = None,
-                         context: Optional[Dict[str, Any]] = None,
-                         metadata: Optional[Dict[str, Any]] = None) -> str:
+                          success: bool, confidence: float, execution_time: float,
+                          memory_usage: int, error_message: Optional[str] = None,
+                          context: Optional[Dict[str, Any]] = None,
+                          metadata: Optional[Dict[str, Any]] = None) -> str:
         """Record AI learning experience."""
         if not self.learning_enabled:
             return ""
@@ -1135,21 +1178,24 @@ class AILearningEngine:
             except Exception as e:
                 logger.error(f"Error in background evolution: {e}")
 
-        evolution_thread = threading.Thread(target=evolution_worker, daemon=True)
+        evolution_thread = threading.Thread(
+            target=evolution_worker, daemon=True)
         evolution_thread.start()
 
     @profile_ai_operation("pattern_evolution")
     def evolve_patterns(self) -> Dict[str, Any]:
         """Evolve AI patterns based on learning."""
         results = self.pattern_engine.evolve_patterns()
-        self.learning_stats["patterns_discovered"] += results.get("new_patterns_discovered", 0)
+        self.learning_stats["patterns_discovered"] += results.get(
+            "new_patterns_discovered", 0)
         return results
 
     @profile_ai_operation("failure_analysis")
     def analyze_failures(self) -> Dict[str, Any]:
         """Analyze failures for learning."""
         results = self.failure_engine.analyze_failures()
-        self.learning_stats["failures_analyzed"] += results.get("new_analyses", 0)
+        self.learning_stats["failures_analyzed"] += results.get(
+            "new_analyses", 0)
         return results
 
     def get_applicable_patterns(self, context: Dict[str, Any]) -> List[PatternRule]:
@@ -1171,8 +1217,8 @@ class AILearningEngine:
         return insights
 
     def record_exploit_chain_creation(self, vulnerability: Any, chain: Any, success: bool,
-                                    execution_time: Optional[float] = None,
-                                    error_message: Optional[str] = None) -> str:
+                                      execution_time: Optional[float] = None,
+                                      error_message: Optional[str] = None) -> str:
         """Record exploit chain creation for learning."""
         # Create context from vulnerability
         context = {
@@ -1196,9 +1242,9 @@ class AILearningEngine:
         return self.record_experience(
             task_type="exploit_chain_building",
             input_data={"vuln_id": getattr(vulnerability, 'vuln_id', ''),
-                       "vuln_type": str(vulnerability.vuln_type.value) if hasattr(vulnerability, 'vuln_type') else ""},
+                        "vuln_type": str(vulnerability.vuln_type.value) if hasattr(vulnerability, 'vuln_type') else ""},
             output_data={"chain_id": getattr(chain, 'chain_id', ''),
-                        "success_probability": getattr(chain, 'success_probability', 0.0)},
+                         "success_probability": getattr(chain, 'success_probability', 0.0)},
             success=success,
             confidence=getattr(chain, 'success_probability', 0.0),
             execution_time=execution_time or 0.0,

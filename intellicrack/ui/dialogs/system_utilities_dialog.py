@@ -1,3 +1,9 @@
+import json
+import os
+import time
+
+from intellicrack.logger import logger
+
 """
 System Utilities Dialog for Intellicrack.
 
@@ -20,9 +26,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import json
-import os
-import time
 
 try:
     from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
@@ -48,7 +51,8 @@ try:
         QVBoxLayout,
         QWidget,
     )
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in system_utilities_dialog: %s", e)
     # Fallback for environments without PyQt5
     class QDialog:
         """
@@ -100,6 +104,7 @@ class SystemUtilitiesWorker(QThread):
             elif self.operation == "optimize_memory":
                 self._optimize_memory()
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in system_utilities_dialog: %s", e)
             self.error_occurred.emit(str(e))
 
     def _extract_icon(self):
@@ -118,6 +123,7 @@ class SystemUtilitiesWorker(QThread):
             self.operation_completed.emit(result)
 
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in system_utilities_dialog: %s", e)
             self.error_occurred.emit(f"Icon extraction failed: {str(e)}")
 
     def _get_system_info(self):
@@ -133,6 +139,7 @@ class SystemUtilitiesWorker(QThread):
             self.operation_completed.emit(result)
 
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in system_utilities_dialog: %s", e)
             self.error_occurred.emit(f"System info collection failed: {str(e)}")
 
     def _check_dependencies(self):
@@ -154,6 +161,7 @@ class SystemUtilitiesWorker(QThread):
             self.operation_completed.emit(result)
 
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in system_utilities_dialog: %s", e)
             self.error_occurred.emit(f"Dependency check failed: {str(e)}")
 
     def _get_process_list(self):
@@ -169,6 +177,7 @@ class SystemUtilitiesWorker(QThread):
             self.operation_completed.emit({'processes': result})
 
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in system_utilities_dialog: %s", e)
             self.error_occurred.emit(f"Process enumeration failed: {str(e)}")
 
     def _optimize_memory(self):
@@ -184,6 +193,7 @@ class SystemUtilitiesWorker(QThread):
             self.operation_completed.emit(result)
 
         except (OSError, ValueError, RuntimeError) as e:
+            self.logger.error("Error in system_utilities_dialog: %s", e)
             self.error_occurred.emit(f"Memory optimization failed: {str(e)}")
 
     def stop(self):
@@ -524,7 +534,64 @@ class SystemUtilitiesDialog(QDialog):
 
     def connect_signals(self):
         """Connect internal signals."""
-        pass
+        # Connect tool signals
+        if hasattr(self, 'icon_browser_btn') and hasattr(self, 'browse_icon_file'):
+            self.icon_browser_btn.clicked.connect(self.browse_icon_file)
+        
+        if hasattr(self, 'icon_extract_btn') and hasattr(self, 'extract_icon'):
+            self.icon_extract_btn.clicked.connect(self.extract_icon)
+            
+        if hasattr(self, 'sysinfo_refresh_btn') and hasattr(self, 'refresh_system_info'):
+            self.sysinfo_refresh_btn.clicked.connect(self.refresh_system_info)
+            
+        if hasattr(self, 'dependency_check_btn') and hasattr(self, 'check_dependencies'):
+            self.dependency_check_btn.clicked.connect(self.check_dependencies)
+            
+        if hasattr(self, 'process_refresh_btn') and hasattr(self, 'refresh_process_list'):
+            self.process_refresh_btn.clicked.connect(self.refresh_process_list)
+            
+        if hasattr(self, 'process_filter') and hasattr(self, 'filter_processes'):
+            self.process_filter.textChanged.connect(self.filter_processes)
+            
+        if hasattr(self, 'process_kill_btn') and hasattr(self, 'kill_selected_process'):
+            self.process_kill_btn.clicked.connect(self.kill_selected_process)
+            
+        if hasattr(self, 'file_monitor_btn') and hasattr(self, 'toggle_file_monitor'):
+            self.file_monitor_btn.clicked.connect(self.toggle_file_monitor)
+            
+        if hasattr(self, 'file_monitor_path') and hasattr(self, 'browse_monitor_path'):
+            self.file_monitor_browse_btn.clicked.connect(self.browse_monitor_path)
+            
+        if hasattr(self, 'registry_search_btn') and hasattr(self, 'search_registry'):
+            self.registry_search_btn.clicked.connect(self.search_registry)
+            
+        if hasattr(self, 'registry_delete_btn') and hasattr(self, 'delete_registry_key'):
+            self.registry_delete_btn.clicked.connect(self.delete_registry_key)
+            
+        if hasattr(self, 'file_shredder_browse_btn') and hasattr(self, 'browse_shred_file'):
+            self.file_shredder_browse_btn.clicked.connect(self.browse_shred_file)
+            
+        if hasattr(self, 'file_shredder_shred_btn') and hasattr(self, 'shred_file'):
+            self.file_shredder_shred_btn.clicked.connect(self.shred_file)
+            
+        if hasattr(self, 'env_editor_add_btn') and hasattr(self, 'add_env_variable'):
+            self.env_editor_add_btn.clicked.connect(self.add_env_variable)
+            
+        if hasattr(self, 'env_editor_delete_btn') and hasattr(self, 'delete_env_variable'):
+            self.env_editor_delete_btn.clicked.connect(self.delete_env_variable)
+            
+        if hasattr(self, 'env_editor_save_btn') and hasattr(self, 'save_env_variables'):
+            self.env_editor_save_btn.clicked.connect(self.save_env_variables)
+            
+        # Connect close button
+        if hasattr(self, 'close_btn'):
+            self.close_btn.clicked.connect(self.close)
+            
+        # Connect worker signals
+        if hasattr(self, 'worker_thread'):
+            self.worker_thread.operation_completed.connect(self.handle_operation_completed)
+            self.worker_thread.progress_updated.connect(self.update_progress)
+            self.worker_thread.error_occurred.connect(self.handle_error)
 
     def browse_icon_file(self):
         """Browse for executable file."""
@@ -586,6 +653,7 @@ class SystemUtilitiesDialog(QDialog):
                 else:
                     self.icon_preview.setText("Could not load extracted icon")
             except (OSError, ValueError, RuntimeError) as e:
+                self.logger.error("Error in system_utilities_dialog: %s", e)
                 self.icon_preview.setText(f"Preview error: {str(e)}")
         else:
             self.icon_preview.setText("Icon extracted successfully")
@@ -680,6 +748,7 @@ class SystemUtilitiesDialog(QDialog):
 
                 self.status_label.setText(f"System info exported to {os.path.basename(file_path)}")
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in system_utilities_dialog: %s", e)
                 QMessageBox.critical(self, "Export Error", f"Failed to export: {str(e)}")
 
     def check_dependencies(self):
@@ -821,6 +890,7 @@ class SystemUtilitiesDialog(QDialog):
                         QMessageBox.warning(self, "Failed", f"Failed to kill process {name}")
 
                 except (OSError, ValueError, RuntimeError) as e:
+                    logger.error("Error in system_utilities_dialog: %s", e)
                     QMessageBox.critical(self, "Error", f"Failed to kill process: {str(e)}")
 
     def optimize_memory(self):

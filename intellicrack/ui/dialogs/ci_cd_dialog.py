@@ -1,28 +1,8 @@
-"""
-CI/CD Pipeline Dialog for Intellicrack plugins.
-
-Copyright (C) 2025 Zachary Flint
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 import json
 import os
 from datetime import datetime
 from typing import Any, Dict
 
-import yaml
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
@@ -45,8 +25,36 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from intellicrack.logger import logger
+
 from ...tools.plugin_ci_cd import CICDPipeline, GitHubActionsGenerator
 from .plugin_dialog_base import PluginDialogBase
+
+"""
+CI/CD Pipeline Dialog for Intellicrack plugins.
+
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
 
 
 class PipelineThread(QThread):
@@ -88,6 +96,7 @@ class PipelineThread(QThread):
             self.finished.emit(results)
 
         except Exception as e:
+            logger.error("Exception in ci_cd_dialog: %s", e)
             self.error.emit(str(e))
 
 
@@ -459,10 +468,12 @@ class CICDDialog(PluginDialogBase):
                     return value.lower() == 'true'
                 try:
                     return int(value)
-                except ValueError:
+                except ValueError as e:
+                    self.logger.error("Value error in ci_cd_dialog: %s", e)
                     try:
                         return float(value)
-                    except ValueError:
+                    except ValueError as e:
+                        logger.error("Value error in ci_cd_dialog: %s", e)
                         return value
 
         # Process root items

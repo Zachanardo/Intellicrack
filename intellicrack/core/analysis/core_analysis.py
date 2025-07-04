@@ -24,16 +24,19 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from ...utils.protection.protection_utils import calculate_entropy
+
+# Module logger
+logger = logging.getLogger(__name__)
+
 try:
     import pefile
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in core_analysis: %s", e)
     pefile = None
-
-logger = logging.getLogger(__name__)
 
 
 # Import shared entropy calculation
-from ...utils.protection.protection_utils import calculate_entropy
 
 
 def get_machine_type(machine: int) -> str:
@@ -93,7 +96,8 @@ def get_pe_timestamp(timestamp: int) -> str:
     try:
         dt = datetime.datetime.fromtimestamp(timestamp)
         return dt.strftime("%Y-%m-%d %H:%M:%S")
-    except (ValueError, OSError):
+    except (ValueError, OSError) as e:
+        logger.error("Error in core_analysis: %s", e)
         return "Invalid timestamp"
 
 
@@ -199,6 +203,7 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
                         results.append("    WARNING: High entropy, possible encryption/compression")
                         suspicious_sections.append(name)
                 except (OSError, ValueError, RuntimeError) as e:
+                    logger.error("Error in core_analysis: %s", e)
                     results.append(f"    ERROR: Could not calculate entropy: {e}")
 
         # Import table analysis
@@ -333,7 +338,8 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
                     if entropy > 7.0:
                         section_name = _section.Name.decode('utf-8', errors='ignore').rstrip('\0')
                         protection_indicators.append(f"High entropy section: {section_name} ({entropy:.2f})")
-                except (UnicodeDecodeError, AttributeError, ValueError):
+                except (UnicodeDecodeError, AttributeError, ValueError) as e:
+                    logger.error("Error in core_analysis: %s", e)
                     pass
 
         results["protection_mechanisms"] = protection_indicators
@@ -536,6 +542,7 @@ def decrypt_embedded_script(binary_path):
                             "content": decoded_script[:1000]
                         })
                     except (OSError, ValueError, RuntimeError) as e:
+                        logger.error("Error in core_analysis: %s", e)
                         results.append(f"Error decoding script: {e}")
 
                 start_pos = end_pos + len(end_marker)
@@ -568,6 +575,7 @@ def decrypt_embedded_script(binary_path):
                         "content": decoded_context
                     })
                 except (OSError, ValueError, RuntimeError) as e:
+                    logger.error("Error in core_analysis: %s", e)
                     results.append(f"Error decoding obfuscated script: {e}")
 
                 start_pos += len(_marker)

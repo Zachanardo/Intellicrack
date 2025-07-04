@@ -6,11 +6,12 @@ model repositories and handles model import, loading, and verification.
 """
 
 import hashlib
-import logging
 import os
 from datetime import datetime
 from threading import Thread
 from typing import Any, Callable, Dict, List, Optional, Tuple
+
+from intellicrack.logger import logger
 
 try:
     from .repositories.factory import RepositoryFactory
@@ -54,8 +55,6 @@ except ImportError:
         def __init__(self, *args, **kwargs):
             pass
 
-# Set up logging
-logger = logging.getLogger(__name__)
 
 class ProgressHandler(DownloadProgressCallback):
     """Handles progress updates during downloads."""
@@ -111,12 +110,27 @@ class ModelManager:
 
     def _init_repositories(self):
         """Initialize repositories from configuration."""
+        # Check if we have a proper Config instance with is_repository_enabled method
+        try:
+            from intellicrack.config import get_config
+            config_instance = get_config()
+            use_config_method = hasattr(config_instance, 'is_repository_enabled')
+        except ImportError:
+            config_instance = None
+            use_config_method = False
+        
         repositories_config = self.config.get("model_repositories", {})
 
         for repo_name, repo_config in repositories_config.items():
-            # Skip disabled repositories
-            if not repo_config.get("enabled", True):
-                continue
+            # Check if repository is enabled using the proper method if available
+            if use_config_method:
+                if not config_instance.is_repository_enabled(repo_name):
+                    logger.info(f"Repository {repo_name} is disabled in configuration")
+                    continue
+            else:
+                # Fallback to direct check
+                if not repo_config.get("enabled", True):
+                    continue
 
             # Add the repository name to the config
             repo_config["name"] = repo_name
@@ -317,6 +331,7 @@ class ModelManager:
                 return False, f"Checksum mismatch: expected {expected_checksum}, got {actual_checksum}"
 
         except IOError as e:
+            logger.error("IO error in model_manager: %s", e)
             return False, f"Error reading model file: {str(e)}"
 
     def get_model_path(self, model_id: str, repository_name: str) -> Optional[str]:
@@ -376,34 +391,34 @@ class ModelManager:
         for repository in self.repositories.values():
             # This will trigger a refresh by calling get_available_models
             repository.get_available_models()
-    
+
     def train_model(self, training_data: Any, model_type: str) -> bool:
         """
         Train machine learning model.
-        
+
         This method trains a new machine learning model using the provided data
         and model type. It supports various model architectures and training
         frameworks with real implementation.
-        
+
         Args:
             training_data: Training data (can be numpy array, DataFrame, or custom format)
             model_type: Type of model to train (e.g., 'classifier', 'regression', 'neural_network')
-            
+
         Returns:
             bool: True if training successful, False otherwise
         """
         logger.info(f"Training {model_type} model with data")
-        
+
         try:
             # Import ML libraries as needed
             model = None
             trained = False
-            
+
             if model_type == 'classifier':
                 try:
                     from sklearn.ensemble import RandomForestClassifier
                     from sklearn.model_selection import train_test_split
-                    
+
                     # Prepare data (assuming training_data has 'features' and 'labels')
                     if hasattr(training_data, 'features') and hasattr(training_data, 'labels'):
                         X = training_data.features
@@ -414,82 +429,82 @@ class ModelManager:
                     else:
                         # Assume it's a tuple or list of (X, y)
                         X, y = training_data[0], training_data[1]
-                    
+
                     # Split data
                     X_train, X_test, y_train, y_test = train_test_split(
                         X, y, test_size=0.2, random_state=42
                     )
-                    
+
                     # Train model
                     model = RandomForestClassifier(n_estimators=100, random_state=42)
                     model.fit(X_train, y_train)
-                    
+
                     # Evaluate
                     accuracy = model.score(X_test, y_test)
                     logger.info(f"Model trained with accuracy: {accuracy:.2f}")
-                    
+
                     # Store model reference
                     self._last_trained_model = model
                     trained = True
-                    
+
                 except ImportError:
                     logger.warning("scikit-learn not available, using simple classifier")
                     # Fallback to simple implementation
                     self._last_trained_model = {"type": "simple_classifier", "data": training_data}
                     trained = True
-                    
+
             elif model_type == 'regression':
                 try:
                     from sklearn.linear_model import LinearRegression
-                    
+
                     # Similar data preparation
                     if isinstance(training_data, dict):
                         X = training_data.get('features', [])
                         y = training_data.get('targets', [])
                     else:
                         X, y = training_data[0], training_data[1]
-                    
+
                     # Train model
                     model = LinearRegression()
                     model.fit(X, y)
-                    
+
                     self._last_trained_model = model
                     trained = True
-                    
+
                 except ImportError:
                     logger.warning("scikit-learn not available, using simple regression")
                     self._last_trained_model = {"type": "simple_regression", "data": training_data}
                     trained = True
-                    
+
             elif model_type == 'neural_network':
                 try:
                     # Try PyTorch first
                     import torch
                     import torch.nn as nn
-                    
+
                     class SimpleNN(nn.Module):
                         def __init__(self, input_size, hidden_size, output_size):
                             super().__init__()
                             self.fc1 = nn.Linear(input_size, hidden_size)
                             self.relu = nn.ReLU()
                             self.fc2 = nn.Linear(hidden_size, output_size)
-                        
+
                         def forward(self, x):
                             x = self.fc1(x)
                             x = self.relu(x)
                             x = self.fc2(x)
                             return x
-                    
+
                     # Create simple neural network
                     model = SimpleNN(10, 50, 2)  # Adjust sizes based on data
                     self._last_trained_model = model
                     trained = True
-                    
+
                 except ImportError:
                     try:
                         # Fallback to TensorFlow/Keras
                         from tensorflow import keras
-                        
+
                         model = keras.Sequential([
                             keras.layers.Dense(50, activation='relu', input_shape=(10,)),
                             keras.layers.Dense(2, activation='softmax')
@@ -497,12 +512,12 @@ class ModelManager:
                         model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
                         self._last_trained_model = model
                         trained = True
-                        
+
                     except ImportError:
                         logger.warning("No deep learning framework available")
                         self._last_trained_model = {"type": "simple_nn", "data": training_data}
                         trained = True
-            
+
             else:
                 # Generic model type - store configuration
                 self._last_trained_model = {
@@ -511,54 +526,54 @@ class ModelManager:
                     "trained_at": str(datetime.now())
                 }
                 trained = True
-            
+
             return trained
-            
+
         except Exception as e:
             logger.error(f"Model training failed: {e}")
             return False
-    
+
     def save_model(self, model: Any, path: str) -> bool:
         """
         Save trained model to disk.
-        
+
         This method saves a trained model to disk with support for various
         model formats and serialization methods.
-        
+
         Args:
             model: Trained model object to save
             path: Path where to save the model
-            
+
         Returns:
             bool: True if save successful, False otherwise
         """
         try:
-            import pickle
             import os
-            
+            import pickle
+
             # Use last trained model if no model provided
             if model is None and hasattr(self, '_last_trained_model'):
                 model = self._last_trained_model
-            
+
             if model is None:
                 logger.error("No model to save")
                 return False
-            
+
             # Ensure directory exists
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            
+
             # Determine save method based on model type
             saved = False
-            
+
             # Try joblib first (better for scikit-learn models)
             try:
                 import joblib
                 joblib.dump(model, path)
                 logger.info(f"Model saved with joblib to: {path}")
                 saved = True
-            except ImportError:
-                pass
-            
+            except ImportError as e:
+                logger.debug(f"Joblib not available for model saving: {e}")
+
             if not saved:
                 # Try PyTorch save
                 try:
@@ -567,9 +582,9 @@ class ModelManager:
                         torch.save(model.state_dict(), path)
                         logger.info(f"PyTorch model saved to: {path}")
                         saved = True
-                except ImportError:
-                    pass
-            
+                except ImportError as e:
+                    logger.debug(f"PyTorch not available for model saving: {e}")
+
             if not saved:
                 # Try Keras/TensorFlow save
                 try:
@@ -577,16 +592,16 @@ class ModelManager:
                         model.save(path)
                         logger.info(f"Keras model saved to: {path}")
                         saved = True
-                except:
-                    pass
-            
+                except Exception as e:
+                    logger.debug(f"Keras/TensorFlow save failed: {e}")
+
             if not saved:
                 # Fallback to pickle
                 with open(path, 'wb') as f:
                     pickle.dump(model, f)
                 logger.info(f"Model saved with pickle to: {path}")
                 saved = True
-            
+
             # Save metadata
             metadata_path = path + '.meta'
             metadata = {
@@ -595,13 +610,13 @@ class ModelManager:
                 'intellicrack_version': '2.0',
                 'path': path
             }
-            
+
             with open(metadata_path, 'w') as f:
                 import json
                 json.dump(metadata, f, indent=2)
-            
+
             return saved
-            
+
         except Exception as e:
             logger.error(f"Model save failed: {e}")
             return False

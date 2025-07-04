@@ -1,3 +1,12 @@
+import os
+import time
+
+import psutil
+
+from intellicrack.logger import logger
+
+from ...utils.constants import ADOBE_PROCESSES
+
 """
 Inject Frida script into the specified Adobe process.
 
@@ -20,19 +29,16 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import os
-import time
 
 try:
     import frida  # pylint: disable=import-error
     HAS_FRIDA = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in adobe_full_auto_injector: %s", e)
     HAS_FRIDA = False
     frida = None
 
-import psutil
 
-from ...utils.constants import ADOBE_PROCESSES
 
 FRIDA_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "adobe_bypass_frida.js")
 
@@ -59,7 +65,8 @@ def inject(target_name):
             script = session.create_script(f.read())
             script.load()
         injected.add(target_name)
-    except (OSError, ValueError, RuntimeError):
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in adobe_full_auto_injector: %s", e)
         pass  # Silent fail to remain stealthy
 
 def get_running_adobe_apps():
@@ -78,7 +85,8 @@ def get_running_adobe_apps():
             pname = _proc.info['name']
             if pname in ADOBE_PROCESSES and pname not in injected:
                 running.append(pname)
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+            logger.error("Error in adobe_full_auto_injector: %s", e)
             continue
     return running
 

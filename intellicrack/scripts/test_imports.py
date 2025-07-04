@@ -94,10 +94,12 @@ def test_functionality():
         from intellicrack.config import ConfigManager, load_config
         config = load_config()
         print("✓ Configuration loading works")
+        print(f"  Config type: {type(config).__name__}")
 
         # Test config manager
         config_manager = ConfigManager()
         print("✓ Configuration manager works")
+        print(f"  Manager settings: {len(config_manager.get_all()) if hasattr(config_manager, 'get_all') else 'N/A'}")
 
         # Test vulnerability engine (without actual binary analysis)
         from intellicrack.core.analysis.vulnerability_engine import calculate_entropy

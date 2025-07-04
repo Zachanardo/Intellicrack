@@ -25,6 +25,8 @@ import logging
 import os
 from pathlib import Path
 
+from .plugin_config import PLUGIN_SYSTEM_EXPORTS
+
 # Set up package logger
 logger = logging.getLogger(__name__)
 
@@ -209,18 +211,6 @@ try:  # pylint: disable=unused-argument
 except ImportError as e:
     logger.warning("Remote plugin executor not available: %s", e)
     RemotePluginExecutor = None
-
-# Shared plugin system function exports
-PLUGIN_SYSTEM_EXPORTS = [
-    'load_plugins',
-    'run_plugin',
-    'run_custom_plugin',
-    'run_frida_plugin_from_file',
-    'run_ghidra_plugin_from_file',
-    'create_sample_plugins',
-    'run_plugin_in_sandbox',
-    'run_plugin_remotely',
-]
 
 # Define package exports
 __all__ = [

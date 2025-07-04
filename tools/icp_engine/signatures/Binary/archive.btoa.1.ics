@@ -1,0 +1,14 @@
+// Intellicrack Protection Engine: detection rule file
+// Author: hypn0 <hypn0@mail.ru>
+
+init("archive", "btoa");
+
+function detect() {
+    var sStr = Binary.getString(0, 11);
+
+    if (sStr == "'xbtoa Begin'") {
+        bDetected = true;
+    }
+
+    return result();
+}

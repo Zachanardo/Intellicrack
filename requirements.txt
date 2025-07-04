@@ -1,31 +1,60 @@
+accelerate>=0.25.0
 aiohttp==3.12.13
-angr==9.2.158
+angr==9.2.95
 anthropic==0.54.0
+jiter==0.6.1  # Pin to working version to prevent stalling
+importlib_metadata==6.8.0  # Pin to prevent stalling on dask dependency
+idna==3.8  # Pin to prevent stalling on requests dependency
+amqp==5.2.0  # Pin to prevent celery dependency cycling
+kombu==5.5.2  # Pin to prevent celery dependency cycling
+keyring==24.2.0  # Pin to prevent twine dependency cycling
+jmespath==1.0.0  # Pin to prevent boto3 dependency cycling
+hyperframe==6.0.0  # Pin to prevent mitmproxy dependency cycling
+huggingface_hub==0.32.0  # Pin to prevent peft dependency cycling
+auto-gptq>=0.7.0
 azure-storage-blob==12.19.0
+bitsandbytes>=0.41.0
 boto3==1.38.41
 cairocffi==1.7.1
-capstone==5.0.3
+capstone==5.0.0.post1
 celery==5.5.3
 cffi==1.17.1
-claripy==9.2.158
+claripy==9.2.95
 click==8.1.7
 coverage==7.8.2
-cryptography==45.0.4
+cryptography>=38.0,<39.0  # Compatible with mitmproxy 9.0.1
 # cupy==13.4.1  # Requires CUDA - optional GPU acceleration
 dask==2025.5.1
 dpkt==1.9.8
-flake8==7.2.0
-Flask==3.1.1
+flake8==5.0.4
+Flask>=1.1.1,<2.3
 flask_cors==6.0.1
 frida==17.2.4
-# intel_extension_for_pytorch - not available on Windows, using PyTorch with Intel MKL
+# Intel GPU acceleration (install manually if you have supported hardware):
+# 
+# REQUIREMENTS:
+# - Intel Arc B/A-Series GPUs OR Intel Core Ultra processors with Arc graphics
+# - Windows 10/11 (21H2, 22H2)
+# - Intel Arc & Iris Xe Graphics driver 32.0.101.6647 (WHQL)
+# - Microsoft Visual C++ Redistributable
+# - Python 3.9-3.13
+#
+# INSTALLATION COMMANDS:
+# python -m pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/xpu
+# python -m pip install intel-extension-for-pytorch==2.7.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/
 Jinja2==3.1.6
 joblib==1.5.1
 keystone_engine==0.9.2
-langchain==0.3.26
 lief==0.16.6
+# llama-cpp-python==0.3.9  # Already installed, skip to avoid rebuild
 macholib==1.16.3
-manticore==0.3.7
+# manticore==0.3.7  # TEMP COMMENTED - ply conflicts with python-fx
+mitmproxy>=9.0.1,<10.0.0
+# Mitmproxy compatibility pins
+h11>=0.11,<0.15  # Required by mitmproxy
+zstandard>=0.11,<0.20  # Required by mitmproxy
+pyperclip>=1.6.0,<1.9  # Required by mitmproxy
+urwid>=2.1.1,<2.2  # Required by mitmproxy
 matplotlib>=3.7.0,<3.10.0
 mypy==1.16.0
 networkx==3.1
@@ -45,14 +74,16 @@ peft==0.15.2
 Pillow==11.2.1
 psutil==7.0.0
 psycopg2_binary==2.9.10
-pycuda==2025.1.1
+# pycuda==2025.1.1  # Requires NVIDIA CUDA - not compatible with Intel GPUs
 pyelftools==0.32
-pylint==3.3.7
+python-dotenv==1.0.1
+pycryptodome==3.19.0
+# pylint==3.3.7  # TEMP COMMENTED - pip resolver stalling
 pymongo==4.13.2
 pynput==1.8.1
 pyopencl==2025.2.4
-pyOpenSSL==25.1.0
-pypykatz==0.6.11
+pyOpenSSL>=22.0,<23.0  # Compatible with cryptography 38.x
+# pypykatz==0.6.11  # Windows credential dumping - install separately if needed
 PyQt5==5.15.11
 PyQt5_sip==12.17.0
 PyQt6==6.9.1
@@ -60,25 +91,134 @@ pyshark==0.6
 pytest==8.3.5
 pyusb==1.3.1
 pywin32==310
-PyYAML==6.0.2
-qiling==1.4.6
+# PyYAML==6.0.2  # TEMP COMMENTED - pip resolver stalling
+# qiling==1.4.6  # TEMP COMMENTED - dependency conflicts
 r2pipe==1.9.4
 radon==6.0.1
 ray==2.47.1
 reportlab==4.4.1
 Requests==2.32.4
 rich==14.0.0
+safetensors>=0.4.0
 scapy==2.6.1
 scikit_learn>=1.3.0,<1.8.0
 scipy>=1.10.0,<1.17.0
 setuptools==80.9.0
 tensorflow_cpu>=2.15.0,<2.20.0
 tinycss2==1.4.0
-torch>=2.0.0,<2.8.0
+# torch>=2.0.0,<2.8.0  # Use Intel XPU version above for Intel GPU acceleration
 transformers>=4.35.0,<4.50.0
 watchdog==6.0.0
 weasyprint==65.1
 wmi==1.5.1
-xattr==1.1.4
+# xattr==1.1.4  # Unix-only package, not compatible with Windows
 xlsxwriter==3.2.5
-z3_solver==4.13.0.0
+z3-solver==4.10.2.0
+
+# Development Tools
+# Code Quality & Linting
+# black==24.4.2  # TEMP COMMENTED - click dependency conflicts
+isort==5.13.2  # Import sorter
+# autopep8==1.7.0  # PEP8 formatter (conflicts with flake8, use black instead)
+ruff==0.5.0  # Fast Python linter
+bandit==1.7.8  # Security linter
+vulture==2.11  # Dead code finder
+# pycodestyle==2.9.1  # Style checker (included via flake8)
+pydocstyle==6.3.0  # Docstring checker
+# prospector==1.10.3  # TEMP COMMENTED - meta-linter pulling in pylint
+
+# Type Checking & Static Analysis
+# pyflakes==2.5.0  # Simple checker (included via flake8)
+
+# Testing & Coverage
+pytest-cov==5.0.0  # Coverage plugin for pytest
+pytest-mock==3.14.0  # Mock fixture
+pytest-asyncio==0.23.7  # Async testing
+pytest-xdist==3.6.1  # Parallel testing
+pytest-timeout==2.3.1  # Test timeouts
+hypothesis==6.100.0  # Property-based testing
+tox==4.15.0  # Test automation
+nox==2024.4.15  # Flexible test automation
+
+# Code Metrics & Complexity
+mccabe==0.7.0  # Cyclomatic complexity
+# radon==6.0.1  # Code metrics (already included above)
+xenon==0.9.1  # Complexity monitoring
+
+# Documentation
+sphinx==7.3.7  # Documentation generator
+sphinx-rtd-theme==2.0.0  # ReadTheDocs theme
+sphinx-autodoc-typehints==2.1.0  # Type hints in docs
+sphinx-copybutton==0.5.2  # Copy button for code blocks
+sphinx-tabs==3.4.5  # Tabbed content
+sphinxcontrib-mermaid==0.9.2  # Mermaid diagrams
+sphinx-autobuild==2024.4.16  # Auto-rebuild docs
+pdoc3==0.10.0  # API documentation
+# mkdocs==1.6.0  # TEMP COMMENTED - click dependency conflicts
+mkdocs-material==9.5.25  # Material theme
+
+# Debugging & Profiling
+ipdb==0.13.13  # IPython debugger
+line-profiler==4.1.2  # Line-by-line profiler
+memory-profiler==0.61.0  # Memory profiler
+py-spy==0.3.14  # Sampling profiler
+snakeviz==2.2.0  # Profile visualizer
+
+# Development Utilities
+pre-commit==3.7.1  # Git hooks
+commitizen==3.27.0  # Commit conventions
+bumpversion==0.6.0  # Version bumping
+pipdeptree==2.20.0  # Dependency tree
+# pip-tools==7.4.1  # TEMP COMMENTED - click dependency conflicts
+
+# Code Generation & Refactoring
+rope==1.13.0  # Refactoring library
+astor==0.8.1  # AST manipulation
+yapf==0.40.2  # Yet another formatter
+
+# Security & Vulnerability Scanning
+# safety==3.2.0  # TEMP COMMENTED - click dependency conflicts
+pip-audit==2.7.3  # Dependency auditor
+
+# JavaScript/TypeScript Linting (via Python wrappers)
+# djlint==1.34.1  # HTML/JS/CSS linter (disabled - jsbeautifier build issues on Windows)
+# pyjslint==0.3.4  # JSLint wrapper for Python (disabled - dependency issues)
+nodeenv==1.9.1  # Node.js virtual environment
+
+# Additional Development Tools
+# Build & Packaging
+build==1.2.1  # PEP 517 package builder
+wheel==0.43.0  # Wheel package format
+twine==5.1.0  # PyPI upload tool
+setuptools-scm==8.1.0  # Git-based versioning
+poetry==1.8.3  # Dependency management
+# hatch==1.12.0  # TEMP COMMENTED - zstandard conflicts with mitmproxy
+
+# Code Analysis & Visualization
+pycallgraph2==1.1.3  # Call graph generator
+graphviz==0.20.3  # Graph visualization
+
+# Performance & Optimization
+pyinstrument==4.6.2  # Statistical profiler
+scalene==1.5.38  # CPU+GPU+memory profiler
+
+# Git & Version Control
+gitpython==3.1.43  # Git integration
+pre-commit-hooks==4.6.0  # Common hooks
+detect-secrets==1.5.0  # Secret detection
+
+# API Development
+fastapi==0.111.0  # Modern API framework
+# uvicorn==0.30.1  # TEMP COMMENTED - click dependency conflicts
+httpie==3.2.2  # HTTP client
+
+# Monitoring & Logging
+loguru==0.7.2  # Better logging
+sentry-sdk==2.5.1  # Error tracking
+structlog==24.2.0  # Structured logging
+
+# CLI Development
+# typer==0.12.3  # TEMP COMMENTED - click dependency conflicts
+# click-completion==0.5.2  # TEMP COMMENTED - click dependency conflicts
+# colorama==0.4.6  # TEMP COMMENTED - pip resolver stalling
+tqdm==4.66.4  # Progress bars

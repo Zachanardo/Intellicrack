@@ -1,11 +1,14 @@
+import os
+from typing import Any, Dict, List
+
+from intellicrack.logger import logger
+
 """
 Common binary I/O utilities for Intellicrack.
 
 This module provides shared utilities for reading and analyzing binary files.
 """
 
-import os
-from typing import Any, Dict, List
 
 
 def find_all_pattern_offsets(data: bytes, pattern: bytes) -> List[int]:
@@ -67,6 +70,7 @@ def analyze_binary_for_strings(binary_path: str, search_strings: list) -> Dict[s
             results["confidence"] = (found_count / len(search_strings)) * 100.0
 
     except Exception as e:
+        logger.error("Exception in binary_io: %s", e)
         results["error"] = str(e)
 
     return results

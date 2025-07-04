@@ -1,22 +1,3 @@
-"""
-Test Generator Dialog for Intellicrack plugins.
-
-Copyright (C) 2025 Zachary Flint
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 import os
 import subprocess
 import sys
@@ -42,8 +23,32 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from intellicrack.logger import logger
+
 from ...tools.plugin_test_generator import MockDataGenerator, PluginTestGenerator, PluginTestRunner
 from .plugin_dialog_base import PluginDialogBase
+
+"""
+Test Generator Dialog for Intellicrack plugins.
+
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+
+
 
 
 class TestGenerationThread(QThread):
@@ -83,6 +88,7 @@ class TestGenerationThread(QThread):
             self.finished.emit(results)
 
         except Exception as e:
+            logger.error("Exception in test_generator_dialog: %s", e)
             self.error.emit(str(e))
 
 
@@ -362,6 +368,7 @@ class TestGeneratorDialog(PluginDialogBase):
                 self.run_tests()
 
         except Exception as e:
+            logger.error("Exception in test_generator_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to generate tests:\n{str(e)}")
 
     def run_tests(self):
@@ -481,6 +488,7 @@ class TestGeneratorDialog(PluginDialogBase):
                 QMessageBox.information(self, "Saved", f"Tests saved to:\n{file_path}")
 
             except Exception as e:
+                self.logger.error("Exception in test_generator_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to save tests:\n{str(e)}")
 
     def generate_mock_binary(self):
@@ -532,4 +540,5 @@ class TestGeneratorDialog(PluginDialogBase):
                 QMessageBox.information(self, "Saved", f"Mock data saved to:\n{file_path}")
 
             except Exception as e:
+                self.logger.error("Exception in test_generator_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to save mock data:\n{str(e)}")

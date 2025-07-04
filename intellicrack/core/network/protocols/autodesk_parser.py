@@ -28,7 +28,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from ....utils.logger import get_logger
+from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -215,7 +215,8 @@ class AutodeskLicensingParser:
             if body:
                 try:
                     request_data = json.loads(body)
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as e:
+                    logger.error("json.JSONDecodeError in autodesk_parser: %s", e)
                     # Try to parse as form data
                     request_data = self._parse_form_data(body)
 
@@ -356,7 +357,8 @@ class AutodeskLicensingParser:
                 if '=' in pair:
                     key, value = pair.split('=', 1)
                     data[key] = value
-        except (ValueError, AttributeError, Exception):
+        except (ValueError, AttributeError, Exception) as e:
+            self.logger.error("Error in autodesk_parser: %s", e)
             pass
         return data
 

@@ -72,7 +72,8 @@ except ImportError as e:
                     "The Radare2 comprehensive integration module is not available.\n"
                     "Please check that all dependencies are installed."
                 )
-            except ImportError:
+            except ImportError as e:
+                logger.error("Import error in __init__: %s", e)
                 pass
 
             # Try to disable radare2-related UI elements

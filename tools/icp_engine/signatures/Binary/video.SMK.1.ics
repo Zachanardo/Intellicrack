@@ -1,0 +1,14 @@
+// Intellicrack Protection Engine: detection rule file
+// Author: BJNFNE <bjnfne@web.de>
+// This Script supports following formats: SMK
+
+// https://wiki.multimedia.cx/index.php/Smacker
+init("format", "Smacker Video");
+
+function detect() {
+    if (Binary.compare("'SMK2'")) {
+        bDetected = true;
+    }
+
+    return result();
+}

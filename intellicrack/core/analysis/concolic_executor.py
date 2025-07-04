@@ -25,6 +25,8 @@ import re
 import traceback
 from typing import Any, Dict, List, Optional
 
+from intellicrack.logger import logger
+
 # Optional dependencies - graceful fallback if not available
 try:
     from manticore.core.plugin import Plugin
@@ -37,8 +39,9 @@ except ImportError:
         import sys
 
         # Add scripts directory to path
-        import pkg_resources
-        scripts_dir = pkg_resources.resource_filename('intellicrack', 'scripts')
+        import intellicrack
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
+        scripts_dir = os.path.join(base_dir, 'intellicrack', 'scripts')
         if os.path.exists(scripts_dir):
             sys.path.insert(0, scripts_dir)
 
@@ -193,8 +196,8 @@ except ImportError:
                                     self.binary_data[opt_header_offset + 16:opt_header_offset + 20], 'little'
                                 )
                                 return entry_point + 0x400000  # Add image base
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Failed to parse PE entry point: {e}")
                 return 0x401000  # Default PE entry point
 
             def _parse_elf_entry_point(self) -> int:
@@ -207,8 +210,8 @@ except ImportError:
                         else:  # 32-bit
                             entry_point = int.from_bytes(self.binary_data[24:28], 'little')
                         return entry_point
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Failed to parse ELF entry point: {e}")
                 return 0x8048000  # Default ELF entry point
 
             def add_hook(self, address: int, callback) -> None:
@@ -443,7 +446,8 @@ except ImportError:
 try:
     import lief
     LIEF_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in concolic_executor: %s", e)
     LIEF_AVAILABLE = False
 
 
@@ -778,14 +782,14 @@ class ConcolicExecutionEngine:
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error finding license check address: %s", e)
             return None
-    
+
     def analyze(self, binary_path: str, **kwargs) -> Dict[str, Any]:
         """Perform comprehensive concolic execution analysis on a binary.
-        
+
         This method conducts a thorough concolic execution analysis combining
         concrete and symbolic execution to systematically explore program paths,
         discover vulnerabilities, find license checks, and generate test cases.
-        
+
         Args:
             binary_path: Path to the binary file to analyze
             **kwargs: Additional analysis parameters:
@@ -798,7 +802,7 @@ class ConcolicExecutionEngine:
                 - generate_test_cases: Whether to generate test cases (default: True)
                 - symbolic_stdin_size: Size of symbolic stdin (default: 256)
                 - concrete_seed: Initial concrete input seed
-                
+
         Returns:
             Dict containing:
                 - binary: Path to analyzed binary
@@ -813,13 +817,13 @@ class ConcolicExecutionEngine:
         """
         import time
         start_time = time.time()
-        
+
         # Update binary path if provided
         if binary_path:
             self.binary_path = binary_path
-        
+
         self.logger.info(f"Starting concolic execution analysis on {self.binary_path}")
-        
+
         # Extract parameters
         target_functions = kwargs.get('target_functions', [])
         avoid_functions = kwargs.get('avoid_functions', [])
@@ -830,7 +834,7 @@ class ConcolicExecutionEngine:
         generate_test_cases = kwargs.get('generate_test_cases', True)
         symbolic_stdin_size = kwargs.get('symbolic_stdin_size', 256)
         concrete_seed = kwargs.get('concrete_seed', None)
-        
+
         results = {
             'binary': self.binary_path,
             'test_cases': [],
@@ -841,20 +845,21 @@ class ConcolicExecutionEngine:
             'execution_time': 0,
             'constraints': [],
             'interesting_addresses': [],
+            'max_depth': max_depth,
             'error': None
         }
-        
+
         if not self.manticore_available:
             # Use native implementation
             return self._native_analyze(binary_path, **kwargs)
-        
+
         try:
             # Create Manticore instance
             m = Manticore(self.binary_path)
-            
+
             # Set analysis parameters
             m.set_exec_timeout(timeout)
-            
+
             # Track analysis data
             analysis_data = {
                 'covered_blocks': set(),
@@ -865,41 +870,41 @@ class ConcolicExecutionEngine:
                 'constraints': {},
                 'interesting_addresses': set()
             }
-            
+
             # Add comprehensive analysis plugin
             class ComprehensiveAnalysisPlugin(Plugin):
                 """Plugin for comprehensive concolic analysis."""
-                
+
                 def __init__(self, analysis_data):
                     super().__init__()
                     self.analysis_data = analysis_data
                     self.logger = logging.getLogger(__name__)
-                    
+
                 def will_execute_instruction_callback(self, state, pc, insn):
                     """Track execution and detect interesting behaviors."""
                     # Track coverage
                     self.analysis_data['covered_blocks'].add(pc)
-                    
+
                     # Check for vulnerabilities
                     if find_vulnerabilities:
                         vuln = self._check_for_vulnerability(state, pc, insn)
                         if vuln:
                             self.analysis_data['vulnerabilities'].append(vuln)
-                    
+
                     # Check for interesting patterns
                     if hasattr(insn, 'mnemonic'):
                         # System calls
                         if insn.mnemonic in ['syscall', 'int']:
                             self.analysis_data['interesting_addresses'].add(pc)
-                        
+
                         # Function calls
                         elif insn.mnemonic == 'call':
                             self.analysis_data['interesting_addresses'].add(pc)
-                
+
                 def _check_for_vulnerability(self, state, pc, insn):
                     """Check for potential vulnerabilities."""
                     vuln = None
-                    
+
                     # Check for dangerous function calls
                     if hasattr(insn, 'mnemonic') and insn.mnemonic == 'call':
                         # Simplified check - real implementation would resolve call targets
@@ -908,9 +913,9 @@ class ConcolicExecutionEngine:
                             'address': hex(pc),
                             'description': 'Potentially dangerous function call'
                         }
-                    
+
                     return vuln
-                
+
                 def will_fork_state_callback(self, state, expression, solutions, *args, **kwargs):
                     """Track constraints when state forks."""
                     try:
@@ -923,14 +928,14 @@ class ConcolicExecutionEngine:
                         }
                     except Exception as e:
                         self.logger.debug(f"Failed to record constraint: {e}")
-                
+
                 def did_run_callback(self):
                     """Finalize analysis after execution."""
                     self.logger.info(f"Analysis complete. Covered {len(self.analysis_data['covered_blocks'])} blocks")
-            
+
             # Register analysis plugin
             m.register_plugin(ComprehensiveAnalysisPlugin(analysis_data))
-            
+
             # Add hooks for target/avoid functions
             for target in target_functions:
                 if isinstance(target, int):
@@ -938,32 +943,32 @@ class ConcolicExecutionEngine:
                 else:
                     # Try to resolve function name to address
                     self.logger.debug(f"Target function {target} specified but name resolution not implemented")
-            
+
             for avoid in avoid_functions:
                 if isinstance(avoid, int):
                     m.add_hook(avoid, lambda s: s.abandon())
-            
+
             # Set up symbolic input
             if generate_test_cases:
                 # Create symbolic stdin
                 stdin_data = m.make_symbolic_buffer(symbolic_stdin_size)
                 m.input_symbols['stdin'] = stdin_data
-                
+
                 # Apply concrete seed if provided
                 if concrete_seed:
                     if isinstance(concrete_seed, str):
                         concrete_seed = concrete_seed.encode()
                     for i, byte in enumerate(concrete_seed[:symbolic_stdin_size]):
                         m.constrain(stdin_data[i] == byte)
-            
+
             # Run concolic execution
             self.logger.info("Running concolic execution...")
             m.run(procs=4)
-            
+
             # Process results
             all_states = list(m.all_states.values()) if hasattr(m.all_states, 'values') else m.all_states
             results['paths_explored'] = len(all_states)
-            
+
             # Generate test cases from terminated states
             if generate_test_cases:
                 for i, state in enumerate(m.terminated_states[:50]):  # Limit to 50 test cases
@@ -977,58 +982,58 @@ class ConcolicExecutionEngine:
                                 'triggers': [],
                                 'path_length': len(state.trace) if hasattr(state, 'trace') else 0
                             }
-                            
+
                             # Check what this test case triggers
                             if state.cpu.PC in analysis_data['interesting_addresses']:
                                 test_case['triggers'].append('interesting_address')
-                            
+
                             results['test_cases'].append(test_case)
                     except Exception as e:
                         self.logger.debug(f"Failed to generate test case: {e}")
-            
+
             # Calculate coverage
             if analysis_data['covered_blocks']:
                 # Estimate total blocks (simplified)
                 total_blocks_estimate = 1000  # Real implementation would parse binary
                 results['coverage'] = (len(analysis_data['covered_blocks']) / total_blocks_estimate) * 100
-            
+
             # Add vulnerabilities found
             results['vulnerabilities'] = analysis_data['vulnerabilities']
-            
+
             # Add constraints
             results['constraints'] = list(analysis_data['constraints'].values())
-            
+
             # Add interesting addresses
             results['interesting_addresses'] = [hex(addr) for addr in analysis_data['interesting_addresses']]
-            
+
             # Search for license checks if requested
             if find_license_checks:
                 license_results = self.find_license_bypass()
                 results['license_checks'] = license_results
-            
+
             # Calculate execution time
             results['execution_time'] = time.time() - start_time
-            
+
             self.logger.info(f"Concolic analysis completed: {results['paths_explored']} paths explored, "
                            f"{len(results['test_cases'])} test cases generated, "
                            f"{results['coverage']:.2f}% coverage achieved")
-            
+
             return results
-            
+
         except Exception as e:
             self.logger.error(f"Error during concolic analysis: {e}")
             self.logger.debug(traceback.format_exc())
             results['error'] = str(e)
             results['execution_time'] = time.time() - start_time
             return results
-    
+
     def _native_analyze(self, binary_path: str, **kwargs) -> Dict[str, Any]:
         """Native implementation of analyze without Manticore."""
         import time
         start_time = time.time()
-        
+
         self.logger.info(f"Starting native concolic analysis on {binary_path}")
-        
+
         results = {
             'binary': binary_path,
             'test_cases': [],
@@ -1041,21 +1046,21 @@ class ConcolicExecutionEngine:
             'interesting_addresses': [],
             'error': None
         }
-        
+
         try:
             # Use native Manticore implementation
             m = Manticore(binary_path)
             m.set_exec_timeout(kwargs.get('timeout', self.timeout))
-            
+
             # Run native execution
             m.run()
-            
+
             # Process states
             all_states = m.get_all_states()
             terminated_states = m.get_terminated_states()
-            
+
             results['paths_explored'] = len(all_states)
-            
+
             # Generate test cases from execution traces
             for i, state in enumerate(terminated_states[:10]):
                 test_case = {
@@ -1066,7 +1071,7 @@ class ConcolicExecutionEngine:
                     'termination_reason': state.termination_reason if hasattr(state, 'termination_reason') else 'unknown'
                 }
                 results['test_cases'].append(test_case)
-            
+
             # Extract constraints
             for state in all_states[:20]:  # Limit to first 20 states
                 if hasattr(state, 'constraints') and state.constraints:
@@ -1075,7 +1080,7 @@ class ConcolicExecutionEngine:
                         'pc': hex(state.pc),
                         'constraints': state.constraints[:5]  # Limit constraints per state
                     })
-            
+
             # Basic vulnerability detection
             for state in terminated_states:
                 if state.termination_reason == 'segfault':
@@ -1084,26 +1089,26 @@ class ConcolicExecutionEngine:
                         'address': hex(state.pc),
                         'description': 'Program crashed (potential vulnerability)'
                     })
-            
+
             # Calculate coverage (simplified)
             unique_pcs = set()
             for state in all_states:
                 if hasattr(state, 'execution_trace'):
                     for trace_entry in state.execution_trace:
                         unique_pcs.add(trace_entry.get('pc', 0))
-            
+
             results['coverage'] = len(unique_pcs)  # Basic block count as coverage metric
-            
+
             results['execution_time'] = time.time() - start_time
-            
+
             return results
-            
+
         except Exception as e:
             self.logger.error(f"Native analysis failed: {e}")
             results['error'] = str(e)
             results['execution_time'] = time.time() - start_time
             return results
-    
+
     def _target_reached(self, state, analysis_data):
         """Callback when target address is reached."""
         analysis_data['successful_states'].append(state)

@@ -1,22 +1,9 @@
-"""
-Frida Manager Dialog - Advanced GUI Controls for Frida Operations
-
-This dialog provides comprehensive controls for all Frida features including:
-- Process attachment and script management
-- Real-time protection detection and adaptation
-- Performance monitoring and optimization
-- Preset configurations and automated bypass wizard
-"""
-
 import json
 import os
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List
-
-if TYPE_CHECKING:
-    pass
 
 from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtGui import QColor, QFont
@@ -47,14 +34,33 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from intellicrack.logger import logger
+
 from ...core.frida_constants import HookCategory, ProtectionType
 from ..widgets.console_widget import ConsoleWidget
 from ..widgets.syntax_highlighters import JavaScriptHighlighter
 
+"""
+Frida Manager Dialog - Advanced GUI Controls for Frida Operations
+
+This dialog provides comprehensive controls for all Frida features including:
+- Process attachment and script management
+- Real-time protection detection and adaptation
+- Performance monitoring and optimization
+- Preset configurations and automated bypass wizard
+"""
+
+
+if TYPE_CHECKING:
+    pass
+
+
+
 # Import preset configurations
 try:
     from ...core.frida_presets import FRIDA_PRESETS
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in frida_manager_dialog: %s", e)
     FRIDA_PRESETS = {}
 
 
@@ -66,7 +72,11 @@ class ProcessWorker(QThread):
     def run(self):
         """Scan for running processes that can be hooked with Frida."""
         try:
-            import psutil
+            try:
+                import psutil
+            except ImportError:
+                self.error.emit("psutil library not available - cannot scan processes")
+                return
             processes = []
             for proc in psutil.process_iter(['pid', 'name', 'exe']):
                 try:
@@ -77,10 +87,12 @@ class ProcessWorker(QThread):
                             'name': info['name'],
                             'path': info['exe']
                         })
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    self.logger.error("Error in frida_manager_dialog: %s", e)
                     continue
             self.processFound.emit(processes)
         except Exception as e:
+            self.logger.error("Exception in frida_manager_dialog: %s", e)
             self.error.emit(str(e))
 
 
@@ -127,6 +139,7 @@ class FridaWorker(QThread):
                     self.msleep(1000)  # Update every second
 
         except Exception as e:
+            logger.error("Exception in frida_manager_dialog: %s", e)
             self.error.emit(str(e))
 
 
@@ -1093,9 +1106,93 @@ class FridaManagerDialog(QDialog):
 
     def spawn_process(self):
         """Spawn a new process"""
-        # Implementation for spawning process
-        QMessageBox.information(self, "Spawn Process",
-                               "Process spawning not implemented yet")
+        # Get executable path from user
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, 
+            "Select Executable to Spawn", 
+            "", 
+            "Executable Files (*.exe *.elf *.app *.bin);;All Files (*.*)"
+        )
+        
+        if not file_path:
+            return
+            
+        # Get command line arguments if needed
+        args, ok = QInputDialog.getText(
+            self,
+            "Command Line Arguments",
+            "Enter command line arguments (optional):",
+            QLineEdit.Normal,
+            ""
+        )
+        
+        if not ok:
+            return
+            
+        try:
+            # Get selected device
+            device_item = self.device_list.currentItem()
+            if not device_item:
+                QMessageBox.warning(self, "No Device", "Please select a device first")
+                return
+                
+            device_id = device_item.data(1)
+            device = frida.get_device(device_id) if device_id != 'local' else frida.get_local_device()
+            
+            # Prepare spawn options
+            spawn_options = {}
+            
+            # Parse arguments if provided
+            if args.strip():
+                import shlex
+                spawn_options['argv'] = [file_path] + shlex.split(args)
+            else:
+                spawn_options['argv'] = [file_path]
+                
+            # Set environment variables for exploitation
+            spawn_options['env'] = {
+                'LD_PRELOAD': '',  # Clear preload to avoid detection
+                'DYLD_INSERT_LIBRARIES': '',  # Clear for macOS
+                'FRIDA_ENABLED': '1'  # Custom env var
+            }
+            
+            # Spawn with suspend flag to attach before execution
+            self.console_text.append(f"Spawning process: {file_path}")
+            pid = device.spawn(file_path, **spawn_options)
+            
+            # Attach to spawned process
+            self.current_session = device.attach(pid)
+            self.current_pid = pid
+            
+            # Set up message handler
+            self.current_session.on('detached', self._on_detached)
+            
+            # Update UI
+            self.attach_btn.setEnabled(False)
+            self.spawn_btn.setEnabled(False)
+            self.detach_btn.setEnabled(True)
+            self.suspend_btn.setEnabled(True)
+            self.resume_btn.setEnabled(False)
+            self.load_script_btn.setEnabled(True)
+            
+            self.status_label.setText(f"Spawned and attached to PID: {pid}")
+            self.console_text.append(f"Process spawned with PID: {pid}")
+            self.console_text.append("Process is suspended. Use 'Resume' to start execution.")
+            
+            # Add to process list
+            self.refresh_processes()
+            
+            # Auto-select the spawned process
+            for i in range(self.process_list.count()):
+                item = self.process_list.item(i)
+                if int(item.data(1)) == pid:
+                    self.process_list.setCurrentItem(item)
+                    break
+                    
+        except Exception as e:
+            error_msg = f"Failed to spawn process: {str(e)}"
+            self.console_text.append(f"Error: {error_msg}")
+            QMessageBox.critical(self, "Spawn Error", error_msg)
 
     def suspend_process(self):
         """Suspend the attached process"""
@@ -1147,6 +1244,7 @@ class FridaManagerDialog(QDialog):
 
         try:
             import shutil
+
             # Ask if should overwrite if exists
             if dest_path.exists():
                 reply = QMessageBox.question(
@@ -1175,6 +1273,7 @@ class FridaManagerDialog(QDialog):
             self.preview_script(dest_path)
 
         except Exception as e:
+            logger.error("Exception in frida_manager_dialog: %s", e)
             QMessageBox.critical(
                 self,
                 "Error",
@@ -1206,6 +1305,7 @@ class FridaManagerDialog(QDialog):
             JavaScriptHighlighter(content_edit.document())
 
         except Exception as e:
+            logger.error("Exception in frida_manager_dialog: %s", e)
             content_edit.setPlainText(f"Error reading script: {str(e)}")
 
         layout.addWidget(QLabel(f"Location: {script_path}"))
@@ -1236,6 +1336,7 @@ class FridaManagerDialog(QDialog):
             else:
                 os.system(f"xdg-open '{script_path}'")
         except Exception as e:
+            self.logger.error("Exception in frida_manager_dialog: %s", e)
             QMessageBox.warning(
                 self,
                 "Error",
@@ -1352,6 +1453,7 @@ class FridaManagerDialog(QDialog):
                     f"[SUCCESS] Deleted script: {script_path.name}"
                 )
             except Exception as e:
+                self.logger.error("Exception in frida_manager_dialog: %s", e)
                 QMessageBox.critical(
                     self,
                     "Error",
@@ -1384,6 +1486,7 @@ class FridaManagerDialog(QDialog):
             self.edit_script(new_path)
 
         except Exception as e:
+            logger.error("Exception in frida_manager_dialog: %s", e)
             QMessageBox.critical(
                 self,
                 "Error",
@@ -1471,7 +1574,8 @@ class FridaManagerDialog(QDialog):
                     f"Active: {self.hooks_tree.topLevelItemCount()}"
                 )
 
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in frida_manager_dialog: %s", e)
             # Silently handle stats update errors
             pass
 
@@ -1606,6 +1710,7 @@ class FridaManagerDialog(QDialog):
                 self.status_label.setText(f"Configuration saved: {file_path}")
 
         except json.JSONDecodeError as e:
+            logger.error("json.JSONDecodeError in frida_manager_dialog: %s", e)
             QMessageBox.error(self, "Invalid JSON",
                              f"Invalid configuration format: {e}")
 
@@ -1624,6 +1729,7 @@ class FridaManagerDialog(QDialog):
                 self.status_label.setText(f"Configuration loaded: {file_path}")
 
             except Exception as e:
+                self.logger.error("Exception in frida_manager_dialog: %s", e)
                 QMessageBox.error(self, "Load Error",
                                  f"Failed to load configuration: {e}")
 
@@ -1650,6 +1756,7 @@ class FridaManagerDialog(QDialog):
             QMessageBox.information(self, "Export Complete",
                                    f"Logs exported to: {export_dir}")
         except Exception as e:
+            self.logger.error("Exception in frida_manager_dialog: %s", e)
             QMessageBox.error(self, "Export Error",
                              f"Failed to export logs: {e}")
 
@@ -1660,6 +1767,7 @@ class FridaManagerDialog(QDialog):
             QMessageBox.information(self, "Export Complete",
                                    f"Analysis exported to: {export_dir}")
         except Exception as e:
+            self.logger.error("Exception in frida_manager_dialog: %s", e)
             QMessageBox.error(self, "Export Error",
                              f"Failed to export analysis: {e}")
 
@@ -1861,6 +1969,7 @@ class FridaManagerDialog(QDialog):
                 QMessageBox.critical(self, "AI Generation Failed", error_msg)
 
         except Exception as e:
+            logger.error("Exception in frida_manager_dialog: %s", e)
             self.ai_status.setText(f"❌ Error: {str(e)}")
             self.log_console.append_output(f"[AI ERROR] {str(e)}")
             QMessageBox.critical(self, "Error", f"AI script generation failed: {str(e)}")
@@ -1903,6 +2012,7 @@ class FridaManagerDialog(QDialog):
             self.log_console.append_output(f"[AI] Completed analysis of {os.path.basename(binary_path)}")
 
         except Exception as e:
+            logger.error("Exception in frida_manager_dialog: %s", e)
             self.ai_status.setText(f"❌ Analysis failed: {str(e)}")
             self.log_console.append_output(f"[AI ERROR] Analysis failed: {str(e)}")
 
@@ -2000,22 +2110,46 @@ class FridaManagerDialog(QDialog):
         preview_dialog.exec_()
 
     def deploy_ai_script(self):
-        """Deploy generated AI scripts."""
+        """Deploy generated AI scripts with optional QEMU testing."""
         if not self.ai_generated_scripts:
             QMessageBox.information(self, "Info", "No scripts to deploy.")
             return
 
         try:
+            # Initialize ScriptExecutionManager if not already done
+            if not hasattr(self, 'script_execution_manager'):
+                from ...core.execution import ScriptExecutionManager
+                self.script_execution_manager = ScriptExecutionManager(self)
+
             deployed_count = 0
             for script in self.ai_generated_scripts:
                 if hasattr(script, 'metadata') and "frida" in script.metadata.script_type.value.lower():
-                    # Deploy Frida script
                     script_content = script.content if hasattr(script, 'content') else str(script)
-                    # Add to loaded scripts list
-                    item = QListWidgetItem(f"AI Generated: {script.metadata.target_binary}")
-                    item.setData(Qt.UserRole, script_content)
-                    self.loaded_scripts_list.addItem(item)
-                    deployed_count += 1
+                    target_binary = getattr(script.metadata, 'target_binary', self.selected_process.get('path', '') if self.selected_process else '')
+                    
+                    # Execute through ScriptExecutionManager for QEMU testing option
+                    result = self.script_execution_manager.execute_script(
+                        script_type='frida',
+                        script_content=script_content,
+                        target_binary=target_binary,
+                        options={
+                            'session_id': self.current_session,
+                            'ai_generated': True
+                        }
+                    )
+                    
+                    if result.get('success'):
+                        # Add to loaded scripts list
+                        item = QListWidgetItem(f"AI Generated: {script.metadata.target_binary}")
+                        item.setData(Qt.UserRole, script_content)
+                        self.loaded_scripts_list.addItem(item)
+                        deployed_count += 1
+                    elif result.get('cancelled'):
+                        self.log_console.append_output("[AI] Script deployment cancelled by user")
+                        break
+                    else:
+                        error_msg = result.get('error', 'Unknown error')
+                        self.log_console.append_output(f"[AI ERROR] Failed to deploy script: {error_msg}")
 
             if deployed_count > 0:
                 self.ai_status.setText(f"✅ Deployed {deployed_count} scripts!")
@@ -2025,6 +2159,7 @@ class FridaManagerDialog(QDialog):
                 QMessageBox.information(self, "Info", "No deployable Frida scripts found.")
 
         except Exception as e:
+            logger.error("Exception in frida_manager_dialog: %s", e)
             self.ai_status.setText(f"❌ Deployment failed: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to deploy scripts: {str(e)}")
 
@@ -2055,6 +2190,7 @@ class FridaManagerDialog(QDialog):
                     saved_count += 1
                     self.log_console.append_output(f"[AI] Saved script: {saved_path}")
                 except Exception as e:
+                    logger.error("Exception in frida_manager_dialog: %s", e)
                     self.log_console.append_output(f"[AI ERROR] Failed to save script: {e}")
 
             if saved_count > 0:
@@ -2068,6 +2204,7 @@ class FridaManagerDialog(QDialog):
                 QMessageBox.warning(self, "Warning", "No scripts were saved.")
 
         except Exception as e:
+            logger.error("Exception in frida_manager_dialog: %s", e)
             self.ai_status.setText(f"❌ Save failed: {str(e)}")
             QMessageBox.critical(self, "Error", f"Failed to save scripts: {str(e)}")
 

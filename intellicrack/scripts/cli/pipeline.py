@@ -26,7 +26,6 @@ Enables Unix-style command chaining and data flow between operations
 """
 
 import argparse
-import io
 import json
 import os
 import sys
@@ -35,13 +34,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
 from rich import box
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.table import Table
+
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 
 
 @dataclass
@@ -326,10 +326,11 @@ class TransformStage(PipelineStage):
                     table.add_row(*[str(item.get(k, "")) for k in content[0].keys()])
 
         # Render table to string
-        string_output = io.StringIO()
-        console = Console(file=string_output)
+        import io
+        string_io = io.StringIO()
+        console = Console(file=string_io)
         console.print(table)
-        return string_output.getvalue()
+        return string_io.getvalue()
 
     def _create_summary(self, content: Any) -> str:
         """Create a summary of the content"""
@@ -437,7 +438,7 @@ class Pipeline:
         return data
 
 
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-statements
 def parse_pipeline_command(command: str) -> Pipeline:
     """Parse a pipeline command string"""
     # Validate command string
@@ -519,7 +520,7 @@ def parse_pipeline_command(command: str) -> Pipeline:
     return pipeline
 
 
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-statements
 def main():
     """CLI entry point for pipeline operations"""
     parser = argparse.ArgumentParser(
@@ -610,6 +611,12 @@ Examples:
 
     if args.verbose:
         console.print("\n[bold green]Pipeline completed![/bold green]")
+        if result:
+            console.print(f"[dim]Result type: {type(result).__name__}[/dim]")
+
+
+# Alias for easier importing
+PipelineProcessor = Pipeline
 
 
 if __name__ == "__main__":

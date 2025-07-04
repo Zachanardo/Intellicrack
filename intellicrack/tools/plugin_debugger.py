@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Advanced Plugin Debugger with Breakpoint Support for Intellicrack.
 
@@ -76,6 +78,7 @@ class PluginDebugger:
     """Advanced debugger for Intellicrack plugins"""
 
     def __init__(self):
+        self.logger = logger  # Use the imported logger from line 1
         self.breakpoints: Dict[int, Breakpoint] = {}
         self.next_breakpoint_id = 1
         self.state = DebuggerState.IDLE
@@ -179,6 +182,7 @@ class PluginDebugger:
                 self.output_queue.put(('result', result))
 
         except Exception as e:
+            logger.error("Exception in plugin_debugger: %s", e)
             if self.exception_breakpoint:
                 self._handle_exception(e)
             else:
@@ -197,7 +201,7 @@ class PluginDebugger:
             command = self.command_queue.get_nowait()
             self._handle_command(command)
         except queue.Empty:
-            pass
+            logger.debug("No commands in queue")
 
         # Handle different events
         if event == 'line':
@@ -249,8 +253,8 @@ class PluginDebugger:
                             bp.hit_count += 1
                             self._pause_at_breakpoint(frame, bp)
                             break
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.debug("Failed to evaluate breakpoint condition: %s", e)
 
         # Handle stepping
         if self.state == DebuggerState.STEPPING:
@@ -411,6 +415,7 @@ class PluginDebugger:
                 command = self.command_queue.get(timeout=0.1)
                 self._handle_command(command)
             except queue.Empty:
+                logger.debug("No commands in queue during pause")
                 continue
 
     def _handle_command(self, command: Dict[str, Any]):
@@ -506,6 +511,7 @@ class PluginDebugger:
                 value = eval(expr, self.current_frame.f_globals, self.current_frame.f_locals)
                 watched_values[expr] = self._serialize_value(value)
             except Exception as e:
+                self.logger.error("Exception in plugin_debugger: %s", e)
                 watched_values[expr] = f"<error: {str(e)}>"
 
         self.output_queue.put(('watches', watched_values))
@@ -526,6 +532,7 @@ class PluginDebugger:
                 'value': self._serialize_value(result)
             }))
         except Exception as e:
+            self.logger.error("Exception in plugin_debugger: %s", e)
             self.output_queue.put(('eval_result', {
                 'expression': expression,
                 'error': str(e)
@@ -555,6 +562,7 @@ class PluginDebugger:
             self._update_watched_variables()
 
         except Exception as e:
+            logger.error("Exception in plugin_debugger: %s", e)
             self.output_queue.put(('error', f"Failed to set variable: {str(e)}"))
 
     def _add_watch(self, expression: str):

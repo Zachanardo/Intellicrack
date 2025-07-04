@@ -3,12 +3,12 @@
 Standalone network analysis functionality test
 """
 
-import os
 import logging
-import time
+import os
 import tempfile
 import threading
-from typing import Dict, Optional, Any
+import time
+from typing import Any, Dict, Optional
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

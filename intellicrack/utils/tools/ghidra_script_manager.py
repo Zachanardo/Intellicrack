@@ -30,7 +30,7 @@ import shutil
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-import pkg_resources
+from ..resource_helper import get_resource_path
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +145,7 @@ class GhidraScript:
             self.is_valid = len(self.validation_errors) == 0
 
         except Exception as e:
+            logger.error("Exception in ghidra_script_manager: %s", e)
             self.validation_errors.append(f"Failed to validate: {e}")
             self.is_valid = False
 
@@ -173,7 +174,7 @@ class GhidraScriptManager:
 
     # Centralized script directory
     DEFAULT_SCRIPT_DIRS = [
-        pkg_resources.resource_filename('intellicrack', 'plugins/ghidra_scripts')
+        get_resource_path('plugins/ghidra_scripts')
     ]
 
     # Script metadata cache file
@@ -203,7 +204,7 @@ class GhidraScriptManager:
     def _create_default_directories(self):
         """Create default script directories if they don't exist."""
         # Create main directory and subdirectories
-        base_dir = pkg_resources.resource_filename('intellicrack', 'plugins/ghidra_scripts')
+        base_dir = get_resource_path('plugins/ghidra_scripts')
         subdirs = ["default", "user", "examples", "community"]
 
         # Create base directory
@@ -331,6 +332,7 @@ class GhidraScriptManager:
             script = GhidraScript(script_path)
             return script.is_valid, script.validation_errors
         except Exception as e:
+            logger.error("Exception in ghidra_script_manager: %s", e)
             return False, [str(e)]
 
     def copy_script_for_execution(self, script: GhidraScript, destination_dir: str) -> str:
@@ -399,7 +401,7 @@ class GhidraScriptManager:
         Returns:
             GhidraScript object if successful
         """
-        base_dir = pkg_resources.resource_filename('intellicrack', 'plugins/ghidra_scripts')
+        base_dir = get_resource_path('plugins/ghidra_scripts')
         user_dir = os.path.join(base_dir, "user")
         os.makedirs(user_dir, exist_ok=True)
 

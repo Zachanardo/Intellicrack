@@ -1,3 +1,18 @@
+import base64
+import datetime
+import io
+import logging
+import os
+import platform
+import subprocess
+import traceback
+from typing import Any, Dict, List, Optional
+
+from intellicrack.logger import logger
+
+from ...utils.core.common_imports import MATPLOTLIB_AVAILABLE, PDFKIT_AVAILABLE, pdfkit, plt
+from ...utils.core.import_patterns import PEFILE_AVAILABLE, pefile
+
 """
 PDF Report Generator for comprehensive analysis findings.
 
@@ -27,17 +42,6 @@ This module provides professional PDF report generation with detailed analysis r
 including visualizations, code snippets, and recommendations.
 """
 
-import base64
-import datetime
-import io
-import logging
-import os
-import platform
-import subprocess
-import traceback
-from typing import Any, Dict, List, Optional
-
-import pkg_resources
 
 try:
     from reportlab.lib.pagesizes import A4, legal, letter
@@ -53,19 +57,19 @@ try:
         TableStyle,
     )
     REPORTLAB_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in pdf_generator: %s", e)
     REPORTLAB_AVAILABLE = False
 
 # Import matplotlib and pdfkit from common imports
-from ...utils.core.common_imports import MATPLOTLIB_AVAILABLE, PDFKIT_AVAILABLE, pdfkit, plt
 
 # Import common patterns from centralized module
-from ...utils.core.import_patterns import PEFILE_AVAILABLE, pefile
 
 try:
     from PyQt5.QtWidgets import QInputDialog, QMessageBox
     PYQT_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in pdf_generator: %s", e)
     PYQT_AVAILABLE = False
 
 
@@ -105,12 +109,14 @@ class PDFReportGenerator:
         self.title = "Intellicrack Security Analysis Report"
         self.author = "Intellicrack Security Team"
         self.company = "Intellicrack Security"
-        self.logo_path = pkg_resources.resource_filename('intellicrack', 'assets/icon.ico')
+        import intellicrack
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
+        self.logo_path = os.path.join(base_path, 'intellicrack', 'assets', 'icon.ico')
 
         # Default configuration
         self.report_config = {
             "company_name": "Intellicrack Security",
-            "logo_path": pkg_resources.resource_filename('intellicrack', 'assets/icon.ico'),
+            "logo_path": self.logo_path,
             "include_timestamps": True,
             "include_charts": True,
             "include_code_snippets": True,
@@ -243,7 +249,8 @@ class PDFReportGenerator:
         try:
             try:
                 from reportlab.lib import colors
-            except ImportError:
+            except ImportError as e:
+                self.logger.error("Import error in pdf_generator: %s", e)
                 # Fallback when reportlab is not available
                 return None
 
@@ -304,13 +311,18 @@ class PDFReportGenerator:
 
             # Build content
             content = []
+            
+            # Function to add page breaks between major sections
+            def add_section_break():
+                """Add a page break for new sections."""
+                content.append(PageBreak())
 
             # Title
             binary_name = os.path.basename(binary_path) if binary_path else "Unknown Binary"
             content.append(Paragraph("Intellicrack Analysis Report", styles['Title']))
             content.append(Paragraph(f"Binary: {binary_name}", styles['Normal']))
             content.append(Paragraph(f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
-            content.append(Spacer(1, 12))
+            content.append(Spacer(1, 0.2 * inch))  # Use inch for spacing
 
             # Add binary info if available from app
             binary_info = None
@@ -369,6 +381,9 @@ class PDFReportGenerator:
 
             # Add PE section analysis and visualization
             if self.report_config.get("include_charts", True) and binary_path:
+                add_section_break()  # New page for PE analysis
+                content.append(Paragraph("PE Section Analysis", styles['Heading2']))
+                content.append(Spacer(1, 0.1 * inch))
                 self._add_pe_section_analysis(binary_path, content, styles, colors)
 
             # Add visualization if matplotlib is available
@@ -467,8 +482,8 @@ class PDFReportGenerator:
         try:
             from reportlab.graphics.charts.barcharts import VerticalBarChart
             from reportlab.graphics.shapes import Drawing
-            from reportlab.lib.units import inch  # pylint: disable=redefined-outer-name
-            from reportlab.platypus import Spacer  # pylint: disable=redefined-outer-name
+            # inch is already imported at module level
+            # Spacer is already imported at module level
 
             # Initialize data structures
             section_names = []
@@ -541,7 +556,8 @@ class PDFReportGenerator:
                         chart.legend.columnMaximum = 1
                         chart.legend.fontName = 'Helvetica'
                         chart.legend.fontSize = 8
-                except AttributeError:
+                except AttributeError as e:
+                    logger.error("Attribute error in pdf_generator: %s", e)
                     pass
             chart.categoryAxis.labels.angle = 30
             chart.categoryAxis.labels.fontSize = 8
@@ -941,7 +957,8 @@ class PDFReportGenerator:
                        for keyword in license_keywords):
                     summary['license_checks'] += 1
 
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in pdf_generator: %s", e)
             pass
 
         return summary
@@ -1076,6 +1093,7 @@ def run_report_generation(app: Any) -> None:
 
                 app.update_output.emit(f"[Report] Opened report: {report_path}")
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in pdf_generator: %s", e)
                 app.update_output.emit(f"[Report] Error opening report: {e}")
     else:
         app.update_output.emit("[Report] Failed to generate report")

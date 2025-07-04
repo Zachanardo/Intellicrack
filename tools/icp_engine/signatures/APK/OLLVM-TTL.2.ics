@@ -1,0 +1,16 @@
+// Intellicrack Protection Engine: detection rule file
+
+// Author: DosX
+// E-Mail: collab@kay-software.ru
+// GitHub: https://github.com/DosX-dev
+// Telegram: @DosX_dev
+
+init("protector", "OLLVM-TLL");
+
+function detect() {
+    bDetected =
+        APK.isArchiveRecordPresent("lib/armeabi-v7a/libmtprotect.so") ||
+        APK.isArchiveRecordPresent("lib/x86/libmtprotect.so");
+
+    return result();
+}

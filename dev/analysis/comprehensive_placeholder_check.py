@@ -4,10 +4,11 @@ Comprehensive Placeholder Code Detection Script
 Finds ALL placeholder, stub, or simulated code in the Intellicrack project.
 """
 
+import ast
 import os
 import re
-import ast
-from typing import List, Dict
+from typing import Dict, List
+
 
 class PlaceholderDetector:
     def __init__(self):
@@ -121,7 +122,8 @@ class PlaceholderDetector:
                                     'category': category,
                                     'pattern': pattern
                                 })
-                                self.stats[category] = self.stats.get(category, 0) + 1
+                                self.stats[category] = self.stats.get(
+                                    category, 0) + 1
                                 self.stats['total_issues'] += 1
 
             # Additional AST-based analysis for function bodies
@@ -190,8 +192,9 @@ class PlaceholderDetector:
                     elif isinstance(node.body[0], ast.Return):
                         ret_node = node.body[0]
                         if ret_node.value is None or (
-                            isinstance(ret_node.value, ast.Constant) and 
-                            ret_node.value.value in [None, [], {}, "", 0, False, True]
+                            isinstance(ret_node.value, ast.Constant) and
+                            ret_node.value.value in [
+                                None, [], {}, "", 0, False, True]
                         ):
                             issues.append({
                                 'file': filepath,
@@ -215,7 +218,8 @@ class PlaceholderDetector:
 
         for root, dirs, files in os.walk(directory):
             # Skip certain directories
-            skip_dirs = {'venv', '__pycache__', '.git', 'tools', 'examples', 'tests'}
+            skip_dirs = {'venv', '__pycache__',
+                         '.git', 'tools', 'examples', 'tests'}
             dirs[:] = [d for d in dirs if d not in skip_dirs]
 
             for file in files:
@@ -253,7 +257,8 @@ class PlaceholderDetector:
             issues_by_file[file_path].append(issue)
 
         # Sort files by number of issues (most problematic first)
-        sorted_files = sorted(issues_by_file.items(), key=lambda x: len(x[1]), reverse=True)
+        sorted_files = sorted(issues_by_file.items(),
+                              key=lambda x: len(x[1]), reverse=True)
 
         report.append("DETAILED FINDINGS:")
         report.append("=" * 60)
@@ -272,11 +277,14 @@ class PlaceholderDetector:
                 issues_by_category[cat].append(issue)
 
             for category, cat_issues in sorted(issues_by_category.items()):
-                report.append(f"\n  🔸 {category.replace('_', ' ').title()} ({len(cat_issues)} instances):")
+                report.append(
+                    f"\n  🔸 {category.replace('_', ' ').title()} ({len(cat_issues)} instances):")
                 for issue in cat_issues[:10]:  # Show first 10 per category
-                    report.append(f"    Line {issue['line']:4d}: {issue['content'][:80]}")
+                    report.append(
+                        f"    Line {issue['line']:4d}: {issue['content'][:80]}")
                 if len(cat_issues) > 10:
-                    report.append(f"    ... and {len(cat_issues) - 10} more instances")
+                    report.append(
+                        f"    ... and {len(cat_issues) - 10} more instances")
 
         # Summary of most problematic files
         report.append("\n" + "=" * 60)
@@ -286,10 +294,12 @@ class PlaceholderDetector:
         for i, (file_path, file_issues) in enumerate(sorted_files[:20], 1):
             relative_path = file_path.replace('/mnt/c/Intellicrack/', '')
             categories = set(issue['category'] for issue in file_issues)
-            report.append(f"{i:2d}. {relative_path} ({len(file_issues)} issues)")
+            report.append(
+                f"{i:2d}. {relative_path} ({len(file_issues)} issues)")
             report.append(f"    Categories: {', '.join(sorted(categories))}")
 
         return "\n".join(report)
+
 
 def main():
     """Main function to run comprehensive placeholder detection."""
@@ -299,7 +309,7 @@ def main():
     print("This will scan ALL Python files in the Intellicrack project.")
     print("Looking for:")
     print("  - Empty function bodies")
-    print("  - TODO/FIXME comments") 
+    print("  - TODO/FIXME comments")
     print("  - NotImplementedError raises")
     print("  - Hardcoded/mock return values")
     print("  - Placeholder strings")
@@ -324,7 +334,8 @@ def main():
         f.write(report)
 
     print("✅ Scan complete!")
-    print(f"📊 Found {detector.stats['total_issues']} potential issues across {detector.stats['files_scanned']} files")
+    print(
+        f"📊 Found {detector.stats['total_issues']} potential issues across {detector.stats['files_scanned']} files")
     print(f"📄 Full report saved to: {report_file}")
 
     # Print summary to console
@@ -341,9 +352,11 @@ def main():
         issues_by_file[file_path] += 1
 
     # Show top 10 most problematic files
-    sorted_files = sorted(issues_by_file.items(), key=lambda x: x[1], reverse=True)
+    sorted_files = sorted(issues_by_file.items(),
+                          key=lambda x: x[1], reverse=True)
     for i, (file_path, count) in enumerate(sorted_files[:10], 1):
         print(f"{i:2d}. {file_path}: {count} issues")
+
 
 if __name__ == "__main__":
     main()

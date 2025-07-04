@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Menu Utilities
 
@@ -6,7 +8,8 @@ Common functionality for menu operations to eliminate code duplication.
 
 try:
     from PyQt6.QtWidgets import QMenu, QMenuBar
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in menu_utils: %s", e)
     from PyQt5.QtWidgets import QMenu, QMenuBar
 
 

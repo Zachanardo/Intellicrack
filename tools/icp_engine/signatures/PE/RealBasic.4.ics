@@ -1,0 +1,22 @@
+// Intellicrack Protection Engine: detection rule file
+// Author: sendersu
+// If errors pls contact sendersu on cracklab.team
+
+init("compiler", "REALbasic (by Xojo.com)");
+
+function detect() {
+    if (PE.isOverlayPresent()) {
+        var nOffset = PE.getOverlayOffset(),
+            nSize = PE.getOverlaySize();
+
+        if (PE.isResourceGroupNamePresent("PICKLE") !== 0 &&
+            PE.findString(nOffset, nSize, "REALbasic.Point") !== -1 &&
+            PE.findString(nOffset, nSize, "Xojo.Introspection") !== -1) {
+            bDetected = true;
+        }
+    }
+
+    _setLang("Basic", bDetected);
+
+    return result();
+}

@@ -26,15 +26,16 @@ import os
 from collections import OrderedDict
 from typing import Optional
 
+logger = logging.getLogger('Intellicrack.HexView')
+
 # Import large file handler for optimization
 try:
     from .large_file_handler import LargeFileHandler, MemoryConfig, MemoryStrategy
     LARGE_FILE_SUPPORT = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in file_handler: %s", e)
     LARGE_FILE_SUPPORT = False
     LargeFileHandler = None
-
-logger = logging.getLogger('Intellicrack.HexView')
 
 class LRUCache:
     """A simple Least Recently Used (LRU) cache implementation."""

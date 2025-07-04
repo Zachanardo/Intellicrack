@@ -1,3 +1,4 @@
+
 """
 Specialized Prompts for AI Script Generation
 
@@ -19,6 +20,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 from enum import Enum
 from typing import Any, Dict, List
 
@@ -41,6 +43,7 @@ class ScriptGenerationPrompts:
     """
 
     def __init__(self):
+        self.logger = logging.getLogger(__name__ + ".ScriptGenerationPrompts")
         self.prompts = self._initialize_prompts()
 
     def _initialize_prompts(self) -> Dict[PromptType, Dict[str, str]]:
@@ -343,8 +346,11 @@ Return validation results in structured JSON format."""
         # Format user template if provided
         if "user_template" in prompt_data and kwargs:
             try:
-                prompt_data["user_template"] = prompt_data["user_template"].format(**kwargs)
-            except KeyError:
+                prompt_data["user_template"] = prompt_data["user_template"].format(
+                    **kwargs)
+            except KeyError as e:
+                self.logger.error(
+                    "Key error in script_generation_prompts: %s", e)
                 # If a required key is missing, return the template with placeholders
                 # This allows the caller to see what keys are needed
                 pass
@@ -362,7 +368,7 @@ Return validation results in structured JSON format."""
         return self.get_prompt(prompt_type, **kwargs)
 
     def build_context_data(self, binary_analysis: Dict[str, Any],
-                          protection_types: List[str] = None) -> Dict[str, str]:
+                           protection_types: List[str] = None) -> Dict[str, str]:
         """Build context data for prompt formatting."""
         context = {
             "binary_name": binary_analysis.get("binary_info", {}).get("name", "unknown"),
@@ -374,14 +380,15 @@ Return validation results in structured JSON format."""
             "key_functions": ", ".join([f["name"] for f in binary_analysis.get("functions", [])[:10]]),
             "imports": ", ".join(binary_analysis.get("imports", [])[:15]),
             "license_strings": ", ".join([s for s in binary_analysis.get("strings", [])
-                                        if any(keyword in s.lower() for keyword in
-                                              ["license", "trial", "demo", "expire"])]),
+                                          if any(keyword in s.lower() for keyword in
+                                                 ["license", "trial", "demo", "expire"])]),
             "analysis_summary": self._summarize_analysis(binary_analysis),
             "functionality_requirements": self._build_functionality_requirements(protection_types or []),
-            "key_addresses": ", ".join(["0x401000", "0x401200", "0x401400"]),  # Example addresses
+            # Example addresses
+            "key_addresses": ", ".join(["0x401000", "0x401200", "0x401400"]),
             "protection_functions": ", ".join([f["name"] for f in binary_analysis.get("functions", [])
-                                             if "license" in f.get("name", "").lower() or
-                                             "check" in f.get("name", "").lower()]),
+                                               if "license" in f.get("name", "").lower() or
+                                               "check" in f.get("name", "").lower()]),
             "patching_objectives": self._build_patching_objectives(protection_types or [])
         }
 
@@ -408,12 +415,16 @@ Return validation results in structured JSON format."""
 
         for ptype in protection_types:
             if "license" in ptype.lower():
-                requirements.append("- Hook license validation functions and force success")
-                requirements.append("- Monitor registry/file access for license storage")
+                requirements.append(
+                    "- Hook license validation functions and force success")
+                requirements.append(
+                    "- Monitor registry/file access for license storage")
                 requirements.append("- Bypass string comparison checks")
             elif "trial" in ptype.lower() or "time" in ptype.lower():
-                requirements.append("- Hook time-related functions (GetSystemTime, etc.)")
-                requirements.append("- Manipulate time values to prevent expiration")
+                requirements.append(
+                    "- Hook time-related functions (GetSystemTime, etc.)")
+                requirements.append(
+                    "- Manipulate time values to prevent expiration")
                 requirements.append("- Monitor trial timer mechanisms")
             elif "network" in ptype.lower():
                 requirements.append("- Intercept network validation calls")
@@ -421,8 +432,10 @@ Return validation results in structured JSON format."""
                 requirements.append("- Block outbound license verification")
             elif "debug" in ptype.lower():
                 requirements.append("- Bypass debugger detection mechanisms")
-                requirements.append("- Hook IsDebuggerPresent and related functions")
-                requirements.append("- Manipulate PEB flags and debug registers")
+                requirements.append(
+                    "- Hook IsDebuggerPresent and related functions")
+                requirements.append(
+                    "- Manipulate PEB flags and debug registers")
 
         if not requirements:
             requirements = [
@@ -439,13 +452,17 @@ Return validation results in structured JSON format."""
 
         for ptype in protection_types:
             if "license" in ptype.lower():
-                objectives.append("- Patch license check jumps to always succeed")
-                objectives.append("- Modify string comparisons to return equal")
-                objectives.append("- Replace license validation with NOP instructions")
+                objectives.append(
+                    "- Patch license check jumps to always succeed")
+                objectives.append(
+                    "- Modify string comparisons to return equal")
+                objectives.append(
+                    "- Replace license validation with NOP instructions")
             elif "trial" in ptype.lower():
                 objectives.append("- Patch time check comparisons")
                 objectives.append("- Modify trial expiration logic")
-                objectives.append("- Replace time-based jumps with unconditional success")
+                objectives.append(
+                    "- Replace time-based jumps with unconditional success")
             elif "network" in ptype.lower():
                 objectives.append("- Patch network calls to return success")
                 objectives.append("- Modify validation responses")

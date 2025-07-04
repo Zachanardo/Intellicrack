@@ -1,3 +1,11 @@
+import logging
+import os
+import time
+
+from intellicrack.logger import logger
+
+from ...utils.secrets_manager import get_secret
+
 """
 LLM Configuration Dialog for Intellicrack
 
@@ -20,9 +28,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import logging
-import os
-import time
+
 
 try:
     from PyQt5.QtCore import Qt, QThread, pyqtSignal
@@ -49,7 +55,8 @@ try:
         QVBoxLayout,
         QWidget,
     )
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in llm_config_dialog: %s", e)
     # Fallback for environments without PyQt5
     QDialog = object
     QThread = object
@@ -62,14 +69,23 @@ try:
         LLMManager,
         create_anthropic_config,
         create_gguf_config,
+        create_gptq_config,
+        create_huggingface_local_config,
         create_ollama_config,
+        create_onnx_config,
         create_openai_config,
+        create_pytorch_config,
+        create_safetensors_config,
+        create_tensorflow_config,
         get_llm_manager,
     )
+    from ...ai.llm_config_manager import get_llm_config_manager
     from ...utils.logger import get_logger
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in llm_config_dialog: %s", e)
     LLMManager = None
     get_llm_manager = None
+    get_llm_config_manager = None
 
 
 logger = get_logger(__name__) if 'get_logger' in globals() else logging.getLogger(__name__)
@@ -122,6 +138,7 @@ class ModelTestThread(QThread):
                 self.test_complete.emit(False, "Failed to initialize model backend")
 
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in llm_config_dialog: %s", e)
             self.test_complete.emit(False, f"Test failed: {str(e)}")
 
 
@@ -152,16 +169,80 @@ class LLMConfigDialog(QDialog):
         self.openai_model = None
         self.openai_temp = None
         self.openai_tools = None
+
+        # PyTorch attributes
+        self.pytorch_model_path = None
+        self.pytorch_model_name = None
+        self.pytorch_device = None
+        self.pytorch_temp = None
+        self.pytorch_max_tokens = None
+
+        # TensorFlow attributes
+        self.tensorflow_model_path = None
+        self.tensorflow_model_name = None
+        self.tensorflow_device = None
+        self.tensorflow_temp = None
+        self.tensorflow_max_tokens = None
+
+        # ONNX attributes
+        self.onnx_model_path = None
+        self.onnx_model_name = None
+        self.onnx_providers = None
+        self.onnx_temp = None
+        self.onnx_max_tokens = None
+
+        # Safetensors attributes
+        self.safetensors_model_path = None
+        self.safetensors_model_name = None
+        self.safetensors_device = None
+        self.safetensors_temp = None
+        self.safetensors_max_tokens = None
+
+        # GPTQ attributes
+        self.gptq_model_path = None
+        self.gptq_model_name = None
+        self.gptq_device = None
+        self.gptq_temp = None
+        self.gptq_max_tokens = None
+
+        # AWQ attributes
+
+        # Hugging Face Local attributes
+        self.huggingface_model_path = None
+        self.huggingface_model_name = None
+        self.huggingface_device = None
+        self.huggingface_temp = None
+        self.huggingface_max_tokens = None
+
+        # LoRA adapter attributes
+        self.lora_base_model = None
+        self.lora_adapter_path = None
+        self.lora_adapter_name = None
+        self.lora_merge_adapter = None
+        self.lora_adapter_type = None
+        self.lora_rank = None
+        self.lora_alpha = None
+        self.lora_dropout = None
+
         super().__init__(parent)
         self.setWindowTitle("LLM Model Configuration - Intellicrack Agentic AI")
         self.setFixedSize(800, 600)
 
         self.llm_manager = get_llm_manager() if get_llm_manager else None
+        self.config_manager = get_llm_config_manager() if get_llm_config_manager else None
         self.current_configs = {}
         self.test_thread = None
 
         self.setup_ui()
         self.load_existing_configs()
+
+        # Auto-load saved models
+        if self.config_manager and self.llm_manager:
+            loaded, failed = self.config_manager.auto_load_models(self.llm_manager)
+            if loaded > 0:
+                self.status_text.append(f"✓ Auto-loaded {loaded} saved models")
+            if failed > 0:
+                self.status_text.append(f"⚠ Failed to load {failed} models")
 
     def setup_ui(self):
         """Set up the user interface."""
@@ -194,6 +275,13 @@ class LLMConfigDialog(QDialog):
         self.setup_anthropic_tab()
         self.setup_gguf_tab()
         self.setup_ollama_tab()
+        self.setup_pytorch_tab()
+        self.setup_tensorflow_tab()
+        self.setup_onnx_tab()
+        self.setup_safetensors_tab()
+        self.setup_gptq_tab()
+        self.setup_huggingface_tab()
+        self.setup_lora_tab()
 
         splitter.addWidget(config_widget)
 
@@ -435,7 +523,7 @@ class LLMConfigDialog(QDialog):
 
         # Server URL
         self.ollama_url = QLineEdit()
-        self.ollama_url.setText(os.environ.get('OLLAMA_API_BASE', 'http://localhost:11434'))
+        self.ollama_url.setText(get_secret('OLLAMA_API_BASE', 'http://localhost:11434'))
         layout.addRow("Server URL:", self.ollama_url)
 
         # Model name
@@ -474,6 +562,443 @@ class LLMConfigDialog(QDialog):
 
         self.tabs.addTab(tab, "Ollama")
 
+    def setup_pytorch_tab(self):
+        """Set up PyTorch model configuration tab."""
+        tab = QWidget()
+        layout = QFormLayout(tab)
+
+        # Model file/directory selection
+        model_layout = QHBoxLayout()
+        self.pytorch_model_path = QLineEdit()
+        self.pytorch_model_path.setPlaceholderText("Select PyTorch model file or directory...")
+        browse_btn = QPushButton("Browse")
+        browse_btn.clicked.connect(self.browse_pytorch_model)
+
+        model_layout.addWidget(self.pytorch_model_path)
+        model_layout.addWidget(browse_btn)
+        layout.addRow("Model Path:", model_layout)
+
+        # Model name
+        self.pytorch_model_name = QLineEdit()
+        self.pytorch_model_name.setPlaceholderText("Custom model name (optional)")
+        layout.addRow("Model Name:", self.pytorch_model_name)
+
+        # Device selection
+        self.pytorch_device = QComboBox()
+        self.pytorch_device.addItems(["cpu", "cuda", "mps"])
+        layout.addRow("Device:", self.pytorch_device)
+
+        # Temperature
+        self.pytorch_temp = QDoubleSpinBox()
+        self.pytorch_temp.setRange(0.0, 2.0)
+        self.pytorch_temp.setSingleStep(0.1)
+        self.pytorch_temp.setValue(0.7)
+        layout.addRow("Temperature:", self.pytorch_temp)
+
+        # Max tokens
+        self.pytorch_max_tokens = QSpinBox()
+        self.pytorch_max_tokens.setRange(1, 8192)
+        self.pytorch_max_tokens.setValue(2048)
+        layout.addRow("Max Tokens:", self.pytorch_max_tokens)
+
+        # Add/Test buttons
+        btn_layout = QHBoxLayout()
+        add_btn = QPushButton("Add PyTorch Model")
+        test_btn = QPushButton("Test Configuration")
+
+        add_btn.clicked.connect(self.add_pytorch_model)
+        test_btn.clicked.connect(self.test_pytorch_config)
+
+        btn_layout.addWidget(add_btn)
+        btn_layout.addWidget(test_btn)
+        layout.addRow("", btn_layout)
+
+        # Requirements info
+        info_text = QLabel("Supports: .pth, .pt, .bin files or Hugging Face model directories")
+        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        layout.addRow("", info_text)
+
+        self.tabs.addTab(tab, "PyTorch")
+
+    def setup_tensorflow_tab(self):
+        """Set up TensorFlow model configuration tab."""
+        tab = QWidget()
+        layout = QFormLayout(tab)
+
+        # Model file/directory selection
+        model_layout = QHBoxLayout()
+        self.tensorflow_model_path = QLineEdit()
+        self.tensorflow_model_path.setPlaceholderText("Select TensorFlow model file or directory...")
+        browse_btn = QPushButton("Browse")
+        browse_btn.clicked.connect(self.browse_tensorflow_model)
+
+        model_layout.addWidget(self.tensorflow_model_path)
+        model_layout.addWidget(browse_btn)
+        layout.addRow("Model Path:", model_layout)
+
+        # Model name
+        self.tensorflow_model_name = QLineEdit()
+        self.tensorflow_model_name.setPlaceholderText("Custom model name (optional)")
+        layout.addRow("Model Name:", self.tensorflow_model_name)
+
+        # Device selection
+        self.tensorflow_device = QComboBox()
+        self.tensorflow_device.addItems(["cpu", "gpu"])
+        layout.addRow("Device:", self.tensorflow_device)
+
+        # Temperature
+        self.tensorflow_temp = QDoubleSpinBox()
+        self.tensorflow_temp.setRange(0.0, 2.0)
+        self.tensorflow_temp.setSingleStep(0.1)
+        self.tensorflow_temp.setValue(0.7)
+        layout.addRow("Temperature:", self.tensorflow_temp)
+
+        # Max tokens
+        self.tensorflow_max_tokens = QSpinBox()
+        self.tensorflow_max_tokens.setRange(1, 8192)
+        self.tensorflow_max_tokens.setValue(2048)
+        layout.addRow("Max Tokens:", self.tensorflow_max_tokens)
+
+        # Add/Test buttons
+        btn_layout = QHBoxLayout()
+        add_btn = QPushButton("Add TensorFlow Model")
+        test_btn = QPushButton("Test Configuration")
+
+        add_btn.clicked.connect(self.add_tensorflow_model)
+        test_btn.clicked.connect(self.test_tensorflow_config)
+
+        btn_layout.addWidget(add_btn)
+        btn_layout.addWidget(test_btn)
+        layout.addRow("", btn_layout)
+
+        # Requirements info
+        info_text = QLabel("Supports: .h5 files or SavedModel directories")
+        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        layout.addRow("", info_text)
+
+        self.tabs.addTab(tab, "TensorFlow")
+
+    def setup_onnx_tab(self):
+        """Set up ONNX model configuration tab."""
+        tab = QWidget()
+        layout = QFormLayout(tab)
+
+        # Model file selection
+        model_layout = QHBoxLayout()
+        self.onnx_model_path = QLineEdit()
+        self.onnx_model_path.setPlaceholderText("Select ONNX model file...")
+        browse_btn = QPushButton("Browse")
+        browse_btn.clicked.connect(self.browse_onnx_model)
+
+        model_layout.addWidget(self.onnx_model_path)
+        model_layout.addWidget(browse_btn)
+        layout.addRow("Model File:", model_layout)
+
+        # Model name
+        self.onnx_model_name = QLineEdit()
+        self.onnx_model_name.setPlaceholderText("Custom model name (optional)")
+        layout.addRow("Model Name:", self.onnx_model_name)
+
+        # Provider selection
+        self.onnx_providers = QComboBox()
+        self.onnx_providers.addItems(["CPUExecutionProvider", "CUDAExecutionProvider", "TensorrtExecutionProvider"])
+        layout.addRow("Provider:", self.onnx_providers)
+
+        # Temperature
+        self.onnx_temp = QDoubleSpinBox()
+        self.onnx_temp.setRange(0.0, 2.0)
+        self.onnx_temp.setSingleStep(0.1)
+        self.onnx_temp.setValue(0.7)
+        layout.addRow("Temperature:", self.onnx_temp)
+
+        # Max tokens
+        self.onnx_max_tokens = QSpinBox()
+        self.onnx_max_tokens.setRange(1, 8192)
+        self.onnx_max_tokens.setValue(2048)
+        layout.addRow("Max Tokens:", self.onnx_max_tokens)
+
+        # Add/Test buttons
+        btn_layout = QHBoxLayout()
+        add_btn = QPushButton("Add ONNX Model")
+        test_btn = QPushButton("Test Configuration")
+
+        add_btn.clicked.connect(self.add_onnx_model)
+        test_btn.clicked.connect(self.test_onnx_config)
+
+        btn_layout.addWidget(add_btn)
+        btn_layout.addWidget(test_btn)
+        layout.addRow("", btn_layout)
+
+        # Requirements info
+        info_text = QLabel("Requires: onnxruntime or onnxruntime-gpu")
+        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        layout.addRow("", info_text)
+
+        self.tabs.addTab(tab, "ONNX")
+
+    def setup_safetensors_tab(self):
+        """Set up Safetensors model configuration tab."""
+        tab = QWidget()
+        layout = QFormLayout(tab)
+
+        # Model file/directory selection
+        model_layout = QHBoxLayout()
+        self.safetensors_model_path = QLineEdit()
+        self.safetensors_model_path.setPlaceholderText("Select Safetensors model file or directory...")
+        browse_btn = QPushButton("Browse")
+        browse_btn.clicked.connect(self.browse_safetensors_model)
+
+        model_layout.addWidget(self.safetensors_model_path)
+        model_layout.addWidget(browse_btn)
+        layout.addRow("Model Path:", model_layout)
+
+        # Model name
+        self.safetensors_model_name = QLineEdit()
+        self.safetensors_model_name.setPlaceholderText("Custom model name (optional)")
+        layout.addRow("Model Name:", self.safetensors_model_name)
+
+        # Device selection
+        self.safetensors_device = QComboBox()
+        self.safetensors_device.addItems(["cpu", "cuda", "mps"])
+        layout.addRow("Device:", self.safetensors_device)
+
+        # Temperature
+        self.safetensors_temp = QDoubleSpinBox()
+        self.safetensors_temp.setRange(0.0, 2.0)
+        self.safetensors_temp.setSingleStep(0.1)
+        self.safetensors_temp.setValue(0.7)
+        layout.addRow("Temperature:", self.safetensors_temp)
+
+        # Max tokens
+        self.safetensors_max_tokens = QSpinBox()
+        self.safetensors_max_tokens.setRange(1, 8192)
+        self.safetensors_max_tokens.setValue(2048)
+        layout.addRow("Max Tokens:", self.safetensors_max_tokens)
+
+        # Add/Test buttons
+        btn_layout = QHBoxLayout()
+        add_btn = QPushButton("Add Safetensors Model")
+        test_btn = QPushButton("Test Configuration")
+
+        add_btn.clicked.connect(self.add_safetensors_model)
+        test_btn.clicked.connect(self.test_safetensors_config)
+
+        btn_layout.addWidget(add_btn)
+        btn_layout.addWidget(test_btn)
+        layout.addRow("", btn_layout)
+
+        # Requirements info
+        info_text = QLabel("Supports: .safetensors files with model configs")
+        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        layout.addRow("", info_text)
+
+        self.tabs.addTab(tab, "Safetensors")
+
+    def setup_gptq_tab(self):
+        """Set up GPTQ model configuration tab."""
+        tab = QWidget()
+        layout = QFormLayout(tab)
+
+        # Model directory selection
+        model_layout = QHBoxLayout()
+        self.gptq_model_path = QLineEdit()
+        self.gptq_model_path.setPlaceholderText("Select GPTQ model directory...")
+        browse_btn = QPushButton("Browse")
+        browse_btn.clicked.connect(self.browse_gptq_model)
+
+        model_layout.addWidget(self.gptq_model_path)
+        model_layout.addWidget(browse_btn)
+        layout.addRow("Model Directory:", model_layout)
+
+        # Model name
+        self.gptq_model_name = QLineEdit()
+        self.gptq_model_name.setPlaceholderText("Custom model name (optional)")
+        layout.addRow("Model Name:", self.gptq_model_name)
+
+        # Device selection
+        self.gptq_device = QComboBox()
+        self.gptq_device.addItems(["cuda"])  # GPTQ typically requires CUDA
+        layout.addRow("Device:", self.gptq_device)
+
+        # Temperature
+        self.gptq_temp = QDoubleSpinBox()
+        self.gptq_temp.setRange(0.0, 2.0)
+        self.gptq_temp.setSingleStep(0.1)
+        self.gptq_temp.setValue(0.7)
+        layout.addRow("Temperature:", self.gptq_temp)
+
+        # Max tokens
+        self.gptq_max_tokens = QSpinBox()
+        self.gptq_max_tokens.setRange(1, 8192)
+        self.gptq_max_tokens.setValue(2048)
+        layout.addRow("Max Tokens:", self.gptq_max_tokens)
+
+        # Add/Test buttons
+        btn_layout = QHBoxLayout()
+        add_btn = QPushButton("Add GPTQ Model")
+        test_btn = QPushButton("Test Configuration")
+
+        add_btn.clicked.connect(self.add_gptq_model)
+        test_btn.clicked.connect(self.test_gptq_config)
+
+        btn_layout.addWidget(add_btn)
+        btn_layout.addWidget(test_btn)
+        layout.addRow("", btn_layout)
+
+        # Requirements info
+        info_text = QLabel("Requires: auto-gptq and CUDA GPU")
+        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        layout.addRow("", info_text)
+
+        self.tabs.addTab(tab, "GPTQ")
+
+
+    def setup_huggingface_tab(self):
+        """Set up Hugging Face local model configuration tab."""
+        tab = QWidget()
+        layout = QFormLayout(tab)
+
+        # Model directory selection
+        model_layout = QHBoxLayout()
+        self.huggingface_model_path = QLineEdit()
+        self.huggingface_model_path.setPlaceholderText("Select Hugging Face model directory...")
+        browse_btn = QPushButton("Browse")
+        browse_btn.clicked.connect(self.browse_huggingface_model)
+
+        model_layout.addWidget(self.huggingface_model_path)
+        model_layout.addWidget(browse_btn)
+        layout.addRow("Model Directory:", model_layout)
+
+        # Model name
+        self.huggingface_model_name = QLineEdit()
+        self.huggingface_model_name.setPlaceholderText("Custom model name (optional)")
+        layout.addRow("Model Name:", self.huggingface_model_name)
+
+        # Device selection
+        self.huggingface_device = QComboBox()
+        self.huggingface_device.addItems(["cpu", "cuda", "mps"])
+        layout.addRow("Device:", self.huggingface_device)
+
+        # Temperature
+        self.huggingface_temp = QDoubleSpinBox()
+        self.huggingface_temp.setRange(0.0, 2.0)
+        self.huggingface_temp.setSingleStep(0.1)
+        self.huggingface_temp.setValue(0.7)
+        layout.addRow("Temperature:", self.huggingface_temp)
+
+        # Max tokens
+        self.huggingface_max_tokens = QSpinBox()
+        self.huggingface_max_tokens.setRange(1, 8192)
+        self.huggingface_max_tokens.setValue(2048)
+        layout.addRow("Max Tokens:", self.huggingface_max_tokens)
+
+        # Add/Test buttons
+        btn_layout = QHBoxLayout()
+        add_btn = QPushButton("Add HF Model")
+        test_btn = QPushButton("Test Configuration")
+
+        add_btn.clicked.connect(self.add_huggingface_model)
+        test_btn.clicked.connect(self.test_huggingface_config)
+
+        btn_layout.addWidget(add_btn)
+        btn_layout.addWidget(test_btn)
+        layout.addRow("", btn_layout)
+
+        # Requirements info
+        info_text = QLabel("Supports: Local Hugging Face model directories with config.json")
+        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        layout.addRow("", info_text)
+
+        self.tabs.addTab(tab, "HF Local")
+
+    def setup_lora_tab(self):
+        """Set up LoRA adapter configuration tab."""
+        tab = QWidget()
+        layout = QFormLayout(tab)
+
+        # Base model selection
+        model_layout = QHBoxLayout()
+        self.lora_base_model = QComboBox()
+        self.lora_base_model.setEditable(True)
+        self.lora_base_model.setPlaceholderText("Select or enter base model ID...")
+
+        # Populate with registered models
+        if self.llm_manager:
+            model_ids = list(self.llm_manager.backends.keys())
+            self.lora_base_model.addItems(model_ids)
+
+        refresh_btn = QPushButton("Refresh")
+        refresh_btn.clicked.connect(self.refresh_lora_models)
+
+        model_layout.addWidget(self.lora_base_model)
+        model_layout.addWidget(refresh_btn)
+        layout.addRow("Base Model:", model_layout)
+
+        # Adapter path selection
+        adapter_layout = QHBoxLayout()
+        self.lora_adapter_path = QLineEdit()
+        self.lora_adapter_path.setPlaceholderText("Select LoRA adapter directory...")
+        browse_btn = QPushButton("Browse")
+        browse_btn.clicked.connect(self.browse_lora_adapter)
+
+        adapter_layout.addWidget(self.lora_adapter_path)
+        adapter_layout.addWidget(browse_btn)
+        layout.addRow("Adapter Path:", adapter_layout)
+
+        # Adapter name
+        self.lora_adapter_name = QLineEdit()
+        self.lora_adapter_name.setPlaceholderText("Adapter name (optional)")
+        self.lora_adapter_name.setText("default")
+        layout.addRow("Adapter Name:", self.lora_adapter_name)
+
+        # Adapter type
+        self.lora_adapter_type = QComboBox()
+        self.lora_adapter_type.addItems(["lora", "qlora", "adalora"])
+        layout.addRow("Adapter Type:", self.lora_adapter_type)
+
+        # LoRA parameters
+        self.lora_rank = QSpinBox()
+        self.lora_rank.setRange(1, 256)
+        self.lora_rank.setValue(16)
+        layout.addRow("LoRA Rank (r):", self.lora_rank)
+
+        self.lora_alpha = QSpinBox()
+        self.lora_alpha.setRange(1, 256)
+        self.lora_alpha.setValue(32)
+        layout.addRow("LoRA Alpha:", self.lora_alpha)
+
+        self.lora_dropout = QDoubleSpinBox()
+        self.lora_dropout.setRange(0.0, 1.0)
+        self.lora_dropout.setSingleStep(0.05)
+        self.lora_dropout.setValue(0.1)
+        layout.addRow("Dropout:", self.lora_dropout)
+
+        # Merge option
+        self.lora_merge_adapter = QCheckBox("Merge adapter into base model")
+        layout.addRow("", self.lora_merge_adapter)
+
+        # Add/Test buttons
+        btn_layout = QHBoxLayout()
+        add_btn = QPushButton("Load LoRA Adapter")
+        test_btn = QPushButton("Test Adapter")
+        create_btn = QPushButton("Create New Adapter")
+
+        add_btn.clicked.connect(self.add_lora_adapter)
+        test_btn.clicked.connect(self.test_lora_adapter)
+        create_btn.clicked.connect(self.create_lora_adapter)
+
+        btn_layout.addWidget(add_btn)
+        btn_layout.addWidget(test_btn)
+        btn_layout.addWidget(create_btn)
+        layout.addRow("", btn_layout)
+
+        # Requirements info
+        info_text = QLabel("Requires: PEFT library and a compatible base model")
+        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        layout.addRow("", info_text)
+
+        self.tabs.addTab(tab, "LoRA Adapters")
+
     def browse_gguf_model(self):
         """Browse for GGUF model file."""
         file_path, _ = QFileDialog.getOpenFileName(
@@ -489,6 +1014,90 @@ class LLMConfigDialog(QDialog):
             if not self.gguf_model_name.text():
                 model_name = os.path.splitext(os.path.basename(file_path))[0]
                 self.gguf_model_name.setText(model_name)
+
+    def browse_pytorch_model(self):
+        """Browse for PyTorch model file or directory."""
+        options = QFileDialog.Options()
+        path = QFileDialog.getExistingDirectory(self, "Select PyTorch Model Directory") or \
+               QFileDialog.getOpenFileName(self, "Select PyTorch Model File", "",
+                                         "PyTorch Files (*.pth *.pt *.bin);;All Files (*)",
+                                         options=options)[0]
+
+        if path:
+            self.pytorch_model_path.setText(path)
+            if not self.pytorch_model_name.text():
+                model_name = os.path.basename(path).replace('.pth', '').replace('.pt', '').replace('.bin', '')
+                self.pytorch_model_name.setText(model_name)
+
+    def browse_tensorflow_model(self):
+        """Browse for TensorFlow model file or directory."""
+        options = QFileDialog.Options()
+        path = QFileDialog.getExistingDirectory(self, "Select TensorFlow SavedModel Directory") or \
+               QFileDialog.getOpenFileName(self, "Select TensorFlow Model File", "",
+                                         "TensorFlow Files (*.h5);;All Files (*)",
+                                         options=options)[0]
+
+        if path:
+            self.tensorflow_model_path.setText(path)
+            if not self.tensorflow_model_name.text():
+                model_name = os.path.basename(path).replace('.h5', '')
+                self.tensorflow_model_name.setText(model_name)
+
+    def browse_onnx_model(self):
+        """Browse for ONNX model file."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select ONNX Model File",
+            "",
+            "ONNX Files (*.onnx);;All Files (*)"
+        )
+
+        if file_path:
+            self.onnx_model_path.setText(file_path)
+            if not self.onnx_model_name.text():
+                model_name = os.path.splitext(os.path.basename(file_path))[0]
+                self.onnx_model_name.setText(model_name)
+
+    def browse_safetensors_model(self):
+        """Browse for Safetensors model file or directory."""
+        options = QFileDialog.Options()
+        path = QFileDialog.getExistingDirectory(self, "Select Safetensors Model Directory") or \
+               QFileDialog.getOpenFileName(self, "Select Safetensors Model File", "",
+                                         "Safetensors Files (*.safetensors);;All Files (*)",
+                                         options=options)[0]
+
+        if path:
+            self.safetensors_model_path.setText(path)
+            if not self.safetensors_model_name.text():
+                model_name = os.path.basename(path).replace('.safetensors', '')
+                self.safetensors_model_name.setText(model_name)
+
+    def browse_gptq_model(self):
+        """Browse for GPTQ model directory."""
+        directory = QFileDialog.getExistingDirectory(
+            self,
+            "Select GPTQ Model Directory"
+        )
+
+        if directory:
+            self.gptq_model_path.setText(directory)
+            if not self.gptq_model_name.text():
+                model_name = os.path.basename(directory)
+                self.gptq_model_name.setText(model_name)
+
+
+    def browse_huggingface_model(self):
+        """Browse for Hugging Face model directory."""
+        directory = QFileDialog.getExistingDirectory(
+            self,
+            "Select Hugging Face Model Directory"
+        )
+
+        if directory:
+            self.huggingface_model_path.setText(directory)
+            if not self.huggingface_model_name.text():
+                model_name = os.path.basename(directory)
+                self.huggingface_model_name.setText(model_name)
 
     def add_openai_model(self):
         """Add OpenAI model configuration."""
@@ -567,6 +1176,157 @@ class LLMConfigDialog(QDialog):
         model_id = f"ollama_{self.ollama_model.text().strip().replace(':', '_')}"
         self.register_model(model_id, config)
 
+    def add_pytorch_model(self):
+        """Add PyTorch model configuration."""
+        if not self.pytorch_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model Path", "Please select a PyTorch model file or directory")
+            return
+
+        if not os.path.exists(self.pytorch_model_path.text()):
+            QMessageBox.warning(self, "Path Not Found", "The selected model path does not exist")
+            return
+
+        model_name = self.pytorch_model_name.text().strip()
+        if not model_name:
+            model_name = os.path.basename(self.pytorch_model_path.text()).replace('.pth', '').replace('.pt', '').replace('.bin', '')
+
+        config = create_pytorch_config(
+            model_path=self.pytorch_model_path.text(),
+            model_name=model_name,
+            temperature=self.pytorch_temp.value(),
+            max_tokens=self.pytorch_max_tokens.value(),
+            device=self.pytorch_device.currentText()
+        )
+
+        model_id = f"pytorch_{model_name.replace(' ', '_').replace('-', '_')}"
+        self.register_model(model_id, config)
+
+    def add_tensorflow_model(self):
+        """Add TensorFlow model configuration."""
+        if not self.tensorflow_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model Path", "Please select a TensorFlow model file or directory")
+            return
+
+        if not os.path.exists(self.tensorflow_model_path.text()):
+            QMessageBox.warning(self, "Path Not Found", "The selected model path does not exist")
+            return
+
+        model_name = self.tensorflow_model_name.text().strip()
+        if not model_name:
+            model_name = os.path.basename(self.tensorflow_model_path.text()).replace('.h5', '')
+
+        config = create_tensorflow_config(
+            model_path=self.tensorflow_model_path.text(),
+            model_name=model_name,
+            temperature=self.tensorflow_temp.value(),
+            max_tokens=self.tensorflow_max_tokens.value(),
+            device=self.tensorflow_device.currentText()
+        )
+
+        model_id = f"tensorflow_{model_name.replace(' ', '_').replace('-', '_')}"
+        self.register_model(model_id, config)
+
+    def add_onnx_model(self):
+        """Add ONNX model configuration."""
+        if not self.onnx_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model File", "Please select an ONNX model file")
+            return
+
+        if not os.path.exists(self.onnx_model_path.text()):
+            QMessageBox.warning(self, "File Not Found", "The selected ONNX file does not exist")
+            return
+
+        model_name = self.onnx_model_name.text().strip()
+        if not model_name:
+            model_name = os.path.splitext(os.path.basename(self.onnx_model_path.text()))[0]
+
+        config = create_onnx_config(
+            model_path=self.onnx_model_path.text(),
+            model_name=model_name,
+            temperature=self.onnx_temp.value(),
+            max_tokens=self.onnx_max_tokens.value(),
+            providers=[self.onnx_providers.currentText()]
+        )
+
+        model_id = f"onnx_{model_name.replace(' ', '_').replace('-', '_')}"
+        self.register_model(model_id, config)
+
+    def add_safetensors_model(self):
+        """Add Safetensors model configuration."""
+        if not self.safetensors_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model Path", "Please select a Safetensors model file or directory")
+            return
+
+        if not os.path.exists(self.safetensors_model_path.text()):
+            QMessageBox.warning(self, "Path Not Found", "The selected model path does not exist")
+            return
+
+        model_name = self.safetensors_model_name.text().strip()
+        if not model_name:
+            model_name = os.path.basename(self.safetensors_model_path.text()).replace('.safetensors', '')
+
+        config = create_safetensors_config(
+            model_path=self.safetensors_model_path.text(),
+            model_name=model_name,
+            temperature=self.safetensors_temp.value(),
+            max_tokens=self.safetensors_max_tokens.value(),
+            device=self.safetensors_device.currentText()
+        )
+
+        model_id = f"safetensors_{model_name.replace(' ', '_').replace('-', '_')}"
+        self.register_model(model_id, config)
+
+    def add_gptq_model(self):
+        """Add GPTQ model configuration."""
+        if not self.gptq_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model Directory", "Please select a GPTQ model directory")
+            return
+
+        if not os.path.exists(self.gptq_model_path.text()):
+            QMessageBox.warning(self, "Directory Not Found", "The selected model directory does not exist")
+            return
+
+        model_name = self.gptq_model_name.text().strip()
+        if not model_name:
+            model_name = os.path.basename(self.gptq_model_path.text())
+
+        config = create_gptq_config(
+            model_path=self.gptq_model_path.text(),
+            model_name=model_name,
+            temperature=self.gptq_temp.value(),
+            max_tokens=self.gptq_max_tokens.value(),
+            device=self.gptq_device.currentText()
+        )
+
+        model_id = f"gptq_{model_name.replace(' ', '_').replace('-', '_')}"
+        self.register_model(model_id, config)
+
+
+    def add_huggingface_model(self):
+        """Add Hugging Face local model configuration."""
+        if not self.huggingface_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model Directory", "Please select a Hugging Face model directory")
+            return
+
+        if not os.path.exists(self.huggingface_model_path.text()):
+            QMessageBox.warning(self, "Directory Not Found", "The selected model directory does not exist")
+            return
+
+        model_name = self.huggingface_model_name.text().strip()
+        if not model_name:
+            model_name = os.path.basename(self.huggingface_model_path.text())
+
+        config = create_huggingface_local_config(
+            model_path=self.huggingface_model_path.text(),
+            model_name=model_name,
+            temperature=self.huggingface_temp.value(),
+            max_tokens=self.huggingface_max_tokens.value(),
+            device=self.huggingface_device.currentText()
+        )
+
+        model_id = f"huggingface_{model_name.replace(' ', '_').replace('-', '_')}"
+        self.register_model(model_id, config)
+
     def register_model(self, model_id: str, config: LLMConfig):
         """Register a model with the LLM manager."""
         if not self.llm_manager:
@@ -577,6 +1337,15 @@ class LLMConfigDialog(QDialog):
 
         if success:
             self.current_configs[model_id] = config
+
+            # Save to configuration manager
+            if self.config_manager:
+                metadata = {
+                    "auto_load": True,
+                    "created_by": "llm_config_dialog"
+                }
+                self.config_manager.save_model_config(model_id, config, metadata)
+
             self.update_models_list()
             self.status_text.append(f"✓ Added model: {model_id}")
 
@@ -700,6 +1469,85 @@ class LLMConfigDialog(QDialog):
         )
         self.test_model_config(config)
 
+    def test_pytorch_config(self):
+        """Test PyTorch configuration."""
+        if not self.pytorch_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model Path", "Please select a PyTorch model file or directory")
+            return
+
+        config = create_pytorch_config(
+            model_path=self.pytorch_model_path.text(),
+            model_name=self.pytorch_model_name.text() or "test_model",
+            device=self.pytorch_device.currentText()
+        )
+        self.test_model_config(config)
+
+    def test_tensorflow_config(self):
+        """Test TensorFlow configuration."""
+        if not self.tensorflow_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model Path", "Please select a TensorFlow model file or directory")
+            return
+
+        config = create_tensorflow_config(
+            model_path=self.tensorflow_model_path.text(),
+            model_name=self.tensorflow_model_name.text() or "test_model",
+            device=self.tensorflow_device.currentText()
+        )
+        self.test_model_config(config)
+
+    def test_onnx_config(self):
+        """Test ONNX configuration."""
+        if not self.onnx_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model File", "Please select an ONNX model file")
+            return
+
+        config = create_onnx_config(
+            model_path=self.onnx_model_path.text(),
+            model_name=self.onnx_model_name.text() or "test_model",
+            providers=[self.onnx_providers.currentText()]
+        )
+        self.test_model_config(config)
+
+    def test_safetensors_config(self):
+        """Test Safetensors configuration."""
+        if not self.safetensors_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model Path", "Please select a Safetensors model file or directory")
+            return
+
+        config = create_safetensors_config(
+            model_path=self.safetensors_model_path.text(),
+            model_name=self.safetensors_model_name.text() or "test_model",
+            device=self.safetensors_device.currentText()
+        )
+        self.test_model_config(config)
+
+    def test_gptq_config(self):
+        """Test GPTQ configuration."""
+        if not self.gptq_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model Directory", "Please select a GPTQ model directory")
+            return
+
+        config = create_gptq_config(
+            model_path=self.gptq_model_path.text(),
+            model_name=self.gptq_model_name.text() or "test_model",
+            device=self.gptq_device.currentText()
+        )
+        self.test_model_config(config)
+
+
+    def test_huggingface_config(self):
+        """Test Hugging Face local configuration."""
+        if not self.huggingface_model_path.text().strip():
+            QMessageBox.warning(self, "Missing Model Directory", "Please select a Hugging Face model directory")
+            return
+
+        config = create_huggingface_local_config(
+            model_path=self.huggingface_model_path.text(),
+            model_name=self.huggingface_model_name.text() or "test_model",
+            device=self.huggingface_device.currentText()
+        )
+        self.test_model_config(config)
+
     def test_model_config(self, config: 'LLMConfig'):
         """Test a model configuration."""
         if self.test_thread and self.test_thread.isRunning():
@@ -752,6 +1600,202 @@ class LLMConfigDialog(QDialog):
             QMessageBox.information(self, "Success", "Model configuration saved successfully!")
         else:
             QMessageBox.warning(self, "No Models", "No models configured to save")
+
+    def refresh_lora_models(self):
+        """Refresh the list of available base models for LoRA."""
+        self.lora_base_model.clear()
+        if self.llm_manager:
+            model_ids = list(self.llm_manager.backends.keys())
+            self.lora_base_model.addItems(model_ids)
+
+    def browse_lora_adapter(self):
+        """Browse for LoRA adapter directory."""
+        directory = QFileDialog.getExistingDirectory(
+            self,
+            "Select LoRA Adapter Directory"
+        )
+
+        if directory:
+            self.lora_adapter_path.setText(directory)
+            if not self.lora_adapter_name.text() or self.lora_adapter_name.text() == "default":
+                adapter_name = os.path.basename(directory)
+                self.lora_adapter_name.setText(adapter_name)
+
+    def add_lora_adapter(self):
+        """Load a LoRA adapter onto a base model."""
+        base_model_id = self.lora_base_model.currentText()
+        if not base_model_id:
+            QMessageBox.warning(self, "Missing Base Model", "Please select a base model")
+            return
+
+        if not self.lora_adapter_path.text().strip():
+            QMessageBox.warning(self, "Missing Adapter Path", "Please select a LoRA adapter directory")
+            return
+
+        if not os.path.exists(self.lora_adapter_path.text()):
+            QMessageBox.warning(self, "Path Not Found", "The selected adapter directory does not exist")
+            return
+
+        try:
+            from ...ai.lora_adapter_manager import get_adapter_manager
+            adapter_manager = get_adapter_manager()
+
+            # Get base model
+            if self.llm_manager and base_model_id in self.llm_manager.backends:
+                base_llm = self.llm_manager.backends[base_model_id]
+                if hasattr(base_llm, 'model') and base_llm.model is not None:
+                    # Load adapter
+                    adapter_name = self.lora_adapter_name.text() or "default"
+                    model_with_adapter = adapter_manager.load_adapter(
+                        base_llm.model,
+                        self.lora_adapter_path.text(),
+                        adapter_name=adapter_name,
+                        merge_adapter=self.lora_merge_adapter.isChecked()
+                    )
+
+                    if model_with_adapter:
+                        # Update the base model
+                        base_llm.model = model_with_adapter
+
+                        # Create new model ID for the adapted model
+                        new_model_id = f"{base_model_id}_lora_{adapter_name}"
+
+                        self.status_text.append(f"✓ Loaded LoRA adapter '{adapter_name}' onto {base_model_id}")
+                        self.status_text.append(f"✓ Model available as: {new_model_id}")
+
+                        # Update UI
+                        self.update_models_list()
+                        QMessageBox.information(
+                            self,
+                            "Success",
+                            f"LoRA adapter loaded successfully!\nModel ID: {new_model_id}"
+                        )
+                    else:
+                        QMessageBox.critical(self, "Error", "Failed to load LoRA adapter")
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Model Not Loaded",
+                        "The base model is not loaded. Please ensure it's properly initialized."
+                    )
+            else:
+                QMessageBox.warning(self, "Model Not Found", f"Base model '{base_model_id}' not found")
+
+        except Exception as e:
+            logger.error(f"Failed to load LoRA adapter: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to load LoRA adapter: {str(e)}")
+
+    def test_lora_adapter(self):
+        """Test a LoRA adapter configuration."""
+        base_model_id = self.lora_base_model.currentText()
+        if not base_model_id:
+            QMessageBox.warning(self, "Missing Base Model", "Please select a base model")
+            return
+
+        if not self.lora_adapter_path.text().strip():
+            QMessageBox.warning(self, "Missing Adapter Path", "Please select a LoRA adapter directory")
+            return
+
+        try:
+            from ...ai.lora_adapter_manager import get_adapter_manager
+            adapter_manager = get_adapter_manager()
+
+            # Get adapter info
+            adapter_info = adapter_manager.get_adapter_info(self.lora_adapter_path.text())
+
+            info_text = "LoRA Adapter Information:\n\n"
+            info_text += f"Path: {adapter_info['path']}\n"
+            info_text += f"Exists: {adapter_info['exists']}\n"
+            info_text += f"Size: {adapter_info['size_mb']:.2f} MB\n"
+
+            if adapter_info['config']:
+                info_text += "\nConfiguration:\n"
+                info_text += f"  Task Type: {adapter_info['config'].get('task_type', 'N/A')}\n"
+                info_text += f"  LoRA Rank: {adapter_info['config'].get('r', 'N/A')}\n"
+                info_text += f"  LoRA Alpha: {adapter_info['config'].get('lora_alpha', 'N/A')}\n"
+                info_text += f"  Target Modules: {', '.join(adapter_info['config'].get('target_modules', []))}\n"
+
+            QMessageBox.information(self, "LoRA Adapter Info", info_text)
+
+        except Exception as e:
+            logger.error("Exception in llm_config_dialog: %s", e)
+            QMessageBox.critical(self, "Error", f"Failed to get adapter info: {str(e)}")
+
+    def create_lora_adapter(self):
+        """Create a new LoRA adapter configuration."""
+        base_model_id = self.lora_base_model.currentText()
+        if not base_model_id:
+            QMessageBox.warning(self, "Missing Base Model", "Please select a base model")
+            return
+
+        try:
+            from ...ai.lora_adapter_manager import get_adapter_manager
+            adapter_manager = get_adapter_manager()
+
+            # Create LoRA config
+            lora_config = adapter_manager.create_lora_config(
+                adapter_type=self.lora_adapter_type.currentText(),
+                r=self.lora_rank.value(),
+                lora_alpha=self.lora_alpha.value(),
+                lora_dropout=self.lora_dropout.value()
+            )
+
+            if lora_config:
+                # Get base model
+                if self.llm_manager and base_model_id in self.llm_manager.backends:
+                    base_llm = self.llm_manager.backends[base_model_id]
+                    if hasattr(base_llm, 'model') and base_llm.model is not None:
+                        # Apply LoRA to model
+                        adapter_name = self.lora_adapter_name.text() or "new_adapter"
+                        peft_model = adapter_manager.apply_lora_to_model(
+                            base_llm.model,
+                            lora_config,
+                            adapter_name=adapter_name
+                        )
+
+                        if peft_model:
+                            # Ask where to save
+                            save_path = QFileDialog.getExistingDirectory(
+                                self,
+                                "Save LoRA Adapter To"
+                            )
+
+                            if save_path:
+                                # Save adapter
+                                success = adapter_manager.save_adapter(
+                                    peft_model,
+                                    save_path,
+                                    adapter_name=adapter_name
+                                )
+
+                                if success:
+                                    self.status_text.append(
+                                        f"✓ Created new LoRA adapter '{adapter_name}' "
+                                        f"with rank={self.lora_rank.value()}"
+                                    )
+                                    QMessageBox.information(
+                                        self,
+                                        "Success",
+                                        f"LoRA adapter created and saved to:\n{save_path}"
+                                    )
+                                else:
+                                    QMessageBox.critical(self, "Error", "Failed to save LoRA adapter")
+                        else:
+                            QMessageBox.critical(self, "Error", "Failed to create LoRA adapter")
+                    else:
+                        QMessageBox.warning(
+                            self,
+                            "Model Not Loaded",
+                            "The base model is not loaded. Please ensure it's properly initialized."
+                        )
+                else:
+                    QMessageBox.warning(self, "Model Not Found", f"Base model '{base_model_id}' not found")
+            else:
+                QMessageBox.critical(self, "Error", "Failed to create LoRA configuration")
+
+        except Exception as e:
+            logger.error(f"Failed to create LoRA adapter: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to create LoRA adapter: {str(e)}")
 
     def closeEvent(self, event):
         """Handle dialog close event."""

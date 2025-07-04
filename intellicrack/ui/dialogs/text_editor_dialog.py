@@ -59,7 +59,8 @@ try:
         QStatusBar,
         QToolBar,
     )
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in text_editor_dialog: %s", e)
     pass
 
 logger = logging.getLogger(__name__)
@@ -508,6 +509,7 @@ class TextEditorDialog(QDialog):
                 self.file_watcher.addPath(file_path)
 
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in text_editor_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load file: {str(e)}")
 
     def save_file(self):
@@ -532,6 +534,7 @@ class TextEditorDialog(QDialog):
             self.file_saved.emit(self.file_path)
 
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in text_editor_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save file: {str(e)}")
 
     def save_file_as(self):

@@ -1,3 +1,9 @@
+import os
+import sys
+from typing import List, Optional
+
+from intellicrack.logger import logger
+
 """
 Smart Program Selector Dialog
 
@@ -5,9 +11,6 @@ Provides an intelligent interface for selecting programs for analysis
 via desktop shortcuts, file resolution, and program discovery.
 """
 
-import os
-import sys
-from typing import List, Optional
 
 # Qt imports with fallback handling
 try:
@@ -30,7 +33,8 @@ try:
         QWidget,
     )
     HAS_QT = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in smart_program_selector_dialog: %s", e)
     # Fallback definitions for when PyQt5 is not available
     QDialog = object
     QVBoxLayout = object
@@ -58,7 +62,8 @@ try:
     from ...utils.system.file_resolution import file_resolver
     from ...utils.system.program_discovery import ProgramInfo, program_discovery_engine
     HAS_PROGRAM_DISCOVERY = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in smart_program_selector_dialog: %s", e)
     program_discovery_engine = None
     ProgramInfo = None
     file_resolver = None
@@ -97,6 +102,7 @@ class ProgramDiscoveryWorker(QThread):
                 all_programs.extend(programs)
                 self.progress_updated.emit(f"Found {len(programs)} programs in {path}")
             except Exception as e:
+                self.logger.error("Exception in smart_program_selector_dialog: %s", e)
                 self.progress_updated.emit(f"Error scanning {path}: {str(e)}")
 
         self.programs_found.emit(all_programs)

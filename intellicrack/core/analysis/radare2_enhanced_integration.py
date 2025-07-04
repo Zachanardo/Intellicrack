@@ -24,11 +24,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Dict, List, Optional
 
-try:
-    import r2pipe
-except ImportError:
-    r2pipe = None
-
 from ...utils.logger import get_logger
 from .radare2_ai_integration import R2AIEngine
 from .radare2_binary_diff import R2BinaryDiff
@@ -44,6 +39,13 @@ from .radare2_strings import R2StringAnalyzer
 from .radare2_vulnerability_engine import R2VulnerabilityEngine
 
 logger = get_logger(__name__)
+
+try:
+    import r2pipe
+except ImportError as e:
+    logger.error("Import error in radare2_enhanced_integration: %s", e)
+    r2pipe = None
+
 error_handler = get_error_handler()
 
 

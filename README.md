@@ -219,7 +219,15 @@ packets = analyzer.stop_capture()
    Already suppressed in launch script, can be ignored
    ```
 
-4. **Slow Analysis**
+4. **Intel Arc Graphics Crash**
+   ```
+   If application crashes with Intel Arc Graphics:
+   - Run RUN_INTELLICRACK_SAFE_MODE.bat for software rendering
+   - Or press Y when prompted after crash to restart in safe mode
+   - Update Intel Arc drivers to latest version
+   ```
+
+5. **Slow Analysis**
    ```
    Enable GPU acceleration or increase parallel_threads in config
    ```
@@ -234,6 +242,39 @@ Enable detailed logging for troubleshooting:
     }
 }
 ```
+
+## 🔧 Troubleshooting
+
+### Missing Dependencies
+
+If you encounter errors about missing dependencies:
+
+1. **Flask/llama-cpp-python not available**:
+   ```bash
+   # Windows
+   python fix_missing_core_dependencies.py
+   # or
+   .\install_missing_dependencies.bat
+   
+   # Linux/WSL
+   ./install_missing_dependencies.sh
+   ```
+
+2. **QEMU not found**:
+   - **Windows**: Download from https://www.qemu.org/download/#windows
+   - **Linux/WSL**: `sudo apt-get install qemu-system-x86 qemu-user qemu-utils`
+
+3. **Matplotlib 3D projection error**:
+   ```bash
+   pip uninstall -y matplotlib
+   pip install matplotlib==3.8.0
+   ```
+
+4. **Intel GPU not detected**:
+   - Install Intel Graphics Driver
+   - Install Intel Extension for PyTorch: `pip install intel-extension-for-pytorch`
+
+For more detailed troubleshooting, see [Troubleshooting Guide](docs/troubleshooting.md).
 
 ## 🤝 Contributing
 

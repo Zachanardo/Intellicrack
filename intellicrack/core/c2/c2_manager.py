@@ -58,6 +58,7 @@ class C2Manager:
                 }
             }
         except Exception as e:
+            self.logger.error("Exception in c2_manager: %s", e)
             return {
                 'success': False,
                 'error': str(e)
@@ -125,6 +126,7 @@ class C2Manager:
             }
 
         except Exception as e:
+            self.logger.error("Exception in c2_manager: %s", e)
             return {'success': False, 'error': str(e)}
 
     def establish_session(self, target_info: Dict[str, Any], payload_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -176,4 +178,5 @@ class C2Manager:
                 return {'success': False, 'error': 'C2 server not running'}
 
         except Exception as e:
+            self.logger.error("Exception in c2_manager: %s", e)
             return {'success': False, 'error': str(e)}

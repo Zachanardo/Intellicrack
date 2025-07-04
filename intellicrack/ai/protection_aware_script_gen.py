@@ -6,22 +6,24 @@ This module enhances AI script generation by using ML-detected protection
 information to generate targeted bypass scripts.
 """
 
-from typing import Dict, List, Any, Optional
 import logging
+from typing import Any, Dict, List
 
-from ..models import get_ml_system
 from ..models.protection_knowledge_base import get_protection_knowledge_base
+from ..protection.unified_protection_engine import get_unified_engine
 
 logger = logging.getLogger(__name__)
 
 
 class ProtectionAwareScriptGenerator:
     """Generate targeted scripts based on detected protection schemes"""
-    
+
     def __init__(self):
-        self.ml_system = get_ml_system()
+        self.logger = logging.getLogger(
+            __name__ + ".ProtectionAwareScriptGenerator")
+        self.unified_engine = get_unified_engine()
         self.kb = get_protection_knowledge_base()
-        
+
         # Protection-specific script templates
         self.script_templates = {
             'sentinel_hasp': self._get_hasp_scripts(),
@@ -32,90 +34,173 @@ class ProtectionAwareScriptGenerator:
             'denuvo': self._get_denuvo_scripts(),
             'microsoft_activation': self._get_ms_activation_scripts()
         }
-    
-    def generate_bypass_script(self, binary_path: str, 
-                             script_type: str = "frida") -> Dict[str, Any]:
+
+    def generate_bypass_script(self, binary_path: str,
+                               script_type: str = "frida") -> Dict[str, Any]:
         """
         Generate a bypass script tailored to the detected protection.
-        
+
         Args:
             binary_path: Path to the protected binary
             script_type: Type of script to generate (frida, ghidra, ida)
-            
+
         Returns:
             Dict containing script and metadata
         """
-        # First, detect the protection
-        protection_result = self.ml_system.predict(binary_path)
-        
-        if not protection_result.get('success'):
+        # Use unified engine for comprehensive analysis
+        try:
+            result = self.unified_engine.analyze_file(
+                binary_path, deep_scan=True)
+        except Exception as e:
+            self.logger.error(
+                "Exception in protection_aware_script_gen: %s", e)
             return {
                 'success': False,
-                'error': 'Failed to analyze protection',
+                'error': f'Failed to analyze protection: {str(e)}',
                 'script': self._get_generic_analysis_script(script_type)
             }
-        
-        protection_type = protection_result.get('protection_type', 'Unknown')
-        confidence = protection_result.get('confidence', 0)
-        difficulty = protection_result.get('bypass_difficulty', 'Unknown')
-        
+
+        # Early exit if no protection detected
+        if not result or not result.is_protected:
+            return {
+                'success': True,
+                'protection_type': 'None',
+                'confidence': 1.0,
+                'script': self._get_basic_analysis_script(script_type),
+                'approach': 'Basic analysis - no protection detected',
+                'metadata': {
+                    'file_type': result.file_type if result else 'Unknown',
+                    'architecture': result.architecture if result else 'Unknown'
+                }
+            }
+
+        # Build prioritized protection list
+        protections_to_process = {}
+        primary_protection = None
+        highest_confidence = 0.0
+
+        # Prioritize ICP results for accuracy
+        if result.icp_analysis and not result.icp_analysis.error:
+            for detection in result.icp_analysis.all_detections:
+                if detection.name != "Unknown":
+                    protections_to_process[detection.name] = {
+                        'source': 'ICP',
+                        'type': detection.type,
+                        'confidence': detection.confidence,
+                        'version': detection.version
+                    }
+                    # Track highest confidence protection
+                    if detection.confidence > highest_confidence:
+                        highest_confidence = detection.confidence
+                        primary_protection = detection.name
+
+        # Add other protections from unified analysis
+        for protection in result.protections:
+            name = protection.get('name', 'Unknown')
+            if name not in protections_to_process and name != 'Unknown':
+                protections_to_process[name] = {
+                    'source': protection.get('source', 'Unknown'),
+                    'type': protection.get('type', 'unknown'),
+                    'confidence': protection.get('confidence', 50.0) / 100.0,
+                    'version': protection.get('version', '')
+                }
+                # Update primary if higher confidence
+                conf = protection.get('confidence', 50.0) / 100.0
+                if conf > highest_confidence:
+                    highest_confidence = conf
+                    primary_protection = name
+
+        # If no primary protection found, use first one
+        if not primary_protection and protections_to_process:
+            primary_protection = list(protections_to_process.keys())[0]
+            highest_confidence = protections_to_process[primary_protection]['confidence']
+
         # Get protection info from knowledge base
-        protection_info = self.kb.get_protection_info(protection_type)
-        
-        # Generate appropriate script based on protection
-        if protection_type == "No Protection":
-            script = self._get_basic_analysis_script(script_type)
-            approach = "Basic analysis - no protection detected"
-        else:
+        protection_info = self.kb.get_protection_info(
+            primary_protection) if primary_protection else None
+
+        # Generate script sections for each protection
+        script_sections = []
+        bypass_techniques = []
+
+        for protection_name, details in protections_to_process.items():
             # Get protection-specific scripts
-            protection_key = protection_type.lower().replace('/', '_').replace(' ', '_')
-            
+            protection_key = protection_name.lower().replace('/', '_').replace(' ', '_')
+
             if protection_key in self.script_templates:
                 scripts = self.script_templates[protection_key]
-                script = scripts.get(script_type, self._get_generic_bypass_script(script_type))
-                approach = f"Targeted {protection_type} bypass"
+                script_section = scripts.get(
+                    script_type, self._get_generic_bypass_script(script_type))
+                script_sections.append(
+                    f"// Bypass for {protection_name} (Source: {details['source']})\n{script_section}")
+
+                # Get bypass techniques from knowledge base
+                techniques = self.kb.get_bypass_techniques(protection_name)
+                if techniques:
+                    bypass_techniques.extend(techniques)
             else:
-                script = self._get_generic_bypass_script(script_type)
-                approach = "Generic bypass approach"
-        
+                # Generic bypass for unknown protections
+                generic_script = self._get_generic_bypass_script(script_type)
+                script_sections.append(
+                    f"// Generic bypass for {protection_name}\n{generic_script}")
+
+        # Combine all script sections
+        combined_script = "\n\n".join(script_sections)
+
+        # Add file metadata to script header
+        header = f"""// Intellicrack Bypass Script
+// Target: {binary_path}
+// File Type: {result.file_type}
+// Architecture: {result.architecture}
+// Primary Protection: {primary_protection or 'Unknown'}
+// Total Protections Detected: {len(protections_to_process)}
+
+"""
+
+        final_script = header + combined_script
+
         # Add AI-enhanced instructions
-        ai_prompt = self._generate_ai_prompt(protection_result, protection_info)
-        
+        ai_prompt = self._generate_ai_prompt(
+            result, primary_protection, highest_confidence, protection_info)
+
+        # Generate approach description
+        approach = f"Multi-layered analysis detected {len(protections_to_process)} protection(s). "
+        if primary_protection:
+            approach += f"Primary target: {primary_protection}. "
+        approach += f"Using {'ICP engine' if result.icp_analysis else 'unified'} detection."
+
         return {
             'success': True,
-            'protection_detected': protection_type,
-            'confidence': confidence,
-            'difficulty': difficulty,
-            'script': script,
+            'protection_detected': primary_protection or 'Unknown',
+            'confidence': highest_confidence,
+            'script': final_script,
             'approach': approach,
             'ai_prompt': ai_prompt,
             'bypass_techniques': self._get_recommended_techniques(protection_info),
-            'estimated_time': self.kb.estimate_bypass_time(protection_type, "intermediate"),
-            'tools_needed': self.kb.get_tools_for_protection(protection_type)
+            'estimated_time': self.kb.estimate_bypass_time(primary_protection, "intermediate") if primary_protection else "Variable",
+            'tools_needed': self.kb.get_tools_for_protection(primary_protection) if primary_protection else [],
+            'die_analysis': result.icp_analysis
         }
-    
-    def _generate_ai_prompt(self, protection_result: Dict[str, Any], 
-                          protection_info: Any) -> str:
+
+    def _generate_ai_prompt(self, result, protection_type: str,
+                            confidence: float, protection_info: Any) -> str:
         """Generate AI prompt for script enhancement"""
-        protection = protection_result.get('protection_type', 'Unknown')
-        features = protection_result.get('features_summary', {})
-        
-        prompt = f"""Generate a bypass script for {protection} protection.
+
+        prompt = f"""Generate a bypass script for {protection_type} protection.
 
 Protection Details:
-- Type: {protection}
-- Category: {protection_result.get('protection_category', 'unknown')}
-- Confidence: {protection_result.get('confidence', 0):.2%}
-- Difficulty: {protection_result.get('bypass_difficulty', 'Unknown')}
+- Type: {protection_type}
+- Confidence: {confidence:.2%}
+- File Type: {result.file_type}
+- Architecture: {result.architecture}
+- Is Packed: {result.is_packed}
+- Is Protected: {result.is_protected}
 
-Binary Characteristics:
-- File size: {features.get('file_size', 0)} bytes
-- Entropy: {features.get('entropy', 0):.2f}
-- Packed: {'Yes' if features.get('has_packing') else 'No'}
-- Anti-debug: {'Yes' if features.get('has_anti_debug') else 'No'}
+Detected Components:
+{self._format_detections(result)}
 
 """
-        
+
         if protection_info:
             prompt += f"""
 Known Protection Information:
@@ -132,7 +217,7 @@ Recommended Bypass Techniques:
   - Time Estimate: {technique.time_estimate}
   - Tools: {', '.join(technique.tools_required[:3])}
 """
-        
+
         prompt += """
 Generate a script that:
 1. Identifies key protection checks
@@ -143,14 +228,41 @@ Generate a script that:
 
 Focus on the most effective approach for this specific protection type.
 """
-        
+
         return prompt
-    
+
+    def _format_detections(self, result) -> str:
+        """Format detections for display"""
+        lines = []
+
+        # Format ICP detections if available
+        if result.icp_analysis and result.icp_analysis.all_detections:
+            lines.append("ICP Engine Detections:")
+            for detection in result.icp_analysis.all_detections:
+                ver_str = f" v{detection.version}" if detection.version else ""
+                lines.append(f"- {detection.name}{ver_str} ({detection.type})")
+
+        # Format unified protections
+        if result.protections:
+            if lines:
+                lines.append("\nUnified Analysis:")
+            for protection in result.protections:
+                ver_str = f" v{protection.get('version', '')}" if protection.get(
+                    'version') else ""
+                source = protection.get('source', 'Unknown')
+                lines.append(
+                    f"- {protection['name']}{ver_str} ({protection['type']}) [{source}]")
+
+        if not lines:
+            return "- None detected"
+
+        return "\n".join(lines)
+
     def _get_recommended_techniques(self, protection_info: Any) -> List[Dict[str, Any]]:
         """Get recommended bypass techniques"""
         if not protection_info:
             return []
-        
+
         techniques = []
         for technique in protection_info.bypass_techniques:
             techniques.append({
@@ -161,9 +273,9 @@ Focus on the most effective approach for this specific protection type.
                 'time_estimate': technique.time_estimate,
                 'tools': technique.tools_required
             })
-        
+
         return techniques
-    
+
     def _get_hasp_scripts(self) -> Dict[str, str]:
         """Sentinel HASP specific scripts"""
         return {
@@ -231,42 +343,42 @@ public class SentinelHASPBypass extends GhidraScript {
     @Override
     public void run() throws Exception {
         println("=== Sentinel HASP Protection Analysis ===");
-        
+
         // Find HASP imports
         String[] haspAPIs = {
             "hasp_login", "hasp_logout", "hasp_encrypt", "hasp_decrypt",
             "hasp_get_info", "hasp_get_sessioninfo", "hasp_update"
         };
-        
+
         for (String api : haspAPIs) {
             Symbol sym = getSymbol(api, null);
             if (sym != null) {
                 println("Found " + api + " at: " + sym.getAddress());
-                
+
                 // Find references
                 Reference[] refs = getReferencesTo(sym.getAddress());
                 for (Reference ref : refs) {
                     Address callAddr = ref.getFromAddress();
                     println("  Called from: " + callAddr);
-                    
+
                     // Patch the call result check
                     patchHASPCheck(callAddr);
                 }
             }
         }
-        
+
         // Find and patch dongle check patterns
         findAndPatchDongleChecks();
     }
-    
+
     private void patchHASPCheck(Address callAddr) throws Exception {
         // Pattern: call hasp_login; test eax, eax; jnz error
         Instruction inst = getInstructionAt(callAddr);
         if (inst == null) return;
-        
+
         Address nextAddr = inst.getNext().getAddress();
         inst = getInstructionAt(nextAddr);
-        
+
         if (inst.getMnemonicString().equals("TEST")) {
             // Found test after HASP call, patch the jump
             inst = getInstructionAt(inst.getNext().getAddress());
@@ -281,7 +393,7 @@ public class SentinelHASPBypass extends GhidraScript {
 }
 '''
         }
-    
+
     def _get_flexlm_scripts(self) -> Dict[str, str]:
         """FlexLM/FlexNet specific scripts"""
         return {
@@ -331,7 +443,7 @@ Interceptor.attach(getenv, {
 console.log("[+] FlexLM hooks installed");
 '''
         }
-    
+
     def _get_winlicense_scripts(self) -> Dict[str, str]:
         """WinLicense/Themida specific scripts"""
         return {
@@ -364,7 +476,7 @@ Interceptor.attach(Module.findExportByName("kernel32.dll", "VirtualProtect"), {
         var addr = args[0];
         var size = args[1].toInt32();
         var newProtect = args[2].toInt32();
-        
+
         // PAGE_EXECUTE_READWRITE = 0x40
         if (newProtect === 0x40 && size > 0x1000) {
             console.log("[WinLicense] Large VirtualProtect call:");
@@ -386,7 +498,7 @@ console.log("[+] WinLicense analysis hooks installed");
 console.log("[!] Manual unpacking likely required");
 '''
         }
-    
+
     def _get_steam_scripts(self) -> Dict[str, str]:
         """Steam CEG specific scripts"""
         return {
@@ -425,7 +537,7 @@ var steamuser_pattern = "48 89 5C 24 08 57 48 83 EC 20 48 8B F9 E8"; // SteamUse
 Memory.scan(Process.enumerateModules()[0].base, 0x1000000, steamuser_pattern, {
     onMatch: function(address, size) {
         console.log("[Steam] Found SteamUser at: " + address);
-        
+
         Interceptor.attach(address, {
             onLeave: function(retval) {
                 // Return valid SteamUser interface
@@ -441,7 +553,7 @@ Memory.scan(Process.enumerateModules()[0].base, 0x1000000, steamuser_pattern, {
 console.log("[+] Steam CEG bypass hooks installed");
 '''
         }
-    
+
     def _get_vmprotect_scripts(self) -> Dict[str, str]:
         """VMProtect specific scripts"""
         return {
@@ -455,14 +567,14 @@ console.warn("[!] This provides analysis assistance only");
 Process.enumerateModules().forEach(function(module) {
     if (module.name === Process.enumerateModules()[0].name) {
         console.log("[VMProtect] Analyzing main module: " + module.name);
-        
+
         // Look for .vmp sections
         // This is platform specific - example for Windows
         try {
             var peHeader = Memory.readU32(module.base.add(0x3C));
             var sectionsOffset = module.base.add(peHeader).add(0xF8);
             var numSections = Memory.readU16(module.base.add(peHeader).add(0x6));
-            
+
             for (var i = 0; i < numSections; i++) {
                 var sectionName = Memory.readCString(sectionsOffset.add(i * 0x28), 8);
                 if (sectionName.includes("vmp")) {
@@ -491,7 +603,7 @@ vmprotect_apis.forEach(function(api) {
     var addr = Module.findExportByName(null, api);
     if (addr) {
         console.log("[VMProtect] Found API: " + api + " at " + addr);
-        
+
         Interceptor.attach(addr, {
             onEnter: function(args) {
                 console.log("[VMProtect] " + api + " called");
@@ -510,7 +622,7 @@ console.log("[+] VMProtect analysis hooks installed");
 console.log("[!] Full devirtualization required for complete bypass");
 '''
         }
-    
+
     def _get_denuvo_scripts(self) -> Dict[str, str]:
         """Denuvo specific scripts"""
         return {
@@ -558,7 +670,7 @@ console.log("[!] This is a professional-level challenge");
 console.log("[!] Consider waiting for scene release");
 '''
         }
-    
+
     def _get_ms_activation_scripts(self) -> Dict[str, str]:
         """Microsoft Activation specific scripts"""
         return {
@@ -569,7 +681,7 @@ console.log("[!] Consider waiting for scene release");
 var slc = Process.getModuleByName("slc.dll");
 if (slc) {
     console.log("[MS-Activation] Found Software Licensing Client");
-    
+
     // Hook SLOpen
     var slopen = Module.findExportByName("slc.dll", "SLOpen");
     if (slopen) {
@@ -580,7 +692,7 @@ if (slc) {
             }
         });
     }
-    
+
     // Hook SLGetWindowsInformation
     var slgetinfo = Module.findExportByName("slc.dll", "SLGetWindowsInformation");
     if (slgetinfo) {
@@ -614,7 +726,7 @@ if (connectServer) {
 console.log("[+] Microsoft Activation hooks installed");
 '''
         }
-    
+
     def _get_basic_analysis_script(self, script_type: str) -> str:
         """Basic analysis script for unprotected binaries"""
         if script_type == "frida":
@@ -652,7 +764,7 @@ if (connect) {
 console.log("[+] Basic analysis hooks installed");
 '''
         return "// Basic analysis script"
-    
+
     def _get_generic_bypass_script(self, script_type: str) -> str:
         """Generic bypass script for unknown protections"""
         if script_type == "frida":
@@ -672,7 +784,7 @@ commonChecks.forEach(function(funcName) {
     var addr = Module.findExportByName(null, funcName);
     if (addr) {
         console.log("[Generic] Hooking: " + funcName);
-        
+
         Interceptor.attach(addr, {
             onLeave: function(retval) {
                 if (funcName.includes("Debugger")) {
@@ -692,12 +804,12 @@ Process.enumerateModules().forEach(function(module) {
         "6B 65 79",              // "key"
         "76 61 6C 69 64"         // "valid"
     ];
-    
+
     patterns.forEach(function(pattern) {
         Memory.scan(module.base, Math.min(module.size, 0x100000), pattern, {
             onMatch: function(address, size) {
                 console.log("[Generic] Found pattern at: " + address);
-                
+
                 // Set read watch on the address
                 Process.setExceptionHandler(function(details) {
                     if (details.address.equals(address)) {
@@ -713,7 +825,7 @@ Process.enumerateModules().forEach(function(module) {
 console.log("[+] Generic bypass hooks installed");
 '''
         return "// Generic bypass script"
-    
+
     def _get_generic_analysis_script(self, script_type: str) -> str:
         """Generic analysis script when protection detection fails"""
         return '''// Protection Analysis Script
@@ -732,15 +844,15 @@ console.log("[+] Generic analysis started");
 def enhance_ai_script_generation(ai_generator, binary_path: str) -> Dict[str, Any]:
     """
     Enhance existing AI script generation with protection awareness.
-    
+
     This function would be integrated into the existing AI system to provide
     protection-specific script generation.
     """
     protection_gen = ProtectionAwareScriptGenerator()
-    
+
     # Generate protection-aware script
     result = protection_gen.generate_bypass_script(binary_path)
-    
+
     # Use the AI prompt to enhance the script further
     if hasattr(ai_generator, 'generate_script'):
         enhanced_script = ai_generator.generate_script(
@@ -753,5 +865,5 @@ def enhance_ai_script_generation(ai_generator, binary_path: str) -> Dict[str, An
             }
         )
         result['enhanced_script'] = enhanced_script
-    
+
     return result

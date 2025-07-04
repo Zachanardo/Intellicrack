@@ -1,3 +1,15 @@
+import hashlib
+import json
+import logging
+import random
+import re
+import string
+import time
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+from intellicrack.logger import logger
+
 """
 Cloud License Response Generator Module
 
@@ -20,20 +32,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import hashlib
-import json
-import logging
-import random
-import re
-import string
-import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
 try:
     from PyQt5.QtWidgets import QMessageBox
     PYQT5_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in cloud_license_hooker: %s", e)
     PYQT5_AVAILABLE = False
 
 

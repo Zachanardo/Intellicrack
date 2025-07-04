@@ -104,6 +104,9 @@ def create_numpy_fallback():
     class NumpyFallback:
         """Minimal numpy replacement for when numpy is unavailable."""
         __version__ = "fallback-1.0.0"
+        
+        # Define ndarray as the list type for compatibility
+        ndarray = list
 
         @staticmethod
         def array(data):
@@ -137,6 +140,98 @@ def create_numpy_fallback():
         def where(condition):
             """Return indices where condition is true."""
             return [i for i, val in enumerate(condition) if val]
+
+        class random:
+            """Random number generation fallback."""
+            @staticmethod
+            def randn(*shape):
+                """Generate random normal distribution."""
+                import random
+                if len(shape) == 0:
+                    return random.gauss(0, 1)
+                elif len(shape) == 1:
+                    return [random.gauss(0, 1) for _ in range(shape[0])]
+                elif len(shape) == 2:
+                    return [[random.gauss(0, 1) for _ in range(shape[1])] for _ in range(shape[0])]
+                elif len(shape) == 3:
+                    return [[[random.gauss(0, 1) for _ in range(shape[2])] for _ in range(shape[1])] for _ in range(shape[0])]
+                elif len(shape) == 4:
+                    return [[[[random.gauss(0, 1) for _ in range(shape[3])] for _ in range(shape[2])] for _ in range(shape[1])] for _ in range(shape[0])]
+                else:
+                    raise ValueError("Too many dimensions for fallback randn")
+            
+            @staticmethod
+            def rand(*shape):
+                """Generate random uniform distribution [0, 1)."""
+                import random
+                if len(shape) == 0:
+                    return random.random()
+                elif len(shape) == 1:
+                    return [random.random() for _ in range(shape[0])]
+                elif len(shape) == 2:
+                    return [[random.random() for _ in range(shape[1])] for _ in range(shape[0])]
+                else:
+                    raise ValueError("Too many dimensions for fallback rand")
+            
+            @staticmethod
+            def randint(low, high, size=None):
+                """Generate random integers."""
+                import random
+                if size is None:
+                    return random.randint(low, high - 1)
+                elif isinstance(size, int):
+                    return [random.randint(low, high - 1) for _ in range(size)]
+                else:
+                    raise ValueError("Complex sizes not supported in fallback")
+            
+            @staticmethod
+            def uniform(low, high, size=None):
+                """Generate uniform random values."""
+                import random
+                if size is None:
+                    return random.uniform(low, high)
+                elif isinstance(size, int):
+                    return [random.uniform(low, high) for _ in range(size)]
+                else:
+                    raise ValueError("Complex sizes not supported in fallback")
+            
+            @staticmethod
+            def normal(loc=0.0, scale=1.0, size=None):
+                """Generate normal distribution."""
+                import random
+                if size is None:
+                    return random.gauss(loc, scale)
+                elif isinstance(size, int):
+                    return [random.gauss(loc, scale) for _ in range(size)]
+                else:
+                    raise ValueError("Complex sizes not supported in fallback")
+            
+            @staticmethod
+            def choice(a, size=None, p=None):
+                """Random choice from array."""
+                import random
+                if p is not None:
+                    # Weighted choice
+                    if size is None:
+                        return random.choices(a, weights=p, k=1)[0]
+                    else:
+                        return random.choices(a, weights=p, k=size)
+                else:
+                    if size is None:
+                        return random.choice(a)
+                    else:
+                        return [random.choice(a) for _ in range(size)]
+            
+            @staticmethod
+            def random(size=None):
+                """Generate random floats [0, 1)."""
+                import random
+                if size is None:
+                    return random.random()
+                elif isinstance(size, int):
+                    return [random.random() for _ in range(size)]
+                else:
+                    raise ValueError("Complex sizes not supported in fallback")
 
     return NumpyFallback()
 
@@ -298,7 +393,7 @@ def initialize_safe_imports():
     try:
         import numpy
         test_array = numpy.array([1, 2, 3])
-        logger.info("✅ numpy working correctly")
+        logger.info("✅ numpy working correctly - test array shape: %s", test_array.shape)
     except Exception as e:
         logger.warning(f"numpy issue detected: {e}")
         _module_replacer.replace_module('numpy', create_numpy_fallback)
@@ -307,7 +402,7 @@ def initialize_safe_imports():
     try:
         import pandas
         test_df = pandas.DataFrame({'test': [1, 2, 3]})
-        logger.info("✅ pandas working correctly")
+        logger.info("✅ pandas working correctly - test df shape: %s", test_df.shape)
     except Exception as e:
         logger.warning(f"pandas issue detected: {e}")
         _module_replacer.replace_module('pandas', create_pandas_fallback)

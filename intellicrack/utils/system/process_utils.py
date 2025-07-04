@@ -27,14 +27,15 @@ import subprocess
 import sys
 from typing import Any, Dict, List, Optional
 
+logger = logging.getLogger(__name__)
+
 try:
     import psutil
     PSUTIL_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in process_utils: %s", e)
     psutil = None
     PSUTIL_AVAILABLE = False
-
-logger = logging.getLogger(__name__)
 
 
 # Consolidated process iteration utilities to avoid code duplication
@@ -68,7 +69,8 @@ def find_process_by_name(process_name: str, exact_match: bool = False) -> Option
                         if target_name in proc_name_lower:
                             logger.info(f"Found process match: {process_name} with PID: {proc.info['pid']}")
                             return proc.info['pid']
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
+            except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                logger.error("Error in process_utils: %s", e)
                 continue
     except Exception as e:
         logger.error(f"Error searching for process {process_name}: {e}")
@@ -98,7 +100,8 @@ def get_all_processes(fields: Optional[List[str]] = None) -> List[Dict[str, Any]
         for proc in psutil.process_iter(fields):
             try:
                 processes.append(proc.info)
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
+            except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                logger.error("Error in process_utils: %s", e)
                 continue
     except Exception as e:
         logger.error(f"Error getting process list: {e}")
@@ -142,7 +145,8 @@ def _get_system_path(path_type: str) -> Optional[str]:
     try:
         from .core.path_discovery import get_system_path
         return get_system_path(path_type)
-    except ImportError:
+    except ImportError as e:
+        logger.error("Import error in process_utils: %s", e)
         # Fallback
         if path_type == 'windows_system':
             return os.environ.get('SystemRoot', r'C:\Windows')
@@ -319,12 +323,14 @@ def detect_hardware_dongles(app=None) -> List[str]:
                     logger.info("Found dongle registry key: %s", key_path)
                     results.append(f"Found dongle registry key: {key_path}")
                     winreg.CloseKey(key)
-                except FileNotFoundError:
+                except FileNotFoundError as e:
+                    logger.error("File not found in process_utils: %s", e)
                     pass  # Key doesn't exist
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.debug("Error accessing registry key %s: %s", key_path, e)
 
-        except ImportError:
+        except ImportError as e:
+            logger.error("Import error in process_utils: %s", e)
             results.append("winreg not available - cannot check registry")
 
     if found_dongles:
@@ -439,7 +445,8 @@ def get_system_processes() -> List[Dict[str, Any]]:
                     'cmdline': ' '.join(proc.info['cmdline']) if proc.info['cmdline'] else '',
                     'create_time': proc.info['create_time']
                 })
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
+            except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                logger.error("Error in process_utils: %s", e)
                 pass  # Process may have terminated or access denied
 
     except (OSError, ValueError, RuntimeError) as e:

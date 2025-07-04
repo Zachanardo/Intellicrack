@@ -1,30 +1,7 @@
-"""
-Guided Workflow Wizard
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
-
 import datetime
 import os
 from typing import Any, Dict
 
-import pkg_resources
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import (
@@ -47,10 +24,37 @@ from PyQt5.QtWidgets import (
     QWizardPage,
 )
 
+from intellicrack.logger import logger
+
+"""
+Guided Workflow Wizard
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+
+
+
 try:
     import pefile
     HAS_PEFILE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in guided_workflow_wizard: %s", e)
     HAS_PEFILE = False
 
 __all__ = ['GuidedWorkflowWizard']
@@ -78,7 +82,9 @@ class GuidedWorkflowWizard(QWizard):
         self.setWindowTitle("Intellicrack Guided Workflow")
         self.setWizardStyle(QWizard.ModernStyle)
 
-        icon_path = pkg_resources.resource_filename('intellicrack', 'assets/icon.ico')
+        import intellicrack
+        self.base_path = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
+        icon_path = os.path.join(self.base_path, 'intellicrack', 'assets', 'icon.ico')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
@@ -122,7 +128,7 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(intro_text)
 
         # Add image if available
-        splash_path = pkg_resources.resource_filename('intellicrack', 'assets/splash.png')
+        splash_path = os.path.join(self.base_path, 'intellicrack', 'assets', 'splash.png')
         if os.path.exists(splash_path):
             image_label = QLabel()
             pixmap = QPixmap(splash_path).scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -892,10 +898,12 @@ class GuidedWorkflowWizard(QWizard):
                         timestamp = getattr(pe.FILE_HEADER, 'TimeDateStamp', 0)
                         compile_time = datetime.datetime.fromtimestamp(timestamp)
                         info_text += f"<b>Compiled:</b> {compile_time.strftime('%Y-%m-%d %H:%M:%S')}<br>"
-                    except (OSError, ValueError, RuntimeError):
+                    except (OSError, ValueError, RuntimeError) as e:
+                        logger.error("Error in guided_workflow_wizard: %s", e)
                         pass
 
-                except (OSError, ValueError, RuntimeError):
+                except (OSError, ValueError, RuntimeError) as e:
+                    logger.error("Error in guided_workflow_wizard: %s", e)
                     # If pefile fails, try a simpler approach
                     if os.name == "nt":  # Windows
                         if "64" in file_path.lower() or "x64" in file_path.lower():
@@ -906,6 +914,7 @@ class GuidedWorkflowWizard(QWizard):
             self.file_info_label.setText(info_text)
 
         except (OSError, ValueError, RuntimeError) as e:
+            logger.error("Error in guided_workflow_wizard: %s", e)
             self.file_info_label.setText(f"Error getting file info: {str(e)}")
 
     def format_size(self, size_bytes: int) -> str:

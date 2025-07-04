@@ -62,6 +62,13 @@ class C2Server(BaseC2):
         # Command queue for session management
         self.command_queue = asyncio.Queue()
 
+        # Authentication system
+        self.auth_tokens = set()
+        self.failed_auth_attempts = {}  # Track failed attempts by IP
+        self.max_auth_attempts = 5
+        self.auth_lockout_duration = 300  # 5 minutes
+        self._initialize_auth_tokens()
+
     def _initialize_protocols(self):
         """Initialize all supported communication protocols."""
         protocols_config = []
@@ -114,6 +121,83 @@ class C2Server(BaseC2):
 
         # Convert to dict for server usage
         self.protocols = {p['type']: p['handler'] for p in self.protocols}
+
+    def _initialize_auth_tokens(self):
+        """Initialize authentication tokens from configuration or generate new ones."""
+        import secrets
+        from ..utils.secrets_manager import get_secret, store_secret
+        
+        # Try to get existing auth tokens
+        auth_tokens_str = get_secret('C2_AUTH_TOKENS', None)
+        
+        if auth_tokens_str:
+            # Parse existing tokens
+            try:
+                self.auth_tokens = set(auth_tokens_str.split(','))
+                self.logger.info(f"Loaded {len(self.auth_tokens)} authentication tokens")
+            except Exception as e:
+                self.logger.error(f"Failed to parse auth tokens: {e}")
+                self.auth_tokens = set()
+        else:
+            # Generate new auth tokens
+            num_tokens = self.config.get('auth_token_count', 5)
+            new_tokens = []
+            
+            for i in range(num_tokens):
+                token = secrets.token_hex(32)
+                self.auth_tokens.add(token)
+                new_tokens.append(token)
+            
+            # Store tokens
+            try:
+                store_secret('C2_AUTH_TOKENS', ','.join(new_tokens))
+                self.logger.info(f"Generated and stored {num_tokens} new authentication tokens")
+            except Exception as e:
+                self.logger.warning(f"Could not store auth tokens: {e}")
+
+    async def _verify_auth_token(self, token: str, remote_addr: str) -> bool:
+        """Verify authentication token with rate limiting."""
+        try:
+            # Check if IP is locked out
+            if remote_addr in self.failed_auth_attempts:
+                attempts_info = self.failed_auth_attempts[remote_addr]
+                if attempts_info['count'] >= self.max_auth_attempts:
+                    lockout_time = time.time() - attempts_info['last_attempt']
+                    if lockout_time < self.auth_lockout_duration:
+                        self.logger.warning(f"Authentication blocked for {remote_addr} - lockout active")
+                        return False
+                    else:
+                        # Reset after lockout expires
+                        del self.failed_auth_attempts[remote_addr]
+            
+            # Verify token
+            if token in self.auth_tokens:
+                # Clear any failed attempts on successful auth
+                if remote_addr in self.failed_auth_attempts:
+                    del self.failed_auth_attempts[remote_addr]
+                return True
+            else:
+                # Track failed attempt
+                if remote_addr not in self.failed_auth_attempts:
+                    self.failed_auth_attempts[remote_addr] = {
+                        'count': 0,
+                        'last_attempt': 0
+                    }
+                
+                self.failed_auth_attempts[remote_addr]['count'] += 1
+                self.failed_auth_attempts[remote_addr]['last_attempt'] = time.time()
+                
+                remaining_attempts = self.max_auth_attempts - self.failed_auth_attempts[remote_addr]['count']
+                if remaining_attempts > 0:
+                    self.logger.warning(f"Failed auth from {remote_addr} - {remaining_attempts} attempts remaining")
+                else:
+                    self.logger.warning(f"Failed auth from {remote_addr} - locked out for {self.auth_lockout_duration} seconds")
+                
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Error verifying auth token: {e}")
+            return False
 
     async def start(self):
         """Start the C2 server and all protocol handlers."""
@@ -192,11 +276,22 @@ class C2Server(BaseC2):
             self.logger.error(f"Failed to start {protocol_name} protocol: {e}")
 
     async def _handle_new_connection(self, connection_info: Dict[str, Any]):
-        """Handle new client connection."""
+        """Handle new client connection with authentication."""
         try:
-            self.logger.info(f"New connection from {connection_info.get('remote_addr')}")
+            self.logger.info(f"New connection attempt from {connection_info.get('remote_addr')}")
 
-            # Create new session
+            # Check for authentication token
+            auth_token = connection_info.get('auth_token')
+            if not auth_token:
+                self.logger.warning(f"Connection rejected - no authentication token from {connection_info.get('remote_addr')}")
+                return None
+
+            # Verify authentication token
+            if not await self._verify_auth_token(auth_token, connection_info.get('remote_addr')):
+                self.logger.warning(f"Connection rejected - invalid authentication token from {connection_info.get('remote_addr')}")
+                return None
+
+            # Authentication successful - create session
             session = await self.session_manager.create_session(connection_info)
 
             # Update statistics
@@ -206,10 +301,12 @@ class C2Server(BaseC2):
             # Trigger event handlers
             await self._trigger_event('session_connected', session)
 
+            self.logger.info(f"Authenticated connection established with {connection_info.get('remote_addr')}")
             return session
 
         except Exception as e:
             self.logger.error(f"Error handling new connection: {e}")
+            return None
 
     async def _handle_message(self, session_id: str, message: Dict[str, Any]):
         """Handle incoming message from client."""
@@ -407,7 +504,8 @@ class C2Server(BaseC2):
                         self.command_queue.get(), timeout=1.0
                     )
                     await self._process_command(command)
-                except asyncio.TimeoutError:
+                except asyncio.TimeoutError as e:
+                    logger.error("asyncio.TimeoutError in c2_server: %s", e)
                     continue
 
             except Exception as e:
@@ -497,7 +595,8 @@ class C2Server(BaseC2):
             loop = None
             try:
                 loop = asyncio.get_event_loop()
-            except RuntimeError:
+            except RuntimeError as e:
+                logger.error("Runtime error in c2_server: %s", e)
                 # No event loop in current thread, create one
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
@@ -529,7 +628,8 @@ class C2Server(BaseC2):
         if event_type in self.event_handlers:
             try:
                 self.event_handlers[event_type].remove(handler)
-            except ValueError:
+            except ValueError as e:
+                self.logger.error("Value error in c2_server: %s", e)
                 pass
 
     def get_active_sessions(self) -> List[Dict[str, Any]]:
@@ -558,3 +658,52 @@ class C2Server(BaseC2):
                 'connections': getattr(protocol, 'connection_count', 0)
             }
         return status
+
+    def add_auth_token(self, token: str = None) -> str:
+        """Add a new authentication token."""
+        import secrets
+        from ..utils.secrets_manager import get_secret, store_secret
+        
+        if not token:
+            token = secrets.token_hex(32)
+        
+        self.auth_tokens.add(token)
+        
+        # Update stored tokens
+        try:
+            store_secret('C2_AUTH_TOKENS', ','.join(self.auth_tokens))
+            self.logger.info(f"Added new authentication token")
+        except Exception as e:
+            self.logger.warning(f"Could not update stored auth tokens: {e}")
+        
+        return token
+
+    def remove_auth_token(self, token: str) -> bool:
+        """Remove an authentication token."""
+        from ..utils.secrets_manager import store_secret
+        
+        if token in self.auth_tokens:
+            self.auth_tokens.remove(token)
+            
+            # Update stored tokens
+            try:
+                store_secret('C2_AUTH_TOKENS', ','.join(self.auth_tokens))
+                self.logger.info(f"Removed authentication token")
+                return True
+            except Exception as e:
+                self.logger.warning(f"Could not update stored auth tokens: {e}")
+                # Re-add token since we couldn't persist the change
+                self.auth_tokens.add(token)
+                return False
+        return False
+
+    def get_auth_status(self) -> Dict[str, Any]:
+        """Get authentication system status."""
+        return {
+            'auth_enabled': True,
+            'token_count': len(self.auth_tokens),
+            'locked_out_ips': len([ip for ip, info in self.failed_auth_attempts.items() 
+                                   if info['count'] >= self.max_auth_attempts]),
+            'max_attempts': self.max_auth_attempts,
+            'lockout_duration': self.auth_lockout_duration
+        }

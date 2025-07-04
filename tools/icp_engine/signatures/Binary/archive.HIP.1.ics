@@ -1,0 +1,15 @@
+// Intellicrack Protection Engine: detection rule file
+// Author: BJNFNE <bjnfne@web.de>
+// This Script supports following formats: HIP
+// Used by EvilEngine games
+
+init("archive", "HIP archive");
+
+function detect() {
+    if (Binary.compare("'HIPA'")) {
+        sVersion = "HIP/HOP";
+        bDetected = true;
+    }
+
+    return result();
+}

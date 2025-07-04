@@ -19,24 +19,24 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import datetime
 import json
 import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from intellicrack.logger import logger
+
+from ...utils.protection.protection_utils import calculate_entropy
+
 try:
     import pefile
     HAS_PEFILE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in binary_similarity_search: %s", e)
     HAS_PEFILE = False
 
 __all__ = ['BinarySimilaritySearch']
-
-
-# Import shared entropy calculation
-from ...utils.protection.protection_utils import calculate_entropy
 
 
 class BinarySimilaritySearch:
@@ -1115,6 +1115,38 @@ class BinarySimilaritySearch:
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error removing binary %s: %s", binary_path, e)
             return False
+
+    def load_database(self, database_path: str) -> bool:
+        """
+        Load a specific database file.
+
+        Args:
+            database_path: Path to the database file to load
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            self.database_path = database_path
+            self.database = self._load_database()
+            self.logger.info("Loaded database from %s", database_path)
+            return True
+        except Exception as e:
+            self.logger.error("Error loading database %s: %s", database_path, e)
+            return False
+
+    def find_similar(self, binary_path: str, threshold: float = 0.7) -> List[Dict[str, Any]]:
+        """
+        Find similar binaries to the given binary.
+
+        Args:
+            binary_path: Path to the binary file to find similarities for
+            threshold: Similarity threshold (0.0 to 1.0)
+
+        Returns:
+            List of similar binaries with their similarity scores
+        """
+        return self.search_similar_binaries(binary_path, threshold)
 
 
 def create_similarity_search(database_path: str = "binary_database.json") -> BinarySimilaritySearch:

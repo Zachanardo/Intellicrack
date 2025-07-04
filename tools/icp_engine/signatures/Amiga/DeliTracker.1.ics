@@ -1,0 +1,14 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("module", "DeliTracker player");
+
+function detect() {
+    if (Amiga.compareEP("70FF4E75'DELIRIUM'")) {
+        bDetected = true;
+    } else if (Amiga.compareEP("........'DELIRIUM'")) {
+        bDetected = true;
+        sOptions = "Startup code";
+    }
+
+    return result();
+}

@@ -1,3 +1,5 @@
+from intellicrack.logger import logger
+
 """
 Network analysis and protocol handling for Intellicrack.
 
@@ -22,27 +24,32 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 try:
     from .traffic_analyzer import NetworkTrafficAnalyzer as TrafficAnalyzer
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     TrafficAnalyzer = None
 
 try:
     from .ssl_interceptor import SSLTLSInterceptor as SSLInterceptor
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     SSLInterceptor = None
 
 try:
     from .protocol_fingerprinter import ProtocolFingerprinter
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     ProtocolFingerprinter = None
 
 try:
     from .license_server_emulator import NetworkLicenseServerEmulator as LicenseServerEmulator
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     LicenseServerEmulator = None
 
 try:
     from .cloud_license_hooker import CloudLicenseResponseGenerator as CloudLicenseHooker
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
     CloudLicenseHooker = None
 
 __all__ = [

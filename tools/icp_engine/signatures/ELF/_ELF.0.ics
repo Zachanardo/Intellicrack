@@ -1,0 +1,15 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("operation system", "Unix");
+
+function detect() {
+    if (ELF.isVerbose()) {
+        sName = ELF.getOperationSystemName();
+        sVersion = ELF.getOperationSystemVersion();
+        sOptions = ELF.getOperationSystemOptions();
+
+        bDetected = true;
+    }
+
+    return result();
+}

@@ -23,13 +23,16 @@ import datetime
 import logging
 from typing import Optional, Tuple
 
+from intellicrack.logger import logger
+
 try:
     from cryptography import x509
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import rsa
     from cryptography.x509.oid import NameOID
     HAS_CRYPTOGRAPHY = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in certificate_utils: %s", e)
     HAS_CRYPTOGRAPHY = False
 
 
@@ -175,7 +178,8 @@ def verify_certificate_validity(cert: x509.Certificate) -> bool:
         now = datetime.datetime.utcnow()
         return cert.not_valid_before <= now <= cert.not_valid_after
 
-    except Exception:
+    except Exception as e:
+        logger.error("Exception in certificate_utils: %s", e)
         return False
 
 
@@ -221,6 +225,7 @@ def get_certificate_info(cert: x509.Certificate) -> dict:
         return info
 
     except Exception as e:
+        logger.error("Exception in certificate_utils: %s", e)
         return {'error': str(e)}
 
 

@@ -1,0 +1,11 @@
+// Made by KDSS-Research
+
+init("packer", "Squishy");
+
+function detect() {
+    if (PE.isSectionNamePresent("logicoma")) {
+        bDetected = true;
+    }
+
+    return result();
+}

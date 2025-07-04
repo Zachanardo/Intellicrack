@@ -1,0 +1,11 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("language", "JavaScript");
+
+function detect() {
+    if (NPM.isArchiveRecordPresentExp("(.*?).js")) {
+        bDetected = true;
+    }
+
+    return result();
+}

@@ -1,3 +1,11 @@
+import logging
+import time
+from typing import Any, Dict, List, Optional
+
+from intellicrack.logger import logger
+
+from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
+
 """
 Radare2 ESIL (Evaluable Strings Intermediate Language) Analysis Engine
 
@@ -19,11 +27,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import logging
-import time
-from typing import Any, Dict, List, Optional
 
-from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 
 
 class ESILAnalysisEngine:
@@ -545,6 +549,7 @@ def analyze_binary_esil(binary_path: str, radare2_path: Optional[str] = None,
             functions = r2.get_functions()
             addresses = [f['offset'] for f in functions[:function_limit] if f.get('offset')]
     except R2Exception as e:
+        logger.error("R2Exception in radare2_esil: %s", e)
         return {'error': f"Failed to get function list: {e}"}
 
     if not addresses:

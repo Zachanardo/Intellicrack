@@ -5,14 +5,15 @@ Quick Integration Check
 Fast verification of critical exploitation framework components.
 """
 
+import logging
 import os
 import sys
-import logging
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
+
 
 def test_core_imports():
     """Test core module imports."""
@@ -22,7 +23,7 @@ def test_core_imports():
 
         # Test critical exploitation modules
         modules_to_test = [
-            'c2', 
+            'c2',
             'evasion',
             'post_exploitation',
             'vulnerability_research'
@@ -40,12 +41,14 @@ def test_core_imports():
             else:
                 print(f"  ✗ {module_name} (missing)")
 
-        print(f"Core modules: {len(working_modules)}/{len(modules_to_test)} working")
+        print(
+            f"Core modules: {len(working_modules)}/{len(modules_to_test)} working")
         return len(working_modules) >= len(modules_to_test) // 2
 
     except Exception as e:
         print(f"  ✗ Core import failed: {e}")
         return False
+
 
 def test_ai_imports():
     """Test AI module imports."""
@@ -68,12 +71,14 @@ def test_ai_imports():
             else:
                 print(f"  ✗ {component_name} (missing)")
 
-        print(f"AI components: {len(working_components)}/{len(components)} working")
+        print(
+            f"AI components: {len(working_components)}/{len(components)} working")
         return len(working_components) == len(components)
 
     except Exception as e:
         print(f"  ✗ AI import failed: {e}")
         return False
+
 
 def test_basic_functionality():
     """Test basic functionality of key components."""
@@ -114,6 +119,7 @@ def test_basic_functionality():
     print(f"Basic functionality: {tests_passed}/3 tests passed")
     return tests_passed >= 2
 
+
 def test_cli_availability():
     """Test CLI availability."""
     print("Testing CLI availability...")
@@ -124,6 +130,7 @@ def test_cli_availability():
         print(f"  ✗ CLI import failed: {e}")
         return False
 
+
 def main():
     """Run quick integration check."""
     print("=" * 50)
@@ -132,7 +139,7 @@ def main():
 
     tests = [
         ("Core Imports", test_core_imports),
-        ("AI Imports", test_ai_imports), 
+        ("AI Imports", test_ai_imports),
         ("Basic Functionality", test_basic_functionality),
         ("CLI Availability", test_cli_availability)
     ]
@@ -169,6 +176,7 @@ def main():
         print("   Multiple integration issues detected.")
 
     return success_rate >= 50
+
 
 if __name__ == '__main__':
     success = main()

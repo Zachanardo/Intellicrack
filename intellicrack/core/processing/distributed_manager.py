@@ -1,3 +1,16 @@
+import logging
+import math
+import multiprocessing
+import os
+import queue
+import re
+import time
+import traceback
+from collections import Counter
+from typing import Any, Callable, Dict, List, Optional, Union
+
+from intellicrack.logger import logger
+
 """
 Distributed Processing Manager
 
@@ -20,39 +33,33 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-import logging
-import math
-import multiprocessing
-import os
-import queue
-import re
-import time
-import traceback
-from collections import Counter
-from typing import Any, Callable, Dict, List, Optional, Union
 
 try:
     import ray
     RAY_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in distributed_manager: %s", e)
     RAY_AVAILABLE = False
 
 try:
     from dask.distributed import Client, progress
     DASK_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in distributed_manager: %s", e)
     DASK_AVAILABLE = False
 
 try:
     import angr
     ANGR_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in distributed_manager: %s", e)
     ANGR_AVAILABLE = False
 
 try:
     import pefile
     PEFILE_AVAILABLE = True
-except ImportError:
+except ImportError as e:
+    logger.error("Import error in distributed_manager: %s", e)
     PEFILE_AVAILABLE = False
 
 
@@ -385,6 +392,7 @@ class DistributedProcessingManager:
                     chunk_data = f.read(self.chunk_size)
                 return process_func(chunk_data, offset)
             except (OSError, ValueError, RuntimeError) as e:
+                logger.error("Error in distributed_manager: %s", e)
                 return {"error": str(e), "offset": offset, "chunk_idx": chunk_idx}
 
         # Create pool
@@ -875,14 +883,16 @@ class DistributedProcessingManager:
                 while not self.task_queue.empty():
                     try:
                         self.task_queue.get_nowait()
-                    except queue.Empty:
+                    except queue.Empty as e:
+                        logger.error("queue.Empty in distributed_manager: %s", e)
                         break
 
             if self.result_queue:
                 while not self.result_queue.empty():
                     try:
                         self.result_queue.get_nowait()
-                    except queue.Empty:
+                    except queue.Empty as e:
+                        logger.error("queue.Empty in distributed_manager: %s", e)
                         break
 
             self.running = False

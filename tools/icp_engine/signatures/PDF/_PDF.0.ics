@@ -1,0 +1,13 @@
+// Intellicrack Protection Engine: detection rule file
+
+init("format", "PDF");
+
+function detect() {
+    sName = PDF.getFileFormatName();
+    sVersion = PDF.getFileFormatVersion();
+    sOptions = PDF.getFileFormatOptions();
+
+    bDetected = true;
+
+    return result();
+}
