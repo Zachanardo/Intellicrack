@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Optional
 
 
 class LoadingState(Enum):

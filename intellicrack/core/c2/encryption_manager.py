@@ -402,7 +402,7 @@ class EncryptionManager:
         # Use a proper salt derived from the encryption key itself
         # This ensures each key has a unique salt while remaining deterministic
         salt = hashlib.sha256(encryption_key + b'hmac_derivation').digest()[:16]
-        
+
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,

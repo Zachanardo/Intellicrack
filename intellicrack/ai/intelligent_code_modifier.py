@@ -134,7 +134,7 @@ class CodeAnalyzer:
                     content = file_data["content"]
             except (ImportError, AttributeError, KeyError):
                 pass
-            
+
             # Fallback to direct file reading if AIFileTools not available
             if content is None:
                 with open(file_path, 'r', encoding='utf-8') as f:
@@ -785,7 +785,7 @@ Requirements:
                     content = file_data["content"]
             except (ImportError, AttributeError, KeyError):
                 pass
-            
+
             # Fallback to direct file reading if AIFileTools not available
             if content is None:
                 with open(file_path, 'r', encoding='utf-8') as f:

@@ -236,7 +236,7 @@ def simulate_patch_and_verify(binary_path: str, patches: List[Dict[str, Any]]) -
 
             # Check section sizes
             for i, (orig_section, patched_section) in enumerate(
-                    zip(original_pe.sections, verification_pe.sections)):
+                    zip(original_pe.sections, verification_pe.sections, strict=False)):
                 orig_name = orig_section.Name.decode(
                     'utf-8', 'ignore').strip('\x00')
                 patched_name = patched_section.Name.decode(

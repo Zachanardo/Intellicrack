@@ -43,6 +43,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from ..ai.ai_assistant_enhanced import IntellicrackAIAssistant, create_ai_assistant_widget
 from ..analysis.analysis_result_orchestrator import AnalysisResultOrchestrator
 from ..analysis.handlers.llm_handler import LLMHandler
 from ..analysis.handlers.report_generation_handler import ReportGenerationHandler
@@ -58,7 +59,6 @@ from .dialogs.program_selector_dialog import show_program_selector
 from .dialogs.signature_editor_dialog import SignatureEditorDialog
 from .widgets.icp_analysis_widget import ICPAnalysisWidget
 from .widgets.unified_protection_widget import UnifiedProtectionWidget
-from ..ai.ai_assistant_enhanced import IntellicrackAIAssistant, create_ai_assistant_widget
 
 # Configure module logger
 logger = get_logger(__name__)
@@ -336,10 +336,10 @@ class IntellicrackMainWindow(QMainWindow):
         """Setup the AI assistant tab."""
         # Create the AI assistant widget using the function from ai_assistant_enhanced.py
         ai_widget = create_ai_assistant_widget()
-        
+
         # Store reference to the AI widget for potential future use
         self.ai_assistant_widget = ai_widget
-        
+
         # Add the widget to the tab
         self.tab_widget.addTab(ai_widget, "AI Assistant")
 
@@ -643,51 +643,51 @@ Licensing Files Found: {len(licensing_files)}"""
                 self.update_output.emit(f"Error: {analysis_results['error']}")
             else:
                 self._display_analysis_results(analysis_results)
-                
+
                 # Run AI-enhanced complex analysis
                 self.update_progress.emit(70)
                 self.update_output.emit("\n=== AI-ENHANCED COMPLEX ANALYSIS ===")
                 self.update_status.emit("Running AI-enhanced analysis...")
-                
+
                 try:
                     # Prepare ML results if available
                     ml_results = {
                         "confidence": 0.85,
                         "predictions": []
                     }
-                    
+
                     # Extract protection detections if available
                     if hasattr(self, 'protection_results') and self.protection_results:
                         ml_results["predictions"] = self.protection_results
-                    
+
                     # Run AI complex analysis
                     ai_analysis = self.ai_assistant.analyze_binary_complex(
-                        self.binary_path, 
+                        self.binary_path,
                         ml_results
                     )
-                    
+
                     # Display AI analysis results
                     if ai_analysis and not ai_analysis.get('error'):
                         self.update_output.emit(f"AI Confidence: {ai_analysis.get('confidence', 0.0):.2%}")
-                        
+
                         if ai_analysis.get('findings'):
                             self.update_output.emit("\nFindings:")
                             for finding in ai_analysis['findings']:
                                 self.update_output.emit(f"  • {finding}")
-                        
+
                         if ai_analysis.get('recommendations'):
                             self.update_output.emit("\nRecommendations:")
                             for rec in ai_analysis['recommendations']:
                                 self.update_output.emit(f"  → {rec}")
-                        
+
                         if ai_analysis.get('ml_integration'):
                             ml_info = ai_analysis['ml_integration']
                             self.update_output.emit(f"\nML Integration Confidence: {ml_info.get('ml_confidence', 0.0):.2%}")
-                    
+
                 except Exception as e:
                     self.logger.warning(f"AI complex analysis failed: {str(e)}")
                     self.update_output.emit(f"AI analysis unavailable: {str(e)}")
-                
+
                 self.generate_report_button.setEnabled(True)
 
             self.update_progress.emit(100)

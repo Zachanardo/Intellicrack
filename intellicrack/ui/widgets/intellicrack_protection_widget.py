@@ -31,14 +31,14 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from ...ai.ai_assistant_enhanced import IntellicrackAIAssistant
+from ...ai.ai_file_tools import get_ai_file_tools
+from ...ai.ai_tools import AIAssistant
 from ...protection.intellicrack_protection_core import (
     IntellicrackProtectionCore,
     ProtectionAnalysis,
 )
 from ...utils.logger import get_logger
-from ...ai.ai_assistant_enhanced import IntellicrackAIAssistant
-from ...ai.ai_file_tools import get_ai_file_tools
-from ...ai.ai_tools import AIAssistant
 
 logger = get_logger(__name__)
 
@@ -59,7 +59,7 @@ class ProtectionAnalysisThread(QThread):
         try:
             self.analysis_progress.emit(f"Analyzing {os.path.basename(self.file_path)}...")
             analysis = self.detector.detect_protections(self.file_path)
-            
+
             # Check if license protection was detected
             has_license_protection = False
             if hasattr(analysis, 'detections'):
@@ -67,20 +67,20 @@ class ProtectionAnalysisThread(QThread):
                     if detection.type.value in ['license', 'dongle', 'drm']:
                         has_license_protection = True
                         break
-            
+
             # Search for license files if relevant
             if has_license_protection:
                 self.analysis_progress.emit("Searching for license files...")
                 try:
                     binary_dir = os.path.dirname(os.path.abspath(self.file_path))
                     license_file_results = self.ai_file_tools.search_for_license_files(binary_dir)
-                    
+
                     if license_file_results.get("status") == "success":
                         # Add license files to analysis object
                         if not hasattr(analysis, 'license_files'):
                             analysis.license_files = []
                         analysis.license_files = license_file_results.get("files_found", [])
-                        
+
                         # Also add summary info
                         analysis.license_file_summary = {
                             "total_found": len(license_file_results.get("files_found", [])),
@@ -89,7 +89,7 @@ class ProtectionAnalysisThread(QThread):
                         }
                 except Exception as e:
                     logger.warning(f"License file search failed: {e}")
-            
+
             self.analysis_complete.emit(analysis)
         except Exception as e:
             logger.error("Exception in intellicrack_protection_widget: %s", e)
@@ -133,7 +133,7 @@ class IntellicrackProtectionWidget(QWidget):
         self.analyze_btn = QPushButton("Analyze Binary")
         self.analyze_btn.clicked.connect(self.on_analyze_clicked)
         header_layout.addWidget(self.analyze_btn)
-        
+
         # Search license files button
         self.search_license_btn = QPushButton("Search License Files")
         self.search_license_btn.clicked.connect(self.search_license_files)
@@ -145,13 +145,13 @@ class IntellicrackProtectionWidget(QWidget):
         self.export_btn.clicked.connect(self.on_export_clicked)
         self.export_btn.setEnabled(False)
         header_layout.addWidget(self.export_btn)
-        
+
         # AI Reasoning button
         self.ai_reasoning_btn = QPushButton("AI Reasoning")
         self.ai_reasoning_btn.clicked.connect(self.on_ai_reasoning_clicked)
         self.ai_reasoning_btn.setEnabled(False)
         header_layout.addWidget(self.ai_reasoning_btn)
-        
+
         # Ask AI button
         self.ask_ai_btn = QPushButton("Ask AI")
         self.ask_ai_btn.clicked.connect(self.on_ask_ai_clicked)
@@ -206,7 +206,7 @@ class IntellicrackProtectionWidget(QWidget):
         self.raw_output_text.setReadOnly(True)
         self.raw_output_text.setFont(QFont("Consolas", 8))
         self.details_tabs.addTab(self.raw_output_text, "Raw Output")
-        
+
         # AI Reasoning tab
         self.ai_reasoning_text = QTextEdit()
         self.ai_reasoning_text.setReadOnly(True)
@@ -536,17 +536,17 @@ class IntellicrackProtectionWidget(QWidget):
         """Set binary path for analysis (called from main UI)"""
         if file_path and os.path.exists(file_path):
             self.analyze_file(file_path)
-    
+
     def on_ai_reasoning_clicked(self):
         """Handle AI reasoning button click"""
         if not self.current_analysis:
             QMessageBox.warning(self, "No Analysis", "Please analyze a binary first.")
             return
-        
+
         # Disable button during reasoning
         self.ai_reasoning_btn.setEnabled(False)
         self.status_label.setText("Performing AI reasoning...")
-        
+
         try:
             # Prepare task data for AI reasoning
             task_data = {
@@ -561,7 +561,7 @@ class IntellicrackProtectionWidget(QWidget):
                 },
                 "patterns": []
             }
-            
+
             # Add detection patterns
             if self.current_analysis.detections:
                 for detection in self.current_analysis.detections:
@@ -572,76 +572,76 @@ class IntellicrackProtectionWidget(QWidget):
                         "confidence": detection.confidence,
                         "bypass_recommendations": detection.bypass_recommendations
                     })
-            
+
             # Add ML results if available
             if hasattr(self.current_analysis, 'ml_confidence'):
                 task_data["ml_results"] = {
                     "confidence": self.current_analysis.ml_confidence,
                     "predictions": task_data["patterns"]
                 }
-            
+
             # Perform AI reasoning
             reasoning_result = self.ai_assistant.perform_reasoning(task_data)
-            
+
             # Display reasoning results
             self.display_ai_reasoning(reasoning_result)
-            
+
             # Enable button
             self.ai_reasoning_btn.setEnabled(True)
             self.status_label.setText("AI reasoning complete")
-            
+
         except Exception as e:
             logger.error("Error in AI reasoning: %s", e)
             QMessageBox.critical(self, "AI Reasoning Error", f"Error performing AI reasoning:\n{str(e)}")
             self.ai_reasoning_btn.setEnabled(True)
             self.status_label.setText("AI reasoning failed")
-    
+
     def display_ai_reasoning(self, reasoning_result: dict):
         """Display AI reasoning results in the UI"""
         reasoning_lines = []
-        
+
         reasoning_lines.append("=== AI Reasoning Analysis ===\n")
-        
+
         # Check for errors
         if reasoning_result.get("error"):
             reasoning_lines.append(f"Error: {reasoning_result['error']}")
             self.ai_reasoning_text.setText("\n".join(reasoning_lines))
             return
-        
+
         # Display task type and confidence
         reasoning_lines.append(f"Task Type: {reasoning_result.get('task_type', 'Unknown')}")
         reasoning_lines.append(f"Reasoning Confidence: {reasoning_result.get('reasoning_confidence', 0) * 100:.0f}%")
         reasoning_lines.append("")
-        
+
         # Display evidence
         if reasoning_result.get("evidence"):
             reasoning_lines.append("Evidence Found:")
             for evidence in reasoning_result["evidence"]:
                 reasoning_lines.append(f"  • {evidence}")
             reasoning_lines.append("")
-        
+
         # Display conclusions
         if reasoning_result.get("conclusions"):
             reasoning_lines.append("Conclusions:")
             for conclusion in reasoning_result["conclusions"]:
                 reasoning_lines.append(f"  • {conclusion}")
             reasoning_lines.append("")
-        
+
         # Display next steps
         if reasoning_result.get("next_steps"):
             reasoning_lines.append("Recommended Next Steps:")
             for i, step in enumerate(reasoning_result["next_steps"], 1):
                 reasoning_lines.append(f"  {i}. {step}")
             reasoning_lines.append("")
-        
+
         # Add protection-specific reasoning
         if self.current_analysis.detections:
             reasoning_lines.append("Protection-Specific Analysis:")
             reasoning_lines.append("")
-            
+
             for detection in self.current_analysis.detections:
                 reasoning_lines.append(f"For {detection.name} ({detection.type.value}):")
-                
+
                 # Analyze bypass difficulty
                 if detection.bypass_recommendations:
                     reasoning_lines.append("  Bypass Complexity Analysis:")
@@ -651,7 +651,7 @@ class IntellicrackProtectionWidget(QWidget):
                     else:
                         reasoning_lines.append("    - Limited bypass options")
                         reasoning_lines.append("    - May require custom approach")
-                
+
                 # Analyze protection type implications
                 if detection.type.value == "protector":
                     reasoning_lines.append("  Impact: Code obfuscation and anti-debugging expected")
@@ -659,32 +659,32 @@ class IntellicrackProtectionWidget(QWidget):
                     reasoning_lines.append("  Impact: Code unpacking required before analysis")
                 elif detection.type.value in ["license", "dongle", "drm"]:
                     reasoning_lines.append("  Impact: License verification bypass needed")
-                
+
                 reasoning_lines.append("")
-        
+
         # Update the AI reasoning text
         self.ai_reasoning_text.setText("\n".join(reasoning_lines))
-        
+
         # Switch to AI reasoning tab
         self.details_tabs.setCurrentWidget(self.ai_reasoning_text)
-    
+
     def search_license_files(self):
         """Search for license files in the current binary's directory"""
         if not self.current_analysis:
             QMessageBox.warning(self, "No Analysis", "Please analyze a binary first")
             return
-        
+
         try:
             binary_dir = os.path.dirname(os.path.abspath(self.current_analysis.file_path))
             self.status_label.setText("Searching for license files...")
-            
+
             # Use AI file tools to search
             ai_file_tools = get_ai_file_tools()
             license_file_results = ai_file_tools.search_for_license_files(binary_dir)
-            
+
             if license_file_results.get("status") == "success":
                 files_found = license_file_results.get("files_found", [])
-                
+
                 if files_found:
                     # Display results in a message box
                     message_lines = [f"Found {len(files_found)} potential license files:\n"]
@@ -692,33 +692,33 @@ class IntellicrackProtectionWidget(QWidget):
                         message_lines.append(f"• {file_info['name']} ({file_info.get('size_str', 'Unknown size')})")
                         if file_info.get('match_type'):
                             message_lines.append(f"  Type: {file_info['match_type']}")
-                    
+
                     if len(files_found) > 10:
                         message_lines.append(f"\n... and {len(files_found) - 10} more files")
-                    
+
                     QMessageBox.information(self, "License Files Found", "\n".join(message_lines))
-                    
+
                     # Update the analysis object
                     if not hasattr(self.current_analysis, 'license_files'):
                         self.current_analysis.license_files = []
                     self.current_analysis.license_files = files_found
-                    
+
                     # Refresh display
                     self.display_summary(self.current_analysis)
                 else:
-                    QMessageBox.information(self, "No License Files", 
+                    QMessageBox.information(self, "No License Files",
                                           f"No license files found in:\n{binary_dir}")
             else:
                 error_msg = license_file_results.get("error", "Unknown error")
                 QMessageBox.warning(self, "Search Failed", f"License file search failed:\n{error_msg}")
-                
+
             self.status_label.setText("License file search complete")
-            
+
         except Exception as e:
             logger.error(f"Error searching for license files: {e}")
             QMessageBox.critical(self, "Error", f"Error searching for license files:\n{str(e)}")
             self.status_label.setText("License file search failed")
-    
+
     def on_ask_ai_clicked(self):
         """Handle Ask AI button click - opens a dialog to ask questions about protections"""
         # Create a custom dialog for asking questions
@@ -726,41 +726,41 @@ class IntellicrackProtectionWidget(QWidget):
         dialog.setWindowTitle("Ask AI about Protections")
         dialog.setMinimumWidth(600)
         dialog.setMinimumHeight(400)
-        
+
         layout = QVBoxLayout(dialog)
-        
+
         # Instructions
         instructions = QLabel("Ask questions about binary protections, licensing schemes, or security analysis:")
         layout.addWidget(instructions)
-        
+
         # Question input
         question_input = QLineEdit()
         question_input.setPlaceholderText("e.g., 'How do I bypass VMProtect?' or 'What is a dongle protection?'")
         layout.addWidget(question_input)
-        
+
         # Response area
         response_text = QTextEdit()
         response_text.setReadOnly(True)
         layout.addWidget(response_text)
-        
+
         # Buttons
         button_box = QDialogButtonBox()
         ask_button = QPushButton("Ask")
         close_button = QPushButton("Close")
         button_box.addButton(ask_button, QDialogButtonBox.ActionRole)
         button_box.addButton(close_button, QDialogButtonBox.RejectRole)
-        
+
         def ask_question():
             question = question_input.text().strip()
             if not question:
                 QMessageBox.warning(dialog, "No Question", "Please enter a question.")
                 return
-            
+
             # Disable button during processing
             ask_button.setEnabled(False)
             response_text.append(f"<b>Question:</b> {question}\n")
             response_text.append("<i>AI is thinking...</i>\n")
-            
+
             try:
                 # Add context from current analysis if available
                 if self.current_analysis and self.current_analysis.detections:
@@ -772,15 +772,15 @@ class IntellicrackProtectionWidget(QWidget):
                     full_question = context + question
                 else:
                     full_question = question
-                
+
                 # Get AI response
                 response = self.ai_tools.ask_question(full_question)
-                
+
                 # Clear the "thinking" message and display response
                 response_text.clear()
                 response_text.append(f"<b>Question:</b> {question}\n")
                 response_text.append(f"<b>AI Response:</b>\n{response}")
-                
+
             except Exception as e:
                 logger.error(f"Error asking AI question: {e}")
                 response_text.clear()
@@ -790,14 +790,14 @@ class IntellicrackProtectionWidget(QWidget):
                 ask_button.setEnabled(True)
                 question_input.clear()
                 question_input.setFocus()
-        
+
         # Connect signals
         ask_button.clicked.connect(ask_question)
         close_button.clicked.connect(dialog.reject)
         question_input.returnPressed.connect(ask_question)
-        
+
         layout.addWidget(button_box)
-        
+
         # Pre-populate with context-aware suggestions if analysis is available
         if self.current_analysis and self.current_analysis.detections:
             suggestions = []
@@ -808,13 +808,13 @@ class IntellicrackProtectionWidget(QWidget):
                     suggestions.append(f"What are the best tools to unpack {detection.name}?")
                 elif detection.type.value in ["license", "dongle", "drm"]:
                     suggestions.append(f"How does {detection.name} licensing work?")
-            
+
             if suggestions:
                 response_text.append("<b>Suggested questions based on current analysis:</b>")
                 for suggestion in suggestions[:3]:  # Show up to 3 suggestions
                     response_text.append(f"• {suggestion}")
                 response_text.append("\n<i>Type your question above or click a suggestion to use it.</i>\n")
-        
+
         dialog.exec_()
 
 

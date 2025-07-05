@@ -138,7 +138,7 @@ class HexViewRenderer:
             hex_parts = []
             for j in range(0, len(chunk), self.group_size):
                 group = chunk[j:j + self.group_size]
-                
+
                 # Check if this byte range should be highlighted
                 highlight_prefix = ""
                 highlight_suffix = ""
@@ -172,7 +172,7 @@ class HexViewRenderer:
                 else:
                     # Handle incomplete groups at the end
                     group_str = "".join(f"{b:02X}" for b in group)
-                
+
                 # Apply highlighting and add to hex_parts
                 hex_parts.append(highlight_prefix + group_str + highlight_suffix)
 

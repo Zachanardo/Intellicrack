@@ -234,7 +234,7 @@ class IntellicrackAIAssistant:
             function=self._disassemble,
             example="disassemble('app.exe', '0x401000', 30)"
         )
-        
+
         # External tool for calling external analysis services
         tools["external_analysis"] = Tool(
             name="external_analysis",
@@ -997,21 +997,21 @@ What security aspect interests you?"""
                 "conclusions": [],
                 "next_steps": []
             }
-    
+
     def _external_analysis(self, file_path: str, service: str = "virustotal", api_key: Optional[str] = None) -> Dict[str, Any]:
         """Submit file to external analysis service."""
         try:
             import hashlib
             import os
-            
+
             # Validate file exists
             if not os.path.exists(file_path):
                 return {"error": f"File not found: {file_path}"}
-            
+
             # Calculate file hash
             with open(file_path, 'rb') as f:
                 file_hash = hashlib.sha256(f.read()).hexdigest()
-            
+
             # Simulate external service interaction
             result = {
                 "service": service,
@@ -1025,16 +1025,16 @@ What security aspect interests you?"""
                     "permalink": f"https://{service}.com/file/{file_hash}"
                 }
             }
-            
+
             if api_key:
                 result["message"] = f"File submitted to {service} with API authentication"
                 result["results"]["status"] = "authenticated"
             else:
                 result["warning"] = f"No API key provided for {service}. Results may be limited."
-            
+
             logger.info(f"External analysis requested for {file_path} using {service}")
             return result
-            
+
         except Exception as e:
             logger.error(f"External analysis error: {e}")
             return {"error": f"External analysis failed: {str(e)}"}

@@ -1108,15 +1108,15 @@ class FridaManagerDialog(QDialog):
         """Spawn a new process"""
         # Get executable path from user
         file_path, _ = QFileDialog.getOpenFileName(
-            self, 
-            "Select Executable to Spawn", 
-            "", 
+            self,
+            "Select Executable to Spawn",
+            "",
             "Executable Files (*.exe *.elf *.app *.bin);;All Files (*.*)"
         )
-        
+
         if not file_path:
             return
-            
+
         # Get command line arguments if needed
         args, ok = QInputDialog.getText(
             self,
@@ -1125,48 +1125,48 @@ class FridaManagerDialog(QDialog):
             QLineEdit.Normal,
             ""
         )
-        
+
         if not ok:
             return
-            
+
         try:
             # Get selected device
             device_item = self.device_list.currentItem()
             if not device_item:
                 QMessageBox.warning(self, "No Device", "Please select a device first")
                 return
-                
+
             device_id = device_item.data(1)
             device = frida.get_device(device_id) if device_id != 'local' else frida.get_local_device()
-            
+
             # Prepare spawn options
             spawn_options = {}
-            
+
             # Parse arguments if provided
             if args.strip():
                 import shlex
                 spawn_options['argv'] = [file_path] + shlex.split(args)
             else:
                 spawn_options['argv'] = [file_path]
-                
+
             # Set environment variables for exploitation
             spawn_options['env'] = {
                 'LD_PRELOAD': '',  # Clear preload to avoid detection
                 'DYLD_INSERT_LIBRARIES': '',  # Clear for macOS
                 'FRIDA_ENABLED': '1'  # Custom env var
             }
-            
+
             # Spawn with suspend flag to attach before execution
             self.console_text.append(f"Spawning process: {file_path}")
             pid = device.spawn(file_path, **spawn_options)
-            
+
             # Attach to spawned process
             self.current_session = device.attach(pid)
             self.current_pid = pid
-            
+
             # Set up message handler
             self.current_session.on('detached', self._on_detached)
-            
+
             # Update UI
             self.attach_btn.setEnabled(False)
             self.spawn_btn.setEnabled(False)
@@ -1174,21 +1174,21 @@ class FridaManagerDialog(QDialog):
             self.suspend_btn.setEnabled(True)
             self.resume_btn.setEnabled(False)
             self.load_script_btn.setEnabled(True)
-            
+
             self.status_label.setText(f"Spawned and attached to PID: {pid}")
             self.console_text.append(f"Process spawned with PID: {pid}")
             self.console_text.append("Process is suspended. Use 'Resume' to start execution.")
-            
+
             # Add to process list
             self.refresh_processes()
-            
+
             # Auto-select the spawned process
             for i in range(self.process_list.count()):
                 item = self.process_list.item(i)
                 if int(item.data(1)) == pid:
                     self.process_list.setCurrentItem(item)
                     break
-                    
+
         except Exception as e:
             error_msg = f"Failed to spawn process: {str(e)}"
             self.console_text.append(f"Error: {error_msg}")
@@ -2126,7 +2126,7 @@ class FridaManagerDialog(QDialog):
                 if hasattr(script, 'metadata') and "frida" in script.metadata.script_type.value.lower():
                     script_content = script.content if hasattr(script, 'content') else str(script)
                     target_binary = getattr(script.metadata, 'target_binary', self.selected_process.get('path', '') if self.selected_process else '')
-                    
+
                     # Execute through ScriptExecutionManager for QEMU testing option
                     result = self.script_execution_manager.execute_script(
                         script_type='frida',
@@ -2137,7 +2137,7 @@ class FridaManagerDialog(QDialog):
                             'ai_generated': True
                         }
                     )
-                    
+
                     if result.get('success'):
                         # Add to loaded scripts list
                         item = QListWidgetItem(f"AI Generated: {script.metadata.target_binary}")

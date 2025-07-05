@@ -90,45 +90,45 @@ try:
         QWizardPage,
     )
     PYQT5_AVAILABLE = True
-    
+
     # Utility functions that use the imported classes
     def create_point(x: int, y: int) -> QPoint:
         """Create a QPoint instance"""
         return QPoint(x, y)
-    
+
     def create_rect(x: int, y: int, width: int, height: int) -> QRect:
         """Create a QRect instance"""
         return QRect(x, y, width, height)
-    
+
     def create_size(width: int, height: int) -> QSize:
         """Create a QSize instance"""
         return QSize(width, height)
-    
+
     def get_text_metrics(font: QFont, text: str) -> QFontMetrics:
         """Get font metrics for text measurement"""
         metrics = QFontMetrics(font)
         return metrics
-    
+
     def create_icon_from_file(path: str) -> QIcon:
         """Create an icon from a file path"""
         return QIcon(path)
-    
+
     def create_pixmap(width: int, height: int) -> QPixmap:
         """Create an empty pixmap"""
         return QPixmap(width, height)
-    
+
     def create_pen(color: QColor, width: int = 1) -> QPen:
         """Create a pen for drawing"""
         return QPen(color, width)
-    
+
     def handle_key_event(event: QKeyEvent) -> tuple:
         """Extract key information from a key event"""
         return (event.key(), event.modifiers(), event.text())
-    
+
     def handle_mouse_event(event: QMouseEvent) -> tuple:
         """Extract mouse information from a mouse event"""
         return (event.x(), event.y(), event.button(), event.buttons())
-    
+
     def handle_paint_event(widget: QWidget, event: QPaintEvent, paint_func=None):
         """Helper for handling paint events"""
         painter = QPainter(widget)
@@ -137,12 +137,12 @@ try:
                 paint_func(painter, event.rect())
         finally:
             painter.end()
-    
+
     def handle_resize_event(event: QResizeEvent) -> tuple:
         """Extract size information from resize event"""
-        return (event.size().width(), event.size().height(), 
+        return (event.size().width(), event.size().height(),
                 event.oldSize().width(), event.oldSize().height())
-    
+
     def create_standard_action(text: str, parent=None, slot=None, shortcut=None) -> QAction:
         """Create a standard action with optional shortcut"""
         action = QAction(text, parent)
@@ -151,14 +151,14 @@ try:
         if shortcut:
             action.setShortcut(QKeySequence(shortcut))
         return action
-    
+
     def create_button_group(buttons: list, parent=None) -> QButtonGroup:
         """Create a button group from a list of buttons"""
         group = QButtonGroup(parent)
         for i, button in enumerate(buttons):
             group.addButton(button, i)
         return group
-    
+
     def get_desktop_geometry() -> tuple:
         """Get desktop geometry information"""
         desktop = QApplication.desktop() if hasattr(QApplication, 'desktop') else None
@@ -166,17 +166,17 @@ try:
             rect = desktop.screenGeometry()
             return (rect.width(), rect.height())
         return (1920, 1080)  # Default fallback
-    
+
     def create_frame_with_style(style=QFrame.Box, shadow=QFrame.Raised) -> QFrame:
         """Create a styled frame"""
         frame = QFrame()
         frame.setFrameStyle(style | shadow)
         return frame
-    
+
     def prompt_for_input(parent, title: str, label: str, default: str = "") -> tuple:
         """Show input dialog and return (text, ok)"""
         return QInputDialog.getText(parent, title, label, text=default)
-    
+
     def create_context_menu(actions: list, parent=None) -> QMenu:
         """Create a context menu with actions"""
         menu = QMenu(parent)
@@ -186,7 +186,7 @@ try:
             else:
                 menu.addAction(action)
         return menu
-    
+
     def create_radio_button_set(labels: list, parent=None) -> list:
         """Create a set of radio buttons"""
         buttons = []
@@ -196,28 +196,28 @@ try:
         if buttons:
             buttons[0].setChecked(True)  # Default first option
         return buttons
-    
+
     def create_scroll_area_with_widget(widget: QWidget) -> QScrollArea:
         """Create a scroll area containing a widget"""
         scroll = QScrollArea()
         scroll.setWidget(widget)
         scroll.setWidgetResizable(True)
         return scroll
-    
-    def create_slider_with_range(min_val: int, max_val: int, 
+
+    def create_slider_with_range(min_val: int, max_val: int,
                                 orientation=Qt.Horizontal) -> QSlider:
         """Create a slider with specified range"""
         slider = QSlider(orientation)
         slider.setMinimum(min_val)
         slider.setMaximum(max_val)
         return slider
-    
+
     def create_splash_screen(pixmap_path: str, flags=Qt.WindowStaysOnTopHint) -> QSplashScreen:
         """Create a splash screen with image"""
         pixmap = QPixmap(pixmap_path)
         splash = QSplashScreen(pixmap, flags)
         return splash
-    
+
     def create_toolbar_with_actions(title: str, actions: list, parent=None) -> QToolBar:
         """Create a toolbar with actions"""
         toolbar = QToolBar(title, parent)
@@ -227,7 +227,7 @@ try:
             else:
                 toolbar.addAction(action)
         return toolbar
-    
+
     def create_wizard_with_pages(title: str, pages: list) -> QWizard:
         """Create a wizard with pages"""
         wizard = QWizard()
@@ -235,7 +235,7 @@ try:
         for page in pages:
             wizard.addPage(page)
         return wizard
-    
+
     def create_wizard_page(title: str, subtitle: str = "") -> QWizardPage:
         """Create a wizard page"""
         page = QWizardPage()
@@ -243,22 +243,22 @@ try:
         if subtitle:
             page.setSubTitle(subtitle)
         return page
-        
-    def configure_abstract_item_view(view: QAbstractItemView, 
+
+    def configure_abstract_item_view(view: QAbstractItemView,
                                    selection_mode=QAbstractItemView.SingleSelection):
         """Configure common settings for item views"""
         view.setSelectionMode(selection_mode)
         view.setAlternatingRowColors(True)
         return view
-    
-    def configure_abstract_scroll_area(area: QAbstractScrollArea, 
+
+    def configure_abstract_scroll_area(area: QAbstractScrollArea,
                                      h_policy=Qt.ScrollBarAsNeeded,
                                      v_policy=Qt.ScrollBarAsNeeded):
         """Configure scroll bar policies"""
         area.setHorizontalScrollBarPolicy(h_policy)
         area.setVerticalScrollBarPolicy(v_policy)
         return area
-    
+
     def create_main_window_with_statusbar(title: str, status_text: str = "") -> tuple:
         """Create a main window with status bar"""
         window = QMainWindow()
@@ -268,14 +268,14 @@ try:
         if status_text:
             status_bar.showMessage(status_text)
         return window, status_bar
-    
+
     def create_text_browser_with_html(html: str) -> QTextBrowser:
         """Create a text browser with HTML content"""
         browser = QTextBrowser()
         browser.setHtml(html)
         browser.setOpenExternalLinks(True)
         return browser
-    
+
     def create_standard_dialog_buttons(accept_text="OK", reject_text="Cancel",
                                      buttons=QDialogButtonBox.Ok | QDialogButtonBox.Cancel) -> QDialogButtonBox:
         """Create standard dialog buttons"""
@@ -285,13 +285,13 @@ try:
         if reject_text != "Cancel" and button_box.button(QDialogButtonBox.Cancel):
             button_box.button(QDialogButtonBox.Cancel).setText(reject_text)
         return button_box
-    
-    def create_spacer_item(width: int = 20, height: int = 20, 
-                          h_policy=QSizePolicy.Minimum, 
+
+    def create_spacer_item(width: int = 20, height: int = 20,
+                          h_policy=QSizePolicy.Minimum,
                           v_policy=QSizePolicy.Minimum) -> QSpacerItem:
         """Create a spacer item for layouts"""
         return QSpacerItem(width, height, h_policy, v_policy)
-    
+
     # Export all utility functions for easy access
     __all__ = [
         # PyQt5 availability flag
@@ -327,11 +327,11 @@ try:
         'create_text_browser_with_html', 'create_standard_dialog_buttons',
         'create_spacer_item'
     ]
-    
+
 except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     PYQT5_AVAILABLE = False
-    
+
     # Create dummy implementations when PyQt5 is not available
     def create_point(x, y):
         """Create a point object for UI positioning in exploit analysis tools."""
@@ -347,7 +347,7 @@ except ImportError as e:
                 import math
                 return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
         return Point(x, y)
-    
+
     def create_rect(x, y, w, h):
         """Create rectangle for exploit visualization bounds."""
         class Rect:
@@ -357,7 +357,7 @@ except ImportError as e:
                 self.width = int(w)
                 self.height = int(h)
             def contains(self, point):
-                return (self.x <= point.x <= self.x + self.width and 
+                return (self.x <= point.x <= self.x + self.width and
                         self.y <= point.y <= self.y + self.height)
             def intersects(self, other):
                 return not (self.x + self.width < other.x or other.x + other.width < self.x or
@@ -365,7 +365,7 @@ except ImportError as e:
             def center(self):
                 return create_point(self.x + self.width // 2, self.y + self.height // 2)
         return Rect(x, y, w, h)
-    
+
     def create_size(w, h):
         """Create size object for exploit analysis UI components."""
         class Size:
@@ -379,7 +379,7 @@ except ImportError as e:
             def __repr__(self):
                 return f"Size({self.width}x{self.height})"
         return Size(w, h)
-    
+
     def get_text_metrics(font, text):
         """Calculate text metrics for exploit data display."""
         # Estimate based on typical font sizes
@@ -388,18 +388,18 @@ except ImportError as e:
         if font and hasattr(font, 'pointSize'):
             char_height = font.pointSize() * 1.3
             char_width = char_height * 0.6
-        
+
         width = len(text) * char_width
         height = char_height
-        
+
         # Handle multiline text
         lines = text.split('\n')
         if len(lines) > 1:
             width = max(len(line) * char_width for line in lines)
             height = len(lines) * char_height * 1.2
-        
+
         return {'width': int(width), 'height': int(height), 'ascent': int(height * 0.8)}
-    
+
     def create_icon_from_file(path):
         """Create icon for exploit tool UI from file."""
         import os
@@ -413,7 +413,7 @@ except ImportError as e:
             def actualSize(self):
                 return create_size(*self.size)
         return Icon(path)
-    
+
     def create_pixmap(w, h):
         """Create pixmap for exploit visualization rendering."""
         class Pixmap:
@@ -435,7 +435,7 @@ except ImportError as e:
             def size(self):
                 return create_size(self.width, self.height)
         return Pixmap(w, h)
-    
+
     def create_pen(color, width=1):
         """Create pen for exploit analysis drawing operations."""
         class Pen:
@@ -458,31 +458,31 @@ except ImportError as e:
         """Handle paint events for UI components with exploit analysis visualization."""
         if not widget or not event:
             return
-        
+
         try:
             # Get painter and widget dimensions
             painter = widget.getPainter() if hasattr(widget, 'getPainter') else None
             if not painter:
                 return
-                
+
             rect = widget.geometry() if hasattr(widget, 'geometry') else None
             if not rect:
                 return
-                
+
             width, height = rect.width(), rect.height()
-            
+
             # Execute custom paint function if provided
             if func and callable(func):
                 try:
                     func(painter, event, width, height)
-                except Exception as e:
+                except Exception:
                     # Fallback to default painting
                     painter.fillRect(0, 0, width, height, 0x000000)
             else:
                 # Default exploit analysis visualization
                 # Dark background for security tool aesthetic
                 painter.fillRect(0, 0, width, height, 0x1a1a1a)
-                
+
                 # Grid pattern for technical interface
                 painter.setPen(0x333333, 1)
                 grid_size = 20
@@ -490,12 +490,12 @@ except ImportError as e:
                     painter.drawLine(x, 0, x, height)
                 for y in range(0, height, grid_size):
                     painter.drawLine(0, y, width, y)
-                
+
                 # Status indicator in corner
                 painter.setPen(0x00ff00, 2)
                 painter.drawRect(width - 20, 5, 10, 10)
-                
-        except Exception as e:
+
+        except Exception:
             # Robust error handling for UI painting
             pass
     def handle_resize_event(event): return (0, 0, 0, 0)
@@ -511,19 +511,19 @@ except ImportError as e:
                 self.shortcut = None
                 self.triggered_callbacks = []
                 self.data = None
-                
+
             def setEnabled(self, enabled):
                 self.enabled = bool(enabled)
-                
+
             def setCheckable(self, checkable):
                 self.checkable = bool(checkable)
-                
+
             def setChecked(self, checked):
                 self.checked = bool(checked)
-                
+
             def setShortcut(self, shortcut):
                 self.shortcut = shortcut
-                
+
             def triggered(self):
                 # Simulate signal
                 class Signal:
@@ -534,24 +534,24 @@ except ImportError as e:
                         self.callbacks.append(callback)
                         self.action.triggered_callbacks.append(callback)
                 return Signal(self)
-                
+
             def setData(self, data):
                 self.data = data
-                
+
             def trigger(self):
                 for callback in self.triggered_callbacks:
                     try:
                         callback()
                     except:
                         pass
-                        
+
         action = Action(text, parent)
         if shortcut:
             action.setShortcut(shortcut)
         if slot:
             action.triggered().connect(slot)
         return action
-    
+
     def create_button_group(buttons, parent=None):
         """Create button group for exploit option selection."""
         class ButtonGroup:
@@ -561,38 +561,38 @@ except ImportError as e:
                 self.exclusive = True
                 self.checked_id = -1
                 self.button_clicked_callbacks = []
-                
+
             def addButton(self, button, id=-1):
                 if id == -1:
                     id = len(self.buttons)
                 self.buttons.append((button, id))
-                
+
                 # Connect button to group
                 if hasattr(button, 'clicked'):
                     button.clicked.connect(lambda: self._button_clicked(id))
-                    
+
             def checkedId(self):
                 return self.checked_id
-                
+
             def setExclusive(self, exclusive):
                 self.exclusive = bool(exclusive)
-                
+
             def _button_clicked(self, id):
                 if self.exclusive:
                     # Uncheck all other buttons
                     for btn, btn_id in self.buttons:
                         if btn_id != id and hasattr(btn, 'setChecked'):
                             btn.setChecked(False)
-                            
+
                 self.checked_id = id
-                
+
                 # Notify callbacks
                 for callback in self.button_clicked_callbacks:
                     try:
                         callback(id)
                     except:
                         pass
-                        
+
             def buttonClicked(self):
                 # Return signal-like object
                 class Signal:
@@ -601,7 +601,7 @@ except ImportError as e:
                     def connect(self, callback):
                         self.group.button_clicked_callbacks.append(callback)
                 return Signal(self)
-                
+
         group = ButtonGroup(parent)
         if buttons:
             for i, button in enumerate(buttons):
@@ -617,25 +617,25 @@ except ImportError as e:
                 self.line_width = 1
                 self.mid_line_width = 0
                 self.margin = 2
-                
+
             def setFrameStyle(self, style):
                 self.style = style
-                
+
             def setFrameShadow(self, shadow):
                 self.shadow = shadow
-                
+
             def setLineWidth(self, width):
                 self.line_width = int(width)
-                
+
             def setMidLineWidth(self, width):
                 self.mid_line_width = int(width)
-                
+
             def setContentsMargins(self, left, top, right, bottom):
                 self.margin = (left, top, right, bottom)
-                
+
             def frameWidth(self):
                 return self.line_width + self.mid_line_width
-                
+
         return Frame()
     def prompt_for_input(parent, title, label, default=""): return ("", False)
     def create_context_menu(actions, parent=None):
@@ -646,26 +646,26 @@ except ImportError as e:
                 self.actions = []
                 self.visible = False
                 self.position = None
-                
+
             def addAction(self, action):
                 self.actions.append(action)
-                
+
             def addSeparator(self):
                 self.actions.append(None)  # None represents separator
-                
+
             def exec_(self, pos):
                 self.position = pos
                 self.visible = True
                 # In a real implementation, this would show the menu
                 # and return the selected action
                 return None
-                
+
             def popup(self, pos):
                 self.exec_(pos)
-                
+
             def clear(self):
                 self.actions = []
-                
+
         menu = ContextMenu(parent)
         if actions:
             for action in actions:
@@ -680,28 +680,28 @@ except ImportError as e:
                 self.h_scrollbar_policy = 'as_needed'
                 self.v_scrollbar_policy = 'as_needed'
                 self.widget_resizable = True
-                
+
             def setWidget(self, widget):
                 self.widget = widget
-                
+
             def setHorizontalScrollBarPolicy(self, policy):
                 self.h_scrollbar_policy = policy
-                
+
             def setVerticalScrollBarPolicy(self, policy):
                 self.v_scrollbar_policy = policy
-                
+
             def setWidgetResizable(self, resizable):
                 self.widget_resizable = bool(resizable)
-                
+
             def ensureWidgetVisible(self, widget, x_margin=50, y_margin=50):
                 # Scroll to make widget visible
                 pass
-                
+
         area = ScrollArea()
         if widget:
             area.setWidget(widget)
         return area
-    
+
     def create_slider_with_range(min_val, max_val, orientation=None):
         """Create slider for exploit parameter adjustment."""
         class Slider:
@@ -713,13 +713,13 @@ except ImportError as e:
                 self.tick_position = 'both'
                 self.tick_interval = 10
                 self.value_changed_callbacks = []
-                
+
             def setMinimum(self, val):
                 self.minimum = int(val)
-                
+
             def setMaximum(self, val):
                 self.maximum = int(val)
-                
+
             def setValue(self, val):
                 old_value = self.value
                 self.value = max(self.minimum, min(self.maximum, int(val)))
@@ -729,13 +729,13 @@ except ImportError as e:
                             callback(self.value)
                         except:
                             pass
-                            
+
             def setTickPosition(self, pos):
                 self.tick_position = pos
-                
+
             def setTickInterval(self, interval):
                 self.tick_interval = int(interval)
-                
+
             def valueChanged(self):
                 class Signal:
                     def __init__(self, slider):
@@ -743,12 +743,12 @@ except ImportError as e:
                     def connect(self, callback):
                         self.slider.value_changed_callbacks.append(callback)
                 return Signal(self)
-                
+
         slider = Slider(orientation or 'horizontal')
         slider.setMinimum(min_val)
         slider.setMaximum(max_val)
         return slider
-    
+
     def create_splash_screen(pixmap_path, flags=None):
         """Create splash screen for exploit tool startup."""
         class SplashScreen:
@@ -757,21 +757,21 @@ except ImportError as e:
                 self.flags = flags or []
                 self.message = ""
                 self.visible = False
-                
+
             def show(self):
                 self.visible = True
-                
+
             def showMessage(self, message, alignment=None, color=None):
                 self.message = message
-                
+
             def finish(self, widget):
                 self.visible = False
-                
+
             def close(self):
                 self.visible = False
-                
+
         return SplashScreen(pixmap_path, flags)
-    
+
     def create_toolbar_with_actions(title, actions, parent=None):
         """Create toolbar for exploit tool actions."""
         class ToolBar:
@@ -782,31 +782,31 @@ except ImportError as e:
                 self.orientation = 'horizontal'
                 self.movable = True
                 self.icon_size = (24, 24)
-                
+
             def addAction(self, action):
                 self.actions.append(action)
-                
+
             def addSeparator(self):
                 self.actions.append(None)
-                
+
             def setOrientation(self, orientation):
                 self.orientation = orientation
-                
+
             def setMovable(self, movable):
                 self.movable = bool(movable)
-                
+
             def setIconSize(self, size):
                 self.icon_size = size
-                
+
             def clear(self):
                 self.actions = []
-                
+
         toolbar = ToolBar(title, parent)
         if actions:
             for action in actions:
                 toolbar.addAction(action)
         return toolbar
-    
+
     def create_wizard_with_pages(title, pages):
         """Create wizard for exploit configuration."""
         class Wizard:
@@ -815,30 +815,30 @@ except ImportError as e:
                 self.pages = []
                 self.current_page = 0
                 self.finished_callbacks = []
-                
+
             def addPage(self, page):
                 self.pages.append(page)
-                
+
             def currentPage(self):
                 if 0 <= self.current_page < len(self.pages):
                     return self.pages[self.current_page]
                 return None
-                
+
             def next(self):
                 if self.current_page < len(self.pages) - 1:
                     self.current_page += 1
-                    
+
             def back(self):
                 if self.current_page > 0:
                     self.current_page -= 1
-                    
+
             def accept(self):
                 for callback in self.finished_callbacks:
                     try:
                         callback()
                     except:
                         pass
-                        
+
             def finished(self):
                 class Signal:
                     def __init__(self, wizard):
@@ -846,13 +846,13 @@ except ImportError as e:
                     def connect(self, callback):
                         self.wizard.finished_callbacks.append(callback)
                 return Signal(self)
-                
+
         wizard = Wizard(title)
         if pages:
             for page in pages:
                 wizard.addPage(page)
         return wizard
-    
+
     def create_wizard_page(title, subtitle=""):
         """Create wizard page for exploit setup steps."""
         class WizardPage:
@@ -862,25 +862,25 @@ except ImportError as e:
                 self.complete = False
                 self.commit_page = False
                 self.final_page = False
-                
+
             def setTitle(self, title):
                 self.title = title
-                
+
             def setSubTitle(self, subtitle):
                 self.subtitle = subtitle
-                
+
             def isComplete(self):
                 return self.complete
-                
+
             def setComplete(self, complete):
                 self.complete = bool(complete)
-                
+
             def setCommitPage(self, commit):
                 self.commit_page = bool(commit)
-                
+
             def setFinalPage(self, final):
                 self.final_page = bool(final)
-                
+
         return WizardPage(title, subtitle)
     def configure_abstract_item_view(view, selection_mode=None): return view
     def configure_abstract_scroll_area(area, h_policy=None, v_policy=None): return area

@@ -214,6 +214,8 @@ venv/
 venv*/
 .venv/
 .venv*/
+.venv_windows/
+.venv_wsl/
 virtualenv/
 virtualenv*/
 env/

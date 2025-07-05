@@ -14,7 +14,9 @@ from intellicrack.logger import logger
 
 # Try to import enhanced training interface components
 try:
-    from ...ai.enhanced_training_interface import TrainingConfiguration as EnhancedTrainingConfiguration
+    from ...ai.enhanced_training_interface import (
+        TrainingConfiguration as EnhancedTrainingConfiguration,
+    )
     ENHANCED_TRAINING_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
@@ -84,14 +86,14 @@ try:
     import torch
     import torch.nn as nn
     TORCH_AVAILABLE = True
-    
+
     # Import unified GPU system
     try:
         from ...utils.gpu_autoloader import get_device, get_gpu_info, to_device
         GPU_AUTOLOADER_AVAILABLE = True
     except ImportError:
         GPU_AUTOLOADER_AVAILABLE = False
-        
+
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
     TORCH_AVAILABLE = False
@@ -238,7 +240,7 @@ class TrainingThread(QThread):
         try:
             self.status = TrainingStatus.PREPARING
             self.logger.info("Starting training with config: %s", self.config)
-            
+
             if PYQT5_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit({
                     "status": self.status.value,
@@ -1138,7 +1140,7 @@ class TrainingThread(QThread):
 
                     # Simulate time delay
                     time.sleep(0.1)
-                
+
                 # Run validation at the end of each epoch
                 if not self.is_stopped:
                     self.status = TrainingStatus.VALIDATING
@@ -1148,10 +1150,10 @@ class TrainingThread(QThread):
                             "message": f"Validating epoch {_epoch+1}",
                             "step": current_step
                         })
-                    
+
                     # Simulate validation time
                     time.sleep(0.3)
-                    
+
                     # Return to training status
                     self.status = TrainingStatus.TRAINING
 
@@ -1171,7 +1173,7 @@ class TrainingThread(QThread):
         self.is_stopped = True
         self.status = TrainingStatus.ERROR  # Set to error as training was interrupted
         self.logger.info("Training stop requested")
-        
+
     def pause(self):
         """Pause the training process."""
         self.status = TrainingStatus.PAUSED
@@ -1182,7 +1184,7 @@ class TrainingThread(QThread):
                 "message": "Training paused",
                 "step": -1
             })
-            
+
     def resume(self):
         """Resume the training process."""
         self.status = TrainingStatus.TRAINING
@@ -2590,22 +2592,22 @@ class ModelFinetuningDialog(QDialog):
             # Get current configuration
             current_config = self._get_current_config()
             enhanced_config = current_config.to_enhanced_config()
-            
+
             if enhanced_config:
                 # Import and show enhanced training interface
                 from ...ai.enhanced_training_interface import create_enhanced_training_interface
                 dialog = create_enhanced_training_interface(self)
-                
+
                 # Set configuration
                 dialog.config = enhanced_config
                 dialog.update_ui_from_config()
-                
+
                 # Show the dialog
                 dialog.exec_()
             else:
                 QMessageBox.warning(self, "Configuration Error",
                                   "Could not convert current configuration to enhanced format.")
-                
+
         except (ImportError, AttributeError, OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error opening enhanced training interface: %s", e)
             QMessageBox.critical(self, "Enhanced Training Error",
@@ -2614,7 +2616,7 @@ class ModelFinetuningDialog(QDialog):
     def _get_current_config(self) -> TrainingConfig:
         """Get current training configuration from UI."""
         config = TrainingConfig()
-        
+
         # Update config with current UI values
         if hasattr(self, 'model_path_edit') and self.model_path_edit:
             config.model_path = self.model_path_edit.text()
@@ -2626,7 +2628,7 @@ class ModelFinetuningDialog(QDialog):
             config.batch_size = self.batch_size_spin.value()
         if hasattr(self, 'learning_rate_spin') and self.learning_rate_spin:
             config.learning_rate = self.learning_rate_spin.value()
-            
+
         return config
 
     def _show_help(self):

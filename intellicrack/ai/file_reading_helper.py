@@ -23,7 +23,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
-from typing import Optional, Union, Tuple
+from typing import Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -54,23 +54,23 @@ def read_file_with_ai_tools(
     """
     content = None
     used_ai_tools = False
-    
+
     # Try to use AIFileTools first
     try:
         from .ai_file_tools import get_ai_file_tools
         ai_file_tools = get_ai_file_tools(app_instance)
         file_data = ai_file_tools.read_file(file_path, purpose=purpose)
-        
+
         if file_data.get("status") == "success" and file_data.get("content") is not None:
             raw_content = file_data["content"]
-            
+
             if mode == 'binary':
                 # Convert to bytes if needed
                 if isinstance(raw_content, str):
                     content = raw_content.encode('latin-1', errors='ignore')
                 else:
                     content = raw_content
-                
+
                 # Apply max_bytes limit if specified
                 if max_bytes and len(content) > max_bytes:
                     content = content[:max_bytes]
@@ -80,15 +80,15 @@ def read_file_with_ai_tools(
                     content = raw_content.decode(encoding, errors='ignore')
                 else:
                     content = raw_content
-            
+
             used_ai_tools = True
             logger.debug(f"Successfully read file using AIFileTools: {file_path}")
-            
+
     except (ImportError, AttributeError, KeyError) as e:
         logger.debug(f"AIFileTools not available: {e}")
     except Exception as e:
         logger.warning(f"Error using AIFileTools for {file_path}: {e}")
-    
+
     # Fallback to direct file reading if AIFileTools didn't work
     if content is None:
         try:
@@ -101,13 +101,13 @@ def read_file_with_ai_tools(
             else:
                 with open(file_path, 'r', encoding=encoding) as f:
                     content = f.read()
-            
+
             logger.debug(f"Read file using direct file access: {file_path}")
-            
+
         except Exception as e:
             logger.error(f"Failed to read file {file_path}: {e}")
             return None, False
-    
+
     return content, used_ai_tools
 
 
@@ -173,7 +173,7 @@ class FileReadingMixin:
     
     Classes using this mixin should have an 'app_instance' attribute.
     """
-    
+
     def read_file_safe(
         self,
         file_path: str,

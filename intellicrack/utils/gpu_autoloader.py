@@ -12,7 +12,7 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -67,14 +67,14 @@ class GPUAutoLoader:
                 # Try to use the first one
                 conda_env = conda_envs[0]
                 python_path = os.path.join(conda_env['path'], 'python.exe' if sys.platform == 'win32' else 'python')
-                
+
                 # Test if we can import from that environment
                 result = subprocess.run(
                     [python_path, '-c', 'import torch; import intel_extension_for_pytorch as ipex; print(torch.xpu.is_available())'],
                     capture_output=True,
                     text=True
                 )
-                
+
                 if result.returncode == 0 and 'True' in result.stdout:
                     # Inject the conda environment's packages
                     self._inject_conda_packages(conda_env['path'])
@@ -97,7 +97,7 @@ class GPUAutoLoader:
                 self.gpu_type = "intel_xpu"
                 self._device = torch.device("xpu")
                 self._device_string = "xpu"
-                
+
                 # Get detailed info
                 device_count = torch.xpu.device_count()
                 self.gpu_info = {
@@ -105,13 +105,13 @@ class GPUAutoLoader:
                     'backend': 'Intel Extension for PyTorch',
                     'driver_version': torch.xpu.get_driver_version() if hasattr(torch.xpu, 'get_driver_version') else 'Unknown'
                 }
-                
+
                 # Get info for first device
                 if device_count > 0:
                     self.gpu_info['device_name'] = torch.xpu.get_device_name(0)
                     props = torch.xpu.get_device_properties(0)
                     self.gpu_info['total_memory'] = f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, 'total_memory') else 'Unknown'
-                    
+
                 return True
 
             return False
@@ -199,15 +199,15 @@ class GPUAutoLoader:
             self._torch = torch
             self._device = torch.device("cpu")  # DirectML uses CPU device designation
             self._device_string = "cpu"  # DirectML operations happen through CPU API
-            
+
             self.gpu_info = {
                 'backend': 'DirectML',
                 'platform': 'Windows',
                 'note': 'GPU acceleration through DirectML'
             }
-            
+
             return True
-            
+
         except Exception as e:
             logger.debug(f"DirectML initialization failed: {e}")
             return False
@@ -221,14 +221,14 @@ class GPUAutoLoader:
             self.gpu_type = "cpu"
             self._device = torch.device("cpu")
             self._device_string = "cpu"
-            
+
             self.gpu_info = {
                 'backend': 'CPU',
                 'cores': os.cpu_count()
             }
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Even CPU initialization failed: {e}")
             return False
@@ -236,7 +236,7 @@ class GPUAutoLoader:
     def _find_conda_envs_with_ipex(self) -> List[Dict[str, str]]:
         """Find conda environments that have Intel Extension for PyTorch installed"""
         conda_envs = []
-        
+
         # Common conda locations
         possible_conda_bases = [
             os.path.expanduser("~/miniconda3"),
@@ -247,11 +247,11 @@ class GPUAutoLoader:
             "C:\\tools\\anaconda3",
             os.environ.get("CONDA_PREFIX", ""),
         ]
-        
+
         for base in possible_conda_bases:
             if not base or not os.path.exists(base):
                 continue
-                
+
             envs_dir = os.path.join(base, "envs")
             if os.path.exists(envs_dir):
                 for env_name in os.listdir(envs_dir):
@@ -263,7 +263,7 @@ class GPUAutoLoader:
                         os.path.join(env_path, "lib", "python3.10", "site-packages", "intel_extension_for_pytorch"),
                         os.path.join(env_path, "lib", "python3.11", "site-packages", "intel_extension_for_pytorch"),
                     ]
-                    
+
                     for indicator in ipex_indicators:
                         if os.path.exists(indicator):
                             conda_envs.append({
@@ -272,7 +272,7 @@ class GPUAutoLoader:
                                 'base': base
                             })
                             break
-        
+
         return conda_envs
 
     def _inject_conda_packages(self, conda_env_path: str):
@@ -286,7 +286,7 @@ class GPUAutoLoader:
                 site_packages = os.path.join(conda_env_path, "lib", py_ver, "site-packages")
                 if os.path.exists(site_packages):
                     break
-        
+
         if os.path.exists(site_packages) and site_packages not in sys.path:
             sys.path.insert(0, site_packages)
             logger.info(f"Injected conda packages from: {site_packages}")

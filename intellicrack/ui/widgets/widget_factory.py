@@ -171,7 +171,7 @@ def create_standard_dialog_buttons(buttons: List[str], callbacks: List[Callable]
     layout = QHBoxLayout()
     layout.addStretch()
 
-    for button_text, callback in zip(buttons, callbacks):
+    for button_text, callback in zip(buttons, callbacks, strict=False):
         button = QPushButton(button_text)
         button.clicked.connect(callback)
         layout.addWidget(button)

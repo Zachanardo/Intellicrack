@@ -27,7 +27,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Set Qt to offscreen mode for WSL/headless environments if no display
 if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:
-    # Check if we're in WSL
+    # Check if we're in WSL by examining /proc/version for Microsoft string
     if os.path.exists('/proc/version'):
         try:
             with open('/proc/version', 'r', encoding='utf-8') as f:
@@ -35,19 +35,20 @@ if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:
                     os.environ['QT_QPA_PLATFORM'] = 'offscreen'
         except:
             pass
-    # Don't set offscreen mode on Windows
+    # Don't set offscreen mode on Windows - use native rendering
     elif os.name != 'nt':
         os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 # Configure Qt font handling for Windows
 if os.name == 'nt':
+    # Set Windows font directory for Qt to find system fonts
     if 'QT_QPA_FONTDIR' not in os.environ:
         windir = os.environ.get('WINDIR', 'C:\\Windows')
         os.environ['QT_QPA_FONTDIR'] = os.path.join(windir, 'Fonts')
 
-    # Suppress Qt font warnings
+    # Suppress Qt font warnings to reduce console noise
     os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.fonts=false'
-    
+
     # Force software rendering if not already set (for compatibility)
     if 'QT_OPENGL' not in os.environ:
         os.environ['QT_OPENGL'] = 'software'
@@ -59,9 +60,26 @@ if os.name == 'nt':
 def main() -> int:
     """
     Main entry point for the Intellicrack application.
+    
+    This function performs the following operations:
+    1. Executes startup checks and auto-configuration
+    2. Imports and launches the GUI application
+    3. Handles import errors and other exceptions gracefully
+    
+    The function includes verbose logging for debugging startup issues
+    and provides helpful error messages for missing dependencies.
 
     Returns:
-        Application exit code
+        int: Application exit code
+             - 0: Successful execution
+             - 1: Error during startup or execution
+             
+    Raises:
+        No exceptions are raised; all errors are caught and logged
+        
+    Example:
+        >>> import sys
+        >>> sys.exit(main())
     """
     try:
         # Perform startup checks and auto-configuration
@@ -75,7 +93,7 @@ def main() -> int:
         print("Importing launch function...")
         from intellicrack.ui.main_app import launch
         print("Launch function imported successfully.")
-        
+
         print("Calling launch()...")
         sys.stdout.flush()  # Force output to display
         result = launch()

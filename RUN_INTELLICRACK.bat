@@ -4,16 +4,20 @@ cd /d "%~dp0"
 echo Starting Intellicrack...
 echo.
 
-REM Activate the virtual environment
-if exist ".venv\Scripts\activate.bat" (
-    echo Activating UV virtual environment...
+REM This is a Windows batch file, so we're on Windows
+REM Activate the Windows virtual environment
+if exist ".venv_windows\Scripts\activate.bat" (
+    echo Activating Windows UV virtual environment...
+    call .venv_windows\Scripts\activate.bat
+) else if exist ".venv\Scripts\activate.bat" (
+    echo Activating fallback UV virtual environment...
     call .venv\Scripts\activate.bat
 ) else if exist "venv_windows\Scripts\activate.bat" (
     echo Activating legacy virtual environment...
     call venv_windows\Scripts\activate.bat
 ) else (
     echo ERROR: Virtual environment not found
-    echo Please ensure UV environment is created with 'uv venv'
+    echo Please ensure Windows UV environment is created with 'uv venv .venv_windows'
     pause
     exit /b 1
 )

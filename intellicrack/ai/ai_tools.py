@@ -503,10 +503,10 @@ class CodeAnalyzer:
                 full_question = f"{context_info}\n\nQuestion: {question}"
             else:
                 full_question = question
-                
+
             # Use AI assistant to answer the question
             return self.ai_assistant.ask_question(full_question)
-            
+
         except (AttributeError, TypeError, ValueError) as e:
             logger.error("AI question failed: %s", e, exc_info=True)
             return f"Error processing question: {str(e)}"
@@ -523,22 +523,22 @@ class CodeAnalyzer:
         try:
             # Build context from analysis results
             context_parts = []
-            
+
             if analysis_result.get('analysis_type') == 'binary':
                 context_parts.append(f"binary {analysis_result.get('metadata', {}).get('format', 'unknown')} file")
             elif analysis_result.get('code_type') == 'assembly':
                 context_parts.append("assembly code")
-                
+
             if analysis_result.get('protection_mechanisms'):
                 context_parts.append("protection mechanisms detected")
             if analysis_result.get('security_issues') or analysis_result.get('vulnerabilities'):
                 context_parts.append("security vulnerabilities found")
-                
+
             context = " with ".join(context_parts) if context_parts else "code analysis"
-            
+
             # Get suggestions from AI assistant
             base_suggestions = self.ai_assistant.get_suggestions(context)
-            
+
             # Add specific suggestions based on findings
             specific_suggestions = []
             if analysis_result.get('protection_mechanisms'):
@@ -547,9 +547,9 @@ class CodeAnalyzer:
                 specific_suggestions.append("Investigate identified security issues for exploitation")
             if analysis_result.get('patterns'):
                 specific_suggestions.append("Examine code patterns for behavioral insights")
-                
+
             return base_suggestions + specific_suggestions
-            
+
         except (AttributeError, TypeError, ValueError) as e:
             logger.error("Getting analysis suggestions failed: %s", e, exc_info=True)
             return ["Continue with manual analysis"]
@@ -585,7 +585,7 @@ class CodeAnalyzer:
                         header = content[:512]
             except (ImportError, AttributeError, KeyError) as e:
                 logger.debug("AIFileTools not available, using direct file read: %s", e)
-            
+
             # Fallback to direct file reading if AIFileTools not available
             if header is None:
                 with open(file_path, 'rb') as f:
@@ -701,7 +701,7 @@ class CodeAnalyzer:
             # First try to use AI assistant for suggestions
             context = f"binary file analysis for {basic_result.get('metadata', {}).get('format', 'Unknown')} format"
             ai_suggestions = self.ai_assistant.get_suggestions(context)
-            
+
             # Ask AI assistant for binary analysis insights
             question = f"""
             I'm analyzing a binary file with these characteristics:
@@ -713,7 +713,7 @@ class CodeAnalyzer:
             What security risks, protection mechanisms, and analysis recommendations do you have?
             """
             ai_response = self.ai_assistant.ask_question(question)
-            
+
             # Use fallback LLM if AI assistant doesn't provide detailed response
             from .llm_backends import LLMManager, LLMMessage
 
@@ -869,15 +869,15 @@ class CodeAnalyzer:
         try:
             # Use AI assistant to analyze the assembly code
             ai_analysis = self.ai_assistant.analyze_code(assembly_code, language="assembly")
-            
+
             # Extract relevant insights from AI assistant analysis
             ai_insights = ai_analysis.get("insights", [])
             ai_suggestions = ai_analysis.get("suggestions", [])
             ai_security_issues = ai_analysis.get("security_issues", [])
-            
+
             # Also get context-specific suggestions
             context_suggestions = self.ai_assistant.get_suggestions("assembly code vulnerability analysis")
-            
+
             # Try advanced LLM analysis if available
             from .llm_backends import LLMManager, LLMMessage
 

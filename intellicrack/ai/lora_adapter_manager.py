@@ -453,7 +453,7 @@ class LoRAAdapterManager:
         except Exception as e:
             logger.error(f"Failed to merge adapters: {e}")
             return False
-    
+
     def compare_adapter_configs(self, config1_path: Union[str, Path], config2_path: Union[str, Path]) -> Dict[str, Any]:
         """Compare two PEFT adapter configurations.
         
@@ -470,36 +470,36 @@ class LoRAAdapterManager:
             "config1_details": {},
             "config2_details": {}
         }
-        
+
         if not HAS_PEFT or not PeftConfig:
             results["compatible"] = False
             results["differences"].append("PEFT not available for comparison")
             return results
-            
+
         try:
             # Load both configs
             config1 = PeftConfig.from_json_file(str(config1_path))
             config2 = PeftConfig.from_json_file(str(config2_path))
-            
+
             # Compare peft types
             if config1.peft_type != config2.peft_type:
                 results["compatible"] = False
                 results["differences"].append(
                     f"Different PEFT types: {config1.peft_type} vs {config2.peft_type}"
                 )
-                
+
             # Compare important parameters
             params_to_compare = ['r', 'lora_alpha', 'lora_dropout', 'target_modules', 'task_type']
-            
+
             for param in params_to_compare:
                 val1 = getattr(config1, param, None)
                 val2 = getattr(config2, param, None)
-                
+
                 if val1 != val2:
                     results["differences"].append(
                         f"Different {param}: {val1} vs {val2}"
                     )
-                    
+
                     # Some differences don't affect compatibility
                     if param in ['r', 'lora_alpha']:
                         # Different ranks/alphas are still compatible for merging
@@ -507,7 +507,7 @@ class LoRAAdapterManager:
                     elif param == 'target_modules':
                         # Different target modules are incompatible
                         results["compatible"] = False
-                        
+
             # Extract details for both configs
             for attr in dir(config1):
                 if not attr.startswith('_'):
@@ -517,7 +517,7 @@ class LoRAAdapterManager:
                             results["config1_details"][attr] = str(val)
                     except:
                         pass
-                        
+
             for attr in dir(config2):
                 if not attr.startswith('_'):
                     try:
@@ -526,11 +526,11 @@ class LoRAAdapterManager:
                             results["config2_details"][attr] = str(val)
                     except:
                         pass
-                        
+
         except Exception as e:
             results["compatible"] = False
             results["differences"].append(f"Error comparing configs: {e}")
-            
+
         return results
 
     def download_adapter(
@@ -600,7 +600,7 @@ class LoRAAdapterManager:
             try:
                 with open(config_path, 'r') as f:
                     info["config"] = json.load(f)
-                    
+
                 # Try to parse as PeftConfig if PEFT is available
                 if HAS_PEFT and PeftConfig:
                     try:
@@ -642,11 +642,11 @@ class LoRAAdapterManager:
             "warnings": [],
             "config_details": {}
         }
-        
+
         if not config_path.exists():
             results["errors"].append(f"Config file not found: {config_path}")
             return results
-            
+
         if not HAS_PEFT or not PeftConfig:
             results["warnings"].append("PEFT not available for full validation")
             # Basic JSON validation only
@@ -658,39 +658,39 @@ class LoRAAdapterManager:
             except Exception as e:
                 results["errors"].append(f"Invalid JSON: {e}")
             return results
-            
+
         try:
             # Load and validate using PeftConfig
             peft_config = PeftConfig.from_json_file(str(config_path))
-            
+
             # Check required fields
             if not hasattr(peft_config, 'peft_type'):
                 results["errors"].append("Missing peft_type in config")
             else:
                 results["config_details"]["peft_type"] = peft_config.peft_type
-                
+
             if hasattr(peft_config, 'r'):
                 results["config_details"]["rank"] = peft_config.r
                 if peft_config.r > 64:
                     results["warnings"].append(f"Very high LoRA rank ({peft_config.r}) may use excessive memory")
-                    
+
             if hasattr(peft_config, 'target_modules'):
                 results["config_details"]["target_modules"] = peft_config.target_modules
                 if not peft_config.target_modules:
                     results["warnings"].append("No target modules specified")
-                    
+
             if hasattr(peft_config, 'task_type'):
                 results["config_details"]["task_type"] = str(peft_config.task_type)
-                
+
             # Validate model compatibility if base model is specified
             if hasattr(peft_config, 'base_model_name_or_path'):
                 results["config_details"]["base_model"] = peft_config.base_model_name_or_path
-                
+
             results["valid"] = len(results["errors"]) == 0
-            
+
         except Exception as e:
             results["errors"].append(f"Failed to parse PeftConfig: {e}")
-            
+
         return results
 
     def cleanup_cache(self, keep_recent: int = 5):

@@ -52,13 +52,13 @@ gpu_autoloader = None
 
 try:
     from ..gpu_autoloader import (
-        gpu_autoloader,
+        empty_cache,
         get_device,
         get_gpu_info,
-        to_device,
+        gpu_autoloader,
         memory_allocated,
         memory_reserved,
-        empty_cache
+        to_device,
     )
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
@@ -1014,7 +1014,7 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
         # Check if GPU libraries are available
         gpu_available = False
         device_str = "cpu"
-        
+
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
             if gpu_info['available']:
@@ -1023,7 +1023,7 @@ def _gpu_pattern_matching(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[
         elif TORCH_AVAILABLE and torch.cuda.is_available():
             gpu_available = True
             device_str = "cuda"
-            
+
         if gpu_available:
             # Convert patterns and data to GPU tensors for fast matching
             patterns = config.get('patterns', [])
@@ -1154,7 +1154,7 @@ def _gpu_ml_inference(data: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
         else:
             device_str = 'cpu'
             backend = 'cpu'
-            
+
         device = torch.device(device_str)
 
         # Get model and features

@@ -5,11 +5,8 @@ Captures actual execution data from QEMU VMs.
 """
 
 import json
-import re
 import subprocess
-import time
-from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict
 
 from ..utils.logger import get_logger
 
@@ -18,11 +15,11 @@ logger = get_logger(__name__)
 
 class EnhancedQEMUTestManager:
     """Enhanced QEMU manager with real data capture capabilities."""
-    
-    def test_frida_script_with_callback(self, snapshot_id: str, script_content: str, 
+
+    def test_frida_script_with_callback(self, snapshot_id: str, script_content: str,
                                        binary_path: str, output_callback: Callable[[str], None]):
         """Execute Frida script with real-time output streaming."""
-        
+
         # Create enhanced Frida wrapper that captures more data
         wrapper_script = f'''
 import frida
@@ -128,32 +125,32 @@ if session:
             text=True,
             bufsize=1  # Line buffered
         )
-        
+
         # Stream output in real-time
         for line in iter(process.stdout.readline, ''):
             if line:
                 output_callback(line.strip())
-                
+
         process.wait()
-        
+
         # Read the detailed data file
         try:
             with open('/tmp/qemu_test_data.json', 'r') as f:
                 detailed_data = json.load(f)
         except:
             detailed_data = {}
-            
+
         return {
             'success': process.returncode == 0,
             'output': ''.join(self.captured_output),
             'detailed_data': detailed_data
         }
-        
+
     def analyze_binary_for_vm(self, binary_path: str) -> Dict[str, Any]:
         """Analyze binary to determine VM requirements."""
-        import pefile
         import magic
-        
+        import pefile
+
         result = {
             'platform': 'unknown',
             'architecture': 'unknown',
@@ -161,23 +158,23 @@ if session:
             'entry_point': None,
             'sections': []
         }
-        
+
         # Use file magic to detect type
         file_type = magic.from_file(binary_path)
-        
+
         if 'PE32' in file_type:
             # Windows binary - analyze with pefile
             pe = pefile.PE(binary_path)
-            
+
             result['platform'] = 'windows'
             result['architecture'] = 'x64' if pe.FILE_HEADER.Machine == 0x8664 else 'x86'
             result['entry_point'] = hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
-            
+
             # Get real import data
             for entry in pe.DIRECTORY_ENTRY_IMPORT:
                 dll_name = entry.dll.decode('utf-8')
                 result['dependencies'].append(dll_name)
-                
+
             # Get real section data
             for section in pe.sections:
                 result['sections'].append({
@@ -185,17 +182,17 @@ if session:
                     'virtual_address': hex(section.VirtualAddress),
                     'size': section.SizeOfRawData
                 })
-                
+
         elif 'ELF' in file_type:
             # Linux binary
             result['platform'] = 'linux'
             # Parse ELF headers for real data...
-            
+
         return result
-        
+
     def monitor_process_in_vm(self, process_id: int) -> Dict[str, Any]:
         """Monitor real process behavior in VM."""
-        
+
         # Use guest agent or SSH to monitor
         monitor_script = f'''
 #!/bin/bash
@@ -225,14 +222,14 @@ echo "  \\"connections\\": $CONNS,"
 echo "  \\"threads\\": $THREADS"
 echo "}}"
 '''
-        
+
         # Execute and return real metrics
         result = subprocess.run(
             ['ssh', f'qemu@{self.vm_ip}', monitor_script],
             capture_output=True,
             text=True
         )
-        
+
         if result.returncode == 0:
             return json.loads(result.stdout)
         return {}

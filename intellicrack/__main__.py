@@ -1,6 +1,18 @@
 """
 Entry point for running Intellicrack as a module.
 
+This module enables execution of Intellicrack using Python's -m flag,
+providing a standard entry point for package execution. It handles
+environment setup for various display configurations and ensures
+proper initialization across different platforms.
+
+Usage:
+    python -m intellicrack [args]
+
+Environment Variables:
+    DISPLAY: X11 display identifier (automatically detected)
+    QT_QPA_PLATFORM: Qt platform plugin (set to 'offscreen' for headless)
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
@@ -26,6 +38,7 @@ import sys
 from .main import main
 
 # Set Qt to offscreen mode for WSL/headless environments if no display
+# This prevents Qt initialization errors when running without a GUI environment
 if 'DISPLAY' not in os.environ and 'QT_QPA_PLATFORM' not in os.environ:
     os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 

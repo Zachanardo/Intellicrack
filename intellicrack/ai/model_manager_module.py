@@ -52,8 +52,11 @@ else:
 # Import unified GPU system
 try:
     from ..utils.gpu_autoloader import (
-        gpu_autoloader, get_device, get_gpu_info, 
-        to_device, optimize_for_gpu
+        get_device,
+        get_gpu_info,
+        gpu_autoloader,
+        optimize_for_gpu,
+        to_device,
     )
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
@@ -787,14 +790,14 @@ class ModelManager:
                     X_train, X_val, y_train, y_val = train_test_split(
                         X, y, test_size=0.2, random_state=42, stratify=y if len(np.unique(y)) > 1 else None
                     )
-                    
+
                     logger.info(f"Split data: {len(X_train)} training samples, {len(X_val)} validation samples")
-                    
+
                     # Create and train model
                     model = RandomForestClassifier(
                         n_estimators=10, random_state=42)
                     model.fit(X_train, y_train)
-                    
+
                     # Evaluate on validation set
                     val_score = model.score(X_val, y_val)
                     logger.info(f"Validation accuracy: {val_score:.4f}")
@@ -915,7 +918,7 @@ class ModelManager:
     def repositories(self) -> List[str]:
         """Get available repositories."""
         return self.get_available_repositories()
-    
+
     def evaluate_model_with_split(self, model_id: str, data: Any, labels: Any, test_size: float = 0.2, random_state: int = 42) -> Dict[str, Any]:
         """Evaluate a model using train_test_split for proper validation.
         
@@ -930,32 +933,32 @@ class ModelManager:
             Dictionary with evaluation metrics
         """
         try:
-            from sklearn.model_selection import train_test_split
             import numpy as np
-            
+            from sklearn.model_selection import train_test_split
+
             # Get the model
             model_data = self.cache.get(model_id)
             if not model_data:
                 logger.error(f"Model {model_id} not found in cache")
                 return {"error": "Model not found"}
-                
+
             model = model_data.get('model')
             backend = model_data.get('backend')
-            
+
             # Convert data to numpy arrays if needed
             if not isinstance(data, np.ndarray):
                 data = np.array(data)
             if not isinstance(labels, np.ndarray):
                 labels = np.array(labels)
-                
+
             # Use train_test_split to create training and test sets
             X_train, X_test, y_train, y_test = train_test_split(
                 data, labels, test_size=test_size, random_state=random_state,
                 stratify=labels if len(np.unique(labels)) > 1 else None
             )
-            
+
             logger.info(f"Split data into {len(X_train)} training and {len(X_test)} test samples")
-            
+
             # Evaluate based on backend type
             evaluation_results = {
                 "train_size": len(X_train),
@@ -963,71 +966,71 @@ class ModelManager:
                 "test_ratio": test_size,
                 "random_state": random_state
             }
-            
+
             if isinstance(backend, SklearnBackend):
                 # Re-train on training set
                 model.fit(X_train, y_train)
-                
+
                 # Evaluate on both sets
                 train_score = model.score(X_train, y_train)
                 test_score = model.score(X_test, y_test)
-                
+
                 evaluation_results.update({
                     "train_score": train_score,
                     "test_score": test_score,
                     "overfitting_gap": train_score - test_score
                 })
-                
+
                 # Get predictions for additional metrics
                 y_pred = model.predict(X_test)
-                
+
                 # Calculate additional metrics if classification
                 if hasattr(model, "predict_proba"):
                     from sklearn.metrics import classification_report, confusion_matrix
-                    
+
                     report = classification_report(y_test, y_pred, output_dict=True)
                     cm = confusion_matrix(y_test, y_pred)
-                    
+
                     evaluation_results.update({
                         "classification_report": report,
                         "confusion_matrix": cm.tolist()
                     })
-                    
+
             elif isinstance(backend, PyTorchBackend) and HAS_TORCH:
                 # For PyTorch models, implement evaluation logic
                 import torch
-                
+
                 # Convert to tensors
                 X_train_t = torch.FloatTensor(X_train)
                 X_test_t = torch.FloatTensor(X_test)
                 y_train_t = torch.LongTensor(y_train)
                 y_test_t = torch.LongTensor(y_test)
-                
+
                 # Evaluate
                 model.eval()
                 with torch.no_grad():
                     train_outputs = model(X_train_t)
                     test_outputs = model(X_test_t)
-                    
+
                     if len(train_outputs.shape) > 1:
                         train_preds = torch.argmax(train_outputs, dim=1)
                         test_preds = torch.argmax(test_outputs, dim=1)
                     else:
                         train_preds = (train_outputs > 0.5).long()
                         test_preds = (test_outputs > 0.5).long()
-                    
+
                     train_accuracy = (train_preds == y_train_t).float().mean().item()
                     test_accuracy = (test_preds == y_test_t).float().mean().item()
-                    
+
                 evaluation_results.update({
                     "train_accuracy": train_accuracy,
                     "test_accuracy": test_accuracy,
                     "backend": "pytorch"
                 })
-                
+
             logger.info(f"Model evaluation completed with test score: {evaluation_results.get('test_score', evaluation_results.get('test_accuracy', 'N/A'))}")
             return evaluation_results
-            
+
         except ImportError as e:
             logger.error(f"Failed to import required libraries: {e}")
             return {"error": f"Missing dependencies: {e}"}

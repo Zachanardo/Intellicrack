@@ -238,7 +238,7 @@ class UnifiedProtectionEngine:
                         header = content[:1024]
             except (ImportError, AttributeError, KeyError):
                 pass
-            
+
             # Fallback to direct file reading if AIFileTools not available
             if header is None:
                 with open(file_path, 'rb') as f:

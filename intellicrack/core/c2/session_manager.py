@@ -535,20 +535,20 @@ class SessionManager:
 
         # Get just the basename to prevent path traversal
         filename = os.path.basename(filename)
-        
+
         # Remove any remaining path separators and dangerous characters
         safe_filename = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', filename)
-        
+
         # Remove any leading dots to prevent hidden files
         safe_filename = safe_filename.lstrip('.')
-        
+
         # Ensure filename is not empty
         if not safe_filename:
             safe_filename = 'unnamed_file'
-            
+
         # Remove any directory traversal attempts
         safe_filename = safe_filename.replace('..', '_')
-        
+
         return safe_filename[:255]  # Limit length
 
     async def _persist_session(self, session: Session):
@@ -719,8 +719,8 @@ class SessionManager:
 
             export_data = {
                 'session': session.to_dict(),
-                'tasks': [dict(zip([col[0] for col in cursor.description], row)) for row in task_rows],
-                'files': [dict(zip([col[0] for col in cursor.description], row)) for row in file_rows],
+                'tasks': [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in task_rows],
+                'files': [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in file_rows],
                 'export_time': time.time()
             }
 

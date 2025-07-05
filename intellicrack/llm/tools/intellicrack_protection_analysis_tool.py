@@ -11,6 +11,7 @@ Licensed under GNU General Public License v3.0
 import os
 from typing import Any, Dict, List
 
+from ...ai.ai_assistant_enhanced import IntellicrackAIAssistant
 from ...protection import get_protection_detector
 from ...protection.intellicrack_protection_advanced import (
     AdvancedProtectionAnalysis,
@@ -22,7 +23,6 @@ from ...protection.intellicrack_protection_advanced import (
 )
 from ...protection.intellicrack_protection_core import ProtectionType
 from ...utils.logger import get_logger
-from ...ai.ai_assistant_enhanced import IntellicrackAIAssistant
 
 logger = get_logger(__name__)
 
@@ -172,7 +172,7 @@ class DIEAnalysisTool:
                     }
                     for det in analysis.heuristic_detections
                 ]
-            
+
             # Check if license pattern analysis is needed
             has_license_protection = False
             if analysis.detections:
@@ -180,7 +180,7 @@ class DIEAnalysisTool:
                     if detection.type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
                         has_license_protection = True
                         break
-            
+
             # Run license pattern analysis if relevant
             if has_license_protection or self._should_analyze_license_patterns(analysis):
                 license_patterns = self._analyze_license_patterns_for_llm(file_path, analysis)
@@ -194,7 +194,7 @@ class DIEAnalysisTool:
                     "confidence": result.get("confidence", 0.0),
                     "predictions": []
                 }
-                
+
                 # Convert protection detections to ML predictions format
                 if result.get("protections"):
                     for protection in result["protections"]:
@@ -204,10 +204,10 @@ class DIEAnalysisTool:
                             "confidence": protection.get("confidence", 0.0),
                             "category": protection.get("category", "unknown")
                         })
-                
+
                 # Run AI complex analysis
                 ai_analysis = self.ai_assistant.analyze_binary_complex(file_path, ml_results)
-                
+
                 # Add AI analysis to results
                 if ai_analysis and not ai_analysis.get('error'):
                     result["ai_complex_analysis"] = {
@@ -216,7 +216,7 @@ class DIEAnalysisTool:
                         "recommendations": ai_analysis.get("recommendations", []),
                         "ml_integration": ai_analysis.get("ml_integration", {})
                     }
-                    
+
                     # Merge AI recommendations with existing bypass recommendations
                     if ai_analysis.get("recommendations") and result.get("bypass_recommendations"):
                         for rec in ai_analysis["recommendations"]:
@@ -224,7 +224,7 @@ class DIEAnalysisTool:
                             if "AI-Enhanced Analysis" not in result["bypass_recommendations"]:
                                 result["bypass_recommendations"]["AI-Enhanced Analysis"] = []
                             result["bypass_recommendations"]["AI-Enhanced Analysis"].append(rec)
-                
+
             except Exception as e:
                 logger.warning(f"AI complex analysis failed: {e}")
                 result["ai_complex_analysis"] = {
@@ -583,7 +583,7 @@ class DIEAnalysisTool:
             )
 
         return comparison
-    
+
     def _should_analyze_license_patterns(self, analysis: AdvancedProtectionAnalysis) -> bool:
         """Determine if license pattern analysis would be beneficial"""
         # Check for license-related imports
@@ -592,21 +592,21 @@ class DIEAnalysisTool:
             for import_dll in analysis.imports:
                 if any(keyword in import_dll.lower() for keyword in license_imports):
                     return True
-        
+
         # Check if it's a commercial application
         if analysis.compiler:
             commercial_compilers = ['visual c++', 'visual studio', 'delphi', 'borland']
             if any(comp in analysis.compiler.lower() for comp in commercial_compilers):
                 return True
-        
+
         # Check for suspicious strings related to licensing
         if analysis.suspicious_strings:
             for string_info in analysis.suspicious_strings:
                 if any(keyword in string_info.value.lower() for keyword in ['license', 'serial', 'key']):
                     return True
-        
+
         return False
-    
+
     def _analyze_license_patterns_for_llm(self, file_path: str, analysis: AdvancedProtectionAnalysis) -> Dict[str, Any]:
         """Analyze license patterns for LLM consumption"""
         try:
@@ -616,17 +616,17 @@ class DIEAnalysisTool:
                 "strings": [],
                 "binary_path": file_path
             }
-            
+
             # Extract relevant strings from analysis
             if analysis.suspicious_strings:
-                license_keywords = ['license', 'serial', 'key', 'activation', 'trial', 
+                license_keywords = ['license', 'serial', 'key', 'activation', 'trial',
                                   'expire', 'register', 'unlock', 'demo', 'evaluation']
                 for string_info in analysis.suspicious_strings:
                     if any(keyword in string_info.value.lower() for keyword in license_keywords):
                         input_data["strings"].append(string_info.value)
                         if len(input_data["strings"]) >= 50:  # Limit to 50 strings
                             break
-            
+
             # Add detection patterns
             if analysis.detections:
                 for detection in analysis.detections:
@@ -637,10 +637,10 @@ class DIEAnalysisTool:
                             "version": detection.version,
                             "confidence": detection.confidence
                         })
-            
+
             # Call AI assistant's license pattern analysis
             license_analysis = self.ai_assistant.analyze_license_patterns(input_data)
-            
+
             # Enhance with additional context
             if license_analysis and not license_analysis.get('error'):
                 # Add import context
@@ -649,44 +649,44 @@ class DIEAnalysisTool:
                     "has_crypto_apis": self._check_for_crypto_apis(analysis),
                     "has_registry_apis": self._check_for_registry_apis(analysis)
                 }
-                
+
                 # Add protection-specific recommendations
                 if license_analysis.get("license_type") != "unknown":
                     license_analysis["llm_guidance"] = self._get_license_llm_guidance(
                         license_analysis["license_type"],
                         analysis.detections
                     )
-            
+
             return license_analysis
-            
+
         except Exception as e:
             logger.warning(f"License pattern analysis failed: {e}")
             return {"error": str(e)}
-    
+
     def _check_for_network_apis(self, analysis: AdvancedProtectionAnalysis) -> bool:
         """Check if network APIs are imported"""
         if not hasattr(analysis, 'imports') or not analysis.imports:
             return False
         network_dlls = ['ws2_32.dll', 'winhttp.dll', 'wininet.dll']
         return any(dll in analysis.imports for dll in network_dlls)
-    
+
     def _check_for_crypto_apis(self, analysis: AdvancedProtectionAnalysis) -> bool:
         """Check if crypto APIs are imported"""
         if not hasattr(analysis, 'imports') or not analysis.imports:
             return False
         crypto_dlls = ['crypt32.dll', 'advapi32.dll', 'bcrypt.dll']
         return any(dll in analysis.imports for dll in crypto_dlls)
-    
+
     def _check_for_registry_apis(self, analysis: AdvancedProtectionAnalysis) -> bool:
         """Check if registry APIs are imported"""
         if not hasattr(analysis, 'imports') or not analysis.imports:
             return False
         return 'advapi32.dll' in analysis.imports
-    
+
     def _get_license_llm_guidance(self, license_type: str, detections: List[Any]) -> str:
         """Get LLM-specific guidance for license analysis"""
         guidance = f"Detected {license_type} licensing. "
-        
+
         if license_type == "trial_based":
             guidance += "Look for time/date checks, trial counters, and expiration logic. "
             guidance += "Check registry or local storage for trial state persistence."
@@ -696,7 +696,7 @@ class DIEAnalysisTool:
         elif license_type == "activation_based":
             guidance += "Analyze network communication for activation servers. "
             guidance += "Check for hardware fingerprinting and machine ID generation."
-        
+
         # Add protection-specific guidance
         for detection in detections:
             if detection.type == ProtectionType.LICENSE:
@@ -707,7 +707,7 @@ class DIEAnalysisTool:
                     guidance += " HASP detected: Monitor hasp_login calls and feature ID checks."
                 elif "codemeter" in name_lower:
                     guidance += " CodeMeter detected: Analyze CmContainer access and license queries."
-        
+
         return guidance
 
 

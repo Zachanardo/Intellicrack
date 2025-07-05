@@ -104,7 +104,7 @@ def create_numpy_fallback():
     class NumpyFallback:
         """Minimal numpy replacement for when numpy is unavailable."""
         __version__ = "fallback-1.0.0"
-        
+
         # Define ndarray as the list type for compatibility
         ndarray = list
 
@@ -159,7 +159,7 @@ def create_numpy_fallback():
                     return [[[[random.gauss(0, 1) for _ in range(shape[3])] for _ in range(shape[2])] for _ in range(shape[1])] for _ in range(shape[0])]
                 else:
                     raise ValueError("Too many dimensions for fallback randn")
-            
+
             @staticmethod
             def rand(*shape):
                 """Generate random uniform distribution [0, 1)."""
@@ -172,7 +172,7 @@ def create_numpy_fallback():
                     return [[random.random() for _ in range(shape[1])] for _ in range(shape[0])]
                 else:
                     raise ValueError("Too many dimensions for fallback rand")
-            
+
             @staticmethod
             def randint(low, high, size=None):
                 """Generate random integers."""
@@ -183,7 +183,7 @@ def create_numpy_fallback():
                     return [random.randint(low, high - 1) for _ in range(size)]
                 else:
                     raise ValueError("Complex sizes not supported in fallback")
-            
+
             @staticmethod
             def uniform(low, high, size=None):
                 """Generate uniform random values."""
@@ -194,7 +194,7 @@ def create_numpy_fallback():
                     return [random.uniform(low, high) for _ in range(size)]
                 else:
                     raise ValueError("Complex sizes not supported in fallback")
-            
+
             @staticmethod
             def normal(loc=0.0, scale=1.0, size=None):
                 """Generate normal distribution."""
@@ -205,7 +205,7 @@ def create_numpy_fallback():
                     return [random.gauss(loc, scale) for _ in range(size)]
                 else:
                     raise ValueError("Complex sizes not supported in fallback")
-            
+
             @staticmethod
             def choice(a, size=None, p=None):
                 """Random choice from array."""
@@ -221,7 +221,7 @@ def create_numpy_fallback():
                         return random.choice(a)
                     else:
                         return [random.choice(a) for _ in range(size)]
-            
+
             @staticmethod
             def random(size=None):
                 """Generate random floats [0, 1)."""

@@ -413,12 +413,12 @@ class UnifiedProtectionWidget(QWidget):
                 if hasattr(widget, 'ai_coordinator') and widget.ai_coordinator:
                     main_window = widget
                     break
-            
+
             if main_window and hasattr(main_window.ai_coordinator, 'suggest_strategy'):
                 analysis_type = "complex_patterns" if deep_scan else "quick_check"
                 suggested_strategy = main_window.ai_coordinator.suggest_strategy(file_path, analysis_type)
                 logger.info(f"AI coordinator suggests strategy: {suggested_strategy} for {analysis_type}")
-                
+
                 # Update status to show strategy
                 strategy_text = str(suggested_strategy).replace('AnalysisStrategy.', '').replace('_', ' ').title()
                 self.status_label.setText(f"Using {strategy_text} strategy for analysis")

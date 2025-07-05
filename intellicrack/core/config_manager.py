@@ -50,15 +50,46 @@ class IntellicrackConfig:
     _lock = threading.Lock()
 
     def __new__(cls):
-        """Singleton pattern for global config access."""
+        """
+        Singleton pattern for global config access.
+        
+        Ensures only one instance of IntellicrackConfig exists throughout
+        the application lifecycle. Uses double-checked locking for thread safety.
+        
+        Returns:
+            IntellicrackConfig: The single global configuration instance
+            
+        Complexity:
+            Time: O(1) after first instantiation
+            Space: O(1)
+        """
         if cls._instance is None:
             with cls._lock:
+                # Double-check pattern for thread safety
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self):
-        """Initialize configuration manager."""
+        """
+        Initialize configuration manager.
+        
+        Sets up platform-specific directories, loads or creates configuration,
+        and ensures all necessary directories exist. Uses initialization guard
+        to prevent multiple initializations.
+        
+        Side Effects:
+            - Creates configuration directories if they don't exist
+            - Loads existing config or creates default config
+            - Sets up logging for the configuration manager
+            
+        Attributes Set:
+            - config_dir: Platform-specific config directory
+            - config_file: Path to config.json
+            - cache_dir: Directory for cached data
+            - logs_dir: Directory for log files
+            - output_dir: Directory for output files
+        """
         if hasattr(self, '_initialized'):
             return
 
@@ -79,26 +110,58 @@ class IntellicrackConfig:
         self._load_or_create_config()
 
     def _get_user_config_dir(self) -> Path:
-        """Get platform-appropriate user config directory."""
+        """
+        Get platform-appropriate user config directory.
+        
+        Follows platform conventions for configuration storage:
+        - Windows: %APPDATA%\Intellicrack
+        - macOS: ~/Library/Application Support/Intellicrack
+        - Linux: $XDG_CONFIG_HOME/intellicrack or ~/.config/intellicrack
+        
+        Returns:
+            Path: Platform-specific configuration directory path
+            
+        Example:
+            Windows: C:\Users\Username\AppData\Roaming\Intellicrack
+            macOS: /Users/Username/Library/Application Support/Intellicrack
+            Linux: /home/username/.config/intellicrack
+        """
         if sys.platform == "win32":
-            # Windows: Use APPDATA
+            # Windows: Use APPDATA environment variable
             base = os.environ.get('APPDATA', os.path.expanduser('~'))
             return Path(base) / 'Intellicrack'
         elif sys.platform == "darwin":
-            # macOS: Use Application Support
+            # macOS: Use Application Support directory
             return Path.home() / 'Library' / 'Application Support' / 'Intellicrack'
         else:
-            # Linux/Unix: Use XDG config
+            # Linux/Unix: Follow XDG Base Directory specification
             xdg_config = os.environ.get('XDG_CONFIG_HOME', '~/.config')
             return Path(xdg_config).expanduser() / 'intellicrack'
 
     def _ensure_directories_exist(self):
-        """Create necessary directories if they don't exist."""
+        """
+        Create necessary directories if they don't exist.
+        
+        Creates all required directories for configuration, cache, logs,
+        and output. Handles errors gracefully and continues even if some
+        directories cannot be created.
+        
+        Directories created:
+            - config_dir: Main configuration directory
+            - cache_dir: For cached analysis results
+            - logs_dir: For application logs
+            - output_dir: For generated output files
+            
+        Side Effects:
+            - Creates directories on filesystem
+            - Logs success/failure for each directory
+        """
         for directory in [self.config_dir, self.cache_dir, self.logs_dir, self.output_dir]:
             try:
                 directory.mkdir(parents=True, exist_ok=True)
                 logger.debug(f"Ensured directory exists: {directory}")
             except Exception as e:
+                # Continue even if directory creation fails
                 logger.warning(f"Could not create directory {directory}: {e}")
 
     def _load_or_create_config(self):
@@ -127,7 +190,31 @@ class IntellicrackConfig:
             self._create_default_config()
 
     def _create_default_config(self):
-        """Create intelligent default configuration."""
+        """
+        Create intelligent default configuration.
+        
+        Generates a comprehensive default configuration with:
+        - Platform-specific paths
+        - Auto-discovered tools
+        - Sensible default preferences
+        - Security-conscious defaults
+        
+        Side Effects:
+            - Sets internal configuration dictionary
+            - Saves configuration to disk
+            - Runs tool discovery (may take several seconds)
+            
+        Configuration sections:
+            - directories: Platform-specific paths
+            - tools: Auto-discovered tool locations
+            - preferences: User preferences and UI settings
+            - analysis: Analysis engine settings
+            - network: Network and proxy configuration
+            - security: Security and sandboxing options
+            - patching: Binary patching preferences
+            - ui: User interface settings
+            - ai: AI model configuration
+        """
         logger.info("Creating default configuration with auto-discovery")
 
         default_config = {
@@ -201,17 +288,46 @@ class IntellicrackConfig:
         logger.info("Default configuration created successfully")
 
     def _auto_discover_tools(self) -> Dict[str, Any]:
-        """Auto-discover tools and their configurations."""
+        """
+        Auto-discover tools and their configurations.
+        
+        Searches for common reverse engineering and analysis tools:
+        - Ghidra: Reverse engineering framework
+        - Radare2: Command-line RE tool
+        - Python3: Script interpreter
+        - Frida: Dynamic instrumentation
+        - QEMU: System emulator
+        
+        Returns:
+            Dict mapping tool names to their configuration:
+            {
+                'tool_name': {
+                    'available': bool,
+                    'path': str or None,
+                    'version': str or None,
+                    'auto_discovered': bool,
+                    'last_check': float (timestamp)
+                }
+            }
+            
+        Side Effects:
+            - Executes tool processes to check versions
+            - May take several seconds to complete
+            
+        Complexity:
+            Time: O(n*m) where n is number of tools, m is search paths
+            Space: O(n)
+        """
         logger.info("Auto-discovering tools...")
         tools = {}
 
-        # Tool discovery patterns
+        # Tool discovery patterns - defines how to find each tool
         tool_patterns = {
             'ghidra': {
                 'executables': ['ghidra', 'ghidraRun', 'ghidraRun.bat'],
                 'search_paths': self._get_ghidra_search_paths(),
                 'version_flag': '--version',
-                'required': False
+                'required': False  # Optional - app works without it
             },
             'radare2': {
                 'executables': ['r2', 'radare2'],
@@ -261,16 +377,39 @@ class IntellicrackConfig:
         return tools
 
     def _discover_tool(self, tool_name: str, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Discover a specific tool and return its information."""
+        """
+        Discover a specific tool and return its information.
+        
+        Searches for tools in the following order:
+        1. System PATH (using shutil.which)
+        2. Platform-specific search paths
+        
+        Args:
+            tool_name: Name of the tool to discover
+            config: Tool configuration containing:
+                    - executables: List of possible executable names
+                    - search_paths: List of directories to search
+                    - version_flag: Command flag to get version info
+                    
+        Returns:
+            Dict with tool information if found, None otherwise
+            Tool info includes: available, path, version, auto_discovered, last_check
+            
+        Example:
+            >>> config = {'executables': ['ghidra', 'ghidraRun'], 
+            ...           'search_paths': ['/opt/ghidra'],
+            ...           'version_flag': '--version'}
+            >>> tool_info = self._discover_tool('ghidra', config)
+        """
         logger.debug(
             f"Discovering tool: {tool_name} with config keys: {list(config.keys())}")
-        # First check PATH
+        # First check PATH environment variable
         for executable in config['executables']:
             tool_path = shutil.which(executable)
             if tool_path:
                 return self._validate_tool(tool_path, config.get('version_flag'))
 
-        # Then check specific search paths
+        # Then check platform-specific search paths
         for search_path in config['search_paths']:
             if not os.path.exists(search_path):
                 continue
@@ -283,7 +422,32 @@ class IntellicrackConfig:
         return None
 
     def _validate_tool(self, tool_path: str, version_flag: Optional[str] = None) -> Dict[str, Any]:
-        """Validate tool and get version information."""
+        """
+        Validate tool and get version information.
+        
+        Executes the tool with version flag to verify it works and extract
+        version information. Uses timeout to prevent hanging on broken tools.
+        
+        Args:
+            tool_path: Full path to the tool executable
+            version_flag: Command line flag to get version (e.g., '--version')
+            
+        Returns:
+            Dict containing:
+                - available: True (always, since tool exists)
+                - path: Full path to the tool
+                - version: Version string (if obtainable)
+                - auto_discovered: True
+                - last_check: Unix timestamp of validation
+                
+        Side Effects:
+            - Executes external tool process
+            - May take up to 10 seconds (timeout)
+            
+        Complexity:
+            Time: O(1) + external process time
+            Space: O(1)
+        """
         import subprocess
         import time
 
@@ -301,11 +465,11 @@ class IntellicrackConfig:
                     [tool_path, version_flag],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10  # Prevent hanging on broken tools
                 )
                 if result.returncode == 0:
-                    tool_info['version'] = result.stdout.strip()[
-                        :100]  # Limit length
+                    # Limit version string length to prevent huge outputs
+                    tool_info['version'] = result.stdout.strip()[:100]
             except Exception as e:
                 logger.debug(f"Could not get version for {tool_path}: {e}")
 
@@ -395,7 +559,7 @@ class IntellicrackConfig:
         # Create new config with current structure
         self._create_default_config()
 
-        # Restore user preferences
+        # Restore user preferences over defaults
         with self._config_lock:
             if user_preferences:
                 self._config['preferences'].update(user_preferences)
@@ -403,8 +567,9 @@ class IntellicrackConfig:
             # Merge user tool configurations
             for tool_name, tool_config in user_tools.items():
                 if tool_name in self._config['tools']:
+                    # Keep manually configured tools (auto_discovered=False)
+                    # but use auto-discovered paths for auto-discovered tools
                     if not tool_config.get('auto_discovered', True):
-                        # Keep manually configured tools
                         self._config['tools'][tool_name] = tool_config
 
         self._save_config()
@@ -443,7 +608,29 @@ class IntellicrackConfig:
     # Public API methods
 
     def get(self, key: str, default: Any = None) -> Any:
-        """Get configuration value with dot notation support."""
+        """
+        Get configuration value with dot notation support.
+        
+        Retrieves nested configuration values using dot-separated keys.
+        Thread-safe access using read lock.
+        
+        Args:
+            key: Dot-separated configuration key (e.g., 'tools.ghidra.path')
+            default: Default value if key not found
+            
+        Returns:
+            Configuration value or default if not found
+            
+        Example:
+            >>> config.get('tools.ghidra.path')
+            '/opt/ghidra/ghidraRun'
+            >>> config.get('preferences.ui_theme', 'light')
+            'dark'
+            
+        Complexity:
+            Time: O(n) where n is the number of dots in key
+            Space: O(1)
+        """
         with self._config_lock:
             keys = key.split('.')
             value = self._config
@@ -457,55 +644,178 @@ class IntellicrackConfig:
                 return default
 
     def set(self, key: str, value: Any, save: bool = True):
-        """Set configuration value with dot notation support."""
+        """
+        Set configuration value with dot notation support.
+        
+        Updates nested configuration values using dot-separated keys.
+        Creates intermediate dictionaries as needed. Thread-safe.
+        
+        Args:
+            key: Dot-separated configuration key (e.g., 'tools.ghidra.path')
+            value: Value to set
+            save: Whether to save config to disk immediately
+            
+        Side Effects:
+            - Modifies internal configuration dictionary
+            - Saves to disk if save=True
+            - Creates intermediate dictionaries if needed
+            
+        Example:
+            >>> config.set('tools.ghidra.path', '/usr/local/ghidra')
+            >>> config.set('preferences.ui_theme', 'dark', save=False)
+            
+        Complexity:
+            Time: O(n) where n is the number of dots in key
+            Space: O(n) for creating intermediate dictionaries
+        """
         with self._config_lock:
             keys = key.split('.')
             config = self._config
 
-            # Navigate to parent
+            # Navigate to parent, creating intermediate dicts as needed
+            # Example: 'a.b.c' creates {'a': {'b': {}}} if needed
             for k in keys[:-1]:
                 if k not in config:
                     config[k] = {}
                 config = config[k]
 
-            # Set value
+            # Set the final value at the last key
             config[keys[-1]] = value
 
         if save:
             self._save_config()
 
     def get_tool_path(self, tool_name: str) -> Optional[str]:
-        """Get path to a specific tool."""
+        """
+        Get path to a specific tool.
+        
+        Retrieves the filesystem path for an available tool.
+        
+        Args:
+            tool_name: Name of the tool (e.g., 'ghidra', 'radare2')
+            
+        Returns:
+            Full path to tool executable if available, None otherwise
+            
+        Example:
+            >>> path = config.get_tool_path('ghidra')
+            >>> if path:
+            ...     subprocess.run([path, '--analyze', 'binary.exe'])
+        """
         tool_config = self.get(f'tools.{tool_name}')
         if tool_config and tool_config.get('available'):
             return tool_config.get('path')
         return None
 
     def is_tool_available(self, tool_name: str) -> bool:
-        """Check if a tool is available."""
+        """
+        Check if a tool is available.
+        
+        Verifies whether a tool has been discovered and is available for use.
+        
+        Args:
+            tool_name: Name of the tool to check
+            
+        Returns:
+            True if tool is available, False otherwise
+            
+        Example:
+            >>> if config.is_tool_available('frida'):
+            ...     print("Frida dynamic analysis available")
+        """
         tool_config = self.get(f'tools.{tool_name}')
         return tool_config and tool_config.get('available', False)
 
     def refresh_tool_discovery(self):
-        """Re-run tool discovery and update configuration."""
+        """
+        Re-run tool discovery and update configuration.
+        
+        Performs a fresh scan for all tools, updating paths and versions.
+        Useful after installing new tools or changing system configuration.
+        
+        Side Effects:
+            - Executes tool discovery for all configured tools
+            - Updates tool configuration in memory and on disk
+            - May take several seconds to complete
+            
+        Example:
+            >>> config.refresh_tool_discovery()
+            >>> print(f"Ghidra now at: {config.get_tool_path('ghidra')}")
+        """
         logger.info("Refreshing tool discovery")
         tools = self._auto_discover_tools()
         self.set('tools', tools)
 
     def get_output_dir(self) -> Path:
-        """Get user's preferred output directory."""
+        """
+        Get user's preferred output directory.
+        
+        Returns the configured output directory for analysis results,
+        reports, and generated files.
+        
+        Returns:
+            Path: Output directory path
+            
+        Example:
+            >>> output_dir = config.get_output_dir()
+            >>> report_file = output_dir / 'analysis_report.pdf'
+        """
         return Path(self.get('directories.output', self.output_dir))
 
     def get_cache_dir(self) -> Path:
-        """Get cache directory."""
+        """
+        Get cache directory.
+        
+        Returns the directory for cached analysis results, downloaded
+        signatures, and temporary processing files.
+        
+        Returns:
+            Path: Cache directory path
+            
+        Example:
+            >>> cache_dir = config.get_cache_dir()
+            >>> signature_cache = cache_dir / 'signatures'
+        """
         return Path(self.get('directories.cache', self.cache_dir))
 
     def get_logs_dir(self) -> Path:
-        """Get logs directory."""
+        """
+        Get logs directory.
+        
+        Returns the directory for application logs, debug output,
+        and analysis traces.
+        
+        Returns:
+            Path: Logs directory path
+            
+        Example:
+            >>> logs_dir = config.get_logs_dir()
+            >>> today_log = logs_dir / f'{datetime.now():%Y-%m-%d}.log'
+        """
         return Path(self.get('directories.logs', self.logs_dir))
 
     def export_config(self, file_path: Union[str, Path]) -> bool:
-        """Export configuration to a file."""
+        """
+        Export configuration to a file.
+        
+        Saves the current configuration to a JSON file for backup,
+        sharing, or migration purposes.
+        
+        Args:
+            file_path: Path where to save the configuration
+            
+        Returns:
+            True if export succeeded, False otherwise
+            
+        Side Effects:
+            - Creates/overwrites file at specified path
+            - Logs errors if export fails
+            
+        Example:
+            >>> success = config.export_config('my_config_backup.json')
+            >>> if success:
+            ...     print("Configuration exported successfully")
+        """
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
                 with self._config_lock:
@@ -516,7 +826,32 @@ class IntellicrackConfig:
             return False
 
     def import_config(self, file_path: Union[str, Path]) -> bool:
-        """Import configuration from a file."""
+        """
+        Import configuration from a file.
+        
+        Loads configuration from a JSON file, merging with existing
+        configuration. Existing values are overwritten by imported values.
+        
+        Args:
+            file_path: Path to configuration file to import
+            
+        Returns:
+            True if import succeeded, False otherwise
+            
+        Side Effects:
+            - Updates internal configuration
+            - Saves merged configuration to disk
+            - Logs errors if import fails
+            
+        Example:
+            >>> success = config.import_config('shared_config.json')
+            >>> if success:
+            ...     config.refresh_tool_discovery()  # Update tool paths
+            
+        Security Note:
+            Only import configurations from trusted sources as they
+            can modify tool paths and execution settings.
+        """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 imported_config = json.load(f)
@@ -536,7 +871,27 @@ _global_config = None
 
 
 def get_config() -> IntellicrackConfig:
-    """Get global configuration instance."""
+    """
+    Get global configuration instance.
+    
+    Returns the singleton IntellicrackConfig instance, creating it
+    on first access. Thread-safe through singleton pattern in the class.
+    
+    Returns:
+        IntellicrackConfig: Global configuration manager instance
+        
+    Example:
+        >>> config = get_config()
+        >>> output_dir = config.get_output_dir()
+        
+    Side Effects:
+        - Creates configuration instance on first call
+        - Initializes configuration files and directories
+        
+    Complexity:
+        Time: O(1) after first call
+        Space: O(1)
+    """
     global _global_config
     if _global_config is None:
         _global_config = IntellicrackConfig()

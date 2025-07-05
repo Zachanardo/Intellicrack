@@ -149,7 +149,7 @@ class LocalGGUFServer:
                 import torch  # pylint: disable=import-outside-toplevel
                 if not torch:
                     raise ImportError("Torch not available")
-                
+
                 # Initialize IPEX if available
                 if ipex is not None:
                     # Check for XPU device support
@@ -162,14 +162,14 @@ class LocalGGUFServer:
                                 self.gpu_backend = "ipex"
                             logger.info(
                                 f"Found Intel GPU device via IPEX: {device_name}")
-                            
+
                             # Get device properties via IPEX
                             device_props = ipex.xpu.get_device_properties(i)
                             logger.info(f"Intel GPU {i} properties: {device_props}")
-                    
+
                     # Check IPEX version and capabilities
                     logger.info(f"Intel Extension for PyTorch version: {ipex.__version__}")
-                    
+
                     # Enable IPEX optimizations if available
                     if hasattr(ipex, 'enable_auto_mixed_precision'):
                         ipex.enable_auto_mixed_precision()

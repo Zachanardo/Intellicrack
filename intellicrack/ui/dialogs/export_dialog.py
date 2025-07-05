@@ -608,13 +608,13 @@ class ExportDialog(QDialog):
         # Page format selection for PDF export
         page_format_layout = QHBoxLayout()
         page_format_layout.addWidget(QLabel("PDF page format:"))
-        
+
         self.page_format_combo = QComboBox()
         self.page_format_combo.addItems(["A4", "Letter"])
         self.page_format_combo.setCurrentText(self.export_prefs.get("page_format", "A4"))
         self.page_format_combo.setToolTip("Choose page size for PDF export:\nA4: International standard (210×297mm)\nLetter: US standard (8.5×11 inches)")
         page_format_layout.addWidget(self.page_format_combo)
-        
+
         page_format_layout.addStretch()
         options_layout.addLayout(page_format_layout)
 

@@ -264,22 +264,22 @@ class AITerminalChat:
         try:
             from intellicrack.ai.ai_tools import AIAssistant
             ai_tools = AIAssistant()
-            
+
             # Build contextual question with binary and analysis info
             contextual_question = user_input
             if self.binary_path:
                 contextual_question = f"Binary: {os.path.basename(self.binary_path)}\n{user_input}"
-            
+
             if self.analysis_results:
                 # Add key analysis findings to context
                 vuln_count = len(self.analysis_results.get('vulnerabilities', {}).get('vulnerabilities', []))
                 if vuln_count > 0:
                     contextual_question = f"Context: Found {vuln_count} vulnerabilities\n{contextual_question}"
-            
+
             response = ai_tools.ask_question(contextual_question)
             return response
-            
-        except Exception as e:
+
+        except Exception:
             # Log the error but continue to fallback methods
             pass
 
@@ -573,7 +573,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
             # Show available backends
             available_backends = self.ai_assistant.llm_manager.list_backends()
             current_backend = self.ai_assistant.llm_manager.current_backend
-            
+
             if self.console:
                 self.console.print("\n[bold cyan]Available AI Backends:[/bold cyan]")
                 for backend in available_backends:
@@ -590,34 +590,34 @@ Could you be more specific about what aspect of the analysis you'd like to explo
                     else:
                         print(f"  • {backend}")
                 print("\nUsage: /backend <name>")
-                
+
             return None
-            
+
         # Switch to specified backend
         backend_name = args[0].lower()
-        
+
         try:
             # Attempt to switch backend
             success = self.ai_assistant.llm_manager.switch_backend(backend_name)
-            
+
             if success:
                 msg = f"Switched to {backend_name} backend successfully!"
                 if self.console:
                     self.console.print(f"[green]{msg}[/green]")
                 else:
                     print(msg)
-                    
+
                 # Update context with new backend info
                 self.context['ai_backend'] = backend_name
                 self.context['backend_capabilities'] = self.ai_assistant.llm_manager.get_backend_capabilities(backend_name)
-                
+
             else:
                 msg = f"Failed to switch to {backend_name} backend. Check configuration."
                 if self.console:
                     self.console.print(f"[red]{msg}[/red]")
                 else:
                     print(msg)
-                    
+
         except Exception as e:
             error_msg = f"Error switching backend: {str(e)}"
             if self.console:

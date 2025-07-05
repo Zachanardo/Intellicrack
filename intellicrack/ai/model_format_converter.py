@@ -38,13 +38,13 @@ gpu_autoloader = None
 
 try:
     from ..utils.gpu_autoloader import (
-        gpu_autoloader,
+        empty_cache,
         get_device,
         get_gpu_info,
-        to_device,
+        gpu_autoloader,
         memory_allocated,
         memory_reserved,
-        empty_cache
+        to_device,
     )
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
@@ -264,7 +264,7 @@ class ModelFormatConverter:
                         device = get_device()
                     elif HAS_TORCH and torch.cuda.is_available():
                         device = "cuda"
-                    
+
                     model = AutoModelForCausalLM.from_pretrained(
                         str(source_path),
                         torch_dtype=torch.float32,
@@ -293,7 +293,7 @@ class ModelFormatConverter:
                     device = get_device()
                 elif HAS_TORCH and torch.cuda.is_available():
                     device = "cuda"
-                
+
                 model = torch.load(source_path, map_location=device)
 
                 # Try to infer input shape
@@ -380,7 +380,7 @@ class ModelFormatConverter:
                         device = get_device()
                     elif HAS_TORCH and torch.cuda.is_available():
                         device = "cuda"
-                        
+
                     state_dict.update(torch.load(
                         model_file, map_location=device))
             else:
@@ -391,7 +391,7 @@ class ModelFormatConverter:
                     device = get_device()
                 elif HAS_TORCH and torch.cuda.is_available():
                     device = "cuda"
-                    
+
                 state_dict = torch.load(source_path, map_location=device)
 
                 # Handle full model vs state dict
@@ -639,7 +639,7 @@ class ModelFormatConverter:
 
                 # Convert to dictionary
                 output_names = [o.name for o in session.get_outputs()]
-                return dict(zip(output_names, outputs))
+                return dict(zip(output_names, outputs, strict=False))
 
             elif format == "pytorch":
                 # PyTorch inference
@@ -649,7 +649,7 @@ class ModelFormatConverter:
                     device = get_device()
                 elif HAS_TORCH and torch.cuda.is_available():
                     device = "cuda"
-                
+
                 model = torch.load(model_path, map_location=device)
                 model.eval()
 
@@ -658,7 +658,7 @@ class ModelFormatConverter:
                     torch_inputs = {
                         k: torch.from_numpy(v) for k, v in inputs.items()
                     }
-                    
+
                     # Move to device if available
                     if GPU_AUTOLOADER_AVAILABLE and to_device:
                         torch_inputs = {k: to_device(v) for k, v in torch_inputs.items()}
@@ -747,7 +747,7 @@ class ModelFormatConverter:
                 logger.debug(f"Could not get ONNX model metadata: {e}")
 
         return info
-    
+
     def load_model_for_conversion(self, model_path: Union[str, Path], model_type: str = "auto") -> Optional[Any]:
         """Load a model using appropriate AutoModel class based on type.
         
@@ -761,10 +761,10 @@ class ModelFormatConverter:
         if not HAS_TRANSFORMERS or not AutoModel:
             logger.error("transformers with AutoModel required")
             return None
-            
+
         try:
             model_path = Path(model_path)
-            
+
             # Map model types to appropriate AutoModel classes
             model_loaders = {
                 "auto": AutoModel,
@@ -776,10 +776,10 @@ class ModelFormatConverter:
                 "question_answering": lambda path: AutoModel.from_pretrained(path),
                 "feature_extraction": AutoModel,
             }
-            
+
             # Get the appropriate loader
             loader = model_loaders.get(model_type, AutoModel)
-            
+
             # Load the model
             if callable(loader) and hasattr(loader, 'from_pretrained'):
                 model = loader.from_pretrained(str(model_path))
@@ -787,14 +787,14 @@ class ModelFormatConverter:
                 model = loader(str(model_path))
             else:
                 model = AutoModel.from_pretrained(str(model_path))
-                
+
             logger.info(f"Successfully loaded model from {model_path} as {model_type}")
             return model
-            
+
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
             return None
-    
+
     def analyze_model_architecture(self, model_path: Union[str, Path]) -> Optional[Dict[str, Any]]:
         """Analyze model architecture using AutoModel to determine conversion requirements.
         
@@ -807,17 +807,17 @@ class ModelFormatConverter:
         if not HAS_TRANSFORMERS or not AutoModel:
             logger.error("transformers with AutoModel required")
             return None
-            
+
         try:
             # First try to load config
             config = AutoConfig.from_pretrained(str(model_path))
-            
+
             # Try to load with AutoModel to get architecture info
             model = AutoModel.from_pretrained(
                 str(model_path),
                 output_loading_info=True
             )
-            
+
             # Get model info
             architecture_info = {
                 "model_type": config.model_type,
@@ -834,20 +834,20 @@ class ModelFormatConverter:
                 "is_quantized": hasattr(model, "quantization_config"),
                 "device_map": getattr(model, "hf_device_map", None),
             }
-            
+
             # Clean up
             del model
             if GPU_AUTOLOADER_AVAILABLE and empty_cache:
                 empty_cache()
             elif HAS_TORCH and torch.cuda.is_available():
                 torch.cuda.empty_cache()
-                
+
             return architecture_info
-            
+
         except Exception as e:
             logger.error(f"Failed to analyze model architecture: {e}")
             return None
-    
+
     def convert_model_with_automodel(self, source_path: Union[str, Path], target_format: str, model_type: str = "auto", **kwargs) -> Optional[Path]:
         """Convert a model using AutoModel for flexible model loading.
         
@@ -864,19 +864,19 @@ class ModelFormatConverter:
         model = self.load_model_for_conversion(source_path, model_type)
         if model is None:
             return None
-            
+
         output_path = kwargs.get("output_path", Path(source_path).parent / f"{Path(source_path).stem}_{target_format}")
-        
+
         try:
             if target_format == "onnx" and HAS_ONNX and HAS_TORCH:
                 # Convert to ONNX
                 model.eval()
-                
+
                 # Get input dimensions
                 config = AutoConfig.from_pretrained(str(source_path))
                 batch_size = kwargs.get("batch_size", 1)
                 seq_length = kwargs.get("sequence_length", 128)
-                
+
                 # Create appropriate dummy input based on model type
                 if hasattr(config, "vocab_size"):
                     dummy_input = torch.randint(0, config.vocab_size, (batch_size, seq_length))
@@ -884,7 +884,7 @@ class ModelFormatConverter:
                     # For non-text models
                     input_shape = kwargs.get("input_shape", (batch_size, 3, 224, 224))
                     dummy_input = torch.randn(*input_shape)
-                
+
                 # Export
                 torch.onnx.export(
                     model,
@@ -896,14 +896,14 @@ class ModelFormatConverter:
                     output_names=kwargs.get("output_names", ["output"]),
                     dynamic_axes=kwargs.get("dynamic_axes", {"input": {0: "batch_size"}, "output": {0: "batch_size"}})
                 )
-                
+
                 logger.info(f"Successfully converted model to {target_format} using AutoModel")
                 return output_path
-                
+
             else:
                 logger.error(f"Conversion to {target_format} not supported with AutoModel method")
                 return None
-                
+
         except Exception as e:
             logger.error(f"Failed to convert model with AutoModel: {e}")
             return None

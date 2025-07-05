@@ -90,7 +90,7 @@ class RemotePluginExecutor:
             # Try JSON serialization
             json_str = json.dumps(data)
             return base64.b64encode(json_str.encode('utf-8')).decode('ascii')
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError):
             # Convert non-serializable objects to string representation
             self.logger.debug(f"Converting non-JSON-serializable data to string: {type(data)}")
             # Attempt to make data JSON-serializable
@@ -118,7 +118,7 @@ class RemotePluginExecutor:
         """
         if expected_type != 'json':
             raise ValueError(f"Unsupported serialization type: {expected_type}. Only JSON is allowed for security.")
-            
+
         decoded = base64.b64decode(encoded_data)
 
         try:

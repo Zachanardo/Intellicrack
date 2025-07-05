@@ -194,7 +194,7 @@ class AnalysisStatsGenerator:
             mean2 = sum(values2) / len(values2)
 
             # Calculate correlation components
-            numerator = sum((x - mean1) * (y - mean2) for x, y in zip(values1, values2))
+            numerator = sum((x - mean1) * (y - mean2) for x, y in zip(values1, values2, strict=False))
             sum_sq1 = sum((x - mean1) ** 2 for x in values1)
             sum_sq2 = sum((y - mean2) ** 2 for y in values2)
 

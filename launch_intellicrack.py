@@ -10,7 +10,28 @@ from pathlib import Path
 
 
 def detect_and_configure_gpu():
-    """Auto-detect GPU and configure environment for optimal performance."""
+    """
+    Auto-detect GPU and configure environment for optimal performance.
+    
+    This function performs comprehensive GPU detection across multiple backends
+    (OpenCL, PyTorch, DirectML) and applies vendor-specific optimizations for
+    Intel, NVIDIA, and AMD GPUs. It configures environment variables for optimal
+    performance based on the detected hardware.
+    
+    Returns:
+        tuple: A tuple containing:
+            - gpu_detected (bool): Whether a GPU was successfully detected
+            - gpu_type (str): Description of the detected GPU (e.g., "Intel Arc A770")
+            - gpu_vendor (str): GPU vendor name ("Intel", "NVIDIA", "AMD", or "Unknown")
+    
+    Side Effects:
+        Sets multiple environment variables for GPU optimization including:
+        - MKL and OpenMP settings for CPU optimization
+        - OpenCL context configuration
+        - PyTorch backend settings
+        - Qt rendering backend configuration
+        - Vendor-specific GPU optimizations
+    """
     print("=" * 60)
     print("INTELLICRACK GPU AUTO-DETECTION")
     print("=" * 60)
@@ -38,15 +59,16 @@ def detect_and_configure_gpu():
     gpu_vendor = "Unknown"
 
     try:
+        # First attempt: Use OpenCL to detect GPUs across all vendors
         import pyopencl as cl
         platforms = cl.get_platforms()
         for platform in platforms:
             devices = platform.get_devices(device_type=cl.device_type.GPU)
             if devices:
                 gpu_detected = True
-                device = devices[0]
+                device = devices[0]  # Use first available GPU
                 gpu_type = device.name.strip()
-                # Detect vendor
+                # Detect vendor from platform vendor string or device name
                 vendor = platform.vendor.lower()
                 if 'intel' in vendor or 'intel' in gpu_type.lower():
                     gpu_vendor = "Intel"
@@ -162,9 +184,36 @@ def detect_and_configure_gpu():
     return gpu_detected, gpu_type, gpu_vendor
 
 
-# Test insertion before symbol
-
 def main():
+    """
+    Main entry point for the Intellicrack launcher.
+    
+    This function sets up the Python path, detects and configures GPU settings,
+    and launches the main Intellicrack application. It includes special handling
+    for Intel Arc Graphics crashes and can automatically restart in software
+    rendering mode if needed.
+    
+    The function performs the following steps:
+    1. Adds the project root to Python path for module imports
+    2. Detects and configures GPU settings via detect_and_configure_gpu()
+    3. Stores GPU information in environment variables for the app
+    4. Checks for forced software rendering mode
+    5. Imports and runs the main Intellicrack application
+    6. Handles Intel Arc Graphics crash recovery with user prompt
+    
+    Returns:
+        int: Exit code from the main application or recursive call result
+    
+    Environment Variables Set:
+        - INTELLICRACK_GPU_DETECTED: "True" or "False" string
+        - INTELLICRACK_GPU_TYPE: GPU description string
+        - INTELLICRACK_GPU_VENDOR: Vendor name string
+        - INTELLICRACK_FORCE_SOFTWARE: "1" to force software rendering
+    
+    Raises:
+        ImportError: If Intellicrack modules cannot be imported
+        Exception: For any other startup errors
+    """
     # Add the intellicrack package to Python path
     project_root = Path(__file__).parent
     sys.path.insert(0, str(project_root))
@@ -197,7 +246,7 @@ def main():
         exit_code = intellicrack_main()
         print(f"intellicrack_main() returned: {exit_code}")
         
-        # Check for Intel Arc crash
+        # Check for Intel Arc crash (specific exit code -805306369 indicates Qt/OpenGL crash)
         if exit_code == -805306369 and gpu_vendor == "Intel":
             print("\n" + "=" * 60)
             print("INTEL ARC GRAPHICS CRASH DETECTED")
@@ -208,7 +257,7 @@ def main():
             if response == 'Y':
                 os.environ['INTELLICRACK_FORCE_SOFTWARE'] = '1'
                 print("Restarting in software rendering mode...")
-                return main()  # Recursive call with software mode
+                return main()  # Recursive call with software mode enabled
         
         sys.exit(exit_code)
     except ImportError as e:

@@ -43,13 +43,13 @@ gpu_autoloader = None
 
 try:
     from ..utils.gpu_autoloader import (
-        gpu_autoloader,
+        empty_cache,
         get_device,
         get_gpu_info,
-        to_device,
+        gpu_autoloader,
         memory_allocated,
         memory_reserved,
-        empty_cache
+        to_device,
     )
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
@@ -162,7 +162,7 @@ class ModelPerformanceMonitor:
             self.has_gpu = HAS_TORCH and torch.cuda.is_available()
             self.gpu_type = 'nvidia_cuda' if self.has_gpu else 'cpu'
             self.gpu_count = torch.cuda.device_count() if self.has_gpu else 0
-            
+
         if self.has_gpu and self.gpu_type == 'nvidia_cuda':
             try:
                 if HAS_PYNVML and pynvml:

@@ -45,7 +45,20 @@ _legacy_mode = False
 
 
 def _get_modern_config():
-    """Get the modern configuration instance."""
+    """
+    Get the modern configuration instance.
+    
+    This internal function implements a singleton pattern to ensure only one
+    configuration instance exists throughout the application lifetime. It lazily
+    initializes the modern IntellicrackConfig on first access.
+    
+    Returns:
+        IntellicrackConfig: The global modern configuration instance
+    
+    Note:
+        This is an internal function used by the legacy compatibility layer.
+        External code should use get_config() instead.
+    """
     global _modern_config  # pylint: disable=global-statement
     if _modern_config is None:
         _modern_config = get_new_config()
@@ -57,13 +70,25 @@ def _get_modern_config():
 def find_tool(tool_name: str, required_executables=None) -> Optional[str]:
     """
     Find tool executable path using the modern discovery system.
+    
+    This function attempts to locate external tools (Ghidra, Radare2, Frida, etc.)
+    using the modern configuration system's tool discovery capabilities. If the
+    modern system fails, it falls back to a basic PATH search.
 
     Args:
         tool_name: Name of the tool to find (e.g., 'ghidra', 'radare2', 'frida')
         required_executables: Optional list of required executables for the tool
+                            (currently used for logging only)
 
     Returns:
         Path to the tool executable or None if not found
+        
+    Examples:
+        >>> find_tool('ghidra')
+        '/opt/ghidra/ghidraRun'
+        
+        >>> find_tool('radare2', ['r2', 'rabin2'])
+        '/usr/bin/r2'
     """
     if required_executables:
         logger.debug("Tool search for %s with required executables: %s",
@@ -82,12 +107,30 @@ def find_tool(tool_name: str, required_executables=None) -> Optional[str]:
 def get_system_path(path_type: str) -> Optional[str]:
     """
     Get system-specific paths using modern configuration.
+    
+    This function provides a unified interface to retrieve various system paths
+    like output directories, cache locations, and user folders. It uses the modern
+    configuration system and falls back to OS-specific defaults if needed.
 
     Args:
-        path_type: Type of system path to retrieve
+        path_type: Type of system path to retrieve. Valid values:
+                  - "output": Output directory for results
+                  - "cache": Cache directory for temporary data
+                  - "logs": Log files directory
+                  - "temp": Temporary files directory
+                  - "desktop": User's desktop folder (fallback only)
+                  - "documents": User's documents folder (fallback only)
+                  - "downloads": User's downloads folder (fallback only)
 
     Returns:
         Path string or None if not found
+        
+    Examples:
+        >>> get_system_path("output")
+        '/home/user/.local/share/intellicrack/output'
+        
+        >>> get_system_path("cache")
+        '/home/user/.cache/intellicrack'
     """
     try:
         config = _get_modern_config()
@@ -121,21 +164,77 @@ class ConfigManager:
     Legacy configuration manager that wraps the modern IntellicrackConfig.
 
     Provides backward compatibility for existing code while using the new
-    dynamic configuration system under the hood.
+    dynamic configuration system under the hood. This class maintains the old
+    API interface while delegating to the modern configuration system for
+    actual functionality.
+    
+    The ConfigManager acts as a bridge between legacy code expecting dictionary-style
+    configuration access and the modern object-oriented configuration system. It
+    automatically translates legacy keys to modern configuration paths and provides
+    fallback values for backward compatibility.
+    
+    Attributes:
+        config_path: Path to the configuration file (for compatibility)
+        _modern_config: Internal reference to the modern IntellicrackConfig instance
+    
+    Examples:
+        >>> config = ConfigManager()
+        >>> config.get('ghidra_path')
+        '/opt/ghidra/ghidraRun'
+        
+        >>> config['log_dir'] = '/var/log/intellicrack'
+        >>> config.save_config()
+        True
     """
 
     def __init__(self, config_path: str = None):
-        """Initialize legacy configuration manager wrapper."""
+        """
+        Initialize legacy configuration manager wrapper.
+        
+        Args:
+            config_path: Optional path to configuration file. This parameter is
+                        maintained for backward compatibility but is largely ignored
+                        as the modern system uses platform-specific config locations.
+        """
         self._modern_config = _get_modern_config()
         self.config_path = config_path or str(self._modern_config.config_file)
 
     @property
     def config(self) -> Dict[str, Any]:
-        """Get configuration as dictionary for legacy compatibility."""
+        """
+        Get configuration as dictionary for legacy compatibility.
+        
+        This property dynamically builds a legacy-compatible configuration dictionary
+        from the modern configuration system. The returned dictionary matches the
+        structure expected by older code while pulling data from the new system.
+        
+        Returns:
+            Dict[str, Any]: Complete configuration dictionary with all sections
+                           including paths, tools, analysis settings, etc.
+        
+        Note:
+            The dictionary is rebuilt on each access to ensure it reflects
+            the current state of the modern configuration.
+        """
         return self._build_legacy_config()
 
     def _build_legacy_config(self) -> Dict[str, Any]:
-        """Build a legacy-compatible configuration dictionary."""
+        """
+        Build a legacy-compatible configuration dictionary.
+        
+        This internal method constructs a configuration dictionary that matches
+        the structure expected by legacy code. It maps modern configuration
+        values to their legacy equivalents and provides default values where
+        necessary.
+        
+        Returns:
+            Dict[str, Any]: Legacy-formatted configuration dictionary with
+                           all expected sections and keys
+        
+        Note:
+            This method is called by the config property and should not be
+            used directly by external code.
+        """
         config = self._modern_config
 
         # Create legacy structure from modern config
@@ -331,12 +430,28 @@ _config_manager: Optional[ConfigManager] = None
 def load_config(config_path: str = None) -> Dict[str, Any]:
     """
     Load configuration using the modern config system.
+    
+    This function initializes the global configuration manager if not already
+    present and returns a legacy-compatible configuration dictionary. It's
+    maintained for backward compatibility with code expecting a dictionary-based
+    configuration system.
 
     Args:
-        config_path: Path to configuration file (ignored in modern system)
+        config_path: Path to configuration file (ignored in modern system as
+                    it uses platform-specific locations automatically)
 
     Returns:
-        Configuration dictionary for legacy compatibility
+        Configuration dictionary for legacy compatibility containing all
+        configuration sections and values
+        
+    Examples:
+        >>> config = load_config()
+        >>> print(config['ghidra_path'])
+        '/opt/ghidra/ghidraRun'
+        
+    Note:
+        New code should use get_config() to get the ConfigManager instance
+        instead of working with raw dictionaries.
     """
     global _config_manager  # pylint: disable=global-statement
     if _config_manager is None:

@@ -125,11 +125,12 @@ class C2Server(BaseC2):
     def _initialize_auth_tokens(self):
         """Initialize authentication tokens from configuration or generate new ones."""
         import secrets
+
         from ..utils.secrets_manager import get_secret, store_secret
-        
+
         # Try to get existing auth tokens
         auth_tokens_str = get_secret('C2_AUTH_TOKENS', None)
-        
+
         if auth_tokens_str:
             # Parse existing tokens
             try:
@@ -142,12 +143,12 @@ class C2Server(BaseC2):
             # Generate new auth tokens
             num_tokens = self.config.get('auth_token_count', 5)
             new_tokens = []
-            
+
             for i in range(num_tokens):
                 token = secrets.token_hex(32)
                 self.auth_tokens.add(token)
                 new_tokens.append(token)
-            
+
             # Store tokens
             try:
                 store_secret('C2_AUTH_TOKENS', ','.join(new_tokens))
@@ -169,7 +170,7 @@ class C2Server(BaseC2):
                     else:
                         # Reset after lockout expires
                         del self.failed_auth_attempts[remote_addr]
-            
+
             # Verify token
             if token in self.auth_tokens:
                 # Clear any failed attempts on successful auth
@@ -183,18 +184,18 @@ class C2Server(BaseC2):
                         'count': 0,
                         'last_attempt': 0
                     }
-                
+
                 self.failed_auth_attempts[remote_addr]['count'] += 1
                 self.failed_auth_attempts[remote_addr]['last_attempt'] = time.time()
-                
+
                 remaining_attempts = self.max_auth_attempts - self.failed_auth_attempts[remote_addr]['count']
                 if remaining_attempts > 0:
                     self.logger.warning(f"Failed auth from {remote_addr} - {remaining_attempts} attempts remaining")
                 else:
                     self.logger.warning(f"Failed auth from {remote_addr} - locked out for {self.auth_lockout_duration} seconds")
-                
+
                 return False
-                
+
         except Exception as e:
             self.logger.error(f"Error verifying auth token: {e}")
             return False
@@ -662,33 +663,34 @@ class C2Server(BaseC2):
     def add_auth_token(self, token: str = None) -> str:
         """Add a new authentication token."""
         import secrets
-        from ..utils.secrets_manager import get_secret, store_secret
-        
+
+        from ..utils.secrets_manager import store_secret
+
         if not token:
             token = secrets.token_hex(32)
-        
+
         self.auth_tokens.add(token)
-        
+
         # Update stored tokens
         try:
             store_secret('C2_AUTH_TOKENS', ','.join(self.auth_tokens))
-            self.logger.info(f"Added new authentication token")
+            self.logger.info("Added new authentication token")
         except Exception as e:
             self.logger.warning(f"Could not update stored auth tokens: {e}")
-        
+
         return token
 
     def remove_auth_token(self, token: str) -> bool:
         """Remove an authentication token."""
         from ..utils.secrets_manager import store_secret
-        
+
         if token in self.auth_tokens:
             self.auth_tokens.remove(token)
-            
+
             # Update stored tokens
             try:
                 store_secret('C2_AUTH_TOKENS', ','.join(self.auth_tokens))
-                self.logger.info(f"Removed authentication token")
+                self.logger.info("Removed authentication token")
                 return True
             except Exception as e:
                 self.logger.warning(f"Could not update stored auth tokens: {e}")
@@ -702,7 +704,7 @@ class C2Server(BaseC2):
         return {
             'auth_enabled': True,
             'token_count': len(self.auth_tokens),
-            'locked_out_ips': len([ip for ip, info in self.failed_auth_attempts.items() 
+            'locked_out_ips': len([ip for ip, info in self.failed_auth_attempts.items()
                                    if info['count'] >= self.max_auth_attempts]),
             'max_attempts': self.max_auth_attempts,
             'lockout_duration': self.auth_lockout_duration

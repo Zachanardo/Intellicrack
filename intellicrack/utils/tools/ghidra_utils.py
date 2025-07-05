@@ -75,7 +75,7 @@ def get_ghidra_headless_path() -> Optional[str]:
                 return ghidra_path
     except ImportError:
         logger.debug("Config module not available, skipping config-based path")
-    
+
     try:
         from .core.path_discovery import find_tool
         return find_tool("analyzeHeadless")

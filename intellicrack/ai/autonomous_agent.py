@@ -321,7 +321,7 @@ class AutonomousAgent:
                             data = content
                 except (ImportError, AttributeError, KeyError):
                     pass
-                
+
                 # Fallback to direct file reading if AIFileTools not available
                 if data is None:
                     with open(binary_path, 'rb') as f:

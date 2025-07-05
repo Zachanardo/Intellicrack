@@ -118,7 +118,7 @@ class ModelManager:
         except ImportError:
             config_instance = None
             use_config_method = False
-        
+
         repositories_config = self.config.get("model_repositories", {})
 
         for repo_name, repo_config in repositories_config.items():

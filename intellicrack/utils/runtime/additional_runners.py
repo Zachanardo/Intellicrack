@@ -2474,7 +2474,7 @@ def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
 def run_ml_vulnerability_prediction(binary_path: str) -> Dict[str, Any]:
     """ML vulnerability prediction removed - using LLM-only approach."""
     return {
-        "status": "removed", 
+        "status": "removed",
         "message": "ML vulnerability prediction has been removed. Use LLM-based analysis instead.",
         "predictions": [],
         "confidence": 0.0,

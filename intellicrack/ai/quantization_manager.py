@@ -29,17 +29,20 @@ from .model_sharding import get_sharding_manager
 try:
     import torch
     HAS_TORCH = True
-    
+
     # Import unified GPU system
     try:
         from ..utils.gpu_autoloader import (
-            gpu_autoloader, get_device, get_gpu_info,
-            to_device, optimize_for_gpu
+            get_device,
+            get_gpu_info,
+            gpu_autoloader,
+            optimize_for_gpu,
+            to_device,
         )
         GPU_AUTOLOADER_AVAILABLE = True
     except ImportError:
         GPU_AUTOLOADER_AVAILABLE = False
-        
+
 except ImportError:
     torch = None
     HAS_TORCH = False
@@ -587,7 +590,7 @@ class QuantizationManager:
         supported_types.append("none")
 
         return supported_types
-    
+
     def quantize_model_with_bnb(self, model: Any, quantization_bits: int = 8, **kwargs) -> Optional[Any]:
         """Quantize a model using bitsandbytes (bnb) library.
         
@@ -602,7 +605,7 @@ class QuantizationManager:
         if not HAS_BITSANDBYTES or not bnb:
             logger.error("bitsandbytes (bnb) required for this quantization method")
             return None
-            
+
         try:
             # Prepare model for quantization
             if quantization_bits == 8:
@@ -612,7 +615,7 @@ class QuantizationManager:
                         # Replace with 8-bit linear layer
                         in_features = module.in_features
                         out_features = module.out_features
-                        
+
                         # Create 8-bit linear layer
                         linear_8bit = bnb.nn.Linear8bitLt(
                             in_features,
@@ -621,24 +624,24 @@ class QuantizationManager:
                             has_fp16_weights=kwargs.get("has_fp16_weights", False),
                             threshold=kwargs.get("threshold", 6.0)
                         )
-                        
+
                         # Copy weights
                         linear_8bit.weight = bnb.nn.Int8Params(
                             module.weight.data.clone(),
                             requires_grad=False,
                             has_fp16_weights=kwargs.get("has_fp16_weights", False)
                         )
-                        
+
                         if module.bias is not None:
                             linear_8bit.bias = module.bias.clone()
-                            
+
                         # Replace module
                         parent = model
                         child_name = name.split('.')[-1]
                         for part in name.split('.')[:-1]:
                             parent = getattr(parent, part)
                         setattr(parent, child_name, linear_8bit)
-                        
+
             elif quantization_bits == 4:
                 # 4-bit quantization using bnb
                 for name, module in model.named_modules():
@@ -646,7 +649,7 @@ class QuantizationManager:
                         # Use bnb's 4-bit quantization
                         in_features = module.in_features
                         out_features = module.out_features
-                        
+
                         # Create 4-bit params
                         linear_4bit = bnb.nn.LinearFP4(
                             in_features,
@@ -654,7 +657,7 @@ class QuantizationManager:
                             compress_statistics=kwargs.get("compress_statistics", True),
                             quant_type=kwargs.get("quant_type", "fp4")
                         )
-                        
+
                         # Copy and quantize weights
                         linear_4bit.weight = bnb.nn.Params4bit(
                             module.weight.data.clone(),
@@ -662,24 +665,24 @@ class QuantizationManager:
                             compress_statistics=kwargs.get("compress_statistics", True),
                             quant_type=kwargs.get("quant_type", "fp4")
                         )
-                        
+
                         if module.bias is not None:
                             linear_4bit.bias = module.bias.clone()
-                            
+
                         # Replace module
                         parent = model
                         child_name = name.split('.')[-1]
                         for part in name.split('.')[:-1]:
                             parent = getattr(parent, part)
                         setattr(parent, child_name, linear_4bit)
-                        
+
             logger.info(f"Successfully quantized model to {quantization_bits}-bit using bnb")
             return model
-            
+
         except Exception as e:
             logger.error(f"Failed to quantize model with bnb: {e}")
             return None
-    
+
     def create_gptq_config(self, bits: int = 4, group_size: int = 128, **kwargs) -> Optional[Any]:
         """Create a GPTQ configuration using BaseQuantizeConfig.
         
@@ -694,7 +697,7 @@ class QuantizationManager:
         if not HAS_AUTO_GPTQ or not BaseQuantizeConfig:
             logger.error("auto-gptq with BaseQuantizeConfig required")
             return None
-            
+
         try:
             # Create GPTQ config using BaseQuantizeConfig
             config = BaseQuantizeConfig(
@@ -708,14 +711,14 @@ class QuantizationManager:
                 model_name_or_path=kwargs.get("model_name_or_path", None),
                 model_file_base_name=kwargs.get("model_file_base_name", "model")
             )
-            
+
             logger.info(f"Created GPTQ config: {bits}-bit, group_size={group_size}")
             return config
-            
+
         except Exception as e:
             logger.error(f"Failed to create GPTQ config: {e}")
             return None
-    
+
     def prepare_model_for_gptq_quantization(self, model_path: Union[str, Path], config: Any = None, **kwargs) -> Optional[Any]:
         """Prepare a model for GPTQ quantization using GPTQConfig.
         
@@ -730,7 +733,7 @@ class QuantizationManager:
         if not HAS_TRANSFORMERS or not GPTQConfig:
             logger.error("transformers with GPTQConfig required")
             return None
-            
+
         try:
             # Create GPTQConfig if not using BaseQuantizeConfig
             if config is None and GPTQConfig:
@@ -754,7 +757,7 @@ class QuantizationManager:
                     sym=config.sym,
                     true_sequential=config.true_sequential
                 )
-            
+
             # Load model with GPTQ config
             model = AutoModelForCausalLM.from_pretrained(
                 str(model_path),
@@ -763,10 +766,10 @@ class QuantizationManager:
                 trust_remote_code=kwargs.get("trust_remote_code", True),
                 torch_dtype=torch.float16
             )
-            
+
             logger.info("Successfully prepared model for GPTQ quantization")
             return model
-            
+
         except Exception as e:
             logger.error(f"Failed to prepare model for GPTQ: {e}")
             return None
@@ -860,7 +863,7 @@ class QuantizationManager:
                     torch.xpu.empty_cache()
         elif torch.cuda.is_available():
             torch.cuda.empty_cache()
-            
+
         if self.sharding_manager:
             self.sharding_manager.cleanup_memory()
         gc.collect()

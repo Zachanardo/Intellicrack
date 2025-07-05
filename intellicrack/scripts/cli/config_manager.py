@@ -438,7 +438,7 @@ class ConfigManager:
             Dictionary mapping keys to success status
         """
         results = {}
-        
+
         # First validate all updates
         for key, value in updates.items():
             if key not in self.options:
@@ -449,17 +449,17 @@ class ConfigManager:
                 self.logger.warning(f"Invalid value for {key}: {value}")
             else:
                 results[key] = True
-        
+
         # Apply valid updates
         for key, value in updates.items():
             if results.get(key, False):
                 self.config[key] = value
                 self.options[key].value = value
-        
+
         # Save if any updates were successful
         if any(results.values()):
             self.save_config()
-        
+
         return results
 
     def reset_to_defaults(self, category: Optional[str] = None):

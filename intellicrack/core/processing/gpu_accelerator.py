@@ -19,14 +19,13 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import os
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from intellicrack.logger import logger
 
-from ...utils.core.import_checks import TENSORFLOW_AVAILABLE, tf
+from ...utils.core.import_checks import TENSORFLOW_AVAILABLE
+from ...utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
 from ...utils.logger import get_logger
-from ...utils.gpu_autoloader import gpu_autoloader, get_device, get_gpu_info, to_device
 
 # Optional GPU backend imports
 try:
@@ -62,17 +61,17 @@ class GPUAccelerationManager:
             prefer_intel: Whether to prefer Intel GPUs when multiple GPUs are available (default: True)
         """
         self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
-        
+
         # Use the unified GPU autoloader
         self.gpu_info = get_gpu_info()
         self.gpu_available = self.gpu_info['available']
         self.gpu_type = self.gpu_info['type']
         self.device = get_device()
-        
+
         # Get torch reference if available
         self._torch = gpu_autoloader.get_torch()
         self._ipex = gpu_autoloader.get_ipex()
-        
+
         # Legacy attributes for compatibility
         self.gpu_backend = self._determine_backend()
         self.context = None
@@ -80,7 +79,7 @@ class GPUAccelerationManager:
         self.cl = cl
         self.cl_array = cl_array
         self.cupy = cp
-        
+
         # Initialize OpenCL if available and needed
         if OPENCL_AVAILABLE and self.gpu_type not in ['intel_xpu', 'nvidia_cuda', 'amd_rocm']:
             self._init_opencl()
@@ -191,7 +190,7 @@ class GPUAccelerationManager:
         import numpy as np
 
         all_matches = []
-        
+
         # Convert data to tensor on device
         data_np = np.frombuffer(data, dtype=np.uint8)
         data_tensor = self._torch.tensor(data_np, dtype=self._torch.uint8, device=self.device)
@@ -199,15 +198,15 @@ class GPUAccelerationManager:
         for pattern in patterns:
             pattern_np = np.frombuffer(pattern, dtype=np.uint8)
             pattern_tensor = self._torch.tensor(pattern_np, dtype=self._torch.uint8, device=self.device)
-            
+
             # Use convolution for pattern matching
             if len(pattern) <= len(data):
                 # Create a sliding window view
                 windows = data_tensor.unfold(0, len(pattern), 1)
-                
+
                 # Compare each window with the pattern
                 matches_mask = (windows == pattern_tensor).all(dim=1)
-                
+
                 # Get match positions
                 match_positions = self._torch.where(matches_mask)[0].cpu().numpy().tolist()
                 all_matches.extend(match_positions)
@@ -377,21 +376,21 @@ class GPUAccelerator(GPUAccelerationManager):
     def __init__(self):
         """Initialize the GPU accelerator using the new unified system."""
         super().__init__(use_intel_pytorch=True, prefer_intel=True)
-        
+
         # Legacy attributes
         self.cuda_available = self.gpu_type == 'nvidia_cuda'
         self.opencl_available = OPENCL_AVAILABLE
         self.tensorflow_available = TENSORFLOW_AVAILABLE and self.gpu_available
         self.pytorch_available = self._torch is not None
         self.intel_pytorch_available = self.gpu_type == 'intel_xpu'
-        
+
         # Legacy device lists
         self.cuda_devices = []
         self.opencl_devices = []
         self.tensorflow_devices = []
         self.pytorch_devices = []
         self.intel_devices = []
-        
+
         # Populate legacy device info
         if self.gpu_available:
             device_info = {
@@ -400,7 +399,7 @@ class GPUAccelerator(GPUAccelerationManager):
                 'memory': self.gpu_info.get('total_memory', 'Unknown'),
                 'backend': self.gpu_backend
             }
-            
+
             if self.gpu_type == 'nvidia_cuda':
                 self.cuda_devices.append(device_info)
                 self.pytorch_devices.append(device_info)
@@ -409,15 +408,15 @@ class GPUAccelerator(GPUAccelerationManager):
                 self.pytorch_devices.append(device_info)
             elif self.gpu_type == 'amd_rocm':
                 self.pytorch_devices.append(device_info)
-            
+
             if OPENCL_AVAILABLE:
                 self.opencl_devices.append(device_info)
-                
+
         # Legacy attributes
         self.selected_backend = self.gpu_backend
         self.detected_gpu_vendor = self._detect_vendor()
         self.detected_gpu_name = self.gpu_info.get('device_name', 'Unknown')
-        
+
         # Benchmarking and error handling
         self.backend_benchmarks = {}
         self.error_counts = {}

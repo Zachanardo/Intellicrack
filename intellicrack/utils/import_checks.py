@@ -322,7 +322,7 @@ def get_fallback_implementations() -> Dict[str, Any]:
             """Fallback numpy-like operations when numpy is not available."""
             # Define ndarray as the list type for compatibility
             ndarray = list
-            
+
             class random:
                 """Random number generation fallback."""
                 @staticmethod
@@ -330,13 +330,13 @@ def get_fallback_implementations() -> Dict[str, Any]:
                     """Generate uniform random value."""
                     import random
                     return random.uniform(low, high)
-                
+
                 @staticmethod
                 def normal(loc=0.0, scale=1.0):
                     """Generate normal distribution value."""
                     import random
                     return random.gauss(loc, scale)
-                
+
                 @staticmethod
                 def choice(a, p=None):
                     """Random choice from array."""

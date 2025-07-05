@@ -919,7 +919,7 @@ ep:
             selected_template = None
             if self.template_list.currentItem():
                 selected_template = self.template_list.currentItem().text()
-            
+
             # Store the last selected template for this category
             if not hasattr(self, '_category_selections'):
                 self._category_selections = {}

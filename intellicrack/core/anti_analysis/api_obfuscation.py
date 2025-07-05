@@ -146,53 +146,53 @@ class APIObfuscator:
             import platform
             if platform.system() != 'Windows':
                 return None
-            
+
             # Load DLL and enumerate exports
             kernel32 = ctypes.windll.kernel32
             h_module = kernel32.GetModuleHandleW(dll_name)
             if not h_module:
                 h_module = kernel32.LoadLibraryW(dll_name)
-            
+
             if not h_module:
                 return None
-            
+
             # Parse PE headers to get export table
             dos_header = ctypes.c_uint32.from_address(h_module)
             if dos_header.value != 0x5A4D:  # "MZ"
                 return None
-            
+
             pe_offset = ctypes.c_uint32.from_address(h_module + 0x3C).value
             pe_signature = ctypes.c_uint32.from_address(h_module + pe_offset).value
-            
+
             if pe_signature != 0x4550:  # "PE"
                 return None
-            
+
             # Get export directory
             export_dir_rva = ctypes.c_uint32.from_address(h_module + pe_offset + 0x78).value
             if not export_dir_rva:
                 return None
-            
+
             export_dir = h_module + export_dir_rva
-            
+
             # Get export table data
             num_functions = ctypes.c_uint32.from_address(export_dir + 0x14).value
             num_names = ctypes.c_uint32.from_address(export_dir + 0x18).value
             names_rva = ctypes.c_uint32.from_address(export_dir + 0x20).value
             ordinals_rva = ctypes.c_uint32.from_address(export_dir + 0x24).value
             functions_rva = ctypes.c_uint32.from_address(export_dir + 0x1C).value
-            
+
             names_array = h_module + names_rva
             ordinals_array = h_module + ordinals_rva
             functions_array = h_module + functions_rva
-            
+
             # Enumerate exports and hash names
             for i in range(num_names):
                 name_rva = ctypes.c_uint32.from_address(names_array + i * 4).value
                 name_ptr = h_module + name_rva
-                
+
                 # Read function name
                 name = ctypes.string_at(name_ptr).decode('ascii', errors='ignore')
-                
+
                 # Calculate hash using multiple algorithms
                 calculated_hashes = [
                     self._djb2_hash(name),
@@ -200,15 +200,15 @@ class APIObfuscator:
                     self._crc32_hash(name),
                     self._custom_hash(name)
                 ]
-                
+
                 if api_hash in calculated_hashes:
                     # Get ordinal and function address
                     ordinal = ctypes.c_uint16.from_address(ordinals_array + i * 2).value
                     func_rva = ctypes.c_uint32.from_address(functions_array + ordinal * 4).value
                     return h_module + func_rva
-            
+
             return None
-            
+
         except Exception as e:
             self.logger.debug(f"Hash resolution failed: {e}")
             return None
@@ -247,75 +247,75 @@ class APIObfuscator:
                 return None
 
             kernel32 = ctypes.windll.kernel32
-            
+
             # Get module handle with obfuscation
             h_module = kernel32.GetModuleHandleW(dll_name)
             if not h_module:
                 h_module = kernel32.LoadLibraryW(dll_name)
-            
+
             if not h_module:
                 return None
-            
+
             # Parse PE export table directly for ordinal resolution
             try:
                 # Read DOS header
                 dos_header = ctypes.c_uint32.from_address(h_module).value
                 if dos_header != 0x5A4D:  # "MZ"
                     return None
-                
+
                 # Get PE header offset
                 pe_offset = ctypes.c_uint32.from_address(h_module + 0x3C).value
                 pe_signature = ctypes.c_uint32.from_address(h_module + pe_offset).value
-                
+
                 if pe_signature != 0x4550:  # "PE"
                     return None
-                
+
                 # Get export directory RVA
                 export_dir_rva = ctypes.c_uint32.from_address(h_module + pe_offset + 0x78).value
                 if not export_dir_rva:
                     return None
-                
+
                 export_dir = h_module + export_dir_rva
-                
+
                 # Read export table structure
                 base_ordinal = ctypes.c_uint32.from_address(export_dir + 0x10).value
                 num_functions = ctypes.c_uint32.from_address(export_dir + 0x14).value
                 functions_rva = ctypes.c_uint32.from_address(export_dir + 0x1C).value
-                
+
                 # Calculate function index from ordinal
                 func_index = ordinal - base_ordinal
-                
+
                 if func_index < 0 or func_index >= num_functions:
                     return None
-                
+
                 # Get function address
                 functions_array = h_module + functions_rva
                 func_rva = ctypes.c_uint32.from_address(functions_array + func_index * 4).value
-                
+
                 if func_rva == 0:
                     return None
-                
+
                 func_addr = h_module + func_rva
-                
+
                 # Check if this is a forwarded export
                 export_dir_end = export_dir + ctypes.c_uint32.from_address(export_dir + 0x04).value
                 if export_dir <= func_addr < export_dir_end:
                     # This is a forwarded export, need to resolve further
                     forward_str = ctypes.string_at(func_addr).decode('ascii', errors='ignore')
                     return self._resolve_forwarded_export(forward_str)
-                
+
                 return func_addr
-                
+
             except Exception as pe_error:
                 self.logger.debug(f"PE parsing failed, using fallback: {pe_error}")
-                
+
                 # Fallback: Use GetProcAddress with MAKEINTRESOURCE
                 try:
                     address = kernel32.GetProcAddress(h_module, ordinal)
                     return address if address else None
                 except:
                     return None
-        
+
         except Exception as e:
             self.logger.debug(f"Ordinal resolution failed: {e}")
             return None
@@ -408,7 +408,7 @@ class APIObfuscator:
             return ""
         key = data[0]
         return ''.join(chr(b ^ key) for b in data[1:])
-    
+
     def _djb2_hash(self, string: str) -> int:
         """DJB2 hash algorithm commonly used in malware."""
         hash_value = 5381
@@ -416,7 +416,7 @@ class APIObfuscator:
             hash_value = ((hash_value << 5) + hash_value) + ord(char)
             hash_value &= 0xFFFFFFFF  # Keep 32-bit
         return hash_value
-    
+
     def _fnv1a_hash(self, string: str) -> int:
         """FNV-1a hash algorithm for API obfuscation."""
         hash_value = 0x811c9dc5  # FNV offset basis
@@ -425,12 +425,12 @@ class APIObfuscator:
             hash_value *= 0x01000193  # FNV prime
             hash_value &= 0xFFFFFFFF  # Keep 32-bit
         return hash_value
-    
+
     def _crc32_hash(self, string: str) -> int:
         """CRC32 hash for API name obfuscation."""
         import zlib
         return zlib.crc32(string.encode('ascii')) & 0xFFFFFFFF
-    
+
     def _custom_hash(self, string: str) -> int:
         """Custom hash algorithm for advanced evasion."""
         hash_value = 0
@@ -439,19 +439,19 @@ class APIObfuscator:
             hash_value = (hash_value * 0x9e3779b9) ^ (i << 16)
             hash_value &= 0xFFFFFFFF
         return hash_value
-    
+
     def _resolve_forwarded_export(self, forward_str: str) -> Optional[int]:
         """Resolve forwarded exports like 'NTDLL.RtlInitUnicodeString'."""
         try:
             if '.' not in forward_str:
                 return None
-            
+
             dll_name, api_name = forward_str.split('.', 1)
             dll_name = dll_name + '.dll'
-            
+
             # Use normal resolution for forwarded export
             return self._normal_resolve(dll_name, api_name)
-            
+
         except Exception as e:
             self.logger.debug(f"Forwarded export resolution failed: {e}")
             return None

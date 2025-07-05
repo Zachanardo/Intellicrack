@@ -442,11 +442,11 @@ except ImportError as e:
 # Import GPU autoloader functions
 try:
     from .gpu_autoloader import (
-        gpu_autoloader,
         get_device,
         get_gpu_info,
-        to_device,
+        gpu_autoloader,
         optimize_for_gpu,
+        to_device,
     )
 except ImportError as e:
     _init_logger.warning("Failed to import gpu_autoloader functions: %s", e)

@@ -667,20 +667,20 @@ class IntellicrackCLI:
                 'question': question,
                 'response': response
             }
-        
+
         # AI Reasoning using enhanced AI assistant
         if hasattr(self.args, 'ai_reasoning') and self.args.ai_reasoning:
             logger.info("Running AI Reasoning...")
             from intellicrack.ai.ai_assistant_enhanced import IntellicrackAIAssistant
             ai_assistant = IntellicrackAIAssistant()
-            
+
             # Prepare task data from analysis results
             task_data = {
                 "type": "cli_analysis",
                 "file_path": self.binary_path,
                 "binary_info": {}
             }
-            
+
             # Add protection detection results if available
             if 'protection_detection' in self.results:
                 task_data["patterns"] = []
@@ -692,36 +692,36 @@ class IntellicrackCLI:
                             "type": protection.get('type', 'Unknown'),
                             "confidence": protection.get('confidence', 0)
                         })
-            
+
             # Add ML results if available
             if 'ml_analysis' in self.results:
                 task_data["ml_results"] = self.results['ml_analysis']
-            
+
             # Add any other relevant analysis results
             if 'vulnerability_scan' in self.results:
                 task_data["vulnerabilities"] = self.results['vulnerability_scan']
-            
+
             # Perform AI reasoning
             reasoning_result = ai_assistant.perform_reasoning(task_data)
-            
+
             self.results['ai_reasoning'] = reasoning_result
-            
+
             # Print reasoning results if not in JSON output mode
             if not self.args.json_output:
                 print("\n=== AI Reasoning Analysis ===")
                 print(f"Task Type: {reasoning_result.get('task_type', 'Unknown')}")
                 print(f"Confidence: {reasoning_result.get('reasoning_confidence', 0) * 100:.0f}%")
-                
+
                 if reasoning_result.get('evidence'):
                     print("\nEvidence:")
                     for evidence in reasoning_result['evidence']:
                         print(f"  • {evidence}")
-                
+
                 if reasoning_result.get('conclusions'):
                     print("\nConclusions:")
                     for conclusion in reasoning_result['conclusions']:
                         print(f"  • {conclusion}")
-                
+
                 if reasoning_result.get('next_steps'):
                     print("\nRecommended Next Steps:")
                     for i, step in enumerate(reasoning_result['next_steps'], 1):

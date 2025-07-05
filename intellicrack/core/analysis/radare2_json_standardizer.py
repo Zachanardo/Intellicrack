@@ -1187,7 +1187,7 @@ class R2JSONStandardizer:
         sum2 = sum(values2)
         sum1_sq = sum(x * x for x in values1)
         sum2_sq = sum(x * x for x in values2)
-        sum_products = sum(x * y for x, y in zip(values1, values2))
+        sum_products = sum(x * y for x, y in zip(values1, values2, strict=False))
 
         numerator = n * sum_products - sum1 * sum2
         denominator = ((n * sum1_sq - sum1 * sum1) * (n * sum2_sq - sum2 * sum2)) ** 0.5
@@ -1969,7 +1969,7 @@ class R2JSONStandardizer:
 
         # Calculate weighted average (higher scores get more weight)
         weights = [score + 1 for score in risk_scores]  # Add 1 to avoid zero weights
-        weighted_sum = sum(score * weight for score, weight in zip(risk_scores, weights))
+        weighted_sum = sum(score * weight for score, weight in zip(risk_scores, weights, strict=False))
         total_weight = sum(weights)
 
         return weighted_sum / total_weight if total_weight > 0 else 0.0

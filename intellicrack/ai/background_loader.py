@@ -26,15 +26,9 @@ import logging
 import queue
 import threading
 import time
-from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from .llm_types import (
-    LoadingState,
-    LoadingProgress,
-    ProgressCallback
-)
+from .llm_types import LoadingProgress, LoadingState, ProgressCallback
 
 if TYPE_CHECKING:
     from .llm_backends import LLMBackend, LLMConfig

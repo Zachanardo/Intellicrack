@@ -8,29 +8,29 @@ Licensed under GNU General Public License v3.0
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
 # Import unified GPU system
 try:
     from ..utils.gpu_autoloader import (
-        gpu_autoloader,
         get_device,
         get_gpu_info,
+        gpu_autoloader,
+        optimize_for_gpu,
         to_device,
-        optimize_for_gpu
     )
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     logger.warning("GPU autoloader not available, using fallback implementations")
     GPU_AUTOLOADER_AVAILABLE = False
-    
+
     # Fallback implementations
     def get_device():
         import torch
         return torch.device('cpu')
-    
+
     def get_gpu_info():
         return {
             'available': False,
@@ -39,27 +39,27 @@ except ImportError:
             'info': {},
             'memory': {}
         }
-    
+
     def to_device(tensor_or_model):
         return tensor_or_model
-    
+
     def optimize_for_gpu(model):
         return model
 
 
 class GPUIntegration:
     """GPU Integration for AI models using unified system"""
-    
+
     def __init__(self):
         """Initialize GPU integration"""
         self.gpu_info = get_gpu_info()
         self.device = get_device()
         logger.info(f"GPU Integration initialized: {self.gpu_info['type']}")
-        
+
     def get_device_info(self) -> Dict[str, Any]:
         """Get comprehensive device information"""
         info = self.gpu_info.copy()
-        
+
         # Add additional runtime info if available
         if GPU_AUTOLOADER_AVAILABLE:
             try:
@@ -82,39 +82,39 @@ class GPUIntegration:
                     }
             except Exception as e:
                 logger.debug(f"Failed to get runtime info: {e}")
-                
+
         return info
-    
+
     def prepare_model(self, model: Any) -> Any:
         """Prepare model for GPU execution"""
         # Move to device
         model = to_device(model)
-        
+
         # Optimize for specific backend
         model = optimize_for_gpu(model)
-        
+
         return model
-    
+
     def prepare_tensor(self, tensor: Any) -> Any:
         """Prepare tensor for GPU execution"""
         return to_device(tensor)
-    
+
     def get_memory_usage(self) -> Dict[str, Any]:
         """Get current GPU memory usage"""
         if GPU_AUTOLOADER_AVAILABLE:
             return gpu_autoloader.get_memory_info()
         else:
             return {}
-    
+
     def synchronize(self):
         """Synchronize GPU operations"""
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_autoloader.synchronize()
-    
+
     def is_available(self) -> bool:
         """Check if GPU acceleration is available"""
         return self.gpu_info['available']
-    
+
     def get_backend_name(self) -> str:
         """Get the backend name"""
         return self.gpu_info.get('info', {}).get('backend', 'Unknown')

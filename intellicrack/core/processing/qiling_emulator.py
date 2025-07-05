@@ -142,7 +142,7 @@ class QilingEmulator:
         """Convert architecture string to QL_ARCH constant."""
         if not QILING_AVAILABLE or not QL_ARCH:
             return None
-            
+
         arch_map = {
             'x86': QL_ARCH.X86,
             'x64': QL_ARCH.X8664,
@@ -157,14 +157,14 @@ class QilingEmulator:
             'riscv': QL_ARCH.RISCV,
             'riscv64': QL_ARCH.RISCV64,
         }
-        
+
         return arch_map.get(arch.lower(), QL_ARCH.X8664)
-    
+
     def _get_ql_os(self, ostype: str) -> Optional[int]:
         """Convert OS type string to QL_OS constant."""
         if not QILING_AVAILABLE or not QL_OS:
             return None
-            
+
         os_map = {
             'windows': QL_OS.WINDOWS,
             'linux': QL_OS.LINUX,
@@ -175,7 +175,7 @@ class QilingEmulator:
             'dos': QL_OS.DOS,
             'uefi': QL_OS.UEFI,
         }
-        
+
         return os_map.get(ostype.lower(), QL_OS.WINDOWS)
 
     def _get_default_rootfs(self) -> str:
@@ -218,23 +218,23 @@ class QilingEmulator:
         if not QILING_AVAILABLE or not QlFsMappedObject:
             self.logger.warning("QlFsMappedObject not available")
             return
-            
+
         if not os.path.exists(host_path):
             raise FileNotFoundError(f"Host path not found: {host_path}")
-            
+
         self.mapped_files.append({
             'host': host_path,
             'guest': guest_path,
             'type': 'directory' if os.path.isdir(host_path) else 'file'
         })
-        
+
         self.logger.info("Mapped %s -> %s", host_path, guest_path)
-    
+
     def setup_filesystem_mappings(self):
         """Set up common filesystem mappings for license files."""
         if not self.ql:
             return
-            
+
         # Map common license file locations
         license_paths = [
             # Windows common paths
@@ -245,11 +245,11 @@ class QilingEmulator:
             ('/usr/share', '/usr/share'),
             ('/var/lib', '/var/lib'),
         ]
-        
+
         for host, guest in license_paths:
             if self.ql_os == QL_OS.WINDOWS and guest.startswith('/'):
                 guest = 'C:' + guest.replace('/', '\\')
-            
+
             try:
                 if hasattr(self.ql, 'os') and hasattr(self.ql.os, 'fs_mapper'):
                     # Use QlFsMappedObject for advanced mapping
@@ -379,19 +379,19 @@ class QilingEmulator:
                 'argv': argv,
                 'verbose': verbose
             }
-            
+
             # Add architecture and OS if available
             if self.ql_arch is not None:
                 init_params['archtype'] = self.ql_arch
             if self.ql_os is not None:
                 init_params['ostype'] = self.ql_os
-                
+
             # Add rootfs if exists
             if os.path.exists(self.rootfs):
                 init_params['rootfs'] = self.rootfs
-                
+
             self.ql = Qiling(**init_params)
-            
+
             # Setup filesystem mappings
             self.setup_filesystem_mappings()
 
@@ -483,7 +483,7 @@ class QilingEmulator:
         """Get detailed architecture information using QL_ARCH constants."""
         if not QILING_AVAILABLE or not QL_ARCH or not self.ql_arch:
             return {'arch': self.arch, 'bits': 32 if '86' in self.arch else 64}
-            
+
         arch_info = {
             'arch_string': self.arch,
             'ql_arch': self.ql_arch,
@@ -491,7 +491,7 @@ class QilingEmulator:
             'endianness': 'little',
             'instruction_set': 'unknown'
         }
-        
+
         # Determine architecture details
         if self.ql_arch in [QL_ARCH.X86]:
             arch_info.update({
@@ -532,14 +532,14 @@ class QilingEmulator:
                             's0', 's1', 's2', 's3', 's4', 's5', 's6', 's7',
                             't8', 't9', 'k0', 'k1', 'gp', 'sp', 'fp', 'ra']
             })
-            
+
         return arch_info
-    
+
     def get_os_info(self) -> Dict[str, Any]:
         """Get detailed OS information using QL_OS constants."""
         if not QILING_AVAILABLE or not QL_OS or not self.ql_os:
             return {'os': self.ostype, 'family': 'unknown'}
-            
+
         os_info = {
             'os_string': self.ostype,
             'ql_os': self.ql_os,
@@ -547,7 +547,7 @@ class QilingEmulator:
             'syscall_convention': 'unknown',
             'executable_format': 'unknown'
         }
-        
+
         # Determine OS details
         if self.ql_os == QL_OS.WINDOWS:
             os_info.update({
@@ -581,7 +581,7 @@ class QilingEmulator:
                 'path_separator': '/',
                 'common_dirs': ['/usr', '/etc', '/var', '/tmp']
             })
-            
+
         return os_info
 
     def _analyze_results(self) -> Dict[str, Any]:
@@ -700,14 +700,14 @@ class QilingEmulator:
             'sections': [],
             'imports': []
         }
-        
+
         try:
             # Try PE format detection
             import pefile
             pe = pefile.PE(self.binary_path)
             format_info['format'] = 'PE'
             format_info['entry_point'] = hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
-            
+
             # Get sections
             for section in pe.sections:
                 format_info['sections'].append({
@@ -715,7 +715,7 @@ class QilingEmulator:
                     'virtual_address': hex(section.VirtualAddress),
                     'size': section.SizeOfRawData
                 })
-                
+
             # Get imports
             if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
@@ -725,7 +725,7 @@ class QilingEmulator:
                         'functions': [imp.name.decode('utf-8') if imp.name else f"Ordinal_{imp.ordinal}"
                                     for imp in entry.imports]
                     })
-                    
+
         except (ImportError, pefile.PEFormatError):
             # Try ELF format
             try:
@@ -744,7 +744,7 @@ class QilingEmulator:
                         format_info['format'] = 'Mach-O'
             except Exception:
                 pass
-                
+
         return format_info
 
 
@@ -805,13 +805,13 @@ def run_qiling_emulation(binary_path: str, options: Dict[str, Any] = None) -> Di
 
         # Get binary format info
         format_info = emulator.detect_binary_format()
-        
+
         # Run emulation
         results = emulator.run(
             timeout=options.get('timeout', 60),
             until_address=options.get('until_address')
         )
-        
+
         # Add format info to results
         results['binary_format'] = format_info
 

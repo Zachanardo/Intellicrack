@@ -102,7 +102,7 @@ def log_function_call(func: F) -> F:
                     logger.error("Error in logger: %s", e)
                     return '<repr_failed>'
 
-            arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values)]
+            arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values, strict=False)]
             if kwargs:
                 arg_strs += [f"{k}={safe_repr(v)}" for k, v in kwargs.items()]
 
@@ -152,7 +152,7 @@ def log_function_call(func: F) -> F:
                         logger.error("Error in logger: %s", e)
                         return '<repr_failed>'
 
-                arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values)]
+                arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values, strict=False)]
                 if kwargs:
                     arg_strs += [f"{k}={safe_repr(v)}" for k, v in kwargs.items()]
 

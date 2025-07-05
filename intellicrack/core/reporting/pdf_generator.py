@@ -311,7 +311,7 @@ class PDFReportGenerator:
 
             # Build content
             content = []
-            
+
             # Function to add page breaks between major sections
             def add_section_break():
                 """Add a page break for new sections."""

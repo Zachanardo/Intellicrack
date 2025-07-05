@@ -50,20 +50,21 @@ __license__ = "GPL-3.0"
 
 # Initialize GPU acceleration automatically
 try:
-    from .utils.gpu_autoloader import gpu_autoloader, get_device, get_gpu_info
-    
-    # Setup GPU on import (silent)
+    from .utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
+
+    # Setup GPU on import (silent initialization for optimal performance)
     gpu_autoloader.setup()
-    
+
     # Log GPU status only if logger is configured
     gpu_info = get_gpu_info()
     if gpu_info['gpu_available']:
         import sys
+        # Check if we're in interactive mode (REPL) vs script mode
         if not hasattr(sys, 'ps1'):  # Not in interactive mode
-            # Only log, don't print
+            # Only log, don't print to avoid cluttering output in production
             pass
 except Exception:
-    # Silently continue without GPU
+    # Silently continue without GPU - application will fall back to CPU
     pass
 
 # Setup logging after imports
@@ -72,23 +73,23 @@ logger = logging.getLogger(__name__)
 # Initialize and validate configuration
 _config = get_config()
 if _config:
-    # Validate configuration on module load
+    # Validate configuration on module load to ensure all required settings are present
     if not _config.validate_config():
         logger.warning("Configuration validation failed - using defaults")
-    
-    # Check if repositories are enabled
+
+    # Check if repositories are enabled for model management
     if _config.is_repository_enabled('model_repository'):
         logger.info("Model repository is enabled")
-    
-    # Get and validate Ghidra path
+
+    # Get and validate Ghidra path for reverse engineering integration
     ghidra_path = _config.get_ghidra_path()
     if ghidra_path and ghidra_path != "ghidra":
         logger.info(f"Ghidra path configured: {ghidra_path}")
-    
+
     # Update configuration with runtime defaults if needed
     runtime_config = {
-        'initialized': True,
-        'version': __version__
+        'initialized': True,  # Mark configuration as initialized
+        'version': __version__  # Store current version for compatibility checks
     }
     _config.update(runtime_config)
 
@@ -134,21 +135,81 @@ except ImportError as e:
 
 
 def get_version():
-    """Return the current version of Intellicrack."""
+    """
+    Return the current version of Intellicrack.
+    
+    This function provides a programmatic way to access the version string
+    of the Intellicrack package, useful for version checking, logging,
+    and compatibility verification.
+    
+    Returns:
+        str: The version string in semantic versioning format (e.g., "1.0.0")
+    
+    Example:
+        >>> from intellicrack import get_version
+        >>> version = get_version()
+        >>> print(f"Running Intellicrack v{version}")
+        Running Intellicrack v1.0.0
+    """
     return __version__
 
 # Package-level convenience functions
 
 
 def create_app():
-    """Create and return a new Intellicrack application instance."""
+    """
+    Create and return a new Intellicrack application instance.
+    
+    This factory function creates a fresh instance of the IntellicrackApp,
+    which is the main GUI application class. It ensures that all required
+    dependencies are available before attempting to create the instance.
+    
+    Returns:
+        IntellicrackApp: A new instance of the main application
+    
+    Raises:
+        ImportError: If IntellicrackApp is not available due to missing
+                    dependencies (typically PyQt5 or other UI components)
+    
+    Example:
+        >>> from intellicrack import create_app
+        >>> app = create_app()
+        >>> app.show()
+    
+    Note:
+        This function checks if the UI module was successfully imported
+        before attempting to create the application instance.
+    """
     if IntellicrackApp is None:
         raise ImportError("IntellicrackApp not available. Check dependencies.")
     return IntellicrackApp()
 
 
 def run_app():
-    """Run the Intellicrack application."""
+    """
+    Run the Intellicrack application.
+    
+    This convenience function provides a simple way to launch the complete
+    Intellicrack application, handling all initialization, GPU detection,
+    and UI setup automatically.
+    
+    Returns:
+        int: Exit code from the application (0 for success, non-zero for errors)
+    
+    Raises:
+        ImportError: If the main function is not available due to missing
+                    dependencies or import failures
+    
+    Example:
+        >>> from intellicrack import run_app
+        >>> exit_code = run_app()
+        >>> sys.exit(exit_code)
+    
+    Note:
+        This function wraps the main() function from intellicrack.main,
+        which handles all application initialization including GPU detection,
+        configuration loading, and UI setup.
+    """
     if main is None:
         raise ImportError("Main function not available. Check dependencies.")
     return main()

@@ -283,7 +283,7 @@ class EntropyGraphWidget(QWidget):
         bars = self.ax.bar(x_pos, entropies, color=colors, alpha=0.8)
 
         # Add value labels on bars
-        for i, (bar, entropy) in enumerate(zip(bars, entropies)):
+        for i, (bar, entropy) in enumerate(zip(bars, entropies, strict=False)):
             height = bar.get_height()
             self.ax.text(
                 bar.get_x() + bar.get_width()/2.,

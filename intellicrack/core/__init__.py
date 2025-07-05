@@ -36,6 +36,7 @@ try:
     )
     EXPLOITATION_MODULES_AVAILABLE = True
 except ImportError as e:
+    # Exploitation modules are optional - not critical for basic functionality
     logging.getLogger(__name__).warning(f"Exploitation modules not available: {e}")
     exploitation = None
     vulnerability_research = None
@@ -48,7 +49,27 @@ FRIDA_PRESETS = None
 FridaBypassWizard = None
 
 def get_frida_manager():
-    """Get FridaManager with lazy import to avoid cycles."""
+    """
+    Get FridaManager with lazy import to avoid circular dependencies.
+    
+    This function implements lazy loading for the FridaManager class to prevent
+    circular import issues that can occur during module initialization. The
+    FridaManager is only imported when first requested, and then cached for
+    subsequent calls.
+    
+    Returns:
+        FridaManager: The FridaManager class if available, None if import fails
+        
+    Side Effects:
+        - Sets global FridaManager variable on first successful import
+        - Sets FRIDA_MODULES_AVAILABLE to True on successful import
+        - Logs warning if import fails
+        
+    Example:
+        >>> FridaManager = get_frida_manager()
+        >>> if FridaManager:
+        ...     manager = FridaManager()
+    """
     global FridaManager, FRIDA_MODULES_AVAILABLE
     if FridaManager is None:
         try:
@@ -60,7 +81,25 @@ def get_frida_manager():
     return FridaManager
 
 def get_frida_presets():
-    """Get FRIDA_PRESETS with lazy import."""
+    """
+    Get FRIDA_PRESETS with lazy import to avoid circular dependencies.
+    
+    This function implements lazy loading for the FRIDA_PRESETS dictionary
+    to prevent circular import issues. The presets contain pre-configured
+    bypass scripts for common protection schemes.
+    
+    Returns:
+        dict: Dictionary of Frida presets if available, None if import fails
+        
+    Side Effects:
+        - Sets global FRIDA_PRESETS variable on first successful import
+        - Logs error if import fails
+        
+    Example:
+        >>> presets = get_frida_presets()
+        >>> if presets:
+        ...     anti_debug_script = presets.get('anti_debug')
+    """
     global FRIDA_PRESETS
     if FRIDA_PRESETS is None:
         try:
@@ -72,7 +111,26 @@ def get_frida_presets():
     return FRIDA_PRESETS
 
 def get_frida_bypass_wizard():
-    """Get FridaBypassWizard with lazy import."""
+    """
+    Get FridaBypassWizard with lazy import to avoid circular dependencies.
+    
+    This function implements lazy loading for the FridaBypassWizard class
+    which provides an interactive wizard for generating protection bypass
+    scripts based on detected protection schemes.
+    
+    Returns:
+        FridaBypassWizard: The wizard class if available, None if import fails
+        
+    Side Effects:
+        - Sets global FridaBypassWizard variable on first successful import
+        - Logs error if import fails
+        
+    Example:
+        >>> Wizard = get_frida_bypass_wizard()
+        >>> if Wizard:
+        ...     wizard = Wizard()
+        ...     wizard.generate_bypass_script(protections)
+    """
     global FridaBypassWizard
     if FridaBypassWizard is None:
         try:

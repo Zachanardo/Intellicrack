@@ -65,27 +65,27 @@ def configure_table_selection(table, behavior=None, mode=None):
         behavior = QAbstractItemView.SelectRows
     if mode is None:
         mode = QAbstractItemView.SingleSelection
-    
+
     table.setSelectionBehavior(behavior)
     table.setSelectionMode(mode)
-    
+
     # Additional QAbstractItemView configurations
     table.setDragDropMode(QAbstractItemView.NoDragDrop)
     table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    
+
     return table
 
 def create_enhanced_item_view(parent=None):
     """Create an enhanced item view with custom behavior"""
     from PyQt5.QtWidgets import QListView
-    
+
     view = QListView(parent)
     # Use QAbstractItemView methods
     view.setAlternatingRowColors(True)
     view.setSelectionMode(QAbstractItemView.ExtendedSelection)
     view.setDragDropMode(QAbstractItemView.InternalMove)
     view.setEditTriggers(QAbstractItemView.DoubleClicked | QAbstractItemView.EditKeyPressed)
-    
+
     return view
 
 
@@ -251,7 +251,7 @@ class ModelManagerDialog(QDialog):
         header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        
+
         # Create additional custom header for advanced features
         self.custom_header = create_custom_header_view(header.orientation(), self.models_table)
 
@@ -290,7 +290,7 @@ class ModelManagerDialog(QDialog):
         header = self.recommended_table.horizontalHeader()
         header.setStretchLastSection(True)
         header.setSectionResizeMode(1, QHeaderView.Stretch)
-        
+
         # Configure table selection behavior
         configure_table_selection(self.recommended_table)
 
@@ -660,31 +660,31 @@ Server URL: {gguf_manager.get_server_url()}"""
             'anthropic.com',
             'openai.com'
         ]
-        
+
         try:
             from urllib.parse import urlparse
             parsed = urlparse(url)
-            
+
             # Check if URL is using HTTPS
             if parsed.scheme != 'https':
-                QMessageBox.warning(self, "Security Warning", 
+                QMessageBox.warning(self, "Security Warning",
                     "Only HTTPS URLs are allowed for security reasons.")
                 return
-            
+
             # Check if domain is in allowed list
             domain_allowed = False
             for allowed_domain in allowed_domains:
-                if parsed.hostname and (parsed.hostname == allowed_domain or 
+                if parsed.hostname and (parsed.hostname == allowed_domain or
                                       parsed.hostname.endswith('.' + allowed_domain)):
                     domain_allowed = True
                     break
-            
+
             if not domain_allowed:
-                QMessageBox.warning(self, "Security Warning", 
+                QMessageBox.warning(self, "Security Warning",
                     f"Domain {parsed.hostname} is not in the allowed list.\n"
                     f"Allowed domains: {', '.join(allowed_domains)}")
                 return
-                
+
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Invalid URL: {e}")
             return

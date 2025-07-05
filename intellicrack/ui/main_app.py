@@ -43,14 +43,15 @@ import webbrowser
 import xml.etree.ElementTree as ET
 from functools import partial
 
+# Import AI file tools for directory analysis
+from ..ai.ai_file_tools import get_ai_file_tools
+
 # Import common patterns from centralized module
 from ..utils.core.import_patterns import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs, ELFFile, pefile
 
 # Import resource helper
 from ..utils.resource_helper import get_resource_path
 
-# Import AI file tools for directory analysis
-from ..ai.ai_file_tools import get_ai_file_tools
 
 def log_message(message: str) -> str:
     """Helper function for log message formatting"""
@@ -280,8 +281,11 @@ try:
     from .dialogs.ai_coding_assistant_dialog import AICodingAssistantDialog
     from .dialogs.code_modification_dialog import CodeModificationDialog
     from .dialogs.distributed_config_dialog import DistributedProcessingConfigDialog
+    from .dialogs.model_finetuning_dialog import (
+        ModelFinetuningDialog as ComprehensiveModelFinetuningDialog,
+    )
+    from .dialogs.model_finetuning_dialog import TrainingStatus
     from .dialogs.model_manager_dialog import ModelManagerDialog
-    from .dialogs.model_finetuning_dialog import ModelFinetuningDialog as ComprehensiveModelFinetuningDialog, TrainingStatus
     from .dialogs.splash_screen import SplashScreen
     from .emulator_ui_enhancements import (
         EmulatorRequiredDecorator,
@@ -308,10 +312,10 @@ except ImportError as e:
 # Import all the extracted components
 try:
     from intellicrack.ai.ai_tools import (
-        retrieve_few_shot_examples,
         analyze_with_ai,
+        explain_code,
         get_ai_suggestions,
-        explain_code
+        retrieve_few_shot_examples,
     )
     from intellicrack.ai.llm_backends import LLMMessage, get_llm_manager
     from intellicrack.ai.model_manager_module import ModelManager
@@ -1733,7 +1737,7 @@ except ImportError as e:
                     results.append("String extraction complete")
 
             results.append("Analysis complete")
-            
+
             # Add AI-powered analysis if available
             try:
                 from ..ai.ai_tools import analyze_with_ai
@@ -1929,11 +1933,11 @@ except ImportError as e:
                 "has_hardware_binding": len(results["hardware_checks"]) > 0,
                 "protection_level": "high" if total_indicators > 10 else "medium" if total_indicators > 5 else "low"
             }
-            
+
             # Add AI-powered analysis and suggestions
             try:
                 from ..ai.ai_tools import analyze_with_ai, get_ai_suggestions
-                
+
                 # Get AI analysis of the binary
                 ai_analysis = analyze_with_ai(binary_path, analysis_type="binary")
                 if ai_analysis and not ai_analysis.get("error"):
@@ -1942,12 +1946,12 @@ except ImportError as e:
                         "security_issues": ai_analysis.get("security_issues", []),
                         "recommendations": ai_analysis.get("recommendations", [])
                     }
-                
+
                 # Get targeted suggestions for license analysis
                 context = "license protection analysis with " + results["summary"]["protection_level"] + " protection level"
                 suggestions = get_ai_suggestions(context, domain="reverse_engineering")
                 results["ai_suggestions"] = suggestions[:5]
-                
+
             except (ImportError, AttributeError, ValueError, RuntimeError) as e:
                 logger.debug("AI analysis not available for license analysis: %s", e)
 
@@ -5113,7 +5117,7 @@ def _check_intercepted_traffic(proxy_server):
                 pass
 
             try:
-                from ..utils.gpu_autoloader import gpu_autoloader, get_gpu_info
+                from ..utils.gpu_autoloader import get_gpu_info, gpu_autoloader
                 gpu_info = get_gpu_info()
                 if gpu_info['available']:
                     gpu_frameworks['pytorch_cuda'] = True  # Keep for compatibility
@@ -5171,7 +5175,7 @@ def _check_intercepted_traffic(proxy_server):
 
             elif gpu_frameworks.get('unified_gpu') or gpu_frameworks['pytorch_cuda']:
                 try:
-                    from ..utils.gpu_autoloader import gpu_autoloader, get_gpu_info
+                    from ..utils.gpu_autoloader import get_gpu_info, gpu_autoloader
                     gpu_info = get_gpu_info()
                     if gpu_info['available']:
                         # Create device info from unified system
@@ -5183,11 +5187,11 @@ def _check_intercepted_traffic(proxy_server):
                             'backend': gpu_info['info'].get('backend', 'Unknown'),
                             'status': 'available'
                         }
-                        
+
                         # Add compute capability for CUDA devices
                         if gpu_info['type'] == 'nvidia_cuda':
                             device_info['compute_capability'] = gpu_info['info'].get('compute_capability', 'Unknown')
-                        
+
                         detected_devices.append(device_info)
                 except ImportError:
                     # Fallback to old method
@@ -7166,7 +7170,7 @@ def _check_intercepted_traffic(proxy_server):
                 if hasattr(app, 'update_analysis_results'):
                     app.update_analysis_results.emit("\n=== Frida Script Execution ===\n")
                     app.update_analysis_results.emit(f"Target: {os.path.basename(binary_path)}\n")
-                    
+
                     # Display stdout/stderr if available
                     if 'stdout' in results:
                         app.update_analysis_results.emit("\nExecution Output:\n")
@@ -7177,11 +7181,11 @@ def _check_intercepted_traffic(proxy_server):
 
                 if hasattr(app, 'update_output'):
                     app.update_output.emit(log_message("[Frida Script] Execution complete"))
-                    
+
             elif results.get('cancelled'):
                 if hasattr(app, 'update_output'):
                     app.update_output.emit(log_message("[Frida Script] Execution cancelled by user"))
-                    
+
             elif results.get('qemu_failed'):
                 if hasattr(app, 'update_output'):
                     app.update_output.emit(log_message("[Frida Script] QEMU test failed"))
@@ -7949,7 +7953,7 @@ except ImportError as e:
             if not hasattr(app, 'script_execution_manager'):
                 from ..core.execution import ScriptExecutionManager
                 app.script_execution_manager = ScriptExecutionManager(app)
-            
+
             if hasattr(app, 'update_output'):
                 app.update_output.emit(log_message("[Ghidra Plugin] Loading plugin..."))
 
@@ -7975,12 +7979,12 @@ except ImportError as e:
             # Read plugin content
             with open(plugin_path, 'r', encoding='utf-8') as f:
                 plugin_content = f.read()
-            
+
             # Get target binary (if available)
             target_binary = kwargs.get('target_binary', '')
             if not target_binary and hasattr(app, 'binary_path'):
                 target_binary = app.binary_path
-            
+
             # Execute through ScriptExecutionManager for QEMU testing option
             result = app.script_execution_manager.execute_script(
                 script_type='ghidra',
@@ -7993,27 +7997,27 @@ except ImportError as e:
                     **kwargs
                 }
             )
-            
+
             # Update UI with result
             if result.get('success') and hasattr(app, 'update_analysis_results'):
                 app.update_analysis_results.emit("\n=== Ghidra Script Execution ===\n")
                 app.update_analysis_results.emit(f"Script: {plugin_name}\n")
                 app.update_analysis_results.emit(f"Type: {'Python' if plugin_ext == '.py' else 'Java'}\n")
-                
+
                 if 'output' in result:
                     app.update_analysis_results.emit("\nExecution Output:\n")
                     for line in result.get('output', []):
                         app.update_analysis_results.emit(f"{line}\n")
-                
+
                 if 'qemu_tested' in result and result['qemu_tested']:
                     app.update_analysis_results.emit("\n[QEMU Test Completed Successfully]\n")
-                    
+
             if hasattr(app, 'update_output'):
                 if result.get('success'):
                     app.update_output.emit(log_message("[Ghidra Plugin] Script executed successfully"))
                 else:
                     app.update_output.emit(log_message(f"[Ghidra Plugin] Execution failed: {result.get('error', 'Unknown error')}"))
-            
+
             return result
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
@@ -8697,17 +8701,17 @@ def load_ai_model(model_path):
                 from ..utils.gpu_autoloader import get_device, get_gpu_info
                 gpu_info = get_gpu_info()
                 device_str = gpu_info.get('device', 'cpu')
-                
+
                 import torch
                 # Load model to the appropriate device
                 model = torch.load(model_path, map_location=device_str)
                 print(f"Loaded PyTorch model from {model_path} to device: {device_str}")
-                
+
                 # Move to device if needed
                 device = get_device()
                 if device and hasattr(model, 'to'):
                     model = model.to(device)
-                    
+
                 return model
             except ImportError as e:
                 # Fallback to CPU loading
@@ -9087,7 +9091,7 @@ class ModelFinetuningDialog(QDialog):
                 "patience": self.patience_spin.value(),
                 "status": TrainingStatus.PREPARING.value
             }
-            
+
             # In a production implementation, this would start actual training
             # For now, show the configuration that would be used
             config_str = "\n".join([f"{key}: {value}" for key, value in config_info.items()])
@@ -9817,7 +9821,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.dynamic_analyzer = None
         self.ml_predictor = None
         self.autonomous_agent = None
-        
+
         # Initialize AI components
         try:
             from ..ai.autonomous_agent import AutonomousAgent
@@ -10499,11 +10503,11 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         save_session_btn = QPushButton("Save AI Session")
         save_session_btn.clicked.connect(self.save_ai_session)
         save_session_btn.setToolTip("Save current AI conversation history and analysis data")
-        
+
         reset_agent_btn = QPushButton("Reset AI Agent")
         reset_agent_btn.clicked.connect(self.reset_ai_agent)
         reset_agent_btn.setToolTip("Reset AI agent for a new analysis task")
-        
+
         run_vuln_analysis_btn = QPushButton("Run AI Vulnerability Analysis")
         run_vuln_analysis_btn.clicked.connect(lambda: self.execute_autonomous_task('vulnerability_analysis'))
         run_vuln_analysis_btn.setToolTip("Use AI to analyze vulnerabilities in the binary")
@@ -13987,23 +13991,23 @@ Please provide a helpful, technical response that assists with the binary analys
 
             # Display the response
             self.show_assistant_response(response)
-            
+
             # Track conversation history
             if not hasattr(self, 'ai_conversation_history'):
                 self.ai_conversation_history = []
-            
+
             self.ai_conversation_history.append({
                 'role': 'user',
                 'content': user_message,
                 'timestamp': datetime.datetime.now().isoformat()
             })
-            
+
             self.ai_conversation_history.append({
                 'role': 'assistant',
                 'content': response,
                 'timestamp': datetime.datetime.now().isoformat()
             })
-            
+
             # Also update autonomous agent's conversation history if available
             if self.autonomous_agent:
                 try:
@@ -15657,7 +15661,7 @@ def register():
             if not hasattr(self, 'script_execution_manager'):
                 from ..core.execution import ScriptExecutionManager
                 self.script_execution_manager = ScriptExecutionManager(self)
-            
+
             # First load plugins to get available plugins
             from ..plugins.plugin_system import load_plugins
             available_plugins = load_plugins()
@@ -15667,23 +15671,23 @@ def register():
             for plugin_info in available_plugins.get("custom", []):
                 if plugin_info["name"] == plugin_name:
                     plugin_found = True
-                    
+
                     # Read plugin content
                     plugin_path = plugin_info.get('path', '')
                     if not plugin_path:
                         self.update_output.emit(log_message(f"[Plugin] No path for plugin '{plugin_name}'"))
                         return
-                    
+
                     try:
                         with open(plugin_path, 'r', encoding='utf-8') as f:
                             plugin_content = f.read()
                     except Exception as e:
                         self.update_output.emit(log_message(f"[Plugin] Error reading plugin: {e}"))
                         return
-                    
+
                     # Get target binary if available
                     target_binary = getattr(self, 'binary_path', '') or ''
-                    
+
                     # Execute through ScriptExecutionManager
                     result = self.script_execution_manager.execute_script(
                         script_type='python',
@@ -15695,7 +15699,7 @@ def register():
                             'plugin_path': plugin_path
                         }
                     )
-                    
+
                     if result.get('success'):
                         self.update_output.emit(log_message(f"[Plugin] Successfully executed '{plugin_name}'"))
                     else:
@@ -15983,7 +15987,7 @@ def register():
         similarity_search_action = QAction("Similarity Search", self)
         similarity_search_action.triggered.connect(self.run_binary_similarity_search)
         analysis_menu.addAction(similarity_search_action)
-        
+
         # Add Directory Analysis action
         directory_analysis_action = QAction("Analyze Directory", self)
         directory_analysis_action.setToolTip("Analyze entire program directory structure")
@@ -15994,32 +15998,32 @@ def register():
 
         # AI Analysis submenu
         ai_analysis_menu = analysis_menu.addMenu("AI Analysis")
-        
+
         ai_vuln_action = QAction("AI Vulnerability Analysis", self)
         ai_vuln_action.setToolTip("Use AI to analyze vulnerabilities")
         ai_vuln_action.triggered.connect(lambda: self.execute_autonomous_task('vulnerability_analysis'))
         ai_analysis_menu.addAction(ai_vuln_action)
-        
+
         ai_script_gen_action = QAction("AI Script Generation", self)
         ai_script_gen_action.setToolTip("Generate exploitation scripts using AI")
-        ai_script_gen_action.triggered.connect(lambda: self.execute_autonomous_task('script_generation', 
+        ai_script_gen_action.triggered.connect(lambda: self.execute_autonomous_task('script_generation',
                                                                                    'Generate exploitation scripts for the loaded binary'))
         ai_analysis_menu.addAction(ai_script_gen_action)
-        
+
         ai_analysis_menu.addSeparator()
-        
+
         save_session_action = QAction("Save AI Session", self)
         save_session_action.setToolTip("Save AI conversation and analysis history")
         save_session_action.triggered.connect(self.save_ai_session)
         ai_analysis_menu.addAction(save_session_action)
-        
+
         reset_ai_action = QAction("Reset AI Agent", self)
         reset_ai_action.setToolTip("Reset AI agent for new analysis")
         reset_ai_action.triggered.connect(self.reset_ai_agent)
         ai_analysis_menu.addAction(reset_ai_action)
-        
+
         ai_analysis_menu.addSeparator()
-        
+
         ai_performance_action = QAction("AI Performance Statistics", self)
         ai_performance_action.setToolTip("View AI coordination layer performance statistics")
         ai_performance_action.triggered.connect(self.show_ai_performance_stats)
@@ -16294,7 +16298,7 @@ def register():
         analyze_action.setToolTip("Perform analysis on the selected program")
         analyze_action.triggered.connect(self.run_analysis)
         toolbar.addAction(analyze_action)
-        
+
         # Directory analysis action
         dir_analyze_action = QAction("Analyze Directory", self)
         dir_analyze_action.setToolTip("Analyze entire program directory structure")
@@ -16866,33 +16870,33 @@ def register():
             "© 2025 Intellicrack Team\n\n"
             "An advanced binary analysis and patching tool with AI capabilities."
         )
-    
+
     def show_preferences_dialog(self):
         """Show the preferences dialog."""
         try:
             from .dialogs.preferences_dialog import PreferencesDialog
-            
+
             dialog = PreferencesDialog(self)
             dialog.preferences_changed.connect(self.on_preferences_changed)
-            
+
             if dialog.exec_() == QDialog.Accepted:
                 self.update_output.emit(log_message("[Settings] Preferences updated"))
         except Exception as e:
             logger.error("Error showing preferences dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to open preferences: {str(e)}")
-    
+
     def on_preferences_changed(self):
         """Handle preferences changes."""
         # Reload any settings that affect the UI
         settings = QSettings("Intellicrack", "Preferences")
-        
+
         # Apply theme if changed
         theme = settings.value("general/theme", "Dark")
         if theme == "Dark" and hasattr(self, 'apply_dark_theme'):
             self.apply_dark_theme()
         elif theme == "Light" and hasattr(self, 'apply_light_theme'):
             self.apply_light_theme()
-        
+
         # Update any other UI elements based on preferences
         self.update_output.emit(log_message("[Settings] Preferences applied"))
 
@@ -17405,13 +17409,13 @@ def register():
             "",
             QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
         )
-        
+
         if not directory_path:
             self.update_output.emit(log_message("[Directory Analysis] Operation cancelled"))
             return
-        
+
         self.update_output.emit(log_message(f"[Directory Analysis] Starting analysis of: {directory_path}"))
-        
+
         try:
             # Look for main executable in the directory
             executables = []
@@ -17421,7 +17425,7 @@ def register():
                     # Check for executable files
                     if file.endswith(('.exe', '.dll')) or (os.name != 'nt' and os.access(file_path, os.X_OK)):
                         executables.append(file_path)
-            
+
             if not executables:
                 QMessageBox.warning(
                     self,
@@ -17430,7 +17434,7 @@ def register():
                     "Please select a directory containing the program executable."
                 )
                 return
-            
+
             # If multiple executables, let user choose
             main_executable = executables[0]
             if len(executables) > 1:
@@ -17446,25 +17450,25 @@ def register():
                     main_executable = next(exe for exe in executables if os.path.basename(exe) == item)
                 else:
                     return
-            
+
             # Initialize AI file tools
             ai_tools = get_ai_file_tools(self)
-            
+
             # Perform directory analysis
-            self.update_output.emit(log_message(f"[Directory Analysis] Analyzing directory structure..."))
+            self.update_output.emit(log_message("[Directory Analysis] Analyzing directory structure..."))
             analysis_results = ai_tools.analyze_program_directory(main_executable)
-            
+
             if analysis_results["status"] == "success":
                 # Format and display results
                 self._display_directory_analysis_results(analysis_results)
-                
+
                 # Add to dashboard activity
                 if hasattr(self, "dashboard_manager"):
                     self.dashboard_manager.add_activity(
-                        "analyze", 
+                        "analyze",
                         f"Directory analysis completed: {os.path.basename(directory_path)}"
                     )
-                
+
                 # Store results for later use
                 if not hasattr(self, "directory_analysis_results"):
                     self.directory_analysis_results = []
@@ -17473,33 +17477,33 @@ def register():
                     "directory": directory_path,
                     "results": analysis_results
                 })
-                
+
             else:
                 self.update_output.emit(log_message(f"[Directory Analysis] Error: {analysis_results.get('error', 'Unknown error')}"))
-                
+
         except Exception as e:
             self.update_output.emit(log_message(f"[Directory Analysis] Error: {str(e)}"))
             logger.error(f"Directory analysis error: {e}", exc_info=True)
-    
+
     def _display_directory_analysis_results(self, results):
         """Display the results of directory analysis in a formatted way."""
         self.update_output.emit(log_message("[Directory Analysis] === Analysis Results ==="))
         self.update_output.emit(log_message(f"[Directory Analysis] Program: {results['program_path']}"))
         self.update_output.emit(log_message(f"[Directory Analysis] Directory: {results['program_directory']}"))
-        
+
         # Display found license files
         if results.get('license_files_found'):
             self.update_output.emit(log_message(f"[Directory Analysis] Found {len(results['license_files_found'])} potential license-related files:"))
             for file_info in results['license_files_found']:
                 self.update_output.emit(log_message(f"  - {file_info['name']} ({file_info['type']})"))
-        
+
         # Display file contents summary if available
         if results.get('file_contents'):
             self.update_output.emit(log_message("[Directory Analysis] Analyzed file contents:"))
             for file_path, content_info in results['file_contents'].items():
                 if isinstance(content_info, dict) and 'preview' in content_info:
                     self.update_output.emit(log_message(f"  - {os.path.basename(file_path)}: {content_info.get('size', 'N/A')} bytes"))
-        
+
         # Display analysis summary
         if results.get('analysis_summary'):
             self.update_output.emit(log_message("[Directory Analysis] Summary:"))
@@ -17509,7 +17513,7 @@ def register():
                     self.update_output.emit(log_message(f"  - {key}: {value}"))
             else:
                 self.update_output.emit(log_message(f"  {summary}"))
-        
+
         self.update_output.emit(log_message("[Directory Analysis] === Analysis Complete ==="))
 
     def setup_dashboard_content(self):
@@ -19214,9 +19218,9 @@ def register():
             QMessageBox.warning(self, "Fine-Tuning Error",
                               f"Error opening model fine-tuning dialog: {e}")
 
-    
 
-    
+
+
 
     def _verify_model_thread(self, model_path):
         """Background thread for model verification."""
@@ -19406,7 +19410,7 @@ def register():
 
         suggestions_btn = QPushButton("💭 Get Suggestions")
         suggestions_btn.clicked.connect(self.get_ai_code_suggestions)
-        
+
         chat_controls.addWidget(send_btn)
         chat_controls.addWidget(clear_chat_btn)
         chat_controls.addWidget(suggestions_btn)
@@ -19555,25 +19559,25 @@ def register():
             if not code.strip():
                 self.ai_chat_display.append("[AI] No code to explain.")
                 return
-            
+
             # Use the explain_code function
             from ..ai.ai_tools import explain_code
             explanation = explain_code(code, detail_level="high")
-            
+
             # Display the explanation
             self.ai_chat_display.append(f"[AI Code Explanation]\n{explanation}\n")
-            
+
             # Also get AI suggestions for the code
             from ..ai.ai_tools import get_ai_suggestions
             context = "code analysis and reverse engineering"
             suggestions = get_ai_suggestions(context, domain="reverse_engineering")
-            
+
             if suggestions:
                 self.ai_chat_display.append("\n[AI Suggestions]")
                 for i, suggestion in enumerate(suggestions[:5], 1):
                     self.ai_chat_display.append(f"{i}. {suggestion}")
                 self.ai_chat_display.append("")
-            
+
         except (ImportError, AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
             self.logger.error("Error explaining code: %s", e)
             self.ai_chat_display.append(f"[AI] Error explaining code: {e}")
@@ -19585,10 +19589,10 @@ def register():
             if not code.strip():
                 self.ai_chat_display.append("[AI] No code to analyze.")
                 return
-            
+
             # Check if it's assembly code
             is_assembly = any(keyword in code.lower() for keyword in ['mov ', 'call ', 'jmp ', 'ret', 'push ', 'pop '])
-            
+
             # Use analyze_with_ai for structured analysis
             from ..ai.ai_tools import analyze_with_ai
             if is_assembly:
@@ -19599,7 +19603,7 @@ def register():
                 self.ai_chat_input.setPlainText(prompt)
                 self.send_ai_chat_message()
                 return
-            
+
             # Display structured analysis results
             if analysis_result and not analysis_result.get("error"):
                 self.ai_chat_display.append("[AI Assembly Analysis]")
@@ -19607,17 +19611,17 @@ def register():
                     self.ai_chat_display.append("\nPatterns Detected:")
                     for pattern in analysis_result["patterns"][:5]:
                         self.ai_chat_display.append(f"  • {pattern}")
-                
+
                 if analysis_result.get("vulnerabilities"):
                     self.ai_chat_display.append("\nPotential Vulnerabilities:")
                     for vuln in analysis_result["vulnerabilities"][:5]:
                         self.ai_chat_display.append(f"  ⚠️ {vuln}")
-                
+
                 if analysis_result.get("recommendations"):
                     self.ai_chat_display.append("\nRecommendations:")
                     for rec in analysis_result["recommendations"][:3]:
                         self.ai_chat_display.append(f"  → {rec}")
-                
+
                 confidence = analysis_result.get("confidence", 0.0)
                 self.ai_chat_display.append(f"\nConfidence: {confidence:.0%}\n")
 
@@ -19670,11 +19674,11 @@ def register():
         """Get AI suggestions for current code context."""
         try:
             from ..ai.ai_tools import get_ai_suggestions
-            
+
             # Build context from current code
             code = self.ai_code_editor.toPlainText()
             context = "reverse engineering"
-            
+
             if code.strip():
                 # Analyze code to determine context
                 code_lower = code.lower()
@@ -19686,19 +19690,19 @@ def register():
                     context = "protection and obfuscation"
                 elif any(word in code_lower for word in ['network', 'socket', 'http', 'connect']):
                     context = "network communication analysis"
-            
+
             # Get suggestions from AI
             suggestions = get_ai_suggestions(context, domain="reverse_engineering")
-            
+
             # Display suggestions
             self.ai_chat_display.append("\n[AI Suggestions for Current Context]")
             self.ai_chat_display.append(f"Context: {context}\n")
-            
+
             for i, suggestion in enumerate(suggestions, 1):
                 self.ai_chat_display.append(f"{i}. {suggestion}")
-            
+
             self.ai_chat_display.append("\nSelect a suggestion or ask your own question.\n")
-            
+
         except (ImportError, AttributeError, ValueError, RuntimeError) as e:
             self.logger.error("Error getting AI suggestions: %s", e)
             self.ai_chat_display.append(f"[AI] Error getting suggestions: {e}")
@@ -19715,12 +19719,12 @@ def register():
             if not code.strip():
                 self.ai_chat_display.append("[AI] No code available for script generation.")
                 return
-            
+
             # Try to use AutonomousAgent for script generation
             if self.autonomous_agent and self.binary_path:
                 # Build request for autonomous agent
                 request = f"Generate a script to analyze or bypass protections based on this code:\n\n{code}"
-                
+
                 result = self.execute_autonomous_task('script_generation', request)
                 if result and result.get('success') and 'scripts' in result:
                     # Display generated scripts in AI chat
@@ -19730,12 +19734,12 @@ def register():
                         self.ai_chat_display.append(script.code)
                         self.ai_chat_display.append("```\n")
                     return
-            
+
             # Fallback to original method if AutonomousAgent not available
             # Get few-shot examples to help with script generation
             from ..ai.ai_tools import retrieve_few_shot_examples
             examples = retrieve_few_shot_examples(num_examples=2)
-            
+
             # Analyze code to determine script type needed
             code_lower = code.lower()
             script_type = "Frida"
@@ -19743,7 +19747,7 @@ def register():
                 script_type = "Ghidra"
             elif any(word in code_lower for word in ['memory', 'hook', 'intercept', 'trace']):
                 script_type = "Frida"
-            
+
             # Build enhanced prompt with examples
             prompt = f"""Generate a {script_type} script based on this code analysis.
 
@@ -19762,7 +19766,7 @@ Focus on:
 2. Creating hooks or analysis points
 3. Implementing bypass or patching logic
 4. Providing clear comments explaining the approach"""
-            
+
             self.ai_chat_input.setPlainText(prompt)
             self.send_ai_chat_message()
 
@@ -20741,7 +20745,7 @@ Focus on:
                     self.update_analysis_results.emit(pe_invalid_msg + "\n")
                     self.update_status.emit("Not a valid PE executable")
                     return
-            
+
             # --- AI Vulnerability Analysis (if enabled and depth is high) ---
             if analysis_depth >= 80 and self.autonomous_agent:
                 self.update_output.emit(log_message("[Analysis] Running AI vulnerability analysis..."))
@@ -22387,36 +22391,36 @@ Focus on:
         if not self.autonomous_agent:
             self.update_output.emit(log_message("[Autonomous Task] AutonomousAgent not available"))
             return None
-            
+
         task_config = {
             'type': task_type,
             'target_binary': self.binary_path,
             'request': request
         }
-        
+
         self.update_output.emit(log_message(f"[Autonomous Task] Executing {task_type} task..."))
-        
+
         try:
             result = self.autonomous_agent.execute_autonomous_task(task_config)
-            
+
             if result.get('success'):
                 self.update_output.emit(log_message(f"[Autonomous Task] {task_type} completed successfully"))
-                
+
                 if task_type == 'script_generation' and 'scripts' in result:
                     for script in result['scripts']:
                         self.update_analysis_results.emit(f"\n--- Generated {script.script_type} Script ---\n")
                         self.update_analysis_results.emit(script.code)
-                        
+
                 elif task_type == 'vulnerability_analysis' and 'vulnerabilities' in result:
                     self.update_analysis_results.emit("\n=== Vulnerability Analysis Results ===\n")
                     for vuln in result['vulnerabilities']:
                         self.update_analysis_results.emit(f"- {vuln}\n")
-                        
+
             else:
                 self.update_output.emit(log_message(f"[Autonomous Task] Failed: {result.get('error', 'Unknown error')}"))
-                
+
             return result
-            
+
         except Exception as e:
             self.logger.error(f"Error executing autonomous task: {e}")
             self.update_output.emit(log_message(f"[Autonomous Task] Error: {str(e)}"))
@@ -22427,11 +22431,11 @@ Focus on:
         if not self.autonomous_agent:
             self.update_output.emit(log_message("[Session] AutonomousAgent not available"))
             return
-            
+
         try:
             session_file = self.autonomous_agent.save_session_data()
             self.update_output.emit(log_message(f"[Session] Session data saved to: {session_file}"))
-            
+
             # Also save UI conversation history
             if hasattr(self, 'ai_conversation_history') and self.ai_conversation_history:
                 import json
@@ -22443,7 +22447,7 @@ Focus on:
                         'timestamp': datetime.datetime.now().isoformat()
                     }, f, indent=2)
                 self.update_output.emit(log_message(f"[Session] UI history saved to: {ui_session_file}"))
-                
+
         except Exception as e:
             self.logger.error(f"Error saving AI session: {e}")
             self.update_output.emit(log_message(f"[Session] Error saving session: {str(e)}"))
@@ -22453,13 +22457,13 @@ Focus on:
         if not self.autonomous_agent:
             self.update_output.emit(log_message("[Reset] AutonomousAgent not available"))
             return
-            
+
         try:
             self.autonomous_agent.reset()
             self.ai_conversation_history = []
             self.update_output.emit(log_message("[Reset] AI agent and conversation history reset"))
             self.ai_chat_display.clear() if hasattr(self, 'ai_chat_display') else None
-            
+
         except Exception as e:
             self.logger.error(f"Error resetting AI agent: {e}")
             self.update_output.emit(log_message(f"[Reset] Error: {str(e)}"))
@@ -22469,8 +22473,8 @@ Focus on:
         try:
             if not hasattr(self, 'ai_coordinator') or not self.ai_coordinator:
                 QMessageBox.information(
-                    self, 
-                    "AI Coordination Layer", 
+                    self,
+                    "AI Coordination Layer",
                     "AI Coordination Layer is not available.\n\nThe AI coordination layer provides "
                     "intelligent routing between ML models and LLM backends for optimal analysis performance."
                 )
@@ -22478,92 +22482,92 @@ Focus on:
 
             if not hasattr(self.ai_coordinator, 'get_performance_stats'):
                 QMessageBox.warning(
-                    self, 
-                    "Performance Stats", 
+                    self,
+                    "Performance Stats",
                     "Performance statistics are not available in the current AI coordination layer."
                 )
                 return
 
             # Get performance statistics
             stats = self.ai_coordinator.get_performance_stats()
-            
+
             # Create dialog
             dialog = QDialog(self)
             dialog.setWindowTitle("AI Coordination Layer Performance Statistics")
             dialog.setMinimumWidth(500)
             dialog.setMinimumHeight(400)
-            
+
             layout = QVBoxLayout()
-            
+
             # Statistics content
             stats_text = QTextEdit()
             stats_text.setReadOnly(True)
             stats_text.setFont(QFont("Consolas", 10))
-            
+
             # Format statistics
             content = "AI Coordination Layer Performance Statistics\n"
             content += "=" * 50 + "\n\n"
-            
-            content += f"Analysis Calls:\n"
+
+            content += "Analysis Calls:\n"
             content += f"  • ML Analysis Calls: {stats.get('ml_calls', 0)}\n"
             content += f"  • LLM Analysis Calls: {stats.get('llm_calls', 0)}\n"
             content += f"  • Escalations: {stats.get('escalations', 0)}\n\n"
-            
-            content += f"Cache Performance:\n"
+
+            content += "Cache Performance:\n"
             content += f"  • Cache Hits: {stats.get('cache_hits', 0)}\n"
             content += f"  • Cache Size: {stats.get('cache_size', 0)} entries\n\n"
-            
-            content += f"Timing Statistics:\n"
+
+            content += "Timing Statistics:\n"
             content += f"  • Average ML Time: {stats.get('avg_ml_time', 0):.2f}s\n"
             content += f"  • Average LLM Time: {stats.get('avg_llm_time', 0):.2f}s\n\n"
-            
-            content += f"Component Status:\n"
+
+            content += "Component Status:\n"
             components = stats.get('components_available', {})
             content += f"  • Model Manager: {'Available' if components.get('model_manager', False) else 'Not Available'}\n\n"
-            
-            content += f"Cache Efficiency:\n"
+
+            content += "Cache Efficiency:\n"
             total_calls = stats.get('ml_calls', 0) + stats.get('llm_calls', 0)
             if total_calls > 0:
                 cache_rate = (stats.get('cache_hits', 0) / total_calls) * 100
                 content += f"  • Cache Hit Rate: {cache_rate:.1f}%\n"
             else:
-                content += f"  • Cache Hit Rate: No data available\n"
-            
+                content += "  • Cache Hit Rate: No data available\n"
+
             if stats.get('escalations', 0) > 0 and stats.get('ml_calls', 0) > 0:
                 escalation_rate = (stats.get('escalations', 0) / stats.get('ml_calls', 0)) * 100
                 content += f"  • Escalation Rate: {escalation_rate:.1f}%\n"
-            
+
             stats_text.setPlainText(content)
             layout.addWidget(stats_text)
-            
+
             # Buttons
             button_layout = QHBoxLayout()
-            
+
             refresh_btn = QPushButton("Refresh")
             refresh_btn.clicked.connect(lambda: self._refresh_performance_stats(stats_text))
             button_layout.addWidget(refresh_btn)
-            
+
             clear_cache_btn = QPushButton("Clear AI Cache")
             clear_cache_btn.clicked.connect(lambda: self._clear_ai_cache_from_stats(dialog))
             button_layout.addWidget(clear_cache_btn)
-            
+
             button_layout.addStretch()
-            
+
             close_btn = QPushButton("Close")
             close_btn.clicked.connect(dialog.accept)
             button_layout.addWidget(close_btn)
-            
+
             layout.addLayout(button_layout)
             dialog.setLayout(layout)
-            
+
             # Show dialog
             dialog.exec_()
-            
+
         except Exception as e:
             self.logger.error(f"Error showing AI performance stats: {e}")
             QMessageBox.critical(
-                self, 
-                "Error", 
+                self,
+                "Error",
                 f"Failed to retrieve AI performance statistics:\n{str(e)}"
             )
 
@@ -22572,26 +22576,26 @@ Focus on:
         try:
             if hasattr(self, 'ai_coordinator') and self.ai_coordinator:
                 stats = self.ai_coordinator.get_performance_stats()
-                
+
                 # Re-format and update content (same logic as above)
                 content = "AI Coordination Layer Performance Statistics\n"
                 content += "=" * 50 + "\n\n"
-                content += f"Analysis Calls:\n"
+                content += "Analysis Calls:\n"
                 content += f"  • ML Analysis Calls: {stats.get('ml_calls', 0)}\n"
                 content += f"  • LLM Analysis Calls: {stats.get('llm_calls', 0)}\n"
                 content += f"  • Escalations: {stats.get('escalations', 0)}\n\n"
-                content += f"Cache Performance:\n"
+                content += "Cache Performance:\n"
                 content += f"  • Cache Hits: {stats.get('cache_hits', 0)}\n"
                 content += f"  • Cache Size: {stats.get('cache_size', 0)} entries\n\n"
-                content += f"Timing Statistics:\n"
+                content += "Timing Statistics:\n"
                 content += f"  • Average ML Time: {stats.get('avg_ml_time', 0):.2f}s\n"
                 content += f"  • Average LLM Time: {stats.get('avg_llm_time', 0):.2f}s\n\n"
-                content += f"Component Status:\n"
+                content += "Component Status:\n"
                 components = stats.get('components_available', {})
                 content += f"  • Model Manager: {'Available' if components.get('model_manager', False) else 'Not Available'}\n\n"
-                
+
                 text_widget.setPlainText(content)
-                
+
         except Exception as e:
             self.logger.error(f"Error refreshing performance stats: {e}")
 
@@ -22606,11 +22610,11 @@ Focus on:
                     QMessageBox.Yes | QMessageBox.No,
                     QMessageBox.No
                 )
-                
+
                 if reply == QMessageBox.Yes:
                     self.ai_coordinator.clear_cache()
                     QMessageBox.information(parent_dialog, "Cache Cleared", "AI coordination cache has been cleared.")
-                    
+
         except Exception as e:
             self.logger.error(f"Error clearing AI cache: {e}")
             QMessageBox.critical(parent_dialog, "Error", f"Failed to clear AI cache: {str(e)}")
@@ -22618,11 +22622,11 @@ Focus on:
     def get_ai_conversation_history(self):
         """Get the AI conversation history from both UI and agent."""
         history = []
-        
+
         # Get UI conversation history
         if hasattr(self, 'ai_conversation_history'):
             history.extend(self.ai_conversation_history)
-            
+
         # Get agent conversation history
         if self.autonomous_agent:
             try:
@@ -22632,7 +22636,7 @@ Focus on:
                         history.append(entry)
             except Exception as e:
                 self.logger.error(f"Error getting agent conversation history: {e}")
-                
+
         return history
 
     def run_detect_packing(self):
@@ -26269,42 +26273,42 @@ ANALYSIS SUMMARY
             if hasattr(self, 'ai_coordinator') and self.ai_coordinator:
                 # Use comprehensive analysis from coordination layer
                 self.update_output.emit(log_message("[Static Vuln] Using AI coordination for comprehensive analysis..."))
-                
+
                 # Suggest analysis strategy
                 if hasattr(self.ai_coordinator, 'suggest_strategy'):
                     strategy = self.ai_coordinator.suggest_strategy(self.binary_path, "vulnerability_scan")
                     self.update_output.emit(log_message(f"[Strategy] Recommended strategy: {strategy}"))
-                
+
                 # Run comprehensive coordinated analysis
                 coordinated_result = comprehensive_analysis(self.binary_path)
-                
+
                 if coordinated_result and coordinated_result.success:
                     # Display comprehensive results
                     report = "Comprehensive AI-Coordinated Vulnerability Analysis:\n\n"
                     report += f"🎯 Overall Risk Score: {coordinated_result.confidence:.3f}\n"
                     report += f"📊 Analysis Sources: {coordinated_result.source}\n"
                     report += f"⚠️  Risk Assessment: {coordinated_result.analysis_data.get('risk_level', 'Unknown')}\n\n"
-                    
+
                     # Add detailed analysis data
                     if coordinated_result.analysis_data:
                         for key, value in coordinated_result.analysis_data.items():
                             if key != 'risk_level':
                                 report += f"{key.replace('_', ' ').title()}: {value}\n"
-                    
+
                     self.update_analysis_results.emit(report)
                     self.update_output.emit(log_message("[Static Vuln] Comprehensive analysis complete"))
-                    
+
                     # Display performance statistics
                     if hasattr(self.ai_coordinator, 'get_performance_stats'):
                         stats = self.ai_coordinator.get_performance_stats()
-                        perf_report = f"\nPerformance Statistics:\n"
+                        perf_report = "\nPerformance Statistics:\n"
                         perf_report += f"• ML Analysis Calls: {stats.get('ml_calls', 0)}\n"
                         perf_report += f"• LLM Analysis Calls: {stats.get('llm_calls', 0)}\n"
                         perf_report += f"• Cache Hits: {stats.get('cache_hits', 0)}\n"
                         perf_report += f"• Average ML Time: {stats.get('avg_ml_time', 0):.2f}s\n"
                         perf_report += f"• Cache Size: {stats.get('cache_size', 0)} entries\n"
                         self.update_analysis_results.emit(perf_report)
-                    
+
                     return
                 else:
                     self.update_output.emit(log_message("[Static Vuln] Comprehensive analysis failed, falling back to standard analysis..."))
@@ -26714,23 +26718,23 @@ To configure LLMs, set the appropriate environment variables and restart Intelli
 def launch():
     """Starts the application with an optional splash screen."""
     print("[LAUNCH] Starting launch function...")
-    
+
     # Set Qt attributes before creating QApplication
     try:
         print("[LAUNCH] Importing Qt modules...")
         from PyQt5.QtCore import Qt
         from PyQt5.QtWidgets import QApplication
         print("[LAUNCH] Qt modules imported successfully")
-        
+
         # Set attributes for better compatibility
         print("[LAUNCH] Setting Qt attributes...")
         QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, False)
         QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, False)
-        
+
         # Check GPU vendor for appropriate settings
         gpu_vendor = os.environ.get('INTELLICRACK_GPU_VENDOR', 'Unknown')
         gpu_type = os.environ.get('INTELLICRACK_GPU_TYPE', 'CPU')
-        
+
         if gpu_vendor == "Intel" or gpu_type.startswith('Intel'):
             print(f"[LAUNCH] Intel GPU detected ({gpu_type}) - using hardware acceleration")
             # Don't use software OpenGL for Intel Arc
@@ -26750,7 +26754,7 @@ def launch():
     except Exception as e:
         print(f"[LAUNCH] ERROR: Failed to set Qt attributes: {e}")
         logger.error(f"Failed to set Qt attributes: {e}")
-    
+
     # Check for existing QApplication instance first (like in monolithic version)
     print("[LAUNCH] Creating QApplication instance...")
     app_instance = QApplication.instance()
@@ -26803,7 +26807,7 @@ def launch():
     try:
         # logger.info("Creating IntellicrackApp instance...")
         print("[LAUNCH] About to create IntellicrackApp...")
-        
+
         # Try to catch any Qt-related crashes
         try:
             window = IntellicrackApp()
@@ -26813,17 +26817,17 @@ def launch():
             print(f"[LAUNCH] ERROR: Failed to create IntellicrackApp: {init_error}")
             logger.error(f"Failed to create IntellicrackApp: {init_error}")
             logger.error(traceback.format_exc())
-            
+
             # Try to close splash if it exists
             if splash:
                 try:
                     splash.close()
                 except:
                     pass
-            
+
             # Show a simple error dialog
             from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.critical(None, "Startup Error", 
+            QMessageBox.critical(None, "Startup Error",
                                f"Failed to initialize Intellicrack:\n{str(init_error)}\n\n"
                                "This might be a graphics driver compatibility issue.\n"
                                "Try updating your Intel Arc Graphics drivers.")
@@ -26871,12 +26875,12 @@ def launch():
         logger.info("Attempting to show window...")
         logger.info(f"Platform: {sys.platform}")
         logger.info(f"QT_QPA_PLATFORM: {os.environ.get('QT_QPA_PLATFORM', 'not set')}")
-        
+
         window.show()
-        
+
         # Force window to update
         app_instance.processEvents()
-        
+
         # Log window state after show()
         logger.info(f"After show() - Window visible: {window.isVisible()}")
         logger.info(f"After show() - Window minimized: {window.isMinimized()}")
@@ -26949,11 +26953,11 @@ def launch():
         logger.info(f"Active windows after start: {QApplication.topLevelWindows()}")
         logger.info(f"Main window visible: {window.isVisible()}")
         logger.info(f"Main window geometry: {window.geometry()}")
-        
+
         # Force repaint in case window is not updating
         window.update()
         window.repaint()
-        
+
         # Check if window is actually showing
         if not window.isVisible():
             logger.warning("Window is not visible after event loop start! Trying to show again...")

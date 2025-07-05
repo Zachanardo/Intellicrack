@@ -302,7 +302,7 @@ class CacheManagementWidget(QWidget):
         details.append(f"Total Size: {stats_data.get('total_size_bytes', 0) / 1024 / 1024:.2f} MB")
         details.append(f"Max Entries: {stats.get('max_entries', 0)}")
         details.append(f"Max Size: {stats.get('max_size_mb', 0):.1f} MB")
-        
+
         # Add AI coordination layer performance statistics if available
         try:
             from PyQt5.QtWidgets import QApplication
@@ -311,7 +311,7 @@ class CacheManagementWidget(QWidget):
                 if hasattr(widget, 'ai_coordinator') and widget.ai_coordinator:
                     main_window = widget
                     break
-            
+
             if main_window and hasattr(main_window.ai_coordinator, 'get_performance_stats'):
                 ai_stats = main_window.ai_coordinator.get_performance_stats()
                 details.append("")
@@ -323,7 +323,7 @@ class CacheManagementWidget(QWidget):
                 details.append(f"AI Cache Size: {ai_stats.get('cache_size', 0)} entries")
                 details.append(f"Average ML Time: {ai_stats.get('avg_ml_time', 0):.2f}s")
                 details.append(f"Average LLM Time: {ai_stats.get('avg_llm_time', 0):.2f}s")
-                details.append(f"Components Available:")
+                details.append("Components Available:")
                 components = ai_stats.get('components_available', {})
                 details.append(f"  - ML Predictor: {'Yes' if components.get('ml_predictor', False) else 'No'}")
                 details.append(f"  - Model Manager: {'Yes' if components.get('model_manager', False) else 'No'}")
@@ -401,7 +401,7 @@ class CacheManagementWidget(QWidget):
             try:
                 # Clear protection analysis cache
                 self.engine.clear_cache()
-                
+
                 # Also clear AI coordination layer cache if available
                 try:
                     from PyQt5.QtWidgets import QApplication
@@ -410,11 +410,11 @@ class CacheManagementWidget(QWidget):
                         if hasattr(widget, 'ai_coordinator') and widget.ai_coordinator:
                             main_window = widget
                             break
-                    
+
                     if main_window and hasattr(main_window.ai_coordinator, 'clear_cache'):
                         main_window.ai_coordinator.clear_cache()
                         logger.info("AI coordination cache cleared")
-                        
+
                 except Exception as coord_e:
                     logger.warning("Could not clear AI coordination cache: %s", coord_e)
 

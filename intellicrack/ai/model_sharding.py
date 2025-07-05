@@ -8,10 +8,9 @@ Licensed under GNU General Public License v3.0
 """
 
 import gc
-import json
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 from ..utils.logger import get_logger
 
@@ -21,17 +20,20 @@ logger = get_logger(__name__)
 try:
     import torch
     HAS_TORCH = True
-    
+
     # Import unified GPU system
     try:
         from ..utils.gpu_autoloader import (
-            gpu_autoloader, get_device, get_gpu_info,
-            to_device, optimize_for_gpu
+            get_device,
+            get_gpu_info,
+            gpu_autoloader,
+            optimize_for_gpu,
+            to_device,
         )
         GPU_AUTOLOADER_AVAILABLE = True
     except ImportError:
         GPU_AUTOLOADER_AVAILABLE = False
-        
+
 except ImportError:
     torch = None
     HAS_TORCH = False
@@ -88,7 +90,7 @@ class ModelShardingManager:
             ) if HAS_TORCH and torch.cuda.is_available() else 0
             self.gpu_type = 'cuda' if self.device_count > 0 else 'cpu'
             self.unified_device = None
-            
+
         self.device_properties = {}
         self.shard_configs = {}
 
@@ -552,7 +554,7 @@ class ModelShardingManager:
                     torch.xpu.set_device(i)
                 if hasattr(torch.xpu, 'empty_cache'):
                     torch.xpu.empty_cache()
-                    
+
         gc.collect()
         logger.info("Cleaned up memory on all devices")
 
@@ -688,7 +690,7 @@ class ModelShardingManager:
                 torch.cuda.synchronize()
             elif self.gpu_type == 'intel_xpu' and hasattr(torch.xpu, 'synchronize'):
                 torch.xpu.synchronize()
-                
+
             start_time = time.time()
 
             with torch.no_grad():
@@ -698,7 +700,7 @@ class ModelShardingManager:
                 torch.cuda.synchronize()
             elif self.gpu_type == 'intel_xpu' and hasattr(torch.xpu, 'synchronize'):
                 torch.xpu.synchronize()
-                
+
             forward_times.append((time.time() - start_time) * 1000)
 
         # Calculate memory usage

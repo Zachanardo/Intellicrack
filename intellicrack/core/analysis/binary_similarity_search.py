@@ -837,7 +837,7 @@ class BinarySimilaritySearch:
             dist2 = create_entropy_distribution(entropies2)
 
             # Calculate distribution similarity using cosine similarity
-            dot_product = sum(a * b for a, b in zip(dist1, dist2))
+            dot_product = sum(a * b for a, b in zip(dist1, dist2, strict=False))
             norm1 = sum(a * a for a in dist1) ** 0.5
             norm2 = sum(b * b for b in dist2) ** 0.5
 
@@ -911,7 +911,7 @@ class BinarySimilaritySearch:
             dist2.extend([0.0] * (max_len - len(dist2)))
 
             # Calculate similarity using mean squared error
-            mse = sum((a - b) ** 2 for a, b in zip(dist1, dist2)) / max_len
+            mse = sum((a - b) ** 2 for a, b in zip(dist1, dist2, strict=False)) / max_len
             return max(0.0, 1.0 - mse)
 
         except Exception as e:
@@ -940,7 +940,7 @@ class BinarySimilaritySearch:
             sig2 = create_hash_signature(features2)
 
             # Calculate signature similarity
-            matches = sum(1 for a, b in zip(sig1, sig2) if a == b)
+            matches = sum(1 for a, b in zip(sig1, sig2, strict=False) if a == b)
             return matches / len(sig1)
 
         except Exception as e:
@@ -1004,7 +1004,7 @@ class BinarySimilaritySearch:
             vec2 = create_feature_vector(features2)
 
             # Calculate cosine similarity
-            dot_product = sum(a * b for a, b in zip(vec1, vec2))
+            dot_product = sum(a * b for a, b in zip(vec1, vec2, strict=False))
             norm1 = sum(a * a for a in vec1) ** 0.5
             norm2 = sum(b * b for b in vec2) ** 0.5
 
@@ -1043,7 +1043,7 @@ class BinarySimilaritySearch:
                 return 0.0
 
             # Calculate Hamming distance
-            differences = sum(c1 != c2 for c1, c2 in zip(hash1, hash2))
+            differences = sum(c1 != c2 for c1, c2 in zip(hash1, hash2, strict=False))
             similarity = 1.0 - (differences / len(hash1))
 
             return max(0.0, similarity)

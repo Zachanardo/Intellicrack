@@ -175,7 +175,7 @@ class ICPScanResult:
             ICPScanResult with parsed detections
         """
         obj = cls(file_path=file_path)
-        
+
         if not die_text or not die_text.strip():
             # Create a basic file info with no detections
             file_info = ICPFileInfo(
@@ -191,7 +191,7 @@ class ICPScanResult:
 
         # First line is the file type (e.g., "PE64", "ELF64")
         filetype = lines[0].strip() if lines else "Binary"
-        
+
         # Create file info
         file_info = ICPFileInfo(
             filetype=filetype,
@@ -203,13 +203,13 @@ class ICPScanResult:
             line = line.strip()
             if not line:
                 continue
-                
+
             # Parse "Type: Name" format
             if ':' in line:
                 type_part, name_part = line.split(':', 1)
                 detection_type = type_part.strip()
                 detection_name = name_part.strip()
-                
+
                 # Create detection with parsed info
                 detection = ICPDetection(
                     name=detection_name,
@@ -219,7 +219,7 @@ class ICPScanResult:
                     string=line, # Store original line
                     confidence=1.0  # Default confidence
                 )
-                
+
                 file_info.detections.append(detection)
             else:
                 # Handle lines without colons (unusual case)
@@ -304,12 +304,12 @@ class ICPBackend:
 
         # Get scan flags
         scan_flags = self._get_die_scan_flags(scan_mode)
-        
+
         # Apply additional flags based on parameters
         if show_entropy:
             # Add entropy calculation flag if available
             scan_flags |= 0x0100  # DIE_SHOWERRORS flag can include entropy info
-        
+
         if not show_info:
             # If info is not requested, use a faster scan mode
             scan_flags &= ~0x0002  # Remove DIE_SHOWVERSION flag
@@ -341,7 +341,7 @@ class ICPBackend:
 
             # Convert results to our format
             scan_result = ICPScanResult.from_die_text(str(file_path), results)
-            
+
             # Add entropy information if requested
             if show_entropy and os.path.exists(file_path):
                 try:
@@ -354,14 +354,14 @@ class ICPBackend:
                             byte_counts = [0] * 256
                             for byte in data:
                                 byte_counts[byte] += 1
-                            
+
                             entropy = 0.0
                             data_len = len(data)
                             for count in byte_counts:
                                 if count > 0:
                                     probability = count / data_len
                                     entropy -= probability * math.log2(probability)
-                            
+
                             # Add entropy to scan result
                             if not hasattr(scan_result, 'metadata'):
                                 scan_result.metadata = {}
@@ -369,7 +369,7 @@ class ICPBackend:
                             scan_result.metadata['entropy_high'] = entropy > 7.5  # High entropy indicates encryption/compression
                 except Exception as e:
                     logger.debug(f"Could not calculate entropy: {e}")
-            
+
             # Add file info if requested
             if show_info and os.path.exists(file_path):
                 try:

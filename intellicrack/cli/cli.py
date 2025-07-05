@@ -1758,18 +1758,18 @@ def save_session(binary_path: str, output: Optional[str], include_ui: bool):
     """Save AI session data including conversation history"""
     try:
         from intellicrack.ai.autonomous_agent import AutonomousAgent
-        
+
         click.echo("💾 Saving AI session data...")
-        
+
         # Initialize agent
         agent = AutonomousAgent()
-        
+
         # Prepare session save options
         save_options = {
             'binary_path': binary_path,
             'include_ui_history': include_ui
         }
-        
+
         # Include UI conversation history if requested
         if include_ui:
             click.echo("📊 Including UI conversation history in session data...")
@@ -1786,7 +1786,7 @@ def save_session(binary_path: str, output: Optional[str], include_ui: bool):
                 click.echo("  UI module not available, skipping UI history")
             except Exception as e:
                 click.echo(f"  Warning: Could not retrieve UI history: {e}")
-        
+
         # Save session data with options
         if hasattr(agent, 'save_session_data_with_options'):
             session_file = agent.save_session_data_with_options(output, save_options)
@@ -1795,9 +1795,9 @@ def save_session(binary_path: str, output: Optional[str], include_ui: bool):
             session_file = agent.save_session_data(output)
             if include_ui:
                 click.echo("  Note: Agent doesn't support extended save options")
-        
+
         click.echo(f"✅ Session data saved to: {session_file}")
-        
+
         # Display what was included
         click.echo("\n📋 Session includes:")
         click.echo("  ✓ Agent conversation history")
@@ -1807,13 +1807,13 @@ def save_session(binary_path: str, output: Optional[str], include_ui: bool):
             click.echo("  ✓ UI conversation history")
         else:
             click.echo("  ✗ UI conversation history (use --include-ui to add)")
-        
+
         # Show session summary
         history = agent.get_conversation_history()
         click.echo(f"📊 Conversation entries: {len(history)}")
         click.echo(f"📄 Scripts generated: {len(agent.generated_scripts)}")
         click.echo(f"🧪 Tests run: {len(agent.test_results)}")
-        
+
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
         logger.error("Failed to save session: %s", e, exc_info=True)
         click.echo(f"❌ Error: {e}", err=True)
@@ -1826,24 +1826,24 @@ def reset(confirm: bool):
     """Reset AI agent state for new analysis"""
     try:
         from intellicrack.ai.autonomous_agent import AutonomousAgent
-        
+
         if not confirm:
             if not click.confirm("⚠️  Reset AI agent? This will clear all conversation history."):
                 click.echo("❌ Reset cancelled")
                 return
-        
+
         click.echo("🔄 Resetting AI agent...")
-        
+
         # Initialize and reset agent
         agent = AutonomousAgent()
         agent.reset()
-        
+
         click.echo("✅ AI agent reset successfully")
         click.echo("   • Conversation history cleared")
         click.echo("   • Generated scripts cleared")
         click.echo("   • Test results cleared")
         click.echo("   • Ready for new analysis")
-        
+
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
         logger.error("Failed to reset agent: %s", e, exc_info=True)
         click.echo(f"❌ Error: {e}", err=True)
@@ -1857,55 +1857,55 @@ def reset(confirm: bool):
 @click.option('--script', help='Script content for testing (script_testing only)')
 @click.option('--output', '-o', help='Output file for results')
 @click.option('--verbose', '-v', is_flag=True, help='Verbose output')
-def task(task_type: str, binary_path: str, request: Optional[str], script: Optional[str], 
+def task(task_type: str, binary_path: str, request: Optional[str], script: Optional[str],
          output: Optional[str], verbose: bool):
     """Execute specific autonomous AI task"""
     try:
         from intellicrack.ai.autonomous_agent import AutonomousAgent
-        
+
         click.echo(f"🤖 Executing {task_type} task...")
         click.echo(f"🎯 Target: {os.path.basename(binary_path)}")
-        
+
         # Initialize agent
         agent = AutonomousAgent()
-        
+
         # Build task config
         task_config = {
             'type': task_type,
             'target_binary': binary_path,
             'request': request or f"Perform {task_type} on {binary_path}"
         }
-        
+
         # Add script for testing tasks
         if task_type == 'script_testing' and script:
             task_config['script'] = script
-        
+
         # Execute task
         with click.progressbar(length=100, label='Processing') as bar:
             result = agent.execute_autonomous_task(task_config)
             bar.update(100)
-        
+
         # Handle results
         if result.get('success'):
-            click.echo(f"\n✅ Task completed successfully!")
-            
+            click.echo("\n✅ Task completed successfully!")
+
             if task_type == 'script_generation' and 'scripts' in result:
                 scripts = result['scripts']
                 click.echo(f"📄 Generated {len(scripts)} scripts")
                 for i, script_obj in enumerate(scripts):
                     click.echo(f"   Script {i+1}: {script_obj.script_type}")
-                    
+
             elif task_type == 'vulnerability_analysis' and 'vulnerabilities' in result:
                 vulns = result['vulnerabilities']
                 click.echo(f"🔍 Found {len(vulns)} vulnerabilities")
                 for vuln in vulns[:5]:  # Show first 5
                     click.echo(f"   • {vuln}")
-                    
+
             elif task_type == 'script_testing' and 'test_results' in result:
                 test_result = result['test_results']
                 click.echo(f"🧪 Test completed in {test_result.get('runtime_ms', 0)}ms")
                 click.echo(f"   Exit code: {test_result.get('exit_code', 'N/A')}")
-            
+
             # Save output if requested
             if output:
                 with open(output, 'w', encoding='utf-8') as f:
@@ -1914,12 +1914,12 @@ def task(task_type: str, binary_path: str, request: Optional[str], script: Optio
             elif verbose:
                 click.echo("\n📊 Full results:")
                 click.echo(json.dumps(result, indent=2, default=str))
-                
+
         else:
             error_msg = result.get('error', 'Unknown error')
             click.echo(f"❌ Task failed: {error_msg}", err=True)
             sys.exit(1)
-            
+
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
         logger.error("Task execution failed: %s", e, exc_info=True)
         click.echo(f"❌ Error: {e}", err=True)

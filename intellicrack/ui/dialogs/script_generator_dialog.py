@@ -1,8 +1,8 @@
 import os
 import time
 
-from intellicrack.logger import logger
 from intellicrack.ai.ai_tools import AIAssistant
+from intellicrack.logger import logger
 
 from ..common_imports import (
     QCheckBox,
@@ -132,17 +132,17 @@ class ScriptGeneratorWorker(QThread):
         # Try AI-powered generation first
         try:
             from ...ai.ai_script_generator import AIScriptGenerator
-            
+
             if not self.ai_generator:
                 self.ai_generator = AIScriptGenerator()
-            
+
             # Prepare protection info
             protection_info = {
                 'type': self.kwargs.get('protection_type', 'license'),
                 'methods': self.kwargs.get('methods', ['patch']),
                 'target_platform': 'frida' if self.kwargs.get('language') == 'javascript' else 'python'
             }
-            
+
             # Generate script using AI
             if self.kwargs.get('language') == 'javascript':
                 result = self.ai_generator.generate_frida_script(
@@ -155,14 +155,14 @@ class ScriptGeneratorWorker(QThread):
                     self.binary_path,
                     protection_info
                 )
-            
+
             self.script_generated.emit(result)
-            
+
         except Exception as e:
             self.logger.warning(f"AI script generation failed: {e}. Falling back to template-based generation.")
             # Fallback to template-based generation
             from ...utils.exploitation import generate_bypass_script
-            
+
             result = generate_bypass_script(
                 self.binary_path,
                 protection_type=self.kwargs.get('protection_type', 'license'),
@@ -477,7 +477,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
 
         self.test_btn = QPushButton("Test Script")
         self.test_btn.clicked.connect(self.test_script)
-        
+
         self.analyze_btn = QPushButton("Analyze Script")
         self.analyze_btn.clicked.connect(self.analyze_script)
 
@@ -681,18 +681,18 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             "• Effectiveness testing\n"
             "• Performance analysis"
         )
-    
+
     def analyze_script(self):
         """Analyze the generated script for vulnerabilities, patterns, and improvements."""
         script_content = self.script_display.toPlainText()
         if not script_content:
             QMessageBox.warning(self, "Warning", "No script to analyze. Generate a script first.")
             return
-        
+
         try:
             # Create AI tools instance
             ai_tools = AIAssistant()
-            
+
             # Determine language based on script type or content
             script_type = self.script_type_combo.currentText()
             # Check if bypass_language exists and use it, otherwise detect from content
@@ -701,29 +701,29 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             else:
                 # Auto-detect language from content
                 language = "auto"
-            
+
             # Update status
             self.status_label.setText("Analyzing script...")
-            
+
             # Perform analysis
             analysis_result = ai_tools.analyze_code(script_content, language)
-            
+
             # Format and display results
             if analysis_result.get("status") == "success":
                 formatted_analysis = self._format_analysis_results(analysis_result)
-                
+
                 # Create a new tab for analysis results
                 analysis_display = QTextEdit()
                 analysis_display.setFont(QFont("Consolas", 10))
                 analysis_display.setReadOnly(True)
                 analysis_display.setPlainText(formatted_analysis)
-                
+
                 # Add the analysis tab
                 self.script_tabs.addTab(analysis_display, "Analysis Results")
                 self.script_tabs.setCurrentWidget(analysis_display)
-                
+
                 self.status_label.setText("Script analysis completed")
-                
+
                 # Show warning if security issues found
                 if analysis_result.get("security_issues"):
                     QMessageBox.warning(
@@ -735,23 +735,23 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
                 error_msg = analysis_result.get("error", "Unknown error occurred")
                 QMessageBox.critical(self, "Analysis Error", f"Script analysis failed: {error_msg}")
                 self.status_label.setText("Analysis failed")
-                
+
         except Exception as e:
             logger.error(f"Script analysis error: {e}")
             QMessageBox.critical(self, "Error", f"Failed to analyze script: {str(e)}")
             self.status_label.setText("Error occurred")
-    
+
     def _format_analysis_results(self, analysis_result):
         """Format code analysis results for display."""
         lines = ["Script Analysis Results", "=" * 50, ""]
-        
+
         # Basic info
         lines.append(f"Language: {analysis_result.get('language', 'Unknown')}")
         lines.append(f"Lines of Code: {analysis_result.get('lines_of_code', 0)}")
         lines.append(f"Complexity: {analysis_result.get('complexity', 'Unknown')}")
         lines.append(f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}")
         lines.append("")
-        
+
         # Insights
         insights = analysis_result.get('insights', [])
         if insights:
@@ -759,7 +759,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             for insight in insights:
                 lines.append(f"  • {insight}")
             lines.append("")
-        
+
         # Security Issues
         security_issues = analysis_result.get('security_issues', [])
         if security_issues:
@@ -767,7 +767,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             for issue in security_issues:
                 lines.append(f"  ⚠️  {issue}")
             lines.append("")
-        
+
         # Suggestions
         suggestions = analysis_result.get('suggestions', [])
         if suggestions:
@@ -775,7 +775,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             for suggestion in suggestions:
                 lines.append(f"  • {suggestion}")
             lines.append("")
-        
+
         # Patterns
         patterns = analysis_result.get('patterns', [])
         if patterns:
@@ -783,12 +783,12 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             for pattern in patterns:
                 lines.append(f"  • {pattern}")
             lines.append("")
-        
+
         # Timestamp
         timestamp = analysis_result.get('analysis_timestamp', '')
         if timestamp:
             lines.append(f"\nAnalysis performed at: {timestamp}")
-        
+
         return "\n".join(lines)
 
     def on_error(self, error_msg):

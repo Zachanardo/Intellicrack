@@ -31,8 +31,8 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 from ..utils.secrets_manager import get_secret
-from .llm_types import LoadingState, LoadingProgress, ProgressCallback
-from .background_loader import get_background_loader, QueuedProgressCallback, LoadingTask
+from .background_loader import LoadingTask, QueuedProgressCallback, get_background_loader
+from .llm_types import LoadingState, ProgressCallback
 
 logger = logging.getLogger(__name__)
 
@@ -44,14 +44,14 @@ HAS_NUMPY = False
 try:
     import torch
     HAS_TORCH = True
-    
+
     # Import unified GPU system
     try:
-        from ..utils.gpu_autoloader import get_device, get_gpu_info, to_device, optimize_for_gpu
+        from ..utils.gpu_autoloader import get_device, get_gpu_info, optimize_for_gpu, to_device
         GPU_AUTOLOADER_AVAILABLE = True
     except ImportError:
         GPU_AUTOLOADER_AVAILABLE = False
-        
+
 except ImportError as e:
     logger.error("Import error in llm_backends: %s", e)
     torch = None
@@ -770,7 +770,7 @@ class PyTorchLLMBackend(LLMBackend):
                     logger.info("Using CPU for PyTorch model")
             else:
                 logger.info(f"Using {device_str} device for PyTorch model")
-            
+
             self.device = torch.device(device_str)
 
             # Check for quantization settings
@@ -1619,7 +1619,7 @@ class HuggingFaceLocalBackend(LLMBackend):
                     from transformers import AutoConfig
                     config = AutoConfig.from_pretrained(self.config.model_path)
                     empty_model = AutoModelForCausalLM.from_config(config)
-                
+
                 # Load model with checkpoint sharding
                 self.model = load_checkpoint_and_dispatch(
                     empty_model,
@@ -2192,7 +2192,7 @@ Please analyze this script and return validation results in JSON format."""
             # Shutdown background loader if enabled
             if self.background_loader:
                 self.background_loader.shutdown()
-                
+
             for _backend in self.backends.values():
                 try:
                     _backend.shutdown()
@@ -2204,14 +2204,14 @@ Please analyze this script and return validation results in JSON format."""
             self.active_backend = None
 
             logger.info("LLM Manager shutdown complete")
-    
+
     # Background loading methods
     def add_progress_callback(self, callback: ProgressCallback):
         """Add a progress callback for model loading."""
         if self.background_loader:
             self.background_loader.add_progress_callback(callback)
             self.progress_callbacks.append(callback)
-    
+
     def add_queued_progress_callback(self, callback: Union[ProgressCallback, QueuedProgressCallback]):
         """Add a queued progress callback that buffers progress updates."""
         if self.background_loader:
@@ -2220,31 +2220,31 @@ Please analyze this script and return validation results in JSON format."""
                 callback = QueuedProgressCallback(callback, update_interval=0.5)
             self.background_loader.add_progress_callback(callback)
             self.progress_callbacks.append(callback)
-    
+
     def remove_progress_callback(self, callback: ProgressCallback):
         """Remove a progress callback."""
         if self.background_loader:
             self.background_loader.remove_progress_callback(callback)
             if callback in self.progress_callbacks:
                 self.progress_callbacks.remove(callback)
-    
-    def load_model_in_background(self, llm_id: str, config: LLMConfig, 
+
+    def load_model_in_background(self, llm_id: str, config: LLMConfig,
                                 priority: int = 0, callback: Optional[ProgressCallback] = None) -> Optional[LoadingTask]:
         """Load a model in the background with progress tracking."""
         if not self.background_loader:
             logger.warning("Background loading not enabled")
             return None
-            
+
         with self.lock:
             try:
                 backend_class = self._get_backend_class(config.provider)
                 if backend_class is None:
                     raise ValueError(f"Unsupported LLM provider: {config.provider}")
-                
+
                 # Add global callbacks if any
                 if callback:
                     self.add_progress_callback(callback)
-                
+
                 # Submit loading task
                 task = self.background_loader.load_model_in_background(
                     model_id=llm_id,
@@ -2252,25 +2252,25 @@ Please analyze this script and return validation results in JSON format."""
                     config=config,
                     priority=priority
                 )
-                
+
                 self.loading_tasks[llm_id] = task
-                
+
                 # Store config for later reference
                 self.configs[llm_id] = config
-                
+
                 logger.info("Submitted background loading task for: %s", llm_id)
                 return task
-                
+
             except Exception as e:
                 logger.error("Failed to submit background loading task: %s", e)
                 return None
-    
+
     def get_loading_progress(self, llm_id: str) -> Optional[LoadingTask]:
         """Get loading progress for a model."""
         if self.background_loader:
             return self.background_loader.get_loading_progress(llm_id)
         return None
-    
+
     def cancel_loading(self, llm_id: str) -> bool:
         """Cancel loading a model."""
         if self.background_loader:
@@ -2279,13 +2279,13 @@ Please analyze this script and return validation results in JSON format."""
                 del self.loading_tasks[llm_id]
             return success
         return False
-    
+
     def get_all_loading_tasks(self) -> Dict[str, LoadingTask]:
         """Get all loading tasks."""
         if self.background_loader:
             return self.background_loader.get_all_loading_tasks()
         return {}
-    
+
     def get_loading_statistics(self) -> Dict[str, Any]:
         """Get loading statistics."""
         if self.background_loader:
@@ -2296,17 +2296,17 @@ Please analyze this script and return validation results in JSON format."""
             "completed": 0,
             "success_rate": 0.0
         }
-    
+
     def register_background_loaded_model(self, llm_id: str, task: LoadingTask) -> bool:
         """Register a model that was loaded in the background."""
         if task.state == LoadingState.COMPLETED and task.result:
             with self.lock:
                 self.backends[llm_id] = task.result
-                
+
                 # Set as active if first one
                 if not self.active_backend:
                     self.active_backend = llm_id
-                    
+
                 logger.info("Registered background-loaded LLM: %s", llm_id)
                 return True
         return False

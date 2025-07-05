@@ -1406,7 +1406,7 @@ def run_selected_patching(app_instance=None, patch_type: Optional[str] = None, *
             patch_addr = kw.get('address', 0)
             patch_bytes = kw.get('bytes', b'')
             process_id = kw.get('pid', None)
-            
+
             result = {"status": "success", "message": "Memory patching ready"}
             if patch_addr and patch_bytes:
                 result["details"] = {
@@ -1417,13 +1417,13 @@ def run_selected_patching(app_instance=None, patch_type: Optional[str] = None, *
             if kw.get('verify', False):
                 result["verification"] = "Patch verification enabled"
             return result
-        
+
         def run_import_patching(app, **kw):
             """Run import table patching with provided options"""
             dll_name = kw.get('dll', '')
             func_name = kw.get('function', '')
             new_addr = kw.get('new_address', 0)
-            
+
             result = {"status": "success", "message": "Import patching ready"}
             if dll_name and func_name:
                 result["details"] = {
@@ -1434,13 +1434,13 @@ def run_selected_patching(app_instance=None, patch_type: Optional[str] = None, *
             if kw.get('rebuild_iat', True):
                 result["iat_rebuild"] = "Import Address Table will be rebuilt"
             return result
-        
+
         def run_targeted_patching(app, **kw):
             """Run targeted patching with provided options"""
             target_pattern = kw.get('pattern', b'')
             replacement = kw.get('replacement', b'')
             max_patches = kw.get('max_patches', -1)
-            
+
             result = {"status": "success", "message": "Targeted patching ready"}
             if target_pattern:
                 result["details"] = {
@@ -1451,13 +1451,13 @@ def run_selected_patching(app_instance=None, patch_type: Optional[str] = None, *
             if kw.get('backup', True):
                 result["backup"] = "Original bytes will be backed up"
             return result
-        
+
         def run_custom_patching(app, **kw):
             """Run custom patching with provided options"""
             script_path = kw.get('script', '')
             patch_config = kw.get('config', {})
             dry_run = kw.get('dry_run', False)
-            
+
             result = {"status": "success", "message": "Custom patching ready"}
             if script_path:
                 result["script"] = script_path
@@ -1467,7 +1467,7 @@ def run_selected_patching(app_instance=None, patch_type: Optional[str] = None, *
                 result["mode"] = "Dry run - no actual patches will be applied"
             result["custom_options"] = {k: v for k, v in kw.items() if k not in ['script', 'config', 'dry_run']}
             return result
-        
+
         patch_runners = {
             'automatic': run_ai_guided_patching,
             'memory': run_memory_patching,

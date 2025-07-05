@@ -163,7 +163,7 @@ class ASCIIChartGenerator:
                     bin_counts[i] += 1
 
         # Create bar chart from histogram data
-        hist_data = dict(zip(bin_labels, bin_counts))
+        hist_data = dict(zip(bin_labels, bin_counts, strict=False))
         return self.generate_bar_chart(hist_data, title)
 
     def generate_line_chart(self, data: Dict[str, Union[int, float]],

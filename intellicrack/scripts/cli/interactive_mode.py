@@ -31,6 +31,7 @@ import cmd
 import json
 import logging
 import os
+
 try:
     import readline
 except ImportError:

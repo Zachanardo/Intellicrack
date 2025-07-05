@@ -22,7 +22,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import hashlib
 import logging
-import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -258,7 +257,7 @@ class AICoordinationLayer:
         # Deep LLM analysis
         if self.model_manager:
             result = self._add_llm_analysis(request, result)
-            
+
             # Use LLM confidence directly (ML removed)
             if result.llm_results:
                 result.combined_confidence = result.llm_results.get("confidence", 0.8)

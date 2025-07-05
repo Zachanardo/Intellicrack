@@ -266,7 +266,7 @@ class ModelDownloadManager:
         except Exception as e:
             logger.error(f"Failed to get model info: {e}")
             return None
-    
+
     def get_model_card(self, model_id: str) -> Optional[Dict[str, Any]]:
         """Fetch and parse the model card for a given model.
         
@@ -279,11 +279,11 @@ class ModelDownloadManager:
         if not HAS_HF_HUB or not ModelCard:
             logger.error("ModelCard functionality not available")
             return None
-            
+
         try:
             # Try to load model card
             card = ModelCard.load(model_id, token=self.token)
-            
+
             # Extract useful information from the card
             card_data = {
                 "content": card.content,
@@ -299,21 +299,21 @@ class ModelDownloadManager:
                     "library_name": getattr(card.data, 'library_name', None),
                 }
             }
-            
+
             # Cache the model card data
             if model_id not in self.metadata["models"]:
                 self.metadata["models"][model_id] = {}
             self.metadata["models"][model_id]["card"] = card_data
             self.metadata["models"][model_id]["card_cached_at"] = datetime.now().isoformat()
             self._save_metadata()
-            
+
             logger.info(f"Successfully fetched model card for {model_id}")
             return card_data
-            
+
         except Exception as e:
             logger.error(f"Failed to fetch model card for {model_id}: {e}")
             return None
-    
+
     def get_model_readme(self, model_id: str) -> Optional[str]:
         """Get the README content from a model's card.
         

@@ -9,33 +9,70 @@ from enum import Enum
 
 
 class ProtectionType(Enum):
-    """Classification of protection techniques"""
-    ANTI_DEBUG = "Anti-Debugging"
-    ANTI_VM = "Anti-VM/Sandbox"
-    ANTI_ATTACH = "Anti-Attach"
-    SSL_PINNING = "SSL Pinning"
-    PACKING = "Packing/Obfuscation"
-    LICENSE = "License Verification"
-    INTEGRITY = "Code Integrity"
-    HARDWARE = "Hardware Binding"
-    CLOUD = "Cloud Verification"
-    TIME = "Time-based Protection"
-    MEMORY = "Memory Protection"
-    MEMORY_PROTECTION = "Memory Protection"
-    KERNEL = "Kernel-mode Protection"
-    BEHAVIOR = "Behavioral Analysis"
-    ROOT_DETECTION = "Root Detection"
-    INTEGRITY_CHECK = "Integrity Check"
-    UNKNOWN = "Unknown Protection"
+    """
+    Classification of protection techniques.
+    
+    Enumerates common software protection mechanisms that can be
+    detected and bypassed using Frida. Each protection type has
+    specific bypass strategies and detection methods.
+    
+    The enum values are human-readable descriptions used in UI
+    and reporting. The enum names are used programmatically.
+    
+    Categories:
+    - Debugging: ANTI_DEBUG, ANTI_ATTACH
+    - Environment: ANTI_VM, ROOT_DETECTION
+    - Validation: LICENSE, HARDWARE, CLOUD, TIME
+    - Security: SSL_PINNING, INTEGRITY, INTEGRITY_CHECK
+    - Obfuscation: PACKING, MEMORY, MEMORY_PROTECTION
+    - Advanced: KERNEL, BEHAVIOR
+    """
+    ANTI_DEBUG = "Anti-Debugging"  # Detects debuggers like GDB, IDA, x64dbg
+    ANTI_VM = "Anti-VM/Sandbox"  # Detects VMs/sandboxes (VMware, VirtualBox)
+    ANTI_ATTACH = "Anti-Attach"  # Prevents process attachment/injection
+    SSL_PINNING = "SSL Pinning"  # Certificate pinning for HTTPS
+    PACKING = "Packing/Obfuscation"  # Code packing/encryption (UPX, Themida)
+    LICENSE = "License Verification"  # License key/serial validation
+    INTEGRITY = "Code Integrity"  # Checksum/hash verification
+    HARDWARE = "Hardware Binding"  # HWID/machine fingerprinting
+    CLOUD = "Cloud Verification"  # Online license/integrity checks
+    TIME = "Time-based Protection"  # Trial periods, expiration
+    MEMORY = "Memory Protection"  # Memory access restrictions
+    MEMORY_PROTECTION = "Memory Protection"  # Duplicate for compatibility
+    KERNEL = "Kernel-mode Protection"  # Driver-based protections
+    BEHAVIOR = "Behavioral Analysis"  # Runtime behavior monitoring
+    ROOT_DETECTION = "Root Detection"  # Mobile root/jailbreak detection
+    INTEGRITY_CHECK = "Integrity Check"  # File/memory integrity validation
+    UNKNOWN = "Unknown Protection"  # Unidentified protection mechanism
 
 
 class HookCategory(Enum):
-    """Categories for hook batching"""
-    CRITICAL = "critical"      # Must hook immediately
-    HIGH = "high"             # Hook soon
-    MEDIUM = "medium"         # Can batch
-    LOW = "low"              # Batch aggressively
-    MONITORING = "monitoring" # Passive monitoring hooks
+    """
+    Categories for hook batching.
+    
+    Defines priority levels for Frida hooks to optimize performance
+    and minimize detection. Higher priority hooks are applied
+    immediately while lower priority ones can be batched.
+    
+    Batching Strategy:
+    - CRITICAL: Applied immediately, no batching
+    - HIGH: Applied within 100ms
+    - MEDIUM: Batched up to 500ms
+    - LOW: Batched up to 2000ms
+    - MONITORING: Passive hooks, lowest priority
+    
+    Use Cases:
+    - CRITICAL: Anti-debug bypass, time-sensitive hooks
+    - HIGH: License checks, integrity validation
+    - MEDIUM: General API hooks, data collection
+    - LOW: Logging, statistics gathering
+    - MONITORING: Performance monitoring, analytics
+    """
+    CRITICAL = "critical"      # Must hook immediately (no delay)
+    HIGH = "high"             # Hook soon (max 100ms delay)
+    MEDIUM = "medium"         # Can batch (max 500ms delay)
+    LOW = "low"              # Batch aggressively (max 2s delay)
+    MONITORING = "monitoring" # Passive monitoring hooks (lowest priority)
 
 
 __all__ = ['ProtectionType', 'HookCategory']

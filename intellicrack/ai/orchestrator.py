@@ -669,27 +669,27 @@ class AIOrchestrator:
                     "confidence": confidence,
                     "predictions": []
                 }
-                
+
                 # Include ML features if available
                 if "ml_features" in result_data:
                     ml_results_for_ai["ml_features"] = result_data["ml_features"]
-                
+
                 # Include hex analysis patterns
                 if "hex_analysis" in result_data:
                     ml_results_for_ai["hex_patterns"] = result_data["hex_analysis"]
-                
+
                 # Run AI complex analysis
                 ai_complex_results = self.ai_assistant.analyze_binary_complex(
                     binary_path, ml_results_for_ai
                 )
-                
+
                 if ai_complex_results and not ai_complex_results.get('error'):
                     result_data["ai_complex_analysis"] = ai_complex_results
                     components_used.append("ai_assistant_complex")
                     confidence = max(confidence, ai_complex_results.get("confidence", 0.0))
-                    
+
                     logger.info(f"AI complex analysis completed with confidence: {ai_complex_results.get('confidence', 0.0)}")
-                
+
             except Exception as e:
                 logger.error(f"AI complex binary analysis failed: {e}")
 
@@ -708,7 +708,7 @@ class AIOrchestrator:
                 system_content = self.system_prompt if self.system_prompt else """You are an expert binary analysis AI assistant integrated into Intellicrack.
                     Analyze the provided data and provide detailed reasoning about binary security, vulnerabilities, and recommendations.
                     Be specific, actionable, and focus on practical security implications."""
-                
+
                 messages = [
                     LLMMessage(role="system", content=system_content),
                     LLMMessage(
