@@ -220,7 +220,7 @@ dev = [
     
     # Monitoring & Logging
     "loguru==0.7.2",
-    "sentry-sdk==2.5.1",
+    "sentry-sdk==2.8.0",
     "structlog==24.2.0",
 ]
 

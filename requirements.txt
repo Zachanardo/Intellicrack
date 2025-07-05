@@ -214,7 +214,7 @@ httpie==3.2.2  # HTTP client
 
 # Monitoring & Logging
 loguru==0.7.2  # Better logging
-sentry-sdk==2.5.1  # Error tracking
+sentry-sdk==2.8.0  # Error tracking
 structlog==24.2.0  # Structured logging
 
 # CLI Development
