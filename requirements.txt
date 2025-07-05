@@ -210,7 +210,7 @@ detect-secrets==1.5.0  # Secret detection
 # API Development
 fastapi==0.111.0  # Modern API framework
 # uvicorn==0.30.1  # TEMP COMMENTED - click dependency conflicts
-httpie==3.2.2  # HTTP client
+httpie==3.2.3  # HTTP client
 
 # Monitoring & Logging
 loguru==0.7.2  # Better logging

@@ -72,7 +72,7 @@ dependencies = [
     "boto3==1.38.41",
     "azure-storage-blob==12.19.0",
     "fastapi==0.111.0",
-    "httpie==3.2.2",
+    "httpie==3.2.3",
     
     # Scientific Computing
     "numpy>=1.24.0,<2.2.0",
