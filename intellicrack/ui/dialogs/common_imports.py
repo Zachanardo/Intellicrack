@@ -1,4 +1,22 @@
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Common imports for dialog modules.
 
 This module centralizes common PyQt5 imports to avoid duplication.
@@ -171,7 +189,9 @@ except ImportError as e:
                 return True  # Simulate successful save
 
         return Pixmap(path, size)
-    def get_user_input(parent, title, label, default="", password=False): return ("", False)
+    def get_user_input(parent, title, label, default="", password=False):
+        """Get user input through dialog."""
+        return ("", False)
     def create_horizontal_slider(min_val=0, max_val=100, value=50, tick_interval=10):
         """Create horizontal slider for exploit parameter control."""
         class HorizontalSlider:

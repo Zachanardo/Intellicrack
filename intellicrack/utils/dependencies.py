@@ -39,21 +39,27 @@ def check_weasyprint_dependencies() -> List[str]:
 
     try:
         import cffi
-        logger.info("✓ CFFI dependency found")
+        # Store CFFI version for debugging
+        cffi_version = getattr(cffi, '__version__', 'unknown')
+        logger.info(f"✓ CFFI dependency found (version: {cffi_version})")
     except ImportError as e:
         logger.error("✗ CFFI import error: %s", e)
         missing_deps.append("cffi")
 
     try:
         import cairocffi
-        logger.info("✓ Cairo dependency found")
+        # Store Cairo version for debugging
+        cairo_version = getattr(cairocffi, '__version__', 'unknown')
+        logger.info(f"✓ Cairo dependency found (version: {cairo_version})")
     except ImportError as e:
         logger.error("✗ Cairo import error: %s", e)
         missing_deps.append("cairocffi")
 
     try:
         import tinycss2
-        logger.info("✓ TinyCSS2 dependency found")
+        # Store TinyCSS2 version for debugging
+        css_version = getattr(tinycss2, '__version__', 'unknown')
+        logger.info(f"✓ TinyCSS2 dependency found (version: {css_version})")
     except ImportError as e:
         logger.error("✗ TinyCSS2 import error: %s", e)
         missing_deps.append("tinycss2")
@@ -186,8 +192,10 @@ def setup_required_environment() -> Dict[str, Any]:
     # Check GUI availability
     try:
         import PyQt5
+        # Get PyQt5 version for logging
+        pyqt_version = getattr(PyQt5.QtCore, 'PYQT_VERSION_STR', 'unknown')
         env_status["gui_available"] = True
-        logger.info("✓ GUI interface available")
+        logger.info(f"✓ GUI interface available (PyQt5 {pyqt_version})")
     except ImportError:
         logger.warning("✗ GUI interface not available - running in CLI mode")
         env_status["missing_dependencies"].append("PyQt5")
@@ -196,8 +204,11 @@ def setup_required_environment() -> Dict[str, Any]:
     try:
         import numpy
         import sklearn
+        # Get versions for logging
+        numpy_version = getattr(numpy, '__version__', 'unknown')
+        sklearn_version = getattr(sklearn, '__version__', 'unknown')
         env_status["ml_available"] = True
-        logger.info("✓ Machine learning features available")
+        logger.info(f"✓ Machine learning features available (numpy {numpy_version}, sklearn {sklearn_version})")
     except ImportError:
         logger.warning("✗ ML features not available")
         env_status["missing_dependencies"].extend(["numpy", "scikit-learn"])
@@ -205,8 +216,10 @@ def setup_required_environment() -> Dict[str, Any]:
     # Check dynamic analysis
     try:
         import frida
+        # Get Frida version for logging
+        frida_version = getattr(frida, '__version__', 'unknown')
         env_status["dynamic_analysis_available"] = True
-        logger.info("✓ Dynamic analysis (Frida) available")
+        logger.info(f"✓ Dynamic analysis (Frida {frida_version}) available")
     except ImportError:
         logger.warning("✗ Dynamic analysis not available")
         env_status["missing_dependencies"].append("frida")
@@ -214,8 +227,10 @@ def setup_required_environment() -> Dict[str, Any]:
     # Check symbolic execution
     try:
         import angr
+        # Get angr version for logging
+        angr_version = getattr(angr, '__version__', 'unknown')
         env_status["symbolic_execution_available"] = True
-        logger.info("✓ Symbolic execution (angr) available")
+        logger.info(f"✓ Symbolic execution (angr {angr_version}) available")
     except ImportError:
         logger.warning("✗ Symbolic execution not available")
         env_status["missing_dependencies"].append("angr")

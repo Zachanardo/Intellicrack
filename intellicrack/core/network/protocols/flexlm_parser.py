@@ -559,8 +559,28 @@ class FlexLMProtocolParser:
 
     def _generate_checkout_key(self, request: FlexLMRequest, feature_info: Dict[str, Any]) -> str:
         """Generate checkout key for license"""
-        data = f"{request.hostname}:{request.username}:{request.feature}:{time.time()}"
+        # Incorporate feature information into key generation
+        feature_version = feature_info.get('version', '1.0')
+        feature_type = feature_info.get('type', 'standard')
+        feature_limit = feature_info.get('user_limit', 1)
+        vendor_string = feature_info.get('vendor_string', 'INTELLICRACK')
+
+        # Create comprehensive key data incorporating feature details
+        data = (f"{request.hostname}:{request.username}:{request.feature}:"
+                f"{feature_version}:{feature_type}:{feature_limit}:"
+                f"{vendor_string}:{time.time()}")
+
+        # Generate feature-specific key with enhanced entropy
         key = hashlib.sha256(data.encode()).hexdigest()[:32].upper()
+
+        # Add feature-specific prefix for debugging
+        if feature_type == 'premium':
+            key = 'P' + key[1:]
+        elif feature_type == 'trial':
+            key = 'T' + key[1:]
+        else:
+            key = 'S' + key[1:]  # Standard
+
         return key
 
     def serialize_response(self, response: FlexLMResponse) -> bytes:

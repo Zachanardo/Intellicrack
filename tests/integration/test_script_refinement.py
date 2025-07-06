@@ -260,7 +260,7 @@ Java.perform(function() {
         """Test a single script refinement iteration."""
         # Simulate test failure
         test_results = self.mock_qemu.test_script(
-            self.initial_script.content, 
+            self.initial_script.content,
             "test_app.apk"
         )
 

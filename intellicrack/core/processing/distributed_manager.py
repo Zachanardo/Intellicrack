@@ -1,3 +1,4 @@
+"""Distributed processing manager for parallel analysis execution."""
 import logging
 import math
 import multiprocessing
@@ -645,24 +646,53 @@ class DistributedProcessingManager:
                 return {'error': f"Section {section_name} not found"}
 
             section_data = section.get_data()
-            entropy = self._calculate_entropy(section_data)
-
-            # String extraction (simple)
-            strings = []
-            current_string = b""
-            min_length = 4  # Minimum string length
-
-            for _byte in section_data:
-                if 32 <= _byte <= 126:  # Printable ASCII
-                    current_string += bytes([_byte])
-                else:
-                    if len(current_string) >= min_length:
-                        strings.append(current_string.decode('ascii'))
-                    current_string = b""
-
-            # Add last string if needed
-            if len(current_string) >= min_length:
-                strings.append(current_string.decode('ascii'))
+            
+            # Process section data in chunks based on chunk_size parameter
+            results = []
+            total_strings = []
+            total_entropy_samples = []
+            
+            # Process data in chunks for better memory efficiency and progress tracking
+            for chunk_start in range(0, len(section_data), chunk_size):
+                chunk_end = min(chunk_start + chunk_size, len(section_data))
+                chunk_data = section_data[chunk_start:chunk_end]
+                
+                # Calculate entropy for this chunk
+                chunk_entropy = self._calculate_entropy(chunk_data)
+                total_entropy_samples.append(chunk_entropy)
+                
+                # String extraction for this chunk
+                chunk_strings = []
+                current_string = b""
+                min_length = 4  # Minimum string length
+                
+                for _byte in chunk_data:
+                    if 32 <= _byte <= 126:  # Printable ASCII
+                        current_string += bytes([_byte])
+                    else:
+                        if len(current_string) >= min_length:
+                            chunk_strings.append(current_string.decode('ascii'))
+                        current_string = b""
+                
+                # Add last string if needed
+                if len(current_string) >= min_length:
+                    chunk_strings.append(current_string.decode('ascii'))
+                
+                total_strings.extend(chunk_strings)
+                
+                # Store chunk analysis results
+                results.append({
+                    'chunk_start': chunk_start,
+                    'chunk_end': chunk_end,
+                    'chunk_size': len(chunk_data),
+                    'entropy': chunk_entropy,
+                    'string_count': len(chunk_strings),
+                    'strings': chunk_strings[:10]  # Limit to first 10 strings per chunk
+                })
+            
+            # Calculate overall entropy as average of chunk entropies
+            entropy = sum(total_entropy_samples) / len(total_entropy_samples) if total_entropy_samples else 0.0
+            strings = total_strings
 
             logger.info(f"Analyzed section {section_name}: size={len(section_data)}, entropy={entropy:.2f}, strings={len(strings)}")
 
@@ -675,7 +705,13 @@ class DistributedProcessingManager:
                 'characteristics': section.Characteristics,
                 'virtual_address': section.VirtualAddress,
                 'pointer_to_raw_data': section.PointerToRawData,
-                'size_of_raw_data': section.SizeOfRawData
+                'size_of_raw_data': section.SizeOfRawData,
+                'chunk_analysis': {
+                    'chunk_size_used': chunk_size,
+                    'total_chunks': len(results),
+                    'chunk_results': results,
+                    'entropy_distribution': total_entropy_samples
+                }
             }
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -723,15 +759,60 @@ class DistributedProcessingManager:
             # Create a simulation manager
             simgr = proj.factory.simulation_manager(initial_state)
 
-            # Simple exploration with timeout
+            # Chunk-based exploration with timeout
             start_time = time.time()
             paths_explored = 0
             vulnerabilities = []
-
+            exploration_chunks = []
+            chunk_number = 0
+            
+            # Process symbolic execution in chunks based on chunk_size parameter
+            # Each chunk processes a limited number of states for better control and monitoring
             while simgr.active and time.time() - start_time < max_time:
-                simgr.step()
-                paths_explored += len(simgr.active)
-
+                chunk_start_time = time.time()
+                chunk_paths_explored = 0
+                chunk_start_states = len(simgr.active)
+                
+                # Process chunk_size number of states or until no more active states
+                for _ in range(min(chunk_size, len(simgr.active))):
+                    if not simgr.active or time.time() - start_time >= max_time:
+                        break
+                    
+                    simgr.step()
+                    chunk_paths_explored += 1
+                    
+                    # Check for potential vulnerabilities in current states
+                    for state in simgr.active:
+                        # Simple vulnerability detection (stack overflow patterns)
+                        if hasattr(state, 'memory') and state.satisfiable():
+                            try:
+                                # Check for potential buffer overflow conditions
+                                rsp_val = state.regs.rsp if hasattr(state.regs, 'rsp') else state.regs.esp
+                                if state.solver.satisfiable(extra_constraints=[rsp_val < 0x1000]):
+                                    vulnerabilities.append({
+                                        'type': 'potential_stack_overflow',
+                                        'address': f"0x{state.addr:x}",
+                                        'chunk': chunk_number,
+                                        'description': 'Stack pointer potentially corrupted'
+                                    })
+                            except (AttributeError, Exception):
+                                pass  # Skip states that can't be analyzed
+                
+                chunk_end_time = time.time()
+                chunk_duration = chunk_end_time - chunk_start_time
+                
+                exploration_chunks.append({
+                    'chunk_number': chunk_number,
+                    'states_processed': chunk_paths_explored,
+                    'initial_active_states': chunk_start_states,
+                    'final_active_states': len(simgr.active),
+                    'chunk_duration': chunk_duration,
+                    'vulnerabilities_found': len([v for v in vulnerabilities if v.get('chunk') == chunk_number])
+                })
+                
+                paths_explored += chunk_paths_explored
+                chunk_number += 1
+                
                 if paths_explored >= max_states:
                     break
 

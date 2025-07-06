@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+import struct
 
 # Create logger after imports
 logger = logging.getLogger(__name__)
@@ -53,8 +54,12 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     HAS_NUMPY = False
     np = None
-    def create_numpy_array(data, dtype=None): return list(data)
-    def get_numpy_info(): return {'version': 'Not installed', 'config': {}}
+    def create_numpy_array(data, dtype=None):
+        """Create numpy array fallback using lists."""
+        return list(data)
+    def get_numpy_info():
+        """Get numpy information fallback."""
+        return {'version': 'Not installed', 'config': {}}
 
 try:
     import torch
@@ -80,8 +85,12 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     HAS_TORCH = False
     torch = None
-    def create_torch_tensor(data, dtype=None, device=None): return data
-    def get_torch_info(): return {'version': 'Not installed', 'cuda_available': False}
+    def create_torch_tensor(data, dtype=None, device=None):
+        """Create torch tensor fallback."""
+        return data
+    def get_torch_info():
+        """Get torch information fallback."""
+        return {'version': 'Not installed', 'cuda_available': False}
 
 try:
     import tensorflow as tf
@@ -104,8 +113,12 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     HAS_TENSORFLOW = False
     tf = None
-    def create_tf_tensor(data, dtype=None): return data
-    def get_tf_info(): return {'version': 'Not installed', 'gpu_available': False}
+    def create_tf_tensor(data, dtype=None):
+        """Create tensorflow tensor fallback."""
+        return data
+    def get_tf_info():
+        """Get tensorflow information fallback."""
+        return {'version': 'Not installed', 'gpu_available': False}
 
 # Binary Analysis Libraries
 try:
@@ -114,7 +127,7 @@ try:
 
     # LIEF utility functions
     def parse_binary_with_lief(file_path):
-        """Parse a binary file using LIEF"""
+        """Parse binary file using LIEF library."""
         try:
             return lief.parse(file_path)
         except Exception as e:
@@ -149,7 +162,6 @@ except ImportError as e:
                 self.relocations = []
 
             def _detect_format(self):
-                """Detect binary format from magic bytes."""
                 try:
                     with open(self.path, 'rb') as f:
                         magic = f.read(4)
@@ -191,7 +203,9 @@ except ImportError as e:
                 return 0
 
         return BinaryInfo(file_path) if file_path else None
-    def get_lief_info(): return {'version': 'Not installed', 'formats': []}
+    def get_lief_info():
+        """Get LIEF library information fallback."""
+        return {'version': 'Not installed', 'formats': []}
 
 try:
     import psutil
@@ -208,7 +222,7 @@ try:
         }
 
     def get_process_info(pid=None):
-        """Get process information"""
+        """Get process information using psutil."""
         try:
             proc = psutil.Process(pid) if pid else psutil.Process()
             return {
@@ -224,8 +238,12 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     PSUTIL_AVAILABLE = False
     psutil = None
-    def get_system_info(): return {'error': 'psutil not installed'}
-    def get_process_info(pid=None): return {'error': 'psutil not installed'}
+    def get_system_info():
+        """Get system information fallback."""
+        return {'error': 'psutil not installed'}
+    def get_process_info(pid=None):
+        """Get process information fallback."""
+        return {'error': 'psutil not installed'}
 
 try:
     import pefile
@@ -233,7 +251,7 @@ try:
 
     # pefile utility functions
     def parse_pe_file(file_path):
-        """Parse a PE file"""
+        """Parse PE file using pefile library."""
         try:
             return pefile.PE(file_path)
         except Exception as e:
@@ -276,7 +294,6 @@ except ImportError as e:
                     self._parse()
 
             def _parse(self):
-                """Parse PE headers and structures."""
                 try:
                     with open(self.path, 'rb') as f:
                         # Check DOS header
@@ -296,6 +313,13 @@ except ImportError as e:
                         # Read COFF header
                         machine = struct.unpack('<H', f.read(2))[0]
                         num_sections = struct.unpack('<H', f.read(2))[0]
+
+                        # Store section count for metadata
+                        self.metadata['pe_sections'] = num_sections
+
+                        # Validate section count
+                        if num_sections > 96:  # PE files typically have fewer than 96 sections
+                            logger.warning(f"Unusual section count: {num_sections}")
 
                         # Determine architecture
                         if machine == 0x014c:
@@ -332,7 +356,6 @@ except ImportError as e:
                 """Check if DLL is imported."""
                 return any(imp.get('dll', '').lower() == dll_name.lower()
                           for imp in self.imports)
-
             def get_export_by_name(self, name):
                 """Get export by name."""
                 for export in self.exports:
@@ -341,7 +364,9 @@ except ImportError as e:
                 return None
 
         return PEFile(file_path) if file_path else None
-    def get_pe_info(pe_obj): return {}
+    def get_pe_info(pe_obj):
+        """Get PE file information fallback."""
+        return {}
 
 try:
     import elftools
@@ -350,7 +375,7 @@ try:
 
     # elftools utility functions
     def parse_elf_file(file_path):
-        """Parse an ELF file"""
+        """Parse ELF file using elftools library."""
         try:
             with open(file_path, 'rb') as f:
                 return ELFFile(f)
@@ -396,7 +421,6 @@ except ImportError as e:
                     self._parse()
 
             def _parse(self):
-                """Parse ELF headers and structures."""
                 try:
                     with open(self.path, 'rb') as f:
                         # Read ELF header
@@ -466,7 +490,6 @@ except ImportError as e:
                 """Check for FORTIFY_SOURCE."""
                 # Would look for _chk functions
                 return True
-
             def get_function_address(self, name):
                 """Get function address by name."""
                 for sym in self.symbols:
@@ -475,7 +498,9 @@ except ImportError as e:
                 return 0
 
         return ELFFile(file_path) if file_path else None
-    def get_elf_info(elf_obj): return {}
+    def get_elf_info(elf_obj):
+        """Get ELF file information fallback."""
+        return {}
 
 try:
     import frida
@@ -487,7 +512,7 @@ try:
         return frida.__version__
 
     def enumerate_devices():
-        """Enumerate available Frida devices"""
+        """Enumerate Frida devices."""
         try:
             return [{'id': d.id, 'name': d.name, 'type': d.type}
                     for d in frida.enumerate_devices()]
@@ -496,7 +521,7 @@ try:
             return []
 
     def get_local_device():
-        """Get the local Frida device"""
+        """Get Frida local device."""
         try:
             return frida.get_local_device()
         except Exception as e:
@@ -507,8 +532,12 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     FRIDA_AVAILABLE = False
     frida = None
-    def get_frida_version(): return 'Not installed'
-    def enumerate_devices(): return []
+    def get_frida_version():
+        """Get Frida version fallback."""
+        return 'Not installed'
+    def enumerate_devices():
+        """Enumerate devices fallback."""
+        return []
     def get_local_device():
         """Get local device for exploit deployment and testing."""
         import platform
@@ -543,7 +572,6 @@ except ImportError as e:
                 }
 
             def _check_root_access(self):
-                """Check if running with root/admin privileges."""
                 try:
                     import os
                     return os.geteuid() == 0 if hasattr(os, 'geteuid') else False
@@ -551,7 +579,6 @@ except ImportError as e:
                     return False
 
             def _check_debugger_access(self):
-                """Check if can attach debugger to processes."""
                 try:
                     # Check ptrace scope on Linux
                     if platform.system() == 'Linux':
@@ -562,7 +589,6 @@ except ImportError as e:
                 return True  # Assume yes on other platforms
 
             def _check_kernel_module_access(self):
-                """Check if can load kernel modules."""
                 try:
                     import os
                     return os.path.exists('/proc/modules') and os.access('/proc/modules', os.R_OK)
@@ -570,7 +596,6 @@ except ImportError as e:
                     return False
 
             def _check_ptrace_access(self):
-                """Check if ptrace is available."""
                 try:
                     import ctypes
                     import ctypes.util
@@ -617,6 +642,23 @@ try:
                 'bytes': insn.bytes.hex()
             })
         return instructions
+
+    def disassemble_32bit_bytes(data, address=0):
+        """Disassemble 32-bit x86 bytes using Capstone"""
+        return disassemble_bytes(data, address, CS_ARCH_X86, CS_MODE_32)
+
+    def auto_detect_architecture(data, address=0):
+        """Auto-detect and disassemble based on common patterns"""
+        # Try 64-bit first
+        instructions_64 = disassemble_bytes(data, address, CS_ARCH_X86, CS_MODE_64)
+
+        # If 64-bit fails or has invalid instructions, try 32-bit
+        if not instructions_64 or any('invalid' in inst.get('mnemonic', '').lower() for inst in instructions_64):
+            instructions_32 = disassemble_32bit_bytes(data, address)
+            if instructions_32:
+                return instructions_32, '32-bit'
+
+        return instructions_64, '64-bit'
 
 except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
@@ -759,7 +801,6 @@ except ImportError as e:
                                 })
 
                 return gadgets
-
         class Instruction:
             def __init__(self, address, bytes_data, mnemonic, op_str, size):
                 self.address = address
@@ -772,7 +813,9 @@ except ImportError as e:
                 return f"0x{self.address:x}: {self.mnemonic} {self.op_str}"
 
         return Disassembler(arch, mode)
-    def disassemble_bytes(data, address=0, arch=None, mode=None): return []
+    def disassemble_bytes(data, address=0, arch=None, mode=None):
+        """Disassemble bytes fallback."""
+        return []
 
 # Visualization
 try:
@@ -1001,7 +1044,7 @@ try:
 
     # pdfkit utility functions
     def html_to_pdf(html_string, output_path, options=None):
-        """Convert HTML string to PDF"""
+        """Convert HTML string to PDF using pdfkit."""
         try:
             if options is None:
                 options = {'page-size': 'A4', 'encoding': 'UTF-8'}
@@ -1012,7 +1055,7 @@ try:
             return False
 
     def url_to_pdf(url, output_path, options=None):
-        """Convert URL to PDF"""
+        """Convert URL to PDF using pdfkit."""
         try:
             if options is None:
                 options = {'page-size': 'A4', 'encoding': 'UTF-8'}
@@ -1026,8 +1069,12 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     pdfkit = None
     PDFKIT_AVAILABLE = False
-    def html_to_pdf(html_string, output_path, options=None): return False
-    def url_to_pdf(url, output_path, options=None): return False
+    def html_to_pdf(html_string, output_path, options=None):
+        """HTML to PDF fallback."""
+        return False
+    def url_to_pdf(url, output_path, options=None):
+        """URL to PDF fallback."""
+        return False
 
 # OpenCL for GPU acceleration
 try:
@@ -1036,7 +1083,7 @@ try:
 
     # OpenCL utility functions
     def get_opencl_platforms():
-        """Get available OpenCL platforms"""
+        """Get OpenCL platforms."""
         try:
             platforms = cl.get_platforms()
             return [{'name': p.name, 'vendor': p.vendor, 'version': p.version}
@@ -1046,7 +1093,7 @@ try:
             return []
 
     def get_opencl_devices(platform_index=0):
-        """Get OpenCL devices for a platform"""
+        """Get OpenCL devices from platform."""
         try:
             platforms = cl.get_platforms()
             if platform_index < len(platforms):
@@ -1061,8 +1108,12 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     cl = None
     HAS_OPENCL = False
-    def get_opencl_platforms(): return []
-    def get_opencl_devices(platform_index=0): return []
+    def get_opencl_platforms():
+        """Get OpenCL platforms fallback."""
+        return []
+    def get_opencl_devices(platform_index=0):
+        """Get OpenCL devices fallback."""
+        return []
 
 # UI Framework
 try:
@@ -1159,7 +1210,6 @@ except ImportError:
             """Stub timeout method."""
             return self
         def connect(self, *args, **kwargs):
-            """Stub method for connecting signals."""
             pass
         def start(self, *args, **kwargs):
             """Stub method for starting operations."""
@@ -1177,8 +1227,12 @@ except ImportError:
     QTextEdit = QTreeWidget = QTreeWidgetItem = QVBoxLayout = _DummyWidget()
 
     # Dummy PyQt functions
-    def create_dial(min_val=0, max_val=100, value=50): return _DummyWidget()
-    def create_slider(orientation=None, min_val=0, max_val=100, value=50): return _DummyWidget()
+    def create_dial(min_val=0, max_val=100, value=50):
+        """Create dial widget fallback."""
+        return _DummyWidget()
+    def create_slider(orientation=None, min_val=0, max_val=100, value=50):
+        """Create slider widget fallback."""
+        return _DummyWidget()
 
 # Export all utilities and flags
 __all__ = [

@@ -1,12 +1,4 @@
-import logging
-
-from intellicrack.logger import logger
-
-# Import all core modules
-from . import analysis, network, patching, processing, protection_bypass, reporting
-
-"""
-Core analysis and processing modules for Intellicrack.
+"""Core analysis and processing modules for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -26,7 +18,12 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
 
+from intellicrack.logger import logger
+
+# Import all core modules
+from . import analysis, network, patching, processing, protection_bypass, reporting
 
 # Import new exploitation modules
 try:
@@ -49,8 +46,7 @@ FRIDA_PRESETS = None
 FridaBypassWizard = None
 
 def get_frida_manager():
-    """
-    Get FridaManager with lazy import to avoid circular dependencies.
+    """Get FridaManager with lazy import to avoid circular dependencies.
     
     This function implements lazy loading for the FridaManager class to prevent
     circular import issues that can occur during module initialization. The
@@ -69,6 +65,7 @@ def get_frida_manager():
         >>> FridaManager = get_frida_manager()
         >>> if FridaManager:
         ...     manager = FridaManager()
+        
     """
     global FridaManager, FRIDA_MODULES_AVAILABLE
     if FridaManager is None:
@@ -81,8 +78,7 @@ def get_frida_manager():
     return FridaManager
 
 def get_frida_presets():
-    """
-    Get FRIDA_PRESETS with lazy import to avoid circular dependencies.
+    """Get FRIDA_PRESETS with lazy import to avoid circular dependencies.
     
     This function implements lazy loading for the FRIDA_PRESETS dictionary
     to prevent circular import issues. The presets contain pre-configured
@@ -99,6 +95,7 @@ def get_frida_presets():
         >>> presets = get_frida_presets()
         >>> if presets:
         ...     anti_debug_script = presets.get('anti_debug')
+        
     """
     global FRIDA_PRESETS
     if FRIDA_PRESETS is None:
@@ -111,8 +108,7 @@ def get_frida_presets():
     return FRIDA_PRESETS
 
 def get_frida_bypass_wizard():
-    """
-    Get FridaBypassWizard with lazy import to avoid circular dependencies.
+    """Get FridaBypassWizard with lazy import to avoid circular dependencies.
     
     This function implements lazy loading for the FridaBypassWizard class
     which provides an interactive wizard for generating protection bypass
@@ -130,6 +126,7 @@ def get_frida_bypass_wizard():
         >>> if Wizard:
         ...     wizard = Wizard()
         ...     wizard.generate_bypass_script(protections)
+        
     """
     global FridaBypassWizard
     if FridaBypassWizard is None:

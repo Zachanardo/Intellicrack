@@ -233,7 +233,7 @@ class AIAssistant:
             # Send to LLM
             messages = [
                 LLMMessage(role="system",
-                           content="You are an expert code security analyst."),
+                           content="You are an autonomous code security expert."),
                 LLMMessage(role="user", content=prompt)
             ]
 
@@ -926,7 +926,7 @@ class CodeAnalyzer:
 
             messages = [
                 LLMMessage(
-                    role="system", content="You are an expert in assembly language analysis and reverse engineering."),
+                    role="system", content="You are an autonomous assembly language and reverse engineering expert."),
                 LLMMessage(role="user", content=prompt)
             ]
 

@@ -66,8 +66,8 @@ except ImportError as e:
 try:
     from openvino.runtime import Core
     HAS_OPENVINO = True
-except ImportError as e:
-    logger.error("Import error in local_gguf_server: %s", e)
+except ImportError:
+    logger.debug("OpenVINO not available - Intel CPU optimization disabled (optional)")
     Core = None
     HAS_OPENVINO = False
 
@@ -75,8 +75,8 @@ except ImportError as e:
 try:
     import dpctl
     HAS_DPCTL = True
-except ImportError as e:
-    logger.error("Import error in local_gguf_server: %s", e)
+except ImportError:
+    logger.debug("dpctl not available - Intel SYCL support disabled (optional)")
     dpctl = None
     HAS_DPCTL = False
 

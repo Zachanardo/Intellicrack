@@ -1,3 +1,4 @@
+"""Cloud license hooking module for intercepting and modifying license requests."""
 import hashlib
 import json
 import logging
@@ -368,7 +369,7 @@ class CloudLicenseResponseGenerator:
 
         return response
 
-    def _generate_xml_response(self, service: str, request: Dict[str, Any]) -> Dict[str, Any]:  # pylint: disable=unused-argument
+    def _generate_xml_response(self, service: str, request: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate an XML response for a cloud license check request.
 
@@ -385,8 +386,37 @@ class CloudLicenseResponseGenerator:
         else:
             template = self.response_templates['generic']['xml']
 
-        # Customize template
+        # Customize template based on request data
         response_body = template
+
+        # Use request data to customize the XML response
+        if request:
+            # Extract request parameters for dynamic response generation
+            license_id = request.get('license_id', 'default_license')
+            user_id = request.get('user_id', 'anonymous')
+            machine_id = request.get('machine_id', 'unknown_machine')
+            product_version = request.get('version', '1.0')
+
+            # Apply request-based customizations to XML template
+            replacements = {
+                '{{LICENSE_ID}}': license_id,
+                '{{USER_ID}}': user_id,
+                '{{MACHINE_ID}}': machine_id,
+                '{{PRODUCT_VERSION}}': product_version,
+                '{{TIMESTAMP}}': str(int(time.time())),
+                '{{SERVICE_NAME}}': service
+            }
+
+            # Apply replacements to template
+            for placeholder, value in replacements.items():
+                response_body = response_body.replace(placeholder, str(value))
+
+            # Add request-specific XML elements if present
+            if 'features' in request:
+                features_xml = '\n'.join([f'<feature>{f}</feature>' for f in request['features']])
+                response_body = response_body.replace('{{FEATURES}}', features_xml)
+            else:
+                response_body = response_body.replace('{{FEATURES}}', '<feature>default</feature>')
 
         # Create response
         response = {
@@ -400,7 +430,7 @@ class CloudLicenseResponseGenerator:
 
         return response
 
-    def _generate_binary_response(self, service: str, request: Dict[str, Any]) -> Dict[str, Any]:  # pylint: disable=unused-argument
+    def _generate_binary_response(self, service: str, request: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate a binary response for a cloud license check request.
 
@@ -411,8 +441,42 @@ class CloudLicenseResponseGenerator:
         Returns:
             dict: Response data
         """
-        # Create a simple binary response
-        response_body = b'\x01\x00\x01\x00\x00\x01\x00\x01'
+        # Create service-specific binary response
+        base_response = b'\x01\x00\x01\x00\x00\x01\x00\x01'
+
+        # Customize binary response based on service type
+        service_bytes = {
+            'flexlm': b'\x02\x01\x00\x01\x00\x02\x01\x00',
+            'sentinel': b'\x03\x02\x01\x00\x01\x03\x02\x01',
+            'wibu': b'\x04\x03\x02\x01\x01\x04\x03\x02',
+            'safenet': b'\x05\x04\x03\x02\x02\x05\x04\x03',
+            'default': base_response
+        }
+
+        response_body = service_bytes.get(service, base_response)
+
+        # Modify response based on request parameters
+        if request:
+            # Add license ID to binary data if present
+            if 'license_id' in request:
+                license_bytes = request['license_id'].encode('utf-8')[:8]
+                # Pad or truncate to 8 bytes
+                license_bytes = license_bytes.ljust(8, b'\x00')[:8]
+                response_body = license_bytes + response_body
+
+            # Add timestamp if requested
+            if request.get('include_timestamp', False):
+                timestamp_bytes = int(time.time()).to_bytes(4, 'little')
+                response_body = response_body + timestamp_bytes
+
+            # Add machine ID hash if present
+            if 'machine_id' in request:
+                machine_hash = hashlib.md5(request['machine_id'].encode()).digest()[:4]
+                response_body = response_body + machine_hash
+
+            # Add success/failure indicator based on request validity
+            status_byte = b'\x01' if request.get('valid_request', True) else b'\x00'
+            response_body = status_byte + response_body
 
         # Create response
         response = {
@@ -611,7 +675,7 @@ class CloudLicenseResponseGenerator:
                 if _keyword.lower() in request['body'].lower():
                     self.learned_patterns[service]['body_patterns'].add(_keyword)
 
-    def _extract_response_template(self, service: str, request: Dict[str, Any], response: Dict[str, Any]) -> None:  # pylint: disable=unused-argument
+    def _extract_response_template(self, service: str, request: Dict[str, Any], response: Dict[str, Any]) -> None:
         """
         Extract a response template from a successful response.
 
@@ -626,6 +690,25 @@ class CloudLicenseResponseGenerator:
             if header.lower() == 'content-type':
                 content_type = value.lower()
                 break
+
+        # Correlate request and response patterns for better template extraction
+        request_method = request.get('method', '').upper()
+        request_url = request.get('url', '')
+        request_body = request.get('body', '')
+
+        # Initialize template context with request information
+        template_context = {
+            'request_method': request_method,
+            'request_path': request_url.split('/')[-1] if request_url else '',
+            'has_authentication': any(key.lower() in ['authorization', 'api-key', 'x-api-key']
+                                    for key in request.get('headers', {})),
+            'request_body_type': 'json' if request_body and request_body.strip().startswith('{') else 'form'
+        }
+
+        # Store template context for this service
+        if service not in self.response_templates:
+            self.response_templates[service] = {}
+        self.response_templates[service]['context'] = template_context
 
         # Extract template based on format
         if content_type and 'json' in content_type:
@@ -1625,7 +1708,7 @@ class CloudLicenseResponseGenerator:
 
         return {'status': 'passthrough', 'params': params}
 
-    def _is_license_related_call(self, api_name: str, params: Dict[str, Any]) -> bool:  # pylint: disable=unused-argument
+    def _is_license_related_call(self, api_name: str, params: Dict[str, Any]) -> bool:
         """
         Check if a network API call is related to license verification.
 
@@ -1641,7 +1724,20 @@ class CloudLicenseResponseGenerator:
             'adobe', 'autodesk', 'microsoft', 'flexlm', 'hasp'
         ]
 
-        # Check URL or hostname for _license indicators
+        # Check API name for license-related functions
+        api_name_lower = api_name.lower()
+        api_license_indicators = [
+            'connect', 'send', 'recv', 'httpopen', 'httpsend', 'ssl_connect',
+            'internetopen', 'internetconnect', 'winhttp'
+        ]
+
+        is_network_api = any(indicator in api_name_lower for indicator in api_license_indicators)
+
+        # Only proceed with deeper analysis if this is a network-related API
+        if not is_network_api:
+            return False
+
+        # Check URL or hostname for license indicators
         url = params.get('url', '').lower()
         hostname = params.get('hostname', '').lower()
 

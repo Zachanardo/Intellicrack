@@ -1,3 +1,4 @@
+"""QEMU emulator interface for running binaries in virtual environments."""
 import base64
 import os
 import subprocess

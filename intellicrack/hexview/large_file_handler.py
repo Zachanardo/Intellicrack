@@ -169,6 +169,26 @@ class FileCache:
             self.regions.clear()
             self.total_memory = 0
 
+    def cleanup_old_regions(self, max_age: float = 60) -> int:
+        """Remove regions that haven't been accessed recently."""
+        with self.lock:
+            current_time = time.time()
+            old_regions = []
+
+            for offset, region in self.regions.items():
+                if current_time - region.last_accessed > max_age and region.ref_count == 0:
+                    old_regions.append(offset)
+
+            removed_count = 0
+            for offset in old_regions:
+                if offset in self.regions:
+                    region = self.regions.pop(offset)
+                    if region.data:
+                        self.total_memory -= len(region.data)
+                    removed_count += 1
+
+            return removed_count
+
     def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics."""
         with self.lock:
@@ -390,6 +410,14 @@ class LargeFileHandler:
             self.memory_monitor.add_callback(self._on_memory_pressure)
             self.memory_monitor.start_monitoring()
 
+            # Setup periodic cleanup timer if PyQt5 is available
+            if PYQT5_AVAILABLE:
+                self.cleanup_timer = QTimer()
+                self.cleanup_timer.timeout.connect(self._periodic_cleanup)
+                self.cleanup_timer.start(30000)  # Every 30 seconds
+            else:
+                self.cleanup_timer = None
+
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize large file handler: %s", e)
             raise
@@ -569,6 +597,27 @@ class LargeFileHandler:
 
             logger.warning(f"Memory pressure detected: {memory_usage:.1%}, "
                          f"reduced cache from {old_size}MB to {self.config.cache_size_mb}MB")
+
+    def _periodic_cleanup(self):
+        """Periodic cleanup of cache and resources."""
+        try:
+            # Clean old access patterns
+            current_time = time.time()
+            self.access_patterns = [
+                p for p in self.access_patterns
+                if current_time - p[2] < 300  # Keep last 5 minutes
+            ]
+
+            # Clean unused cache regions
+            cache_stats = self.cache.get_stats()
+            if cache_stats.get('utilization', 0) > 0.8:
+                # Remove least recently used regions
+                removed_count = self.cache.cleanup_old_regions(max_age=60)  # 1 minute
+                if removed_count > 0:
+                    logger.debug(f"Cleaned up {removed_count} old cache regions")
+
+        except Exception as e:
+            logger.warning(f"Periodic cleanup error: {e}")
 
     def get_file_size(self) -> int:
         """Get the file size."""

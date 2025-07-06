@@ -1,3 +1,4 @@
+"""Keygen dialog for generating license keys and serial numbers."""
 import json
 import os
 import platform

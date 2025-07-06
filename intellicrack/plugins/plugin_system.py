@@ -1,3 +1,4 @@
+"""Plugin system manager for loading and managing Intellicrack plugins."""
 import importlib
 import importlib.util
 import json
@@ -65,8 +66,27 @@ try:
     import resource
     RESOURCE_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in plugin_system: %s", e)
+    import platform
+    if platform.system() != 'Windows':
+        logger.error("Import error in plugin_system: %s", e)
     RESOURCE_AVAILABLE = False
+
+    # Create dummy resource module for Windows
+    class DummyResource:
+        RLIMIT_CPU = 0
+        RLIMIT_FSIZE = 1
+        RLIMIT_DATA = 2
+        RLIMIT_STACK = 3
+
+        @staticmethod
+        def getrlimit(resource_type):
+            return (1024*1024, 1024*1024)  # 1MB soft, 1MB hard
+
+        @staticmethod
+        def setrlimit(resource_type, limits):
+            pass  # No-op on Windows
+
+    resource = DummyResource()
 
 
 

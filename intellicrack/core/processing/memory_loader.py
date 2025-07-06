@@ -1,3 +1,4 @@
+"""Memory loader for loading binary data into memory for analysis."""
 import logging
 import math
 import mmap

@@ -1,3 +1,4 @@
+"""Plugin editor widget for editing and managing plugin code."""
 from intellicrack.logger import logger
 
 """

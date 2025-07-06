@@ -120,7 +120,16 @@ def run_network_license_server(app_instance=None, **kwargs) -> Dict[str, Any]:
 
 
 def run_ssl_tls_interceptor(app_instance=None, **kwargs) -> Dict[str, Any]:
-    """Run the SSL/TLS interceptor."""
+    """
+    Run the SSL/TLS interceptor for network traffic analysis.
+    
+    Args:
+        app_instance: Application instance for output updates
+        **kwargs: Configuration options including 'target_host', 'target_port', 'certificate_path'
+        
+    Returns:
+        Dict containing status, message and interceptor configuration
+    """
     try:
         # Configure interceptor based on kwargs
         target_host = kwargs.get('target_host', None)
@@ -178,7 +187,16 @@ def run_ssl_tls_interceptor(app_instance=None, **kwargs) -> Dict[str, Any]:
 
 
 def run_protocol_fingerprinter(app_instance=None, **kwargs) -> Dict[str, Any]:
-    """Run the protocol fingerprinter."""
+    """
+    Run the protocol fingerprinter for network traffic analysis.
+    
+    Args:
+        app_instance: Application instance for output updates
+        **kwargs: Configuration options including 'traffic_data', 'interface', 'timeout'
+        
+    Returns:
+        Dict containing status, message and fingerprinting results
+    """
     try:
         # Configure fingerprinter based on kwargs
         traffic_data = kwargs.get('traffic_data', None)
@@ -320,7 +338,17 @@ def run_cloud_license_hooker(app_instance=None, **kwargs) -> Dict[str, Any]:
 
 
 def run_cfg_explorer(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
-    """Run the control flow graph explorer."""
+    """
+    Run the control flow graph explorer for binary analysis.
+    
+    Args:
+        app_instance: Application instance for output updates
+        binary_path: Path to binary file to analyze
+        **kwargs: Additional configuration options
+        
+    Returns:
+        Dict containing status, message and CFG analysis data
+    """
     logger.debug(f"CFG explorer called with {len(kwargs)} kwargs")
     try:
         logger.info("Starting CFG explorer")
@@ -347,7 +375,17 @@ def run_cfg_explorer(app_instance=None, binary_path: Optional[str] = None, **kwa
 
 
 def run_concolic_execution(app_instance=None, binary_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
-    """Run concolic execution analysis."""
+    """
+    Run concolic execution analysis on binary.
+    
+    Args:
+        app_instance: Application instance for output updates
+        binary_path: Path to binary file to analyze
+        **kwargs: Additional configuration options
+        
+    Returns:
+        Dict containing status, message and execution analysis results
+    """
     logger.debug(f"Concolic execution called with {len(kwargs)} kwargs")
     try:
         logger.info("Starting concolic execution")
@@ -2437,6 +2475,15 @@ def run_frida_script(app_instance=None, binary_path: Optional[str] = None,
                     script_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
     """
     Run a Frida script on a binary or process.
+    
+    Args:
+        app_instance: Application instance for output updates
+        binary_path: Path to binary file to analyze
+        script_path: Path to Frida script file
+        **kwargs: Additional arguments including 'target', 'spawn', 'script'
+        
+    Returns:
+        Dict containing status, message and execution results
     """
     try:
         if app_instance:

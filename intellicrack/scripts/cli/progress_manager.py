@@ -85,6 +85,7 @@ class ProgressManager:
     def __init__(self):
         self.console = Console()
         self.tasks: Dict[str, AnalysisTask] = {}
+        self.task_ids: Dict[str, int] = {}  # Store task IDs for progress tracking
         self.progress = None
         self.live = None
         self._lock = threading.Lock()
@@ -146,6 +147,8 @@ class ProgressManager:
                 description=f"Running {analysis_type} analysis",
                 total_steps=100
             )
+            # Store task ID for progress tracking
+            self.task_ids[analysis_type] = task_id
 
     def update_progress(self, task_name: str, current: int, total: int,
                        speed: Optional[float] = None) -> None:

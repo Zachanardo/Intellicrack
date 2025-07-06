@@ -1,5 +1,22 @@
 """
-Anti-Analysis Technique Detector
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""Anti-Analysis Technique Detector.
 
 Detects various anti-debugging, anti-VM, and anti-analysis techniques
 commonly used by protected software and malware.
@@ -21,12 +38,215 @@ except ImportError:
     # Running outside Ghidra environment
     GHIDRA_AVAILABLE = False
 
-    # Mock Ghidra classes for syntax checking
-    class GhidraScript:
-        def run(self):
-            pass
+    import os
+    import sys
 
-    # Mock Ghidra globals for pylint
+    class GhidraScript:
+        """Base class for Ghidra scripts when running outside Ghidra environment.
+        
+        This implementation provides the necessary interface for scripts that
+        can run both inside and outside the Ghidra environment.
+        """
+
+        def __init__(self):
+            """Initialize the GhidraScript base class."""
+            self.script_name = self.__class__.__name__
+            self.state = ScriptState()
+            self.monitor = TaskMonitor()
+            self._script_args = []
+            self._script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        def run(self):
+            """Execute the script logic.
+            
+            This method should be overridden by subclasses to implement
+            the actual script functionality.
+            """
+            raise NotImplementedError("Subclasses must implement the run() method")
+
+        def println(self, message):
+            """Print a message to the console.
+            
+            Args:
+                message: The message to print
+
+            """
+            print(message)
+
+        def printerr(self, message):
+            """Print an error message to the console.
+            
+            Args:
+                message: The error message to print
+
+            """
+            print(f"ERROR: {message}", file=sys.stderr)
+
+        def askYesNo(self, title, question):
+            """Ask a yes/no question (returns False in non-interactive mode).
+            
+            Args:
+                title: The dialog title
+                question: The question to ask
+                
+            Returns:
+                bool: Always False in non-Ghidra environment
+
+            """
+            print(f"{title}: {question}")
+            return False
+
+        def askString(self, title, prompt, default_value=""):
+            """Ask for string input.
+            
+            Args:
+                title: Dialog title
+                prompt: The prompt message
+                default_value: Default value
+                
+            Returns:
+                str: The default value in non-interactive mode
+            """
+            print(f"{title}: {prompt} (default: {default_value})")
+            return default_value
+
+        def askInt(self, title, prompt, default_value=0):
+            """Ask for integer input.
+            
+            Args:
+                title: Dialog title  
+                prompt: The prompt message
+                default_value: Default value
+                
+            Returns:
+                int: The default value in non-interactive mode
+            """
+            print(f"{title}: {prompt} (default: {default_value})")
+            return default_value
+
+        def getScriptName(self):
+            """Get the name of this script.
+            
+            Returns:
+                str: The script class name
+
+            """
+            return self.script_name
+
+        def getScriptArgs(self):
+            """Get script arguments.
+            
+            Returns:
+                list: Script arguments
+            """
+            return self._script_args
+
+        def setScriptArgs(self, args):
+            """Set script arguments.
+            
+            Args:
+                args: List of arguments
+            """
+            self._script_args = args if args else []
+
+        def getScriptFile(self):
+            """Get the script file path.
+            
+            Returns:
+                str: Path to the script file
+            """
+            return os.path.abspath(__file__)
+
+        def getScriptDir(self):
+            """Get the script directory.
+            
+            Returns:
+                str: Directory containing the script
+            """
+            return self._script_dir
+
+        def popup(self, message):
+            """Show a popup message.
+            
+            Args:
+                message: Message to display
+            """
+            print(f"POPUP: {message}")
+
+        def isRunningHeadless(self):
+            """Check if running in headless mode.
+            
+            Returns:
+                bool: True when not in Ghidra environment
+            """
+            return True
+
+    class ScriptState:
+        """Represents the state of a script execution."""
+
+        def __init__(self):
+            self._variables = {}
+            self._environment = {}
+
+        def addEnvironmentVar(self, name, value):
+            """Add an environment variable."""
+            self._environment[name] = value
+
+        def getEnvironmentVar(self, name):
+            """Get an environment variable."""
+            return self._environment.get(name)
+
+        def setValue(self, name, value):
+            """Set a state variable."""
+            self._variables[name] = value
+
+        def getValue(self, name):
+            """Get a state variable."""
+            return self._variables.get(name)
+
+    class TaskMonitor:
+        """Monitor for long-running tasks."""
+
+        def __init__(self):
+            self._cancelled = False
+            self._message = ""
+            self._progress = 0
+            self._max = 100
+
+        def isCancelled(self):
+            """Check if task was cancelled."""
+            return self._cancelled
+
+        def cancel(self):
+            """Cancel the task."""
+            self._cancelled = True
+
+        def setMessage(self, message):
+            """Set status message."""
+            self._message = message
+            print(f"STATUS: {message}")
+
+        def getMessage(self):
+            """Get current status message."""
+            return self._message
+
+        def setProgress(self, progress):
+            """Set progress value."""
+            self._progress = progress
+
+        def getProgress(self):
+            """Get current progress."""
+            return self._progress
+
+        def setMaximum(self, maximum):
+            """Set maximum progress value."""
+            self._max = maximum
+
+        def getMaximum(self):
+            """Get maximum progress value."""
+            return self._max
+
+    # Placeholder Ghidra globals for compatibility
     currentProgram = None
     getReferencesTo = None
     createBookmark = None
@@ -53,6 +273,12 @@ def get_current_program():
 
 
 class AntiAnalysisDetector(GhidraScript):
+    """Ghidra script to detect anti-analysis techniques in binaries.
+    
+    Identifies various anti-debugging, anti-VM, and anti-analysis patterns
+    by scanning for suspicious API calls, timing checks, exception handling,
+    and other evasion techniques commonly used by malware and protected software.
+    """
 
     # Anti-debugging APIs
     ANTI_DEBUG_APIS = [
@@ -104,6 +330,15 @@ class AntiAnalysisDetector(GhidraScript):
     ]
 
     def run(self):
+        """Execute anti-analysis detection scan on the current program.
+        
+        Performs comprehensive analysis to identify anti-debugging, anti-VM,
+        and other anti-analysis techniques. Scans for suspicious API imports,
+        timing checks, hardware breakpoint detection, and VM detection patterns.
+        
+        Results are printed to the Ghidra console with detailed findings
+        for each category of anti-analysis technique detected.
+        """
         if not GHIDRA_AVAILABLE:
             print("Error: This script must be run within Ghidra environment")
             return

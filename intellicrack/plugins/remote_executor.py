@@ -1,3 +1,4 @@
+"""Remote plugin executor for running plugins on remote systems."""
 import base64
 import hashlib
 import hmac

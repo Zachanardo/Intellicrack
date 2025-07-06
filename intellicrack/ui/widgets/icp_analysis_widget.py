@@ -81,6 +81,11 @@ class ICPAnalysisWidget(QWidget):
     protection_selected = pyqtSignal(object)  # ICPDetection
 
     def __init__(self, parent=None):
+        """Initialize the ICP analysis widget.
+        
+        Args:
+            parent: Parent widget or None for top-level widget
+        """
         super().__init__(parent)
         self._current_result: Optional[ICPScanResult] = None
         self._analysis_thread: Optional[ICPAnalysisThread] = None

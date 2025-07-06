@@ -1,3 +1,4 @@
+"""LLM configuration dialog for AI model settings."""
 import logging
 import os
 import time

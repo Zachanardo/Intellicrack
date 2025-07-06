@@ -32,7 +32,16 @@ try:
     from manticore.core.plugin import Plugin
     from manticore.native import Manticore
     MANTICORE_AVAILABLE = True
+    MANTICORE_TYPE = "native"
 except ImportError:
+    MANTICORE_AVAILABLE = False
+    MANTICORE_TYPE = None
+
+    # Only show warning on Linux/Unix systems where manticore is expected
+    import platform
+    if platform.system() != 'Windows':
+        logger.warning("Manticore not available on Linux/Unix - install with: pip install manticore")
+
     # Try to use simconcolic as a fallback
     try:
         import os
@@ -48,6 +57,7 @@ except ImportError:
         from simconcolic import BinaryAnalyzer as Manticore
         from simconcolic import Plugin
         MANTICORE_AVAILABLE = True
+        MANTICORE_TYPE = "simconcolic"
         logging.getLogger(__name__).info("Using simconcolic as Manticore replacement")
     except ImportError:
         MANTICORE_AVAILABLE = False
@@ -441,7 +451,11 @@ except ImportError:
             def will_execute_instruction_callback(self, state, pc, insn):
                 """Callback before instruction execution."""
                 self.logger.debug(f"Executing instruction at 0x{pc:x}, state={state}, insn={insn}")
-        logging.getLogger(__name__).warning("Neither Manticore nor simconcolic available")
+        import platform
+        if platform.system() == 'Windows':
+            logging.getLogger(__name__).info("Using angr for symbolic execution on Windows (manticore is Linux-only)")
+        else:
+            logging.getLogger(__name__).warning("Neither Manticore nor simconcolic available")
 
 try:
     import lief
@@ -479,7 +493,11 @@ class ConcolicExecutionEngine:
         if MANTICORE_AVAILABLE:
             self.logger.info("Concolic execution dependencies available")
         else:
-            self.logger.error("Concolic execution dependency missing: manticore not installed")
+            import platform
+            if platform.system() == 'Windows':
+                self.logger.info("Concolic execution via manticore not available on Windows - use Symbolic Execution (angr) instead")
+            else:
+                self.logger.error("Concolic execution dependency missing: manticore not installed")
 
     def explore_paths(self, target_address: Optional[int] = None, avoid_addresses: Optional[List[int]] = None) -> Dict[str, Any]:
         """
@@ -493,7 +511,11 @@ class ConcolicExecutionEngine:
             dict: Exploration results including discovered paths and inputs
         """
         if not self.manticore_available:
-            return {"error": "Required dependencies not available. Please install manticore."}
+            import platform
+            if platform.system() == 'Windows':
+                return {"error": "Concolic execution via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."}
+            else:
+                return {"error": "Required dependencies not available. Please install manticore."}
 
         try:
             self.logger.info("Starting concolic execution on %s", self.binary_path)
@@ -617,7 +639,11 @@ class ConcolicExecutionEngine:
             dict: Bypass results including inputs that bypass license checks
         """
         if not self.manticore_available:
-            return {"error": "Required dependencies not available"}
+            import platform
+            if platform.system() == 'Windows':
+                return {"error": "License bypass via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."}
+            else:
+                return {"error": "Required dependencies not available"}
 
         try:
             self.logger.info("Finding license bypass for %s", self.binary_path)
@@ -902,29 +928,82 @@ class ConcolicExecutionEngine:
                             self.analysis_data['interesting_addresses'].add(pc)
 
                 def _check_for_vulnerability(self, state, pc, insn):
-                    """Check for potential vulnerabilities."""
+                    """Check for potential vulnerabilities using execution state."""
                     vuln = None
 
-                    # Check for dangerous function calls
-                    if hasattr(insn, 'mnemonic') and insn.mnemonic == 'call':
-                        # Simplified check - real implementation would resolve call targets
-                        vuln = {
-                            'type': 'dangerous_call',
-                            'address': hex(pc),
-                            'description': 'Potentially dangerous function call'
-                        }
+                    try:
+                        # Use state information for vulnerability detection
+                        stack_ptr = state.cpu.RSP if hasattr(state.cpu, 'RSP') else state.cpu.ESP if hasattr(state.cpu, 'ESP') else None
+
+                        # Check for dangerous function calls
+                        if hasattr(insn, 'mnemonic') and insn.mnemonic == 'call':
+                            # Analyze call based on state
+                            call_target = None
+                            if hasattr(insn, 'operands') and insn.operands:
+                                try:
+                                    call_target = insn.operands[0].value
+                                except:
+                                    pass
+
+                            vuln = {
+                                'type': 'dangerous_call',
+                                'address': hex(pc),
+                                'call_target': hex(call_target) if call_target else 'indirect',
+                                'stack_ptr': hex(stack_ptr) if stack_ptr else 'unknown',
+                                'description': f'Function call at {hex(pc)} with stack at {hex(stack_ptr) if stack_ptr else "unknown"}'
+                            }
+
+                        # Check for potential buffer overflows using state
+                        elif hasattr(insn, 'mnemonic') and insn.mnemonic in ['mov', 'rep movsb', 'strcpy']:
+                            if stack_ptr:
+                                # Check if writing near stack boundaries
+                                vuln = {
+                                    'type': 'potential_overflow',
+                                    'address': hex(pc),
+                                    'stack_ptr': hex(stack_ptr),
+                                    'instruction': str(insn),
+                                    'description': f'Potential buffer operation at {hex(pc)}'
+                                }
+
+                        # Check for control flow changes
+                        elif hasattr(insn, 'mnemonic') and insn.mnemonic in ['jmp', 'ret']:
+                            # Analyze control flow using state
+                            vuln = {
+                                'type': 'control_flow',
+                                'address': hex(pc),
+                                'state_id': getattr(state, 'id', 'unknown'),
+                                'description': f'Control flow change at {hex(pc)}'
+                            }
+
+                    except Exception as e:
+                        # Fallback for analysis errors
+                        self.logger.debug(f"Vulnerability analysis error: {e}")
 
                     return vuln
 
                 def will_fork_state_callback(self, state, expression, solutions, *args, **kwargs):
                     """Track constraints when state forks."""
                     try:
-                        # Record path constraints
+                        # Record path constraints with additional context
                         constraint_str = str(expression) if expression else "unknown"
+
+                        # Extract additional context from args and kwargs
+                        fork_context = {
+                            'additional_args': len(args) if args else 0,
+                            'context_info': {}
+                        }
+
+                        # Process any additional context from kwargs
+                        if kwargs:
+                            for key, value in kwargs.items():
+                                if key in ['reason', 'depth', 'branch_type']:
+                                    fork_context['context_info'][key] = str(value)
+
                         self.analysis_data['constraints'][state.id] = {
                             'pc': hex(state.cpu.PC),
                             'constraint': constraint_str,
-                            'solutions': len(solutions) if solutions else 0
+                            'solutions': len(solutions) if solutions else 0,
+                            'fork_context': fork_context
                         }
                     except Exception as e:
                         self.logger.debug(f"Failed to record constraint: {e}")

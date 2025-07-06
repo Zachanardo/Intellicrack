@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Real Model Deployment Validation
 
 Validates that the synthetic training system has been completely replaced
@@ -9,8 +27,7 @@ with the real licensing model system.
 import json
 import logging
 import os
-from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 import joblib
 
@@ -260,20 +277,20 @@ def print_validation_report(results: Dict[str, bool]):
     status = "✅ PASSED" if all_passed else "❌ FAILED"
     print(f"Overall Status: {status}")
     
-    print(f"\nValidation Results:")
+    print("\nValidation Results:")
     for check, passed in results.items():
         status_icon = "✅" if passed else "❌"
         check_name = check.replace('_', ' ').title()
         print(f"  {status_icon} {check_name}: {'PASSED' if passed else 'FAILED'}")
     
     if all_passed:
-        print(f"\n🎉 SUCCESS: Real licensing model system is fully deployed!")
-        print(f"   • Synthetic training system completely removed")
-        print(f"   • Real ML model trained on actual binaries")
-        print(f"   • All model files deployed and functional")
-        print(f"   • No synthetic/fake data detected")
+        print("\n🎉 SUCCESS: Real licensing model system is fully deployed!")
+        print("   • Synthetic training system completely removed")
+        print("   • Real ML model trained on actual binaries")
+        print("   • All model files deployed and functional")
+        print("   • No synthetic/fake data detected")
     else:
-        print(f"\n⚠️  ISSUES DETECTED: Some validation checks failed")
+        print("\n⚠️  ISSUES DETECTED: Some validation checks failed")
         failed_checks = [check for check, passed in results.items() if not passed]
         print(f"   Failed checks: {', '.join(failed_checks)}")
     

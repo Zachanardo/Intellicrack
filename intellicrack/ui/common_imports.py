@@ -1,3 +1,4 @@
+"""Common imports module for UI components."""
 from intellicrack.logger import logger
 
 """
@@ -452,8 +453,26 @@ except ImportError as e:
             def setJoinStyle(self, join):
                 self.join_style = join
         return Pen(color, width)
-    def handle_key_event(event): return (0, 0, '')
-    def handle_mouse_event(event): return (0, 0, 0, 0)
+    def handle_key_event(event):
+        """Extract key information from a key event in fallback mode.
+        
+        Args:
+            event: Key event object (unused in fallback)
+            
+        Returns:
+            tuple: Default values (0, 0, '') representing key code, modifiers, and text
+        """
+        return (0, 0, '')
+    def handle_mouse_event(event):
+        """Extract mouse information from a mouse event in fallback mode.
+        
+        Args:
+            event: Mouse event object (unused in fallback)
+            
+        Returns:
+            tuple: Default values (0, 0, 0, 0) representing x, y, button, and buttons state
+        """
+        return (0, 0, 0, 0)
     def handle_paint_event(widget, event, func=None):
         """Handle paint events for UI components with exploit analysis visualization."""
         if not widget or not event:
@@ -498,7 +517,16 @@ except ImportError as e:
         except Exception:
             # Robust error handling for UI painting
             pass
-    def handle_resize_event(event): return (0, 0, 0, 0)
+    def handle_resize_event(event):
+        """Extract size information from resize event in fallback mode.
+        
+        Args:
+            event: Resize event object (unused in fallback)
+            
+        Returns:
+            tuple: Default values (0, 0, 0, 0) for new width/height and old width/height
+        """
+        return (0, 0, 0, 0)
     def create_standard_action(text, parent=None, slot=None, shortcut=None):
         """Create standard action for exploit tool menus."""
         class Action:
@@ -607,7 +635,13 @@ except ImportError as e:
             for i, button in enumerate(buttons):
                 group.addButton(button, i)
         return group
-    def get_desktop_geometry(): return (1920, 1080)
+    def get_desktop_geometry():
+        """Get desktop geometry in fallback mode.
+        
+        Returns:
+            tuple: Default screen resolution (1920, 1080)
+        """
+        return (1920, 1080)
     def create_frame_with_style(style=None, shadow=None):
         """Create styled frame for exploit analysis UI."""
         class Frame:
@@ -634,10 +668,27 @@ except ImportError as e:
                 self.margin = (left, top, right, bottom)
 
             def frameWidth(self):
+                """Calculate total frame width from line widths.
+                
+                Returns:
+                    int: Sum of line width and mid-line width
+                """
                 return self.line_width + self.mid_line_width
 
         return Frame()
-    def prompt_for_input(parent, title, label, default=""): return ("", False)
+    def prompt_for_input(parent, title, label, default=""):
+        """Prompt for input in fallback mode (no actual dialog).
+        
+        Args:
+            parent: Parent widget (unused)
+            title: Dialog title (unused)
+            label: Input label (unused)
+            default: Default text value (unused)
+            
+        Returns:
+            tuple: Empty string and False (no input provided)
+        """
+        return ("", False)
     def create_context_menu(actions, parent=None):
         """Create context menu for exploit tool interactions."""
         class ContextMenu:
@@ -671,7 +722,17 @@ except ImportError as e:
             for action in actions:
                 menu.addAction(action)
         return menu
-    def create_radio_button_set(labels, parent=None): return []
+    def create_radio_button_set(labels, parent=None):
+        """Create radio button set in fallback mode.
+        
+        Args:
+            labels: List of button labels (unused)
+            parent: Parent widget (unused)
+            
+        Returns:
+            list: Empty list (no buttons created in fallback)
+        """
+        return []
     def create_scroll_area_with_widget(widget):
         """Create scrollable area for exploit data display."""
         class ScrollArea:
@@ -882,8 +943,30 @@ except ImportError as e:
                 self.final_page = bool(final)
 
         return WizardPage(title, subtitle)
-    def configure_abstract_item_view(view, selection_mode=None): return view
-    def configure_abstract_scroll_area(area, h_policy=None, v_policy=None): return area
+    def configure_abstract_item_view(view, selection_mode=None):
+        """Configure item view in fallback mode.
+        
+        Args:
+            view: View to configure (returned unchanged)
+            selection_mode: Selection mode (unused)
+            
+        Returns:
+            The same view object passed in
+        """
+        return view
+
+    def configure_abstract_scroll_area(area, h_policy=None, v_policy=None):
+        """Configure scroll area in fallback mode.
+        
+        Args:
+            area: Scroll area to configure (returned unchanged)
+            h_policy: Horizontal scrollbar policy (unused)
+            v_policy: Vertical scrollbar policy (unused)
+            
+        Returns:
+            The same scroll area object passed in
+        """
+        return area
     # Create dummy classes for missing imports
     class MockQtClass:
         """

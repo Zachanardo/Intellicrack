@@ -2298,7 +2298,6 @@ Modified: [dim]{info.get('modified', 'Unknown')}[/dim]""",
             # Import necessary modules
             try:
                 from intellicrack.core.analysis.vulnerability_engine import VulnerabilityEngine
-                from intellicrack.utils.analysis.binary_analysis import analyze_binary
 
                 # Use Intellicrack's vulnerability engine
                 engine = VulnerabilityEngine()
@@ -3429,6 +3428,144 @@ show summary
             self.success(f"Sample batch script created: {filename}")
         except Exception as e:
             self.error(f"Failed to create sample script: {e}")
+
+
+    def display_rich_output(self, message: str, style: str = "info") -> None:
+        """Display rich formatted output using rprint."""
+        if not RICH_AVAILABLE:
+            print(message)
+            return
+
+        # Use rprint for colorized output
+        if style == "success":
+            rprint(f"[green]✅ {message}[/green]")
+        elif style == "error":
+            rprint(f"[red]❌ {message}[/red]")
+        elif style == "warning":
+            rprint(f"[yellow]⚠️  {message}[/yellow]")
+        else:
+            rprint(f"[blue]ℹ️  {message}[/blue]")
+
+    def show_analysis_layout(self) -> None:
+        """Show analysis results in a structured layout using Layout."""
+        if not RICH_AVAILABLE or not self.analysis_results:
+            print("Rich not available or no analysis results.")
+            return
+
+        console = Console()
+
+        # Create main layout
+        layout = Layout()
+        layout.split_column(
+            Layout(name="header", size=3),
+            Layout(name="body"),
+            Layout(name="footer", size=2)
+        )
+
+        # Split body into columns for different analysis types
+        layout["body"].split_row(
+            Layout(name="left"),
+            Layout(name="right")
+        )
+
+        # Header with centered title
+        header_content = Align.center("[bold blue]Analysis Results Dashboard[/bold blue]")
+        layout["header"].update(Panel(header_content, border_style="blue"))
+
+        # Left column - vulnerabilities
+        vuln_data = self.analysis_results.get('vulnerabilities', {})
+        vuln_count = len(vuln_data.get('vulnerabilities', [])) if isinstance(vuln_data, dict) else 0
+        vuln_panel = Panel(f"[red]Found {vuln_count} vulnerabilities[/red]", title="Security", border_style="red")
+        layout["left"].update(vuln_panel)
+
+        # Right column - file info
+        file_info = f"Binary: {os.path.basename(self.current_binary) if self.current_binary else 'None'}"
+        info_panel = Panel(file_info, title="File Information", border_style="green")
+        layout["right"].update(info_panel)
+
+        # Footer with status
+        footer_content = Align.center("[dim]Use 'show' command for detailed results[/dim]")
+        layout["footer"].update(footer_content)
+
+        console.print(layout)
+
+    def display_analysis_columns(self) -> None:
+        """Display analysis summary in columns using Columns."""
+        if not RICH_AVAILABLE or not self.analysis_results:
+            print("Rich not available or no analysis results.")
+            return
+
+        console = Console()
+
+        # Create summary panels for different analysis types
+        panels = []
+
+        # Vulnerabilities panel
+        vuln_data = self.analysis_results.get('vulnerabilities', {})
+        vuln_count = len(vuln_data.get('vulnerabilities', [])) if isinstance(vuln_data, dict) else 0
+        panels.append(Panel(f"[red]{vuln_count}[/red]\nvulnerabilities", title="Security Issues", border_style="red"))
+
+        # Protection analysis panel
+        protection_data = self.analysis_results.get('protections', {})
+        protection_count = len(protection_data) if isinstance(protection_data, (list, dict)) else 0
+        panels.append(Panel(f"[yellow]{protection_count}[/yellow]\nprotections", title="Protections", border_style="yellow"))
+
+        # String analysis panel
+        strings_data = self.analysis_results.get('strings', [])
+        string_count = len(strings_data) if isinstance(strings_data, list) else 0
+        panels.append(Panel(f"[blue]{string_count}[/blue]\nstrings found", title="String Analysis", border_style="blue"))
+
+        # File analysis panel
+        file_size = 0
+        if self.current_binary and os.path.exists(self.current_binary):
+            file_size = os.path.getsize(self.current_binary)
+        panels.append(Panel(f"[green]{file_size // 1024}[/green] KB\nfile size", title="File Info", border_style="green"))
+
+        # Display in columns
+        columns = Columns(panels, equal=True, expand=True)
+        console.print("\n")
+        console.print(Panel(columns, title="Analysis Summary", border_style="cyan"))
+        console.print("\n")
+
+    def show_syntax_highlighted_code(self, code: str, language: str = "python") -> None:
+        """Display syntax-highlighted code using Syntax."""
+        if not RICH_AVAILABLE:
+            print(f"Code ({language}):")
+            print(code)
+            return
+
+        console = Console()
+        syntax = Syntax(code, language, theme="monokai", line_numbers=True)
+        console.print(Panel(syntax, title=f"{language.title()} Code", border_style="cyan"))
+
+    def show_status_operation(self, message: str, operation_func, *args, **kwargs):
+        """Show operation with status spinner using Status."""
+        if not RICH_AVAILABLE:
+            print(f"Status: {message}")
+            return operation_func(*args, **kwargs)
+
+        console = Console()
+        # Use Status class directly for more control
+        with Status(f"[bold green]{message}...", console=console) as status:
+            result = operation_func(*args, **kwargs)
+            status.update("[bold blue]Operation completed")
+            return result
+
+    def create_custom_progress_column(self) -> Optional[ProgressColumn]:
+        """Create a custom progress column using ProgressColumn."""
+        if not RICH_AVAILABLE:
+            return None
+
+        class CustomProgressColumn(ProgressColumn):
+            """Custom progress column for detailed analysis progress."""
+
+            def render(self, task):
+                """Render the custom progress information."""
+                if task.percentage is not None:
+                    return f"[cyan]Analysis: {task.percentage:.1f}%[/cyan]"
+                return "[dim]Preparing...[/dim]"
+
+        return CustomProgressColumn()
 
 
 # Alias for easier importing

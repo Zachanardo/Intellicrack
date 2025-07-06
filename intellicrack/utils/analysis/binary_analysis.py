@@ -1088,7 +1088,10 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
 def _try_import_scapy():
     """Try to import scapy."""
     try:
-        import scapy.all
+        import scapy.all as scapy
+        # Store version information for debugging
+        if hasattr(scapy, '__version__'):
+            logger.debug(f"Scapy version {scapy.__version__} available for network analysis")
         return True
     except ImportError as e:
         logger.error("Import error in binary_analysis: %s", e)
@@ -1099,6 +1102,11 @@ def _try_import_pyshark():
     """Try to import pyshark."""
     try:
         import pyshark
+        # Store version information for debugging
+        if hasattr(pyshark, '__version__'):
+            logger.debug(f"Pyshark version {pyshark.__version__} available for network analysis")
+        else:
+            logger.debug("Pyshark available for network analysis")
         return True
     except ImportError as e:
         logger.error("Import error in binary_analysis: %s", e)

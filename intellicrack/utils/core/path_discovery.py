@@ -1,5 +1,9 @@
-"""
-Dynamic Path Discovery System
+"""Dynamic path discovery system for tools and system resources.
+
+This module provides comprehensive tool and resource discovery capabilities across
+different platforms. It locates security analysis tools, development environments,
+and system paths using multiple discovery strategies including environment variables,
+registry searches, and common installation locations.
 
 Copyright (C) 2025 Zachary Flint
 

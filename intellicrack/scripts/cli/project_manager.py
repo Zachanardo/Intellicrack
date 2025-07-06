@@ -279,6 +279,80 @@ class ProjectManager:
                 shutil.rmtree(project_path, ignore_errors=True)
             return None
 
+    def create_project_interactive(self) -> Optional[IntellicrackProject]:
+        """Create a new project interactively using Prompt.
+
+        Returns:
+            Created project or None if cancelled/failed
+        """
+        if not RICH_AVAILABLE or not self.console:
+            # Fallback to input() if rich not available
+            name = input("Project name: ").strip()
+            description = input("Project description (optional): ").strip()
+            return self.create_project(name, description)
+
+        try:
+            # Use Prompt for interactive project creation
+            self.console.print("[bold blue]Creating New Project[/bold blue]")
+
+            name = Prompt.ask("Enter project name", default="")
+            if not name or not name.isalnum():
+                self.console.print("[red]Invalid project name. Must be alphanumeric.[/red]")
+                return None
+
+            # Check if project already exists
+            if os.path.exists(os.path.join(self.projects_dir, name)):
+                self.console.print(f"[red]Project '{name}' already exists.[/red]")
+                return None
+
+            description = Prompt.ask("Enter project description (optional)", default="")
+
+            # Ask about template usage
+            available_templates = self._get_available_templates()
+            if available_templates:
+                template_choices = ["none"] + available_templates
+                template = Prompt.ask(
+                    "Select template",
+                    choices=template_choices,
+                    default="none"
+                )
+                template = None if template == "none" else template
+            else:
+                template = None
+
+            # Create the project
+            project = self.create_project(name, description, template)
+
+            if project:
+                self.console.print(f"[green]✓ Project '{name}' created successfully![/green]")
+                return project
+            else:
+                self.console.print(f"[red]✗ Failed to create project '{name}'[/red]")
+                return None
+
+        except KeyboardInterrupt:
+            self.console.print("\n[yellow]Project creation cancelled.[/yellow]")
+            return None
+        except Exception as e:
+            self.console.print(f"[red]Error during project creation: {e}[/red]")
+            return None
+
+    def _get_available_templates(self) -> List[str]:
+        """Get list of available project templates.
+        
+        Returns:
+            List of template names
+        """
+        templates = []
+        try:
+            if os.path.exists(self.templates_dir):
+                for file in os.listdir(self.templates_dir):
+                    if file.endswith('.json'):
+                        templates.append(file[:-5])  # Remove .json extension
+        except Exception:
+            pass
+        return sorted(templates)
+
     def load_project(self, name: str) -> Optional[IntellicrackProject]:
         """Load existing project.
 
@@ -334,11 +408,12 @@ class ProjectManager:
         except Exception:
             return False
 
-    def delete_project(self, name: str) -> bool:
+    def delete_project(self, name: str, confirm: bool = True) -> bool:
         """Delete project.
 
         Args:
             name: Project name
+            confirm: Whether to ask for confirmation (default: True)
 
         Returns:
             True if successful
@@ -347,6 +422,12 @@ class ProjectManager:
 
         if not os.path.exists(project_path):
             return False
+
+        # Ask for confirmation if using rich and confirm is enabled
+        if confirm and RICH_AVAILABLE and self.console:
+            if not Confirm.ask(f"[red]Are you sure you want to delete project '{name}'?[/red]"):
+                self.console.print("[yellow]Project deletion cancelled.[/yellow]")
+                return False
 
         try:
             # Create final backup
@@ -359,6 +440,9 @@ class ProjectManager:
 
             if self.current_project and self.current_project.name == name:
                 self.current_project = None
+
+            if RICH_AVAILABLE and self.console:
+                self.console.print(f"[green]Project '{name}' deleted successfully.[/green]")
 
             return True
 
@@ -458,26 +542,70 @@ class ProjectManager:
         try:
             import zipfile
 
-            with zipfile.ZipFile(export_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                # Add project metadata
-                project_data = project.to_dict()
-                zipf.writestr("project.json", json.dumps(project_data, indent=2))
+            # Count total files first for progress tracking
+            total_files = 0
+            for root, dirs, files in os.walk(project.path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    if not include_binaries and "binaries" in file_path:
+                        continue
+                    if "temp" in file_path:
+                        continue
+                    total_files += 1
 
-                # Add project files
-                for root, dirs, files in os.walk(project.path):
-                    for file in files:
-                        file_path = os.path.join(root, file)
+            if RICH_AVAILABLE:
+                console = Console()
+                with Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    BarColumn(),
+                    TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+                    console=console
+                ) as progress:
+                    export_task = progress.add_task(f"Exporting {project.name}...", total=total_files)
 
-                        # Skip binaries if not requested
-                        if not include_binaries and "binaries" in file_path:
-                            continue
+                    with zipfile.ZipFile(export_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                        # Add project metadata
+                        project_data = project.to_dict()
+                        zipf.writestr("project.json", json.dumps(project_data, indent=2))
 
-                        # Skip temp files
-                        if "temp" in file_path:
-                            continue
+                        # Add project files with progress
+                        for root, dirs, files in os.walk(project.path):
+                            for file in files:
+                                file_path = os.path.join(root, file)
 
-                        arc_path = os.path.relpath(file_path, project.path)
-                        zipf.write(file_path, arc_path)
+                                # Skip binaries if not requested
+                                if not include_binaries and "binaries" in file_path:
+                                    continue
+
+                                # Skip temp files
+                                if "temp" in file_path:
+                                    continue
+
+                                arc_path = os.path.relpath(file_path, project.path)
+                                zipf.write(file_path, arc_path)
+                                progress.advance(export_task)
+            else:
+                with zipfile.ZipFile(export_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    # Add project metadata
+                    project_data = project.to_dict()
+                    zipf.writestr("project.json", json.dumps(project_data, indent=2))
+
+                    # Add project files
+                    for root, dirs, files in os.walk(project.path):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+
+                            # Skip binaries if not requested
+                            if not include_binaries and "binaries" in file_path:
+                                continue
+
+                            # Skip temp files
+                            if "temp" in file_path:
+                                continue
+
+                            arc_path = os.path.relpath(file_path, project.path)
+                            zipf.write(file_path, arc_path)
 
             return True
 
@@ -627,6 +755,10 @@ class ProjectManager:
                 )
 
             self.console.print(table)
+
+            # Also display project structure as tree if current project is loaded
+            if self.current_project:
+                self.display_project_tree(self.current_project)
         else:
             print("\\nInteLLicrack Projects:")
             print("-" * 80)
@@ -643,6 +775,76 @@ class ProjectManager:
                 print(f"{project['name']:<15} {project['binary_count']:<8} {project['analysis_count']:<8} "
                       f"{size_str:<10} {modified_str:<16}")
             print()
+
+    def display_project_tree(self, project: IntellicrackProject) -> None:
+        """Display project structure as a tree.
+        
+        Args:
+            project: Project to display
+        """
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        tree = Tree(f"🗂️  [bold blue]{project.name}[/bold blue]")
+
+        # Add project info
+        info_node = tree.add("📋 Project Information")
+        info_node.add(f"📝 Description: {project.description or 'No description'}")
+        info_node.add(f"📅 Created: {project.created_time.strftime('%Y-%m-%d %H:%M')}")
+        info_node.add(f"📝 Modified: {project.modified_time.strftime('%Y-%m-%d %H:%M')}")
+
+        # Add binaries
+        if project.binaries:
+            binaries_node = tree.add(f"📦 Binaries ({len(project.binaries)})")
+            for binary in project.binaries[:10]:  # Limit to first 10
+                binary_name = os.path.basename(binary) if isinstance(binary, str) else str(binary)
+                binaries_node.add(f"🔧 {binary_name}")
+            if len(project.binaries) > 10:
+                binaries_node.add(f"... and {len(project.binaries) - 10} more")
+        else:
+            tree.add("📦 Binaries (0)")
+
+        # Add analysis results
+        if project.analysis_results:
+            analysis_node = tree.add(f"🔍 Analysis Results ({len(project.analysis_results)})")
+            for result_name in list(project.analysis_results.keys())[:5]:  # Limit to first 5
+                analysis_node.add(f"📊 {result_name}")
+            if len(project.analysis_results) > 5:
+                analysis_node.add(f"... and {len(project.analysis_results) - 5} more")
+        else:
+            tree.add("🔍 Analysis Results (0)")
+
+        # Add scripts
+        if project.scripts:
+            scripts_node = tree.add(f"📜 Scripts ({len(project.scripts)})")
+            for script in project.scripts[:5]:  # Limit to first 5
+                script_name = os.path.basename(script) if isinstance(script, str) else str(script)
+                scripts_node.add(f"📄 {script_name}")
+            if len(project.scripts) > 5:
+                scripts_node.add(f"... and {len(project.scripts) - 5} more")
+        else:
+            tree.add("📜 Scripts (0)")
+
+        # Add reports
+        if project.reports:
+            reports_node = tree.add(f"📑 Reports ({len(project.reports)})")
+            for report in project.reports[:5]:  # Limit to first 5
+                report_name = os.path.basename(report) if isinstance(report, str) else str(report)
+                reports_node.add(f"📄 {report_name}")
+            if len(project.reports) > 5:
+                reports_node.add(f"... and {len(project.reports) - 5} more")
+        else:
+            tree.add("📑 Reports (0)")
+
+        # Add tags if any
+        if project.tags:
+            tags_node = tree.add(f"🏷️  Tags ({len(project.tags)})")
+            for tag in project.tags:
+                tags_node.add(f"🔖 {tag}")
+
+        self.console.print()
+        self.console.print(Panel(tree, title=f"Project Structure: {project.name}", border_style="green"))
+        self.console.print()
 
     def cleanup_workspace(self) -> int:
         """Clean up workspace (temp files, old backups, etc.).

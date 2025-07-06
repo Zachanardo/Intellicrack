@@ -306,6 +306,10 @@ class TestModelBackendValidation(unittest.TestCase):
         """Test model comparison functionality."""
         models = ["model1", "model2"]
         
+        # Validate model list
+        self.assertIsInstance(models, list)
+        self.assertEqual(len(models), 2)
+        
         with patch('intellicrack.ai.llm_backends.OpenAIBackend') as MockOpenAI, \
              patch('intellicrack.ai.llm_backends.PyTorchLLMBackend') as MockPyTorch:
             

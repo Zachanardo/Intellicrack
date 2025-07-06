@@ -1,3 +1,4 @@
+"""License protocol handler for processing license validation requests."""
 import logging
 import threading
 from abc import ABC, abstractmethod

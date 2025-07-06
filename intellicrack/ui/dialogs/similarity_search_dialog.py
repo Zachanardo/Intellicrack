@@ -1,3 +1,4 @@
+"""Similarity search dialog for finding similar code patterns."""
 import json
 import logging
 import os

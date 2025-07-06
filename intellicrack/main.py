@@ -1,3 +1,4 @@
+"""Main entry point for the Intellicrack binary analysis platform."""
 import logging
 import os
 import sys
@@ -49,9 +50,16 @@ if os.name == 'nt':
     # Suppress Qt font warnings to reduce console noise
     os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.fonts=false'
 
-    # Force software rendering if not already set (for compatibility)
+    # Force software rendering for Windows (especially Intel Arc compatibility)
     if 'QT_OPENGL' not in os.environ:
         os.environ['QT_OPENGL'] = 'software'
+    
+    # Additional Intel Arc compatibility settings
+    gpu_vendor = os.environ.get('INTELLICRACK_GPU_VENDOR', 'Unknown')
+    if gpu_vendor == 'Intel':
+        os.environ['QT_OPENGL'] = 'software'  # Always force software for Intel
+        os.environ['QT_QUICK_BACKEND'] = 'software'
+        os.environ['QT_ANGLE_PLATFORM'] = 'warp'
 
 # Comprehensive logging disabled for Qt compatibility
 # The comprehensive logging system interferes with Qt's window display mechanisms

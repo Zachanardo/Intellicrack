@@ -72,8 +72,17 @@ def check_dependencies() -> Dict[str, bool]:
         test_tensor = tensorflow.constant([[1.0, 2.0], [3.0, 4.0]])
         test_result = tensorflow.reduce_sum(test_tensor)
 
-        dependencies['TensorFlow'] = True
-        logger.info(f"TensorFlow {tf_version} verified (GPU: {gpu_available})")
+        # Validate tensor operation result
+        expected_sum = 10.0  # 1.0 + 2.0 + 3.0 + 4.0
+        actual_sum = float(test_result.numpy())
+
+        if abs(actual_sum - expected_sum) < 1e-6:
+            dependencies['TensorFlow'] = True
+            logger.info(f"TensorFlow {tf_version} verified (GPU: {gpu_available}, tensor ops: ✓)")
+        else:
+            dependencies['TensorFlow'] = False
+            logger.error(f"TensorFlow tensor operation failed: expected {expected_sum}, got {actual_sum}")
+            return dependencies
 
         # Check if models can be loaded
         if tensorflow.saved_model.contains_saved_model('.'):
@@ -100,8 +109,29 @@ def check_dependencies() -> Dict[str, bool]:
         model_params = llama_cpp.llama_model_params()
         context_params = llama_cpp.llama_context_params()
 
-        dependencies['llama-cpp-python'] = True
-        logger.info("LLM Manager available with llama-cpp backend")
+        # Validate parameter structures are properly initialized
+        if hasattr(model_params, 'n_gpu_layers') and hasattr(context_params, 'n_ctx'):
+            # Test parameter modification to ensure they're functional
+            try:
+                original_gpu_layers = model_params.n_gpu_layers
+                original_ctx_size = context_params.n_ctx
+
+                # Temporarily modify parameters to test functionality
+                model_params.n_gpu_layers = 0
+                context_params.n_ctx = 512
+
+                # Restore original values
+                model_params.n_gpu_layers = original_gpu_layers
+                context_params.n_ctx = original_ctx_size
+
+                dependencies['llama-cpp-python'] = True
+                logger.info(f"LLM Manager available with llama-cpp backend (ctx_size: {original_ctx_size}, gpu_layers: {original_gpu_layers})")
+            except Exception as param_error:
+                dependencies['llama-cpp-python'] = False
+                logger.error(f"llama-cpp parameter validation failed: {param_error}")
+        else:
+            dependencies['llama-cpp-python'] = False
+            logger.error("llama-cpp parameters missing required attributes")
     except ImportError:
         dependencies['llama-cpp-python'] = False
         logger.warning("LLM Manager not available")
@@ -213,8 +243,8 @@ def create_minimal_qemu_disk() -> Optional[Path]:
 
 def check_protection_models() -> bool:
     """Check if protection detection models exist."""
-    # ML models removed - using LLM-only approach with DIE for protection detection
-    logger.info("Protection detection using DIE (Detect It Easy) - ML models removed")
+    # ML models removed - using LLM-only approach with native ICP Engine for protection detection
+    logger.info("Protection detection using native ICP Engine - ML models removed")
     return True
 
 def validate_flask_server() -> Dict[str, any]:
@@ -281,8 +311,25 @@ def validate_tensorflow_models() -> Dict[str, any]:
         test_input = tf.constant([[1.0] * 10])
         test_output = test_model(test_input)
 
-        tf_info['model_building'] = True
-        tf_info['status'] = True
+        # Validate model output
+        if test_output is not None and hasattr(test_output, 'shape'):
+            expected_shape = (1, 1)  # Single prediction output
+            if test_output.shape == expected_shape:
+                output_value = float(test_output.numpy()[0][0])
+                if 0.0 <= output_value <= 1.0:  # Valid sigmoid output
+                    tf_info['model_building'] = True
+                    tf_info['model_prediction_test'] = f'✓ (output: {output_value:.3f})'
+                else:
+                    tf_info['model_building'] = False
+                    tf_info['model_prediction_test'] = f'✗ Invalid output range: {output_value}'
+            else:
+                tf_info['model_building'] = False
+                tf_info['model_prediction_test'] = f'✗ Wrong output shape: {test_output.shape} vs {expected_shape}'
+        else:
+            tf_info['model_building'] = False
+            tf_info['model_prediction_test'] = '✗ No valid output'
+
+        tf_info['status'] = tf_info['model_building']
 
         return tf_info
     except Exception as e:
@@ -316,9 +363,27 @@ def validate_llama_cpp() -> Dict[str, any]:
         # Test parameter creation
         try:
             params = llama_cpp.llama_model_default_params()
-            llama_info['default_params_available'] = True
-        except:
+
+            # Validate parameter structure
+            if hasattr(params, 'n_ctx') and hasattr(params, 'n_batch'):
+                llama_info['default_params_available'] = True
+                llama_info['default_context_size'] = getattr(params, 'n_ctx', 'unknown')
+                llama_info['default_batch_size'] = getattr(params, 'n_batch', 'unknown')
+
+                # Test parameter modification
+                try:
+                    original_ctx = params.n_ctx
+                    params.n_ctx = 1024  # Test modification
+                    params.n_ctx = original_ctx  # Restore
+                    llama_info['params_modifiable'] = True
+                except:
+                    llama_info['params_modifiable'] = False
+            else:
+                llama_info['default_params_available'] = False
+                llama_info['error'] = 'Default parameters missing required attributes'
+        except Exception as e:
             llama_info['default_params_available'] = False
+            llama_info['error'] = f'Parameter creation failed: {e}'
 
         return llama_info
     except Exception as e:

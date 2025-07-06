@@ -719,6 +719,272 @@ class TutorialSystem:
             print("  tutorial quit     - Quit current tutorial")
             print("  tutorial help     - Show this help")
 
+    def display_tutorial_cards(self) -> None:
+        """Display available tutorials as cards using Columns."""
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        # Create tutorial cards
+        cards = []
+        for tutorial in self.tutorials.values():
+            # Determine difficulty color
+            diff_colors = {
+                "beginner": "green",
+                "intermediate": "yellow",
+                "advanced": "red"
+            }
+            diff_color = diff_colors.get(tutorial.difficulty, "white")
+
+            # Create card content
+            card_content = f"[bold {diff_color}]{tutorial.difficulty.title()}[/bold {diff_color}]\n"
+            card_content += f"⏱️ {tutorial.estimated_time} min\n"
+            card_content += f"📚 {len(tutorial.steps)} steps\n\n"
+            card_content += f"[dim]{tutorial.description[:50]}...[/dim]" if len(tutorial.description) > 50 else f"[dim]{tutorial.description}[/dim]"
+
+            # Check completion status
+            completion = self.tutorial_progress.get(tutorial.name, {"completed": False, "progress": 0})
+            if completion["completed"]:
+                border_style = "green"
+                title_prefix = "✅ "
+            elif completion["progress"] > 0:
+                border_style = "yellow"
+                title_prefix = "🔄 "
+            else:
+                border_style = "blue"
+                title_prefix = "📖 "
+
+            card = Panel(
+                card_content,
+                title=f"{title_prefix}{tutorial.title}",
+                border_style=border_style,
+                width=25
+            )
+            cards.append(card)
+
+        # Display cards in columns
+        if cards:
+            columns = Columns(cards, equal=True, expand=False)
+            self.console.print(columns)
+
+    def display_centered_tutorial_header(self, tutorial: Tutorial) -> None:
+        """Display tutorial header with centered alignment using Align."""
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        # Create header content
+        header_text = Text()
+        header_text.append(f"📚 {tutorial.title}\n", style="bold blue")
+        header_text.append(f"Difficulty: {tutorial.difficulty.title()} | ", style="cyan")
+        header_text.append(f"Estimated time: {tutorial.estimated_time} minutes\n", style="cyan")
+        header_text.append(f"{tutorial.description}", style="dim")
+
+        # Center the header using Align
+        centered_header = Align.center(header_text)
+
+        # Wrap in a panel and display
+        header_panel = Panel(
+            centered_header,
+            title="🎓 Tutorial Information",
+            border_style="blue",
+            padding=(1, 2)
+        )
+
+        self.console.print(header_panel)
+
+    def show_tutorial_progress_bar(self, tutorial_name: str) -> None:
+        """Show tutorial progress using Progress bar."""
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        tutorial = self.tutorials.get(tutorial_name)
+        if not tutorial:
+            return
+
+        progress_data = self.tutorial_progress.get(tutorial_name, {"progress": 0})
+        current_step = progress_data.get("progress", 0)
+        total_steps = len(tutorial.steps)
+
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            console=self.console
+        ) as progress:
+            task = progress.add_task(f"Tutorial: {tutorial.title}", total=total_steps)
+            progress.update(task, completed=current_step)
+
+    def display_step_with_syntax(self, step: TutorialStep) -> None:
+        """Display tutorial step with syntax highlighting using Syntax."""
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        # Display step title and description
+        step_panel = Panel(
+            f"[bold cyan]{step.title}[/bold cyan]\n\n{step.description}",
+            title="📖 Tutorial Step",
+            border_style="blue"
+        )
+        self.console.print(step_panel)
+
+        # Display commands with syntax highlighting
+        if step.commands:
+            for cmd in step.commands:
+                syntax = Syntax(cmd, "bash", theme="monokai", line_numbers=False)
+                cmd_panel = Panel(
+                    syntax,
+                    title="💻 Command to Run",
+                    border_style="green"
+                )
+                self.console.print(cmd_panel)
+
+        # Display explanation if available
+        if step.explanation:
+            explanation_panel = Panel(
+                step.explanation,
+                title="💡 Explanation",
+                border_style="yellow"
+            )
+            self.console.print(explanation_panel)
+
+    def interactive_tutorial_selection(self) -> Optional[str]:
+        """Interactive tutorial selection using Prompt."""
+        if not RICH_AVAILABLE or not self.console:
+            return None
+
+        tutorial_names = list(self.tutorials.keys())
+        if not tutorial_names:
+            return None
+
+        # Show available tutorials
+        self.console.print("[bold cyan]Available Tutorials:[/bold cyan]")
+        for i, name in enumerate(tutorial_names, 1):
+            tutorial = self.tutorials[name]
+            self.console.print(f"  {i}. {tutorial.title} ({tutorial.difficulty})")
+
+        # Get user selection
+        try:
+            selection = IntPrompt.ask(
+                "Select tutorial number",
+                choices=[str(i) for i in range(1, len(tutorial_names) + 1)]
+            )
+            return tutorial_names[selection - 1]
+        except (KeyboardInterrupt, ValueError):
+            return None
+
+    def confirm_tutorial_reset(self, tutorial_name: str) -> bool:
+        """Confirm tutorial reset using Confirm."""
+        if not RICH_AVAILABLE or not self.console:
+            return False
+
+        tutorial = self.tutorials.get(tutorial_name)
+        if not tutorial:
+            return False
+
+        return Confirm.ask(
+            f"[yellow]Reset progress for tutorial '{tutorial.title}'?[/yellow]",
+            default=False
+        )
+
+    def get_custom_tutorial_settings(self) -> Dict[str, Any]:
+        """Get custom tutorial settings using Prompt."""
+        if not RICH_AVAILABLE or not self.console:
+            return {}
+
+        settings = {}
+
+        # Get custom settings from user
+        settings['auto_advance'] = Confirm.ask("Enable auto-advance to next step?", default=False)
+        settings['show_hints'] = Confirm.ask("Show hints automatically?", default=True)
+
+        if Confirm.ask("Set custom step timeout?", default=False):
+            settings['step_timeout'] = IntPrompt.ask("Step timeout (seconds)", default=30)
+
+        difficulty_filter = Prompt.ask(
+            "Filter tutorials by difficulty",
+            choices=["all", "beginner", "intermediate", "advanced"],
+            default="all"
+        )
+        settings['difficulty_filter'] = difficulty_filter
+
+        return settings
+
+    def display_tutorials_table(self) -> None:
+        """Display tutorials in a formatted table using Table."""
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        table = Table(title="📚 Available Tutorials", show_header=True, header_style="bold magenta")
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Title", style="blue")
+        table.add_column("Difficulty", style="yellow")
+        table.add_column("Duration", style="green", justify="right")
+        table.add_column("Steps", style="white", justify="center")
+        table.add_column("Status", style="magenta")
+
+        for name, tutorial in self.tutorials.items():
+            # Get completion status
+            progress_data = self.tutorial_progress.get(name, {"completed": False, "progress": 0})
+            if progress_data["completed"]:
+                status = "✅ Complete"
+            elif progress_data["progress"] > 0:
+                status = f"🔄 {progress_data['progress']}/{len(tutorial.steps)}"
+            else:
+                status = "📖 Not Started"
+
+            table.add_row(
+                name,
+                tutorial.title,
+                tutorial.difficulty.title(),
+                f"{tutorial.estimated_time} min",
+                str(len(tutorial.steps)),
+                status
+            )
+
+        self.console.print(table)
+
+    def display_tutorial_structure_tree(self, tutorial_name: str) -> None:
+        """Display tutorial structure as a tree using Tree."""
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        tutorial = self.tutorials.get(tutorial_name)
+        if not tutorial:
+            return
+
+        # Create main tutorial tree
+        tree = Tree(f"📚 [bold blue]{tutorial.title}[/bold blue]")
+
+        # Add tutorial metadata
+        info_node = tree.add("ℹ️ [bold cyan]Tutorial Information[/bold cyan]")
+        info_node.add(f"📊 Difficulty: {tutorial.difficulty.title()}")
+        info_node.add(f"⏱️ Estimated Time: {tutorial.estimated_time} minutes")
+        info_node.add(f"📝 Description: {tutorial.description}")
+
+        # Add tutorial steps
+        steps_node = tree.add(f"📋 [bold yellow]Tutorial Steps ({len(tutorial.steps)})[/bold yellow]")
+
+        for i, step in enumerate(tutorial.steps, 1):
+            step_icon = "✅" if i <= self.tutorial_progress.get(tutorial_name, {}).get("progress", 0) else "📖"
+            step_node = steps_node.add(f"{step_icon} [cyan]Step {i}: {step.title}[/cyan]")
+
+            # Add step details
+            if step.commands:
+                commands_node = step_node.add("💻 Commands")
+                for cmd in step.commands[:3]:  # Limit to first 3 commands
+                    commands_node.add(f"▶️ {cmd}")
+                if len(step.commands) > 3:
+                    commands_node.add(f"... and {len(step.commands) - 3} more")
+
+            if step.hints:
+                hints_node = step_node.add("💡 Hints Available")
+                for hint in step.hints[:2]:  # Limit to first 2 hints
+                    hints_node.add(f"💭 {hint}")
+                if len(step.hints) > 2:
+                    hints_node.add(f"... and {len(step.hints) - 2} more")
+
+        self.console.print(tree)
+
 
 def create_tutorial_system(cli_instance=None) -> TutorialSystem:
     """Create tutorial system instance."""

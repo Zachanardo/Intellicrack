@@ -1,3 +1,4 @@
+"""Plugin path management utilities for locating and managing plugin directories."""
 from intellicrack.logger import logger
 
 """

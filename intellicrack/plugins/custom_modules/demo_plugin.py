@@ -1,3 +1,34 @@
+"""
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""Enhanced Demo Plugin for Intellicrack.
+
+This module demonstrates comprehensive integration with Intellicrack platform,
+showcasing modern Python practices with type hints, error handling, progress
+reporting, file validation, multiple analysis techniques, configuration
+management, and metadata handling.
+
+Author: Intellicrack Development Team
+Version: 2.0.0
+License: GPL v3
+Compatibility: Intellicrack 1.0+
+"""
+
 import hashlib
 import logging
 import os
@@ -11,18 +42,6 @@ from ...utils.analysis.entropy_utils import calculate_byte_entropy
 from ...utils.core.string_utils import extract_ascii_strings
 from ..plugin_base import BasePlugin, PluginMetadata, create_plugin_info
 
-"""
-Enhanced Demo Plugin for Intellicrack
-Comprehensive example showing modern plugin development practices
-
-Author: Intellicrack Development Team
-Version: 2.0.0
-License: GPL v3
-Compatibility: Intellicrack 1.0+
-"""
-
-
-
 # Plugin metadata
 PLUGIN_NAME = "Enhanced Demo Plugin"
 PLUGIN_VERSION = "2.0.0"
@@ -31,8 +50,7 @@ PLUGIN_DESCRIPTION = "Comprehensive demonstration of Intellicrack plugin capabil
 PLUGIN_CATEGORIES = ["demo", "analysis", "education"]
 
 class DemoPlugin(BasePlugin):
-    """
-    Enhanced demo plugin that demonstrates comprehensive integration with Intellicrack.
+    """Enhanced demo plugin that demonstrates comprehensive integration with Intellicrack.
 
     This plugin showcases:
     - Modern Python practices with type hints
@@ -689,8 +707,7 @@ class DemoPlugin(BasePlugin):
         ]
 
     def run(self, *args, **kwargs) -> Dict[str, Any]:
-        """
-        Main plugin execution method required by BasePlugin.
+        """Execute the main plugin method required by BasePlugin.
 
         Routes to appropriate method based on operation type.
 
@@ -700,6 +717,7 @@ class DemoPlugin(BasePlugin):
 
         Returns:
             Dictionary containing execution results
+
         """
         operation = kwargs.get('operation', 'analyze')
         target = kwargs.get('target') or (args[0] if args else None)

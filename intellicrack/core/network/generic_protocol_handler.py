@@ -1,3 +1,4 @@
+"""Generic protocol handler for network communication and data processing."""
 import socket
 import threading
 import time

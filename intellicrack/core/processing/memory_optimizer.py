@@ -1,3 +1,4 @@
+"""Memory optimizer for managing memory usage during analysis operations."""
 import gc
 import logging
 import os

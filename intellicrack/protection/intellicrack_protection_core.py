@@ -8,16 +8,16 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
+import asyncio
 import json
 import os
-import subprocess
 import sys
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 from typing import Dict, List, Optional
 
 from ..utils.logger import get_logger
+from .icp_backend import ICPBackend, ICPScanResult, ScanMode
 
 logger = get_logger(__name__)
 
@@ -70,7 +70,31 @@ class ProtectionAnalysis:
 
 class IntellicrackProtectionCore:
     """
-    Main class for detecting protections using Intellicrack's protection analysis engine
+    Main class for detecting protections using native ICP Engine integration.
+    
+    This class provides comprehensive protection detection capabilities by integrating
+    with the native die-python library instead of relying on external executables.
+    It can detect packers, protectors, compilers, licensing schemes, and other
+    binary protection mechanisms.
+    
+    The class serves as the primary interface for protection analysis throughout
+    Intellicrack, providing consistent results and comprehensive bypass
+    recommendations for detected protections.
+    
+    Key Features:
+    - Native die-python integration (no external processes)
+    - Comprehensive protection database with bypass strategies
+    - Support for PE, ELF, and other binary formats
+    - Entropy analysis and section-level detection
+    - Detailed metadata and confidence scoring
+    
+    Example:
+        detector = IntellicrackProtectionCore()
+        analysis = detector.detect_protections("target.exe")
+        for detection in analysis.detections:
+            print(f"Found: {detection.name} ({detection.type.value})")
+            for recommendation in detection.bypass_recommendations:
+                print(f"  - {recommendation}")
     """
 
     # Known protection schemes and their bypass recommendations
@@ -171,84 +195,36 @@ class IntellicrackProtectionCore:
 
     def __init__(self, engine_path: Optional[str] = None):
         """
-        Initialize protection detector
+        Initialize protection detector using native die-python integration
 
         Args:
-            engine_path: Path to protection engine executable. If None, will search common locations.
+            engine_path: Legacy parameter for compatibility, ignored in favor of native integration
         """
-        self.engine_path = self._find_engine_executable(engine_path)
+        self.engine_path = engine_path  # Keep for compatibility
+        self.icp_backend = ICPBackend()
         self._validate_engine_installation()
 
-    def _find_engine_executable(self, custom_path: Optional[str] = None) -> str:
-        """Find protection engine executable in various locations"""
-        if custom_path and os.path.exists(custom_path):
-            return custom_path
-
-        # Search paths in order of preference
-        search_paths = [
-            # Actual location in project
-            Path(__file__).parent.parent.parent / "tools" / "icp_engine" / "icp-engine.exe",
-
-            # Relative to this module
-            Path(__file__).parent.parent / "tools" / "icp_engine" / "icp-engine.exe",
-            Path(__file__).parent.parent / "tools" / "icp_engine" / "console" / "icp-engine.exe",
-
-            # In system PATH
-            "icp-engine.exe",
-            "icp-engine",
-
-            # Common installation locations
-            Path("C:/Program Files/Intellicrack/icp-engine.exe"),
-            Path("C:/Program Files (x86)/Intellicrack/icp-engine.exe"),
-            Path("C:/Tools/icp_engine/icp-engine.exe"),
-
-            # Portable installations
-            Path.home() / "Tools" / "icp_engine" / "icp-engine.exe",
-            Path.home() / "Downloads" / "icp_engine" / "icp-engine.exe",
-        ]
-
-        for path in search_paths:
-            path_str = str(path)
-            if os.path.exists(path_str):
-                logger.info(f"Found protection engine at: {path_str}")
-                return path_str
-
-            # Try with shutil.which for PATH entries
-            import shutil
-            which_result = shutil.which(path_str)
-            if which_result:
-                logger.info(f"Found protection engine in PATH: {which_result}")
-                return which_result
-
-        # If not found, return expected location for user to install
-        expected_path = Path(__file__).parent.parent.parent / "tools" / "icp_engine" / "icp-engine.exe"
-        logger.warning(f"Protection engine not found. Please install to: {expected_path}")
-        return str(expected_path)
 
     def _validate_engine_installation(self):
-        """Validate that protection engine is properly installed and working"""
-        if not os.path.exists(self.engine_path):
-            logger.error(f"Protection engine executable not found at: {self.engine_path}")
-            logger.info("Please ensure Intellicrack protection engine is properly installed")
-            logger.info(f"Expected location: {os.path.dirname(self.engine_path)}")
-            return
-
+        """Validate that native die-python integration is working"""
         try:
-            # Test DIE execution
-            result = subprocess.run([self.engine_path, "--version"],
-                                    capture_output=True,
-                                    text=True,
-                                    timeout=5)
-            if result.returncode == 0:
-                logger.info(f"DIE version: {result.stdout.strip()}")
-            else:
-                logger.warning("DIE executable found but may not be working properly")
+            version = self.icp_backend.get_engine_version()
+            logger.info(f"ICP Engine: {version}")
+
+            if not self.icp_backend.is_die_python_available():
+                logger.error("die-python library not available or not working")
+                logger.info("Please install die-python: pip install die-python")
+                return False
+
+            logger.info("Native ICP Engine integration validated successfully")
+            return True
         except Exception as e:
-            logger.error(f"Error validating DIE: {e}")
+            logger.error(f"Error validating native ICP Engine: {e}")
+            return False
 
     def detect_protections(self, file_path: str) -> ProtectionAnalysis:
         """
-        Analyze a binary file for protections, packers, and licensing schemes
+        Analyze a binary file for protections, packers, and licensing schemes using native die-python
 
         Args:
             file_path: Path to the binary file to analyze
@@ -259,8 +235,8 @@ class IntellicrackProtectionCore:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        if not os.path.exists(self.engine_path):
-            logger.error("DIE not installed. Cannot perform analysis.")
+        if not self.icp_backend.is_die_python_available():
+            logger.error("Native ICP Engine not available. Cannot perform analysis.")
             return ProtectionAnalysis(
                 file_path=file_path,
                 file_type="Unknown",
@@ -268,71 +244,122 @@ class IntellicrackProtectionCore:
             )
 
         try:
-            # Convert WSL path to Windows path if needed
-            if file_path.startswith('/mnt/'):
-                # Convert /mnt/c/path to C:\path
-                windows_path = file_path.replace('/mnt/', '')
-                drive_letter = windows_path[0].upper()
-                windows_path = drive_letter + ':' + windows_path[1:].replace('/', '\\')
-                logger.debug(f"Converted WSL path {file_path} to Windows path {windows_path}")
-                analysis_path = windows_path
-            else:
-                analysis_path = file_path
+            # Use asyncio to run the async analysis method
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                # Run native die-python analysis
+                icp_result = loop.run_until_complete(
+                    self.icp_backend.analyze_file(file_path, ScanMode.DEEP, timeout=30.0)
+                )
+            finally:
+                loop.close()
 
-            # Run DIE with JSON output for easy parsing
-            cmd = [self.engine_path, "-j", analysis_path]
-            result = subprocess.run(cmd,
-                                    capture_output=True,
-                                    text=True,
-                                    timeout=30)
-
-            if result.returncode != 0:
-                logger.error(f"DIE execution failed with code {result.returncode}")
-                logger.error(f"STDERR: {result.stderr}")
-                logger.error(f"STDOUT: {result.stdout}")
+            if icp_result.error:
+                logger.error(f"ICP analysis failed: {icp_result.error}")
                 return ProtectionAnalysis(
                     file_path=file_path,
                     file_type="Error",
                     architecture="Unknown"
                 )
 
-            # Parse JSON output
-            try:
-                # Skip any warning lines before JSON
-                output = result.stdout
-                json_start = output.find('{')
-                if json_start > 0:
-                    output = output[json_start:]
-                    logger.debug(f"Skipped {json_start} chars before JSON")
+            # Convert ICPScanResult to ProtectionAnalysis
+            return self._convert_icp_result(icp_result)
 
-                logger.debug(f"Protection engine output: {output[:500]}...")  # Log first 500 chars
-                engine_data = json.loads(output)
-            except json.JSONDecodeError as e:
-                logger.error(f"JSON decode error: {e}")
-                logger.error(f"Raw output: {result.stdout}")
-                # Fallback to text parsing if JSON fails
-                return self._parse_text_output(file_path, result.stdout)
-
-            # Extract analysis results
-            return self._parse_json_output(file_path, engine_data)
-
-        except subprocess.TimeoutExpired:
-            logger.error(f"DIE analysis timed out for: {file_path}")
-            return ProtectionAnalysis(
-                file_path=file_path,
-                file_type="Timeout",
-                architecture="Unknown"
-            )
         except Exception as e:
-            logger.error(f"Error analyzing file: {e}")
+            logger.error(f"Error analyzing file with native ICP Engine: {e}")
             return ProtectionAnalysis(
                 file_path=file_path,
                 file_type="Error",
                 architecture="Unknown"
             )
 
+    def _convert_icp_result(self, icp_result: ICPScanResult) -> ProtectionAnalysis:
+        """Convert native ICPScanResult to ProtectionAnalysis format.
+        
+        This method bridges the gap between the native die-python ICP backend
+        and the existing ProtectionAnalysis data structure used throughout
+        Intellicrack. It preserves all detection information while converting
+        to the expected format.
+        
+        Args:
+            icp_result: ICPScanResult from native die-python analysis
+            
+        Returns:
+            ProtectionAnalysis: Converted analysis in standard format
+        """
+        analysis = ProtectionAnalysis(
+            file_path=icp_result.file_path,
+            file_type="Unknown",
+            architecture="Unknown"
+        )
+
+        if not icp_result.file_infos:
+            return analysis
+
+        # Get primary file info (first one)
+        primary_info = icp_result.file_infos[0]
+        analysis.file_type = primary_info.filetype
+
+        # Determine architecture from file type
+        filetype_lower = primary_info.filetype.lower()
+        if "pe64" in filetype_lower or "64" in filetype_lower:
+            analysis.architecture = "x64"
+        elif "pe32" in filetype_lower or "32" in filetype_lower:
+            analysis.architecture = "x86"
+        elif "elf64" in filetype_lower:
+            analysis.architecture = "x64"
+        elif "elf32" in filetype_lower:
+            analysis.architecture = "x86"
+
+        # Process all detections
+        for detection in icp_result.all_detections:
+            det_type = self._categorize_detection(detection.type)
+
+            # Create detection result
+            det_result = DetectionResult(
+                name=detection.name,
+                version=detection.version if detection.version else None,
+                type=det_type,
+                confidence=detection.confidence * 100.0  # Convert to percentage
+            )
+
+            # Add bypass recommendations
+            det_result.bypass_recommendations = self._get_bypass_recommendations(detection.name)
+
+            # Set compiler info
+            if det_type == ProtectionType.COMPILER and not analysis.compiler:
+                analysis.compiler = f"{detection.name} {detection.version}" if detection.version else detection.name
+
+            # Set analysis flags
+            if det_type == ProtectionType.PACKER:
+                analysis.is_packed = True
+            elif det_type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR]:
+                analysis.is_protected = True
+            elif det_type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
+                analysis.is_protected = True
+
+            analysis.detections.append(det_result)
+
+        # Set protection flags from ICPScanResult
+        analysis.is_packed = icp_result.is_packed
+        analysis.is_protected = icp_result.is_protected
+
+        # Add metadata
+        analysis.metadata = {
+            "engine_version": self.icp_backend.get_engine_version(),
+            "scan_mode": "DEEP",
+            "native_integration": True
+        }
+
+        # Add entropy info if available
+        if hasattr(icp_result, 'metadata') and icp_result.metadata:
+            analysis.metadata.update(icp_result.metadata)
+
+        return analysis
+
     def _parse_json_output(self, file_path: str, engine_data: Dict) -> ProtectionAnalysis:
-        """Parse DIE JSON output into structured results"""
+        """Parse legacy JSON output into structured results (kept for compatibility)"""
         analysis = ProtectionAnalysis(file_path=file_path, file_type="Unknown", architecture="Unknown")
 
         # Extract detections from the new format
@@ -379,7 +406,7 @@ class IntellicrackProtectionCore:
                     name=name,
                     version=version if version else None,
                     type=det_type,
-                    confidence=100.0  # DIE detections are signature-based, so high confidence
+                    confidence=100.0  # Signature-based detections have high confidence
                 )
 
                 # Add bypass recommendations
@@ -419,7 +446,7 @@ class IntellicrackProtectionCore:
         return analysis
 
     def _parse_text_output(self, file_path: str, output: str) -> ProtectionAnalysis:
-        """Fallback parser for text output if JSON parsing fails"""
+        """Legacy fallback parser for text output (kept for compatibility)"""
         analysis = ProtectionAnalysis(file_path=file_path, file_type="PE", architecture="Unknown")
 
         lines = output.strip().split('\n')

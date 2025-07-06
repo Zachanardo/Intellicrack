@@ -421,6 +421,16 @@ class ModelManager:
         self.loaded_models = {}
         self.model_metadata = {}
         self.lock = threading.RLock()
+        self.gpu_info = None
+
+        # Get GPU information if available
+        if GPU_AUTOLOADER_AVAILABLE and get_gpu_info:
+            try:
+                self.gpu_info = get_gpu_info()
+                if self.gpu_info:
+                    logger.info(f"ModelManager initialized with GPU: {self.gpu_info}")
+            except Exception as e:
+                logger.debug(f"Could not get GPU info: {e}")
 
         os.makedirs(self.models_dir, exist_ok=True)
         self._load_model_metadata()
@@ -537,6 +547,26 @@ class ModelManager:
             backend = self.backends[model_type]
             model = backend.load_model(model_path)
 
+            # Move to GPU if available and optimize
+            if GPU_AUTOLOADER_AVAILABLE:
+                try:
+                    # Get optimal device
+                    device = get_device()
+                    if device != "cpu":
+                        # Move model to GPU
+                        if to_device:
+                            model = to_device(model, device)
+                            logger.info(f"Moved model {model_id} to {device}")
+
+                        # Apply GPU optimizations
+                        if optimize_for_gpu:
+                            optimized_model = optimize_for_gpu(model)
+                            if optimized_model is not None:
+                                model = optimized_model
+                                logger.info(f"Applied GPU optimizations to model {model_id}")
+                except Exception as e:
+                    logger.debug(f"Could not optimize model for GPU: {e}")
+
             # Cache and store
             self.cache.put(model_path, model)
             self.loaded_models[model_id] = model
@@ -552,6 +582,36 @@ class ModelManager:
 
         backend = self.backends[model_type]
         return backend.predict(model, input_data)
+
+    def predict_batch(self, model_id: str, batch_data: list) -> list:
+        """Make batch predictions with GPU optimization."""
+        model = self.load_model(model_id)
+        model_info = self.model_metadata[model_id]
+        model_type = model_info['type']
+
+        # Apply GPU optimization for batch processing if available
+        if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader and len(batch_data) > 1:
+            try:
+                # Try to optimize the model for batch processing
+                optimized_model = gpu_autoloader(model)
+                if optimized_model is not None:
+                    model = optimized_model
+                    logger.debug(f"Applied GPU batch optimization to model {model_id}")
+            except Exception as e:
+                logger.debug(f"Could not apply batch optimization: {e}")
+
+        # Process batch
+        backend = self.backends[model_type]
+        results = []
+        for data in batch_data:
+            try:
+                result = backend.predict(model, data)
+                results.append(result)
+            except Exception as e:
+                logger.error(f"Batch prediction error: {e}")
+                results.append(None)
+
+        return results
 
     def get_model_info(self, model_id: str) -> Dict[str, Any]:
         """Get information about a model."""

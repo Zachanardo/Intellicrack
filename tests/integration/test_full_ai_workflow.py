@@ -193,7 +193,7 @@ class TestFullAIWorkflow:
             mock_qemu.return_value = mock_vm
 
             test_results = qemu_manager.test_script_in_vm(
-                generated_script, 
+                generated_script,
                 str(target_binary),
                 vm_config={
                     "name": "test_vm",

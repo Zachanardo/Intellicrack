@@ -65,18 +65,55 @@ class IntellicrackHexProtectionIntegration(QObject):
 
             # Build command
             cmd = [protection_viewer_path, file_path]
-
-            # Note: Protection viewer doesn't support direct offset jumping via command line
-            # User will need to press 'H' and navigate manually
+            
+            # Handle offset parameter for better integration
+            if offset is not None:
+                # Try command-line offset support first
+                cmd.extend(['--offset', hex(offset)])
+                logger.info(f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer")
+                
+                # Create offset sync file for advanced integration
+                try:
+                    sync_dir = os.path.join(os.path.dirname(protection_viewer_path), 'sync')
+                    os.makedirs(sync_dir, exist_ok=True)
+                    sync_file = os.path.join(sync_dir, 'initial_offset.txt')
+                    with open(sync_file, 'w') as f:
+                        f.write(f"{offset}\n{hex(offset)}\n{file_path}")
+                    logger.debug(f"Created offset sync file: {sync_file}")
+                except (OSError, IOError) as e:
+                    logger.debug(f"Failed to create offset sync file: {e}")
+            else:
+                logger.info(f"Opening {file_path} in protection viewer (no specific offset)")
 
             # Start protection viewer
             self.engine_process = QProcess()
             self.engine_process.start(cmd[0], cmd[1:])
+            
+            # Schedule offset sync if process starts successfully and offset provided
+            if offset is not None:
+                self.engine_process.finished.connect(lambda: self._cleanup_sync_files())
+                # Set up timer to sync offset once process is running
+                QTimer.singleShot(2000, lambda: self.sync_offset_to_protection_viewer(offset))
 
-            logger.info(f"Opened {file_path} in protection viewer")
+            logger.info(f"Protection viewer process started for {file_path}")
 
         except Exception as e:
             logger.error(f"Error opening file in protection viewer: {e}")
+
+    def _cleanup_sync_files(self):
+        """Clean up temporary sync files after protection viewer closes."""
+        try:
+            protection_viewer_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "extensions", "engines", "protection_viewer", "protection_viewer.exe"
+            )
+            sync_dir = os.path.join(os.path.dirname(protection_viewer_path), 'sync')
+            sync_file = os.path.join(sync_dir, 'initial_offset.txt')
+            if os.path.exists(sync_file):
+                os.remove(sync_file)
+                logger.debug("Cleaned up offset sync file")
+        except (OSError, IOError) as e:
+            logger.debug(f"Failed to cleanup sync files: {e}")
 
     def sync_offset_from_protection_viewer(self, offset: int):
         """

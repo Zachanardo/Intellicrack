@@ -1,3 +1,4 @@
+"""Radare2 real-time analysis module for dynamic binary monitoring."""
 import hashlib
 import os
 import queue

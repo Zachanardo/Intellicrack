@@ -190,8 +190,10 @@ MULTIPROCESSING_AVAILABLE = check_import('multiprocessing')
 
 # Specialized security libraries
 VOLATILITY_AVAILABLE = check_import('volatility')
+VOLATILITY3_AVAILABLE = check_import('volatility3')
 BINWALK_AVAILABLE = check_import('binwalk')
 YARA_AVAILABLE = check_import('yara')
+YARA_PYTHON_AVAILABLE = check_import('yara')  # yara-python installs as 'yara'
 PYNACL_AVAILABLE = check_import('nacl')
 
 # Database libraries
@@ -251,7 +253,9 @@ def get_import_summary() -> Dict[str, Any]:
             'ghidra': GHIDRA_AVAILABLE,
             'frida': FRIDA_AVAILABLE,
             'yara': YARA_AVAILABLE,
+            'yara_python': YARA_PYTHON_AVAILABLE,
             'volatility': VOLATILITY_AVAILABLE,
+            'volatility3': VOLATILITY3_AVAILABLE,
             'binwalk': BINWALK_AVAILABLE
         },
         'cryptography': {
@@ -441,9 +445,13 @@ __all__ = [
     'LIEF_AVAILABLE',
     'PEFILE_AVAILABLE',
     'CAPSTONE_AVAILABLE',
+    'UNICORN_AVAILABLE',
     'ANGR_AVAILABLE',
     'FRIDA_AVAILABLE',
     'SCAPY_AVAILABLE',
     'REQUESTS_AVAILABLE',
-    'CRYPTO_AVAILABLE'
+    'CRYPTO_AVAILABLE',
+    'VOLATILITY3_AVAILABLE',
+    'YARA_PYTHON_AVAILABLE',
+    'BINWALK_AVAILABLE'
 ]

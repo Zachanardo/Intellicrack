@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Real-world test suite for multi-format binary analyzer
 
 Tests the analyzer with actual system files and comprehensive edge cases.
@@ -37,7 +55,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         # PE files (Windows executables)
         pe_candidates = [
             "/mnt/c/Windows/System32/notepad.exe",
-            "/mnt/c/Windows/System32/calc.exe", 
+            "/mnt/c/Windows/System32/calc.exe",
             "/mnt/c/Windows/System32/cmd.exe",
             "/mnt/c/Windows/System32/AgentService.exe"
         ]
@@ -90,7 +108,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         
         # Test format detection
         detected_format = self.analyzer.identify_format(pe_file)
-        self.assertIn(detected_format, ['PE', 'DOTNET'], 
+        self.assertIn(detected_format, ['PE', 'DOTNET'],
                      f"PE file should be detected as PE or DOTNET, got {detected_format}")
         
         # Test full analysis
@@ -102,7 +120,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         self.assertIn(result['format'], ['PE', 'DOTNET'])
         
         # Should not have errors for valid system file
-        self.assertNotIn('error', result, 
+        self.assertNotIn('error', result,
                         f"Real PE file analysis should not have errors: {result.get('error')}")
         
         # PE-specific validations
@@ -128,6 +146,10 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         # Test format detection
         detected_format = self.analyzer.identify_format(elf_file)
         self.assertEqual(detected_format, 'ELF')
+        
+        # Mock external dependencies if needed
+        mock_lief = MagicMock()
+        mock_lief.parse.return_value = MagicMock()
         
         # Test full analysis
         result = self.analyzer.analyze_binary(elf_file)
@@ -250,7 +272,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         analysis_time = end_time - start_time
         
         # Analysis should complete within reasonable time (10 seconds)
-        self.assertLess(analysis_time, 10.0, 
+        self.assertLess(analysis_time, 10.0,
                        f"Large file analysis took too long: {analysis_time:.2f}s")
         
         # Should still produce valid results
@@ -393,8 +415,12 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
             if 'header_analysis' in result:
                 instructions = result['header_analysis'].get('possible_instructions', [])
                 dos_calls = [inst for inst in instructions if 'INT' in inst]
-                # Note: DOS interrupts might not always be detected in synthetic test files
-                # This is acceptable as the analysis completed successfully
+                
+                # Validate DOS interrupt detection
+                if dos_calls:
+                    print(f"Found DOS interrupts: {dos_calls}")
+                else:
+                    print("No DOS interrupts detected (acceptable for synthetic test files)")
         finally:
             os.unlink(temp_path)
 
@@ -471,7 +497,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
 if __name__ == '__main__':
     # Set up logging for test visibility
     import logging
-    logging.basicConfig(level=logging.INFO, 
+    logging.basicConfig(level=logging.INFO,
                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
     # Run the tests

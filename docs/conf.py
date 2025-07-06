@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""
-Intellicrack - Security Research Framework
-Copyright (C) 2024 Zachary Flint
+"""Intellicrack - Security Research Framework.
+
+Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -1,3 +1,4 @@
+"""Incremental analysis manager for caching and tracking analysis progress."""
 import datetime
 import hashlib
 import json

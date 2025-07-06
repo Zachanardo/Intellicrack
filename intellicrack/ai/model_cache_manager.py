@@ -331,6 +331,17 @@ class ModelCacheManager:
         self.cache[model_id] = entry
         self.current_memory_usage += memory_size
 
+        # Apply GPU optimization if available
+        if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader and entry.device != "cpu":
+            try:
+                # Apply GPU optimizations to the model
+                optimized_model = gpu_autoloader(model)
+                if optimized_model is not None:
+                    entry.model_object = optimized_model
+                    logger.info(f"Applied GPU optimizations to model: {model_id}")
+            except Exception as e:
+                logger.debug(f"Could not apply GPU optimizations: {e}")
+
         logger.info(
             f"Cached model {model_id}: {memory_size / (1024**2):.1f}MB, "
             f"total cache: {self.current_memory_usage / (1024**2):.1f}MB"
@@ -461,6 +472,14 @@ class ModelCacheManager:
                     with open(tokenizer_path, 'rb') as f:
                         tokenizer = pickle.load(f)
 
+            # Move model to appropriate device if GPU autoloader is available
+            if GPU_AUTOLOADER_AVAILABLE and to_device and metadata.get("device", "cpu") != "cpu":
+                try:
+                    model = to_device(model, metadata["device"])
+                    logger.info(f"Moved model to device: {metadata['device']}")
+                except Exception as e:
+                    logger.warning(f"Failed to move model to GPU, keeping on CPU: {e}")
+
             # Add back to memory cache
             self.put(
                 model_id=model_id,
@@ -521,7 +540,7 @@ class ModelCacheManager:
         if total_requests > 0:
             hit_rate = self.stats["hits"] / total_requests
 
-        return {
+        stats_dict = {
             "memory_cache": {
                 "entries": len(self.cache),
                 "memory_used_mb": self.current_memory_usage / (1024 * 1024),
@@ -544,6 +563,18 @@ class ModelCacheManager:
                 )
             }
         }
+
+        # Add GPU memory stats if available
+        if GPU_AUTOLOADER_AVAILABLE:
+            gpu_info = get_gpu_info()
+            if gpu_info and memory_allocated and memory_reserved:
+                stats_dict["gpu_memory"] = {
+                    "allocated_mb": memory_allocated() / (1024 * 1024),
+                    "reserved_mb": memory_reserved() / (1024 * 1024),
+                    "gpu_info": gpu_info
+                }
+
+        return stats_dict
 
     def list_cached_models(self) -> List[Dict[str, Any]]:
         """List all cached models.

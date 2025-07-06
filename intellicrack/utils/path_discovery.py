@@ -1,4 +1,10 @@
-"""
+"""Tool discovery utilities for security analysis and reverse engineering tools.
+
+This module provides functions to locate common security analysis tools including
+disassemblers, debuggers, and reverse engineering utilities across different
+platforms. It searches standard installation paths and validates tool availability
+for the Intellicrack framework.
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.

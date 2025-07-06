@@ -230,11 +230,22 @@ class AdobeLicensingParser:
         """Determine Adobe request type from URL and data"""
         request_line_lower = request_line.lower()
 
+        # Check headers for additional context
+        user_agent = headers.get('User-Agent', '').lower()
+        content_type = headers.get('Content-Type', '').lower()
+        authorization = headers.get('Authorization', '')
+        x_adobe_app = headers.get('X-Adobe-App', '').lower()
+
+        # Adobe-specific header analysis
+        is_creative_cloud = 'creative' in user_agent or 'adobe' in user_agent
+        is_subscription_check = 'subscription' in x_adobe_app or authorization.startswith('Bearer')
+        is_legacy_activation = 'application/x-amf' in content_type
+
         # Check URL patterns
         if '/activate' in request_line_lower or 'activation' in request_line_lower:
-            return 'activation'
+            return 'subscription_activation' if is_subscription_check else 'activation'
         elif '/verify' in request_line_lower or 'verification' in request_line_lower:
-            return 'verification'
+            return 'subscription_verification' if is_creative_cloud else 'verification'
         elif '/deactivate' in request_line_lower or 'deactivation' in request_line_lower:
             return 'deactivation'
         elif '/heartbeat' in request_line_lower or '/ping' in request_line_lower:
@@ -475,16 +486,33 @@ class AdobeLicensingParser:
 
     def _handle_heartbeat(self, request: AdobeRequest) -> AdobeResponse:
         """Handle license heartbeat"""
+        # Extract heartbeat-specific information from request
+        app_version = request.license_data.get('app_version', '1.0')
+        client_id = request.activation_data.get('client_id', 'unknown')
+        last_sync = request.license_data.get('last_sync', 0)
+
+        # Calculate appropriate heartbeat interval based on request data
+        heartbeat_interval = 3600  # Default 1 hour
+        if 'subscription' in request.request_type:
+            heartbeat_interval = 1800  # 30 minutes for subscription checks
+        elif 'trial' in str(request.license_data.get('license_type', '')):
+            heartbeat_interval = 900   # 15 minutes for trial licenses
+
         return AdobeResponse(
             status="success",
             response_code=200,
             activation_data={
                 "heartbeat_status": "alive",
-                "server_time": int(time.time())
+                "server_time": int(time.time()),
+                "client_id": client_id,
+                "session_valid": True
             },
             license_data={
                 "license_server_status": "online",
-                "next_heartbeat": int(time.time() + 3600)  # 1 hour
+                "next_heartbeat": int(time.time() + heartbeat_interval),
+                "sync_interval": heartbeat_interval,
+                "app_version": app_version,
+                "last_contact": int(time.time())
             },
             digital_signature="",
             response_headers={"Content-Type": "application/json"}
@@ -573,17 +601,40 @@ class AdobeLicensingParser:
 
     def _handle_subscription_check(self, request: AdobeRequest) -> AdobeResponse:
         """Handle subscription status check"""
+        # Extract subscription information from request
+        user_id = request.activation_data.get('user_id', str(uuid.uuid4()))
+        app_id = request.license_data.get('app_id', request.product_id)
+        subscription_tier = request.license_data.get('subscription_tier', 'individual')
+
+        # Determine subscription type based on request data
+        if 'business' in str(subscription_tier).lower() or 'team' in str(subscription_tier).lower():
+            sub_type = "business"
+            billing_cycle = 2592000  # 30 days for business
+        elif 'student' in str(subscription_tier).lower():
+            sub_type = "student"
+            billing_cycle = 31536000  # 365 days for student
+        else:
+            sub_type = "individual"
+            billing_cycle = 2592000  # 30 days for individual
+
         return AdobeResponse(
             status="success",
             response_code=200,
-            activation_data={},
+            activation_data={
+                "user_id": user_id,
+                "subscription_verified": True
+            },
             license_data={
                 "subscription_active": True,
-                "subscription_type": "individual",
-                "next_billing_date": int(time.time() + 2592000),  # 30 days
+                "subscription_type": sub_type,
+                "next_billing_date": int(time.time() + billing_cycle),
                 "auto_renew": True,
                 "payment_method": "credit_card",
-                "subscription_id": str(uuid.uuid4()).upper()
+                "subscription_id": str(uuid.uuid4()).upper(),
+                "app_entitlements": [app_id] if app_id else ["ALL_APPS"],
+                "subscription_tier": subscription_tier,
+                "trial_days_remaining": 0,
+                "grace_period_days": 7
             },
             digital_signature="",
             response_headers={"Content-Type": "application/json"}
@@ -591,14 +642,34 @@ class AdobeLicensingParser:
 
     def _handle_usage_report(self, request: AdobeRequest) -> AdobeResponse:
         """Handle usage reporting"""
+        # Extract usage data from request
+        app_usage = request.license_data.get('usage_data', {})
+        feature_usage = request.activation_data.get('features_used', [])
+        session_duration = request.license_data.get('session_duration', 0)
+
+        # Process usage statistics
+        usage_stats = {
+            "sessions_tracked": len(feature_usage) if feature_usage else 1,
+            "total_usage_time": session_duration,
+            "features_accessed": len(set(feature_usage)) if feature_usage else 0,
+            "last_feature_used": feature_usage[-1] if feature_usage else "unknown",
+            "compliance_status": "compliant"
+        }
+
         return AdobeResponse(
             status="success",
             response_code=200,
             activation_data={
                 "report_received": True,
-                "report_time": int(time.time())
+                "report_time": int(time.time()),
+                "report_id": str(uuid.uuid4())
             },
-            license_data={},
+            license_data={
+                "usage_acknowledged": True,
+                "usage_stats": usage_stats,
+                "next_report_due": int(time.time() + 86400),  # 24 hours
+                "usage_within_limits": True
+            },
             digital_signature="",
             response_headers={"Content-Type": "application/json"}
         )

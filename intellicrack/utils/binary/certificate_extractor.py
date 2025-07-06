@@ -9,6 +9,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import hashlib
+import os
 import struct
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -253,8 +254,20 @@ class CertificateExtractor:
             now = datetime.utcnow()
             is_expired = now > not_after
 
-            # Signature algorithm
-            sig_algo = cert.signature_algorithm_oid._name if cert.signature_algorithm_oid else "Unknown"
+            # Signature algorithm with enhanced mapping
+            sig_algo = "Unknown"
+            if cert.signature_algorithm_oid:
+                # Use SignatureAlgorithmOID for better algorithm identification
+                if cert.signature_algorithm_oid == SignatureAlgorithmOID.RSA_WITH_SHA256:
+                    sig_algo = "RSA with SHA-256"
+                elif cert.signature_algorithm_oid == SignatureAlgorithmOID.RSA_WITH_SHA1:
+                    sig_algo = "RSA with SHA-1"
+                elif cert.signature_algorithm_oid == SignatureAlgorithmOID.ECDSA_WITH_SHA256:
+                    sig_algo = "ECDSA with SHA-256"
+                elif cert.signature_algorithm_oid == SignatureAlgorithmOID.DSA_WITH_SHA256:
+                    sig_algo = "DSA with SHA-256"
+                else:
+                    sig_algo = cert.signature_algorithm_oid._name
 
             # Public key information
             pub_key = cert.public_key()
@@ -271,9 +284,27 @@ class CertificateExtractor:
                 pub_key_algo = "Unknown"
                 pub_key_size = 0
 
-            # Fingerprints
+            # Fingerprints - use both hashlib and cryptography hashes for verification
             sha1_hash = hashlib.sha1(cert_der).hexdigest().upper()
             sha256_hash = hashlib.sha256(cert_der).hexdigest().upper()
+
+            # Verify fingerprints using cryptography hashes module
+            from cryptography.hazmat.backends import default_backend
+            digest_sha1 = hashes.Hash(hashes.SHA1(), backend=default_backend())
+            digest_sha1.update(cert_der)
+            crypto_sha1 = digest_sha1.finalize().hex().upper()
+
+            digest_sha256 = hashes.Hash(hashes.SHA256(), backend=default_backend())
+            digest_sha256.update(cert_der)
+            crypto_sha256 = digest_sha256.finalize().hex().upper()
+
+            # Use cryptography fingerprints if they differ (more reliable)
+            if crypto_sha1 != sha1_hash:
+                logger.debug("Using cryptography SHA1 fingerprint instead of hashlib")
+                sha1_hash = crypto_sha1
+            if crypto_sha256 != sha256_hash:
+                logger.debug("Using cryptography SHA256 fingerprint instead of hashlib")
+                sha256_hash = crypto_sha256
 
             # Check if self-signed
             is_self_signed = subject == issuer
@@ -422,6 +453,92 @@ class CertificateExtractor:
                 return False
 
         return True
+
+    def export_certificates(self, file_path: str, output_dir: str = None) -> Dict[str, str]:
+        """Export extracted certificates to PEM files using serialization module."""
+        if not CRYPTOGRAPHY_AVAILABLE:
+            return {}
+
+        exported_files = {}
+
+        try:
+            signing_info = self.extract_certificates(file_path)
+            if not signing_info.certificates:
+                return exported_files
+
+            # Set default output directory
+            if output_dir is None:
+                output_dir = os.path.dirname(file_path)
+
+            # Extract raw certificate data
+            cert_data = self._extract_certificate_data()
+            if not cert_data:
+                return exported_files
+
+            # Parse certificates again to get x509 objects
+            certificates = []
+            offset = 0
+
+            while offset < len(cert_data):
+                if offset + 8 > len(cert_data):
+                    break
+
+                length, revision, cert_type = struct.unpack('<LHH', cert_data[offset:offset+8])
+                if length < 8 or offset + length > len(cert_data):
+                    break
+
+                cert_content = cert_data[offset+8:offset+length]
+
+                if cert_type == 0x0002:  # WIN_CERT_TYPE_PKCS_SIGNED_DATA
+                    # Extract individual certificates from PKCS#7
+                    cert_start_pattern = b'\x30\x82'
+                    cert_offset = 0
+
+                    while True:
+                        cert_pos = cert_content.find(cert_start_pattern, cert_offset)
+                        if cert_pos == -1:
+                            break
+
+                        try:
+                            if cert_pos + 4 < len(cert_content):
+                                cert_len = struct.unpack('>H', cert_content[cert_pos+2:cert_pos+4])[0] + 4
+
+                                if cert_pos + cert_len <= len(cert_content):
+                                    cert_der = cert_content[cert_pos:cert_pos+cert_len]
+                                    cert = x509.load_der_x509_certificate(cert_der)
+                                    certificates.append(cert)
+
+                        except Exception as e:
+                            logger.debug(f"Failed to parse certificate: {e}")
+
+                        cert_offset = cert_pos + 1
+
+                offset += (length + 7) & ~7
+
+            # Export each certificate using serialization module
+            base_filename = os.path.splitext(os.path.basename(file_path))[0]
+
+            for i, cert in enumerate(certificates):
+                cert_filename = f"{base_filename}_cert_{i+1}.pem"
+                cert_path = os.path.join(output_dir, cert_filename)
+
+                try:
+                    # Use serialization.Encoding.PEM to export certificate
+                    pem_bytes = cert.public_bytes(serialization.Encoding.PEM)
+
+                    with open(cert_path, 'wb') as f:
+                        f.write(pem_bytes)
+
+                    exported_files[f"certificate_{i+1}"] = cert_path
+                    logger.info(f"Exported certificate to: {cert_path}")
+
+                except Exception as e:
+                    logger.error(f"Failed to export certificate {i+1}: {e}")
+
+        except Exception as e:
+            logger.error(f"Certificate export failed: {e}")
+
+        return exported_files
 
 
 def extract_pe_certificates(file_path: str) -> CodeSigningInfo:

@@ -18,7 +18,7 @@ import sys
 import time
 import traceback
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
 
 # Add Intellicrack to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -28,6 +28,7 @@ try:
 except ImportError:
     logging.basicConfig(level=logging.INFO)
     def get_logger(name):
+        """Get logger instance fallback."""
         return logging.getLogger(name)
 
 logger = get_logger(__name__)
@@ -118,9 +119,13 @@ class ICPIntegrationTester:
             # Test 3: ICP Backend import
             self.log_result('phase_a', "Testing ICP Backend import...")
             try:
-                from intellicrack.protection.icp_backend import ICPBackend, get_icp_backend
+                from intellicrack.protection.icp_backend import get_icp_backend
                 backend = get_icp_backend()
-                self.log_result('phase_a', "✓ ICP Backend imported and initialized successfully")
+                # Validate backend instance
+                if backend is not None:
+                    self.log_result('phase_a', "✓ ICP Backend imported and initialized successfully")
+                else:
+                    self.log_result('phase_a', "✗ ICP Backend returned None", True)
             except Exception as e:
                 self.log_result('phase_a', f"✗ ICP Backend import failed: {e}", True)
                 return False
@@ -130,7 +135,11 @@ class ICPIntegrationTester:
             try:
                 from intellicrack.analysis.analysis_result_orchestrator import AnalysisResultOrchestrator
                 orchestrator = AnalysisResultOrchestrator()
-                self.log_result('phase_a', "✓ Analysis Orchestrator imported and initialized")
+                # Validate orchestrator instance
+                if hasattr(orchestrator, 'orchestrate'):
+                    self.log_result('phase_a', "✓ Analysis Orchestrator imported and initialized")
+                else:
+                    self.log_result('phase_a', "✗ Analysis Orchestrator missing methods", True)
             except Exception as e:
                 self.log_result('phase_a', f"✗ Analysis Orchestrator import failed: {e}", True)
                 return False
@@ -297,10 +306,10 @@ class ICPIntegrationTester:
 
                     filename = os.path.basename(test_file)
                     if result and not result.error:
-                        self.log_result('phase_c', 
+                        self.log_result('phase_c',
                             f"✓ {filename}: {len(result.all_detections)} detections ({analysis_time:.2f}s)")
                     else:
-                        self.log_result('phase_c', 
+                        self.log_result('phase_c',
                             f"! {filename}: Analysis had issues ({analysis_time:.2f}s)")
 
                 except Exception as e:
@@ -428,7 +437,11 @@ class ICPIntegrationTester:
                 analyzer = MultiFormatBinaryAnalyzer()
                 vuln_engine = AdvancedVulnerabilityEngine()
 
-                self.log_result('phase_e', "✓ Core analyzers import and initialize successfully")
+                # Validate analyzer instances
+                if hasattr(analyzer, 'analyze') and hasattr(vuln_engine, 'scan'):
+                    self.log_result('phase_e', "✓ Core analyzers import and initialize successfully")
+                else:
+                    self.log_result('phase_e', "✗ Core analyzers missing required methods", True)
 
             except Exception as e:
                 self.log_result('phase_e', f"✗ Core analyzer import failed: {e}", True)
@@ -534,7 +547,7 @@ class ICPIntegrationTester:
         for phase, result in self.test_results.items():
             status_symbol = {
                 'passed': '✓ PASS',
-                'failed': '✗ FAIL', 
+                'failed': '✗ FAIL',
                 'skipped': '- SKIP',
                 'pending': '? PENDING'
             }.get(result['status'], '? UNKNOWN')

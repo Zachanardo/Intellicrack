@@ -1,5 +1,4 @@
-"""
-Intellicrack AI Package
+"""Intellicrack AI Package.
 
 Copyright (C) 2025 Zachary Flint
 

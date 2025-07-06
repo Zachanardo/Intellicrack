@@ -1,4 +1,22 @@
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Test script for lazy loading functionality
 
 This script demonstrates and tests the lazy loading system for LLM models.
@@ -8,7 +26,6 @@ import os
 import sys
 import time
 import unittest
-from unittest.mock import Mock, patch
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -184,6 +201,49 @@ class TestLazyLoading(unittest.TestCase):
         
         info = manager.get_llm_info("unload-test")
         self.assertFalse(info.get("is_initialized", True))
+    
+    def test_configure_lazy_loading(self):
+        """Test configure_lazy_loading function."""
+        # Configure with custom settings
+        configure_lazy_loading(
+            max_loaded_models=10,
+            idle_unload_time=1800,
+            preload_strategy="smart"
+        )
+        
+        # Get the configured manager
+        manager = get_lazy_manager()
+        self.assertIsNotNone(manager)
+        self.assertEqual(manager.max_loaded_models, 10)
+        self.assertEqual(manager.idle_unload_time, 1800)
+        self.assertIsInstance(manager.loading_strategy, SmartLoadingStrategy)
+        
+        # Test with default strategy
+        configure_lazy_loading(
+            max_loaded_models=5,
+            preload_strategy="default"
+        )
+        
+        manager = get_lazy_manager()
+        self.assertEqual(manager.max_loaded_models, 5)
+        self.assertIsInstance(manager.loading_strategy, DefaultLoadingStrategy)
+    
+    def test_get_lazy_manager(self):
+        """Test get_lazy_manager function."""
+        # Should create a default manager if none exists
+        manager1 = get_lazy_manager()
+        self.assertIsNotNone(manager1)
+        self.assertIsInstance(manager1, LazyModelManager)
+        
+        # Should return the same instance
+        manager2 = get_lazy_manager()
+        self.assertIs(manager1, manager2)
+        
+        # After configuration, should still return same instance
+        configure_lazy_loading(max_loaded_models=20)
+        manager3 = get_lazy_manager()
+        self.assertIs(manager1, manager3)
+        self.assertEqual(manager3.max_loaded_models, 20)
 
 
 def run_performance_test():

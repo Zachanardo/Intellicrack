@@ -1,4 +1,22 @@
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Comprehensive Test Suite for Frida Integration
 
 Tests all aspects of the Frida management system including:
@@ -463,6 +481,36 @@ class TestFridaBypassWizard(unittest.TestCase):
 
         can_apply = strategy.can_apply(set())
         self.assertFalse(can_apply)
+        
+    def test_wizard_state(self):
+        """Test wizard state management"""
+        # Test initial state
+        initial_state = WizardState()
+        self.assertEqual(initial_state.phase, "idle")
+        self.assertFalse(initial_state.is_running)
+        self.assertEqual(initial_state.progress, 0)
+        self.assertIsNone(initial_state.current_protection)
+        self.assertEqual(len(initial_state.completed_protections), 0)
+        self.assertEqual(len(initial_state.errors), 0)
+        
+        # Test state transitions
+        initial_state.phase = "analyzing"
+        initial_state.is_running = True
+        initial_state.progress = 25
+        self.assertEqual(initial_state.phase, "analyzing")
+        self.assertTrue(initial_state.is_running)
+        self.assertEqual(initial_state.progress, 25)
+        
+        # Test protection tracking
+        initial_state.current_protection = ProtectionType.LICENSE
+        initial_state.completed_protections.append(ProtectionType.ANTI_DEBUG)
+        self.assertEqual(initial_state.current_protection, ProtectionType.LICENSE)
+        self.assertIn(ProtectionType.ANTI_DEBUG, initial_state.completed_protections)
+        
+        # Test error tracking
+        initial_state.errors.append({"type": "hook_failed", "message": "Failed to hook function"})
+        self.assertEqual(len(initial_state.errors), 1)
+        self.assertEqual(initial_state.errors[0]["type"], "hook_failed")
 
     @patch.object(FridaBypassWizard, '_analyze_process')
     @patch.object(FridaBypassWizard, '_detect_protections')
@@ -484,7 +532,7 @@ class TestFridaBypassWizard(unittest.TestCase):
         # Check strategies
         self.assertTrue(len(self.wizard.strategies) > 0)
         self.assertTrue(any(
-            s.protection_type == ProtectionType.LICENSE 
+            s.protection_type == ProtectionType.LICENSE
             for s in self.wizard.strategies
         ))
 

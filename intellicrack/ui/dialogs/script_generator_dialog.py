@@ -1,3 +1,4 @@
+"""Script generator dialog for creating analysis scripts."""
 import os
 import time
 
@@ -699,8 +700,13 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             if hasattr(self, 'bypass_language') and self.bypass_language.isVisible():
                 language = "javascript" if "javascript" in self.bypass_language.currentText().lower() else "python"
             else:
-                # Auto-detect language from content
-                language = "auto"
+                # Auto-detect language from script type and content
+                if "frida" in script_type.lower() or "javascript" in script_type.lower():
+                    language = "javascript"
+                elif "python" in script_type.lower() or "ghidra" in script_type.lower():
+                    language = "python"
+                else:
+                    language = "auto"
 
             # Update status
             self.status_label.setText("Analyzing script...")

@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Intellicrack Launcher
 Launch the Intellicrack application with proper environment setup.
 """
@@ -62,42 +80,101 @@ def detect_and_configure_gpu():
         # First attempt: Use OpenCL to detect GPUs across all vendors
         import pyopencl as cl
         platforms = cl.get_platforms()
+        all_gpus = []
+
         for platform in platforms:
             devices = platform.get_devices(device_type=cl.device_type.GPU)
-            if devices:
-                gpu_detected = True
-                device = devices[0]  # Use first available GPU
-                gpu_type = device.name.strip()
-                # Detect vendor from platform vendor string or device name
+            for device in devices:
+                gpu_name = device.name.strip()
                 vendor = platform.vendor.lower()
-                if 'intel' in vendor or 'intel' in gpu_type.lower():
-                    gpu_vendor = "Intel"
-                elif 'nvidia' in vendor or 'nvidia' in gpu_type.lower():
-                    gpu_vendor = "NVIDIA"
-                elif 'amd' in vendor or 'amd' in gpu_type.lower():
-                    gpu_vendor = "AMD"
-                print(f"Detected GPU: {gpu_type} (Vendor: {gpu_vendor})")
-                break
+
+                # Determine vendor
+                if 'intel' in vendor or 'intel' in gpu_name.lower():
+                    gpu_vendor_detected = "Intel"
+                elif 'nvidia' in vendor or 'nvidia' in gpu_name.lower():
+                    gpu_vendor_detected = "NVIDIA"
+                elif 'amd' in vendor or 'amd' in gpu_name.lower():
+                    gpu_vendor_detected = "AMD"
+                else:
+                    gpu_vendor_detected = "Unknown"
+
+                # Check if this is a discrete GPU (prefer over integrated)
+                # More specific detection - exclude integrated Intel Arc
+                gpu_lower = gpu_name.lower()
+                
+                # Intel discrete GPUs - exclude generic "arc graphics" (integrated)
+                intel_discrete = any(keyword in gpu_lower for keyword in [
+                    'a770', 'a750', 'a580', 'a380', 'b580', 'b770'  # Specific Arc models
+                ]) and 'arc' in gpu_lower
+                
+                # Enhanced Intel Arc detection for B580 and other models
+                if any(model in gpu_lower for model in ['b580', 'b770', 'b570']):
+                    intel_discrete = True
+                elif 'intel(r) arc(tm) b' in gpu_lower:  # Catch all B-series
+                    intel_discrete = True
+                elif gpu_lower == 'intel(r) arc(tm) graphics':
+                    intel_discrete = False  # This is integrated
+                
+                # NVIDIA and AMD discrete detection
+                nvidia_discrete = any(keyword in gpu_lower for keyword in [
+                    'rtx', 'gtx', 'titan', 'quadro'
+                ])
+                
+                amd_discrete = any(keyword in gpu_lower for keyword in [
+                    'rx', 'radeon rx', 'vega', 'navi'
+                ])
+                
+                is_discrete = intel_discrete or nvidia_discrete or amd_discrete
+
+                all_gpus.append({
+                    'name': gpu_name,
+                    'vendor': gpu_vendor_detected,
+                    'discrete': is_discrete,
+                    'device': device
+                })
+
+        if all_gpus:
+            # Show all detected GPUs
+            print("All detected GPUs:")
+            for i, gpu in enumerate(all_gpus):
+                gpu_type_str = "Discrete" if gpu['discrete'] else "Integrated"
+                print(f"  {i}: {gpu['name']} ({gpu['vendor']} {gpu_type_str})")
+
+            # Prefer discrete GPUs, then first available
+            discrete_gpus = [gpu for gpu in all_gpus if gpu['discrete']]
+            if discrete_gpus:
+                selected_gpu = discrete_gpus[0]
+                print(f"Selected discrete GPU: {selected_gpu['name']}")
+            else:
+                selected_gpu = all_gpus[0]
+                print(f"No discrete GPU found, using: {selected_gpu['name']}")
+
+            gpu_detected = True
+            gpu_type = selected_gpu['name']
+            gpu_vendor = selected_gpu['vendor']
+            print(f"Detected GPU: {gpu_type} (Vendor: {gpu_vendor})")
+        else:
+            print("No GPUs found via OpenCL")
     except Exception as e:
         print(f"OpenCL GPU detection failed, trying PyTorch: {e}")
 
     if not gpu_detected:
         try:
             # Try unified GPU autoloader first
-            from intellicrack.utils.gpu_autoloader import get_gpu_info, get_device
+            from intellicrack.utils.gpu_autoloader import get_device, get_gpu_info
             gpu_info = get_gpu_info()
             if gpu_info['available']:
                 gpu_detected = True
                 gpu_type = gpu_info.get('device_name', 'Unknown GPU')
                 device_str = get_device()
-                
+
                 # Determine vendor from GPU type
                 gpu_type_lower = gpu_info.get('gpu_type', '').lower()
                 if 'intel' in gpu_type_lower or 'xpu' in gpu_type_lower:
                     gpu_vendor = "Intel"
                     gpu_type = f"Intel {gpu_type} ({device_str})"
                 elif 'nvidia' in gpu_type_lower or 'cuda' in gpu_type_lower:
-                    gpu_vendor = "NVIDIA" 
+                    gpu_vendor = "NVIDIA"
                     gpu_type = f"NVIDIA {gpu_type} ({device_str})"
                 elif 'amd' in gpu_type_lower or 'rocm' in gpu_type_lower:
                     gpu_vendor = "AMD"
@@ -107,11 +184,11 @@ def detect_and_configure_gpu():
                     gpu_type = f"DirectML {gpu_type}"
                 else:
                     gpu_vendor = "Unknown"
-                
+
                 print(f"Detected GPU via unified loader: {gpu_type}")
                 print(f"  Device count: {gpu_info.get('device_count', 1)}")
                 print(f"  Memory: {gpu_info.get('memory_gb', 'Unknown')} GB")
-                
+
         except ImportError:
             # Fall back to direct PyTorch detection
             try:
@@ -136,25 +213,35 @@ def detect_and_configure_gpu():
         os.environ['SYCL_DEVICE_FILTER'] = 'level_zero:gpu,opencl:gpu'
         os.environ['SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS'] = '1'
         os.environ['INTEL_COMPUTE_BACKEND'] = 'level_zero,opencl'
+
+        # Qt settings for Intel Arc Graphics - prioritize software rendering
+        os.environ['QT_OPENGL'] = 'software'  # Force software rendering for Intel Arc
+        os.environ['QT_QUICK_BACKEND'] = 'software'  # Software backend for QtQuick
+        os.environ['QT_QPA_PLATFORM'] = 'windows'  # Use Windows platform
         
-        # Qt settings for Intel Arc Graphics - use ANGLE backend
-        os.environ['QT_OPENGL'] = 'angle'  # Use ANGLE for Intel Arc compatibility
-        os.environ['QT_ANGLE_PLATFORM'] = 'd3d11'
-        os.environ['QSG_RENDER_LOOP'] = 'windows'  # Windows render loop for Intel
+        # Disable OpenGL hardware acceleration entirely
+        os.environ['QT_OPENGL_BUGLIST'] = '1'  # Enable bug workarounds
+        os.environ['QT_DISABLE_WINDOWSCOMPOSITION'] = '1'  # Disable Aero composition
+        
+        # High DPI settings for consistency
         os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '0'
         os.environ['QT_AUTO_SCREEN_SCALE_FACTOR'] = '0'
         os.environ['QT_SCALE_FACTOR'] = '1'
-        os.environ['QT_D3D_ADAPTER_INDEX'] = '0'
-        os.environ['QT_QUICK_BACKEND'] = 'software'  # Software backend for QtQuick
         
-        # Force Qt to use DirectX instead of OpenGL
-        os.environ['QT_QPA_PLATFORM'] = 'windows:darkmode=0'
-        os.environ['QT_OPENGL_BUGLIST'] = '0'  # Disable OpenGL bug workarounds
+        # Intel Arc specific workarounds
+        os.environ['QT_ANGLE_PLATFORM'] = 'warp'  # Use WARP software renderer
+        os.environ['QSG_RENDER_LOOP'] = 'basic'  # Basic render loop for stability
+        os.environ['QT_D3D_ADAPTER_INDEX'] = '-1'  # Disable D3D adapter selection
         
-        # Intel-specific workarounds
-        os.environ['INTEL_DEBUG'] = 'nofc'  # Disable fast clear
-        os.environ['QT_OPENGL_DLL'] = ''  # Don't force specific OpenGL DLL
-        
+        # Intel-specific driver workarounds
+        os.environ['INTEL_DEBUG'] = 'nofc,sync'  # Disable fast clear, enable sync
+        os.environ['QT_OPENGL_DLL'] = 'opengl32sw.dll'  # Force software OpenGL DLL
+
+        # Suppress CUDA warnings on Intel systems (but keep other warnings visible)
+        os.environ['CUPY_CUDA_PATH'] = ''  # Suppress CUDA path detection
+        os.environ['CUDA_VISIBLE_DEVICES'] = ''  # Hide CUDA devices
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # Suppress TensorFlow CUDA warnings
+
     elif gpu_vendor == "NVIDIA":
         print("Applying NVIDIA GPU optimizations...")
         # NVIDIA specific settings
@@ -162,14 +249,14 @@ def detect_and_configure_gpu():
         os.environ['CUDA_CACHE_MAXSIZE'] = '1073741824'  # 1GB cache
         os.environ['QT_OPENGL'] = 'desktop'  # Use hardware acceleration
         os.environ['QT_ANGLE_PLATFORM'] = 'd3d11'
-        
+
     elif gpu_vendor == "AMD":
         print("Applying AMD GPU optimizations...")
         # AMD specific settings
         os.environ['HSA_ENABLE_SDMA'] = '0'  # Disable SDMA for stability
         os.environ['QT_OPENGL'] = 'desktop'  # Use hardware acceleration
         os.environ['QT_ANGLE_PLATFORM'] = 'd3d11'
-        
+
     else:
         print("No GPU detected or unknown vendor. Using CPU mode...")
         # CPU fallback settings
@@ -241,24 +328,27 @@ def main():
         print("Importing intellicrack.main...")
         from intellicrack.main import main as intellicrack_main
         print("Successfully imported intellicrack.main")
-        
+
         print("Calling intellicrack_main()...")
         exit_code = intellicrack_main()
         print(f"intellicrack_main() returned: {exit_code}")
-        
-        # Check for Intel Arc crash (specific exit code -805306369 indicates Qt/OpenGL crash)
-        if exit_code == -805306369 and gpu_vendor == "Intel":
+
+        # Check for Intel Arc crash (multiple exit codes can indicate Qt/OpenGL crashes)
+        intel_crash_codes = [-805306369, -1073741819, -1073740791]  # Common crash codes
+        if exit_code in intel_crash_codes and gpu_vendor == "Intel":
             print("\n" + "=" * 60)
             print("INTEL ARC GRAPHICS CRASH DETECTED")
             print("=" * 60)
-            print("The application crashed due to Intel Arc Graphics compatibility issues.")
-            print("Would you like to restart in software rendering mode? (Y/N)")
-            response = input("> ").strip().upper()
-            if response == 'Y':
-                os.environ['INTELLICRACK_FORCE_SOFTWARE'] = '1'
-                print("Restarting in software rendering mode...")
-                return main()  # Recursive call with software mode enabled
-        
+            print(f"The application crashed (exit code: {exit_code}) due to Intel Arc Graphics compatibility issues.")
+            print("This is a known issue with Intel Arc Graphics drivers and Qt applications.")
+            print("")
+            print("Automatically restarting in software rendering mode...")
+            
+            # Don't prompt user, just restart in software mode automatically
+            os.environ['INTELLICRACK_FORCE_SOFTWARE'] = '1'
+            print("Restarting with software rendering enabled...")
+            return main()  # Recursive call with software mode enabled
+
         sys.exit(exit_code)
     except ImportError as e:
         print(f"ERROR: Failed to import Intellicrack: {e}")

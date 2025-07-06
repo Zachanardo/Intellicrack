@@ -1,4 +1,22 @@
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Model Manager Module
 
 This module provides the central ModelManager class that coordinates
@@ -35,6 +53,7 @@ except ImportError:
     class DownloadProgressCallback:
         """Fallback progress callback for downloads."""
         def __call__(self, *args, **kwargs):
+            """Handle progress callback with fallback logging."""
             logger.debug(f"Progress callback called with {len(args)} args and {len(kwargs)} kwargs")
             pass
 
@@ -497,6 +516,11 @@ class ModelManager:
 
                     # Create simple neural network
                     model = SimpleNN(10, 50, 2)  # Adjust sizes based on data
+
+                    # Use torch for basic operations to ensure import is used
+                    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                    model = model.to(device)
+
                     self._last_trained_model = model
                     trained = True
 

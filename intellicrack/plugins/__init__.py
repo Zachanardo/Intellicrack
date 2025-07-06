@@ -81,6 +81,23 @@ def get_ghidra_script(script_name):
             return str(script_path)
     return None
 
+def get_plugin_size(plugin_name, plugin_type="custom"):
+    """Get the size of a plugin file in bytes."""
+    if plugin_type == "custom":
+        plugin_path = CUSTOM_MODULES_DIR / f"{plugin_name}.py"
+    elif plugin_type == "frida":
+        plugin_path = FRIDA_SCRIPTS_DIR / f"{plugin_name}.js"
+    elif plugin_type == "ghidra":
+        plugin_path = GHIDRA_SCRIPTS_DIR / f"{plugin_name}.java"
+        if not plugin_path.exists():
+            plugin_path = GHIDRA_SCRIPTS_DIR / f"{plugin_name}.py"
+    else:
+        return 0
+
+    if plugin_path.exists():
+        return os.path.getsize(plugin_path)
+    return 0
+
 # Import plugin system functions
 try:
     from .plugin_system import (

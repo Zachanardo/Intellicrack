@@ -1,3 +1,4 @@
+"""Emulator manager for coordinating different emulation engines."""
 import logging
 import os
 import threading

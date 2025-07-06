@@ -31,6 +31,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from ...protection.icp_backend import get_icp_backend
 from ...protection.unified_protection_engine import (
     AnalysisSource,
     UnifiedProtectionEngine,
@@ -51,12 +52,19 @@ class UnifiedAnalysisThread(QThread):
     analysis_progress = pyqtSignal(str, int)  # message, percentage
 
     def __init__(self, file_path: str, deep_scan: bool = True):
+        """Initialize unified analysis thread.
+        
+        Args:
+            file_path: Path to file for analysis
+            deep_scan: Whether to perform deep scanning analysis
+        """
         super().__init__()
         self.file_path = file_path
         self.deep_scan = deep_scan
         self.engine = UnifiedProtectionEngine()
 
     def run(self):
+        """Execute the unified protection analysis in background thread."""
         try:
             self.analysis_progress.emit("Initializing protection analysis...", 10)
 
@@ -178,6 +186,11 @@ class UnifiedProtectionWidget(QWidget):
     bypass_requested = pyqtSignal(str, dict)  # file_path, protection_data
 
     def __init__(self, parent=None):
+        """Initialize the unified protection analysis widget.
+        
+        Args:
+            parent: Parent widget or None for top-level widget
+        """
         super().__init__(parent)
         self.current_result: Optional[UnifiedProtectionResult] = None
         self.analysis_thread: Optional[UnifiedAnalysisThread] = None
@@ -244,12 +257,12 @@ class UnifiedProtectionWidget(QWidget):
         """)
         title_layout.addWidget(self.deep_scan_btn)
 
-        # Advanced GUI button
-        self.advanced_gui_btn = QPushButton("Advanced Editor...")
-        self.advanced_gui_btn.setToolTip("Open file in full Protection Engine editor for advanced analysis")
-        self.advanced_gui_btn.clicked.connect(self.launch_advanced_gui)
-        self.advanced_gui_btn.setEnabled(False)  # Disabled until file is loaded
-        title_layout.addWidget(self.advanced_gui_btn)
+        # Native ICP Features button
+        self.icp_features_btn = QPushButton("ICP Analysis...")
+        self.icp_features_btn.setToolTip("Access advanced ICP Engine features directly in the interface")
+        self.icp_features_btn.clicked.connect(self.show_icp_features_dialog)
+        self.icp_features_btn.setEnabled(False)  # Disabled until file is loaded
+        title_layout.addWidget(self.icp_features_btn)
 
         header_layout.addLayout(title_layout)
 
@@ -432,7 +445,7 @@ class UnifiedProtectionWidget(QWidget):
         self.file_info_label.setText(f"Analyzing: {os.path.basename(file_path)}")
         self.quick_scan_btn.setEnabled(False)
         self.deep_scan_btn.setEnabled(False)
-        self.advanced_gui_btn.setEnabled(True)  # Enable advanced GUI button
+        self.icp_features_btn.setEnabled(True)  # Enable ICP features button
         self.progress_bar.setVisible(True)
 
         # Clear previous results
@@ -873,41 +886,206 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             # Auto-analyze
             self.analyze_file(file_path, deep_scan=False)
 
-    def launch_advanced_gui(self):
-        """Launch the advanced Protection Engine GUI editor"""
+    def show_icp_features_dialog(self):
+        """Display native ICP Engine features in a comprehensive dialog.
+        
+        Opens a tabbed dialog showing detailed ICP analysis including:
+        - Signature analysis with packer detection
+        - Section analysis with entropy per section  
+        - Overall entropy analysis with interpretation
+        - String extraction with offsets
+        
+        The analysis runs in a background thread to avoid blocking the UI.
+        """
+        if not hasattr(self, '_current_file_path') or not self._current_file_path:
+            QMessageBox.information(
+                self,
+                "No File Loaded",
+                "Please analyze a file first to access ICP features."
+            )
+            return
+
         try:
-            import subprocess
-            from pathlib import Path
-
-            # Get the path to icp-gui.exe
-            gui_path = Path(__file__).parent.parent.parent.parent / "tools" / "icp_engine" / "icp-gui.exe"
-
-            if not gui_path.exists():
-                QMessageBox.warning(
-                    self,
-                    "Advanced Editor Not Found",
-                    f"The advanced Protection Engine editor was not found at:\n{gui_path}\n\n"
-                    "Please ensure the Protection Engine is properly installed."
-                )
-                return
-
-            # Build command with current file if available
-            cmd = [str(gui_path)]
-            if hasattr(self, '_current_file_path') and self._current_file_path:
-                cmd.append(self._current_file_path)
-
-            # Launch without blocking the main app
-            subprocess.Popen(cmd, shell=False)
-
-            logger.info(f"Launched advanced GUI: {' '.join(cmd)}")
-
+            from ...dialogs.icp_features_dialog import ICPFeaturesDialog
+            dialog = ICPFeaturesDialog(self._current_file_path, self)
+            dialog.exec_()
+        except ImportError:
+            # Create a simple features dialog inline for now
+            self._show_inline_icp_features()
         except Exception as e:
-            logger.error(f"Failed to launch advanced GUI: {e}")
+            logger.error(f"Failed to show ICP features dialog: {e}")
             QMessageBox.critical(
                 self,
-                "Launch Error",
-                f"Failed to launch the advanced Protection Engine editor:\n{str(e)}"
+                "ICP Features Error",
+                f"Failed to open ICP features:\n{str(e)}"
             )
+
+    def _show_inline_icp_features(self):
+        """Display comprehensive native ICP analysis in tabbed dialog.
+        
+        Creates a modal dialog with four analysis tabs:
+        1. Signature Analysis - File type, packers, and protection status
+        2. Section Analysis - PE sections with addresses and characteristics  
+        3. Entropy Analysis - Shannon entropy with interpretation
+        4. String Analysis - Extracted strings with file offsets
+        
+        All analysis is performed using the native ICP backend in a background
+        thread to maintain UI responsiveness.
+        """
+        from PyQt5.QtCore import QThread, pyqtSignal
+        from PyQt5.QtWidgets import QDialog, QProgressBar, QTabWidget, QTextEdit, QVBoxLayout
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Native ICP Engine Analysis")
+        dialog.resize(900, 700)
+
+        layout = QVBoxLayout()
+
+        # Progress bar
+        progress = QProgressBar()
+        layout.addWidget(progress)
+
+        tabs = QTabWidget()
+
+        # Create text widgets for each tab
+        sig_text = QTextEdit()
+        sig_text.setFont(QFont("Consolas", 9))
+        tabs.addTab(sig_text, "Signature Analysis")
+
+        section_text = QTextEdit()
+        section_text.setFont(QFont("Consolas", 9))
+        tabs.addTab(section_text, "Section Analysis")
+
+        entropy_text = QTextEdit()
+        entropy_text.setFont(QFont("Consolas", 9))
+        tabs.addTab(entropy_text, "Entropy Analysis")
+
+        strings_text = QTextEdit()
+        strings_text.setFont(QFont("Consolas", 9))
+        tabs.addTab(strings_text, "String Analysis")
+
+        layout.addWidget(tabs)
+        dialog.setLayout(layout)
+
+        # Load ICP data in background
+        class ICPAnalysisThread(QThread):
+            analysis_complete = pyqtSignal(dict)
+            progress_updated = pyqtSignal(int)
+
+            def __init__(self, file_path):
+                super().__init__()
+                self.file_path = file_path
+
+            def run(self):
+                try:
+                    backend = get_icp_backend()
+                    self.progress_updated.emit(25)
+
+                    # Get detailed analysis
+                    analysis = backend.get_detailed_analysis(self.file_path)
+                    self.progress_updated.emit(100)
+
+                    self.analysis_complete.emit(analysis)
+                except Exception as e:
+                    logger.error(f"ICP analysis error: {e}")
+                    self.analysis_complete.emit({'error': str(e)})
+
+        def update_analysis(analysis_data):
+            progress.setVisible(False)
+
+            if 'error' in analysis_data:
+                sig_text.setPlainText(f"Error: {analysis_data['error']}")
+                return
+
+            # Signature Analysis
+            sig_content = "=== Native ICP Signature Analysis ===\n\n"
+            sig_content += f"File Type: {analysis_data.get('file_type', 'Unknown')}\n"
+            sig_content += f"File Size: {analysis_data.get('file_size', 0)} bytes\n"
+            sig_content += f"Overall Entropy: {analysis_data.get('entropy', 0.0):.4f}\n\n"
+
+            packers = analysis_data.get('packers', [])
+            if packers:
+                sig_content += "Detected Packers/Protectors:\n"
+                for packer in packers:
+                    sig_content += f"  • {packer}\n"
+            else:
+                sig_content += "No packers detected\n"
+
+            sig_content += f"\nPacked: {'Yes' if analysis_data.get('is_packed', False) else 'No'}\n"
+            sig_content += f"Encrypted: {'Yes' if analysis_data.get('is_encrypted', False) else 'No'}\n"
+
+            sig_text.setPlainText(sig_content)
+
+            # Section Analysis
+            sections = analysis_data.get('sections', [])
+            section_content = "=== Section Analysis ===\n\n"
+            section_content += f"Total Sections: {len(sections)}\n\n"
+
+            for i, section in enumerate(sections):
+                section_content += f"Section {i+1}: {section.get('name', 'Unknown')}\n"
+                section_content += f"  Virtual Address: 0x{section.get('virtual_address', 0):08X}\n"
+                section_content += f"  Virtual Size: {section.get('virtual_size', 0)} bytes\n"
+                section_content += f"  Raw Size: {section.get('raw_size', 0)} bytes\n"
+                section_content += f"  Raw Offset: 0x{section.get('raw_offset', 0):08X}\n"
+                section_content += f"  Characteristics: 0x{section.get('characteristics', 0):08X}\n"
+                section_content += f"  Entropy: {section.get('entropy', 0.0):.4f}\n\n"
+
+            section_text.setPlainText(section_content)
+
+            # Entropy Analysis
+            entropy_content = "=== Entropy Analysis ===\n\n"
+            entropy_content += f"Overall File Entropy: {analysis_data.get('entropy', 0.0):.6f}\n\n"
+
+            if analysis_data.get('entropy', 0.0) > 7.5:
+                entropy_content += "🔴 HIGH ENTROPY - Likely encrypted or compressed\n"
+            elif analysis_data.get('entropy', 0.0) > 6.0:
+                entropy_content += "🟡 MEDIUM ENTROPY - Possible obfuscation\n"
+            else:
+                entropy_content += "🟢 LOW ENTROPY - Normal code/data\n"
+
+            entropy_content += "\nEntropy Interpretation:\n"
+            entropy_content += "• 0.0 - 4.0: Low entropy (normal code, text)\n"
+            entropy_content += "• 4.0 - 6.0: Medium entropy (mixed content)\n"
+            entropy_content += "• 6.0 - 7.5: High entropy (compressed/obfuscated)\n"
+            entropy_content += "• 7.5 - 8.0: Very high entropy (encrypted)\n\n"
+
+            # Per-section entropy
+            entropy_content += "Per-Section Entropy:\n"
+            for section in sections:
+                name = section.get('name', 'Unknown')
+                ent = section.get('entropy', 0.0)
+                entropy_content += f"  {name}: {ent:.4f}\n"
+
+            entropy_text.setPlainText(entropy_content)
+
+            # String Analysis
+            strings = analysis_data.get('strings', [])
+            string_content = "=== String Analysis ===\n\n"
+            string_content += f"Total Strings Found: {len(strings)}\n\n"
+
+            if strings:
+                string_content += "Sample Strings (first 50):\n\n"
+                for i, string_info in enumerate(strings[:50]):
+                    offset = string_info.get('offset', 0)
+                    string_val = string_info.get('string', '')
+                    string_type = string_info.get('type', 'ASCII')
+                    string_content += f"0x{offset:08X}: [{string_type}] {repr(string_val)}\n"
+
+                if len(strings) > 50:
+                    string_content += f"\n... and {len(strings) - 50} more strings\n"
+            else:
+                string_content += "No strings found\n"
+
+            strings_text.setPlainText(string_content)
+
+        # Start analysis
+        thread = ICPAnalysisThread(self._current_file_path)
+        thread.analysis_complete.connect(update_analysis)
+        thread.progress_updated.connect(progress.setValue)
+        thread.start()
+
+        # Show dialog
+        dialog.exec_()
 
     def generate_bypass_script(self):
         """Generate bypass script using the script generation handler"""

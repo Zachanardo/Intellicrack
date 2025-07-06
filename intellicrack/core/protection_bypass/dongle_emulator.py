@@ -59,7 +59,7 @@ class HardwareDongleEmulator:
             dict: Results of the emulation activation with success status and methods applied
         """
         if dongle_types is None:
-            dongle_types = ["SafeNet", "HASP", "CodeMeter", "Rainbow", "ROCKEY"]
+            dongle_types = ["SafeNet", "HASP", "CodeMeter", "Rainbow", "ROCKEY", "Dinkey", "SuperPro", "eToken"]
 
         results = {
             "success": False,

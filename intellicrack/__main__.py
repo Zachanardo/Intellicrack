@@ -1,5 +1,4 @@
-"""
-Entry point for running Intellicrack as a module.
+"""Entry point for running Intellicrack as a module.
 
 This module enables execution of Intellicrack using Python's -m flag,
 providing a standard entry point for package execution. It handles

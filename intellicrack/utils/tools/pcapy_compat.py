@@ -1,3 +1,4 @@
+"""Pcapy compatibility layer for packet capture functionality."""
 from intellicrack.logger import logger
 
 """

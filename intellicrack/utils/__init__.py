@@ -1,5 +1,4 @@
-"""
-Intellicrack Utils Package
+"""Intellicrack Utils Package.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -586,6 +585,7 @@ __all__ = [
     'run_frida_analysis', 'run_dynamic_instrumentation',
     'run_frida_script', 'run_comprehensive_analysis', 'run_ghidra_analysis',
     'run_radare2_analysis', 'run_autonomous_patching', 'run_ghidra_analysis_gui',
+    'run_deep_license_analysis',
 
     # From exception_utils
     'handle_exception', 'load_config', 'save_config',

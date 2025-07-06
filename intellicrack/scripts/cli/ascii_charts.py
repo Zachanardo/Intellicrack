@@ -257,6 +257,71 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
+    def display_chart_rich(self, chart_content: str, title: str = "Analysis Chart") -> None:
+        """Display chart with rich formatting and alignment.
+        
+        Args:
+            chart_content: ASCII chart content to display
+            title: Chart title
+        """
+        if not RICH_AVAILABLE:
+            print(f"\n{title}\n{'=' * len(title)}")
+            print(chart_content)
+            return
+
+        # Create styled title with rich Text formatting
+        styled_title = Text(title, style="bold blue")
+
+        # Center align the title
+        centered_title = Align.center(styled_title)
+
+        # Create chart content with monospace font for proper alignment
+        chart_text = Text(chart_content, style="white")
+        centered_chart = Align.center(chart_text)
+
+        # Display with panels and spacing
+        self.console.print()
+        self.console.print(Panel(centered_title, border_style="blue"))
+        self.console.print()
+        self.console.print(Panel(centered_chart, border_style="cyan", title="Chart Data"))
+        self.console.print()
+
+    def create_styled_legend(self, data: Dict[str, Union[int, float]],
+                           title: str = "Legend") -> None:
+        """Create a styled legend for chart data using rich Text formatting.
+        
+        Args:
+            data: Dictionary of label -> value pairs
+            title: Legend title
+        """
+        if not RICH_AVAILABLE:
+            print(f"\n{title}:")
+            for label, value in data.items():
+                print(f"  {label}: {value}")
+            return
+
+        # Create styled legend entries
+        legend_entries = []
+        colors = ["red", "green", "blue", "yellow", "magenta", "cyan"]
+
+        for i, (label, value) in enumerate(data.items()):
+            color = colors[i % len(colors)]
+            # Create styled text for each legend entry
+            entry = Text()
+            entry.append("■ ", style=f"bold {color}")  # Colored square
+            entry.append(f"{label}: ", style="bold white")
+            entry.append(f"{value}", style=f"{color}")
+            legend_entries.append(entry)
+
+        # Display legend with alignment
+        legend_title = Text(title, style="bold underline")
+        self.console.print(Align.center(legend_title))
+        self.console.print()
+
+        for entry in legend_entries:
+            self.console.print(Align.center(entry))
+        self.console.print()
+
     def generate_pie_chart(self, data: Dict[str, Union[int, float]],
                           title: str = "Pie Chart") -> str:
         """Generate ASCII pie chart representation.

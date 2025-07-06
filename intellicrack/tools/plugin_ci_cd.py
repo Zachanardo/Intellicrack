@@ -1,3 +1,4 @@
+"""Plugin CI/CD system for automated plugin testing and deployment."""
 import hashlib
 import json
 import os

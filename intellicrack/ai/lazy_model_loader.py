@@ -52,11 +52,20 @@ class DefaultLoadingStrategy(ModelLoadingStrategy):
     """Default loading strategy - load on first use."""
 
     def should_preload(self, config: LLMConfig) -> bool:
-        """Don't preload by default."""
+        """Don't preload by default, but allow API models for quick initialization."""
+        # API models are quick to initialize and don't consume much local resources
+        if hasattr(config, 'provider') and config.provider.value in ["openai", "anthropic", "ollama"]:
+            return True
         return False
 
     def get_load_priority(self, config: LLMConfig) -> int:
-        """All models have equal priority."""
+        """Basic priority based on provider type."""
+        # Give API models higher priority since they're faster to initialize
+        if hasattr(config, 'provider'):
+            if config.provider.value in ["openai", "anthropic"]:
+                return 10
+            elif config.provider.value in ["ollama", "local_api"]:
+                return 5
         return 0
 
 

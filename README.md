@@ -77,11 +77,30 @@ git clone https://github.com/yourusername/intellicrack.git
 cd intellicrack
 
 # 3. Install dependencies
-pip install -r requirements.txt
+pip install -r requirements/requirements.txt
 
 # 4. Launch the application
 python launch_intellicrack.py
 ```
+
+### Platform-Specific Dependencies
+
+Intellicrack automatically manages platform-specific dependencies:
+
+#### Windows
+- **Primary Engine**: angr (full Windows support)
+- **Excluded**: manticore (Linux-only, not required)
+- All Windows users get a fully functional system without Linux-specific tools
+
+#### Linux/Unix
+- **Primary Engine**: angr (recommended)
+- **Secondary Engine**: manticore (automatically installed)
+- **Optional**: Install with `pip install intellicrack[linux]` for all Linux tools
+
+#### Symbolic Execution Support
+- **angr**: Cross-platform, installed by default, recommended for all users
+- **manticore**: Linux-only, optional fallback
+- **simconcolic**: Built-in fallback for minimal functionality
 
 ## 🎯 Usage
 
@@ -206,7 +225,7 @@ packets = analyzer.stop_capture()
 
 1. **Import Errors**
    ```
-   Solution: Run install_dependencies.bat or pip install -r requirements.txt
+   Solution: Run install_dependencies.bat or pip install -r requirements/requirements.txt
    ```
 
 2. **GPU Not Detected**

@@ -61,6 +61,8 @@ class GPUAccelerationManager:
             prefer_intel: Whether to prefer Intel GPUs when multiple GPUs are available (default: True)
         """
         self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
+        self.use_intel_pytorch = use_intel_pytorch
+        self.prefer_intel = prefer_intel
 
         # Use the unified GPU autoloader
         self.gpu_info = get_gpu_info()
@@ -68,9 +70,15 @@ class GPUAccelerationManager:
         self.gpu_type = self.gpu_info['type']
         self.device = get_device()
 
-        # Get torch reference if available
-        self._torch = gpu_autoloader.get_torch()
-        self._ipex = gpu_autoloader.get_ipex()
+        # Get torch reference if available - respect use_intel_pytorch setting
+        if use_intel_pytorch:
+            self._torch = gpu_autoloader.get_torch()
+            self._ipex = gpu_autoloader.get_ipex()
+        else:
+            self._torch = gpu_autoloader.get_torch() if self.gpu_type != 'intel_xpu' else None
+            self._ipex = None
+            if self.gpu_type == 'intel_xpu' and not use_intel_pytorch:
+                self.logger.info("Intel PyTorch disabled by configuration, falling back to OpenCL")
 
         # Legacy attributes for compatibility
         self.gpu_backend = self._determine_backend()
@@ -85,9 +93,14 @@ class GPUAccelerationManager:
             self._init_opencl()
 
     def _determine_backend(self) -> Optional[str]:
-        """Determine the backend based on GPU type"""
+        """Determine the backend based on GPU type and configuration"""
         if self.gpu_type == 'intel_xpu':
-            return 'intel_pytorch'
+            if self.use_intel_pytorch and self._ipex:
+                return 'intel_pytorch'
+            elif OPENCL_AVAILABLE:
+                return 'pyopencl'
+            else:
+                return 'intel_pytorch'  # fallback even without IPEX
         elif self.gpu_type == 'nvidia_cuda':
             if CUPY_AVAILABLE:
                 return 'cupy'
@@ -444,3 +457,46 @@ class GPUAccelerator(GPUAccelerationManager):
     def _run_initial_benchmarks(self):
         """Legacy method for compatibility"""
         pass
+
+
+def create_gpu_acceleration_manager():
+    """
+    Factory function to create a GPU acceleration manager.
+    
+    Returns:
+        GPUAccelerationManager: Configured GPU acceleration manager instance
+    """
+    try:
+        return GPUAccelerationManager()
+    except Exception as e:
+        logger.error(f"Failed to create GPU acceleration manager: {e}")
+        return None
+
+
+def create_gpu_accelerator():
+    """
+    Factory function to create a GPU accelerator.
+    
+    Returns:
+        GPUAccelerator: Configured GPU accelerator instance
+    """
+    try:
+        return GPUAccelerator()
+    except Exception as e:
+        logger.error(f"Failed to create GPU accelerator: {e}")
+        return None
+
+
+def is_gpu_acceleration_available():
+    """
+    Check if GPU acceleration is available on this system.
+    
+    Returns:
+        bool: True if GPU acceleration is available, False otherwise
+    """
+    try:
+        gpu_info = get_gpu_info()
+        return gpu_info.get('available', False)
+    except Exception as e:
+        logger.debug(f"GPU availability check failed: {e}")
+        return False

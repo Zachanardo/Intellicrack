@@ -28,6 +28,7 @@ except ImportError:
     import logging
 
     def get_logger(name):
+        """Create a logger instance for the given name."""
         return logging.getLogger(name)
 
 logger = get_logger(__name__)
@@ -64,7 +65,11 @@ class AnalysisResultOrchestrator(QObject):
                 f"Handler {handler.__class__.__name__} missing on_analysis_complete slot")
 
     def unregister_handler(self, handler: QObject):
-        """Remove a handler from the registry"""
+        """Remove a handler from the registry.
+        
+        Args:
+            handler: The QObject handler to remove from the registry
+        """
         if handler in self.handlers:
             self.handlers.remove(handler)
             logger.info(f"Unregistered handler: {handler.__class__.__name__}")

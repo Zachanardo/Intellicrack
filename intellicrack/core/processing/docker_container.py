@@ -1,3 +1,4 @@
+"""Docker container management for isolated analysis environments."""
 import os
 import subprocess
 import time

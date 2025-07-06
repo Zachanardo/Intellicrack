@@ -17,6 +17,8 @@ from pathlib import Path
 # Add Intellicrack to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+from intellicrack.protection.icp_backend import ScanMode
+
 def test_die_python_basic():
     """Test basic die-python functionality"""
     print("🔍 Testing die-python basic functionality...")
@@ -79,7 +81,7 @@ def test_icp_backend_direct():
         sys.path.insert(0, '/mnt/c/Intellicrack')
         
         # Import just the backend module
-        from intellicrack.protection.icp_backend import ICPBackend, ScanMode, ICPScanResult
+        from intellicrack.protection.icp_backend import ICPBackend
         
         print("✓ ICP backend components imported successfully")
         
@@ -148,7 +150,7 @@ def test_text_parser():
         
         result = ICPScanResult.from_die_text("/test/file.exe", sample_text)
         
-        print(f"✓ Text parsing successful")
+        print("✓ Text parsing successful")
         print(f"  File type: {result.file_infos[0].filetype if result.file_infos else 'None'}")
         print(f"  Detections: {len(result.all_detections)}")
         

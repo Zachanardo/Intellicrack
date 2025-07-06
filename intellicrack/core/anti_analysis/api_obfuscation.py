@@ -1,4 +1,22 @@
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 API Obfuscation
 
 Implements techniques to obfuscate API calls and evade
@@ -180,6 +198,24 @@ class APIObfuscator:
             names_rva = ctypes.c_uint32.from_address(export_dir + 0x20).value
             ordinals_rva = ctypes.c_uint32.from_address(export_dir + 0x24).value
             functions_rva = ctypes.c_uint32.from_address(export_dir + 0x1C).value
+
+            # Validate export table consistency
+            if num_functions == 0:
+                logger.warning(f"DLL {dll_name} has no exported functions")
+                return None
+
+            if num_names > num_functions:
+                logger.warning(f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption")
+                return None
+
+            # Check for suspiciously large export tables (possible anti-analysis)
+            if num_functions > 10000:
+                logger.warning(f"DLL {dll_name} has unusually large export table ({num_functions} functions) - possible anti-analysis technique")
+
+            # Validate that we have named exports to search through
+            if num_names == 0:
+                logger.info(f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)")
+                return None
 
             names_array = h_module + names_rva
             ordinals_array = h_module + ordinals_rva

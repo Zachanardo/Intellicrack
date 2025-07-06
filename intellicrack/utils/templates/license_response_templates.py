@@ -1,3 +1,4 @@
+"""License response templates for generating valid license responses."""
 from intellicrack.logger import logger
 
 """

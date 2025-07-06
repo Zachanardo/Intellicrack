@@ -65,6 +65,97 @@ try:
 except ImportError as e:
     logger.error("Import error in enhanced_training_interface: %s", e)
     PYQT5_AVAILABLE = False
+    
+    # Create fallback classes for when PyQt5 is not available
+    class QThread:
+        pass
+    
+    class QWidget:
+        pass
+    
+    class QDialog:
+        pass
+    
+    class QVBoxLayout:
+        pass
+    
+    class QHBoxLayout:
+        pass
+    
+    class QTabWidget:
+        pass
+    
+    class QLabel:
+        pass
+    
+    class QPushButton:
+        pass
+    
+    class QProgressBar:
+        pass
+    
+    class QTextEdit:
+        pass
+    
+    class QCheckBox:
+        pass
+    
+    class QSpinBox:
+        pass
+    
+    class QDoubleSpinBox:
+        pass
+    
+    class QComboBox:
+        pass
+    
+    class QSlider:
+        pass
+    
+    class QGroupBox:
+        pass
+    
+    class QFormLayout:
+        pass
+    
+    class QGridLayout:
+        pass
+    
+    class QFrame:
+        pass
+    
+    class QTableWidget:
+        pass
+    
+    class QTableWidgetItem:
+        pass
+    
+    class QScrollArea:
+        pass
+    
+    class QSplitter:
+        pass
+    
+    class QLineEdit:
+        pass
+    
+    class QFileDialog:
+        pass
+    
+    class QMessageBox:
+        pass
+    
+    class QTimer:
+        pass
+    
+    def pyqtSignal(*args):
+        return None
+    
+    Qt = None
+    QFont = None
+    QIcon = None
+    QPalette = None
+    QPixmap = None
 
 try:
     import numpy as np

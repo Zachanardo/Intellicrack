@@ -111,6 +111,17 @@ class ModelFormatConverter:
     def __init__(self):
         """Initialize the model format converter."""
         self.supported_conversions = self._get_supported_conversions()
+        self.gpu_info = None
+
+        # Get GPU information if available
+        if GPU_AUTOLOADER_AVAILABLE and get_gpu_info:
+            try:
+                self.gpu_info = get_gpu_info()
+                if self.gpu_info:
+                    logger.info(f"GPU available for conversion: {self.gpu_info}")
+            except Exception as e:
+                logger.debug(f"Could not get GPU info: {e}")
+
         logger.info(
             f"Model converter initialized with conversions: {self.supported_conversions}")
 
@@ -183,11 +194,39 @@ class ModelFormatConverter:
         else:
             output_path = Path(output_path)
 
+        # Log GPU memory before conversion if available
+        if GPU_AUTOLOADER_AVAILABLE and memory_allocated and memory_reserved:
+            try:
+                initial_allocated = memory_allocated()
+                initial_reserved = memory_reserved()
+                logger.info(f"GPU memory before conversion - Allocated: {initial_allocated / (1024**2):.1f}MB, Reserved: {initial_reserved / (1024**2):.1f}MB")
+            except Exception:
+                pass
+
         # Perform conversion
         converter_method = f"_convert_{source_format}_to_{target_format}"
         if hasattr(self, converter_method):
             try:
-                return getattr(self, converter_method)(source_path, output_path, **kwargs)
+                result = getattr(self, converter_method)(source_path, output_path, **kwargs)
+
+                # Clean up GPU memory after conversion
+                if GPU_AUTOLOADER_AVAILABLE and empty_cache:
+                    try:
+                        empty_cache()
+                        logger.debug("Cleared GPU cache after conversion")
+                    except Exception:
+                        pass
+
+                # Log final GPU memory if available
+                if GPU_AUTOLOADER_AVAILABLE and memory_allocated and memory_reserved:
+                    try:
+                        final_allocated = memory_allocated()
+                        final_reserved = memory_reserved()
+                        logger.info(f"GPU memory after conversion - Allocated: {final_allocated / (1024**2):.1f}MB, Reserved: {final_reserved / (1024**2):.1f}MB")
+                    except Exception:
+                        pass
+
+                return result
             except Exception as e:
                 logger.error(f"Conversion failed: {e}")
                 return None
@@ -308,6 +347,15 @@ class ModelFormatConverter:
             # Set model to eval mode
             model.eval()
 
+            # Move model to GPU if available for faster conversion
+            if GPU_AUTOLOADER_AVAILABLE and to_device and device != "cpu":
+                try:
+                    model = to_device(model, device)
+                    dummy_input = to_device(dummy_input, device)
+                    logger.info(f"Model and inputs moved to {device} for conversion")
+                except Exception as e:
+                    logger.debug(f"Could not move to GPU, continuing on CPU: {e}")
+
             # Export to ONNX
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -405,6 +453,22 @@ class ModelFormatConverter:
             if output_path.suffix != '.safetensors':
                 output_path = output_path.with_suffix('.safetensors')
 
+            # Apply GPU optimization if available before saving
+            if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader and device != "cpu":
+                try:
+                    # Try to optimize the state dict tensors
+                    optimized_dict = {}
+                    for key, tensor in state_dict.items():
+                        if hasattr(tensor, 'shape'):  # It's a tensor
+                            optimized_tensor = gpu_autoloader(tensor)
+                            optimized_dict[key] = optimized_tensor if optimized_tensor is not None else tensor
+                        else:
+                            optimized_dict[key] = tensor
+                    state_dict = optimized_dict
+                    logger.debug("Applied GPU optimizations to state dict before saving")
+                except Exception as e:
+                    logger.debug(f"Could not apply GPU optimizations: {e}")
+
             # Save to SafeTensors
             metadata = kwargs.get("metadata", {})
             save_file(state_dict, str(output_path), metadata=metadata)
@@ -438,11 +502,20 @@ class ModelFormatConverter:
             return None
 
         try:
+            # Extract conversion options from kwargs
+            device = kwargs.get('device', 'cpu')
+            dtype = kwargs.get('dtype', None)
+            preserve_layout = kwargs.get('preserve_layout', True)
+
             # Load SafeTensors
             state_dict = {}
-            with safe_open(str(source_path), framework="pt", device="cpu") as f:
+            with safe_open(str(source_path), framework="pt", device=device) as f:
                 for key in f.keys():
-                    state_dict[key] = f.get_tensor(key)
+                    tensor = f.get_tensor(key)
+                    # Apply dtype conversion if specified
+                    if dtype and hasattr(torch, dtype):
+                        tensor = tensor.to(getattr(torch, dtype))
+                    state_dict[key] = tensor
 
             # Ensure output directory exists
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -451,8 +524,11 @@ class ModelFormatConverter:
             if output_path.suffix not in ['.pt', '.pth', '.bin']:
                 output_path = output_path.with_suffix('.pt')
 
-            # Save as PyTorch
-            torch.save(state_dict, str(output_path))
+            # Save as PyTorch with options
+            save_kwargs = {}
+            if not preserve_layout:
+                save_kwargs['_use_new_zipfile_serialization'] = False
+            torch.save(state_dict, str(output_path), **save_kwargs)
 
             logger.info(
                 f"Successfully converted SafeTensors to PyTorch: {output_path}")

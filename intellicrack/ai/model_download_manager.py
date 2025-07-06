@@ -448,6 +448,20 @@ class ModelDownloadManager:
             return None
 
         try:
+            # Track download progress if callback provided
+            if progress_callback:
+                # Create progress tracking
+                progress = DownloadProgress(
+                    model_id=model_id,
+                    file_name=filename,
+                    total_bytes=0,
+                    downloaded_bytes=0,
+                    progress_percent=0.0,
+                    download_speed=0.0,
+                    status="starting"
+                )
+                progress_callback(progress)
+
             # Download file
             local_path = hf_hub_download(
                 repo_id=model_id,
@@ -456,6 +470,12 @@ class ModelDownloadManager:
                 cache_dir=str(self.cache_dir),
                 token=self.token
             )
+
+            # Report completion if callback provided
+            if progress_callback:
+                progress.status = "completed"
+                progress.progress_percent = 100.0
+                progress_callback(progress)
 
             return Path(local_path)
 

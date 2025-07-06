@@ -1,3 +1,4 @@
+"""PDF report generator for creating analysis reports."""
 import base64
 import datetime
 import io
@@ -584,31 +585,44 @@ class PDFReportGenerator:
             return False
 
     def generate_html_report(self, binary_path: str, analysis_results: Dict[str, Any],
-                           report_type: str = "comprehensive") -> Optional[str]:  # pylint: disable=unused-argument
+                           report_type: str = "comprehensive") -> Optional[str]:
         """
         Generate an HTML report for the analysis results.
 
         Args:
             binary_path: Path to the analyzed binary
             analysis_results: Dictionary of analysis results
-            report_type: Type of report to generate
+            report_type: Type of report to generate ("comprehensive", "summary", "technical", "executive")
 
         Returns:
             Path to the generated HTML report, or None if generation failed
         """
         try:
-            # Create filename for the report
+            # Create filename for the report based on report type
             binary_name = os.path.basename(binary_path)
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            report_filename = f"report_{binary_name}_{timestamp}.html"
+            report_filename = f"report_{report_type}_{binary_name}_{timestamp}.html"
             report_path = os.path.join(self.output_dir, report_filename)
 
             from ...utils.reporting.html_templates import close_html, get_report_html_template
 
-            # Start building HTML content using common template
+            # Determine report title and CSS class based on report type
+            report_titles = {
+                "comprehensive": "Comprehensive Analysis Report",
+                "summary": "Analysis Summary Report",
+                "technical": "Technical Analysis Report",
+                "executive": "Executive Summary Report"
+            }
+            
+            report_title = report_titles.get(report_type, "Analysis Report")
+            css_class = f"report-{report_type.replace('_', '-')}"
+
+            # Start building HTML content using common template with report type styling
             html_content = get_report_html_template(binary_name) + f"""
-                <h1>Intellicrack Analysis Report</h1>
+                <div class="{css_class}">
+                <h1>Intellicrack {report_title}</h1>
                 <p><strong>Binary:</strong> {binary_name}</p>
+                <p><strong>Report Type:</strong> {report_type.title()}</p>
                 <p><strong>Date:</strong> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
 
                 <h2>Executive Summary</h2>
@@ -621,11 +635,51 @@ class PDFReportGenerator:
 
             html_content += f"""
                 <p>
-                    This report presents the results of a comprehensive analysis of the binary file {binary_name}.
+                    This report presents the results of a {report_type} analysis of the binary file {binary_name}.
                     The analysis identified {len(vulnerabilities)} potential vulnerabilities,
                     {len(protections)} protection mechanisms, and {len(license_checks)} license check routines.
                 </p>
             """
+
+            # Add report type-specific sections
+            if report_type == "executive":
+                # Executive report focuses on high-level findings and business impact
+                html_content += """
+                    <h2>Key Findings</h2>
+                    <ul>
+                """
+                if vulnerabilities:
+                    html_content += f"<li>Security Risk: {len(vulnerabilities)} potential vulnerabilities discovered</li>"
+                if protections:
+                    html_content += f"<li>Protection Status: {len(protections)} security mechanisms detected</li>"
+                if license_checks:
+                    html_content += f"<li>Licensing: {len(license_checks)} license validation routines identified</li>"
+                html_content += "</ul>"
+                
+            elif report_type == "summary":
+                # Summary report provides condensed technical details
+                html_content += """
+                    <h2>Analysis Summary</h2>
+                    <h3>Vulnerability Overview</h3>
+                """
+                if vulnerabilities:
+                    for vuln in vulnerabilities[:3]:  # Show first 3
+                        vuln_type = vuln.get('type', 'Unknown')
+                        html_content += f"<p>• {vuln_type}</p>"
+                        
+            elif report_type == "technical":
+                # Technical report includes detailed analysis data
+                html_content += """
+                    <h2>Technical Analysis Details</h2>
+                    <h3>Binary Characteristics</h3>
+                """
+                if 'file_info' in analysis_results:
+                    file_info = analysis_results['file_info']
+                    html_content += f"<p>File Type: {file_info.get('type', 'Unknown')}</p>"
+                    html_content += f"<p>Architecture: {file_info.get('arch', 'Unknown')}</p>"
+                    html_content += f"<p>Size: {file_info.get('size', 'Unknown')} bytes</p>"
+                    
+            # Default comprehensive report includes all sections (no special handling needed)
 
             # Add visualization if matplotlib is available
             if self.matplotlib_available and (vulnerabilities or protections or license_checks):

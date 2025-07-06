@@ -1,3 +1,4 @@
+"""Emulator UI enhancements for improved user experience."""
 from typing import Dict
 
 from intellicrack.logger import logger

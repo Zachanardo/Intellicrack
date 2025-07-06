@@ -1,3 +1,4 @@
+"""Hex viewer widget for displaying binary data in hexadecimal format."""
 import logging
 from typing import Optional
 

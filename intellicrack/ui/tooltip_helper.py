@@ -1,3 +1,4 @@
+"""Tooltip helper utilities for enhanced UI tooltips."""
 from typing import Dict
 
 from intellicrack.logger import logger

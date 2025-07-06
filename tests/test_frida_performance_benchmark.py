@@ -1,4 +1,22 @@
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Performance Benchmarking System for Frida Integration
 
 Measures and tracks performance metrics for Frida operations including:
@@ -387,7 +405,7 @@ class HookPerformanceBenchmark(FridaBenchmark):
 
         metrics.add_metric('num_hooks', self.num_hooks)
         metrics.add_metric('executions', executions)
-        metrics.add_metric('overhead_per_call_us', 
+        metrics.add_metric('overhead_per_call_us',
                           (metrics.duration * 1000) / executions)  # microseconds
 
         return metrics
@@ -463,7 +481,7 @@ class MemoryUsageBenchmark(FridaBenchmark):
         metrics.add_metric('baseline_memory_mb', round(baseline_memory, 2))
         metrics.add_metric('after_memory_mb', round(after_memory, 2))
         metrics.add_metric('scripts_loaded', self.script_count)
-        metrics.add_metric('memory_per_script_mb', 
+        metrics.add_metric('memory_per_script_mb',
                           round((after_memory - baseline_memory) / self.script_count, 2))
 
         # Clean up loaded scripts for next iteration
@@ -541,7 +559,7 @@ class OptimizationBenchmark(FridaBenchmark):
 
         metrics.add_metric('no_optimization_ms', round(no_opt_time, 2))
         metrics.add_metric('with_optimization_ms', round(opt_time, 2))
-        metrics.add_metric('improvement_percent', 
+        metrics.add_metric('improvement_percent',
                           round(((no_opt_time - opt_time) / no_opt_time) * 100, 2))
 
         return metrics
@@ -634,7 +652,7 @@ class BenchmarkSuite:
             # Print additional metrics
             for r in result.get('raw_results', [])[:1]:  # First result only
                 for k, v in r.items():
-                    if k not in ['name', 'duration_ms', 'memory_start_mb', 
+                    if k not in ['name', 'duration_ms', 'memory_start_mb',
                                'memory_end_mb', 'memory_delta_mb']:
                         print(f"  {k}: {v}")
             print()
@@ -678,6 +696,51 @@ class TestPerformanceBenchmarks(unittest.TestCase):
             metrics.duration = 10 + i  # 10, 11, 12
             metrics.memory_delta = i  # 0, 1, 2
             benchmark.results.append(metrics)
+            
+    def test_frida_performance_optimizer(self):
+        """Test FridaPerformanceOptimizer functionality"""
+        optimizer = FridaPerformanceOptimizer()
+        
+        # Test baseline measurement
+        optimizer.measure_baseline()
+        self.assertGreater(optimizer.baseline_memory, 0)
+        self.assertGreaterEqual(optimizer.baseline_cpu, 0)
+        
+        # Test optimization settings
+        optimizer.set_optimization_level("aggressive")
+        self.assertEqual(optimizer.optimization_level, "aggressive")
+        
+        # Test hook filtering based on category
+        should_hook_critical = optimizer.should_hook_function(
+            "kernel32.dll", "VirtualProtect", HookCategory.CRITICAL
+        )
+        self.assertTrue(should_hook_critical)  # Critical should always be hooked
+        
+        # Test memory limit enforcement
+        optimizer.memory_limit_mb = 100
+        with patch.object(optimizer, 'get_current_memory') as mock_mem:
+            mock_mem.return_value = 150  # Over limit
+            should_hook_low = optimizer.should_hook_function(
+                "user32.dll", "GetWindowText", HookCategory.LOW
+            )
+            self.assertFalse(should_hook_low)  # Low priority should be skipped when over limit
+            
+    def test_hook_category_priorities(self):
+        """Test HookCategory priority ordering"""
+        # Test category values (higher value = higher priority)
+        self.assertGreater(HookCategory.CRITICAL.value, HookCategory.HIGH.value)
+        self.assertGreater(HookCategory.HIGH.value, HookCategory.MEDIUM.value)
+        self.assertGreater(HookCategory.MEDIUM.value, HookCategory.LOW.value)
+        
+        # Test category filtering in optimizer
+        optimizer = FridaPerformanceOptimizer()
+        optimizer.minimum_category = HookCategory.MEDIUM
+        
+        # Should hook medium and above
+        self.assertTrue(optimizer.should_hook_category(HookCategory.CRITICAL))
+        self.assertTrue(optimizer.should_hook_category(HookCategory.HIGH))
+        self.assertTrue(optimizer.should_hook_category(HookCategory.MEDIUM))
+        self.assertFalse(optimizer.should_hook_category(HookCategory.LOW))
 
         stats = benchmark._calculate_statistics()
 

@@ -1,7 +1,6 @@
 
 
-"""
-Intellicrack: A fully featured, AI-assisted software analysis and security research suite.
+"""Intellicrack: A fully featured, AI-assisted software analysis and security research suite.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -59,13 +58,18 @@ try:
     gpu_info = get_gpu_info()
     if gpu_info['gpu_available']:
         import sys
+        # Get the actual device for logging
+        device = get_device()
         # Check if we're in interactive mode (REPL) vs script mode
         if not hasattr(sys, 'ps1'):  # Not in interactive mode
-            # Only log, don't print to avoid cluttering output in production
-            pass
+            # Store device info for later use
+            _default_device = device
+        else:
+            # In interactive mode, we might print device info
+            _default_device = device
 except Exception:
     # Silently continue without GPU - application will fall back to CPU
-    pass
+    _default_device = 'cpu'
 
 # Setup logging after imports
 logger = logging.getLogger(__name__)
@@ -135,8 +139,7 @@ except ImportError as e:
 
 
 def get_version():
-    """
-    Return the current version of Intellicrack.
+    """Return the current version of Intellicrack.
     
     This function provides a programmatic way to access the version string
     of the Intellicrack package, useful for version checking, logging,
@@ -150,6 +153,7 @@ def get_version():
         >>> version = get_version()
         >>> print(f"Running Intellicrack v{version}")
         Running Intellicrack v1.0.0
+        
     """
     return __version__
 
@@ -157,8 +161,7 @@ def get_version():
 
 
 def create_app():
-    """
-    Create and return a new Intellicrack application instance.
+    """Create and return a new Intellicrack application instance.
     
     This factory function creates a fresh instance of the IntellicrackApp,
     which is the main GUI application class. It ensures that all required
@@ -179,6 +182,7 @@ def create_app():
     Note:
         This function checks if the UI module was successfully imported
         before attempting to create the application instance.
+        
     """
     if IntellicrackApp is None:
         raise ImportError("IntellicrackApp not available. Check dependencies.")
@@ -186,8 +190,7 @@ def create_app():
 
 
 def run_app():
-    """
-    Run the Intellicrack application.
+    """Run the Intellicrack application.
     
     This convenience function provides a simple way to launch the complete
     Intellicrack application, handling all initialization, GPU detection,
@@ -209,10 +212,31 @@ def run_app():
         This function wraps the main() function from intellicrack.main,
         which handles all application initialization including GPU detection,
         configuration loading, and UI setup.
+        
     """
     if main is None:
         raise ImportError("Main function not available. Check dependencies.")
     return main()
+
+
+def get_default_device():
+    """Get the default compute device detected at startup.
+    
+    This function returns the device that was detected during module
+    initialization. It can be useful for ensuring consistent device usage
+    across the application.
+    
+    Returns:
+        str: The device string (e.g., 'cuda:0', 'cpu', 'mps')
+    
+    Example:
+        >>> from intellicrack import get_default_device
+        >>> device = get_default_device()
+        >>> print(f"Using device: {device}")
+        Using device: cuda:0
+    
+    """
+    return _default_device
 
 
 __all__ = [
@@ -228,6 +252,7 @@ __all__ = [
     'get_version',
     'create_app',
     'run_app',
+    'get_default_device',
     '__version__',
     '__author__',
     '__license__'

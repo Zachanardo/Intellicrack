@@ -764,21 +764,24 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         try:
             import flask
-            deps_status.append("✓ Flask available")
+            flask_version = getattr(flask, '__version__', 'unknown')
+            deps_status.append(f"✓ Flask available (v{flask_version})")
         except ImportError as e:
             logger.error("Import error in model_manager_dialog: %s", e)
             deps_status.append("✗ Flask not available (pip install flask flask-cors)")
 
         try:
             import llama_cpp
-            deps_status.append("✓ llama-cpp-python available")
+            llama_version = getattr(llama_cpp, '__version__', 'unknown')
+            deps_status.append(f"✓ llama-cpp-python available (v{llama_version})")
         except ImportError as e:
             logger.error("Import error in model_manager_dialog: %s", e)
             deps_status.append("✗ llama-cpp-python not available (pip install llama-cpp-python)")
 
         try:
             import requests
-            deps_status.append("✓ requests available")
+            requests_version = getattr(requests, '__version__', 'unknown')
+            deps_status.append(f"✓ requests available (v{requests_version})")
         except ImportError as e:
             logger.error("Import error in model_manager_dialog: %s", e)
             deps_status.append("✗ requests not available (pip install requests)")

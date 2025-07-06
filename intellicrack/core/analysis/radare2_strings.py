@@ -1,3 +1,4 @@
+"""Radare2 string analysis module for extracting and analyzing string data."""
 import logging
 import re
 from typing import Any, Dict, List, Optional

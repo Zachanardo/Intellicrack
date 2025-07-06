@@ -351,6 +351,13 @@ class TPMProtectionBypass:
                 self._tpm_keys = {}
             self._tpm_keys[handle] = private_key
 
+            # Also store serialized form for potential export
+            self._tpm_keys[f"{handle}_pem"] = private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()
+            )
+
         except ImportError as e:
             self.logger.error("Import error in tpm_bypass: %s", e)
             # Fallback without cryptography library

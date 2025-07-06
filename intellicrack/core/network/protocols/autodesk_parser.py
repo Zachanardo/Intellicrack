@@ -265,9 +265,28 @@ class AutodeskLicensingParser:
         """Determine Autodesk request type from URL and data"""
         request_line_lower = request_line.lower()
 
+        # Analyze headers for additional context
+        user_agent = headers.get('User-Agent', '').lower()
+        content_type = headers.get('Content-Type', '').lower()
+        x_autodesk_version = headers.get('X-Autodesk-Version', '')
+        authorization = headers.get('Authorization', '')
+
+        # Autodesk-specific header analysis
+        is_autocad = 'autocad' in user_agent or 'acad' in user_agent
+        is_inventor = 'inventor' in user_agent
+        is_maya = 'maya' in user_agent
+        is_3dsmax = '3dsmax' in user_agent or 'max' in user_agent
+        is_fusion360 = 'fusion' in user_agent
+        is_oauth = authorization.startswith('Bearer') or 'oauth' in authorization.lower()
+
         # Check URL patterns
         if '/activate' in request_line_lower or '/activation' in request_line_lower:
-            return 'activation'
+            if is_oauth:
+                return 'oauth_activation'
+            elif is_fusion360:
+                return 'fusion360_activation'
+            else:
+                return 'activation'
         elif '/validate' in request_line_lower or '/validation' in request_line_lower:
             return 'validation'
         elif '/deactivate' in request_line_lower or '/deactivation' in request_line_lower:
@@ -610,18 +629,39 @@ class AutodeskLicensingParser:
 
     def _handle_heartbeat(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle license heartbeat"""
+        # Extract heartbeat context from request
+        product_key = request.product_key or 'UNKNOWN'
+        license_method = request.license_data.get('license_method', 'standalone')
+        session_id = request.activation_data.get('session_id', str(uuid.uuid4()))
+
+        # Determine heartbeat interval based on license type
+        if license_method == 'network':
+            heartbeat_interval = 1800  # 30 minutes for network licenses
+        elif 'subscription' in str(request.license_data.get('license_type', '')):
+            heartbeat_interval = 900   # 15 minutes for subscription
+        else:
+            heartbeat_interval = 3600  # 1 hour for standalone
+
         return AutodeskResponse(
             status="success",
             response_code=200,
             activation_data={
                 "heartbeat_status": "alive",
-                "server_time": int(time.time())
+                "server_time": int(time.time()),
+                "session_id": session_id,
+                "license_checkout_time": int(time.time())
             },
             license_data={
                 "license_server_status": "online",
-                "next_heartbeat": int(time.time() + 3600)  # 1 hour
+                "next_heartbeat": int(time.time() + heartbeat_interval),
+                "heartbeat_interval": heartbeat_interval,
+                "license_method": license_method,
+                "server_load": "low"
             },
-            entitlement_data={},
+            entitlement_data={
+                "product_key": product_key,
+                "heartbeat_count": 1
+            },
             digital_signature="",
             response_headers={"Content-Type": "application/json"}
         )
@@ -680,15 +720,39 @@ class AutodeskLicensingParser:
 
     def _handle_feature_usage(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle feature usage reporting"""
+        # Extract usage information from request
+        features_used = request.license_data.get('features_used', [])
+        session_duration = request.activation_data.get('session_duration', 0)
+        product_version = request.license_data.get('product_version', '2024')
+        user_id = request.activation_data.get('user_id', 'anonymous')
+
+        # Process feature usage analytics
+        usage_summary = {
+            "total_features": len(set(features_used)) if features_used else 0,
+            "session_length": session_duration,
+            "most_used_feature": max(set(features_used), key=features_used.count) if features_used else "unknown",
+            "usage_frequency": len(features_used) / max(session_duration / 3600, 1) if session_duration > 0 else 0  # features per hour
+        }
+
         return AutodeskResponse(
             status="success",
             response_code=200,
             activation_data={
                 "usage_recorded": True,
-                "usage_time": int(time.time())
+                "usage_time": int(time.time()),
+                "user_id": user_id,
+                "report_id": str(uuid.uuid4())
             },
-            license_data={},
-            entitlement_data={},
+            license_data={
+                "usage_analytics": usage_summary,
+                "compliance_status": "within_limits",
+                "next_report_due": int(time.time() + 86400)  # 24 hours
+            },
+            entitlement_data={
+                "feature_access_valid": True,
+                "product_version": product_version,
+                "usage_tier": "standard"
+            },
             digital_signature="",
             response_headers={"Content-Type": "application/json"}
         )

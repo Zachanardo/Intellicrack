@@ -1,3 +1,4 @@
+"""Plugin test generator for creating automated tests for plugins."""
 import ast
 import os
 import re

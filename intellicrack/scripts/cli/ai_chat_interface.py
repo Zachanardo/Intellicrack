@@ -216,10 +216,25 @@ class AITerminalChat:
             'content': user_input
         })
 
-        # Show thinking indicator
-        with self.console.status("[bold green]AI is thinking...", spinner="dots") as status:
+        # Show thinking indicator with progress bar
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=self.console,
+            transient=True
+        ) as progress:
+            # Add tasks for different AI processing stages
+            thinking_task = progress.add_task("[green]AI is analyzing your query...", total=100)
+            progress.update(thinking_task, advance=25)
+
             response = self._get_ai_response(user_input)
-            status.update(f"[bold green]Processing response... {len(response)} characters")
+            progress.update(thinking_task, advance=50, description="[blue]Generating response...")
+
+            # Check if response contains code and prepare syntax highlighting
+            if '```' in response:
+                progress.update(thinking_task, advance=15, description="[yellow]Formatting code blocks...")
+
+            progress.update(thinking_task, advance=10, description="[green]Finalizing response...")
 
         # Display response with typing effect
         self._display_ai_response(response)
@@ -427,16 +442,122 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
     def _display_ai_response(self, response: str):
         """Display AI response with typing effect."""
+        if not RICH_AVAILABLE:
+            print(f"\nAI: {response}")
+            return
+
+        # Create layout with centered content
+        layout = Layout()
+        layout.split_column(
+            Layout(name="header", size=3),
+            Layout(name="body"),
+            Layout(name="footer", size=1)
+        )
+
+        # Header with centered title
+        header_content = Align.center(Text("🤖 AI Assistant Response", style="bold green"))
+        layout["header"].update(Panel(header_content, border_style="green"))
+
+        # Body with response content - check for code blocks and markdown
+        if '```' in response:
+            # Process code blocks with syntax highlighting
+            response_content = self._process_code_blocks(response)
+        elif response.startswith('#') or '*' in response or '**' in response:
+            # Render as markdown for formatted text
+            response_content = Markdown(response)
+        else:
+            # Plain text response
+            response_content = response
+
         ai_panel = Panel(
-            response,
-            title="🤖 AI Assistant",
+            response_content,
+            title="Response",
             border_style="green",
             padding=(1, 2)
         )
+        layout["body"].update(ai_panel)
 
-        # Simple display without typing effect for now
-        self.console.print(ai_panel)
+        # Footer with timestamp
+        footer_content = Align.center(f"Generated at {datetime.now().strftime('%H:%M:%S')}")
+        layout["footer"].update(footer_content)
+
+        # Display with live update for typing effect
+        with Live(layout, refresh_per_second=10, console=self.console) as live:
+            import time
+            # Simulate typing effect by updating the display
+            for i in range(5):  # 5 refresh cycles
+                live.update(layout)
+                time.sleep(0.1)  # Brief display effect
+
         self.console.print()
+
+    def _process_code_blocks(self, response: str):
+        """Process response with code blocks and apply syntax highlighting."""
+        if not RICH_AVAILABLE:
+            return response
+
+        import re
+
+        # Pattern to match code blocks with optional language specification
+        pattern = r'```(\w+)?\n(.*?)\n```'
+
+        def replace_code_block(match):
+            language = match.group(1) or 'python'  # Default to python if no language specified
+            code = match.group(2)
+
+            # Create syntax highlighted code block
+            syntax = Syntax(code, language, theme="monokai", line_numbers=True)
+            return syntax
+
+        # Replace code blocks with syntax-highlighted versions
+        parts = re.split(pattern, response, flags=re.DOTALL)
+
+        if len(parts) > 1:
+            # If we found code blocks, create a composite with alternating text and code
+            result_parts = []
+            for i, part in enumerate(parts):
+                if i % 3 == 0:  # Regular text parts
+                    if part.strip():
+                        result_parts.append(part)
+                elif i % 3 == 2:  # Code content parts
+                    lang = parts[i-1] or 'python'
+                    syntax = Syntax(part, lang, theme="monokai", line_numbers=True)
+                    result_parts.append(syntax)
+
+            # Return first part as text if available, or the syntax object
+            return result_parts[0] if result_parts else response
+
+        return response
+
+    def _display_analysis_summary(self):
+        """Display analysis summary using columns layout."""
+        if not RICH_AVAILABLE or not self.analysis_results:
+            print("Analysis results not available or Rich not installed")
+            return
+
+        # Create summary panels for different analysis types
+        panels = []
+
+        if 'vulnerabilities' in self.analysis_results:
+            vuln_data = self.analysis_results['vulnerabilities']
+            vuln_count = len(vuln_data.get('vulnerabilities', [])) if isinstance(vuln_data, dict) else 0
+            panels.append(Panel(f"[red]{vuln_count}[/red] vulnerabilities found", title="Security", border_style="red"))
+
+        if 'strings' in self.analysis_results:
+            string_count = len(self.analysis_results['strings'])
+            panels.append(Panel(f"[blue]{string_count}[/blue] strings extracted", title="Strings", border_style="blue"))
+
+        if 'protections' in self.analysis_results:
+            protection_data = self.analysis_results['protections']
+            protection_count = len(protection_data) if isinstance(protection_data, (list, dict)) else 1
+            panels.append(Panel(f"[yellow]{protection_count}[/yellow] protections detected", title="Protections", border_style="yellow"))
+
+        if panels:
+            # Display in columns for better layout
+            columns = Columns(panels, equal=True, expand=True)
+            self.console.print("\n")
+            self.console.print(Panel(columns, title="Analysis Summary", border_style="cyan"))
+            self.console.print("\n")
 
     def _show_help(self, args: List[str]) -> Optional[str]:
         """Show help information."""

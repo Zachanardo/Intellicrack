@@ -1,3 +1,21 @@
+"""
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 """Integration tests for optional QEMU testing feature."""
 
 import os
@@ -16,7 +34,6 @@ if not QApplication.instance():
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from intellicrack.core.execution import ScriptExecutionManager
-from intellicrack.ui.main_app import IntellicrookApp
 
 
 class TestQEMUOptionalTestingIntegration(unittest.TestCase):
@@ -131,7 +148,7 @@ class TestQEMUOptionalTestingIntegration(unittest.TestCase):
                 with patch.object(manager, '_show_qemu_results_and_confirm') as mock_confirm:
                     mock_confirm.return_value = True
                     
-                    # Mock host execution  
+                    # Mock host execution
                     with patch.object(manager, '_execute_on_host') as mock_host:
                         mock_host.return_value = {'success': True}
                         

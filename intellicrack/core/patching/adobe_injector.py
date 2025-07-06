@@ -1,3 +1,4 @@
+"""Adobe software injector for patching Adobe products."""
 import logging
 import os
 import struct

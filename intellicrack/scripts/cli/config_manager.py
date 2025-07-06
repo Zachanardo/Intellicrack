@@ -428,6 +428,178 @@ class ConfigManager:
         self.options[key].value = value
         return True
 
+    def interactive_config_setup(self) -> None:
+        """Interactive configuration setup with rich UI components."""
+        if not RICH_AVAILABLE:
+            print("Rich not available. Using basic configuration setup.")
+            return
+
+        console = Console()
+
+        # Welcome panel
+        welcome_text = """
+Welcome to Intellicrack Configuration Setup
+
+This interactive tool will help you configure your analysis settings.
+You can modify core analysis, AI backend, and export preferences.
+        """
+
+        welcome_panel = Panel(
+            welcome_text.strip(),
+            title="🔧 Configuration Setup",
+            border_style="green",
+            padding=(1, 2)
+        )
+        console.print(welcome_panel)
+
+        # Ask if user wants to proceed
+        if not Confirm.ask("\nWould you like to configure your settings interactively?"):
+            console.print("[yellow]Configuration setup cancelled.[/yellow]")
+            return
+
+        # Get categories to configure
+        categories = self.get_categories()
+        selected_categories = []
+
+        console.print("\n[bold blue]Available configuration categories:[/bold blue]")
+        for category in categories:
+            category_display = category.replace('_', ' ').title()
+            if Confirm.ask(f"Configure {category_display} settings?", default=False):
+                selected_categories.append(category)
+
+        if not selected_categories:
+            console.print("[yellow]No categories selected. Exiting setup.[/yellow]")
+            return
+
+        # Configure each selected category
+        for category in selected_categories:
+            self._configure_category_interactive(console, category)
+
+        # Save configuration
+        if Confirm.ask("\n[bold green]Save configuration changes?[/bold green]", default=True):
+            self.save_config()
+            console.print("[green]Configuration saved successfully![/green]")
+        else:
+            console.print("[yellow]Configuration changes discarded.[/yellow]")
+
+    def _configure_category_interactive(self, console: Console, category: str) -> None:
+        """Configure a specific category interactively.
+        
+        Args:
+            console: Rich console instance
+            category: Configuration category to configure
+        """
+        category_options = self.get_category_options(category)
+        if not category_options:
+            return
+
+        # Category header panel
+        category_title = category.replace('_', ' ').title()
+        category_panel = Panel(
+            f"Configuring {category_title} Settings",
+            border_style="blue",
+            title=f"📋 {category_title}"
+        )
+        console.print(category_panel)
+
+        for option in category_options:
+            if option.advanced and not Confirm.ask(f"Show advanced option '{option.name}'?", default=False):
+                continue
+
+            # Display current value and description
+            current_value = option.value
+            description = option.description
+
+            option_panel = Panel(
+                f"[bold]Current value:[/bold] {current_value}\n[dim]{description}[/dim]",
+                title=f"⚙️  {option.name}",
+                border_style="cyan"
+            )
+            console.print(option_panel)
+
+            # Ask if user wants to change this option
+            if not Confirm.ask(f"Change '{option.name}'?", default=False):
+                continue
+
+            # Get new value based on type
+            try:
+                if option.data_type == bool:
+                    new_value = Confirm.ask(f"New value for {option.name}")
+                elif option.data_type == int:
+                    new_value = IntPrompt.ask(f"New integer value for {option.name}")
+                elif option.data_type == float:
+                    new_value = FloatPrompt.ask(f"New float value for {option.name}")
+                else:
+                    new_value = Prompt.ask(f"New value for {option.name}")
+
+                # Validate and set
+                if self.set(option.name, new_value):
+                    console.print(f"[green]✓ Updated {option.name} to {new_value}[/green]")
+                else:
+                    console.print(f"[red]✗ Failed to update {option.name}[/red]")
+
+            except KeyboardInterrupt:
+                console.print("\n[yellow]Configuration setup interrupted.[/yellow]")
+                return
+
+    def display_config_tree(self) -> None:
+        """Display configuration options in a tree structure using Tree."""
+        if not RICH_AVAILABLE:
+            print("Rich not available. Cannot display tree view.")
+            return
+
+        console = Console()
+
+        # Create main tree
+        tree = Tree("🔧 [bold blue]Intellicrack Configuration[/bold blue]")
+
+        # Group options by category
+        categories = self.get_categories()
+        for category in categories:
+            category_display = category.replace('_', ' ').title()
+            category_node = tree.add(f"📁 [bold cyan]{category_display}[/bold cyan]")
+
+            category_options = self.get_category_options(category)
+            for option in category_options:
+                # Create option display text
+                option_text = Text()
+                option_text.append(f"⚙️  {option.name}: ", style="white")
+                option_text.append(str(option.value), style="green" if option.value == option.default else "yellow")
+                if option.advanced:
+                    option_text.append(" [ADVANCED]", style="red")
+
+                option_node = category_node.add(option_text)
+                if option.description:
+                    option_node.add(Text(f"   {option.description}", style="dim"))
+
+        console.print(tree)
+
+    def create_status_display(self, message: str, status: str = "info") -> None:
+        """Create a formatted status display using Text styling."""
+        if not RICH_AVAILABLE:
+            print(f"[{status.upper()}] {message}")
+            return
+
+        console = Console()
+
+        # Create styled text based on status
+        status_text = Text()
+
+        if status == "success":
+            status_text.append("✅ ", style="green")
+            status_text.append(message, style="green")
+        elif status == "error":
+            status_text.append("❌ ", style="red")
+            status_text.append(message, style="red")
+        elif status == "warning":
+            status_text.append("⚠️  ", style="yellow")
+            status_text.append(message, style="yellow")
+        else:  # info
+            status_text.append("ℹ️  ", style="blue")
+            status_text.append(message, style="blue")
+
+        console.print(status_text)
+
     def update(self, updates: Dict[str, Any]) -> Dict[str, bool]:
         """Update multiple configuration values at once.
 
@@ -477,6 +649,21 @@ class ConfigManager:
         """Get list of configuration categories."""
         categories = set(option.category for option in self.options.values())
         return sorted(list(categories))
+
+    def get_category_options(self, category: str, include_advanced: bool = True) -> List[ConfigOption]:
+        """Get configuration options for a specific category.
+        
+        Args:
+            category: Category name
+            include_advanced: Whether to include advanced options
+            
+        Returns:
+            List of ConfigOption objects in the category
+        """
+        return [
+            option for option in self.options.values()
+            if option.category == category and (include_advanced or not option.advanced)
+        ]
 
     def get_options_by_category(self, category: str, include_advanced: bool = False) -> Dict[str, ConfigOption]:
         """Get configuration options by category.

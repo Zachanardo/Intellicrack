@@ -225,6 +225,86 @@ class AdvancedExporter:
             print(f"XML export failed: {e}")
             return False
 
+    def export_html_report(self, output_path: str) -> bool:
+        """Export analysis results as interactive HTML report.
+        
+        Args:
+            output_path: Output file path
+            
+        Returns:
+            True if export successful
+        """
+        if not JINJA2_AVAILABLE:
+            print("HTML report generation not available. Install Jinja2: pip install Jinja2")
+            return False
+
+        try:
+            # Basic HTML template for analysis report
+            html_template = Template('''
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Intellicrack Analysis Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background-color: #f0f0f0; padding: 20px; border-radius: 5px; }
+        .summary { display: flex; justify-content: space-around; margin: 20px 0; }
+        .metric { text-align: center; padding: 10px; background-color: #e9e9e9; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Intellicrack Binary Analysis Report</h1>
+        <p>File: {{ metadata.get('Binary File', 'Unknown') }}</p>
+        <p>Generated: {{ metadata.get('Export Time', 'Unknown') }}</p>
+    </div>
+    
+    <div class="summary">
+        <div class="metric">
+            <h3>Analysis Results</h3>
+            <p>{{ analysis_count }} findings</p>
+        </div>
+    </div>
+    
+    <h2>Analysis Details</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Analysis Type</th>
+                <th>Results</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for analysis_type, results in analysis_results.items() %}
+            <tr>
+                <td>{{ analysis_type }}</td>
+                <td>{{ results|string|truncate(100) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+            ''')
+
+            # Render template with data
+            html_content = html_template.render(
+                metadata=self.export_metadata,
+                analysis_results=self.analysis_results,
+                analysis_count=len(self.analysis_results)
+            )
+
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+
+            return True
+        except Exception as e:
+            print(f"HTML export failed: {e}")
+            return False
+
     def export_yaml_config(self, output_path: str) -> bool:
         """Export analysis results as YAML configuration.
 
@@ -281,19 +361,19 @@ class AdvancedExporter:
             cell_format = workbook.add_format({'border': 1})
 
             # Summary sheet
-            self._create_summary_sheet(workbook)
+            self._create_summary_sheet(workbook, header_format, cell_format)
 
             # Vulnerabilities sheet
-            self._create_vulnerabilities_sheet(workbook)
+            self._create_vulnerabilities_sheet(workbook, header_format, cell_format)
 
             # Strings sheet
-            self._create_strings_sheet(workbook)
+            self._create_strings_sheet(workbook, header_format, cell_format)
 
             # Imports sheet
-            self._create_imports_sheet(workbook)
+            self._create_imports_sheet(workbook, header_format, cell_format)
 
             # Statistics sheet
-            self._create_statistics_sheet(workbook)
+            self._create_statistics_sheet(workbook, header_format, cell_format)
 
             workbook.close()
             return True
@@ -899,7 +979,7 @@ KEY FINDINGS
 
         return rules
 
-    def _create_summary_sheet(self, workbook, worksheet_name: str = 'Summary'):
+    def _create_summary_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = 'Summary'):
         """Create summary sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
@@ -947,7 +1027,7 @@ KEY FINDINGS
             print(f"Failed to create summary sheet: {e}")
             return None
 
-    def _create_vulnerabilities_sheet(self, workbook, worksheet_name: str = 'Vulnerabilities'):
+    def _create_vulnerabilities_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = 'Vulnerabilities'):
         """Create vulnerabilities sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
@@ -982,7 +1062,7 @@ KEY FINDINGS
             print(f"Failed to create vulnerabilities sheet: {e}")
             return None
 
-    def _create_strings_sheet(self, workbook, worksheet_name: str = 'Strings'):
+    def _create_strings_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = 'Strings'):
         """Create strings sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
@@ -1020,7 +1100,7 @@ KEY FINDINGS
             print(f"Failed to create strings sheet: {e}")
             return None
 
-    def _create_imports_sheet(self, workbook, worksheet_name: str = 'Imports'):
+    def _create_imports_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = 'Imports'):
         """Create imports sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
@@ -1063,7 +1143,7 @@ KEY FINDINGS
             print(f"Failed to create imports sheet: {e}")
             return None
 
-    def _create_statistics_sheet(self, workbook, worksheet_name: str = 'Statistics'):
+    def _create_statistics_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = 'Statistics'):
         """Create statistics sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)

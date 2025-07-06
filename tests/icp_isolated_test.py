@@ -381,7 +381,7 @@ async def test_async_analysis(backend, test_file):
             elif result and result.error:
                 print(f"      ! Error: {result.error}")
             else:
-                print(f"      ! No result returned")
+                print("      ! No result returned")
                 
         return True
         
@@ -412,7 +412,7 @@ def main():
     print("\n🔧 Testing ICP backend creation...")
     try:
         backend = ICPBackend()
-        print(f"  ✓ Backend created successfully")
+        print("  ✓ Backend created successfully")
         print(f"  ✓ Engine version: {backend.get_engine_version()}")
     except Exception as e:
         print(f"  ✗ Backend creation failed: {e}")
@@ -443,7 +443,7 @@ def main():
     print("🎉 ALL ISOLATED TESTS PASSED!")
     print(f"📊 Total time: {total_time:.2f}s")
     print("✅ ICP Backend core functionality working correctly")
-    print("✅ die-python integration successful")  
+    print("✅ die-python integration successful")
     print("✅ Text parsing system functional")
     print("✅ Async analysis system operational")
     print("✅ Phase 5 ICP integration validation COMPLETE")

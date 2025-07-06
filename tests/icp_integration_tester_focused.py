@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Focused integration testing for ICP components."""
 # Activate virtual environment if available
 import sys
 import os
@@ -29,7 +30,7 @@ import sys
 import time
 import traceback
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
 
 # Configure logging
 logging.basicConfig(
@@ -138,11 +139,15 @@ class FocusedICPIntegrationTester:
             try:
                 # Import directly without full GUI
                 sys.path.insert(0, '/mnt/c/Intellicrack')
-                from intellicrack.protection.icp_backend import ICPBackend, ScanMode, ICPDetection, ICPFileInfo, ICPScanResult
+                from intellicrack.protection.icp_backend import ICPBackend, ScanMode
 
                 # Create backend directly
                 backend = ICPBackend()
-                self.log_result('phase_a', "✓ ICP Backend imported and initialized successfully")
+                # Validate backend functionality
+                if hasattr(backend, 'scan') and hasattr(backend, 'get_results'):
+                    self.log_result('phase_a', "✓ ICP Backend imported and initialized successfully")
+                else:
+                    self.log_result('phase_a', "✗ ICP Backend missing required methods", True)
 
                 # Test scan modes enum
                 scan_modes = [ScanMode.NORMAL, ScanMode.DEEP, ScanMode.HEURISTIC]
@@ -160,6 +165,12 @@ class FocusedICPIntegrationTester:
                 # Create minimal Qt application for signal testing
                 if not QCoreApplication.instance():
                     app = QCoreApplication(sys.argv)
+                    # Validate app instance
+                    if app and hasattr(app, 'exec_'):
+                        self.log_result('phase_a', "✓ QCoreApplication created successfully")
+                else:
+                    app = QCoreApplication.instance()
+                    self.log_result('phase_a', "✓ Using existing QCoreApplication instance")
 
                 class TestSignalEmitter(QObject):
                     test_signal = pyqtSignal(object)
@@ -293,7 +304,7 @@ class FocusedICPIntegrationTester:
                     loop.close()
 
                     if result and not result.error:
-                        # Validate required fields  
+                        # Validate required fields
                         required_fields = ['file_path', 'file_infos', 'all_detections']
                         missing_fields = [field for field in required_fields if not hasattr(result, field)]
 
@@ -351,10 +362,10 @@ class FocusedICPIntegrationTester:
                     file_size = os.path.getsize(test_file) / 1024  # KB
 
                     if result and not result.error:
-                        self.log_result('phase_c', 
+                        self.log_result('phase_c',
                             f"✓ {filename} ({file_size:.1f}KB): {len(result.all_detections)} detections ({analysis_time:.2f}s)")
                     else:
-                        self.log_result('phase_c', 
+                        self.log_result('phase_c',
                             f"! {filename} ({file_size:.1f}KB): Analysis had issues ({analysis_time:.2f}s)")
 
                 except Exception as e:
@@ -660,7 +671,7 @@ class FocusedICPIntegrationTester:
         for phase, result in self.test_results.items():
             status_symbol = {
                 'passed': '✓ PASS',
-                'failed': '✗ FAIL', 
+                'failed': '✗ FAIL',
                 'skipped': '- SKIP',
                 'pending': '? PENDING'
             }.get(result['status'], '? UNKNOWN')
@@ -720,7 +731,7 @@ def main():
         summary_file = "/mnt/c/Intellicrack/PHASE_5_TESTING_COMPLETE.md"
         with open(summary_file, 'w') as f:
             f.write("# Phase 5: System Testing Complete\n\n")
-            f.write(f"## Test Results Summary\n\n")
+            f.write("## Test Results Summary\n\n")
             f.write(f"- **Success Rate**: {report['success_rate']:.1f}%\n")
             f.write(f"- **Production Ready**: {'YES' if report['production_ready'] else 'NO'}\n")
             f.write(f"- **Total Time**: {report['total_time']:.1f} seconds\n")

@@ -1,3 +1,4 @@
+"""CI/CD configuration dialog for plugin development workflows."""
 import json
 import os
 from datetime import datetime

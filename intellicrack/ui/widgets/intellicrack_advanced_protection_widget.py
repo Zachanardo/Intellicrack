@@ -76,6 +76,7 @@ class AdvancedAnalysisThread(QThread):
         self.detector = IntellicrackAdvancedProtection()
 
     def run(self):
+        """Run advanced protection analysis in background thread."""
         try:
             self.analysis_progress.emit("Initializing analysis...", 10)
 

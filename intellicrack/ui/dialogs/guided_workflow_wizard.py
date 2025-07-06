@@ -1,3 +1,4 @@
+"""Guided workflow wizard for step-by-step analysis assistance."""
 import datetime
 import os
 from typing import Any, Dict

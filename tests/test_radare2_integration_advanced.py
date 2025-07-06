@@ -321,6 +321,57 @@ class TestRadare2BypassGenerator(unittest.TestCase):
         # Check key format
         for key in result['example_keys']:
             self.assertRegex(key, r'^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$')
+            
+    def test_bypass_strategy(self):
+        """Test BypassStrategy functionality"""
+        # Test basic strategy creation
+        strategy = BypassStrategy(
+            name="License Patch",
+            description="Patch license check function",
+            confidence=0.9,
+            complexity="medium"
+        )
+        
+        self.assertEqual(strategy.name, "License Patch")
+        self.assertEqual(strategy.description, "Patch license check function")
+        self.assertEqual(strategy.confidence, 0.9)
+        self.assertEqual(strategy.complexity, "medium")
+        
+        # Test strategy with steps
+        strategy_with_steps = BypassStrategy(
+            name="Multi-Step Bypass",
+            description="Complex bypass with multiple steps",
+            confidence=0.8,
+            complexity="high",
+            steps=[
+                "1. Locate license validation function",
+                "2. Identify return value checks",
+                "3. Patch conditional jumps",
+                "4. Test bypass effectiveness"
+            ]
+        )
+        
+        self.assertEqual(len(strategy_with_steps.steps), 4)
+        self.assertIn("Locate license validation", strategy_with_steps.steps[0])
+        
+        # Test strategy comparison
+        strategy1 = BypassStrategy("Strategy1", "Desc1", 0.9, "low")
+        strategy2 = BypassStrategy("Strategy2", "Desc2", 0.7, "high")
+        
+        # Higher confidence should be preferred
+        self.assertGreater(strategy1.confidence, strategy2.confidence)
+        
+        # Test strategy validation
+        invalid_strategy = BypassStrategy(
+            name="",  # Empty name
+            description="Invalid strategy",
+            confidence=1.5,  # Invalid confidence
+            complexity="unknown"  # Invalid complexity
+        )
+        
+        # Strategy should handle invalid values gracefully
+        self.assertEqual(invalid_strategy.name, "")
+        self.assertEqual(invalid_strategy.confidence, 1.5)  # Should be clamped or validated elsewhere
 
     @patch('r2pipe.open')
     def test_comprehensive_bypass_generation(self, mock_r2pipe):

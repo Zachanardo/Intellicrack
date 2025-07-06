@@ -1,4 +1,22 @@
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Windows Version Compatibility Testing for Frida Integration
 
 Tests Frida functionality across different Windows versions and architectures.
@@ -125,7 +143,7 @@ class WindowsCompatibilityTests(unittest.TestCase):
             # These should exist on all Windows versions
             common_processes = ['system', 'smss.exe', 'csrss.exe']
             for proc in common_processes:
-                self.assertIn(proc, process_names, 
+                self.assertIn(proc, process_names,
                             f"{proc} not found in process list")
 
         except Exception as e:
@@ -388,7 +406,7 @@ class WindowsAPICompatibilityTests(unittest.TestCase):
                 try:
                     import ctypes
                     dll = ctypes.WinDLL(module)
-                    self.assertTrue(hasattr(dll, api), 
+                    self.assertTrue(hasattr(dll, api),
                                   f"{api} not found in {module}")
                 except Exception as e:
                     self.fail(f"Failed to test {module}!{api}: {e}")
@@ -504,7 +522,7 @@ class FridaWindowsIntegrationTests(unittest.TestCase):
 
         for module, api in windows_apis:
             detected = detector.analyze_api_call(module, api, [])
-            self.assertGreater(len(detected), 0, 
+            self.assertGreater(len(detected), 0,
                              f"No protection detected for {module}!{api}")
 
 

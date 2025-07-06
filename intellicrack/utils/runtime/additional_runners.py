@@ -1031,6 +1031,11 @@ def get_target_process_pid(process_name: str) -> Optional[int]:
 
 
 def _detect_usb_dongles() -> List[Dict[str, Any]]:
+    """Detect USB dongles by enumerating USB devices.
+    
+    Returns:
+        List of dictionaries containing detected USB dongle information
+    """
     """Detect USB dongles by enumerating USB devices."""
     dongles = []
 
@@ -1079,6 +1084,11 @@ def _detect_usb_dongles() -> List[Dict[str, Any]]:
 
 
 def _detect_windows_usb_dongles() -> List[Dict[str, Any]]:
+    """Detect USB dongles on Windows using WMI.
+    
+    Returns:
+        List of dictionaries containing Windows USB dongle information
+    """
     """Detect USB dongles on Windows using WMI."""
     dongles = []
 
@@ -1116,6 +1126,11 @@ def _detect_windows_usb_dongles() -> List[Dict[str, Any]]:
 
 
 def _detect_linux_usb_dongles() -> List[Dict[str, Any]]:
+    """Detect USB dongles on Linux using lsusb.
+    
+    Returns:
+        List of dictionaries containing Linux USB dongle information
+    """
     """Detect USB dongles on Linux using lsusb."""
     dongles = []
 
@@ -1142,6 +1157,11 @@ def _detect_linux_usb_dongles() -> List[Dict[str, Any]]:
 
 
 def _detect_dongle_processes() -> List[Dict[str, Any]]:
+    """Detect dongle-related processes.
+    
+    Returns:
+        List of dictionaries containing detected dongle process information
+    """
     """Detect dongle-related processes."""
     processes = []
 
@@ -1181,6 +1201,11 @@ def _detect_dongle_processes() -> List[Dict[str, Any]]:
 
 
 def _detect_dongle_drivers() -> List[Dict[str, Any]]:
+    """Detect dongle-related drivers.
+    
+    Returns:
+        List of dictionaries containing detected dongle driver information
+    """
     """Detect dongle-related drivers."""
     drivers = []
 
@@ -1200,6 +1225,11 @@ def _detect_dongle_drivers() -> List[Dict[str, Any]]:
 
 
 def _detect_windows_dongle_drivers() -> List[Dict[str, Any]]:
+    """Detect dongle drivers on Windows.
+    
+    Returns:
+        List of dictionaries containing Windows dongle driver information
+    """
     """Detect dongle drivers on Windows."""
     drivers = []
 
@@ -1233,6 +1263,11 @@ def _detect_windows_dongle_drivers() -> List[Dict[str, Any]]:
 
 
 def _detect_linux_dongle_drivers() -> List[Dict[str, Any]]:
+    """Detect dongle drivers on Linux.
+    
+    Returns:
+        List of dictionaries containing Linux dongle driver information
+    """
     """Detect dongle drivers on Linux."""
     drivers = []
 
@@ -1259,6 +1294,11 @@ def _detect_linux_dongle_drivers() -> List[Dict[str, Any]]:
 
 
 def _detect_license_dongles() -> List[Dict[str, Any]]:
+    """Detect software-based license dongles.
+    
+    Returns:
+        List of dictionaries containing detected license file information
+    """
     """Detect software-based license dongles."""
     license_files = []
 
@@ -1297,6 +1337,11 @@ def _detect_license_dongles() -> List[Dict[str, Any]]:
 
 
 def _detect_network_dongles() -> List[Dict[str, Any]]:
+    """Detect network-based dongles.
+    
+    Returns:
+        List of dictionaries containing detected network dongle information
+    """
     """Detect network-based dongles."""
     network_dongles = []
 
@@ -1401,9 +1446,81 @@ def detect_local_tpm_protection(binary_path: str) -> Dict[str, Any]:
         return {"error": str(e)}
 
 
+def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
+    """
+    Run comprehensive protection scan.
+
+    Args:
+        binary_path: Path to the binary file
+
+    Returns:
+        Dict containing all protection mechanisms found
+    """
+    try:
+        from ...core.analysis.core_analysis import detect_packing
+        from ..protection.protection_detection import (
+            detect_anti_debugging,
+            detect_commercial_protections,
+            detect_tpm_protection,
+            detect_vm_detection,
+        )
+
+        results = {
+            "status": "success",
+            "protections": {}
+        }
+
+        # Detect packing
+        packing = detect_packing(binary_path)
+        if packing.get("packing_detected"):
+            results["protections"]["packing"] = packing
+
+        # Detect commercial protections
+        commercial = detect_commercial_protections(binary_path)
+        if commercial.get("protections_found"):
+            results["protections"]["commercial"] = commercial
+
+        # Detect anti-debugging
+        anti_debug = detect_anti_debugging(binary_path)
+        if anti_debug.get("techniques_found"):
+            results["protections"]["anti_debugging"] = anti_debug
+
+        # Detect VM detection
+        vm_detect = detect_vm_detection(binary_path)
+        if vm_detect.get("vm_detection_found"):
+            results["protections"]["vm_detection"] = vm_detect
+
+        # Detect TPM
+        tpm = detect_tpm_protection(binary_path)
+        if tmp.get("tpm_detected"):
+            results["protections"]["tpm"] = tpm
+
+        # Summary
+        results["summary"] = {
+            "total_protections": len(results["protections"]),
+            "protection_types": list(results["protections"].keys()),
+            "protection_level": "high" if len(results["protections"]) > 3 else
+                              ("medium" if len(results["protections"]) > 1 else "low")
+        }
+
+        return results
+
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("Error in protection scan: %s", e)
+        return {"status": "error", "message": str(e)}
+
+
 # Helper functions
 
 def _generate_analysis_summary(analyses: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate summary from analysis results.
+    
+    Args:
+        analyses: Dictionary containing analysis results
+        
+    Returns:
+        Dictionary containing analysis summary
+    """
     """Generate summary from analysis results."""
     summary = {
         "total_analyses": len(analyses),
@@ -1425,6 +1542,14 @@ def _generate_analysis_summary(analyses: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _generate_bypass_suggestions(pattern_results: Dict[str, Any]) -> List[str]:
+    """Generate bypass suggestions based on patterns found.
+    
+    Args:
+        pattern_results: Dictionary containing pattern analysis results
+        
+    Returns:
+        List of bypass suggestion strings
+    """
     """Generate bypass suggestions based on patterns found."""
     suggestions = []
 
@@ -1447,6 +1572,14 @@ def _generate_bypass_suggestions(pattern_results: Dict[str, Any]) -> List[str]:
 
 
 def _determine_target_type(analysis: Dict[str, Any]) -> str:
+    """Determine target type from analysis.
+    
+    Args:
+        analysis: Dictionary containing analysis results
+        
+    Returns:
+        Target type string (license, trial, or protection)
+    """
     """Determine target type from analysis."""
     patterns = analysis.get("analyses", {}).get("patterns", {})
 
@@ -1549,6 +1682,14 @@ def _verify_crack(binary_path: str) -> Dict[str, Any]:
 
 
 def _verify_static_analysis(binary_path: str) -> Dict[str, Any]:
+    """Verify crack through static analysis.
+    
+    Args:
+        binary_path: Path to binary file
+        
+    Returns:
+        Dictionary containing static analysis verification results
+    """
     """Verify crack through static analysis."""
     result = {"success": False, "confidence": 0.0, "checks": []}
 
@@ -1601,6 +1742,14 @@ def _verify_static_analysis(binary_path: str) -> Dict[str, Any]:
 
 
 def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
+    """Verify crack through controlled execution testing.
+    
+    Args:
+        binary_path: Path to binary file
+        
+    Returns:
+        Dictionary containing execution testing verification results
+    """
     """Verify crack through controlled execution testing."""
     result = {"success": False, "confidence": 0.0, "tests": []}
 
@@ -1714,6 +1863,14 @@ def _verify_execution_testing(binary_path: str) -> Dict[str, Any]:
 
 
 def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
+    """Verify that protection mechanisms have been bypassed.
+    
+    Args:
+        binary_path: Path to binary file
+        
+    Returns:
+        Dictionary containing protection bypass verification results
+    """
     """Verify that protection mechanisms have been bypassed."""
     result = {"bypassed": False, "confidence": 0.0, "protections": []}
 
@@ -1788,6 +1945,14 @@ def _verify_protection_bypass(binary_path: str) -> Dict[str, Any]:
 
 
 def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
+    """Verify that license checks have been bypassed.
+    
+    Args:
+        binary_path: Path to binary file
+        
+    Returns:
+        Dictionary containing license bypass verification results
+    """
     """Verify that license checks have been bypassed."""
     result = {"bypassed": False, "confidence": 0.0, "license_checks": []}
 
@@ -1864,6 +2029,14 @@ def _verify_license_bypass(binary_path: str) -> Dict[str, Any]:
 
 
 def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
+    """Verify the integrity and validity of applied patches.
+    
+    Args:
+        binary_path: Path to binary file
+        
+    Returns:
+        Dictionary containing patch integrity verification results
+    """
     """Verify the integrity and validity of applied patches."""
     result = {"valid": False, "confidence": 0.0, "integrity_checks": []}
 
@@ -1948,6 +2121,11 @@ def _verify_patch_integrity(binary_path: str) -> Dict[str, Any]:
 
 
 def _find_ghidra_installation() -> Optional[str]:
+    """Find Ghidra installation path.
+    
+    Returns:
+        Ghidra installation path or None if not found
+    """
     """Find Ghidra installation path."""
     # Try dynamic path discovery first
     try:
@@ -2094,6 +2272,14 @@ def _is_license_check_pattern(cfg: Dict[str, Any]) -> bool:
 
 
 def _identify_license_related_calls(function_calls: List[str]) -> int:
+    """Identify license-related function calls.
+    
+    Args:
+        function_calls: List of function call names
+        
+    Returns:
+        Number of license-related function calls identified
+    """
     """Identify license-related function calls."""
     license_keywords = [
         "license", "serial", "key", "activation", "trial", "demo",
@@ -2113,6 +2299,14 @@ def _identify_license_related_calls(function_calls: List[str]) -> int:
 
 
 def _count_license_strings(string_refs: List[str]) -> int:
+    """Count license-related string references.
+    
+    Args:
+        string_refs: List of string references
+        
+    Returns:
+        Number of license-related strings found
+    """
     """Count license-related string references."""
     license_patterns = [
         "license", "trial", "demo", "expired", "invalid", "activation",
@@ -2132,6 +2326,15 @@ def _count_license_strings(string_refs: List[str]) -> int:
 
 
 def _parse_tool_output(tool_name: str, output: str) -> Dict[str, Any]:
+    """Parse tool-specific output.
+    
+    Args:
+        tool_name: Name of the tool
+        output: Tool output string
+        
+    Returns:
+        Dictionary containing parsed tool output
+    """
     """Parse tool-specific output."""
     parsed = {}
 

@@ -407,6 +407,87 @@ class SecretsManager:
         self._cache.clear()
         logger.info("Cleared secrets cache")
 
+    def generate_key_from_password(self, password: str, salt: Optional[bytes] = None) -> bytes:
+        """Generate a key from password using PBKDF2HMAC and hashes.
+        
+        Args:
+            password: The password to derive key from
+            salt: Optional salt bytes (random salt generated if None)
+            
+        Returns:
+            Derived key bytes
+        """
+        if not HAS_CRYPTOGRAPHY:
+            logger.error("Cryptography library not available for key generation")
+            return b""
+
+        if salt is None:
+            salt = os.urandom(16)
+
+        # Use PBKDF2HMAC with SHA256 hashing
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+        )
+        key = kdf.derive(password.encode())
+        return key
+
+    def find_env_file_location(self) -> Optional[str]:
+        """Find .env file location using find_dotenv.
+        
+        Returns:
+            Path to .env file or None if not found
+        """
+        if not HAS_DOTENV:
+            logger.warning("python-dotenv not available for finding .env files")
+            return None
+
+        try:
+            # Use find_dotenv to locate the .env file
+            env_path = find_dotenv()
+            if env_path:
+                logger.info(f"Found .env file at: {env_path}")
+                return env_path
+            else:
+                logger.info("No .env file found in search path")
+                return None
+        except Exception as e:
+            logger.error(f"Error finding .env file: {e}")
+            return None
+
+    def verify_password_hash(self, password: str, stored_hash: bytes, salt: bytes) -> bool:
+        """Verify password against stored hash using hashes.
+        
+        Args:
+            password: Password to verify
+            stored_hash: Stored hash bytes
+            salt: Salt used for hashing
+            
+        Returns:
+            True if password matches, False otherwise
+        """
+        if not HAS_CRYPTOGRAPHY:
+            logger.error("Cryptography library not available for password verification")
+            return False
+
+        try:
+            # Generate hash from provided password using same salt
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=salt,
+                iterations=100000,
+            )
+            derived_key = kdf.derive(password.encode())
+
+            # Compare with stored hash
+            return derived_key == stored_hash
+        except Exception as e:
+            logger.error(f"Error verifying password hash: {e}")
+            return False
+
 
 # Singleton instance
 _secrets_manager: Optional[SecretsManager] = None

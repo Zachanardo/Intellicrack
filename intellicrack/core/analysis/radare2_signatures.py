@@ -1,3 +1,4 @@
+"""Radare2 signature analysis module for pattern matching and function identification."""
 import logging
 from typing import Any, Dict, List, Optional
 

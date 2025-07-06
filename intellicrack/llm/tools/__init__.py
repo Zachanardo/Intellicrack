@@ -8,9 +8,11 @@ Licensed under GNU General Public License v3.0
 """
 
 from .binary_analysis_tool import BinaryAnalysisTool, create_binary_tool
-from .die_analysis_tool import DIEAnalysisTool, create_die_tool
-from .protection_bypass_tool import ProtectionBypassTool, create_bypass_tool
+from .firmware_analysis_tool import FirmwareAnalysisTool, create_firmware_analysis_tool
+from .intellicrack_protection_analysis_tool import DIEAnalysisTool, create_die_tool
+from .memory_forensics_tool import MemoryForensicsTool, create_memory_forensics_tool
 from .script_generation_tool import ScriptGenerationTool, create_script_tool
+from .yara_pattern_analysis_tool import YARAPatternAnalysisTool, create_yara_pattern_tool
 
 __all__ = [
     'DIEAnalysisTool',
@@ -19,8 +21,12 @@ __all__ = [
     'create_binary_tool',
     'ScriptGenerationTool',
     'create_script_tool',
-    'ProtectionBypassTool',
-    'create_bypass_tool',
+    'YARAPatternAnalysisTool',
+    'create_yara_pattern_tool',
+    'FirmwareAnalysisTool',
+    'create_firmware_analysis_tool',
+    'MemoryForensicsTool',
+    'create_memory_forensics_tool',
     'get_all_tools',
     'register_tools_with_llm'
 ]
@@ -32,7 +38,9 @@ def get_all_tools():
         'die_analysis': create_die_tool(),
         'binary_analysis': create_binary_tool(),
         'script_generation': create_script_tool(),
-        'protection_bypass': create_bypass_tool()
+        'yara_pattern_analysis': create_yara_pattern_tool(),
+        'firmware_analysis': create_firmware_analysis_tool(),
+        'memory_forensics': create_memory_forensics_tool()
     }
 
 

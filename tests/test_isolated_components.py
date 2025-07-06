@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Isolated component testing - direct imports without problematic dependencies
 """
 
@@ -48,6 +66,8 @@ def test_direct_binary_analysis():
             
         if not LIEF_AVAILABLE:
             print("⚠️ LIEF not available, testing basic file analysis")
+        else:
+            print("✅ LIEF available, testing advanced binary analysis")
             
         # Test file reading
         binary_path = 'test_samples/linux_license_app'
@@ -79,7 +99,7 @@ def test_direct_binary_analysis():
                             strings.append(current_string)
                         current_string = ""
                 
-                license_strings = [s for s in strings if any(keyword in s.lower() 
+                license_strings = [s for s in strings if any(keyword in s.lower()
                                   for keyword in ['license', 'trial', 'valid', 'expire', 'key'])]
                 
                 print(f"✅ Extracted {len(strings)} strings")
@@ -89,6 +109,40 @@ def test_direct_binary_analysis():
                     print("   Sample license strings:")
                     for s in license_strings[:3]:
                         print(f"     '{s}'")
+                
+                # Test LIEF if available
+                if LIEF_AVAILABLE:
+                    print("\n✅ Testing LIEF binary analysis...")
+                    binary = lief.parse(binary_path)
+                    if binary:
+                        print(f"   Format: {binary.format}")
+                        print(f"   Architecture: {binary.header.machine_type}")
+                        print(f"   Entry point: 0x{binary.entrypoint:x}")
+                        
+                        # Analyze sections
+                        print(f"   Sections: {len(binary.sections)}")
+                        for section in binary.sections[:3]:
+                            print(f"     - {section.name}: size={section.size}, entropy={section.entropy:.2f}")
+                        
+                        # Analyze imports
+                        if hasattr(binary, 'imported_functions'):
+                            imports = list(binary.imported_functions)
+                            print(f"   Imported functions: {len(imports)}")
+                            for imp in imports[:5]:
+                                print(f"     - {imp}")
+                        
+                        # Analyze symbols
+                        if hasattr(binary, 'symbols'):
+                            symbols = [s for s in binary.symbols if s.name]
+                            print(f"   Symbols: {len(symbols)}")
+                            license_symbols = [s for s in symbols if any(k in s.name.lower() 
+                                             for k in ['license', 'check', 'validate'])]
+                            if license_symbols:
+                                print(f"   License-related symbols: {len(license_symbols)}")
+                                for sym in license_symbols[:3]:
+                                    print(f"     - {sym.name}")
+                    else:
+                        print("⚠️ LIEF failed to parse binary")
                         
                 return True
             else:
@@ -275,7 +329,7 @@ def test_direct_qemu_integration():
                 try:
                     # Test if command exists
                     import subprocess
-                    result = subprocess.run(['which', 'qemu-system-x86_64'], 
+                    result = subprocess.run(['which', 'qemu-system-x86_64'],
                                           capture_output=True, text=True)
                     if result.returncode == 0:
                         qemu_found = True

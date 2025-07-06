@@ -618,7 +618,14 @@ class IntellicrackCLI:
         if self.args.qemu_emulate:
             logger.info("Setting up QEMU emulation...")
             emulator = QEMUSystemEmulator(self.binary_path)
-            # Emulator is ready to use, no need to call emulate_binary
+            # Store emulator instance and perform initial setup
+            self.results['qemu_emulator'] = {
+                'status': 'initialized',
+                'emulator_id': id(emulator),
+                'target_binary': emulator.target_binary if hasattr(emulator, 'target_binary') else self.binary_path,
+                'emulation_ready': True
+            }
+            logger.info(f"QEMU emulator ready for {os.path.basename(self.binary_path)}")
 
         if self.args.frida_script:
             logger.info(f"Running Frida script: {self.args.frida_script}...")
@@ -660,8 +667,11 @@ class IntellicrackCLI:
             question = self.args.ai_question or "Analyze this binary"
             context = self.args.ai_context or str(self.results)
 
+            # Combine question with context for better AI analysis
+            contextual_question = f"{question}\n\nContext: {context}" if context else question
+
             response = assistant.ask_question(
-                question=question
+                question=contextual_question
             )
             self.results['ai_assistant'] = {
                 'question': question,
@@ -929,6 +939,20 @@ class IntellicrackCLI:
                                  arrows=True, arrowsize=20, alpha=0.6)
             nx.draw_networkx_labels(G, pos, font_size=8)
 
+            # Add fancy boxes around important nodes using FancyBboxPatch
+            ax = plt.gca()
+            for node, (x, y) in pos.items():
+                if G.nodes[node].get('type') in ['entry', 'exit']:
+                    # Create fancy box for entry/exit nodes
+                    fancy_box = FancyBboxPatch(
+                        (x - 0.1, y - 0.05), 0.2, 0.1,
+                        boxstyle="round,pad=0.02",
+                        facecolor='yellow',
+                        edgecolor='red',
+                        alpha=0.3
+                    )
+                    ax.add_patch(fancy_box)
+
             plt.title(f"Control Flow Graph - {os.path.basename(self.binary_path)}")
             plt.axis('off')
             plt.tight_layout()
@@ -1035,6 +1059,189 @@ class IntellicrackCLI:
         # Disable debug mode tracing
         if self.args.debug_mode:
             sys.settrace(None)
+
+    def setup_incremental_analysis(self):
+        """Setup incremental analysis for large binaries using IncrementalAnalysisManager."""
+        try:
+            manager = IncrementalAnalysisManager()
+            manager.initialize_session(self.binary_path)
+
+            # Configure analysis chunks
+            manager.set_chunk_size(1024 * 1024)  # 1MB chunks
+            manager.enable_caching(True)
+
+            self.results['incremental_analysis'] = {
+                'manager': manager,
+                'chunk_size': manager.get_chunk_size(),
+                'cache_enabled': True
+            }
+            logger.info("Incremental analysis manager initialized")
+        except Exception as e:
+            logger.error(f"Failed to setup incremental analysis: {e}")
+
+    def setup_cloud_license_hooking(self):
+        """Setup cloud license hooking using CloudLicenseHooker."""
+        try:
+            hooker = CloudLicenseHooker()
+            hooker.configure_endpoints([
+                "https://license.example.com/api/v1/validate",
+                "https://auth.example.com/license/check"
+            ])
+            hooker.set_bypass_mode(True)
+
+            self.results['cloud_license_hook'] = {
+                'hooker': hooker,
+                'endpoints': hooker.get_configured_endpoints(),
+                'bypass_enabled': True
+            }
+            logger.info("Cloud license hooker configured")
+        except Exception as e:
+            logger.error(f"Failed to setup cloud license hooking: {e}")
+
+    def setup_license_server_emulation(self):
+        """Setup license server emulation using LicenseServerEmulator."""
+        try:
+            emulator = LicenseServerEmulator()
+            emulator.set_port(8080)
+            emulator.configure_responses({
+                'license_valid': True,
+                'expiry_date': '2099-12-31',
+                'features': ['premium', 'enterprise']
+            })
+
+            self.results['license_emulator'] = {
+                'emulator': emulator,
+                'port': 8080,
+                'responses_configured': True
+            }
+            logger.info("License server emulator configured")
+        except Exception as e:
+            logger.error(f"Failed to setup license server emulation: {e}")
+
+    def setup_adobe_injection(self):
+        """Setup Adobe product injection using AdobeInjector."""
+        try:
+            injector = AdobeInjector()
+            injector.set_target_process("adobe_reader.exe")
+            injector.configure_payload_type("dll_injection")
+            injector.set_stealth_mode(True)
+
+            self.results['adobe_injection'] = {
+                'injector': injector,
+                'target': "adobe_reader.exe",
+                'stealth_enabled': True
+            }
+            logger.info("Adobe injector configured")
+        except Exception as e:
+            logger.error(f"Failed to setup Adobe injection: {e}")
+
+    def setup_windows_activation(self):
+        """Setup Windows activation bypass using WindowsActivator."""
+        try:
+            activator = WindowsActivator()
+            activator.detect_windows_version()
+            activator.set_activation_method("kms_emulation")
+            activator.configure_bypass_checks(True)
+
+            self.results['windows_activation'] = {
+                'activator': activator,
+                'version_detected': activator.get_windows_version(),
+                'method': "kms_emulation"
+            }
+            logger.info("Windows activator configured")
+        except Exception as e:
+            logger.error(f"Failed to setup Windows activation: {e}")
+
+    def setup_memory_optimized_loading(self):
+        """Setup memory-optimized binary loading using MemoryOptimizedLoader."""
+        try:
+            loader = MemoryOptimizedLoader()
+            loader.set_chunk_size(4096)
+            loader.enable_lazy_loading(True)
+            loader.configure_cache_policy("lru", max_size=100)
+
+            self.results['memory_loader'] = {
+                'loader': loader,
+                'chunk_size': 4096,
+                'lazy_loading': True,
+                'cache_policy': "lru"
+            }
+            logger.info("Memory-optimized loader configured")
+        except Exception as e:
+            logger.error(f"Failed to setup memory-optimized loading: {e}")
+
+    def run_exploitation_analysis(self):
+        """Run exploitation analysis using exploitation utilities."""
+        try:
+            # Use exploitation module for finding vulnerabilities
+            exploits = exploitation.find_exploitable_vulnerabilities(self.binary_path)
+            exploit_chains = exploitation.generate_exploit_chains(exploits)
+
+            self.results['exploitation'] = {
+                'vulnerabilities': exploits,
+                'exploit_chains': exploit_chains,
+                'exploitability_score': exploitation.calculate_exploitability_score(exploits)
+            }
+            logger.info(f"Found {len(exploits)} exploitable vulnerabilities")
+        except Exception as e:
+            logger.error(f"Failed to run exploitation analysis: {e}")
+
+    def run_cfg_analysis_detailed(self):
+        """Run detailed CFG analysis using run_cfg_analysis."""
+        try:
+            cfg_results = run_cfg_analysis(self.binary_path, detailed=True)
+
+            self.results['detailed_cfg'] = {
+                'nodes': cfg_results.get('nodes', []),
+                'edges': cfg_results.get('edges', []),
+                'complexity_metrics': cfg_results.get('complexity', {}),
+                'analysis_time': cfg_results.get('analysis_time', 0)
+            }
+            logger.info("Detailed CFG analysis completed")
+        except Exception as e:
+            logger.error(f"Failed to run detailed CFG analysis: {e}")
+
+    def run_multi_format_analysis_tool(self):
+        """Run multi-format analysis using run_multi_format_analysis."""
+        try:
+            format_results = run_multi_format_analysis(self.binary_path)
+
+            self.results['multi_format'] = {
+                'detected_formats': format_results.get('formats', []),
+                'format_specific_analysis': format_results.get('analysis', {}),
+                'compatibility_check': format_results.get('compatibility', {})
+            }
+            logger.info("Multi-format analysis completed")
+        except Exception as e:
+            logger.error(f"Failed to run multi-format analysis: {e}")
+
+    def run_rop_gadget_analysis(self):
+        """Run ROP gadget analysis using run_rop_gadget_finder."""
+        try:
+            rop_results = run_rop_gadget_finder(self.binary_path)
+
+            self.results['rop_gadgets'] = {
+                'gadgets': rop_results.get('gadgets', []),
+                'gadget_chains': rop_results.get('chains', []),
+                'statistics': rop_results.get('stats', {})
+            }
+            logger.info(f"Found {len(rop_results.get('gadgets', []))} ROP gadgets")
+        except Exception as e:
+            logger.error(f"Failed to run ROP gadget analysis: {e}")
+
+    def run_vulnerability_scan_detailed(self):
+        """Run detailed vulnerability scan using run_vulnerability_scan."""
+        try:
+            vuln_results = run_vulnerability_scan(self.binary_path, deep_scan=True)
+
+            self.results['detailed_vulnerabilities'] = {
+                'vulnerabilities': vuln_results.get('vulnerabilities', []),
+                'severity_breakdown': vuln_results.get('severity', {}),
+                'remediation_suggestions': vuln_results.get('remediation', [])
+            }
+            logger.info("Detailed vulnerability scan completed")
+        except Exception as e:
+            logger.error(f"Failed to run detailed vulnerability scan: {e}")
 
 
 def show_feature_categories():

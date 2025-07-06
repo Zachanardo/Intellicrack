@@ -1,3 +1,4 @@
+"""Radare2 ESIL (Evaluable Strings Intermediate Language) analysis module."""
 import logging
 import time
 from typing import Any, Dict, List, Optional

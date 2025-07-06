@@ -1,3 +1,4 @@
+"""Control Flow Graph (CFG) exploration and analysis module for binary analysis."""
 import json
 import logging
 import os

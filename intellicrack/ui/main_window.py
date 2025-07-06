@@ -1,5 +1,4 @@
-"""
-Main Application Window
+"""Main Application Window.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -65,9 +64,9 @@ logger = get_logger(__name__)
 
 
 class IntellicrackMainWindow(QMainWindow):
-    """
-    Main application window for Intellicrack - a comprehensive reverse engineering
-    and security analysis framework.
+    """Main application window for Intellicrack.
+    
+    A comprehensive reverse engineering and security analysis framework.
 
     This class provides the primary user interface with multiple tabs for different
     analysis capabilities including binary analysis, vulnerability detection,
@@ -121,7 +120,7 @@ class IntellicrackMainWindow(QMainWindow):
         self.logger.info("Main window initialization completed")
 
     def _setup_ui(self):
-        """Setup the main user interface."""
+        """Set up the main user interface."""
         self.setWindowTitle("Intellicrack - Advanced Binary Analysis Framework")
         self.setGeometry(100, 100, 1400, 900)
 
@@ -158,7 +157,7 @@ class IntellicrackMainWindow(QMainWindow):
         self._setup_settings_tab()
 
     def _setup_dashboard_tab(self):
-        """Setup the main dashboard tab."""
+        """Set up the main dashboard tab."""
         dashboard_widget = QWidget()
         layout = QVBoxLayout(dashboard_widget)
 
@@ -224,7 +223,7 @@ class IntellicrackMainWindow(QMainWindow):
         self.tab_widget.addTab(dashboard_widget, "Dashboard")
 
     def _setup_analysis_tab(self):
-        """Setup the analysis tab."""
+        """Set up the analysis tab."""
         analysis_widget = QWidget()
         layout = QVBoxLayout(analysis_widget)
 
@@ -265,7 +264,7 @@ class IntellicrackMainWindow(QMainWindow):
         self.tab_widget.addTab(analysis_widget, "Analysis")
 
     def _setup_results_tab(self):
-        """Setup the results tab."""
+        """Set up the results tab."""
         results_widget = QWidget()
         layout = QVBoxLayout(results_widget)
 
@@ -293,7 +292,7 @@ class IntellicrackMainWindow(QMainWindow):
         self.tab_widget.addTab(results_widget, "Results")
 
     def _setup_protection_tab(self):
-        """Setup the protection analysis tab."""
+        """Set up the protection analysis tab."""
         # Create container widget with vertical splitter
         protection_container = QWidget()
         container_layout = QVBoxLayout(protection_container)
@@ -333,7 +332,7 @@ class IntellicrackMainWindow(QMainWindow):
         self.tab_widget.addTab(protection_container, "Protection Analysis")
 
     def _setup_ai_assistant_tab(self):
-        """Setup the AI assistant tab."""
+        """Set up the AI assistant tab."""
         # Create the AI assistant widget using the function from ai_assistant_enhanced.py
         ai_widget = create_ai_assistant_widget()
 
@@ -344,7 +343,7 @@ class IntellicrackMainWindow(QMainWindow):
         self.tab_widget.addTab(ai_widget, "AI Assistant")
 
     def _setup_settings_tab(self):
-        """Setup the settings tab."""
+        """Set up the settings tab."""
         settings_widget = QWidget()
         layout = QVBoxLayout(settings_widget)
 
@@ -367,14 +366,14 @@ class IntellicrackMainWindow(QMainWindow):
         self.tab_widget.addTab(settings_widget, "Settings")
 
     def _setup_signals(self):
-        """Setup signal connections."""
+        """Set up signal connections."""
         self.update_output.connect(self._on_update_output)
         self.update_status.connect(self._on_update_status)
         self.update_progress.connect(self._on_update_progress)
         self.clear_output.connect(self._on_clear_output)
 
     def _setup_status_bar(self):
-        """Setup the status bar."""
+        """Set up the status bar."""
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
@@ -388,7 +387,7 @@ class IntellicrackMainWindow(QMainWindow):
         self.status_bar.showMessage("Intellicrack initialized successfully")
 
     def _setup_menu_bar(self):
-        """Setup the menu bar."""
+        """Set up the menu bar."""
         menubar = self.menuBar()
 
         # File menu

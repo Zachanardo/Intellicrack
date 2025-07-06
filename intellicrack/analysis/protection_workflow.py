@@ -26,6 +26,27 @@ except ImportError:
     get_unified_engine = None
 
 try:
+    from ..core.analysis.yara_pattern_engine import get_yara_engine, is_yara_available
+except ImportError:
+    get_yara_engine = None
+    is_yara_available = None
+
+try:
+    from ..core.analysis.firmware_analyzer import get_firmware_analyzer, is_binwalk_available
+except ImportError:
+    get_firmware_analyzer = None
+    is_binwalk_available = None
+
+try:
+    from ..core.analysis.memory_forensics_engine import (
+        get_memory_forensics_engine,
+        is_volatility3_available,
+    )
+except ImportError:
+    get_memory_forensics_engine = None
+    is_volatility3_available = None
+
+try:
     from ..scripting.frida_generator import FridaScriptGenerator
 except ImportError:
     FridaScriptGenerator = None
@@ -41,6 +62,14 @@ except ImportError:
     import logging
 
     def get_logger(name):
+        """Create a logger instance with the given name.
+        
+        Args:
+            name: The name for the logger instance
+            
+        Returns:
+            A logging.Logger instance
+        """
         return logging.getLogger(name)
 
 logger = get_logger(__name__)
@@ -79,6 +108,11 @@ class ProtectionAnalysisWorkflow:
         self.ghidra_gen = GhidraScriptGenerator() if GhidraScriptGenerator else None
         self.llm_manager = LLMManager() if LLMManager else None
 
+        # Supplemental analysis engines
+        self.yara_engine = get_yara_engine() if get_yara_engine else None
+        self.firmware_analyzer = get_firmware_analyzer() if get_firmware_analyzer else None
+        self.memory_forensics = get_memory_forensics_engine() if get_memory_forensics_engine else None
+
         # Workflow callbacks
         self.progress_callback: Optional[Callable[[str, int], None]] = None
 
@@ -116,14 +150,20 @@ class ProtectionAnalysisWorkflow:
             analysis = self.engine.analyze(file_path, deep_scan=True)
             result.protection_analysis = analysis
 
+            # Step 2.5: Supplemental analysis with YARA, Binwalk, and Volatility3
+            self._report_progress("Running supplemental analysis engines...", 40)
+            supplemental_data = self._run_supplemental_analysis(file_path)
+            if supplemental_data and hasattr(analysis, 'supplemental_data'):
+                analysis.supplemental_data = supplemental_data
+
             # Step 3: Generate bypass recommendations
-            self._report_progress("Analyzing bypass strategies...", 50)
+            self._report_progress("Analyzing bypass strategies...", 55)
             recommendations = self._generate_recommendations(analysis)
             result.recommendations = recommendations
 
             # Step 4: Generate bypass scripts if requested
             if auto_generate_scripts and analysis.protections:
-                self._report_progress("Generating bypass scripts...", 70)
+                self._report_progress("Generating bypass scripts...", 75)
                 scripts = self._generate_bypass_scripts(
                     analysis, target_protections)
                 result.bypass_scripts = scripts
@@ -143,6 +183,131 @@ class ProtectionAnalysisWorkflow:
             result.recommendations = [f"Analysis failed: {str(e)}"]
 
         return result
+
+    def _run_supplemental_analysis(self, file_path: str) -> Dict[str, Any]:
+        """
+        Run supplemental analysis with YARA, Binwalk, and Volatility3
+        
+        Args:
+            file_path: Path to the binary file
+            
+        Returns:
+            Dictionary containing supplemental analysis results
+        """
+        supplemental_data = {}
+
+        try:
+            # YARA pattern analysis
+            if self.yara_engine and is_yara_available and is_yara_available():
+                logger.debug("Running YARA pattern analysis...")
+                yara_result = self.yara_engine.scan_file(file_path, timeout=30)
+                if not yara_result.error:
+                    yara_supplemental = self.yara_engine.generate_icp_supplemental_data(yara_result)
+                    supplemental_data['yara_analysis'] = {
+                        'matches_found': len(yara_result.matches),
+                        'total_rules': yara_result.total_rules,
+                        'scan_time': yara_result.scan_time,
+                        'supplemental_data': yara_supplemental
+                    }
+                    logger.debug(f"YARA analysis complete: {len(yara_result.matches)} matches found")
+                else:
+                    logger.warning(f"YARA analysis failed: {yara_result.error}")
+
+        except Exception as e:
+            logger.error(f"YARA analysis error: {e}")
+
+        try:
+            # Binwalk firmware analysis
+            if self.firmware_analyzer and is_binwalk_available and is_binwalk_available():
+                logger.debug("Running Binwalk firmware analysis...")
+                firmware_result = self.firmware_analyzer.analyze_firmware(
+                    file_path=file_path,
+                    extract_files=False,  # Don't extract for workflow performance
+                    analyze_security=True,
+                    extraction_depth=1
+                )
+                if not firmware_result.error:
+                    firmware_supplemental = self.firmware_analyzer.generate_icp_supplemental_data(firmware_result)
+                    supplemental_data['firmware_analysis'] = {
+                        'signatures_found': len(firmware_result.signatures),
+                        'security_findings': len(firmware_result.security_findings),
+                        'firmware_type': firmware_result.firmware_type.value,
+                        'analysis_time': firmware_result.analysis_time,
+                        'supplemental_data': firmware_supplemental
+                    }
+                    logger.debug(f"Binwalk analysis complete: {len(firmware_result.signatures)} signatures found")
+                else:
+                    logger.warning(f"Binwalk analysis failed: {firmware_result.error}")
+
+        except Exception as e:
+            logger.error(f"Binwalk analysis error: {e}")
+
+        try:
+            # Volatility3 memory forensics (for memory dumps)
+            if (self.memory_forensics and is_volatility3_available and is_volatility3_available() and
+                self._is_memory_dump(file_path)):
+                logger.debug("Running Volatility3 memory forensics...")
+                memory_result = self.memory_forensics.analyze_memory_dump(
+                    dump_path=file_path,
+                    deep_analysis=False  # Quick analysis for workflow performance
+                )
+                if not memory_result.error:
+                    memory_supplemental = self.memory_forensics.generate_icp_supplemental_data(memory_result)
+                    supplemental_data['memory_analysis'] = {
+                        'artifacts_found': sum(memory_result.artifacts_found.values()),
+                        'analysis_profile': memory_result.analysis_profile,
+                        'has_suspicious_activity': memory_result.has_suspicious_activity,
+                        'analysis_time': memory_result.analysis_time,
+                        'supplemental_data': memory_supplemental
+                    }
+                    logger.debug(f"Volatility3 analysis complete: {sum(memory_result.artifacts_found.values())} artifacts found")
+                else:
+                    logger.warning(f"Volatility3 analysis failed: {memory_result.error}")
+
+        except Exception as e:
+            logger.error(f"Volatility3 analysis error: {e}")
+
+        if supplemental_data:
+            logger.info(f"Supplemental analysis complete with {len(supplemental_data)} engines")
+        else:
+            logger.debug("No supplemental analysis results available")
+
+        return supplemental_data
+
+    def _is_memory_dump(self, file_path: str) -> bool:
+        """
+        Check if file appears to be a memory dump
+        
+        Args:
+            file_path: Path to file
+            
+        Returns:
+            True if file appears to be a memory dump
+        """
+        try:
+            # Check file extension
+            file_ext = os.path.splitext(file_path)[1].lower()
+            if file_ext in ['.dmp', '.vmem', '.raw', '.mem', '.dd']:
+                return True
+
+            # Check file size (memory dumps are typically large)
+            file_size = os.path.getsize(file_path)
+            if file_size > 100 * 1024 * 1024:  # > 100MB
+                # Check for memory dump signatures
+                with open(file_path, 'rb') as f:
+                    header = f.read(4096)
+                    # Look for common memory dump patterns
+                    if b'PAGEDUMP' in header or b'PAGEDU64' in header:
+                        return True
+                    # Windows crash dump signatures
+                    if header.startswith(b'PAGEDUMP') or header.startswith(b'PAGE'):
+                        return True
+
+            return False
+
+        except Exception as e:
+            logger.debug(f"Memory dump detection error: {e}")
+            return False
 
     def _generate_recommendations(self, analysis: UnifiedProtectionResult) -> List[str]:
         """Generate actionable recommendations based on analysis"""
@@ -187,11 +352,115 @@ class ProtectionAnalysisWorkflow:
                 "⚡ Multiple protections detected. Consider tackling them one at a time, starting with the outermost layer."
             )
 
+        # Supplemental analysis recommendations
+        if hasattr(analysis, 'supplemental_data') and analysis.supplemental_data:
+            supplemental_recs = self._generate_supplemental_recommendations(analysis.supplemental_data)
+            recommendations.extend(supplemental_recs)
+
         # AI assistance
         if self.llm_manager.has_active_backend():
             recommendations.append(
                 "🤖 AI assistance available. Use the Script Generation feature for automated bypass script creation."
             )
+
+        return recommendations
+
+    def _generate_supplemental_recommendations(self, supplemental_data: Dict[str, Any]) -> List[str]:
+        """
+        Generate recommendations based on supplemental analysis results
+        
+        Args:
+            supplemental_data: Results from YARA, Binwalk, and Volatility3
+            
+        Returns:
+            List of recommendations based on supplemental findings
+        """
+        recommendations = []
+
+        # YARA pattern analysis recommendations
+        if 'yara_analysis' in supplemental_data:
+            yara_data = supplemental_data['yara_analysis']
+            matches_found = yara_data.get('matches_found', 0)
+
+            if matches_found > 0:
+                recommendations.append(
+                    f"🔍 YARA detected {matches_found} protection patterns. Check for packing, anti-debug, and licensing signatures."
+                )
+
+                # Look for specific pattern types in supplemental data
+                yara_supplemental = yara_data.get('supplemental_data', {})
+                protection_categories = yara_supplemental.get('protection_categories', {})
+
+                if protection_categories.get('packer', 0) > 0:
+                    recommendations.append(
+                        "📦 YARA identified packer signatures. Consider unpacking before further analysis."
+                    )
+                if protection_categories.get('anti_debug', 0) > 0:
+                    recommendations.append(
+                        "🛡️ YARA found anti-debug patterns. Use stealth debugging techniques."
+                    )
+                if protection_categories.get('licensing', 0) > 0:
+                    recommendations.append(
+                        "🔑 YARA detected licensing patterns. Focus on license validation bypass."
+                    )
+            else:
+                recommendations.append(
+                    "✅ YARA found no known protection patterns. Binary may use custom or unknown protections."
+                )
+
+        # Binwalk firmware analysis recommendations
+        if 'firmware_analysis' in supplemental_data:
+            firmware_data = supplemental_data['firmware_analysis']
+            signatures_found = firmware_data.get('signatures_found', 0)
+            security_findings = firmware_data.get('security_findings', 0)
+            firmware_type = firmware_data.get('firmware_type', 'unknown')
+
+            if signatures_found > 0:
+                recommendations.append(
+                    f"🔧 Binwalk identified {signatures_found} embedded components. This may be firmware or contain embedded files."
+                )
+
+                if firmware_type != 'unknown':
+                    recommendations.append(
+                        f"🖥️ Detected {firmware_type} firmware. Consider firmware-specific analysis techniques."
+                    )
+
+            if security_findings > 0:
+                recommendations.append(
+                    f"⚠️ Binwalk found {security_findings} security issues in embedded components. Review for hardcoded credentials or keys."
+                )
+
+            # Look for specific firmware findings
+            firmware_supplemental = firmware_data.get('supplemental_data', {})
+            embedded_files = firmware_supplemental.get('embedded_files', [])
+            if embedded_files:
+                recommendations.append(
+                    f"📁 Found {len(embedded_files)} embedded files. Extract and analyze individual components."
+                )
+
+        # Volatility3 memory forensics recommendations
+        if 'memory_analysis' in supplemental_data:
+            memory_data = supplemental_data['memory_analysis']
+            artifacts_found = memory_data.get('artifacts_found', 0)
+            has_suspicious = memory_data.get('has_suspicious_activity', False)
+
+            if artifacts_found > 0:
+                recommendations.append(
+                    f"🧠 Memory analysis found {artifacts_found} runtime artifacts. This provides insight into dynamic behavior."
+                )
+
+                if has_suspicious:
+                    recommendations.append(
+                        "🚨 Memory forensics detected suspicious activity. Review process injection and hidden processes."
+                    )
+
+                # Look for specific memory findings
+                memory_supplemental = memory_data.get('supplemental_data', {})
+                protection_indicators = memory_supplemental.get('protection_indicators', [])
+                if protection_indicators:
+                    recommendations.append(
+                        f"🔒 Memory analysis revealed {len(protection_indicators)} protection indicators in runtime."
+                    )
 
         return recommendations
 

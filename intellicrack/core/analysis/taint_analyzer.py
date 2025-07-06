@@ -1,3 +1,4 @@
+"""Taint analysis module for tracking data flow and security vulnerabilities."""
 import logging
 import re
 from typing import Any, Dict, List, Optional, Set
@@ -1547,7 +1548,7 @@ class TaintAnalysisEngine:
 
     def _suggest_mitigation(self, vuln_type: str, flow: Dict[str, Any]) -> str:
         """Suggest mitigation for vulnerability."""
-        mitigations = {
+        base_mitigations = {
             'license_validation_bypass': "Implement multiple validation layers and use cryptographic signatures",
             'weak_license_check': "Use strong cryptographic validation with proper key management",
             'predictable_crypto_key': "Use proper random number generation for cryptographic keys",
@@ -1556,7 +1557,37 @@ class TaintAnalysisEngine:
             'hardware_id_bypass': "Combine multiple hardware identifiers and use secure hashing"
         }
 
-        return mitigations.get(vuln_type, "Review and strengthen the validation logic")
+        # Enhance mitigation suggestions based on flow characteristics
+        base_mitigation = base_mitigations.get(vuln_type, "Review and strengthen the validation logic")
+
+        # Add context-specific recommendations based on the vulnerability flow
+        if flow:
+            source_addr = flow.get('source', {}).get('address', 0)
+            sink_addr = flow.get('sink', {}).get('address', 0)
+
+            context_specific = []
+
+            # Check if vulnerability involves user input
+            if any('input' in str(v).lower() for v in flow.get('path', [])):
+                context_specific.append("Focus on input sanitization at entry points")
+
+            # Check if vulnerability involves crypto operations
+            if any('crypt' in str(v).lower() or 'hash' in str(v).lower() for v in flow.get('path', [])):
+                context_specific.append("Review cryptographic implementation for timing attacks")
+
+            # Check if vulnerability involves file operations
+            if any('file' in str(v).lower() or 'path' in str(v).lower() for v in flow.get('path', [])):
+                context_specific.append("Implement proper file path validation and access controls")
+
+            # Add distance-based recommendations
+            distance = abs(sink_addr - source_addr) if source_addr and sink_addr else 0
+            if distance > 1000:
+                context_specific.append("Consider adding intermediate validation points due to large code distance")
+
+            if context_specific:
+                return f"{base_mitigation}. Additional recommendations: {'; '.join(context_specific)}"
+
+        return base_mitigation
 
 
 def run_taint_analysis(app: Any) -> None:

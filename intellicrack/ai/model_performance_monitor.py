@@ -566,6 +566,45 @@ class ModelPerformanceMonitor:
 
         return comparison
 
+    def optimize_for_monitoring(self, model: Any) -> Any:
+        """Optimize model for performance monitoring.
+        
+        Args:
+            model: Model to optimize
+            
+        Returns:
+            Optimized model
+        """
+        if GPU_AUTOLOADER_AVAILABLE:
+            try:
+                # Move to optimal device
+                if to_device:
+                    device = get_device()
+                    model = to_device(model, device)
+                    logger.debug(f"Moved model to {device} for monitoring")
+
+                # Apply GPU optimizations
+                if gpu_autoloader:
+                    optimized = gpu_autoloader(model)
+                    if optimized is not None:
+                        model = optimized
+                        logger.debug("Applied GPU optimizations for monitoring")
+            except Exception as e:
+                logger.debug(f"Could not optimize model for monitoring: {e}")
+
+        return model
+
+    def clear_gpu_cache(self):
+        """Clear GPU memory cache."""
+        if GPU_AUTOLOADER_AVAILABLE and empty_cache:
+            try:
+                empty_cache()
+                logger.debug("Cleared GPU cache")
+            except Exception as e:
+                logger.debug(f"Could not clear GPU cache: {e}")
+        elif HAS_TORCH and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
     def export_metrics(
         self,
         model_id: Optional[str] = None,

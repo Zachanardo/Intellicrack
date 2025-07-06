@@ -1,3 +1,4 @@
+"""Integration module for hex viewer functionality."""
 import logging
 import os
 from typing import Optional

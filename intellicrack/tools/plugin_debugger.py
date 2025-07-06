@@ -1,3 +1,4 @@
+"""Plugin debugger for testing and debugging Intellicrack plugins."""
 from intellicrack.logger import logger
 
 """

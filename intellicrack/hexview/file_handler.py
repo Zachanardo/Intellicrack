@@ -361,10 +361,12 @@ class VirtualFileAccess:
                     config.max_memory_mb = 1000
                     config.chunk_size_mb = 50
                     config.cache_size_mb = 200
+                    config.strategy = MemoryStrategy.STREAMING
                 elif self.file_size > 100 * 1024 * 1024:  # > 100MB
                     config.max_memory_mb = 500
                     config.chunk_size_mb = 20
                     config.cache_size_mb = 100
+                    config.strategy = MemoryStrategy.ADAPTIVE
 
                 # Use the temp file path if available
                 file_to_use = self.temp_file_path if self.using_temp_file else file_path

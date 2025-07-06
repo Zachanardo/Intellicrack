@@ -1,3 +1,4 @@
+"""Plugin creation wizard for developing new Intellicrack plugins."""
 import json
 from datetime import datetime
 

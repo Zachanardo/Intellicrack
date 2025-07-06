@@ -1631,26 +1631,51 @@ class HexViewerWidget(QAbstractScrollArea):
         # For other keys, fall back to parent implementation
         super().keyPressEvent(event)
 
-    def handle_navigation_key(self, key: int, modifiers: Qt.KeyboardModifiers):  # pylint: disable=unused-argument
-        """Handle navigation key events."""
+    def handle_navigation_key(self, key: int, modifiers: Qt.KeyboardModifiers):
+        """Handle navigation key events with modifier key support."""
         file_size = self.file_handler.get_file_size()
+        ctrl_pressed = bool(modifiers & Qt.ControlModifier)
+        shift_pressed = bool(modifiers & Qt.ShiftModifier)
 
         if key == Qt.Key_Home:
-            # Home: Jump to start of file
-            self.jump_to_offset(0)
+            if ctrl_pressed:
+                # Ctrl+Home: Jump to very beginning of file
+                self.jump_to_offset(0)
+                self.verticalScrollBar().setValue(0)
+            else:
+                # Home: Jump to start of current line
+                current_offset = getattr(self, 'current_offset', 0)
+                line_start = (current_offset // 16) * 16
+                self.jump_to_offset(line_start)
+                
         elif key == Qt.Key_End:
-            # End: Jump to end of file
-            self.jump_to_offset(max(0, file_size - 1))
+            if ctrl_pressed:
+                # Ctrl+End: Jump to very end of file
+                self.jump_to_offset(max(0, file_size - 1))
+                self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
+            else:
+                # End: Jump to end of current line
+                current_offset = getattr(self, 'current_offset', 0)
+                line_end = min(file_size - 1, ((current_offset // 16) + 1) * 16 - 1)
+                self.jump_to_offset(line_end)
+                
         elif key == Qt.Key_PageUp:
             # Page Up: Move up one page
             current_row = self.verticalScrollBar().value()
             page_size = self.verticalScrollBar().pageStep()
+            if ctrl_pressed:
+                # Ctrl+PageUp: Move up multiple pages (faster navigation)
+                page_size *= 5
             new_row = max(0, current_row - page_size)
             self.verticalScrollBar().setValue(new_row)
+            
         elif key == Qt.Key_PageDown:
             # Page Down: Move down one page
             current_row = self.verticalScrollBar().value()
             page_size = self.verticalScrollBar().pageStep()
+            if ctrl_pressed:
+                # Ctrl+PageDown: Move down multiple pages (faster navigation)
+                page_size *= 5
             new_row = min(self.verticalScrollBar().maximum(), current_row + page_size)
             self.verticalScrollBar().setValue(new_row)
         elif key == Qt.Key_Up:

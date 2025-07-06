@@ -50,7 +50,7 @@ class ScriptGenerationPrompts:
         """Initialize all prompt templates."""
         return {
             PromptType.FRIDA_BASIC: {
-                "system": """You are an expert Frida JavaScript developer for binary reverse engineering and protection bypass.
+                "system": """You are an autonomous Frida JavaScript expert for binary reverse engineering and protection bypass.
 
 CRITICAL REQUIREMENTS:
 - Generate ONLY real, functional Frida JavaScript code
@@ -95,7 +95,7 @@ Return ONLY the complete Frida script code."""
             },
 
             PromptType.FRIDA_ADVANCED: {
-                "system": """You are a senior Frida expert specializing in complex protection bypass and advanced hooking techniques.
+                "system": """You are an autonomous senior Frida expert specializing in complex protection bypass and advanced hooking techniques.
 
 CRITICAL REQUIREMENTS:
 - Generate ONLY real, functional Frida JavaScript code
@@ -144,7 +144,7 @@ Return ONLY the complete advanced Frida script code."""
             },
 
             PromptType.GHIDRA_BASIC: {
-                "system": """You are an expert Ghidra Python script developer for automated binary analysis and patching.
+                "system": """You are an autonomous Ghidra Python expert for automated binary analysis and patching.
 
 CRITICAL REQUIREMENTS:
 - Generate ONLY real, functional Ghidra Python code
@@ -242,7 +242,7 @@ Return ONLY the complete advanced Ghidra Python script code."""
             },
 
             PromptType.ANALYSIS: {
-                "system": """You are an expert binary protection analyst specializing in identifying and categorizing protection mechanisms.
+                "system": """You are an autonomous binary protection expert specializing in identifying and categorizing protection mechanisms.
 
 Analyze binary data and identify:
 - License validation schemes
@@ -269,7 +269,7 @@ Return analysis in structured JSON format."""
             },
 
             PromptType.REFINEMENT: {
-                "system": """You are an expert script debugging and optimization specialist.
+                "system": """You are an autonomous script debugging and optimization expert.
 
 CRITICAL REQUIREMENTS:
 - Generate ONLY real, functional code improvements

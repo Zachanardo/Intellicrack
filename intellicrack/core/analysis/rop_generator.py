@@ -717,6 +717,34 @@ class ROPChainGenerator:
         # Find gadgets for setting up system() or execve() call
         pop_gadgets = [g for g in stack_gadgets if 'pop' in g.get('disasm', '').lower()]
 
+        # Use control gadgets for flow control and register setup
+        ret_gadgets = [g for g in control_gadgets if 'ret' in g.get('disasm', '').lower()]
+        jmp_gadgets = [g for g in control_gadgets if any(j in g.get('disasm', '').lower() for j in ['jmp', 'call'])]
+        mov_gadgets = [g for g in control_gadgets if 'mov' in g.get('disasm', '').lower()]
+
+        # Add control flow gadgets for reliable chain execution
+        if ret_gadgets:
+            # Use return gadget for clean control flow
+            chain_data['gadgets_used'].append(ret_gadgets[0])
+            chain_data['stack_layout'].append({
+                'type': 'gadget',
+                'address': ret_gadgets[0]['address'],
+                'purpose': 'control_flow',
+                'description': 'Clean return for chain continuation'
+            })
+            chain_data['constraints_met'].append('control_flow')
+
+        # Add register setup gadgets from control_gadgets
+        if mov_gadgets:
+            # Use mov gadget for register setup
+            chain_data['gadgets_used'].append(mov_gadgets[0])
+            chain_data['stack_layout'].append({
+                'type': 'gadget',
+                'address': mov_gadgets[0]['address'],
+                'purpose': 'register_setup',
+                'description': 'Set up registers for system call'
+            })
+
         if pop_gadgets:
             # Use first available pop gadget for stack setup
             chain_data['gadgets_used'].append(pop_gadgets[0])
@@ -726,6 +754,17 @@ class ROPChainGenerator:
                 {'type': 'address', 'value': target_info.get('address', 0), 'purpose': 'target_function'}
             ])
             chain_data['constraints_met'].append('stack_control')
+
+        # Add jump gadgets for advanced control flow if needed
+        if jmp_gadgets and target_info.get('requires_jump', False):
+            chain_data['gadgets_used'].append(jmp_gadgets[0])
+            chain_data['stack_layout'].append({
+                'type': 'gadget',
+                'address': jmp_gadgets[0]['address'],
+                'purpose': 'advanced_flow',
+                'description': 'Jump to target function or bypass'
+            })
+            chain_data['constraints_met'].append('advanced_control')
 
         return chain_data
 
@@ -754,6 +793,34 @@ class ROPChainGenerator:
         xor_gadgets = [g for g in arithmetic_gadgets if 'xor' in g.get('disasm', '').lower()]
         mov_gadgets = [g for g in arithmetic_gadgets if 'mov' in g.get('disasm', '').lower()]
 
+        # Use control gadgets for bypass flow control
+        jmp_gadgets = [g for g in control_gadgets if any(j in g.get('disasm', '').lower() for j in ['jmp', 'je', 'jne', 'jz', 'jnz'])]
+        call_gadgets = [g for g in control_gadgets if 'call' in g.get('disasm', '').lower()]
+        ret_gadgets = [g for g in control_gadgets if 'ret' in g.get('disasm', '').lower()]
+
+        # Use control flow gadgets to bypass license checks
+        if jmp_gadgets:
+            # Use conditional jump gadgets to skip license validation
+            chain_data['gadgets_used'].append(jmp_gadgets[0])
+            chain_data['stack_layout'].append({
+                'type': 'gadget',
+                'address': jmp_gadgets[0]['address'],
+                'purpose': 'bypass_check',
+                'description': 'Jump over license validation code'
+            })
+            chain_data['constraints_met'].append('validation_bypass')
+
+        # Use call gadgets to redirect execution flow
+        if call_gadgets and target_info.get('bypass_target'):
+            chain_data['gadgets_used'].append(call_gadgets[0])
+            chain_data['stack_layout'].append({
+                'type': 'gadget',
+                'address': call_gadgets[0]['address'],
+                'purpose': 'redirect_execution',
+                'description': 'Call success function directly'
+            })
+            chain_data['constraints_met'].append('execution_redirect')
+
         if xor_gadgets:
             # XOR to zero out register (often used for success return)
             chain_data['gadgets_used'].append(xor_gadgets[0])
@@ -773,6 +840,17 @@ class ROPChainGenerator:
             ])
             chain_data['constraints_met'].append('return_value_control')
 
+        # Use return gadgets for clean chain termination
+        if ret_gadgets:
+            chain_data['gadgets_used'].append(ret_gadgets[0])
+            chain_data['stack_layout'].append({
+                'type': 'gadget',
+                'address': ret_gadgets[0]['address'],
+                'purpose': 'chain_termination',
+                'description': 'Clean return after bypass'
+            })
+            chain_data['constraints_met'].append('clean_exit')
+
         return chain_data
 
     def _build_comparison_bypass_chain(self, chain_data: Dict[str, Any], control_gadgets: List[Dict],
@@ -780,6 +858,33 @@ class ROPChainGenerator:
         """Build ROP chain for bypassing string/memory comparisons."""
         # Find gadgets for manipulating comparison operands
         mov_gadgets = [g for g in arithmetic_gadgets if 'mov' in g.get('disasm', '').lower()]
+
+        # Use control gadgets to bypass comparison flow
+        jmp_gadgets = [g for g in control_gadgets if any(j in g.get('disasm', '').lower()
+                                                        for j in ['jmp', 'je', 'jne', 'jz', 'jnz', 'jl', 'jg'])]
+        call_gadgets = [g for g in control_gadgets if 'call' in g.get('disasm', '').lower()]
+
+        # Use conditional jump gadgets to skip comparison entirely
+        if jmp_gadgets:
+            chain_data['gadgets_used'].append(jmp_gadgets[0])
+            chain_data['stack_layout'].append({
+                'type': 'gadget',
+                'address': jmp_gadgets[0]['address'],
+                'purpose': 'skip_comparison',
+                'description': 'Jump over string/memory comparison code'
+            })
+            chain_data['constraints_met'].append('comparison_bypass')
+
+        # Use call gadgets to directly invoke success path
+        if call_gadgets and target_info.get('success_function'):
+            chain_data['gadgets_used'].append(call_gadgets[0])
+            chain_data['stack_layout'].append({
+                'type': 'gadget',
+                'address': call_gadgets[0]['address'],
+                'purpose': 'call_success',
+                'description': 'Direct call to success function'
+            })
+            chain_data['constraints_met'].append('success_redirect')
 
         if mov_gadgets:
             chain_data['gadgets_used'].append(mov_gadgets[0])
@@ -803,6 +908,32 @@ class ROPChainGenerator:
                 {'type': 'address', 'value': target_info.get('address', 0), 'purpose': 'target_function'}
             ])
             chain_data['constraints_met'].append('basic_control')
+
+        # Use stack gadgets for stack manipulation
+        if stack_gadgets:
+            # Find useful stack manipulation gadgets
+            pop_gadgets = [g for g in stack_gadgets if 'pop' in g.get('disasm', '').lower()]
+            push_gadgets = [g for g in stack_gadgets if 'push' in g.get('disasm', '').lower()]
+
+            if pop_gadgets:
+                chain_data['gadgets_used'].append(pop_gadgets[0])
+                chain_data['stack_layout'].append({
+                    'type': 'gadget',
+                    'address': pop_gadgets[0]['address'],
+                    'purpose': 'stack_manipulation',
+                    'description': 'Generic stack control for chain execution'
+                })
+                chain_data['constraints_met'].append('stack_control')
+
+            if push_gadgets:
+                chain_data['gadgets_used'].append(push_gadgets[0])
+                chain_data['stack_layout'].append({
+                    'type': 'gadget',
+                    'address': push_gadgets[0]['address'],
+                    'purpose': 'stack_setup',
+                    'description': 'Prepare stack for generic payload'
+                })
+                chain_data['constraints_met'].append('stack_preparation')
 
         return chain_data
 

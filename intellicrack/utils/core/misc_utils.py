@@ -31,10 +31,9 @@ logger = logging.getLogger(__name__)
 
 
 def log_message(msg: str) -> str:
-    """
-    Returns a timestamped log message.
+    """Return a timestamped log message.
 
-    Creates a consistently formatted log message with the current timestamp
+    Create a consistently formatted log message with the current timestamp
     prefixed to the provided message text. Used throughout the application
     to ensure uniform log message formatting.
 
@@ -48,8 +47,7 @@ def log_message(msg: str) -> str:
 
 
 def get_timestamp(format_string: str = '%Y-%m-%d %H:%M:%S') -> str:
-    """
-    Get current timestamp as formatted string.
+    """Get current timestamp as formatted string.
 
     Args:
         format_string: strftime format string
@@ -61,8 +59,7 @@ def get_timestamp(format_string: str = '%Y-%m-%d %H:%M:%S') -> str:
 
 
 def format_bytes(size: int, precision: int = 2) -> str:
-    """
-    Format a byte size into a human-readable string.
+    """Format a byte size into a human-readable string.
 
     Args:
         size: Size in bytes
@@ -79,8 +76,7 @@ def format_bytes(size: int, precision: int = 2) -> str:
 
 
 def validate_path(path: Union[str, Path], must_exist: bool = True) -> bool:
-    """
-    Validate a file or directory path.
+    """Validate a file or directory path.
 
     Args:
         path: Path to validate
@@ -110,8 +106,7 @@ def validate_path(path: Union[str, Path], must_exist: bool = True) -> bool:
 
 
 def sanitize_filename(filename: str, replacement: str = '_') -> str:
-    """
-    Sanitize a filename by removing invalid characters.
+    """Sanitize a filename by removing invalid characters.
 
     Args:
         filename: Original filename
@@ -137,8 +132,7 @@ def sanitize_filename(filename: str, replacement: str = '_') -> str:
 
 
 def truncate_string(text: str, max_length: int = 100, suffix: str = '...') -> str:
-    """
-    Truncate a string to a maximum length.
+    """Truncate a string to a maximum length.
 
     Args:
         text: Text to truncate
@@ -155,8 +149,7 @@ def truncate_string(text: str, max_length: int = 100, suffix: str = '...') -> st
 
 
 def safe_str(obj: Any, max_length: int = 100) -> str:
-    """
-    Safely convert an object to string with length limit.
+    """Safely convert an object to string with length limit.
 
     Args:
         obj: Object to convert
@@ -174,8 +167,7 @@ def safe_str(obj: Any, max_length: int = 100) -> str:
 
 
 def parse_size_string(size_str: str) -> int:
-    """
-    Parse a human-readable size string to bytes.
+    """Parse a human-readable size string to bytes.
 
     Args:
         size_str: Size string (e.g., "10MB", "1.5GB")
@@ -213,8 +205,7 @@ def parse_size_string(size_str: str) -> int:
 
 
 def get_file_extension(file_path: Union[str, Path], lower: bool = True) -> str:
-    """
-    Get file extension from path.
+    """Get file extension from path.
 
     Args:
         file_path: File path
@@ -229,8 +220,7 @@ def get_file_extension(file_path: Union[str, Path], lower: bool = True) -> str:
 
 
 def ensure_directory_exists(directory: Union[str, Path]) -> bool:
-    """
-    Ensure a directory exists, creating it if necessary.
+    """Ensure a directory exists, creating it if necessary.
 
     Args:
         directory: Directory path
@@ -248,8 +238,7 @@ def ensure_directory_exists(directory: Union[str, Path]) -> bool:
 
 
 def is_valid_ip_address(ip: str) -> bool:
-    """
-    Check if a string is a valid IP address.
+    """Check if a string is a valid IP address.
 
     Args:
         ip: IP address string
@@ -276,8 +265,7 @@ def is_valid_ip_address(ip: str) -> bool:
 
 
 def is_valid_port(port: Union[str, int]) -> bool:
-    """
-    Check if a port number is valid.
+    """Check if a port number is valid.
 
     Args:
         port: Port number

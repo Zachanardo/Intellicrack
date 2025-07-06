@@ -1,3 +1,4 @@
+"""UI helper utilities for common interface operations."""
 from intellicrack.logger import logger
 
 """

@@ -54,6 +54,7 @@ class HexViewerThread(QThread):
         self.size = size
 
     def run(self):
+        """Load file data in background thread."""
         try:
             file_size = os.path.getsize(self.file_path)
 

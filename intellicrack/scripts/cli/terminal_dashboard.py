@@ -627,6 +627,149 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
 
         return summary
 
+    def display_metrics_columns(self) -> None:
+        """Display system metrics in columns using Columns."""
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        # Create metric cards for column display
+        cpu_panel = Panel(
+            f"[bold cyan]{self.system_metrics.cpu_percent:.1f}%[/bold cyan]\n"
+            f"Load: {self.system_metrics.load_average[0]:.2f}" if self.system_metrics.load_average else "Load: N/A",
+            title="🖥️ CPU Usage",
+            border_style="green" if self.system_metrics.cpu_percent < 80 else "red"
+        )
+
+        memory_panel = Panel(
+            f"[bold magenta]{self.system_metrics.memory_percent:.1f}%[/bold magenta]\n"
+            f"Processes: {self.system_metrics.process_count}",
+            title="💾 Memory Usage",
+            border_style="green" if self.system_metrics.memory_percent < 80 else "red"
+        )
+
+        disk_panel = Panel(
+            f"[bold yellow]{self.system_metrics.disk_usage:.1f}%[/bold yellow]\n"
+            f"Network: ↓{self.system_metrics.network_recv//1024}KB ↑{self.system_metrics.network_sent//1024}KB",
+            title="💽 Storage & Network",
+            border_style="green" if self.system_metrics.disk_usage < 80 else "red"
+        )
+
+        # Display metrics in columns
+        columns = Columns([cpu_panel, memory_panel, disk_panel], equal=True, expand=True)
+        self.console.print(columns)
+
+    def show_analysis_progress(self, operation_name: str, total_steps: int, current_step: int) -> None:
+        """Show analysis progress using Progress bars.
+        
+        Args:
+            operation_name: Name of the current operation
+            total_steps: Total number of steps
+            current_step: Current step number
+        """
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            TimeElapsedColumn(),
+            console=self.console
+        ) as progress:
+            task = progress.add_task(f"[cyan]{operation_name}...", total=total_steps)
+            progress.update(task, completed=current_step)
+
+    def display_activity_with_status(self, activity_title: str, activities: List[str]) -> None:
+        """Display recent activities with status using Status.
+        
+        Args:
+            activity_title: Title for the activity section
+            activities: List of recent activities
+        """
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        with Status(f"[bold green]{activity_title}...", console=self.console):
+            # Create activity list
+            activity_items = "\n".join([f"• {activity}" for activity in activities[-5:]])  # Show last 5
+
+            activity_panel = Panel(
+                activity_items or "No recent activities",
+                title="📋 Recent Activities",
+                border_style="blue"
+            )
+
+            self.console.print(activity_panel)
+            time.sleep(1)  # Brief pause to show status
+
+    def create_system_overview_table(self) -> None:
+        """Create system overview using Table.
+        
+        Displays current system state in a formatted table.
+        """
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        table = Table(title="🖥️ System Overview", show_header=True, header_style="bold magenta")
+        table.add_column("Metric", style="cyan", no_wrap=True)
+        table.add_column("Current Value", style="green")
+        table.add_column("Status", style="yellow")
+        table.add_column("Trend", style="blue")
+
+        # Add system metrics to table
+        cpu_status = "✅ Normal" if self.system_metrics.cpu_percent < 80 else "⚠️ High"
+        cpu_trend = self._get_trend(self.cpu_history)
+        table.add_row("CPU Usage", f"{self.system_metrics.cpu_percent:.1f}%", cpu_status, cpu_trend)
+
+        memory_status = "✅ Normal" if self.system_metrics.memory_percent < 80 else "⚠️ High"
+        memory_trend = self._get_trend(self.memory_history)
+        table.add_row("Memory Usage", f"{self.system_metrics.memory_percent:.1f}%", memory_status, memory_trend)
+
+        disk_status = "✅ Normal" if self.system_metrics.disk_usage < 90 else "⚠️ Full"
+        table.add_row("Disk Usage", f"{self.system_metrics.disk_usage:.1f}%", disk_status, "📊")
+
+        uptime_str = self._format_duration(self.system_metrics.uptime)
+        table.add_row("System Uptime", uptime_str, "✅ Running", "⏱️")
+
+        table.add_row("Process Count", str(self.system_metrics.process_count), "ℹ️ Active", "📈")
+
+        self.console.print(table)
+
+    def display_project_tree_view(self, project_data: Dict[str, Any]) -> None:
+        """Display project structure as tree using Tree.
+        
+        Args:
+            project_data: Dictionary containing project information
+        """
+        if not RICH_AVAILABLE or not self.console:
+            return
+
+        # Create main project tree
+        tree = Tree(f"🗂️ [bold blue]{project_data.get('name', 'Project')}[/bold blue]")
+
+        # Add project statistics
+        stats_node = tree.add("📊 [bold cyan]Statistics[/bold cyan]")
+        stats_node.add(f"📦 Binaries Analyzed: {self.analysis_stats.total_binaries}")
+        stats_node.add(f"🔍 Analyses Completed: {self.analysis_stats.analyses_completed}")
+        stats_node.add(f"🚨 Vulnerabilities Found: {self.analysis_stats.vulnerabilities_found}")
+        stats_node.add(f"📂 Active Projects: {self.analysis_stats.active_projects}")
+
+        # Add cache information
+        cache_node = tree.add("💾 [bold yellow]Cache Status[/bold yellow]")
+        cache_total = self.analysis_stats.cache_hits + self.analysis_stats.cache_misses
+        cache_hit_rate = (self.analysis_stats.cache_hits / cache_total * 100) if cache_total > 0 else 0
+        cache_node.add(f"✅ Cache Hits: {self.analysis_stats.cache_hits}")
+        cache_node.add(f"❌ Cache Misses: {self.analysis_stats.cache_misses}")
+        cache_node.add(f"📈 Hit Rate: {cache_hit_rate:.1f}%")
+
+        # Add recent activity
+        if self.activity_log:
+            activity_node = tree.add("🕒 [bold green]Recent Activity[/bold green]")
+            for activity in self.activity_log[-3:]:  # Show last 3 activities
+                activity_node.add(f"• {activity}")
+
+        self.console.print(tree)
+
 
 def create_dashboard() -> TerminalDashboard:
     """Create dashboard instance."""

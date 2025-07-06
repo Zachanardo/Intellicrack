@@ -1,4 +1,22 @@
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Enhanced QEMU Test Manager with Real Data Capture
 
 Captures actual execution data from QEMU VMs.
@@ -6,7 +24,7 @@ Captures actual execution data from QEMU VMs.
 
 import json
 import subprocess
-from typing import Callable, Dict
+from typing import Any, Callable, Dict
 
 from ..utils.logger import get_logger
 
@@ -19,6 +37,10 @@ class EnhancedQEMUTestManager:
     def test_frida_script_with_callback(self, snapshot_id: str, script_content: str,
                                        binary_path: str, output_callback: Callable[[str], None]):
         """Execute Frida script with real-time output streaming."""
+
+        # Extract binary information for targeted analysis
+        binary_name = os.path.basename(binary_path)
+        binary_dir = os.path.dirname(binary_path)
 
         # Create enhanced Frida wrapper that captures more data
         wrapper_script = f'''
@@ -90,13 +112,35 @@ Interceptor.attach(Module.findExportByName('advapi32.dll', 'RegQueryValueExW'), 
 }});
 """
 
+# Target binary information
+target_binary = "{binary_path}"
+target_name = "{binary_name}"
+target_dir = "{binary_dir}"
+
+print(f"[*] Targeting binary: {{target_name}}")
+print(f"[*] Binary path: {{target_binary}}")
+print(f"[*] Binary directory: {{target_dir}}")
+
 # User script starts here
 {script_content}
 
 # Add monitoring to user script
 if session:
     session.on('message', on_message)
-    script = session.create_script(monitoring_script + "\\n" + user_script)
+    
+    # Inject binary-specific targeting into script
+    binary_targeting = f"""
+// Target specific binary: {{target_name}}
+Process.enumerateModules().forEach(module => {{{{
+    if (module.name.toLowerCase().includes('{{target_name.lower()}}')) {{{{
+        console.log("[*] Found target module: " + module.name);
+        console.log("[*] Base address: " + module.base);
+        console.log("[*] Size: " + module.size);
+    }}}}
+}}}});
+"""
+    
+    script = session.create_script(monitoring_script + "\\n" + binary_targeting + "\\n" + user_script)
     script.load()
     
     # Wait and collect data
@@ -117,34 +161,93 @@ if session:
         }}, f)
 '''
 
-        # Execute in QEMU with real-time output
-        process = subprocess.Popen(
-            ['qemu-system-x86_64', '-snapshot', snapshot_id, '-enable-kvm'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1  # Line buffered
-        )
+        # Write wrapper script to temporary file for execution
+        import os
+        import tempfile
 
-        # Stream output in real-time
-        for line in iter(process.stdout.readline, ''):
-            if line:
-                output_callback(line.strip())
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as script_file:
+            script_file.write(wrapper_script)
+            script_file.flush()
+            script_path = script_file.name
 
-        process.wait()
-
-        # Read the detailed data file
         try:
-            with open('/tmp/qemu_test_data.json', 'r') as f:
-                detailed_data = json.load(f)
-        except:
-            detailed_data = {}
+            # Execute wrapper script in QEMU with real-time output
+            qemu_cmd = [
+                'qemu-system-x86_64',
+                '-snapshot', snapshot_id,
+                '-enable-kvm',
+                '-monitor', 'stdio',
+                '-serial', 'tcp::4444,server,nowait',
+                '-device', 'e1000,netdev=net0',
+                '-netdev', 'user,id=net0,hostfwd=tcp::2222-:22'
+            ]
 
-        return {
-            'success': process.returncode == 0,
-            'output': ''.join(self.captured_output),
-            'detailed_data': detailed_data
-        }
+            process = subprocess.Popen(
+                qemu_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1  # Line buffered
+            )
+
+            # Also run the Frida script inside QEMU
+            frida_process = subprocess.Popen(
+                ['python3', script_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1
+            )
+
+            # Stream output from both processes in real-time
+            import threading
+
+            def stream_frida_output():
+                for line in iter(frida_process.stdout.readline, ''):
+                    if line:
+                        output_callback(f"[FRIDA] {line.strip()}")
+
+            # Start Frida output streaming in separate thread
+            frida_thread = threading.Thread(target=stream_frida_output)
+            frida_thread.daemon = True
+            frida_thread.start()
+
+            # Stream QEMU output
+            for line in iter(process.stdout.readline, ''):
+                if line:
+                    output_callback(f"[QEMU] {line.strip()}")
+
+            # Wait for both processes
+            process.wait()
+            frida_process.wait()
+            frida_thread.join(timeout=5)
+
+            # Read the detailed data file
+            try:
+                with open('/tmp/qemu_test_data.json', 'r') as f:
+                    detailed_data = json.load(f)
+                    logger.info(f"Loaded execution data: {len(detailed_data.get('api_calls', []))} API calls captured")
+            except Exception as e:
+                logger.warning(f"Failed to load execution data: {e}")
+                detailed_data = {}
+
+            return {
+                'success': process.returncode == 0 and frida_process.returncode == 0,
+                'qemu_returncode': process.returncode,
+                'frida_returncode': frida_process.returncode,
+                'detailed_data': detailed_data,
+                'execution_summary': {
+                    'memory_changes': len(detailed_data.get('memory_changes', [])),
+                    'api_calls': len(detailed_data.get('api_calls', [])),
+                    'call_counts': detailed_data.get('call_counts', {})
+                }
+            }
+        finally:
+            # Clean up temporary script file
+            try:
+                os.unlink(script_path)
+            except:
+                pass
 
     def analyze_binary_for_vm(self, binary_path: str) -> Dict[str, Any]:
         """Analyze binary to determine VM requirements."""

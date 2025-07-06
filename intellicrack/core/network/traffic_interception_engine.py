@@ -1,3 +1,4 @@
+"""Traffic interception engine for capturing and analyzing network traffic."""
 import logging
 import os
 import socket

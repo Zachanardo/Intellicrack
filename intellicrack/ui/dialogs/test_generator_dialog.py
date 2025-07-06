@@ -1,3 +1,4 @@
+"""Test generator dialog for creating automated test cases."""
 import os
 import subprocess
 import sys

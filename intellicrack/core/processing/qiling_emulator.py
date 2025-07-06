@@ -1,3 +1,4 @@
+"""Qiling emulator interface for advanced binary emulation and analysis."""
 import logging
 import os
 import threading
@@ -322,15 +323,56 @@ class QilingEmulator:
         # Log potential license check
         self.logger.info(f"Potential license API: {api_name} at {hex(address)}")
 
-    def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int):  # pylint: disable=unused-argument
-        """Hook for memory access monitoring."""
+    def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int):
+        """Hook for memory access monitoring with detailed memory analysis."""
         access_type = "READ" if access == 1 else "WRITE"
+        
+        # Extract current CPU state from Qiling object
+        cpu_state = {}
+        try:
+            if hasattr(ql, 'arch') and hasattr(ql.arch, 'regs'):
+                if hasattr(ql.arch.regs, 'eip'):  # x86
+                    cpu_state['pc'] = hex(ql.arch.regs.eip)
+                elif hasattr(ql.arch.regs, 'rip'):  # x64
+                    cpu_state['pc'] = hex(ql.arch.regs.rip)
+                elif hasattr(ql.arch.regs, 'pc'):  # ARM
+                    cpu_state['pc'] = hex(ql.arch.regs.pc)
+                    
+                # Get stack pointer
+                if hasattr(ql.arch.regs, 'esp'):
+                    cpu_state['sp'] = hex(ql.arch.regs.esp)
+                elif hasattr(ql.arch.regs, 'rsp'):
+                    cpu_state['sp'] = hex(ql.arch.regs.rsp)
+                elif hasattr(ql.arch.regs, 'sp'):
+                    cpu_state['sp'] = hex(ql.arch.regs.sp)
+        except (AttributeError, Exception) as e:
+            self.logger.debug(f"Failed to extract CPU state: {e}")
+            
+        # Try to read memory content around the access
+        memory_content = None
+        try:
+            if access == 1 and size <= 32:  # READ access, reasonable size
+                memory_content = ql.mem.read(address, size).hex()
+        except (OSError, AttributeError, Exception) as e:
+            self.logger.debug(f"Failed to read memory at {hex(address)}: {e}")
+            
+        # Check if this is a stack access
+        is_stack_access = False
+        if cpu_state.get('sp'):
+            try:
+                stack_addr = int(cpu_state['sp'], 16)
+                is_stack_access = abs(address - stack_addr) < 0x10000  # Within 64KB of stack
+            except (ValueError, TypeError):
+                pass
 
         self.memory_accesses.append({
             'type': access_type,
             'address': hex(address),
             'size': size,
             'value': hex(value) if access == 2 else None,
+            'memory_content': memory_content,
+            'cpu_state': cpu_state,
+            'is_stack_access': is_stack_access,
             'timestamp': time.time()
         })
 

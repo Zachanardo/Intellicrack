@@ -1,3 +1,4 @@
+"""Radare2 AI integration module for enhanced binary analysis using AI models."""
 import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple

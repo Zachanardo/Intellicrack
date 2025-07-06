@@ -83,6 +83,13 @@ class BatchAnalysisWorker(QThread):
     error_occurred = pyqtSignal(str)  # error message
 
     def __init__(self, file_paths: List[str], max_workers: int = 4, deep_scan: bool = False):
+        """Initialize batch analysis thread.
+        
+        Args:
+            file_paths: List of file paths to analyze
+            max_workers: Maximum number of worker threads for parallel processing
+            deep_scan: Whether to perform deep scanning analysis
+        """
         super().__init__()
         self.file_paths = file_paths
         self.max_workers = max_workers

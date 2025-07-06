@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Protection-Aware AI Script Generation
 
 This module enhances AI script generation by using ML-detected protection
@@ -828,15 +846,37 @@ console.log("[+] Generic bypass hooks installed");
 
     def _get_generic_analysis_script(self, script_type: str) -> str:
         """Generic analysis script when protection detection fails"""
-        return '''// Protection Analysis Script
+        script_type_upper = script_type.upper()
+
+        if script_type.lower() == 'frida':
+            return f'''// {script_type_upper} Protection Analysis Script
 // Failed to detect specific protection - running generic analysis
 
 console.log("[?] Protection type could not be determined");
-console.log("[*] Running comprehensive analysis...");
+console.log("[*] Running comprehensive {script_type} analysis...");
 
-// Add analysis code here
+// Generic function hooking for {script_type}
+Process.enumerateModules().forEach(module => {{
+    module.enumerateExports().forEach(exp => {{
+        if (exp.name && (exp.name.includes('license') || exp.name.includes('check'))) {{
+            console.log("[*] Found potential protection function: " + exp.name);
+        }}
+    }});
+}});
 
-console.log("[+] Generic analysis started");
+console.log("[+] Generic {script_type} analysis started");
+'''
+        else:
+            return f'''// {script_type_upper} Protection Analysis Script
+// Failed to detect specific protection - running generic analysis
+
+// Generic analysis for {script_type}
+print("[?] Protection type could not be determined")
+print("[*] Running comprehensive {script_type} analysis...")
+
+// Add {script_type}-specific analysis code here
+
+print("[+] Generic {script_type} analysis started")
 '''
 
 

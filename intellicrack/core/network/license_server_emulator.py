@@ -1,3 +1,4 @@
+"""License server emulator for creating mock license validation servers."""
 from intellicrack.logger import logger
 
 """
@@ -515,7 +516,7 @@ class NetworkLicenseServerEmulator:
         # Default to unknown protocol
         return 'unknown'
 
-    def _generate_response(self, protocol: str, request_data: bytes) -> bytes:  # pylint: disable=unused-argument
+    def _generate_response(self, protocol: str, request_data: bytes) -> bytes:
         """
         Generate a response for the identified protocol.
 
@@ -526,11 +527,41 @@ class NetworkLicenseServerEmulator:
         Returns:
             bytes: Response data
         """
+        # Analyze request data for contextual response generation
+        request_str = request_data.decode('utf-8', errors='ignore').lower()
+
         # Check if we have a template for this protocol
         if protocol in self.response_templates:
-            # Use license_ok template by default
+            # Select appropriate template based on request content
+            if 'heartbeat' in request_str or 'ping' in request_str:
+                if 'heartbeat' in self.response_templates[protocol]:
+                    return self.response_templates[protocol]['heartbeat']
+            elif 'checkout' in request_str or 'acquire' in request_str:
+                if 'license_checkout' in self.response_templates[protocol]:
+                    return self.response_templates[protocol]['license_checkout']
+            elif 'checkin' in request_str or 'release' in request_str:
+                if 'license_checkin' in self.response_templates[protocol]:
+                    return self.response_templates[protocol]['license_checkin']
+            elif 'status' in request_str or 'info' in request_str:
+                if 'license_status' in self.response_templates[protocol]:
+                    return self.response_templates[protocol]['license_status']
+
+            # Default to license_ok template
             if 'license_ok' in self.response_templates[protocol]:
                 return self.response_templates[protocol]['license_ok']
+
+        # Generate protocol-specific default responses based on request content
+        if protocol == 'flexlm':
+            if 'checkout' in request_str:
+                return b'lmgrd: checkout successful\n'
+            elif 'checkin' in request_str:
+                return b'lmgrd: checkin successful\n'
+            else:
+                return b'lmgrd: license available\n'
+        elif protocol == 'rlm':
+            return b'<?xml version="1.0"?><rlm><status>OK</status><license>available</license></rlm>'
+        elif protocol == 'sentinel':
+            return b'{"status":0,"message":"License available","data":{"feature":"licensed"}}'
 
         # Default response for unknown protocols
         return b'{"status":"OK","license":"valid"}'

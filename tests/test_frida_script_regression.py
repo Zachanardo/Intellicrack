@@ -1,4 +1,22 @@
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Regression Testing Suite for Frida Scripts
 
 Ensures all Frida scripts continue to work correctly after updates.
@@ -8,6 +26,7 @@ Tests script syntax, functionality, and compatibility.
 import hashlib
 import json
 import re
+import sys
 import tempfile
 import unittest
 from datetime import datetime
@@ -577,6 +596,39 @@ class TestFridaScriptRegression(unittest.TestCase):
         self.assertIn('kernel32.dll!CreateFileW', apis)
         self.assertIn('ntdll.dll!NtCreateFile', apis)
 
+    def test_frida_version_check(self):
+        """Test Frida version checking"""
+        if FRIDA_AVAILABLE:
+            # Check frida version
+            version = frida.__version__
+            self.assertIsNotNone(version)
+            self.assertIsInstance(version, str)
+            
+            # Parse version components
+            version_parts = version.split('.')
+            self.assertGreaterEqual(len(version_parts), 2)  # At least major.minor
+            
+            # Verify version is numeric
+            major = int(version_parts[0])
+            self.assertGreaterEqual(major, 0)
+            
+    def test_frida_device_manager(self):
+        """Test Frida device manager functionality"""
+        if FRIDA_AVAILABLE:
+            # Get device manager
+            device_manager = frida.get_device_manager()
+            self.assertIsNotNone(device_manager)
+            
+            # Enumerate devices
+            devices = device_manager.enumerate_devices()
+            self.assertIsInstance(devices, list)
+            self.assertGreater(len(devices), 0)  # At least local device
+            
+            # Check local device
+            local_device = frida.get_local_device()
+            self.assertIsNotNone(local_device)
+            self.assertEqual(local_device.type, 'local')
+            
     def test_regression_suite(self):
         """Test regression suite functionality"""
         suite = FridaScriptRegressionSuite(self.scripts_dir)

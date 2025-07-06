@@ -1,3 +1,4 @@
+"""Network traffic analyzer for monitoring and analyzing network communications."""
 import datetime
 import glob
 import logging

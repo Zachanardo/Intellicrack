@@ -1,3 +1,4 @@
+"""Adobe automatic injector interface for the main UI."""
 import os
 import time
 

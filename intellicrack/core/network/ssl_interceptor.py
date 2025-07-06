@@ -1,3 +1,4 @@
+"""SSL traffic interceptor for analyzing and modifying encrypted communications."""
 import logging
 import os
 import subprocess

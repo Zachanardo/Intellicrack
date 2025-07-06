@@ -13,7 +13,6 @@ import asyncio
 import os
 import sys
 import time
-from pathlib import Path
 
 def setup_minimal_environment():
     """Setup minimal environment for ICP testing"""
@@ -66,7 +65,7 @@ def test_icp_module_direct():
         # Import the specific file directly
         import importlib.util
         spec = importlib.util.spec_from_file_location(
-            "icp_backend", 
+            "icp_backend",
             "/mnt/c/Intellicrack/intellicrack/protection/icp_backend.py"
         )
         icp_backend = importlib.util.module_from_spec(spec)
@@ -200,7 +199,7 @@ async def test_async_analysis_isolated(backend, test_file, ScanMode):
             elif result and result.error:
                 print(f"      ! Error: {result.error}")
             else:
-                print(f"      ! No result returned")
+                print("      ! No result returned")
                 
         return True
         

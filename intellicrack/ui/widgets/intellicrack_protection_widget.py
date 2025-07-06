@@ -56,6 +56,18 @@ class ProtectionAnalysisThread(QThread):
         self.ai_file_tools = get_ai_file_tools()
 
     def run(self):
+        """Analyze binary file for protections in a background thread.
+        
+        Performs protection detection analysis on the specified file,
+        emitting progress signals during the process. If license-based
+        protections are detected, automatically searches for associated
+        license files in the directory.
+        
+        Emits:
+            analysis_progress: Progress messages during analysis
+            analysis_complete: Final ProtectionAnalysis results
+            analysis_error: Error message if analysis fails
+        """
         try:
             self.analysis_progress.emit(f"Analyzing {os.path.basename(self.file_path)}...")
             analysis = self.detector.detect_protections(self.file_path)

@@ -186,8 +186,7 @@ class QuantizationManager:
     def _get_best_device(self) -> str:
         """Get the best available device for model loading."""
         if GPU_AUTOLOADER_AVAILABLE:
-            gpu_info = get_gpu_info()
-            return gpu_info['device']
+            return get_device()
         elif HAS_TORCH and torch.cuda.is_available():
             return "cuda"
         elif HAS_TORCH and hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
@@ -381,6 +380,16 @@ class QuantizationManager:
 
             if device == "cpu":
                 model = model.to(device)
+            elif GPU_AUTOLOADER_AVAILABLE:
+                # Move model to appropriate device using unified GPU system
+                model = to_device(model, device)
+
+                # Apply GPU optimizations if available
+                if optimize_for_gpu:
+                    optimized = optimize_for_gpu(model)
+                    if optimized is not None:
+                        model = optimized
+                        logger.info("Applied GPU optimizations to standard model")
 
             logger.info("Successfully loaded standard model")
             return model

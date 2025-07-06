@@ -106,7 +106,9 @@ def test_with_gui():
         print("Qt Application created successfully")
         print("Smart Program Selector function available")
         
-        # Don't actually show the dialog in test mode
+        # Don't actually show the dialog in test mode, but test the function
+        result = show_smart_program_selector(None, [])
+        print(f"Smart program selector function tested: {result is not None}")
         print("GUI test completed (dialog not shown in test mode).\n")
         
     except ImportError as e:

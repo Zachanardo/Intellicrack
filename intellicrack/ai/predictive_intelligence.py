@@ -1,21 +1,4 @@
-import json
-import logging
-import math
-import uuid
-from collections import defaultdict, deque
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
-
-from intellicrack.logger import logger
-
-from ..utils.logger import get_logger
-from .learning_engine import learning_engine
-from .performance_monitor import profile_ai_operation
-
-"""
-Predictive Analysis & Intelligence Engine
+"""Predictive Analysis & Intelligence Engine.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -35,6 +18,21 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import json
+import logging
+import math
+import uuid
+from collections import defaultdict, deque
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
+from intellicrack.logger import logger
+
+from ..utils.logger import get_logger
+from .learning_engine import learning_engine
+from .performance_monitor import profile_ai_operation
 
 try:
     import numpy as np

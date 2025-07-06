@@ -1,3 +1,4 @@
+"""Model fine-tuning dialog for customizing AI models."""
 import csv
 import json
 import logging
@@ -1285,6 +1286,7 @@ class ModelFinetuningDialog(QDialog):
 
         self._initialize_knowledge_base()
         self._setup_ui()
+        self._initialize_gpu_system()
 
         self.logger.info("ModelFinetuningDialog initialized")
 
@@ -1311,6 +1313,51 @@ class ModelFinetuningDialog(QDialog):
             self.logger.debug("Knowledge base initialized")
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.warning("Failed to initialize knowledge base: %s", e)
+
+    def _initialize_gpu_system(self):
+        """Initialize GPU system and check available devices."""
+        try:
+            if GPU_AUTOLOADER_AVAILABLE:
+                self.training_device = get_device()
+                self.gpu_info = get_gpu_info()
+                self.logger.info(f"GPU system initialized. Device: {self.training_device}")
+                self.logger.info(f"GPU info: {self.gpu_info}")
+            else:
+                self.training_device = "cpu"
+                self.gpu_info = {"available": False, "devices": []}
+                self.logger.info("GPU autoloader not available, using CPU")
+        except Exception as e:
+            self.logger.warning(f"Failed to initialize GPU system: {e}")
+            self.training_device = "cpu"
+            self.gpu_info = {"available": False, "devices": []}
+
+    def _move_to_device(self, tensor_or_model):
+        """Move tensor or model to the appropriate device."""
+        try:
+            if GPU_AUTOLOADER_AVAILABLE and hasattr(tensor_or_model, 'to'):
+                return to_device(tensor_or_model, self.training_device)
+            return tensor_or_model
+        except Exception as e:
+            self.logger.warning(f"Failed to move to device: {e}")
+            return tensor_or_model
+
+    def _get_device_info_text(self) -> str:
+        """Get formatted device information text."""
+        try:
+            if GPU_AUTOLOADER_AVAILABLE:
+                device_info = f"Training Device: {self.training_device}\n"
+                if self.gpu_info.get("available", False):
+                    device_info += f"GPU Devices: {len(self.gpu_info.get('devices', []))}\n"
+                    for i, device in enumerate(self.gpu_info.get('devices', [])):
+                        device_info += f"  GPU {i}: {device.get('name', 'Unknown')}\n"
+                else:
+                    device_info += "GPU: Not available\n"
+                return device_info
+            else:
+                return "Training Device: CPU (GPU autoloader not available)\n"
+        except Exception as e:
+            self.logger.warning(f"Failed to get device info: {e}")
+            return "Training Device: CPU (Error getting device info)\n"
 
     def _setup_ui(self):
         """Setup the dialog user interface."""

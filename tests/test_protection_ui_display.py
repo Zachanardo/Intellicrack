@@ -1,13 +1,29 @@
 #!/usr/bin/env python3
+"""
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 """Test script to verify protection results display properly in the UI."""
 
-import json
 import os
 import sys
 import tempfile
 from pathlib import Path
 
-from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication
 
 from intellicrack.protection.intellicrack_protection_core import (
@@ -112,7 +128,7 @@ def test_die_widget_display():
         print("✗ No summary displayed")
         return False
     
-    # Check technical details text  
+    # Check technical details text
     tech_details_text = widget.tech_details_text.toPlainText()
     if tech_details_text:
         print(f"✓ Technical details displayed: {len(tech_details_text)} characters")
@@ -150,7 +166,7 @@ def test_die_binary_analysis():
         result = detector.detect_protections(test_binary)
         
         if result:
-            print(f"✓ Protection analysis completed successfully")
+            print("✓ Protection analysis completed successfully")
             print(f"  File type: {result.file_type}")
             print(f"  Architecture: {result.architecture}")
             print(f"  Detections: {len(result.detections)}")
@@ -158,7 +174,7 @@ def test_die_binary_analysis():
             print(f"  Is Packed: {result.is_packed}")
             return True
         else:
-            print(f"✗ Protection analysis failed")
+            print("✗ Protection analysis failed")
             return False
             
     except Exception as e:
@@ -174,7 +190,6 @@ def test_llm_integration_with_die():
     print("\n=== Testing LLM Integration with Protection Engine ===")
     
     try:
-        from intellicrack.ai.ai_assistant_enhanced import IntellicrackAIAssistant
         from intellicrack.tools.protection_analyzer_tool import ProtectionAnalyzerTool
 
         # Initialize tool

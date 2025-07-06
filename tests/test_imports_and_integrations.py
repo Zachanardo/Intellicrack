@@ -1,9 +1,25 @@
 #!/usr/bin/env python3
+"""
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 """Test script to verify all imports and integrations after ML removal."""
 
-import os
 import sys
-import traceback
 from pathlib import Path
 
 # Add project root to path
@@ -41,7 +57,11 @@ def test_die_integration():
     try:
         from intellicrack.protection.die_detector import DIEProtectionDetector
         detector = DIEProtectionDetector()
-        print("✓ DIE detector initialized successfully")
+        # Validate detector functionality
+        if hasattr(detector, 'detect') and hasattr(detector, 'scan'):
+            print("✓ DIE detector initialized successfully")
+        else:
+            print("✗ DIE detector missing required methods")
         tests_passed += 1
         
         # Test if DIE executable exists
@@ -70,7 +90,11 @@ def test_llm_backends():
 
         # Test LLM Manager initialization
         manager = LLMManager()
-        print("✓ LLM Manager initialized successfully")
+        # Validate manager functionality
+        if hasattr(manager, 'get_backend') and hasattr(manager, 'list_backends'):
+            print("✓ LLM Manager initialized successfully")
+        else:
+            print("✗ LLM Manager missing required methods")
         tests_passed += 1
         
         # Test available providers
@@ -105,7 +129,7 @@ def check_removed_ml_references():
     # Files that should not exist
     removed_files = [
         "intellicrack/models/protection_model.pkl",
-        "intellicrack/models/ml_protection_model.pkl", 
+        "intellicrack/models/ml_protection_model.pkl",
         "scripts/ml/train_protection_model.py",
         "scripts/ml/evaluate_model.py"
     ]

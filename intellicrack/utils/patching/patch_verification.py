@@ -1,3 +1,4 @@
+"""Patch verification utilities for validating binary patches."""
 import os
 import shutil
 import tempfile

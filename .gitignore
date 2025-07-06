@@ -485,3 +485,78 @@ htmlcov/
 Icon?
 ehthumbs.db
 Thumbs.db
+
+# Recent development and analysis files
+*_analysis.py
+comprehensive_placeholder_check.py
+detailed_placeholder_analysis.py
+fix_tuple_imports.py
+quick_integration_check.py
+verify_integration.py
+
+# Requirements files (using new structure in requirements/ directory)
+pyproject.toml
+requirements.txt
+requirements/base.txt
+requirements/core.txt
+requirements/dev.txt
+requirements/optional.txt
+requirements/requirements_working.txt
+requirements/test.txt
+
+# Legacy tools and binaries
+tools/icp_engine/
+tools/icp_engine/**
+*.dll
+*.exe
+*.ini
+Qt*.dll
+vcruntime*.dll
+
+# Signature files and detection patterns
+signatures/
+*.signature
+*.yara
+*.rules
+
+# Model files and ML artifacts
+ML_MODEL_GUIDE.md
+*.joblib
+*.json
+model_training_data/
+ml_training_cache/
+advanced_licensing_model.*
+advanced_licensing_metadata.*
+
+# F405 and linting artifacts
+.flake8
+.pylintrc
+ruff.toml
+mypy.ini
+
+# Git and version control artifacts
+*.orig
+*.rej
+.git/hooks/
+.git/info/
+.git/logs/
+.git/refs/
+
+# Additional Python cache patterns
+*.py[cod]
+*$py.class
+*.so
+__pycache__/
+.Python
+
+# Documentation build artifacts
+docs/build/
+docs/_build/
+docs/api/
+docs/verification/
+
+# Test artifacts and temporary files
+test_*_features.py
+test_license_bypass.py
+test_network_features.py
+test_windows_activator.py

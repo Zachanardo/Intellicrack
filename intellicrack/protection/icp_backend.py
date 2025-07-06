@@ -8,6 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import asyncio
+import os
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -16,6 +17,19 @@ from typing import Any, Dict, List, Optional
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Import analysis engines for supplemental data
+try:
+    from ..core.analysis.firmware_analyzer import get_firmware_analyzer, is_binwalk_available
+    from ..core.analysis.memory_forensics_engine import (
+        get_memory_forensics_engine,
+        is_volatility3_available,
+    )
+    from ..core.analysis.yara_pattern_engine import get_yara_engine, is_yara_available
+    SUPPLEMENTAL_ENGINES_AVAILABLE = True
+except ImportError as e:
+    logger.debug(f"Some supplemental analysis engines not available: {e}")
+    SUPPLEMENTAL_ENGINES_AVAILABLE = False
 
 
 class ScanMode(Enum):
@@ -94,6 +108,7 @@ class ICPScanResult:
     file_infos: List[ICPFileInfo] = field(default_factory=list)
     error: Optional[str] = None
     raw_json: Optional[Dict[str, Any]] = None
+    supplemental_data: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def is_packed(self) -> bool:
@@ -243,7 +258,37 @@ class ICPEngineError(Exception):
 
 
 class ICPBackend:
-    """Native die-python wrapper for ICP Engine functionality"""
+    """Native die-python wrapper providing comprehensive ICP Engine functionality.
+    
+    This class serves as the core backend for Intellicrack's protection analysis,
+    replacing external executable dependencies with native Python integration.
+    It provides all the functionality previously available through separate
+    ICP engine executables, but with better performance, reliability, and
+    integration.
+    
+    Core Capabilities:
+    - File type detection and analysis
+    - Packer and protector identification  
+    - Shannon entropy calculation and analysis
+    - String extraction with offset mapping
+    - PE section analysis with detailed metadata
+    - Comprehensive binary analysis reports
+    
+    The backend supports multiple scan modes from quick analysis to deep
+    investigation, and can process files asynchronously to maintain UI
+    responsiveness in GUI applications.
+    
+    Example:
+        backend = ICPBackend()
+        result = await backend.analyze_file("target.exe", ScanMode.DEEP)
+        if result.is_packed:
+            print(f"File is packed with: {', '.join(result.all_detections)}")
+        
+        # Or use synchronous detailed analysis
+        analysis = backend.get_detailed_analysis("target.exe")
+        print(f"Entropy: {analysis['entropy']:.4f}")
+        print(f"Strings found: {len(analysis['strings'])}")
+    """
 
     def __init__(self, engine_path: Optional[str] = None):
         """Initialize ICP backend
@@ -281,9 +326,10 @@ class ICPBackend:
         scan_mode: ScanMode = ScanMode.DEEP,
         show_entropy: bool = True,
         show_info: bool = True,
-        timeout: float = 30.0
+        timeout: float = 30.0,
+        include_supplemental: bool = True
     ) -> ICPScanResult:
-        """Analyze a file asynchronously using die-python
+        """Analyze a file asynchronously using die-python with optional supplemental analysis
 
         Args:
             file_path: Path to file to analyze
@@ -291,9 +337,10 @@ class ICPBackend:
             show_entropy: Include entropy analysis (ignored, kept for compatibility)
             show_info: Include file info (ignored, kept for compatibility)
             timeout: Maximum time to wait for analysis
+            include_supplemental: Include supplemental analysis from YARA, Binwalk, and Volatility3
 
         Returns:
-            ICPScanResult with analysis data
+            ICPScanResult with analysis data and optional supplemental data
         """
         file_path = Path(file_path)
         if not file_path.exists():
@@ -341,6 +388,14 @@ class ICPBackend:
 
             # Convert results to our format
             scan_result = ICPScanResult.from_die_text(str(file_path), results)
+
+            # Run supplemental analysis if requested
+            if include_supplemental and SUPPLEMENTAL_ENGINES_AVAILABLE:
+                try:
+                    supplemental_data = await self._run_supplemental_analysis(str(file_path))
+                    scan_result.supplemental_data = supplemental_data
+                except Exception as e:
+                    logger.warning(f"Supplemental analysis failed: {e}")
 
             # Add entropy information if requested
             if show_entropy and os.path.exists(file_path):
@@ -443,6 +498,717 @@ class ICPBackend:
             return hasattr(self, 'die') and self.die is not None
         except Exception:
             return False
+
+    def get_file_type(self, file_path: str) -> str:
+        """Get file type using native die-python analysis.
+        
+        Args:
+            file_path: Path to the file to analyze
+            
+        Returns:
+            str: File type (e.g., "PE64", "ELF64", "Unknown")
+        """
+        try:
+            result = self.die.scan_file(str(file_path), 0)
+            lines = result.strip().split('\n')
+            return lines[0] if lines else "Unknown"
+        except Exception as e:
+            logger.error(f"Error getting file type: {e}")
+            return "Unknown"
+
+    def get_file_entropy(self, file_path: str) -> float:
+        """Calculate Shannon entropy of file contents.
+        
+        Entropy is a measure of randomness/unpredictability in data.
+        High entropy (>7.5) often indicates encryption or compression.
+        Low entropy (<4.0) indicates normal code/text.
+        
+        Args:
+            file_path: Path to the file to analyze
+            
+        Returns:
+            float: Entropy value between 0.0 and 8.0
+        """
+        try:
+            import math
+            with open(file_path, 'rb') as f:
+                data = f.read()
+                if not data:
+                    return 0.0
+
+                # Calculate entropy
+                byte_counts = [0] * 256
+                for byte in data:
+                    byte_counts[byte] += 1
+
+                entropy = 0.0
+                data_len = len(data)
+                for count in byte_counts:
+                    if count > 0:
+                        probability = count / data_len
+                        entropy -= probability * math.log2(probability)
+
+                return entropy
+        except Exception as e:
+            logger.error(f"Error calculating entropy: {e}")
+            return 0.0
+
+    def extract_strings(self, file_path: str, min_length: int = 4) -> List[Dict[str, any]]:
+        """Extract printable ASCII strings from binary file.
+        
+        Searches for sequences of printable ASCII characters that could
+        indicate hardcoded strings, API names, error messages, etc.
+        
+        Args:
+            file_path: Path to the file to analyze
+            min_length: Minimum string length to extract (default: 4)
+            
+        Returns:
+            List[Dict]: List of dictionaries containing:
+                - offset: File offset where string was found
+                - string: The extracted string
+                - length: Length of the string
+                - type: String type ("ASCII")
+        """
+        try:
+            strings = []
+            with open(file_path, 'rb') as f:
+                data = f.read()
+
+            # Extract ASCII strings
+            current_string = ""
+            current_offset = 0
+
+            for i, byte in enumerate(data):
+                if 32 <= byte <= 126:  # Printable ASCII
+                    if not current_string:
+                        current_offset = i
+                    current_string += chr(byte)
+                else:
+                    if len(current_string) >= min_length:
+                        strings.append({
+                            'offset': current_offset,
+                            'string': current_string,
+                            'length': len(current_string),
+                            'type': 'ASCII'
+                        })
+                    current_string = ""
+
+            # Don't forget the last string
+            if len(current_string) >= min_length:
+                strings.append({
+                    'offset': current_offset,
+                    'string': current_string,
+                    'length': len(current_string),
+                    'type': 'ASCII'
+                })
+
+            return strings
+        except Exception as e:
+            logger.error(f"Error extracting strings: {e}")
+            return []
+
+    def get_file_sections(self, file_path: str) -> List[Dict[str, any]]:
+        """Extract file sections with detailed information.
+        
+        Attempts to parse PE file sections using pefile if available,
+        otherwise provides basic file information as a single section.
+        
+        Args:
+            file_path: Path to the file to analyze
+            
+        Returns:
+            List[Dict]: List of section dictionaries containing:
+                - name: Section name
+                - virtual_address: Virtual address in memory
+                - virtual_size: Size in memory
+                - raw_size: Size on disk
+                - raw_offset: Offset in file
+                - characteristics: Section characteristics flags
+                - entropy: Section entropy (calculated if needed)
+        """
+        try:
+            sections = []
+
+            # Try to get sections from PE analysis
+            import pefile
+            try:
+                pe = pefile.PE(file_path)
+                for section in pe.sections:
+                    section_info = {
+                        'name': section.Name.decode('utf-8').rstrip('\x00'),
+                        'virtual_address': section.VirtualAddress,
+                        'virtual_size': section.Misc_VirtualSize,
+                        'raw_size': section.SizeOfRawData,
+                        'raw_offset': section.PointerToRawData,
+                        'characteristics': section.Characteristics,
+                        'entropy': 0.0  # Will calculate if needed
+                    }
+                    sections.append(section_info)
+            except:
+                # Not a PE file or pefile not available
+                pass
+
+            # Fallback to basic file analysis
+            if not sections:
+                file_size = os.path.getsize(file_path)
+                sections.append({
+                    'name': '.data',
+                    'virtual_address': 0,
+                    'virtual_size': file_size,
+                    'raw_size': file_size,
+                    'raw_offset': 0,
+                    'characteristics': 0,
+                    'entropy': self.get_file_entropy(file_path)
+                })
+
+            return sections
+        except Exception as e:
+            logger.error(f"Error getting file sections: {e}")
+            return []
+
+    def detect_packers(self, file_path: str) -> List[str]:
+        """Detect packers and protectors using native die-python analysis.
+        
+        Scans the file and extracts any detections that are classified
+        as packers or protectors based on the detection type.
+        
+        Args:
+            file_path: Path to the file to analyze
+            
+        Returns:
+            List[str]: List of detected packer/protector names
+        """
+        try:
+            result = self.die.scan_file(str(file_path), 0)
+            lines = result.strip().split('\n')
+
+            packers = []
+            for line in lines[1:]:  # Skip file type line
+                line = line.strip()
+                if ':' in line:
+                    type_part, name_part = line.split(':', 1)
+                    type_part = type_part.strip()
+                    name_part = name_part.strip()
+
+                    if 'pack' in type_part.lower():
+                        packers.append(name_part)
+
+            return packers
+        except Exception as e:
+            logger.error(f"Error detecting packers: {e}")
+            return []
+
+    def add_supplemental_data(self, scan_result: ICPScanResult, supplemental_data: Dict[str, Any]) -> ICPScanResult:
+        """Add supplemental analysis data to an ICP scan result
+        
+        Args:
+            scan_result: Existing ICP scan result
+            supplemental_data: Additional analysis data from external engines
+            
+        Returns:
+            Updated ICPScanResult with merged supplemental data
+        """
+        if supplemental_data:
+            scan_result.supplemental_data.update(supplemental_data)
+
+            # Enhance detections with supplemental findings
+            self._merge_supplemental_detections(scan_result, supplemental_data)
+
+        return scan_result
+
+    def _merge_supplemental_detections(self, scan_result: ICPScanResult, supplemental_data: Dict[str, Any]):
+        """Merge supplemental analysis findings into ICP detections"""
+        try:
+            # Process YARA pattern findings
+            if 'yara_analysis' in supplemental_data:
+                yara_data = supplemental_data['yara_analysis']
+                for pattern in yara_data.get('pattern_matches', []):
+                    # Create detection for YARA match
+                    detection = ICPDetection(
+                        name=pattern.get('rule_name', 'YARA Pattern'),
+                        type="Pattern",
+                        version="",
+                        info=f"YARA: {pattern.get('category', 'Unknown')}",
+                        string=pattern.get('description', ''),
+                        confidence=pattern.get('confidence', 0.8)
+                    )
+
+                    # Add to first file info or create new one
+                    if scan_result.file_infos:
+                        scan_result.file_infos[0].detections.append(detection)
+                    else:
+                        file_info = ICPFileInfo(
+                            filetype="Binary",
+                            size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0)
+                        )
+                        file_info.detections.append(detection)
+                        scan_result.file_infos.append(file_info)
+
+            # Process firmware analysis findings
+            if 'firmware_analysis' in supplemental_data:
+                firmware_data = supplemental_data['firmware_analysis']
+                for component in firmware_data.get('embedded_components', []):
+                    if component.get('is_executable') or component.get('is_filesystem'):
+                        detection = ICPDetection(
+                            name=component.get('name', 'Embedded Component'),
+                            type="Firmware",
+                            version="",
+                            info=f"Firmware: {component.get('type', 'Unknown')} at offset {component.get('offset', 0)}",
+                            string=f"Size: {component.get('size', 0)} bytes",
+                            confidence=component.get('confidence', 0.9)
+                        )
+
+                        if scan_result.file_infos:
+                            scan_result.file_infos[0].detections.append(detection)
+                        else:
+                            file_info = ICPFileInfo(
+                                filetype="Firmware",
+                                size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0)
+                            )
+                            file_info.detections.append(detection)
+                            scan_result.file_infos.append(file_info)
+
+            # Process memory forensics findings
+            if 'memory_forensics' in supplemental_data:
+                memory_data = supplemental_data['memory_forensics']
+                for indicator in memory_data.get('process_indicators', []):
+                    if indicator.get('is_hidden') or indicator.get('indicators'):
+                        detection = ICPDetection(
+                            name=f"Process {indicator.get('name', 'Unknown')}",
+                            type="Memory",
+                            version="",
+                            info=f"Memory: PID {indicator.get('pid', 0)} - {', '.join(indicator.get('indicators', []))}",
+                            string=f"Hidden: {indicator.get('is_hidden', False)}",
+                            confidence=0.7
+                        )
+
+                        if scan_result.file_infos:
+                            scan_result.file_infos[0].detections.append(detection)
+                        else:
+                            file_info = ICPFileInfo(
+                                filetype="Memory Dump",
+                                size=str(Path(scan_result.file_path).stat().st_size if Path(scan_result.file_path).exists() else 0)
+                            )
+                            file_info.detections.append(detection)
+                            scan_result.file_infos.append(file_info)
+
+        except Exception as e:
+            logger.error(f"Error merging supplemental detections: {e}")
+
+    def merge_analysis_engines_data(self, file_path: str, yara_data: Optional[Dict[str, Any]] = None,
+                                   firmware_data: Optional[Dict[str, Any]] = None,
+                                   memory_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Merge data from all analysis engines into a unified report
+        
+        Args:
+            file_path: Path to the analyzed file
+            yara_data: YARA pattern analysis results
+            firmware_data: Binwalk firmware analysis results
+            memory_data: Volatility3 memory forensics results
+            
+        Returns:
+            Unified analysis report with all engine data
+        """
+        try:
+            # Start with base ICP analysis
+            base_analysis = self.get_detailed_analysis(file_path)
+
+            # Create supplemental data structure
+            supplemental_data = {}
+
+            if yara_data:
+                supplemental_data['yara_analysis'] = yara_data
+
+            if firmware_data:
+                supplemental_data['firmware_analysis'] = firmware_data
+
+            if memory_data:
+                supplemental_data['memory_forensics'] = memory_data
+
+            # Merge supplemental data into base analysis
+            if supplemental_data:
+                base_analysis['supplemental_analysis'] = supplemental_data
+
+                # Enhanced threat assessment with supplemental data
+                base_analysis['threat_assessment'] = self._calculate_threat_score(base_analysis, supplemental_data)
+
+                # Combined security indicators
+                base_analysis['security_indicators'] = self._extract_security_indicators(supplemental_data)
+
+                # Enhanced protection bypass recommendations
+                base_analysis['bypass_recommendations'] = self._generate_bypass_recommendations(base_analysis, supplemental_data)
+
+            return base_analysis
+
+        except Exception as e:
+            logger.error(f"Error merging analysis engines data: {e}")
+            return {
+                'file_path': file_path,
+                'error': str(e)
+            }
+
+    def _calculate_threat_score(self, base_analysis: Dict[str, Any], supplemental_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate comprehensive threat score based on all analysis data"""
+        try:
+            threat_score = 0.0
+            threat_indicators = []
+
+            # Base ICP analysis scoring
+            if base_analysis.get('is_packed'):
+                threat_score += 2.0
+                threat_indicators.append("File is packed/protected")
+
+            if base_analysis.get('is_encrypted') or base_analysis.get('entropy', 0) > 7.5:
+                threat_score += 1.5
+                threat_indicators.append("High entropy - possible encryption")
+
+            # YARA analysis scoring
+            yara_data = supplemental_data.get('yara_analysis', {})
+            if yara_data.get('security_findings'):
+                threat_score += len(yara_data['security_findings']) * 0.5
+                threat_indicators.append(f"YARA: {len(yara_data['security_findings'])} security patterns found")
+
+            # Firmware analysis scoring
+            firmware_data = supplemental_data.get('firmware_analysis', {})
+            if firmware_data.get('security_findings'):
+                threat_score += len(firmware_data['security_findings']) * 0.3
+                threat_indicators.append(f"Firmware: {len(firmware_data['security_findings'])} security issues found")
+
+            # Memory forensics scoring
+            memory_data = supplemental_data.get('memory_forensics', {})
+            if memory_data.get('has_suspicious_activity'):
+                threat_score += 2.0
+                threat_indicators.append("Memory: Suspicious activity detected")
+
+            # Normalize threat score (0-10 scale)
+            threat_score = min(threat_score, 10.0)
+
+            return {
+                'score': round(threat_score, 2),
+                'level': 'critical' if threat_score >= 7.0 else 'high' if threat_score >= 5.0 else 'medium' if threat_score >= 3.0 else 'low',
+                'indicators': threat_indicators,
+                'assessment': f"Threat level: {threat_score:.1f}/10.0"
+            }
+
+        except Exception as e:
+            logger.error(f"Error calculating threat score: {e}")
+            return {'score': 0.0, 'level': 'unknown', 'indicators': [], 'assessment': 'Assessment failed'}
+
+    def _extract_security_indicators(self, supplemental_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extract unified security indicators from all analysis engines"""
+        indicators = []
+
+        try:
+            # YARA security indicators
+            yara_data = supplemental_data.get('yara_analysis', {})
+            for indicator in yara_data.get('security_indicators', []):
+                indicators.append({
+                    'source': 'YARA',
+                    'type': indicator.get('type', 'unknown'),
+                    'severity': indicator.get('severity', 'low'),
+                    'description': indicator.get('description', ''),
+                    'confidence': indicator.get('confidence', 0.5)
+                })
+
+            # Firmware security indicators
+            firmware_data = supplemental_data.get('firmware_analysis', {})
+            for indicator in firmware_data.get('security_indicators', []):
+                indicators.append({
+                    'source': 'Firmware',
+                    'type': indicator.get('type', 'unknown'),
+                    'severity': indicator.get('severity', 'low'),
+                    'description': indicator.get('description', ''),
+                    'file': indicator.get('file', ''),
+                    'remediation': indicator.get('remediation', '')
+                })
+
+            # Memory forensics security indicators
+            memory_data = supplemental_data.get('memory_forensics', {})
+            for indicator in memory_data.get('security_indicators', []):
+                indicators.append({
+                    'source': 'Memory',
+                    'type': indicator.get('type', 'unknown'),
+                    'severity': indicator.get('severity', 'low'),
+                    'description': indicator.get('description', ''),
+                    'evidence': indicator.get('evidence', {})
+                })
+
+        except Exception as e:
+            logger.error(f"Error extracting security indicators: {e}")
+
+        return indicators
+
+    def _generate_bypass_recommendations(self, base_analysis: Dict[str, Any], supplemental_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate protection bypass recommendations based on analysis data"""
+        recommendations = []
+
+        try:
+            # Base ICP recommendations
+            if base_analysis.get('is_packed'):
+                packers = base_analysis.get('packers', [])
+                for packer in packers:
+                    recommendations.append({
+                        'target': f"Packer: {packer}",
+                        'method': 'Unpacking',
+                        'tools': ['UPX', 'PEiD', 'Universal Unpacker'],
+                        'difficulty': 'medium',
+                        'description': f"Use specialized unpacker for {packer}"
+                    })
+
+            # YARA-based recommendations
+            yara_data = supplemental_data.get('yara_analysis', {})
+            for pattern in yara_data.get('pattern_matches', []):
+                if pattern.get('category') in ['ANTI_DEBUG', 'PROTECTION']:
+                    recommendations.append({
+                        'target': f"Protection: {pattern.get('rule_name', 'Unknown')}",
+                        'method': 'Pattern Bypass',
+                        'tools': ['Debugger', 'Hex Editor', 'Patch Tool'],
+                        'difficulty': 'high',
+                        'description': f"Patch or bypass {pattern.get('description', 'protection mechanism')}"
+                    })
+
+            # Firmware-based recommendations
+            firmware_data = supplemental_data.get('firmware_analysis', {})
+            for component in firmware_data.get('embedded_components', []):
+                if component.get('is_executable'):
+                    recommendations.append({
+                        'target': f"Embedded Executable: {component.get('name', 'Unknown')}",
+                        'method': 'Extraction & Analysis',
+                        'tools': ['Binwalk', 'Ghidra', 'IDA Pro'],
+                        'difficulty': 'medium',
+                        'description': f"Extract and analyze embedded component at offset {component.get('offset', 0)}"
+                    })
+
+            # Memory-based recommendations
+            memory_data = supplemental_data.get('memory_forensics', {})
+            if memory_data.get('has_suspicious_activity'):
+                recommendations.append({
+                    'target': 'Runtime Protection',
+                    'method': 'Memory Analysis',
+                    'tools': ['Volatility', 'Process Hacker', 'Debugging'],
+                    'difficulty': 'high',
+                    'description': 'Analyze runtime behavior and memory layout for bypass opportunities'
+                })
+
+        except Exception as e:
+            logger.error(f"Error generating bypass recommendations: {e}")
+
+        return recommendations
+
+    def get_detailed_analysis(self, file_path: str, include_supplemental: bool = False,
+                             yara_data: Optional[Dict[str, Any]] = None,
+                             firmware_data: Optional[Dict[str, Any]] = None,
+                             memory_data: Optional[Dict[str, Any]] = None) -> Dict[str, any]:
+        """Perform comprehensive file analysis combining all ICP backend capabilities.
+        
+        This is the main analysis method that combines file type detection,
+        entropy analysis, section parsing, string extraction, and packer
+        detection into a single comprehensive report.
+        
+        Args:
+            file_path: Path to the file to analyze
+            include_supplemental: Whether to include supplemental analysis data
+            yara_data: Optional YARA analysis results
+            firmware_data: Optional firmware analysis results
+            memory_data: Optional memory forensics results
+            
+        Returns:
+            Dict[str, any]: Comprehensive analysis containing:
+                - file_path: Original file path
+                - file_type: Detected file type
+                - file_size: Size in bytes
+                - entropy: Overall file entropy
+                - sections: List of file sections with details
+                - strings: Extracted strings with offsets
+                - packers: Detected packers/protectors
+                - is_packed: Boolean indicating if file is packed
+                - is_encrypted: Boolean indicating if file appears encrypted
+                - supplemental_analysis: Additional analysis data (if requested)
+                - threat_assessment: Unified threat scoring (if supplemental data provided)
+                - security_indicators: Combined security findings (if supplemental data provided)
+                - bypass_recommendations: Protection bypass suggestions (if supplemental data provided)
+                - error: Error message if analysis failed
+        """
+        try:
+            analysis = {
+                'file_path': file_path,
+                'file_type': self.get_file_type(file_path),
+                'file_size': os.path.getsize(file_path),
+                'entropy': self.get_file_entropy(file_path),
+                'sections': self.get_file_sections(file_path),
+                'strings': self.extract_strings(file_path),
+                'packers': self.detect_packers(file_path),
+                'is_packed': False,
+                'is_encrypted': False
+            }
+
+            # Determine if file is packed/encrypted
+            analysis['is_packed'] = len(analysis['packers']) > 0
+            analysis['is_encrypted'] = analysis['entropy'] > 7.5
+
+            # Include supplemental analysis if requested
+            if include_supplemental and any([yara_data, firmware_data, memory_data]):
+                return self.merge_analysis_engines_data(file_path, yara_data, firmware_data, memory_data)
+
+            return analysis
+        except Exception as e:
+            logger.error(f"Error in detailed analysis: {e}")
+            return {
+                'file_path': file_path,
+                'error': str(e)
+            }
+
+    async def _run_supplemental_analysis(self, file_path: str) -> Dict[str, Any]:
+        """
+        Run supplemental analysis using YARA, Binwalk, and Volatility3 engines
+        
+        Args:
+            file_path: Path to file to analyze
+            
+        Returns:
+            Merged supplemental data from all available engines
+        """
+        supplemental_data = {
+            "engines_used": [],
+            "analysis_summary": {
+                "yara_available": False,
+                "binwalk_available": False,
+                "volatility_available": False
+            }
+        }
+
+        # Run YARA pattern analysis
+        if is_yara_available():
+            try:
+                yara_engine = get_yara_engine()
+                if yara_engine:
+                    logger.debug("Running YARA pattern analysis")
+                    yara_result = yara_engine.scan_file(file_path, timeout=30)
+                    if not yara_result.error:
+                        yara_supplemental = yara_engine.generate_icp_supplemental_data(yara_result)
+                        if yara_supplemental:
+                            supplemental_data.update(yara_supplemental)
+                            supplemental_data["engines_used"].append("yara")
+                            supplemental_data["analysis_summary"]["yara_available"] = True
+            except Exception as e:
+                logger.debug(f"YARA analysis failed: {e}")
+
+        # Run Binwalk firmware analysis
+        if is_binwalk_available():
+            try:
+                firmware_analyzer = get_firmware_analyzer()
+                if firmware_analyzer:
+                    logger.debug("Running Binwalk firmware analysis")
+                    # Run firmware analysis asynchronously
+                    loop = asyncio.get_event_loop()
+                    firmware_result = await loop.run_in_executor(
+                        None,
+                        lambda: firmware_analyzer.analyze_firmware(
+                            file_path,
+                            extract_files=False,  # Skip extraction for performance
+                            analyze_security=True,
+                            extraction_depth=1
+                        )
+                    )
+                    if not firmware_result.error:
+                        firmware_supplemental = firmware_analyzer.generate_icp_supplemental_data(firmware_result)
+                        if firmware_supplemental:
+                            supplemental_data.update(firmware_supplemental)
+                            supplemental_data["engines_used"].append("binwalk")
+                            supplemental_data["analysis_summary"]["binwalk_available"] = True
+            except Exception as e:
+                logger.debug(f"Binwalk analysis failed: {e}")
+
+        # Skip Volatility3 analysis for regular files (it's for memory dumps)
+        if is_volatility3_available():
+            try:
+                # Only run Volatility3 if the file looks like a memory dump
+                file_size = os.path.getsize(file_path)
+                filename = os.path.basename(file_path).lower()
+
+                # Heuristics for memory dump detection
+                is_memory_dump = (
+                    file_size > 100 * 1024 * 1024 or  # > 100MB
+                    any(keyword in filename for keyword in ['dump', 'mem', 'vmem', 'raw', 'dmp']) or
+                    filename.endswith(('.vmem', '.raw', '.dmp', '.mem'))
+                )
+
+                if is_memory_dump:
+                    memory_engine = get_memory_forensics_engine()
+                    if memory_engine:
+                        logger.debug("Running Volatility3 memory analysis")
+                        # Run memory analysis asynchronously
+                        loop = asyncio.get_event_loop()
+                        memory_result = await loop.run_in_executor(
+                            None,
+                            lambda: memory_engine.analyze_memory_dump(
+                                file_path,
+                                deep_analysis=False  # Skip deep analysis for performance
+                            )
+                        )
+                        if not memory_result.error:
+                            memory_supplemental = memory_engine.generate_icp_supplemental_data(memory_result)
+                            if memory_supplemental:
+                                supplemental_data.update(memory_supplemental)
+                                supplemental_data["engines_used"].append("volatility3")
+                                supplemental_data["analysis_summary"]["volatility_available"] = True
+                else:
+                    logger.debug("Skipping Volatility3 analysis - file doesn't appear to be a memory dump")
+                    supplemental_data["analysis_summary"]["volatility_available"] = True
+            except Exception as e:
+                logger.debug(f"Volatility3 analysis failed: {e}")
+
+        # Add summary information
+        supplemental_data["analysis_summary"]["engines_run"] = len(supplemental_data["engines_used"])
+        supplemental_data["analysis_summary"]["total_engines_available"] = (
+            int(is_yara_available()) +
+            int(is_binwalk_available()) +
+            int(is_volatility3_available())
+        )
+
+        logger.info(f"Supplemental analysis complete: {supplemental_data['engines_used']}")
+        return supplemental_data
+
+    def get_supplemental_engines_status(self) -> Dict[str, Any]:
+        """
+        Get status of supplemental analysis engines
+        
+        Returns:
+            Dictionary with engine availability and status
+        """
+        return {
+            "supplemental_engines_available": SUPPLEMENTAL_ENGINES_AVAILABLE,
+            "yara_available": is_yara_available() if SUPPLEMENTAL_ENGINES_AVAILABLE else False,
+            "binwalk_available": is_binwalk_available() if SUPPLEMENTAL_ENGINES_AVAILABLE else False,
+            "volatility3_available": is_volatility3_available() if SUPPLEMENTAL_ENGINES_AVAILABLE else False,
+            "engines_summary": {
+                "yara": "Pattern matching for protections, packers, and malware",
+                "binwalk": "Firmware analysis and embedded file extraction",
+                "volatility3": "Memory forensics for runtime analysis"
+            }
+        }
+
+    async def analyze_with_all_engines(
+        self,
+        file_path: str,
+        scan_mode: ScanMode = ScanMode.DEEP
+    ) -> ICPScanResult:
+        """
+        Convenience method to analyze file with all available engines
+        
+        Args:
+            file_path: Path to file to analyze
+            scan_mode: ICP scan mode to use
+            
+        Returns:
+            Complete analysis results with supplemental data
+        """
+        return await self.analyze_file(
+            file_path=file_path,
+            scan_mode=scan_mode,
+            include_supplemental=True
+        )
 
 
 # Singleton instance

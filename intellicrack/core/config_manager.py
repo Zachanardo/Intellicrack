@@ -110,11 +110,10 @@ class IntellicrackConfig:
         self._load_or_create_config()
 
     def _get_user_config_dir(self) -> Path:
-        """
-        Get platform-appropriate user config directory.
+        """Get platform-appropriate user config directory.
         
         Follows platform conventions for configuration storage:
-        - Windows: %APPDATA%\Intellicrack
+        - Windows: %APPDATA%\\Intellicrack
         - macOS: ~/Library/Application Support/Intellicrack
         - Linux: $XDG_CONFIG_HOME/intellicrack or ~/.config/intellicrack
         
@@ -122,9 +121,10 @@ class IntellicrackConfig:
             Path: Platform-specific configuration directory path
             
         Example:
-            Windows: C:\Users\Username\AppData\Roaming\Intellicrack
+            Windows: C:\\Users\\Username\\AppData\\Roaming\\Intellicrack
             macOS: /Users/Username/Library/Application Support/Intellicrack
             Linux: /home/username/.config/intellicrack
+            
         """
         if sys.platform == "win32":
             # Windows: Use APPDATA environment variable

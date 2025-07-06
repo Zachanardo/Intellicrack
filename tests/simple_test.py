@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Simple test for smart program selector components.
 """
 
@@ -29,13 +47,28 @@ def test_direct_imports():
         print("✓ ProgramDiscoveryEngine imported successfully")
         
         engine = ProgramDiscoveryEngine()
-        print("✓ ProgramDiscoveryEngine instance created")
+        # Validate engine functionality
+        if hasattr(engine, 'discover') and hasattr(engine, 'get_available_programs'):
+            print("✓ ProgramDiscoveryEngine instance created and validated")
+        else:
+            print("✗ ProgramDiscoveryEngine missing required methods")
         
         # Test smart dialog (PyQt components might fail)
         try:
             # Import PyQt5 components directly
             from PyQt5.QtWidgets import QApplication, QDialog
             print("✓ PyQt5 components available")
+            
+            # Test if we can create QApplication and QDialog instances
+            app = QApplication.instance()
+            if app is None:
+                app = QApplication([])
+            print(f"✓ QApplication instance available: {type(app).__name__}")
+            
+            # Create a basic QDialog to test functionality
+            dialog = QDialog()
+            dialog.setWindowTitle("Test Dialog")
+            print(f"✓ QDialog created successfully: {dialog.windowTitle()}")
             
             # Import our dialog
             sys.path.insert(0, str(project_root / 'intellicrack' / 'ui' / 'dialogs'))
@@ -44,6 +77,14 @@ def test_direct_imports():
             try:
                 from smart_program_selector_dialog import SmartProgramSelectorDialog
                 print("✓ SmartProgramSelectorDialog imported successfully")
+                
+                # Test instantiation without showing the dialog
+                try:
+                    smart_dialog = SmartProgramSelectorDialog()
+                    print(f"✓ SmartProgramSelectorDialog instantiated: {type(smart_dialog).__name__}")
+                except Exception as instantiation_error:
+                    print(f"⚠ SmartProgramSelectorDialog instantiation failed: {instantiation_error}")
+                    
             except Exception as e:
                 print(f"⚠ SmartProgramSelectorDialog import failed: {e}")
                 

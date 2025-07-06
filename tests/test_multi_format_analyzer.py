@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Test script for multi-format binary analyzer
 
 Tests the extended format support for DEX, JAR/APK, MSI, and COM files.
@@ -124,7 +142,7 @@ def create_test_msi_file() -> str:
         # Minor version
         header[24:26] = (0x003e).to_bytes(2, 'little')
         
-        # Major version  
+        # Major version
         header[26:28] = (0x003e).to_bytes(2, 'little')
         
         # Byte order

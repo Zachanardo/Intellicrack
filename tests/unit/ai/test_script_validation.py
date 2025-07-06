@@ -19,8 +19,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from datetime import datetime
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -91,7 +89,7 @@ class TestScriptValidator:
                 assert any(case["pattern"] in error for error in errors)
             else:
                 forbidden_found = any(
-                    pattern in case["content"] 
+                    pattern in case["content"]
                     for pattern in self.validator.forbidden_patterns
                 )
                 assert not forbidden_found
@@ -729,7 +727,7 @@ Java.perform(function() {
         is_valid, errors = self.validator.validate_script(android_script)
         assert is_valid is True
 
-        # Windows-specific script  
+        # Windows-specific script
         windows_script = GeneratedScript(
             metadata=ScriptMetadata(
                 script_id="windows_test",

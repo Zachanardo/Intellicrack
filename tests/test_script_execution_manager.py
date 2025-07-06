@@ -1,3 +1,21 @@
+"""
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 """Tests for the ScriptExecutionManager."""
 
 import unittest
@@ -78,9 +96,19 @@ class TestScriptExecutionManager(unittest.TestCase):
         result = self.manager._should_auto_test_qemu('frida', {'force_qemu_test': True})
         self.assertTrue(result)
         
+        # Test with MagicMock for complex scenarios
+        mock_complex_config = MagicMock()
+        mock_complex_config.get.return_value = True
+        result = self.manager._should_auto_test_qemu('frida', mock_complex_config)
+        self.assertTrue(result)
+        
         # Test with general preference
         self.settings.setValue("execution/qemu_preference", "always")
         result = self.manager._should_auto_test_qemu('frida', {})
+        
+        # Test QEMUTestDialog instantiation
+        test_dialog = QEMUTestDialog(self.parent, 'frida', '/test/binary', {})
+        self.assertIsNotNone(test_dialog)
         self.assertTrue(result)
         
         self.settings.setValue("execution/qemu_preference", "never")

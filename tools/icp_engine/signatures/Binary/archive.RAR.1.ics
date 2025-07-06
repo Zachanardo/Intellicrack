@@ -1,9 +1,0 @@
-// Intellicrack Protection Engine: detection rule file
-
-includeScript("rar-file");
-
-function detect() {
-    detect_RAR(1);
-
-    return result();
-}

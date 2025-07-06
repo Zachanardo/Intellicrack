@@ -40,6 +40,14 @@ except ImportError:
     import logging
 
     def get_logger(name):
+        """Create a logger instance with the given name.
+        
+        Args:
+            name: The name for the logger instance
+            
+        Returns:
+            A logging.Logger instance
+        """
         return logging.getLogger(name)
 
 logger = get_logger(__name__)
@@ -116,6 +124,7 @@ class ReportOptionsDialog(QDialog):
         self.init_ui()
 
     def init_ui(self):
+        """Initialize the user interface for the report options dialog."""
         layout = QVBoxLayout()
 
         # Format selection

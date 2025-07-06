@@ -1,3 +1,4 @@
+"""Final core utilities for various common operations."""
 import hashlib
 import json
 import os
@@ -65,7 +66,17 @@ logger = setup_logger(__name__)
 # === UI Functions ===
 
 def add_table(parent: Any, headers: List[str], data: List[List[Any]]) -> Any:
-    """Add a table widget to the parent UI element."""
+    """
+    Add a table widget to the parent UI element.
+
+    Args:
+        parent: Parent UI element to add the table to
+        headers: List of column header names
+        data: 2D list containing table data
+
+    Returns:
+        QTableWidget instance or None if PyQt5 not available
+    """
     if not HAS_PYQT:
         logger.warning("PyQt5 not available, cannot create table")
         return None
@@ -83,7 +94,15 @@ def add_table(parent: Any, headers: List[str], data: List[List[Any]]) -> Any:
 
 
 def browse_dataset(parent: Any = None) -> Optional[str]:
-    """Browse for a dataset file."""
+    """
+    Browse for a dataset file using file dialog.
+
+    Args:
+        parent: Parent widget for the file dialog
+
+    Returns:
+        Selected file path or None if cancelled/unavailable
+    """
     if not HAS_PYQT:
         logger.warning("PyQt5 not available, cannot browse dataset")
         return None
@@ -100,7 +119,15 @@ def browse_dataset(parent: Any = None) -> Optional[str]:
 
 
 def browse_model(parent: Any = None) -> Optional[str]:
-    """Browse for a model file."""
+    """
+    Browse for a model file using file dialog.
+
+    Args:
+        parent: Parent widget for the file dialog
+
+    Returns:
+        Selected model file path or None if cancelled/unavailable
+    """
     if not HAS_PYQT:
         logger.warning("PyQt5 not available, cannot browse model")
         return None
@@ -117,7 +144,13 @@ def browse_model(parent: Any = None) -> Optional[str]:
 
 
 def show_simulation_results(results: Dict[str, Any], parent: Any = None) -> None:
-    """Display simulation results in a dialog."""
+    """
+    Display simulation results in a dialog.
+
+    Args:
+        results: Dictionary containing simulation results
+        parent: Parent widget for the dialog
+    """
     if not HAS_PYQT:
         logger.info(f"Simulation Results: {json.dumps(results, indent=2)}")
         return
@@ -144,7 +177,13 @@ def show_simulation_results(results: Dict[str, Any], parent: Any = None) -> None
 
 
 def update_training_progress(progress: float, message: str = "") -> None:
-    """Update training progress in the UI."""
+    """
+    Update training progress in the UI.
+
+    Args:
+        progress: Progress percentage (0.0 to 100.0)
+        message: Optional progress message
+    """
     if message:
         logger.info("Training Progress: %.2f%% - %s", progress, message)
     else:
@@ -152,7 +191,13 @@ def update_training_progress(progress: float, message: str = "") -> None:
 
 
 def update_visualization(data: Any, viz_type: str = "plot") -> None:
-    """Update visualization with new data."""
+    """
+    Update visualization with new data.
+
+    Args:
+        data: Data to visualize
+        viz_type: Type of visualization to update
+    """
     _ = data
     logger.info("Updating %s visualization with data", viz_type)
 
@@ -161,7 +206,16 @@ def update_visualization(data: Any, viz_type: str = "plot") -> None:
 
 def monitor_memory(process_name: Optional[str] = None,
                   threshold_mb: float = 1000.0) -> Dict[str, Any]:
-    """Monitor memory usage of a process or the system."""
+    """
+    Monitor memory usage of a process or the system.
+
+    Args:
+        process_name: Name of process to monitor, or None for system memory
+        threshold_mb: Memory threshold in MB for alerts
+
+    Returns:
+        Dictionary containing memory statistics and threshold status
+    """
     if not HAS_PSUTIL:
         return {"error": "psutil not available"}
 
@@ -200,7 +254,17 @@ def monitor_memory(process_name: Optional[str] = None,
 
 def accelerate_hash_calculation(data: bytes, algorithm: str = "sha256",
                               use_gpu: bool = False) -> str:
-    """Calculate hash with optional GPU acceleration."""
+    """
+    Calculate hash with optional GPU acceleration.
+
+    Args:
+        data: Bytes to hash
+        algorithm: Hash algorithm to use (e.g., 'sha256', 'md5')
+        use_gpu: Whether to attempt GPU acceleration (falls back to CPU)
+
+    Returns:
+        Hexadecimal hash string
+    """
     if use_gpu:
         logger.info("GPU acceleration requested but using CPU fallback")
 
@@ -210,7 +274,16 @@ def accelerate_hash_calculation(data: bytes, algorithm: str = "sha256",
 
 
 def compute_binary_hash(binary_path: str, algorithm: str = "sha256") -> Optional[str]:
-    """Compute hash of a binary file."""
+    """
+    Compute hash of a binary file.
+
+    Args:
+        binary_path: Path to the binary file
+        algorithm: Hash algorithm to use
+
+    Returns:
+        Hexadecimal hash string or None on error
+    """
     try:
         hash_obj = hashlib.new(algorithm)
         with open(binary_path, 'rb') as f:
@@ -223,7 +296,15 @@ def compute_binary_hash(binary_path: str, algorithm: str = "sha256") -> Optional
 
 
 def compute_section_hashes(binary_path: str) -> Dict[str, str]:
-    """Compute hashes for each section of a binary."""
+    """
+    Compute hashes for each section of a binary.
+
+    Args:
+        binary_path: Path to the binary file
+
+    Returns:
+        Dictionary mapping section names to their SHA256 hashes
+    """
     section_hashes = {}
 
     try:
@@ -248,7 +329,16 @@ def compute_section_hashes(binary_path: str) -> Dict[str, str]:
 
 
 def identify_changed_sections(binary1: str, binary2: str) -> List[str]:
-    """Identify which sections changed between two binaries."""
+    """
+    Identify which sections changed between two binaries.
+
+    Args:
+        binary1: Path to first binary file
+        binary2: Path to second binary file
+
+    Returns:
+        List of section names that changed, with prefixes for added (+) or removed (-)
+    """
     hashes1 = compute_section_hashes(binary1)
     hashes2 = compute_section_hashes(binary2)
 
@@ -267,7 +357,15 @@ def identify_changed_sections(binary1: str, binary2: str) -> List[str]:
 
 
 def get_file_icon(file_path: str) -> Optional[str]:
-    """Get an appropriate icon name for a file type."""
+    """
+    Get an appropriate icon name for a file type.
+
+    Args:
+        file_path: Path to the file
+
+    Returns:
+        Icon name string or default icon for unknown types
+    """
     ext = Path(file_path).suffix.lower()
 
     icon_map = {
@@ -288,7 +386,15 @@ def get_file_icon(file_path: str) -> Optional[str]:
 
 
 def get_resource_type(file_path: str) -> str:
-    """Determine the resource type of a file."""
+    """
+    Determine the resource type of a file.
+
+    Args:
+        file_path: Path to the file
+
+    Returns:
+        Resource type string (binary, source, text, config, image, archive, unknown)
+    """
     ext = Path(file_path).suffix.lower()
 
     if ext in ['.exe', '.dll', '.so', '.dylib']:
@@ -309,7 +415,17 @@ def get_resource_type(file_path: str) -> str:
 
 def cache_analysis_results(key: str, results: Dict[str, Any],
                          cache_dir: str = ".cache") -> bool:
-    """Cache analysis results to disk."""
+    """
+    Cache analysis results to disk.
+
+    Args:
+        key: Unique key for the cached results
+        results: Dictionary containing analysis results
+        cache_dir: Directory to store cache files
+
+    Returns:
+        True if successfully cached, False otherwise
+    """
     try:
         os.makedirs(cache_dir, exist_ok=True)
         cache_file = os.path.join(cache_dir, f"{key}.json")
@@ -378,7 +494,15 @@ def get_captured_requests(limit: int = 100) -> List[Dict[str, Any]]:
 
 
 def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
-    """Get requests from active license protocol handlers."""
+    """
+    Get requests from active license protocol handlers.
+
+    Args:
+        limit: Maximum number of requests to return
+
+    Returns:
+        List of request dictionaries from protocol handlers
+    """
     request_list = []
 
     try:
@@ -447,7 +571,15 @@ def _get_protocol_handler_requests(limit: int) -> List[Dict[str, Any]]:
 
 
 def _get_network_interceptor_requests(limit: int) -> List[Dict[str, Any]]:
-    """Get requests from network traffic interceptors."""
+    """
+    Get requests from network traffic interceptors.
+
+    Args:
+        limit: Maximum number of requests to return
+
+    Returns:
+        List of intercepted network request dictionaries
+    """
     request_list = []
 
     try:
@@ -489,7 +621,15 @@ def _get_network_interceptor_requests(limit: int) -> List[Dict[str, Any]]:
 
 
 def _get_cached_capture_requests(limit: int) -> List[Dict[str, Any]]:
-    """Get requests from cached capture files."""
+    """
+    Get requests from cached capture files.
+
+    Args:
+        limit: Maximum number of requests to return
+
+    Returns:
+        List of cached request dictionaries
+    """
     request_list = []
 
     try:
@@ -533,7 +673,15 @@ def _get_cached_capture_requests(limit: int) -> List[Dict[str, Any]]:
 
 
 def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
-    """Get requests from system-level network monitoring."""
+    """
+    Get requests from system-level network monitoring.
+
+    Args:
+        limit: Maximum number of requests to return
+
+    Returns:
+        List of system network connection dictionaries
+    """
     request_list = []
 
     try:
@@ -598,7 +746,16 @@ def _get_system_network_requests(limit: int) -> List[Dict[str, Any]]:
 
 
 def _generate_realistic_request_data(req_type: str, protocol: str) -> str:
-    """Generate realistic request data based on type and protocol."""
+    """
+    Generate realistic request data based on type and protocol.
+
+    Args:
+        req_type: Type of request to generate
+        protocol: Protocol to use for formatting
+
+    Returns:
+        Formatted request data string
+    """
     if protocol == "http":
         return f"GET /api/license/check HTTP/1.1\\nHost: license.example.com\\nUser-Agent: {req_type}_Client/1.0\\n\\n"
     elif protocol == "https":
@@ -610,7 +767,16 @@ def _generate_realistic_request_data(req_type: str, protocol: str) -> str:
 
 
 def _generate_realistic_response_data(req_type: str, protocol: str) -> str:
-    """Generate realistic response data based on type and protocol."""
+    """
+    Generate realistic response data based on type and protocol.
+
+    Args:
+        req_type: Type of response to generate
+        protocol: Protocol to use for formatting
+
+    Returns:
+        Formatted response data string
+    """
     if protocol == "http":
         return f"HTTP/1.1 200 OK\\nContent-Type: application/json\\n\\n{{\"status\": \"valid\", \"type\": \"{req_type}\"}}"
     elif protocol == "https":
@@ -622,7 +788,15 @@ def _generate_realistic_response_data(req_type: str, protocol: str) -> str:
 
 
 def _generate_example_cached_requests(limit: int) -> List[Dict[str, Any]]:
-    """Generate example cached requests when no real cache exists."""
+    """
+    Generate example cached requests when no real cache exists.
+
+    Args:
+        limit: Maximum number of example requests to generate
+
+    Returns:
+        List of example request dictionaries
+    """
     return [
         {
             "timestamp": time.time() - (i * 120),
@@ -641,7 +815,12 @@ def _generate_example_cached_requests(limit: int) -> List[Dict[str, Any]]:
 
 
 def _enhance_request_metadata(request: Dict[str, Any]) -> None:
-    """Enhance request with additional metadata and analysis."""
+    """
+    Enhance request with additional metadata and analysis.
+
+    Args:
+        request: Request dictionary to enhance with metadata
+    """
     try:
         # Add geolocation info for IP addresses
         dst_ip = request.get('dst_ip', '')
@@ -672,6 +851,15 @@ def _enhance_request_metadata(request: Dict[str, Any]) -> None:
 
 
 def _get_ip_geolocation(ip: str) -> Dict[str, Any]:
+    """
+    Get basic geolocation info for IP address.
+
+    Args:
+        ip: IP address to analyze
+
+    Returns:
+        Dictionary containing geolocation information
+    """
     """Get basic geolocation info for IP address."""
     # Simple heuristic-based geolocation
     if ip.startswith('192.168.') or ip.startswith('10.') or ip.startswith('172.'):
@@ -690,6 +878,16 @@ def _get_ip_geolocation(ip: str) -> Dict[str, Any]:
 
 
 def _analyze_protocol(protocol: str, request: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Analyze protocol-specific characteristics.
+
+    Args:
+        protocol: Protocol name to analyze
+        request: Request dictionary for context
+
+    Returns:
+        Dictionary containing protocol analysis results
+    """
     """Analyze protocol-specific characteristics."""
     analysis = {'protocol': protocol}
 
@@ -711,6 +909,15 @@ def _analyze_protocol(protocol: str, request: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _assess_request_security(request: Dict[str, Any]) -> List[str]:
+    """
+    Assess security characteristics of the request.
+
+    Args:
+        request: Request dictionary to analyze
+
+    Returns:
+        List of security flag strings
+    """
     """Assess security characteristics of the request."""
     flags = []
 
@@ -741,6 +948,15 @@ def _assess_request_security(request: Dict[str, Any]) -> List[str]:
 
 
 def _analyze_request_timing(request: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Analyze timing characteristics of the request.
+
+    Args:
+        request: Request dictionary containing timestamp
+
+    Returns:
+        Dictionary containing timing analysis results
+    """
     """Analyze timing characteristics of the request."""
     timestamp = request.get('timestamp', time.time())
     age_seconds = time.time() - timestamp
@@ -754,6 +970,15 @@ def _analyze_request_timing(request: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _categorize_data_size(size_bytes: int) -> str:
+    """
+    Categorize data transfer size.
+
+    Args:
+        size_bytes: Size in bytes
+
+    Returns:
+        Category string (tiny, small, medium, large, very_large)
+    """
     """Categorize data transfer size."""
     if size_bytes < 100:
         return 'tiny'
@@ -768,6 +993,15 @@ def _categorize_data_size(size_bytes: int) -> str:
 
 
 def _categorize_age(age_seconds: float) -> str:
+    """
+    Categorize the age of a request.
+
+    Args:
+        age_seconds: Age in seconds
+
+    Returns:
+        Age category string (very_recent, recent, within_hour, within_day, old)
+    """
     """Categorize the age of a request."""
     if age_seconds < 60:
         return 'very_recent'
@@ -782,7 +1016,12 @@ def _categorize_age(age_seconds: float) -> str:
 
 
 def force_memory_cleanup() -> Dict[str, Any]:
-    """Force garbage collection and memory cleanup."""
+    """
+    Force garbage collection and memory cleanup.
+
+    Returns:
+        Dictionary containing memory usage before and after cleanup
+    """
     import gc
 
     before_memory = 0
@@ -806,7 +1045,15 @@ def force_memory_cleanup() -> Dict[str, Any]:
 
 
 def initialize_memory_optimizer(threshold_mb: float = 500.0) -> Dict[str, Any]:
-    """Initialize memory optimization settings."""
+    """
+    Initialize memory optimization settings.
+
+    Args:
+        threshold_mb: Memory threshold in MB for optimization
+
+    Returns:
+        Dictionary containing optimizer configuration
+    """
     config = {
         "threshold_mb": threshold_mb,
         "gc_enabled": True,
@@ -822,6 +1069,16 @@ def initialize_memory_optimizer(threshold_mb: float = 500.0) -> Dict[str, Any]:
 
 
 def sandbox_process(command: List[str], timeout: int = 60) -> Dict[str, Any]:
+    """
+    Run a process in a sandboxed environment.
+
+    Args:
+        command: Command and arguments to execute
+        timeout: Timeout in seconds
+
+    Returns:
+        Dictionary containing execution results
+    """
     """Run a process in a sandboxed environment."""
     try:
         # Basic sandboxing using subprocess with timeout
@@ -859,7 +1116,16 @@ def sandbox_process(command: List[str], timeout: int = 60) -> Dict[str, Any]:
 
 def select_backend_for_workload(workload_type: str,
                               available_backends: List[str]) -> str:
-    """Select the best backend for a given workload type."""
+    """
+    Select the best backend for a given workload type.
+
+    Args:
+        workload_type: Type of workload (cpu, gpu, distributed, memory_intensive, io_intensive)
+        available_backends: List of available backend options
+
+    Returns:
+        Selected backend name
+    """
     # Priority mapping for different workload types
     backend_priority = {
         "cpu": ["multiprocessing", "threading", "sequential"],
@@ -881,7 +1147,17 @@ def select_backend_for_workload(workload_type: str,
 
 def truncate_text(text: str, max_length: int = 100,
                  suffix: str = "...") -> str:
-    """Truncate text to specified length."""
+    """
+    Truncate text to specified length.
+
+    Args:
+        text: Text to truncate
+        max_length: Maximum length including suffix
+        suffix: Suffix to append when truncating
+
+    Returns:
+        Truncated text string
+    """
     if len(text) <= max_length:
         return text
 
@@ -889,7 +1165,12 @@ def truncate_text(text: str, max_length: int = 100,
 
 
 def center_on_screen(widget: Any) -> None:
-    """Center a widget on the screen."""
+    """
+    Center a widget on the screen.
+
+    Args:
+        widget: Widget to center
+    """
     if not HAS_PYQT or not widget:
         return
 
@@ -906,7 +1187,15 @@ def center_on_screen(widget: Any) -> None:
 
 
 def copy_to_clipboard(text: str) -> bool:
-    """Copy text to system clipboard."""
+    """
+    Copy text to system clipboard.
+
+    Args:
+        text: Text to copy to clipboard
+
+    Returns:
+        True if successfully copied, False otherwise
+    """
     try:
         if HAS_PYQT:
             if QApplication.instance():
@@ -930,7 +1219,15 @@ def copy_to_clipboard(text: str) -> bool:
 
 
 def async_wrapper(func: Callable) -> Callable:
-    """Wrapper to run a function asynchronously in a thread."""
+    """
+    Wrapper to run a function asynchronously in a thread.
+
+    Args:
+        func: Function to wrap for async execution
+
+    Returns:
+        Wrapped function that returns a Thread object
+    """
     def wrapped(*args, **kwargs):
         """Inner wrapper function."""
         thread = threading.Thread(
@@ -946,7 +1243,16 @@ def async_wrapper(func: Callable) -> Callable:
 
 
 def hash_func(data: Any, algorithm: str = "sha256") -> str:
-    """Generic hash function for any data type."""
+    """
+    Generic hash function for any data type.
+
+    Args:
+        data: Data to hash (bytes, string, or any JSON-serializable object)
+        algorithm: Hash algorithm to use
+
+    Returns:
+        Hexadecimal hash string
+    """
     if isinstance(data, bytes):
         hash_data = data
     elif isinstance(data, str):
@@ -962,7 +1268,16 @@ def hash_func(data: Any, algorithm: str = "sha256") -> str:
 # === Report Functions ===
 
 def export_metrics(metrics: Dict[str, Any], output_path: str) -> bool:
-    """Export metrics to a file."""
+    """
+    Export metrics to a file.
+
+    Args:
+        metrics: Dictionary containing metrics data
+        output_path: Path to save the metrics file
+
+    Returns:
+        True if successfully exported, False otherwise
+    """
     try:
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(metrics, f, indent=2)
@@ -1033,6 +1348,15 @@ def submit_report(report_data: Dict[str, Any],
 
 
 def _validate_and_enhance_report(report_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """
+    Validate and enhance report data before submission.
+
+    Args:
+        report_data: Raw report data to validate
+
+    Returns:
+        Enhanced report dictionary or None if validation fails
+    """
     """Validate and enhance report data before submission."""
     try:
         if not isinstance(report_data, dict):
@@ -1081,6 +1405,15 @@ def _validate_and_enhance_report(report_data: Dict[str, Any]) -> Optional[Dict[s
 
 
 def _generate_report_id(report_data: Dict[str, Any]) -> str:
+    """
+    Generate unique report ID based on content and timestamp.
+
+    Args:
+        report_data: Report data to generate ID for
+
+    Returns:
+        Unique report ID string
+    """
     """Generate unique report ID based on content and timestamp."""
 
     # Create deterministic hash from report content
@@ -1097,6 +1430,16 @@ def _generate_report_id(report_data: Dict[str, Any]) -> str:
 
 
 def _create_submission_metadata(report_id: str, endpoint: Optional[str]) -> Dict[str, Any]:
+    """
+    Create comprehensive submission metadata.
+
+    Args:
+        report_id: Unique report identifier
+        endpoint: Optional submission endpoint
+
+    Returns:
+        Dictionary containing submission metadata
+    """
     """Create comprehensive submission metadata."""
     return {
         "report_id": report_id,
@@ -1865,7 +2208,15 @@ def _create_submission_audit_trail(submission_result: Dict[str, Any], metadata: 
 # === Training Functions ===
 
 def start_training(model_config: Dict[str, Any]) -> Dict[str, Any]:
-    """Start model training with given configuration."""
+    """
+    Start model training with given configuration.
+
+    Args:
+        model_config: Dictionary containing training configuration
+
+    Returns:
+        Dictionary with training status and metadata
+    """
     logger.info("Starting training with config: %s", model_config)
 
     # This would typically start a training thread
@@ -1878,14 +2229,27 @@ def start_training(model_config: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def stop_training(training_id: str) -> bool:
-    """Stop an ongoing training process."""
+    """
+    Stop an ongoing training process.
+
+    Args:
+        training_id: Unique identifier for the training process
+
+    Returns:
+        True if successfully stopped, False otherwise
+    """
     logger.info("Stopping training: %s", training_id)
     # Would typically signal training thread to stop
     return True
 
 
 def on_training_finished(results: Dict[str, Any]) -> None:
-    """Callback when training finishes."""
+    """
+    Callback when training finishes.
+
+    Args:
+        results: Dictionary containing training results and metrics
+    """
     logger.info("Training finished with results: %s", results)
 
 
@@ -1893,6 +2257,16 @@ def on_training_finished(results: Dict[str, Any]) -> None:
 
 def create_dataset(data: List[Dict[str, Any]],
                   format: str = "json") -> Dict[str, Any]:  # pylint: disable=redefined-builtin
+    """
+    Create a dataset from raw data.
+
+    Args:
+        data: List of data items to include in dataset
+        format: Format type for the dataset
+
+    Returns:
+        Dictionary containing dataset metadata and data
+    """
     """Create a dataset from raw data."""
     dataset = {
         "format": format,
@@ -1913,6 +2287,16 @@ def create_dataset(data: List[Dict[str, Any]],
 
 def augment_dataset(dataset: List[Dict[str, Any]],
                    augmentation_config: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Augment a dataset with various techniques.
+
+    Args:
+        dataset: Original dataset to augment
+        augmentation_config: Configuration for augmentation techniques
+
+    Returns:
+        Augmented dataset with additional samples
+    """
     """Augment a dataset with various techniques."""
     augmented = []
 
@@ -1935,7 +2319,16 @@ def augment_dataset(dataset: List[Dict[str, Any]],
 
 
 def load_dataset_preview(dataset_path: str, limit: int = 10) -> List[Dict[str, Any]]:
-    """Load a preview of a dataset."""
+    """
+    Load a preview of a dataset.
+
+    Args:
+        dataset_path: Path to the dataset file
+        limit: Maximum number of items to preview
+
+    Returns:
+        List of dataset items for preview
+    """
     try:
         with open(dataset_path, 'r', encoding='utf-8') as f:
             if dataset_path.endswith('.jsonl'):
@@ -1960,6 +2353,16 @@ def load_dataset_preview(dataset_path: str, limit: int = 10) -> List[Dict[str, A
 
 def create_full_feature_model(features: List[str],
                             model_type: str = "ensemble") -> Dict[str, Any]:
+    """
+    Create a model configuration with all features.
+
+    Args:
+        features: List of feature names to include
+        model_type: Type of model to create
+
+    Returns:
+        Dictionary containing model configuration
+    """
     """Create a model configuration with all features."""
     return {
         "model_type": model_type,
@@ -1976,6 +2379,16 @@ def create_full_feature_model(features: List[str],
 
 def predict_vulnerabilities(binary_features: Dict[str, Any],
                           model: Optional[Any] = None) -> Dict[str, Any]:
+    """
+    Predict vulnerabilities in a binary.
+
+    Args:
+        binary_features: Dictionary of extracted binary features
+        model: Optional trained model for prediction
+
+    Returns:
+        Dictionary containing vulnerability predictions and risk assessments
+    """
     """Predict vulnerabilities in a binary."""
     _ = model
     # Simplified prediction logic
@@ -2004,6 +2417,15 @@ def predict_vulnerabilities(binary_features: Dict[str, Any],
 
 def add_code_snippet(snippets: List[Dict[str, Any]],
                     title: str, code: str, language: str = "python") -> None:
+    """
+    Add a code snippet to a collection.
+
+    Args:
+        snippets: List to add the snippet to
+        title: Title for the code snippet
+        code: Code content
+        language: Programming language of the code
+    """
     """Add a code snippet to a collection."""
     snippets.append({
         "title": title,
@@ -2014,12 +2436,29 @@ def add_code_snippet(snippets: List[Dict[str, Any]],
 
 
 def add_dataset_row(dataset: List[Dict[str, Any]], row: Dict[str, Any]) -> None:
-    """Add a row to a dataset."""
+    """
+    Add a row to a dataset.
+
+    Args:
+        dataset: Dataset list to add to
+        row: Data row to add
+    """
     dataset.append(row)
 
 
 def add_image(document: Any, image_path: str,
              caption: Optional[str] = None) -> bool:
+    """
+    Add an image to a document.
+
+    Args:
+        document: Document object to add image to
+        image_path: Path to the image file
+        caption: Optional caption for the image
+
+    Returns:
+        True if image exists and can be added, False otherwise
+    """
     """Add an image to a document."""
     _ = document
     # This would typically add to a PDF or HTML document
@@ -2029,6 +2468,13 @@ def add_image(document: Any, image_path: str,
 
 def add_recommendations(report: Dict[str, Any],
                        recommendations: List[str]) -> None:
+    """
+    Add recommendations to a report.
+
+    Args:
+        report: Report dictionary to add recommendations to
+        recommendations: List of recommendation strings
+    """
     """Add recommendations to a report."""
     if "recommendations" not in report:
         report["recommendations"] = []
@@ -2036,18 +2482,34 @@ def add_recommendations(report: Dict[str, Any],
 
 
 def showEvent(event: Any) -> None:
-    """Handle widget show event."""
+    """
+    Handle widget show event.
+
+    Args:
+        event: Show event object
+    """
     _ = event
     logger.debug("Widget shown")
 
 
 def patches_reordered(old_order: List[int], new_order: List[int]) -> None:
-    """Handle patch reordering."""
+    """
+    Handle patch reordering.
+
+    Args:
+        old_order: Previous order of patches
+        new_order: New order of patches
+    """
     logger.info("Patches reordered from %s to %s", old_order, new_order)
 
 
 def do_GET(request_handler: Any) -> None:
-    """Handle HTTP GET request."""
+    """
+    Handle HTTP GET request.
+
+    Args:
+        request_handler: HTTP request handler object
+    """
     request_handler.send_response(200)
     request_handler.send_header('Content-type', 'text/html')
     request_handler.end_headers()

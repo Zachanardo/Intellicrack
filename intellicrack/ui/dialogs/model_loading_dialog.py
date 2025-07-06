@@ -26,6 +26,7 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
+    QWidget,
 )
 
 from ...ai.background_loader import LoadingState

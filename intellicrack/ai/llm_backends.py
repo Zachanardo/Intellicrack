@@ -1,5 +1,4 @@
-"""
-LLM Backend Support for Intellicrack Agentic AI
+"""LLM Backend Support for Intellicrack Agentic AI.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -74,6 +73,7 @@ except ImportError as e:
 
 class LLMProvider(Enum):
     """Supported LLM providers."""
+
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     LLAMACPP = "llamacpp"
@@ -92,6 +92,7 @@ class LLMProvider(Enum):
 @dataclass
 class LLMConfig:
     """Configuration for LLM backends."""
+
     provider: LLMProvider
     model_name: str = None
     api_key: Optional[str] = None
@@ -123,6 +124,7 @@ class LLMConfig:
 @dataclass
 class LLMMessage:
     """Message structure for LLM communication."""
+
     role: str  # "system", "user", "assistant", "tool"
     content: str
     tool_calls: Optional[List[Dict]] = None
@@ -132,6 +134,7 @@ class LLMMessage:
 @dataclass
 class LLMResponse:
     """Response structure from LLM."""
+
     content: str
     tool_calls: Optional[List[Dict]] = None
     usage: Optional[Dict[str, int]] = None
@@ -143,6 +146,11 @@ class LLMBackend:
     """Base class for LLM backends."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize the LLM backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         self.config = config
         self.is_initialized = False
         self.tools = []
@@ -185,6 +193,11 @@ class OpenAIBackend(LLMBackend):
     """OpenAI API backend."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize OpenAI backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         super().__init__(config)
         self.client = None
 
@@ -277,6 +290,11 @@ class AnthropicBackend(LLMBackend):
     """Anthropic Claude API backend."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize Anthropic backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         super().__init__(config)
         self.client = None
 
@@ -361,6 +379,11 @@ class LlamaCppBackend(LLMBackend):
     """llama.cpp backend for GGUF models."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize llama.cpp backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         super().__init__(config)
         self.llama = None
 
@@ -494,6 +517,11 @@ class OllamaBackend(LLMBackend):
     """Ollama backend for local model serving."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize Ollama backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         super().__init__(config)
         self.base_url = config.api_base or get_secret(
             'OLLAMA_API_BASE', 'http://localhost:11434')
@@ -588,6 +616,11 @@ class LocalGGUFBackend(LLMBackend):
     """Local GGUF model backend using our local server."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize Local GGUF backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         super().__init__(config)
         self.server_url = config.api_base or "http://127.0.0.1:8000"
         self.gguf_manager = None
@@ -734,6 +767,11 @@ class PyTorchLLMBackend(LLMBackend):
     """PyTorch model backend for loading .pth/.pt files."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize PyTorch backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         super().__init__(config)
         self.model = None
         self.tokenizer = None
@@ -869,6 +907,10 @@ class PyTorchLLMBackend(LLMBackend):
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
+        # Log tool usage for PyTorch models (limited tool support)
+        if tools:
+            logger.warning("PyTorch backend has limited tool support. %d tools ignored.", len(tools))
+
         try:
             if not HAS_TORCH:
                 raise RuntimeError("PyTorch is not installed")
@@ -926,7 +968,7 @@ class PyTorchLLMBackend(LLMBackend):
 
         # Clear GPU cache
         try:
-            if GPU_AUTOLOADER_AVAILABLE and empty_cache:
+            if GPU_AUTOLOADER_AVAILABLE:
                 from ..utils.gpu_autoloader import empty_cache
                 empty_cache()
             elif HAS_TORCH and torch.cuda.is_available():
@@ -939,6 +981,11 @@ class TensorFlowLLMBackend(LLMBackend):
     """TensorFlow model backend for loading .h5 and SavedModel formats."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize TensorFlow backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         super().__init__(config)
         self.model = None
         self.tokenizer = None
@@ -1014,6 +1061,10 @@ class TensorFlowLLMBackend(LLMBackend):
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
+        # Log tool usage for TensorFlow models (limited tool support)
+        if tools:
+            logger.warning("TensorFlow backend has limited tool support. %d tools ignored.", len(tools))
+
         try:
 
             # Convert messages to prompt
@@ -1080,6 +1131,11 @@ class ONNXLLMBackend(LLMBackend):
     """ONNX model backend for loading .onnx files."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize ONNX backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         super().__init__(config)
         self.session = None
         self.tokenizer = None
@@ -1135,6 +1191,10 @@ class ONNXLLMBackend(LLMBackend):
         """Generate response using ONNX model."""
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
+
+        # Log tool usage for ONNX models (limited tool support)
+        if tools:
+            logger.warning("ONNX backend has limited tool support. %d tools ignored.", len(tools))
 
         try:
             if not HAS_NUMPY:
@@ -1210,6 +1270,11 @@ class SafetensorsBackend(LLMBackend):
     """Safetensors model backend for loading .safetensors files."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize Safetensors backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         super().__init__(config)
         self.model = None
         self.tokenizer = None
@@ -1318,6 +1383,10 @@ class SafetensorsBackend(LLMBackend):
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
+        # Log tool usage for SafeTensors models (limited tool support)
+        if tools:
+            logger.warning("SafeTensors backend has limited tool support. %d tools ignored.", len(tools))
+
         try:
             if not HAS_TORCH:
                 raise RuntimeError("PyTorch is not installed")
@@ -1375,7 +1444,7 @@ class SafetensorsBackend(LLMBackend):
 
         # Clear GPU cache
         try:
-            if GPU_AUTOLOADER_AVAILABLE and empty_cache:
+            if GPU_AUTOLOADER_AVAILABLE:
                 from ..utils.gpu_autoloader import empty_cache
                 empty_cache()
             elif HAS_TORCH and torch.cuda.is_available():
@@ -1388,6 +1457,11 @@ class GPTQBackend(LLMBackend):
     """GPTQ quantized model backend."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize GPTQ backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         super().__init__(config)
         self.model = None
         self.tokenizer = None
@@ -1458,6 +1532,10 @@ class GPTQBackend(LLMBackend):
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
+        # Log tool usage for GPTQ models (limited tool support)
+        if tools:
+            logger.warning("GPTQ backend has limited tool support. %d tools ignored.", len(tools))
+
         try:
             # Convert messages to prompt
             prompt = ""
@@ -1510,7 +1588,7 @@ class GPTQBackend(LLMBackend):
 
         # Clear GPU cache
         try:
-            if GPU_AUTOLOADER_AVAILABLE and empty_cache:
+            if GPU_AUTOLOADER_AVAILABLE:
                 from ..utils.gpu_autoloader import empty_cache
                 empty_cache()
             elif HAS_TORCH and torch.cuda.is_available():
@@ -1523,6 +1601,11 @@ class HuggingFaceLocalBackend(LLMBackend):
     """Hugging Face local model backend for loading from directories."""
 
     def __init__(self, config: LLMConfig):
+        """Initialize Hugging Face Local backend with configuration.
+        
+        Args:
+            config: LLM configuration object
+        """
         super().__init__(config)
         self.model = None
         self.tokenizer = None
@@ -1651,6 +1734,10 @@ class HuggingFaceLocalBackend(LLMBackend):
         if not self.is_initialized:
             raise RuntimeError("Backend not initialized")
 
+        # Log tool usage for Hugging Face models (limited tool support)
+        if tools:
+            logger.warning("Hugging Face backend has limited tool support. %d tools ignored.", len(tools))
+
         try:
             if not HAS_TORCH:
                 raise RuntimeError("PyTorch is not installed")
@@ -1724,7 +1811,7 @@ class HuggingFaceLocalBackend(LLMBackend):
 
         # Clear GPU cache
         try:
-            if GPU_AUTOLOADER_AVAILABLE and empty_cache:
+            if GPU_AUTOLOADER_AVAILABLE:
                 from ..utils.gpu_autoloader import empty_cache
                 empty_cache()
             elif HAS_TORCH and torch.cuda.is_available():
@@ -1737,6 +1824,12 @@ class LLMManager:
     """Manager for LLM backends and configurations with lazy loading support."""
 
     def __init__(self, enable_lazy_loading: bool = True, enable_background_loading: bool = True):
+        """Initialize LLM Manager with lazy and background loading options.
+        
+        Args:
+            enable_lazy_loading: Whether to enable lazy loading of models
+            enable_background_loading: Whether to enable background loading
+        """
         self.backends = {}
         self.configs = {}
         self.active_backend = None

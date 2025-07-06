@@ -1,3 +1,21 @@
+/*
+ * This file is part of Intellicrack.
+ * Copyright (C) 2025 Zachary Flint
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /**
  * Cloud License Server Bypass
  * 
@@ -36,7 +54,7 @@
                 'adobe': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFkb2JlIFVzZXIiLCJpYXQiOjE1MTYyMzkwMjJ9.valid_signature',
                 'autodesk': 'Bearer_valid_autodesk_token_12345',
                 'microsoft': 'access_token_valid_microsoft_365',
-                'generic': 'valid_license_token_placeholder'
+                'generic': 'valid_research_license_token_example'
             }
         },
         

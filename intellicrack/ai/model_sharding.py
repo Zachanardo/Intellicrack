@@ -289,12 +289,24 @@ class ModelShardingManager:
         if not HAS_ACCELERATE:
             logger.warning("Accelerate not available, model not sharded")
             if GPU_AUTOLOADER_AVAILABLE:
+                # Apply GPU optimizations before moving to device
+                if optimize_for_gpu:
+                    optimized = optimize_for_gpu(model)
+                    if optimized is not None:
+                        model = optimized
+                        logger.info("Applied GPU optimizations to model")
                 return to_device(model)
             return model
 
         if self.device_count <= 1:
             logger.info("Single GPU - no sharding needed")
             if GPU_AUTOLOADER_AVAILABLE:
+                # Apply GPU optimizations for single GPU
+                if optimize_for_gpu:
+                    optimized = optimize_for_gpu(model)
+                    if optimized is not None:
+                        model = optimized
+                        logger.info("Applied GPU optimizations to model")
                 return to_device(model)
             elif self.device_count == 1:
                 return model.to(0) if torch.cuda.is_available() else model
@@ -303,6 +315,16 @@ class ModelShardingManager:
         # Create device map if not provided
         if device_map is None:
             device_map = self._create_simple_device_map()
+
+        # Apply GPU optimization before sharding
+        if GPU_AUTOLOADER_AVAILABLE and optimize_for_gpu:
+            try:
+                optimized = optimize_for_gpu(model)
+                if optimized is not None:
+                    model = optimized
+                    logger.info("Applied GPU optimizations before sharding")
+            except Exception as e:
+                logger.debug(f"Could not optimize model before sharding: {e}")
 
         # Dispatch model
         try:
@@ -314,6 +336,17 @@ class ModelShardingManager:
                 offload_state_dict=offload_state_dict
             )
             logger.info("Model successfully sharded across devices")
+
+            # Apply autoloader optimizations after sharding
+            if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader:
+                try:
+                    optimized = gpu_autoloader(model)
+                    if optimized is not None:
+                        model = optimized
+                        logger.info("Applied autoloader optimizations after sharding")
+                except Exception as e:
+                    logger.debug(f"Could not apply autoloader optimizations: {e}")
+
             return model
 
         except Exception as e:
@@ -350,6 +383,12 @@ class ModelShardingManager:
             if HAS_TORCH:
                 model.load_state_dict(torch.load(checkpoint))
                 if GPU_AUTOLOADER_AVAILABLE:
+                    # Apply GPU optimizations after loading
+                    if optimize_for_gpu:
+                        optimized = optimize_for_gpu(model)
+                        if optimized is not None:
+                            model = optimized
+                            logger.info("Applied GPU optimizations to loaded model")
                     return to_device(model)
             return model
 
@@ -358,6 +397,12 @@ class ModelShardingManager:
             if HAS_TORCH:
                 model.load_state_dict(torch.load(checkpoint))
                 if GPU_AUTOLOADER_AVAILABLE:
+                    # Apply GPU optimizations for single GPU
+                    if optimize_for_gpu:
+                        optimized = optimize_for_gpu(model)
+                        if optimized is not None:
+                            model = optimized
+                            logger.info("Applied GPU optimizations to loaded model")
                     return to_device(model)
             return model
 
@@ -376,6 +421,17 @@ class ModelShardingManager:
                 dtype=dtype
             )
             logger.info("Checkpoint loaded and sharded across devices")
+
+            # Apply autoloader optimizations after loading sharded checkpoint
+            if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader:
+                try:
+                    optimized = gpu_autoloader(model)
+                    if optimized is not None:
+                        model = optimized
+                        logger.info("Applied autoloader optimizations to sharded checkpoint")
+                except Exception as e:
+                    logger.debug(f"Could not apply autoloader optimizations: {e}")
+
             return model
 
         except Exception as e:
@@ -383,6 +439,11 @@ class ModelShardingManager:
             if HAS_TORCH:
                 model.load_state_dict(torch.load(checkpoint))
                 if GPU_AUTOLOADER_AVAILABLE:
+                    # Apply optimizations even on fallback
+                    if optimize_for_gpu:
+                        optimized = optimize_for_gpu(model)
+                        if optimized is not None:
+                            model = optimized
                     return to_device(model)
             return model
 
@@ -684,7 +745,16 @@ class ModelShardingManager:
         else:
             start_memory = 0
 
-        for _ in range(num_iterations):
+        for i in range(num_iterations):
+            # Measure memory before forward pass
+            if self.gpu_type == 'nvidia_cuda':
+                iter_start_memory = sum(
+                    torch.cuda.memory_allocated(j)
+                    for j in range(self.device_count)
+                )
+            else:
+                iter_start_memory = 0
+
             # Forward pass
             if self.gpu_type == 'nvidia_cuda':
                 torch.cuda.synchronize()
@@ -702,6 +772,31 @@ class ModelShardingManager:
                 torch.xpu.synchronize()
 
             forward_times.append((time.time() - start_time) * 1000)
+
+            # Measure memory after forward pass
+            if self.gpu_type == 'nvidia_cuda':
+                iter_end_memory = sum(
+                    torch.cuda.memory_allocated(j)
+                    for j in range(self.device_count)
+                )
+                memory_usage.append({
+                    'iteration': i,
+                    'memory_before': iter_start_memory,
+                    'memory_after': iter_end_memory,
+                    'memory_delta': iter_end_memory - iter_start_memory,
+                    'per_device': [
+                        torch.cuda.memory_allocated(j)
+                        for j in range(self.device_count)
+                    ]
+                })
+            else:
+                memory_usage.append({
+                    'iteration': i,
+                    'memory_before': iter_start_memory,
+                    'memory_after': iter_start_memory,
+                    'memory_delta': 0,
+                    'per_device': []
+                })
 
         # Calculate memory usage
         if self.gpu_type == 'nvidia_cuda':
@@ -722,6 +817,11 @@ class ModelShardingManager:
         min_time = min(forward_times)
         max_time = max(forward_times)
 
+        # Calculate memory usage statistics
+        memory_deltas = [usage['memory_delta'] for usage in memory_usage]
+        avg_memory_delta = sum(memory_deltas) / len(memory_deltas) if memory_deltas else 0
+        max_memory_delta = max(memory_deltas) if memory_deltas else 0
+
         results = {
             "device_map": device_map,
             "num_devices": self.device_count,
@@ -736,6 +836,12 @@ class ModelShardingManager:
                 "end": end_memory,
                 "peak": peak_memory,
                 "increase": end_memory - start_memory
+            },
+            "memory_profile": {
+                "per_iteration": memory_usage,
+                "avg_delta_per_iteration": avg_memory_delta,
+                "max_delta_per_iteration": max_memory_delta,
+                "total_iterations": len(memory_usage)
             },
             "balance_score": self.get_device_balance_score(device_map)
         }

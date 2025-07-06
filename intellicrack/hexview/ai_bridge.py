@@ -513,7 +513,7 @@ class AIBinaryBridge:
             try:
                 # Use LLM backend for analysis
                 messages = [
-                    LLMMessage(role="system", content="You are an expert binary analyst specialized in reverse engineering and malware analysis."),
+                    LLMMessage(role="system", content="You are an autonomous binary analysis expert specialized in reverse engineering and malware analysis."),
                     LLMMessage(role="user", content=prompt)
                 ]
                 llm_response = self.llm_manager.chat(messages)
@@ -563,7 +563,7 @@ class AIBinaryBridge:
             try:
                 # Use LLM backend for edit suggestions
                 messages = [
-                    LLMMessage(role="system", content="You are an expert binary editor that helps users modify binary files. Provide precise hex edit suggestions with clear explanations."),
+                    LLMMessage(role="system", content="You are an autonomous binary editing expert that autonomously modifies binary files. Provide precise hex edit suggestions with comprehensive explanations and execute complete editing workflows."),
                     LLMMessage(role="user", content=prompt)
                 ]
                 llm_response = self.llm_manager.chat(messages)
@@ -613,7 +613,7 @@ class AIBinaryBridge:
             try:
                 # Use LLM backend for pattern identification
                 messages = [
-                    LLMMessage(role="system", content="You are an expert pattern recognition specialist for binary analysis. Identify known data structures, file formats, and binary patterns."),
+                    LLMMessage(role="system", content="You are an autonomous pattern recognition expert for binary analysis. Autonomously identify known data structures, file formats, and binary patterns with comprehensive analysis."),
                     LLMMessage(role="user", content=prompt)
                 ]
                 llm_response = self.llm_manager.chat(messages)
@@ -678,7 +678,7 @@ class AIBinaryBridge:
                 try:
                     # Use LLM backend for semantic search
                     messages = [
-                        LLMMessage(role="system", content="You are an expert in semantic binary analysis. Help users find specific data patterns, structures, or content based on their natural language descriptions."),
+                        LLMMessage(role="system", content="You are an autonomous semantic binary analysis expert. Autonomously find specific data patterns, structures, or content based on natural language descriptions with comprehensive analysis workflows."),
                         LLMMessage(role="user", content=prompt)
                     ]
                     llm_response = self.llm_manager.chat(messages)

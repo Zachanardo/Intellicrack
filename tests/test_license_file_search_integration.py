@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
 """
+This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+"""
 Test script to demonstrate license file search integration in Intellicrack
 
 This script shows how the search_for_license_files() method from ai_file_tools.py
@@ -8,7 +26,6 @@ is integrated into the protection analysis workflow.
 
 import os
 import sys
-from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -136,7 +153,7 @@ def test_direct_license_file_search():
                 content = read_result["content"]
                 print(f"\nFile: {first_file}")
                 print(f"Size: {read_result['metadata']['size_str']}")
-                print(f"First 500 characters:")
+                print("First 500 characters:")
                 print("-" * 40)
                 print(content[:500])
                 if len(content) > 500:

@@ -1,3 +1,4 @@
+"""Hexadecimal viewer renderer for displaying binary data."""
 import logging
 import re
 import struct

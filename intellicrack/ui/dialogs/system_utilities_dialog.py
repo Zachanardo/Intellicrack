@@ -1,3 +1,4 @@
+"""System utilities dialog for system-level analysis tools."""
 import json
 import os
 import time

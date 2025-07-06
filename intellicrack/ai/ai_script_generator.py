@@ -1,5 +1,4 @@
-"""
-AI Script Generator for Frida and Ghidra Scripts
+"""AI Script Generator for Frida and Ghidra Scripts.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -36,6 +35,7 @@ logger = get_logger(__name__)
 
 class ScriptType(Enum):
     """Types of scripts that can be generated."""
+
     FRIDA = "frida"
     GHIDRA = "ghidra"
     UNIFIED = "unified"
@@ -43,6 +43,7 @@ class ScriptType(Enum):
 
 class ProtectionType(Enum):
     """Types of protection mechanisms detected."""
+
     LICENSE_CHECK = "license_check"
     TRIAL_TIMER = "trial_timer"
     TRIAL_PROTECTION = "trial_protection"
@@ -59,6 +60,7 @@ class ProtectionType(Enum):
 @dataclass
 class ScriptMetadata:
     """Metadata for generated scripts."""
+
     script_id: str
     script_type: ScriptType
     target_binary: str
@@ -73,6 +75,7 @@ class ScriptMetadata:
 @dataclass
 class GeneratedScript:
     """Container for a generated script with metadata."""
+
     metadata: ScriptMetadata
     content: str
     language: str
@@ -86,6 +89,7 @@ class GeneratedScript:
 @dataclass
 class ScriptGenerationResult:
     """Result of script generation process."""
+
     success: bool
     script: Optional[GeneratedScript] = None
     errors: List[str] = field(default_factory=list)
@@ -180,7 +184,16 @@ class ScriptValidator:
         return errors
 
     def _validate_syntax(self, content: str, language: str) -> List[str]:
-        """Basic syntax validation."""
+        """Validate basic syntax.
+        
+        Args:
+            content: The script content to validate
+            language: The programming language of the script
+            
+        Returns:
+            List of syntax error messages, empty if no errors
+            
+        """
         errors = []
 
         if language.lower() == "javascript":
@@ -385,8 +398,8 @@ Interceptor.attach(Module.findExportByName("advapi32.dll", "RegQueryValueExW"), 
 
 
 class AIScriptGenerator:
-    """
-    Main AI script generator that creates real, functional Frida and Ghidra scripts.
+    """Main AI script generator that creates real, functional Frida and Ghidra scripts.
+    
     NO PLACEHOLDERS - all generated code must be immediately executable.
     """
 
@@ -1209,6 +1222,7 @@ class AIScriptGenerator:
             
         Returns:
             Dict with script and metadata for UI compatibility
+            
         """
         start_time = time.time()
 
@@ -1331,6 +1345,7 @@ class AIScriptGenerator:
             
         Returns:
             Dict with script and metadata for UI compatibility
+            
         """
         start_time = time.time()
 
@@ -1636,6 +1651,8 @@ This script was generated to bypass the following protection mechanisms:
         """Generate Frida script specifically for license bypass."""
         template = """// AI-generated Frida script for license bypass
 // Target: {binary_path}
+// Protection: {protection_type}
+// Detected patterns: {patterns}
 
 Java.perform(function() {{
     console.log("[+] Starting license bypass...");
@@ -1679,7 +1696,11 @@ Java.perform(function() {{
         }}
     }});
 }});
-""".format(binary_path=binary_path)
+""".format(
+            binary_path=binary_path,
+            protection_type=protection_info.get('type', 'Unknown'),
+            patterns=', '.join(protection_info.get('patterns', ['Generic']))
+        )
         return template
 
     def _generate_trial_bypass_frida(self, binary_path: str, protection_info: Dict) -> str:
@@ -2994,8 +3015,12 @@ send({{
 
     def _generate_generic_bypass_frida(self, binary_path: str, protection_info: Dict) -> str:
         """Generate comprehensive generic bypass script combining multiple techniques."""
+        protection_type = protection_info.get('type', 'Unknown')
+        patterns = protection_info.get('patterns', ['Generic'])
         template = """// Comprehensive Generic Bypass Script
 // Target: {binary_path}
+// Protection: {protection_type}
+// Detected patterns: {detected_patterns}
 // This script combines multiple bypass techniques for maximum effectiveness
 
 console.log("[*] Initializing comprehensive generic bypass...");
@@ -3483,5 +3508,9 @@ send({{
         'java_android_bypass'
     ]
 }});
-""".format(binary_path=binary_path)
+""".format(
+            binary_path=binary_path,
+            protection_type=protection_type,
+            detected_patterns=', '.join(patterns)
+        )
         return template

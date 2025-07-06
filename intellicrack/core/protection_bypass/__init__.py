@@ -59,15 +59,19 @@ except ImportError as e:
 __all__ = [
     # From tpm_bypass
     'TPMAnalyzer',
+    'TPMProtectionBypass',
     'analyze_tpm_protection',
+    'bypass_tpm_protection',
     'detect_tpm_usage',
     'tpm_research_tools',
 
     # From vm_bypass
     'VMDetector',
     'VirtualizationAnalyzer',
+    'VirtualizationDetectionBypass',
     'detect_virtualization',
     'analyze_vm_protection',
+    'bypass_vm_detection',
 
     # From dongle_emulator
     'HardwareDongleEmulator',

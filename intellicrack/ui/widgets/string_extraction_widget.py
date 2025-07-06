@@ -58,6 +58,20 @@ class StringExtractionThread(QThread):
         self.logger = get_logger(__name__)
 
     def run(self):
+        """Extract readable strings from binary file in background thread.
+        
+        Reads the binary file and extracts both ASCII and Unicode strings
+        based on the configured settings. Filters strings by minimum length
+        and emits progress updates during extraction.
+        
+        The extraction process handles large files efficiently and categorizes
+        strings by their encoding type (ASCII, UTF-16LE, UTF-16BE).
+        
+        Emits:
+            status_update: Progress messages during extraction
+            strings_extracted: List of tuples (offset, string, encoding)
+            extraction_error: Error message if extraction fails
+        """
         try:
             strings = []
             file_size = os.path.getsize(self.file_path)

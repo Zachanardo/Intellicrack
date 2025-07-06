@@ -1,3 +1,4 @@
+"""Visual patch editor dialog for graphical binary patching."""
 import os
 from typing import Any, Dict, List
 
