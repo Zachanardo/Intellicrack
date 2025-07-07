@@ -11,9 +11,9 @@ Licensed under GNU General Public License v3.0
 import logging
 from typing import Dict, Optional
 
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,

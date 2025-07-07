@@ -972,7 +972,7 @@ class IntellicrackCLI:
         """Launch interactive hex editor with the binary file."""
         try:
             # Try to use the integrated hex viewer
-            from PyQt5.QtWidgets import QApplication
+            from PyQt6.QtWidgets import QApplication
 
             from intellicrack.hexview.hex_widget import HexViewerWidget
 

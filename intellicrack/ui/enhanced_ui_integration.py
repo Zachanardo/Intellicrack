@@ -22,8 +22,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from typing import Any, Dict
 
-from PyQt5.QtGui import QColor, QFont, QIcon, QPalette
-from PyQt5.QtWidgets import (
+from PyQt6.QtGui import QColor, QFont, QIcon, QPalette
+from PyQt6.QtWidgets import (
     QAction,
     QApplication,
     QComboBox,

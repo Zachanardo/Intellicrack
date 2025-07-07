@@ -22,9 +22,9 @@ import os
 import queue
 from typing import Any, Dict, List
 
-from PyQt5.QtCore import QSize, Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QColor, QFont, QTextCursor, QTextFormat
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QSize, Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QTextCursor, QTextFormat
+from PyQt6.QtWidgets import (
     QDialog,
     QFileDialog,
     QHBoxLayout,
@@ -729,7 +729,7 @@ class CodeEditorWidget(QTextEdit):
 
     def line_number_area_paint_event(self, event):
         """Paint line numbers"""
-        from PyQt5.QtGui import QPainter
+        from PyQt6.QtGui import QPainter
 
         painter = QPainter(self.line_number_area)
         painter.fillRect(event.rect(), Qt.lightGray)

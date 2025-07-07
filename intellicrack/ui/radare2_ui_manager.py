@@ -22,8 +22,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from typing import Any, Dict, List
 
-from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtWidgets import QMessageBox, QTabWidget
+from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtWidgets import QMessageBox, QTabWidget
 
 from ..utils.logger import get_logger
 from .enhanced_ui_integration import (

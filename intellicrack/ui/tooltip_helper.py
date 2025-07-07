@@ -303,28 +303,391 @@ def get_tooltip_definitions() -> Dict[str, str]:
     }
 
 
-def apply_tooltips_to_buttons(parent_widget):
+def apply_tooltips_to_all_elements(parent_widget):
     """
-    Apply tooltips to all buttons in a widget hierarchy.
+    Apply tooltips to all UI elements in a widget hierarchy.
+    Now supports: QPushButton, QLabel, QLineEdit, QComboBox, QCheckBox, 
+    QSpinBox, QDoubleSpinBox, QTabWidget, and other common UI elements.
 
     Args:
-        parent_widget: The parent widget to search for buttons
+        parent_widget: The parent widget to search for UI elements
     """
     try:
-        from PyQt5.QtWidgets import QPushButton
+        from PyQt6.QtWidgets import (
+            QPushButton, QLabel, QLineEdit, QComboBox, QCheckBox, 
+            QSpinBox, QDoubleSpinBox, QTabWidget, QSlider, QProgressBar,
+            QTextEdit, QPlainTextEdit, QListWidget, QTreeWidget, QTableWidget
+        )
     except ImportError as e:
         logger.error("Import error in tooltip_helper: %s", e)
         from PyQt6.QtWidgets import QPushButton
+        QLabel = QLineEdit = QComboBox = QCheckBox = QPushButton  # Fallback
+        QSpinBox = QDoubleSpinBox = QTabWidget = QSlider = QPushButton
+        QProgressBar = QTextEdit = QPlainTextEdit = QPushButton
+        QListWidget = QTreeWidget = QTableWidget = QPushButton
 
     tooltips = get_tooltip_definitions()
+    
+    # Enhanced tooltip definitions for all UI elements
+    enhanced_tooltips = get_enhanced_tooltip_definitions()
+    all_tooltips = {**tooltips, **enhanced_tooltips}
 
-    # Find all QPushButton instances
+    # Apply tooltips to QPushButton (existing functionality)
     buttons = parent_widget.findChildren(QPushButton)
-
     for button in buttons:
         button_text = button.text()
-        if button_text in tooltips:
-            button.setToolTip(tooltips[button_text])
+        if button_text in all_tooltips:
+            button.setToolTip(all_tooltips[button_text])
+
+    # Apply tooltips to QLabel
+    labels = parent_widget.findChildren(QLabel)
+    for label in labels:
+        label_text = label.text()
+        object_name = label.objectName()
+        
+        if label_text in all_tooltips:
+            label.setToolTip(all_tooltips[label_text])
+        elif object_name in all_tooltips:
+            label.setToolTip(all_tooltips[object_name])
+        elif label_text and _get_contextual_tooltip(label_text):
+            label.setToolTip(_get_contextual_tooltip(label_text))
+
+    # Apply tooltips to QLineEdit
+    line_edits = parent_widget.findChildren(QLineEdit)
+    for line_edit in line_edits:
+        placeholder = line_edit.placeholderText()
+        object_name = line_edit.objectName()
+        
+        if placeholder in all_tooltips:
+            line_edit.setToolTip(all_tooltips[placeholder])
+        elif object_name in all_tooltips:
+            line_edit.setToolTip(all_tooltips[object_name])
+        elif placeholder and _get_contextual_tooltip(placeholder):
+            line_edit.setToolTip(_get_contextual_tooltip(placeholder))
+
+    # Apply tooltips to QComboBox
+    combo_boxes = parent_widget.findChildren(QComboBox)
+    for combo in combo_boxes:
+        object_name = combo.objectName()
+        current_text = combo.currentText()
+        
+        if object_name in all_tooltips:
+            combo.setToolTip(all_tooltips[object_name])
+        elif current_text in all_tooltips:
+            combo.setToolTip(all_tooltips[current_text])
+        elif object_name and _get_contextual_tooltip(object_name):
+            combo.setToolTip(_get_contextual_tooltip(object_name))
+
+    # Apply tooltips to QCheckBox
+    checkboxes = parent_widget.findChildren(QCheckBox)
+    for checkbox in checkboxes:
+        checkbox_text = checkbox.text()
+        object_name = checkbox.objectName()
+        
+        if checkbox_text in all_tooltips:
+            checkbox.setToolTip(all_tooltips[checkbox_text])
+        elif object_name in all_tooltips:
+            checkbox.setToolTip(all_tooltips[object_name])
+        elif checkbox_text and _get_contextual_tooltip(checkbox_text):
+            checkbox.setToolTip(_get_contextual_tooltip(checkbox_text))
+
+    # Apply tooltips to QSpinBox and QDoubleSpinBox
+    spinboxes = parent_widget.findChildren(QSpinBox) + parent_widget.findChildren(QDoubleSpinBox)
+    for spinbox in spinboxes:
+        object_name = spinbox.objectName()
+        
+        if object_name in all_tooltips:
+            spinbox.setToolTip(all_tooltips[object_name])
+        elif object_name and _get_contextual_tooltip(object_name):
+            spinbox.setToolTip(_get_contextual_tooltip(object_name))
+
+    # Apply tooltips to QTabWidget tabs
+    tab_widgets = parent_widget.findChildren(QTabWidget)
+    for tab_widget in tab_widgets:
+        for i in range(tab_widget.count()):
+            tab_text = tab_widget.tabText(i)
+            if tab_text in all_tooltips:
+                tab_widget.setTabToolTip(i, all_tooltips[tab_text])
+            elif tab_text and _get_contextual_tooltip(tab_text):
+                tab_widget.setTabToolTip(i, _get_contextual_tooltip(tab_text))
+
+    # Apply tooltips to other common widgets
+    other_widgets = (parent_widget.findChildren(QSlider) + 
+                    parent_widget.findChildren(QProgressBar) +
+                    parent_widget.findChildren(QTextEdit) +
+                    parent_widget.findChildren(QPlainTextEdit) +
+                    parent_widget.findChildren(QListWidget) +
+                    parent_widget.findChildren(QTreeWidget) +
+                    parent_widget.findChildren(QTableWidget))
+    
+    for widget in other_widgets:
+        object_name = widget.objectName()
+        if object_name in all_tooltips:
+            widget.setToolTip(all_tooltips[object_name])
+        elif object_name and _get_contextual_tooltip(object_name):
+            widget.setToolTip(_get_contextual_tooltip(object_name))
+
+def get_enhanced_tooltip_definitions() -> Dict[str, str]:
+    """
+    Enhanced tooltip definitions for all UI element types.
+    
+    Returns:
+        Dictionary mapping UI element identifiers to tooltip descriptions
+    """
+    return {
+        # Tab tooltips
+        "Dashboard": (
+            "Project overview and workspace management.\\n"
+            "Manage projects, select binaries, view activity logs,\\n"
+            "and access recent files for quick analysis startup."
+        ),
+        
+        "Analysis": (
+            "Comprehensive binary analysis tools.\\n"
+            "Static analysis, protection detection, dynamic hooking,\\n"
+            "and advanced execution engines for deep binary inspection."
+        ),
+        
+        "Exploitation": (
+            "Binary exploitation and patching tools.\\n"
+            "ROP chain generation, shellcode creation, memory patching,\\n"
+            "and exploit development for security testing."
+        ),
+        
+        "AI Assistant": (
+            "AI-powered analysis and code generation.\\n"
+            "Script generation, binary analysis assistance, model training,\\n"
+            "and intelligent reverse engineering support."
+        ),
+        
+        "Tools": (
+            "System tools, plugin management, and network analysis.\\n"
+            "File operations, cryptographic tools, plugin development,\\n"
+            "and network packet capture capabilities."
+        ),
+        
+        "Settings": (
+            "Application configuration and preferences.\\n"
+            "Theme settings, tool paths, performance tuning,\\n"
+            "and advanced configuration options."
+        ),
+        
+        # Common UI element tooltips
+        "Binary Path:": (
+            "Full path to the target binary file for analysis.\\n"
+            "Supports PE (.exe/.dll), ELF, and Mach-O formats."
+        ),
+        
+        "Target Binary:": (
+            "Select the executable file you want to analyze.\\n"
+            "The binary will be loaded but not executed until you choose."
+        ),
+        
+        "Output Directory:": (
+            "Where analysis results and generated files will be saved.\\n"
+            "Include reports, patches, extracted data, and logs."
+        ),
+        
+        "API Key:": (
+            "Authentication key for AI service access.\\n"
+            "Required for OpenAI, Anthropic, or other AI providers."
+        ),
+        
+        "Temperature:": (
+            "Controls AI response creativity and randomness.\\n"
+            "Lower values (0.1-0.3): More focused and deterministic\\n"
+            "Higher values (0.7-1.0): More creative and varied"
+        ),
+        
+        "Max Tokens:": (
+            "Maximum length of AI response in tokens.\\n"
+            "Higher values allow longer responses but cost more.\\n"
+            "1 token ≈ 0.75 words for English text."
+        ),
+        
+        "Analysis Depth:": (
+            "How thorough the analysis should be.\\n"
+            "Quick: Fast scan of basic properties\\n"
+            "Standard: Comprehensive analysis (recommended)\\n"
+            "Deep: Exhaustive analysis with all techniques"
+        ),
+        
+        "Cache Size:": (
+            "Amount of memory to use for caching analysis data.\\n"
+            "Larger cache improves performance but uses more RAM.\\n"
+            "Recommended: 512MB for most systems."
+        ),
+        
+        "Worker Threads:": (
+            "Number of parallel threads for analysis tasks.\\n"
+            "More threads = faster analysis on multi-core CPUs.\\n"
+            "Recommended: 2-4 threads for most systems."
+        ),
+        
+        # Object name based tooltips
+        "binary_path_edit": "Path to the target binary file for analysis",
+        "analysis_depth_combo": "Select analysis thoroughness level",
+        "provider_combo": "Choose AI service provider",
+        "model_combo": "Select AI model for analysis",
+        "temperature_slider": "Adjust AI response creativity",
+        "max_tokens_spin": "Set maximum AI response length",
+        "cache_size_spin": "Configure memory cache size",
+        "worker_threads_spin": "Set number of worker threads",
+        "log_level_combo": "Choose logging verbosity level",
+        "theme_combo": "Select application theme",
+        "opacity_slider": "Adjust window transparency",
+        "icon_size_combo": "Choose UI icon size",
+        
+        # Placeholder text tooltips
+        "Select a binary file for analysis...": (
+            "Click Browse to choose an executable file.\\n"
+            "Supported formats: PE, ELF, Mach-O"
+        ),
+        
+        "Enter API key...": (
+            "Paste your AI service API key here.\\n"
+            "Keep this secret and secure!"
+        ),
+        
+        "Search files...": (
+            "Enter filename or pattern to search.\\n"
+            "Supports wildcards like *.exe or *crack*"
+        ),
+        
+        "Enter target address...": (
+            "Memory address in hexadecimal format.\\n"
+            "Example: 0x401000 or 401000"
+        ),
+        
+        "Enter shellcode...": (
+            "Raw shellcode bytes in hex format.\\n"
+            "Example: \\x90\\x90\\xCC or 909090CC"
+        ),
+        
+        # Analysis specific tooltips
+        "Include Strings": (
+            "Extract and include readable text strings from the binary.\\n"
+            "Helps identify: URLs, file paths, error messages, debug info."
+        ),
+        
+        "Include Imports": (
+            "Analyze imported functions and libraries.\\n"
+            "Shows what Windows APIs or system functions are used."
+        ),
+        
+        "Include Exports": (
+            "Analyze exported functions (for DLLs).\\n"
+            "Shows what functions this library provides to other programs."
+        ),
+        
+        "Include Disassembly": (
+            "Include assembly code in the analysis.\\n"
+            "⚠️ Can produce very large outputs for big binaries."
+        ),
+        
+        "Enable GPU": (
+            "Use GPU acceleration for analysis tasks.\\n"
+            "Significantly faster but requires compatible GPU.\\n"
+            "Supports CUDA, OpenCL, and DirectML."
+        ),
+        
+        "Safe Mode": (
+            "Enable additional safety checks and confirmations.\\n"
+            "Prevents accidental dangerous operations.\\n"
+            "Recommended for production environments."
+        ),
+        
+        "Auto Analysis": (
+            "Automatically start analysis when binary is selected.\\n"
+            "Convenient but may slow down file browsing."
+        ),
+        
+        "Show Tooltips": (
+            "Display helpful tooltips like this one.\\n"
+            "Disable to reduce visual clutter."
+        ),
+        
+        "Enable Animations": (
+            "Use smooth animations for UI transitions.\\n"
+            "Disable to improve performance on slower systems."
+        ),
+        
+        "Parallel Processing": (
+            "Use multiple CPU cores for analysis tasks.\\n"
+            "Faster analysis but higher resource usage."
+        ),
+        
+        "Auto Cleanup": (
+            "Automatically clean up temporary files and memory.\\n"
+            "Keeps system clean but may slow down repeated tasks."
+        ),
+        
+        "Debug Mode": (
+            "Enable verbose logging and debug features.\\n"
+            "Useful for troubleshooting but slower performance."
+        ),
+        
+        "Experimental Features": (
+            "Enable cutting-edge experimental features.\\n"
+            "⚠️ May be unstable - use at your own risk."
+        )
+    }
+
+
+def _get_contextual_tooltip(text: str) -> str:
+    """
+    Generate contextual tooltips for common UI patterns.
+    
+    Args:
+        text: The UI element text to analyze
+        
+    Returns:
+        Contextual tooltip or empty string if no match
+    """
+    text_lower = text.lower()
+    
+    # Binary/file related
+    if any(word in text_lower for word in ['binary', 'file', 'executable', 'target']):
+        return "Select or specify a binary file for analysis"
+    
+    # Path related
+    if any(word in text_lower for word in ['path', 'directory', 'folder']):
+        return "Specify the file or directory path"
+    
+    # Analysis related
+    if any(word in text_lower for word in ['analysis', 'analyze', 'scan']):
+        return "Configure or start analysis operations"
+    
+    # AI related
+    if any(word in text_lower for word in ['ai', 'model', 'assistant', 'openai', 'anthropic']):
+        return "AI-powered analysis and assistance settings"
+    
+    # Network related
+    if any(word in text_lower for word in ['network', 'packet', 'capture', 'interface']):
+        return "Network analysis and monitoring tools"
+    
+    # Security related
+    if any(word in text_lower for word in ['protection', 'security', 'encrypt', 'hash']):
+        return "Security analysis and cryptographic operations"
+    
+    # Performance related
+    if any(word in text_lower for word in ['performance', 'memory', 'cache', 'thread']):
+        return "Performance and system resource settings"
+    
+    # Theme/appearance related
+    if any(word in text_lower for word in ['theme', 'color', 'font', 'appearance']):
+        return "Visual appearance and theme settings"
+    
+    return ""  # No contextual match found
+
+def apply_tooltips_to_buttons(parent_widget):
+    """
+    Backward compatibility wrapper for apply_tooltips_to_all_elements.
+    
+    Args:
+        parent_widget: The parent widget to search for UI elements
+    """
+    apply_tooltips_to_all_elements(parent_widget)
 
 
 def create_tooltip_with_shortcut(description: str, shortcut: str = None) -> str:

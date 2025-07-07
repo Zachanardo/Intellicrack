@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 
 from typing import Optional
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, pyqtSignal
 
 try:
     from ..protection.unified_protection_engine import UnifiedProtectionResult

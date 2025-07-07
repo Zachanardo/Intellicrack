@@ -35,7 +35,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 try:
-    from PyQt5.QtWidgets import QMessageBox
+    from PyQt6.QtWidgets import QMessageBox
     PYQT5_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in cloud_license_hooker: %s", e)

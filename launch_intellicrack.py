@@ -228,14 +228,8 @@ def detect_and_configure_gpu():
         os.environ['QT_AUTO_SCREEN_SCALE_FACTOR'] = '0'
         os.environ['QT_SCALE_FACTOR'] = '1'
         
-        # Intel Arc specific workarounds
-        os.environ['QT_ANGLE_PLATFORM'] = 'warp'  # Use WARP software renderer
-        os.environ['QSG_RENDER_LOOP'] = 'basic'  # Basic render loop for stability
-        os.environ['QT_D3D_ADAPTER_INDEX'] = '-1'  # Disable D3D adapter selection
-        
         # Intel-specific driver workarounds
         os.environ['INTEL_DEBUG'] = 'nofc,sync'  # Disable fast clear, enable sync
-        os.environ['QT_OPENGL_DLL'] = 'opengl32sw.dll'  # Force software OpenGL DLL
 
         # Suppress CUDA warnings on Intel systems (but keep other warnings visible)
         os.environ['CUPY_CUDA_PATH'] = ''  # Suppress CUDA path detection

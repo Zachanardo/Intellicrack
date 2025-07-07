@@ -3,7 +3,8 @@ import logging
 import os
 from typing import Optional
 
-from PyQt5.QtWidgets import QAction, QDialog, QMessageBox, QToolBar
+from PyQt6.QtGui import QAction
+from PyQt6.QtWidgets import QDialog, QMessageBox, QToolBar
 
 from intellicrack.logger import logger
 

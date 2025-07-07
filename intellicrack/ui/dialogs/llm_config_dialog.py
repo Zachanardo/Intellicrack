@@ -32,9 +32,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 try:
-    from PyQt5.QtCore import Qt, QThread, pyqtSignal
-    from PyQt5.QtGui import QFont
-    from PyQt5.QtWidgets import (
+    from PyQt6.QtCore import Qt, QThread, pyqtSignal
+    from PyQt6.QtGui import QFont
+    from PyQt6.QtWidgets import (
         QCheckBox,
         QComboBox,
         QDialog,
@@ -1823,7 +1823,7 @@ if __name__ == "__main__":
     # For testing the dialog standalone
     import sys
 
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
     dialog = LLMConfigDialog()

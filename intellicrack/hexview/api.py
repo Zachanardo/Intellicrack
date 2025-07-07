@@ -24,7 +24,7 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from PyQt5.QtWidgets import QApplication, QDialog
+from PyQt6.QtWidgets import QApplication, QDialog
 
 from .ai_bridge import AIBinaryBridge, BinaryContextBuilder
 from .file_handler import VirtualFileAccess

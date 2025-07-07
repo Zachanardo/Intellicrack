@@ -35,13 +35,13 @@ def test_qt_availability():
     
     try:
         # Test PyQt5 availability
-        import PyQt5.QtCore
+        import PyQt6.QtCore
         print("✅ PyQt5.QtCore available")
         
-        import PyQt5.QtWidgets
+        import PyQt6.QtWidgets
         print("✅ PyQt5.QtWidgets available")
         
-        import PyQt5.QtGui
+        import PyQt6.QtGui
         print("✅ PyQt5.QtGui available")
         
         # Check Qt version
@@ -101,8 +101,8 @@ def test_gui_initialization():
         # We can't test actual GUI creation in WSL without X11
         # But we can test Qt application creation
         
-        import PyQt5.QtCore
-        import PyQt5.QtWidgets
+        import PyQt6.QtCore
+        import PyQt6.QtWidgets
 
         # Create QApplication without GUI (headless mode)
         if not PyQt5.QtWidgets.QApplication.instance():

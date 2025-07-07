@@ -25,9 +25,9 @@ A professional console widget with syntax highlighting, filtering, and search ca
 
 from datetime import datetime
 
-from PyQt5.QtCore import QRegExp, Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat, QTextCursor
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QRegExp, Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat, QTextCursor
+from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QHBoxLayout,
@@ -325,7 +325,7 @@ class ConsoleWidget(QWidget):
 
     def export_log(self):
         """Export console log to file"""
-        from PyQt5.QtWidgets import QFileDialog
+        from PyQt6.QtWidgets import QFileDialog
 
         filename, _ = QFileDialog.getSaveFileName(
             self, "Export Console Log",

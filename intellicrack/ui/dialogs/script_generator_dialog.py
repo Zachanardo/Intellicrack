@@ -55,8 +55,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 try:
-    from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat
-    from PyQt5.QtWidgets import QPlainTextEdit
+    from PyQt6.QtGui import QSyntaxHighlighter, QTextCharFormat
+    from PyQt6.QtWidgets import QPlainTextEdit
 except ImportError as e:
     logger.error("Import error in script_generator_dialog: %s", e)
     pass
@@ -627,7 +627,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         script_content = self.script_display.toPlainText()
         if script_content:
             try:
-                from PyQt5.QtWidgets import QApplication
+                from PyQt6.QtWidgets import QApplication
                 QApplication.clipboard().setText(script_content)
                 self.status_label.setText("Script copied to clipboard")
             except (OSError, ValueError, RuntimeError) as e:

@@ -101,7 +101,7 @@ except ImportError as e:
 
 # UI dependencies
 try:
-    from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
+    from PyQt6.QtWidgets import QFileDialog, QInputDialog, QMessageBox
     PYQT_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in cfg_explorer: %s", e)

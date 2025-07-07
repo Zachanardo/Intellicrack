@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import QRegExp
-from PyQt5.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
+from PyQt6.QtCore import QRegExp
+from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
 
 
 class PythonHighlighter(QSyntaxHighlighter):

@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 
 from typing import Any, Dict, Optional
 
-from PyQt5.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
+from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
 
 try:
     from ...ai.llm_backends import LLMManager

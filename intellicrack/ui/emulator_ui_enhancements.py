@@ -25,7 +25,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 try:
-    from PyQt5.QtWidgets import (
+    from PyQt6.QtWidgets import (
         QHBoxLayout,
         QLabel,
         QMessageBox,

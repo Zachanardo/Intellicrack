@@ -29,7 +29,7 @@ from typing import Any, Callable, List, Optional, Tuple
 from intellicrack.logger import logger
 
 try:
-    from PyQt5.QtWidgets import (
+    from PyQt6.QtWidgets import (
         QFileDialog,
         QGroupBox,
         QHBoxLayout,

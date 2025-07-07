@@ -10,8 +10,8 @@ Licensed under GNU General Public License v3.0
 import os
 from typing import Dict, Optional
 
-from PyQt5.QtCore import QObject, QProcess, pyqtSignal
-from PyQt5.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtCore import QObject, QProcess, pyqtSignal
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from ..protection.intellicrack_protection_core import IntellicrackProtectionCore
 from ..utils.logger import get_logger

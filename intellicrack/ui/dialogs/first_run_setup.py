@@ -13,9 +13,9 @@ import subprocess
 import sys
 from typing import Dict, List
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
     QGroupBox,

@@ -482,7 +482,7 @@ else:
                             if plugin_info.get('enabled', True):
                                 list_item.setForeground(list_item.foreground())  # Default color
                             else:
-                                from PyQt5.QtGui import QColor
+                                from PyQt6.QtGui import QColor
                                 list_item.setForeground(QColor(128, 128, 128))  # Gray for disabled
 
                             self.installed_list.addItem(list_item)
@@ -613,7 +613,7 @@ Description: {plugin_info['description']}"""
                 plugin_info = current_item.data(0)
                 plugin_info['enabled'] = False
                 current_item.setData(0, plugin_info)
-                from PyQt5.QtGui import QColor
+                from PyQt6.QtGui import QColor
                 current_item.setForeground(QColor(128, 128, 128))  # Gray out
                 self.on_installed_selection_changed()  # Refresh info display
                 QMessageBox.information(self, "Success", f"Plugin '{plugin_info['name']}' disabled")

@@ -29,9 +29,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 try:
-    from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
-    from PyQt5.QtGui import QColor, QFont, QPixmap
-    from PyQt5.QtWidgets import (
+    from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+    from PyQt6.QtGui import QColor, QFont, QPixmap
+    from PyQt6.QtWidgets import (
         QCheckBox,
         QComboBox,
         QDialog,

@@ -54,9 +54,9 @@ from .common_imports import (
 )
 
 if HAS_PYQT:
-    from PyQt5.QtCore import QThread, QTimer, pyqtSignal
-    from PyQt5.QtGui import QFont
-    from PyQt5.QtWidgets import QStyle
+    from PyQt6.QtCore import QThread, QTimer, pyqtSignal
+    from PyQt6.QtGui import QFont
+    from PyQt6.QtWidgets import QStyle
 else:
     # Fallback definitions when PyQt is not available
     QThread = object

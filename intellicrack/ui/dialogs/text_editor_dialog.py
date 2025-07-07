@@ -44,8 +44,8 @@ from .common_imports import (
 )
 
 try:
-    from PyQt5.QtCore import QFileSystemWatcher
-    from PyQt5.QtGui import (
+    from PyQt6.QtCore import QFileSystemWatcher
+    from PyQt6.QtGui import (
         QColor,
         QKeySequence,
         QSyntaxHighlighter,
@@ -53,7 +53,7 @@ try:
         QTextCursor,
         QTextDocument,
     )
-    from PyQt5.QtWidgets import (
+    from PyQt6.QtWidgets import (
         QAction,
         QPlainTextEdit,
         QStatusBar,

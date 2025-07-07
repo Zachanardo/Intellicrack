@@ -230,7 +230,7 @@ class ICPIntegrationTester:
             # Test 3: Signal connections (basic validation)
             self.log_result('phase_b', "Testing signal connection infrastructure...")
             try:
-                from PyQt5.QtCore import QObject, pyqtSignal
+                from PyQt6.QtCore import QObject, pyqtSignal
 
                 class TestSignalEmitter(QObject):
                     test_signal = pyqtSignal(object)
@@ -349,7 +349,7 @@ class ICPIntegrationTester:
 
             try:
                 from intellicrack.analysis.analysis_result_orchestrator import AnalysisResultOrchestrator
-                from PyQt5.QtCore import QObject
+                from PyQt6.QtCore import QObject
 
                 # Create test handler
                 class TestHandler(QObject):

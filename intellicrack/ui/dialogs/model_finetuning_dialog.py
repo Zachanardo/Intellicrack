@@ -47,8 +47,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 try:
-    from PyQt5.QtCore import Qt, QThread, pyqtSignal
-    from PyQt5.QtWidgets import (
+    from PyQt6.QtCore import Qt, QThread, pyqtSignal
+    from PyQt6.QtWidgets import (
         QApplication,
         QCheckBox,
         QComboBox,
@@ -2512,7 +2512,7 @@ class ModelFinetuningDialog(QDialog):
             plt.close(fig)
 
             # Update visualization label
-            from PyQt5.QtGui import QPixmap
+            from PyQt6.QtGui import QPixmap
             pixmap = QPixmap(temp_path)
             scaled_pixmap = pixmap.scaled(
                 self.visualization_label.size(),

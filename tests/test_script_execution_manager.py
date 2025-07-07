@@ -20,8 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import unittest
 from unittest.mock import Mock, patch, MagicMock
-from PyQt5.QtWidgets import QApplication, QDialog
-from PyQt5.QtCore import QSettings
+from PyQt6.QtWidgets import QApplication, QDialog
+from PyQt6.QtCore import QSettings
 import sys
 
 # Create QApplication if it doesn't exist

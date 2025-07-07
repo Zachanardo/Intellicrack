@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 
 from typing import Any, Optional, Union
 
-from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt, pyqtSignal
+from PyQt6.QtCore import QAbstractItemModel, QModelIndex, Qt, pyqtSignal
 
 from .pe_file_model import FileStructure, PEFileModel, SectionInfo
 
@@ -278,16 +278,16 @@ class PEStructureModel(QAbstractItemModel):
         """Return number of columns"""
         return self.root_item.column_count()
 
-    def data(self, index: QModelIndex, role: int = Qt.DisplayRole) -> Any:
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         """Return data for index and role"""
         if not index.isValid():
             return None
 
         item = index.internalPointer()
 
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             return item.data(index.column())
-        elif role == Qt.ToolTipRole:
+        elif role == Qt.ItemDataRole.ToolTipRole:
             if isinstance(item.item_data, FileStructure):
                 return f"{item.item_data.description}\nOffset: 0x{item.item_data.offset:X}\nSize: 0x{item.item_data.size:X}"
             elif isinstance(item.item_data, SectionInfo):
@@ -308,16 +308,16 @@ class PEStructureModel(QAbstractItemModel):
 
         return None
 
-    def flags(self, index: QModelIndex) -> Qt.ItemFlags:
+    def flags(self, index: QModelIndex) -> Qt.ItemFlag:
         """Return item flags"""
         if not index.isValid():
-            return Qt.NoItemFlags
+            return Qt.ItemFlag.NoItemFlags
 
-        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole) -> Any:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         """Return header data"""
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             if section == 0:
                 return "Name"
             elif section == 1:

@@ -21,9 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import sys
 
-from PyQt5.QtCore import QProcess, Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QProcess, Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
     QDialogButtonBox,
@@ -351,7 +351,7 @@ Process.enumerateModules().forEach(function(module) {
 
     def browse_test_file(self):
         """Browse for test file"""
-        from PyQt5.QtWidgets import QFileDialog
+        from PyQt6.QtWidgets import QFileDialog
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Test Binary",
             "", "Executable Files (*.exe *.dll *.so);;All Files (*.*)"

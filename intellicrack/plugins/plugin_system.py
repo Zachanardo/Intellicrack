@@ -11,7 +11,7 @@ import tempfile
 import traceback
 from typing import Any, Dict, List, Optional
 
-from PyQt5.QtWidgets import QInputDialog, QMessageBox
+from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
 from intellicrack.logger import logger
 
@@ -1315,8 +1315,7 @@ def register():
     templates = [
         ("simple_analysis_plugin.py", simple_template),
         ("binary_patcher_plugin.py", patcher_template),
-        ("network_analysis_plugin.py", network_template),
-        ("malware_analysis_plugin.py", malware_template)
+        ("network_analysis_plugin.py", network_template)
     ]
 
     custom_dir = os.path.join(plugin_dir, "custom_modules")

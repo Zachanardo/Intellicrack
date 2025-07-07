@@ -25,8 +25,8 @@ import os
 import subprocess
 from typing import Any, Dict, List, Optional
 
-from PyQt5.QtCore import QObject, QSettings, pyqtSignal
-from PyQt5.QtWidgets import QDialog, QMessageBox
+from PyQt6.QtCore import QObject, QSettings, pyqtSignal
+from PyQt6.QtWidgets import QDialog, QMessageBox
 
 logger = logging.getLogger(__name__)
 

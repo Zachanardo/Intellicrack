@@ -94,7 +94,7 @@ def test_with_gui():
     print("Testing with GUI...")
     
     try:
-        from PyQt5.QtWidgets import QApplication
+        from PyQt6.QtWidgets import QApplication
 
         from intellicrack.ui.dialogs.smart_program_selector_dialog import (
             show_smart_program_selector,

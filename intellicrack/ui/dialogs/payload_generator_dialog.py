@@ -27,9 +27,9 @@ import asyncio
 import logging
 from typing import Any, Dict
 
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFileDialog,

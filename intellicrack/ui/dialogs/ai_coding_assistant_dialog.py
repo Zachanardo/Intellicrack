@@ -26,9 +26,9 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from PyQt5.QtCore import QFileSystemWatcher, Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QFileSystemWatcher, Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
+from PyQt6.QtWidgets import (
     QAction,
     QCheckBox,
     QComboBox,

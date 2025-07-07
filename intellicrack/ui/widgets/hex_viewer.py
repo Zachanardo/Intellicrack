@@ -28,9 +28,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 try:
-    from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-    from PyQt5.QtGui import QFont
-    from PyQt5.QtWidgets import (
+    from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+    from PyQt6.QtGui import QFont
+    from PyQt6.QtWidgets import (
         QFrame,
         QHBoxLayout,
         QLabel,
@@ -298,7 +298,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
     def open_file_dialog(self):
         """Open file dialog to load a binary file."""
         try:
-            from PyQt5.QtWidgets import QFileDialog
+            from PyQt6.QtWidgets import QFileDialog
 
             file_path, _ = QFileDialog.getOpenFileName(
                 self, "Open Binary File", "",
@@ -426,7 +426,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
             return
 
         try:
-            from PyQt5.QtWidgets import (
+            from PyQt6.QtWidgets import (
                 QButtonGroup,
                 QCheckBox,
                 QDialog,
@@ -777,7 +777,7 @@ class SearchBar(QWidget if PYQT_AVAILABLE else BaseWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         # Search input
-        from PyQt5.QtWidgets import QLineEdit
+        from PyQt6.QtWidgets import QLineEdit
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Search...")
         self.search_input.returnPressed.connect(self._on_search)
@@ -957,7 +957,7 @@ class ProgressWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
         layout = QVBoxLayout(self)
 
         # Progress bar
-        from PyQt5.QtWidgets import QProgressBar
+        from PyQt6.QtWidgets import QProgressBar
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
         layout.addWidget(self.progress_bar)
@@ -1062,7 +1062,7 @@ class LogViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
     def save_log(self):
         """Save log to file."""
         if PYQT_AVAILABLE:
-            from PyQt5.QtWidgets import QFileDialog
+            from PyQt6.QtWidgets import QFileDialog
             filename, _ = QFileDialog.getSaveFileName(
                 self, "Save Log", "", "Log Files (*.log);;All Files (*)"
             )

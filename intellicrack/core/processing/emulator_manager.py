@@ -29,7 +29,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 try:
-    from PyQt5.QtCore import QObject, pyqtSignal
+    from PyQt6.QtCore import QObject, pyqtSignal
 except ImportError as e:
     logger.error("Import error in emulator_manager: %s", e)
     from PyQt6.QtCore import QObject, pyqtSignal

@@ -20,8 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 
-from PyQt5.QtCore import QSettings, pyqtSignal
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QSettings, pyqtSignal
+from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
@@ -387,7 +387,7 @@ class PreferencesDialog(QDialog):
 if __name__ == "__main__":
     import sys
 
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
     dialog = PreferencesDialog()

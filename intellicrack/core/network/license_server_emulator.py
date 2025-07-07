@@ -52,7 +52,7 @@ except ImportError as e:
     HAS_NEW_COMPONENTS = False
 
 try:
-    from PyQt5.QtWidgets import QInputDialog, QLineEdit
+    from PyQt6.QtWidgets import QInputDialog, QLineEdit
     QT_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in license_server_emulator: %s", e)

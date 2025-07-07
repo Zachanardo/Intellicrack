@@ -65,7 +65,7 @@ except ImportError as e:
 
             # Show message box if Qt is available
             try:
-                from PyQt5.QtWidgets import QMessageBox
+                from PyQt6.QtWidgets import QMessageBox
                 QMessageBox.warning(
                     main_app,
                     "Integration Not Available",

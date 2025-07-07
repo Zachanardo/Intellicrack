@@ -660,7 +660,7 @@ class KeygenDialog(BinarySelectionDialog):
         key = self.key_display.toPlainText().strip()
         if key:
             try:
-                from PyQt5.QtWidgets import QApplication
+                from PyQt6.QtWidgets import QApplication
                 QApplication.clipboard().setText(key)
                 self.status_label.setText("Key copied to clipboard")
             except (OSError, ValueError, RuntimeError) as e:

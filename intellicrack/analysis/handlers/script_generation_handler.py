@@ -10,9 +10,9 @@ Licensed under GNU General Public License v3.0
 
 from typing import Optional
 
-from PyQt5.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
-from PyQt5.QtGui import QFont, QTextDocument
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
+from PyQt6.QtGui import QFont, QTextDocument
+from PyQt6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -189,7 +189,7 @@ class ScriptDisplayDialog(QDialog):
 
     def _apply_syntax_highlighting(self):
         """Apply basic syntax highlighting based on script type"""
-        from PyQt5.QtGui import QColor, QFont, QTextCharFormat
+        from PyQt6.QtGui import QColor, QFont, QTextCharFormat
 
         # This is a simplified version - could be enhanced with proper syntax highlighter
         script_type = self.script_data.get('type', '').lower()
@@ -246,7 +246,7 @@ class ScriptDisplayDialog(QDialog):
 
     def copy_script(self):
         """Copy script to clipboard"""
-        from PyQt5.QtWidgets import QApplication
+        from PyQt6.QtWidgets import QApplication
         QApplication.clipboard().setText(self.script_data.get('script', ''))
 
         # Show brief confirmation
@@ -256,7 +256,7 @@ class ScriptDisplayDialog(QDialog):
 
     def save_script(self):
         """Save script to file"""
-        from PyQt5.QtWidgets import QFileDialog
+        from PyQt6.QtWidgets import QFileDialog
 
         script_type = self.script_data.get('type', 'script').lower()
         if script_type == 'frida':

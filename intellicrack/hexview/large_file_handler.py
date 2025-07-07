@@ -36,7 +36,7 @@ from ..utils.core.import_checks import PSUTIL_AVAILABLE, psutil
 logger = logging.getLogger(__name__)
 
 try:
-    from PyQt5.QtCore import QObject, QThread, QTimer, pyqtSignal
+    from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
     PYQT5_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in large_file_handler: %s", e)

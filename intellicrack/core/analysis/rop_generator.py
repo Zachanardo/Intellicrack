@@ -28,7 +28,7 @@ from ...utils.ui.ui_common import ask_open_report
 logger = logging.getLogger(__name__)
 
 try:
-    from PyQt5.QtWidgets import QInputDialog
+    from PyQt6.QtWidgets import QInputDialog
     PYQT5_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in rop_generator: %s", e)

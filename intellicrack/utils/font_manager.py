@@ -24,7 +24,7 @@ import json
 import logging
 import os
 
-from PyQt5.QtGui import QFont, QFontDatabase
+from PyQt6.QtGui import QFont, QFontDatabase
 
 logger = logging.getLogger(__name__)
 

@@ -25,9 +25,9 @@ code duplication across dialog implementations.
 
 from typing import Callable, Dict, Optional
 
-from PyQt5.QtCore import QThread, QTimer
-from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QDialog, QMenu, QMessageBox, QWidget
+from PyQt6.QtCore import QThread, QTimer
+from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtWidgets import QDialog, QMenu, QMessageBox, QWidget
 
 
 class DialogEventHandler:

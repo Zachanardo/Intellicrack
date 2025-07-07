@@ -109,8 +109,8 @@ except ImportError as e:
 
 # GUI framework
 try:
-    from PyQt5.QtCore import QThread, QTimer, pyqtSignal
-    from PyQt5.QtWidgets import QApplication, QWidget
+    from PyQt6.QtCore import QThread, QTimer, pyqtSignal
+    from PyQt6.QtWidgets import QApplication, QWidget
     HAS_PYQT = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)

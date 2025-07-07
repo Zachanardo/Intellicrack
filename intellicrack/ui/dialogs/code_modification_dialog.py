@@ -22,9 +22,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 from pathlib import Path
 from typing import List
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
+from PyQt6.QtWidgets import (
     QDialog,
     QFileDialog,
     QFormLayout,

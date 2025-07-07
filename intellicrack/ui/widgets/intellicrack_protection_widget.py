@@ -11,9 +11,9 @@ Licensed under GNU General Public License v3.0
 import os
 from typing import Optional
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QBrush, QColor, QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QBrush, QColor, QFont
+from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFileDialog,

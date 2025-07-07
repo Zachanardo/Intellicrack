@@ -10,8 +10,8 @@ Copyright (C) 2025 Zachary Flint
 import logging
 import sys
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
     QAction,
     QApplication,
     QHBoxLayout,

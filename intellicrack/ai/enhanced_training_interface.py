@@ -32,9 +32,9 @@ from typing import Any, Dict
 logger = logging.getLogger(__name__)
 
 try:
-    from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
-    from PyQt5.QtGui import QFont, QIcon, QPalette, QPixmap
-    from PyQt5.QtWidgets import (
+    from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+    from PyQt6.QtGui import QFont, QIcon, QPalette, QPixmap
+    from PyQt6.QtWidgets import (
         QCheckBox,
         QComboBox,
         QDialog,

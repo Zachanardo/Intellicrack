@@ -104,7 +104,7 @@ def integrate_with_main_app():
         main_app = None
 
         # Method 1: Check if running in QApplication context
-        from PyQt5.QtWidgets import QApplication
+        from PyQt6.QtWidgets import QApplication
         app = QApplication.instance()
         if app:
             # Look for IntellicrackApp in top-level widgets

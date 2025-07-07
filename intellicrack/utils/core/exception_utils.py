@@ -30,7 +30,7 @@ from typing import Any, Dict, Optional
 logger = logging.getLogger(__name__)
 
 try:
-    from PyQt5.QtWidgets import QApplication, QMessageBox
+    from PyQt6.QtWidgets import QApplication, QMessageBox
 except ImportError as e:
     logger.error("Import error in exception_utils: %s", e)
     QMessageBox = None

@@ -191,7 +191,7 @@ def setup_required_environment() -> Dict[str, Any]:
 
     # Check GUI availability
     try:
-        import PyQt5
+        import PyQt6
         # Get PyQt5 version for logging
         pyqt_version = getattr(PyQt5.QtCore, 'PYQT_VERSION_STR', 'unknown')
         env_status["gui_available"] = True

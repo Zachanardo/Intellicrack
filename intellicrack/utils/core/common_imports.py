@@ -1117,9 +1117,9 @@ except ImportError as e:
 
 # UI Framework
 try:
-    from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
-    from PyQt5.QtGui import QColor, QFont
-    from PyQt5.QtWidgets import (
+    from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+    from PyQt6.QtGui import QColor, QFont
+    from PyQt6.QtWidgets import (
         QApplication,
         QCheckBox,
         QComboBox,
@@ -1159,13 +1159,15 @@ try:
         dial.setNotchesVisible(True)
         return dial
 
-    def create_slider(orientation=Qt.Horizontal, min_val=0, max_val=100, value=50):
+    def create_slider(orientation=None, min_val=0, max_val=100, value=50):
         """Create a QSlider widget"""
+        if orientation is None:
+            orientation = Qt.Orientation.Horizontal
         slider = QSlider(orientation)
         slider.setMinimum(min_val)
         slider.setMaximum(max_val)
         slider.setValue(value)
-        slider.setTickPosition(QSlider.TicksBelow if orientation == Qt.Horizontal else QSlider.TicksLeft)
+        slider.setTickPosition(QSlider.TickPosition.TicksBelow if orientation == Qt.Orientation.Horizontal else QSlider.TickPosition.TicksLeft)
         return slider
 
 except ImportError:

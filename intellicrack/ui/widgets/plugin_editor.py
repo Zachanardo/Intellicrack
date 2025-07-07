@@ -24,14 +24,14 @@ import ast
 import os
 from typing import List, Tuple
 
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import (
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import (
     QColor,
     QFont,
     QKeySequence,
     QTextCursor,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QComboBox,
     QFileDialog,
     QHBoxLayout,
@@ -406,7 +406,7 @@ class PluginEditor(QWidget):
     def show_find_dialog(self):
         """Show find/replace dialog"""
         # Simple find implementation
-        from PyQt5.QtWidgets import QInputDialog
+        from PyQt6.QtWidgets import QInputDialog
         text, ok = QInputDialog.getText(self, "Find", "Find text:")
         if ok and text:
             cursor = self.editor.textCursor()

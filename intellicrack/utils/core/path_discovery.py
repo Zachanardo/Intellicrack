@@ -705,7 +705,7 @@ class PathDiscovery:
         if not path:
             if parent_widget:
                 try:
-                    from PyQt5.QtWidgets import QFileDialog, QMessageBox
+                    from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
                     msg = QMessageBox()
                     msg.setWindowTitle(f"{tool_name} Not Found")

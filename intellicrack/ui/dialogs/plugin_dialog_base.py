@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QDialog,
     QFileDialog,
     QHBoxLayout,

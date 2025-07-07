@@ -135,7 +135,7 @@ def run_gui_mode(args) -> int:
     """
     _ = args
     try:
-        from PyQt5.QtWidgets import QApplication
+        from PyQt6.QtWidgets import QApplication
 
         from ...ui.main_app import launch
 

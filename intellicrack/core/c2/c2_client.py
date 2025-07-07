@@ -518,7 +518,7 @@ class C2Client(BaseC2):
                 try:
                     import sys
 
-                    from PyQt5.QtWidgets import QApplication
+                    from PyQt6.QtWidgets import QApplication
 
                     app = QApplication.instance()
                     if app is None:

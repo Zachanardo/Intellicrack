@@ -29,9 +29,9 @@ import time
 from datetime import datetime
 from typing import Any, Dict
 
-from PyQt5.QtCore import Qt, QThread, QTimer, pyqtSignal
-from PyQt5.QtGui import QBrush, QColor, QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QBrush, QColor, QFont
+from PyQt6.QtWidgets import (
     QAction,
     QCheckBox,
     QComboBox,
@@ -964,7 +964,7 @@ class C2ManagementDialog(QDialog):
                 remote_path = file_path
 
             # Show file dialog for local save location
-            from PyQt5.QtWidgets import QFileDialog
+            from PyQt6.QtWidgets import QFileDialog
             local_path, _ = QFileDialog.getSaveFileName(
                 self,
                 "Save Downloaded File",
@@ -1055,7 +1055,7 @@ class C2ManagementDialog(QDialog):
     def add_file_to_upload(self):
         """Add file to upload list."""
         try:
-            from PyQt5.QtWidgets import QFileDialog
+            from PyQt6.QtWidgets import QFileDialog
 
             # Open file dialog to select files
             file_paths, _ = QFileDialog.getOpenFileNames(

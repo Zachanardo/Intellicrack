@@ -24,7 +24,7 @@ Common UI layout patterns to eliminate code duplication between dialog classes.
 
 from typing import Callable, List, Optional, Tuple
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QFormLayout,
     QGroupBox,
     QHBoxLayout,

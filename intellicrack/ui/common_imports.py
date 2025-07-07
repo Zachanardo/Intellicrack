@@ -24,8 +24,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 try:
-    from PyQt5.QtCore import QPoint, QRect, QSize, Qt, QThread, QTimer, pyqtSignal
-    from PyQt5.QtGui import (
+    from PyQt6.QtCore import QPoint, QRect, QSize, Qt, QThread, QTimer, pyqtSignal
+    from PyQt6.QtGui import (
+        QAction,
         QColor,
         QFont,
         QFontMetrics,
@@ -39,10 +40,9 @@ try:
         QPixmap,
         QResizeEvent,
     )
-    from PyQt5.QtWidgets import (
+    from PyQt6.QtWidgets import (
         QAbstractItemView,
         QAbstractScrollArea,
-        QAction,
         QApplication,
         QButtonGroup,
         QCheckBox,

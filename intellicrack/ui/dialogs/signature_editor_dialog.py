@@ -14,8 +14,8 @@ import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import (
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import (
     QColor,
     QFont,
     QStandardItem,
@@ -23,7 +23,7 @@ from PyQt5.QtGui import (
     QSyntaxHighlighter,
     QTextCharFormat,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
     QDialog,

@@ -22,10 +22,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from typing import Any, Dict, List, Optional
 
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtWidgets import (
-    QAction,
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QAction, QFont, QIcon
+from PyQt6.QtWidgets import (
     QCheckBox,
     QFileDialog,
     QGroupBox,
@@ -298,8 +297,8 @@ class IntellicrackMainWindow(QMainWindow):
         container_layout = QVBoxLayout(protection_container)
 
         # Create splitter for two widgets
-        from PyQt5.QtCore import Qt
-        from PyQt5.QtWidgets import QSplitter
+        from PyQt6.QtCore import Qt
+        from PyQt6.QtWidgets import QSplitter
         splitter = QSplitter(Qt.Vertical)
 
         # Add unified protection widget
@@ -836,7 +835,7 @@ Licensing Files Found: {len(licensing_files)}"""
                 msg += "Script saved to clipboard."
 
                 # Copy script to clipboard
-                from PyQt5.QtWidgets import QApplication
+                from PyQt6.QtWidgets import QApplication
                 clipboard = QApplication.clipboard()
                 clipboard.setText(result['script'])
 

@@ -81,7 +81,7 @@ def add_table(parent: Any, headers: List[str], data: List[List[Any]]) -> Any:
         logger.warning("PyQt5 not available, cannot create table")
         return None
 
-    from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
+    from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
 
     table = QTableWidget(len(data), len(headers), parent)
     table.setHorizontalHeaderLabels(headers)
@@ -107,7 +107,7 @@ def browse_dataset(parent: Any = None) -> Optional[str]:
         logger.warning("PyQt5 not available, cannot browse dataset")
         return None
 
-    from PyQt5.QtWidgets import QFileDialog
+    from PyQt6.QtWidgets import QFileDialog
 
     file_path, _ = QFileDialog.getOpenFileName(
         parent,
@@ -132,7 +132,7 @@ def browse_model(parent: Any = None) -> Optional[str]:
         logger.warning("PyQt5 not available, cannot browse model")
         return None
 
-    from PyQt5.QtWidgets import QFileDialog
+    from PyQt6.QtWidgets import QFileDialog
 
     file_path, _ = QFileDialog.getOpenFileName(
         parent,
@@ -155,7 +155,7 @@ def show_simulation_results(results: Dict[str, Any], parent: Any = None) -> None
         logger.info(f"Simulation Results: {json.dumps(results, indent=2)}")
         return
 
-    from PyQt5.QtWidgets import QDialog, QPushButton, QTextEdit, QVBoxLayout
+    from PyQt6.QtWidgets import QDialog, QPushButton, QTextEdit, QVBoxLayout
 
     dialog = QDialog(parent)
     dialog.setWindowTitle("Simulation Results")
@@ -1174,7 +1174,7 @@ def center_on_screen(widget: Any) -> None:
     if not HAS_PYQT or not widget:
         return
 
-    from PyQt5.QtWidgets import QDesktopWidget
+    from PyQt6.QtWidgets import QDesktopWidget
 
     desktop = QDesktopWidget()
     screen_rect = desktop.screenGeometry()

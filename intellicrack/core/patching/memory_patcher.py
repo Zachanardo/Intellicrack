@@ -25,7 +25,7 @@ import os
 import sys
 from typing import Any, Optional
 
-from PyQt5.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QMessageBox
 
 from ...utils.logger import get_logger
 from ...utils.protection.protection_detection import (

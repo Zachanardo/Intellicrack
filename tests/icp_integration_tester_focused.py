@@ -160,7 +160,7 @@ class FocusedICPIntegrationTester:
             # Test 4: PyQt5 signal system
             self.log_result('phase_a', "Testing PyQt5 signal infrastructure...")
             try:
-                from PyQt5.QtCore import QObject, pyqtSignal, QCoreApplication
+                from PyQt6.QtCore import QObject, pyqtSignal, QCoreApplication
 
                 # Create minimal Qt application for signal testing
                 if not QCoreApplication.instance():
@@ -430,7 +430,7 @@ class FocusedICPIntegrationTester:
 
             try:
                 from intellicrack.analysis.analysis_result_orchestrator import AnalysisResultOrchestrator
-                from PyQt5.QtCore import QObject, QCoreApplication
+                from PyQt6.QtCore import QObject, QCoreApplication
                 import sys
 
                 # Ensure Qt application exists

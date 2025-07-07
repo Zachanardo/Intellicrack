@@ -67,7 +67,7 @@ except ImportError as e:
 # Import common patterns from centralized module
 
 try:
-    from PyQt5.QtWidgets import QInputDialog, QMessageBox
+    from PyQt6.QtWidgets import QInputDialog, QMessageBox
     PYQT_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in pdf_generator: %s", e)

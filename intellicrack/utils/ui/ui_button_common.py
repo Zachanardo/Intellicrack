@@ -24,7 +24,7 @@ Common UI button utilities to avoid code duplication.
 """
 
 try:
-    from PyQt5.QtWidgets import QPushButton
+    from PyQt6.QtWidgets import QPushButton
     PYQT_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in ui_button_common: %s", e)

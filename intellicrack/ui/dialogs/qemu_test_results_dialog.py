@@ -29,9 +29,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QFont, QTextCursor
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QFont, QTextCursor
+from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QLabel,
@@ -495,7 +495,7 @@ class QEMUTestResultsDialog(QDialog):
         }
 
         # Save to file
-        from PyQt5.QtWidgets import QFileDialog
+        from PyQt6.QtWidgets import QFileDialog
         filename, _ = QFileDialog.getSaveFileName(
             self, "Export Test Results",
             f"qemu_test_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",

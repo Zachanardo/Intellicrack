@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Dict, Optional
 
-from PyQt5.QtWidgets import QMainWindow, QTabWidget, QWidget
+from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget
 
 from ..utils.logger import get_logger
 from .enhanced_ui_integration import EnhancedAnalysisDashboard

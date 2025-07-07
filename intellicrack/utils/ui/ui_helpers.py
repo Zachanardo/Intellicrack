@@ -34,7 +34,7 @@ def check_binary_path_and_warn(app_instance):
     """
     if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
         try:
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             QMessageBox.warning(app_instance, "No File Selected",
                               "Please select a program first.")
         except ImportError as e:
@@ -72,7 +72,7 @@ def show_file_dialog(parent, title, file_filter="HTML Files (*.html);;All Files 
         str: Selected filename or empty string if cancelled
     """
     try:
-        from PyQt5.QtWidgets import QFileDialog
+        from PyQt6.QtWidgets import QFileDialog
         filename, _ = QFileDialog.getSaveFileName(parent, title, "", file_filter)
         return filename if filename else ""
     except ImportError as e:
@@ -91,7 +91,7 @@ def ask_yes_no_question(parent, title, question):
         bool: True if Yes clicked, False otherwise
     """
     try:
-        from PyQt5.QtWidgets import QMessageBox
+        from PyQt6.QtWidgets import QMessageBox
         return QMessageBox.question(
             parent, title, question,
             QMessageBox.Yes | QMessageBox.No

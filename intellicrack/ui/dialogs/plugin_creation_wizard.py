@@ -2,11 +2,11 @@
 import json
 from datetime import datetime
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 
 # Import missing class
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,

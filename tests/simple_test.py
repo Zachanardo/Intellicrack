@@ -56,7 +56,7 @@ def test_direct_imports():
         # Test smart dialog (PyQt components might fail)
         try:
             # Import PyQt5 components directly
-            from PyQt5.QtWidgets import QApplication, QDialog
+            from PyQt6.QtWidgets import QApplication, QDialog
             print("✓ PyQt5 components available")
             
             # Test if we can create QApplication and QDialog instances

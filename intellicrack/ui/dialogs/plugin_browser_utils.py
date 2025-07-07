@@ -25,7 +25,7 @@ Shared utilities for plugin browsing functionality to eliminate code duplication
 
 import os
 
-from PyQt5.QtWidgets import QFileDialog
+from PyQt6.QtWidgets import QFileDialog
 
 
 def browse_for_plugin(parent_widget, title="Select Plugin") -> str:

@@ -23,8 +23,8 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QSettings
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QSettings
 
 # Create QApplication if it doesn't exist
 if not QApplication.instance():

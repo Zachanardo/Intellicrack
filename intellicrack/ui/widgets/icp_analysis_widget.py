@@ -10,9 +10,9 @@ Licensed under GNU General Public License v3.0
 import asyncio
 from typing import Optional
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QBrush, QColor, QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QBrush, QColor, QFont
+from PyQt6.QtWidgets import (
     QComboBox,
     QGroupBox,
     QHBoxLayout,

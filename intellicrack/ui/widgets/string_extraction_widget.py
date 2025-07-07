@@ -13,9 +13,9 @@ import os
 import re
 from typing import List, Optional, Tuple
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QBrush, QColor
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtWidgets import (
     QAction,
     QCheckBox,
     QComboBox,
@@ -542,7 +542,7 @@ class StringExtractionWidget(QWidget):
             string_item = self.string_table.item(row, 1)
             if string_item:
                 full_string = string_item.data(Qt.UserRole)
-                from PyQt5.QtWidgets import QApplication
+                from PyQt6.QtWidgets import QApplication
                 QApplication.clipboard().setText(full_string)
 
     def _copy_selected_offset(self):
@@ -551,7 +551,7 @@ class StringExtractionWidget(QWidget):
         if row >= 0:
             offset_item = self.string_table.item(row, 0)
             if offset_item:
-                from PyQt5.QtWidgets import QApplication
+                from PyQt6.QtWidgets import QApplication
                 QApplication.clipboard().setText(offset_item.text())
 
     def _copy_selected_row(self):
@@ -567,7 +567,7 @@ class StringExtractionWidget(QWidget):
                     else:
                         row_data.append(item.text())
 
-            from PyQt5.QtWidgets import QApplication
+            from PyQt6.QtWidgets import QApplication
             QApplication.clipboard().setText("\t".join(row_data))
 
     def _goto_selected_offset(self):

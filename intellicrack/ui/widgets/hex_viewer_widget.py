@@ -12,9 +12,9 @@ import os
 import struct
 from typing import List, Optional, Tuple
 
-from PyQt5.QtCore import QModelIndex, Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QBrush, QColor, QFont, QTextCharFormat, QTextCursor
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QModelIndex, Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QBrush, QColor, QFont, QTextCharFormat, QTextCursor
+from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFileDialog,

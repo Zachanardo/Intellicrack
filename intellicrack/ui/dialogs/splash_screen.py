@@ -24,9 +24,9 @@ import logging
 import os
 from typing import Optional
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QFont, QPainter, QPixmap
-from PyQt5.QtWidgets import QApplication, QLabel, QProgressBar, QSplashScreen
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QPainter, QPixmap
+from PyQt6.QtWidgets import QApplication, QLabel, QProgressBar, QSplashScreen
 
 logger = logging.getLogger(__name__)
 

@@ -26,7 +26,7 @@ This script tests the export functionality independently.
 import os
 import sys
 
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 
 from intellicrack.ui.dialogs.export_dialog import ExportDialog
 

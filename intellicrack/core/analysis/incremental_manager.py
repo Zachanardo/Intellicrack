@@ -42,7 +42,7 @@ improving performance for large binaries.
 
 
 try:
-    from PyQt5.QtWidgets import QMessageBox
+    from PyQt6.QtWidgets import QMessageBox
     PYQT_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in incremental_manager: %s", e)

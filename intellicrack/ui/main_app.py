@@ -173,8 +173,7 @@ if not HAS_CTYPES:
     sizeof = mock_sizeof
 
 try:  # pylint: disable=unused-argument
-    from PyQt5.QtWidgets import (
-        QAction,
+    from PyQt6.QtWidgets import (
         QApplication,
         QButtonGroup,
         QCheckBox,
@@ -228,20 +227,20 @@ try:  # pylint: disable=unused-argument
 
     # Optional PyQt imports
     try:
-        from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
+        from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
         QPrinter = QPrintDialog = None
 
     try:
-        from PyQt5.QtWebEngineWidgets import QWebEngineView
+        from PyQt6.QtWebEngineWidgets import QWebEngineView
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
         QWebEngineView = None
 
     try:
-        from PyQt5.QtPdf import QPdfDocument
-        from PyQt5.QtPdfWidgets import QPdfView
+        from PyQt6.QtPdf import QPdfDocument
+        from PyQt6.QtPdfWidgets import QPdfView
         HAS_PDF_SUPPORT = True
     except ImportError as e:
         if "QtPdf" in str(e):
@@ -250,8 +249,8 @@ try:  # pylint: disable=unused-argument
             logger.error("Import error in main_app.py: %s", e)
         QPdfDocument = QPdfView = None
         HAS_PDF_SUPPORT = False
-    from PyQt5 import QtCore
-    from PyQt5.QtCore import (
+    from PyQt6 import QtCore
+    from PyQt6.QtCore import (
         QDateTime,
         QFileInfo,
         QMetaObject,
@@ -263,7 +262,8 @@ try:  # pylint: disable=unused-argument
         QUrl,
         pyqtSignal,
     )
-    from PyQt5.QtGui import (
+    from PyQt6.QtGui import (
+        QAction,
         QColor,
         QDesktopServices,
         QFont,
@@ -303,7 +303,16 @@ try:
         EmulatorStatusWidget,
         add_emulator_tooltips,
     )
-    from .tooltip_helper import apply_tooltips_to_buttons, get_tooltip_definitions
+    from .tooltip_helper import apply_tooltips_to_buttons, apply_tooltips_to_all_elements, get_tooltip_definitions
+    from .theme_manager import get_theme_manager
+    
+    # Import new modular tab architecture
+    from .tabs.dashboard_tab import DashboardTab
+    from .tabs.analysis_tab import AnalysisTab
+    from .tabs.exploitation_tab import ExploitationTab
+    from .tabs.ai_assistant_tab import AIAssistantTab
+    from .tabs.tools_tab import ToolsTab
+    from .tabs.settings_tab import SettingsTab
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
     # Define a dummy SplashScreen for environments without PyQt5
@@ -319,6 +328,14 @@ except ImportError as e:
     EmulatorRequiredDecorator = None
     get_tooltip_definitions = None
     apply_tooltips_to_buttons = None
+    
+    # Fallback tab classes
+    DashboardTab = None
+    AnalysisTab = None
+    ExploitationTab = None
+    AIAssistantTab = None
+    ToolsTab = None
+    SettingsTab = None
 
 # Import all the extracted components
 try:
@@ -9187,7 +9204,7 @@ def compute_file_hash(file_path, algorithm='sha256'):
 def get_file_icon(file_path):
     """Get file icon for the given file path."""
     try:
-        from PyQt5.QtWidgets import QFileIconProvider
+        from PyQt6.QtWidgets import QFileIconProvider
 
         if not file_path:
             return None
@@ -9835,7 +9852,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
             # Start a timer to periodically update the UI with captured packets
             if self.packet_update_timer is None:
-                from PyQt5.QtCore import QTimer
+                from PyQt6.QtCore import QTimer
                 self.packet_update_timer = QTimer()
                 self.packet_update_timer.timeout.connect(self._update_packet_display)
 
@@ -10220,7 +10237,11 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         # Initialize the ModelManager
         models_dir = CONFIG.get('model_repositories', {}).get('local', {}).get('models_directory', 'models')
-        self.model_manager = ModelManager(models_dir)
+        if ModelManager is not None:
+            self.model_manager = ModelManager(models_dir)
+        else:
+            self.model_manager = None
+            self.logger.warning("ModelManager not available - AI features will be limited")
 
         # Initialize AI Orchestrator for agentic environment
         try:
@@ -10487,8 +10508,13 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         # pylint: disable=no-value-for-parameter
         print("[INIT] Creating PDFReportGenerator...")
-        self.pdf_report_generator = PDFReportGenerator()
-        print("[INIT] PDFReportGenerator created")
+        if PDFReportGenerator is not None:
+            self.pdf_report_generator = PDFReportGenerator()
+            print("[INIT] PDFReportGenerator created")
+        else:
+            self.pdf_report_generator = None
+            print("[INIT] PDFReportGenerator not available - reporting features limited")
+            self.logger.warning("PDFReportGenerator not available - reporting features will be limited")
 
         # Create central widget and layout
         print("[INIT] Creating central widget...")
@@ -10518,34 +10544,16 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.tabs.setTabPosition(QTabWidget.North)
         print("[INIT] Setting tabs closable...")
         self.tabs.setTabsClosable(False)
-        print("[INIT] Applying tab stylesheet...")
+        print("[INIT] Applying theme stylesheet...")
         try:
-            self.tabs.setStyleSheet("""
-            QTabWidget::pane {
-                border: 2px solid #C0C0C0;
-                background-color: #F0F0F0;
-            }
-            QTabWidget::tab-bar {
-                alignment: center;
-            }
-            QTabBar::tab {
-                background-color: #E0E0E0;
-                border: 1px solid #C0C0C0;
-                padding: 8px 16px;
-                margin-right: 2px;
-                font-weight: bold;
-            }
-            QTabBar::tab:selected {
-                background-color: #FFFFFF;
-                border-bottom-color: #FFFFFF;
-            }
-            QTabBar::tab:hover {
-                background-color: #F0F0F0;
-            }
-        """)
-            print("[INIT] Tab stylesheet applied successfully")
+            # Initialize and apply theme using ThemeManager
+            self.theme_manager = get_theme_manager()
+            self.theme_manager.set_theme(self.theme_manager.get_current_theme())
+            print(f"[INIT] Theme '{self.theme_manager.get_current_theme()}' applied successfully")
         except Exception as e:
-            print(f"[INIT] Failed to apply tab stylesheet: {e}")
+            print(f"[INIT] Failed to apply theme: {e}")
+            # Fallback to basic styling if theme manager fails
+            self.tabs.setStyleSheet("QTabBar::tab { padding: 8px 16px; font-weight: bold; }")
 
         print("[INIT] Setting additional tab properties...")
         self.tabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
@@ -10586,22 +10594,30 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.main_splitter.setSizes([700, 500])
         print("[INIT] Splitter configuration complete")
 
-        # Create tab widgets for the main application tabs
-        self.project_dashboard_tab = QWidget()
-        self.analysis_tab = QWidget()
-        self.patching_exploitation_tab = QWidget()
-        self.ai_assistant_tab = QWidget()
-        self.netanalysis_emulation_tab = QWidget()
-        self.tools_plugins_tab = QWidget()
-        self.settings_tab = QWidget()
-
-        # Add tabs to the tab widget with new organization
-        self.tabs.addTab(self.project_dashboard_tab, "Project & Dashboard")
+        # Create shared context for tabs
+        shared_context = {
+            'main_window': self,
+            'log_message': self.log_message
+        }
+        
+        # Create new modular tabs with lazy loading
+        self.dashboard_tab = DashboardTab(shared_context, self) if DashboardTab else QWidget()
+        self.analysis_tab = AnalysisTab(shared_context, self) if AnalysisTab else QWidget()
+        self.exploitation_tab = ExploitationTab(shared_context, self) if ExploitationTab else QWidget()
+        self.ai_assistant_tab = AIAssistantTab(shared_context, self) if AIAssistantTab else QWidget()
+        self.tools_tab = ToolsTab(shared_context, self) if ToolsTab else QWidget()
+        self.settings_tab = SettingsTab(shared_context, self) if SettingsTab else QWidget()
+        
+        # Connect theme change signal to handler
+        if hasattr(self.settings_tab, 'theme_changed'):
+            self.settings_tab.theme_changed.connect(self.on_theme_changed)
+        
+        # Add new modular tabs to the tab widget
+        self.tabs.addTab(self.dashboard_tab, "Dashboard")
         self.tabs.addTab(self.analysis_tab, "Analysis")
-        self.tabs.addTab(self.patching_exploitation_tab, "Patching & Exploitation")
+        self.tabs.addTab(self.exploitation_tab, "Exploitation")
         self.tabs.addTab(self.ai_assistant_tab, "AI Assistant")
-        self.tabs.addTab(self.netanalysis_emulation_tab, "NetAnalysis & Emulation")
-        self.tabs.addTab(self.tools_plugins_tab, "Tools & Plugins")
+        self.tabs.addTab(self.tools_tab, "Tools")
         self.tabs.addTab(self.settings_tab, "Settings")
 
         # Initialize dashboard manager
@@ -10704,6 +10720,14 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.logger.warning("Plugin initialization failed: %s", e)
             self.available_plugins = {"custom": [], "frida": [], "ghidra": []}
 
+        # Apply comprehensive tooltips to all UI elements
+        if apply_tooltips_to_buttons:
+            try:
+                apply_tooltips_to_buttons(self)
+                self.logger.info("Tooltips applied to all UI elements")
+            except Exception as e:
+                self.logger.error("Failed to apply tooltips: %s", e)
+        
         self.logger.info("Window configuration complete")
 
     def closeEvent_handler(self, event):
@@ -12292,7 +12316,7 @@ class Plugin:
     def analyze_process_behavior(self):
         """Analyze live process behavior using dynamic analysis."""
         try:
-            from PyQt5.QtWidgets import QInputDialog, QMessageBox
+            from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
             # Get process name or PID from user
             process_name, ok = QInputDialog.getText(
@@ -12336,7 +12360,7 @@ class Plugin:
     def run_memory_keyword_scan(self):
         """Run dynamic memory keyword scan using Frida."""
         try:
-            from PyQt5.QtWidgets import QInputDialog, QMessageBox
+            from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
             # Get keywords from user
             keywords, ok = QInputDialog.getText(
@@ -18035,6 +18059,26 @@ def register():
         """Handles switching the main tab view via signal."""
         if hasattr(self, 'tabs'):
             self.tabs.setCurrentIndex(index)
+    
+    def on_theme_changed(self, theme_name):
+        """Handle theme change from SettingsTab"""
+        try:
+            # Convert theme name to match ThemeManager format
+            if theme_name.lower() == 'auto':
+                # For now, auto defaults to light mode
+                theme_name = 'light'
+            else:
+                theme_name = theme_name.lower()
+            
+            # Apply theme using ThemeManager
+            if hasattr(self, 'theme_manager'):
+                self.theme_manager.set_theme(theme_name)
+                print(f"Theme changed to: {theme_name}")
+            else:
+                print(f"Warning: ThemeManager not available, cannot change theme to {theme_name}")
+                
+        except Exception as e:
+            print(f"Error changing theme: {e}")
 
     def handle_generate_key(self):
         """Handles triggering key generation via signal."""
@@ -18371,7 +18415,7 @@ def register():
         binary_icon_label = QLabel()
         binary_icon_label.setObjectName("dashboard_binary_icon_label") # Assign object name
         binary_icon_label.setFixedSize(64, 64)
-        binary_icon_label.setAlignment(Qt.AlignCenter)
+        binary_icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         binary_icon_label.setText("Icon") # Placeholder text
         binary_layout.addWidget(binary_icon_label)
 
@@ -19501,7 +19545,7 @@ def register():
             }
 
             # Download in a separate thread to avoid blocking the UI
-            from PyQt5.QtCore import QThread, pyqtSignal
+            from PyQt6.QtCore import QThread, pyqtSignal
 
             class DownloadThread(QThread):
                 """Thread for downloading models without blocking the UI."""
@@ -24480,7 +24524,7 @@ Focus on:
                             # Define the thread-safe confirmation function
                             def ask_user_confirmation(app, tool_name, parameters):
                                 """Thread-safe user confirmation dialog for sensitive AI tools"""
-                                from PyQt5.QtWidgets import QMessageBox
+                                from PyQt6.QtWidgets import QMessageBox
 
                                 param_text = "\n".join([f"{k}: {v}" for k, v in parameters.items()])
                                 result = QMessageBox.question(
@@ -27555,14 +27599,15 @@ def launch():
     # Set Qt attributes before creating QApplication
     try:
         print("[LAUNCH] Importing Qt modules...")
-        from PyQt5.QtCore import Qt
-        from PyQt5.QtWidgets import QApplication
+        from PyQt6.QtCore import Qt
+        from PyQt6.QtWidgets import QApplication
         print("[LAUNCH] Qt modules imported successfully")
 
         # Set attributes for better compatibility
         print("[LAUNCH] Setting Qt attributes...")
-        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, False)
-        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, False)
+        # These attributes are not needed in PyQt6 - high DPI is automatic
+        # QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, False)  # Removed in PyQt6
+        # QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, False)     # Removed in PyQt6
 
         # Check GPU vendor for appropriate settings
         gpu_vendor = os.environ.get('INTELLICRACK_GPU_VENDOR', 'Unknown')
@@ -27576,27 +27621,28 @@ def launch():
             # Force software rendering for ALL Intel Arc cards and when explicitly requested
             if force_software or is_intel_arc:
                 print(f"[LAUNCH] Intel GPU detected ({gpu_type}) - using SOFTWARE rendering (Intel Arc compatibility)")
-                QApplication.setAttribute(Qt.AA_UseSoftwareOpenGL, True)
-                QApplication.setAttribute(Qt.AA_ShareOpenGLContexts, False)
-                QApplication.setAttribute(Qt.AA_DisableWindowContextHelpButton, True)
+                QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseSoftwareOpenGL, True)
+                QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, False)
+                # AA_DisableWindowContextHelpButton not available in PyQt6
+                # QApplication.setAttribute(Qt.ApplicationAttribute.AA_DisableWindowContextHelpButton, True)
                 # Additional safety attributes for Intel Arc
-                QApplication.setAttribute(Qt.AA_UseDesktopOpenGL, False)
-                QApplication.setAttribute(Qt.AA_UseOpenGLES, False)
+                QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseDesktopOpenGL, False)
+                QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseOpenGLES, False)
             else:
                 print(f"[LAUNCH] Intel GPU detected ({gpu_type}) - using limited hardware acceleration")
                 # Even non-Arc Intel GPUs should use conservative settings
-                QApplication.setAttribute(Qt.AA_UseSoftwareOpenGL, True)
-                QApplication.setAttribute(Qt.AA_ShareOpenGLContexts, False)
+                QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseSoftwareOpenGL, True)
+                QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, False)
         elif gpu_vendor in ["NVIDIA", "AMD"]:
             print(f"[LAUNCH] {gpu_vendor} GPU detected ({gpu_type}) - using hardware acceleration")
             # Use hardware acceleration for NVIDIA and AMD
-            QApplication.setAttribute(Qt.AA_UseSoftwareOpenGL, False)
-            QApplication.setAttribute(Qt.AA_ShareOpenGLContexts, True)
+            QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseSoftwareOpenGL, False)
+            QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True)
         else:
             print(f"[LAUNCH] No GPU detected or unknown vendor ({gpu_vendor}) - using software rendering")
             # Use software OpenGL for CPU mode
-            QApplication.setAttribute(Qt.AA_UseSoftwareOpenGL, True)
-            QApplication.setAttribute(Qt.AA_ShareOpenGLContexts, False)
+            QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseSoftwareOpenGL, True)
+            QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, False)
         print("[LAUNCH] Qt attributes set successfully")
     except Exception as e:
         print(f"[LAUNCH] ERROR: Failed to set Qt attributes: {e}")
@@ -27673,7 +27719,7 @@ def launch():
                     pass
 
             # Show a simple error dialog
-            from PyQt5.QtWidgets import QMessageBox
+            from PyQt6.QtWidgets import QMessageBox
             QMessageBox.critical(None, "Startup Error",
                                f"Failed to initialize Intellicrack:\n{str(init_error)}\n\n"
                                "This might be a graphics driver compatibility issue.\n"
@@ -27793,7 +27839,7 @@ def launch():
     logger.info("App is about to quit: %s", app_instance.aboutToQuit)
 
     # Add a single-shot timer to log after event loop starts
-    from PyQt5.QtCore import QTimer
+    from PyQt6.QtCore import QTimer
 
     def log_after_start():
         logger.info("Qt event loop started successfully")

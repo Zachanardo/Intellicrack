@@ -56,7 +56,7 @@ from .common_imports import (
 )
 
 try:
-    from PyQt5.QtWidgets import QTextBrowser
+    from PyQt6.QtWidgets import QTextBrowser
 except ImportError as e:
     logger.error("Import error in report_manager_dialog: %s", e)
     pass

@@ -13,9 +13,9 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
     QComboBox,
@@ -899,7 +899,7 @@ class ExportDialog(QDialog):
 
 def main():
     """Test the export dialog"""
-    from PyQt5.QtWidgets import QApplication
+    from PyQt6.QtWidgets import QApplication
 
     app = QApplication([])
     app.setApplicationName("IntellicrackExportTest")

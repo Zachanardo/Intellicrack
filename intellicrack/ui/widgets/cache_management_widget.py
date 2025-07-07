@@ -9,9 +9,9 @@ Licensed under GNU General Public License v3.0
 
 from typing import Any, Dict
 
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
@@ -305,7 +305,7 @@ class CacheManagementWidget(QWidget):
 
         # Add AI coordination layer performance statistics if available
         try:
-            from PyQt5.QtWidgets import QApplication
+            from PyQt6.QtWidgets import QApplication
             main_window = None
             for widget in QApplication.allWidgets():
                 if hasattr(widget, 'ai_coordinator') and widget.ai_coordinator:
@@ -404,7 +404,7 @@ class CacheManagementWidget(QWidget):
 
                 # Also clear AI coordination layer cache if available
                 try:
-                    from PyQt5.QtWidgets import QApplication
+                    from PyQt6.QtWidgets import QApplication
                     main_window = None
                     for widget in QApplication.allWidgets():
                         if hasattr(widget, 'ai_coordinator') and widget.ai_coordinator:

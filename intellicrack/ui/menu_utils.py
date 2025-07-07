@@ -29,7 +29,7 @@ try:
     from PyQt6.QtWidgets import QMenu, QMenuBar
 except ImportError as e:
     logger.error("Import error in menu_utils: %s", e)
-    from PyQt5.QtWidgets import QMenu, QMenuBar
+    from PyQt6.QtWidgets import QMenu, QMenuBar
 
 
 def find_or_create_menu(menu_bar: QMenuBar, menu_name: str) -> QMenu:

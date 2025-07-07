@@ -12,9 +12,9 @@ import os
 from typing import Any, Dict, Optional
 
 # Import for QDateTime
-from PyQt5.QtCore import QDateTime, Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QColor, QFont
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QDateTime, Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtWidgets import (
     QFileDialog,
     QFrame,
     QGroupBox,
@@ -420,7 +420,7 @@ class UnifiedProtectionWidget(QWidget):
 
         # Get AI coordination strategy suggestion if available
         try:
-            from PyQt5.QtWidgets import QApplication
+            from PyQt6.QtWidgets import QApplication
             main_window = None
             for widget in QApplication.allWidgets():
                 if hasattr(widget, 'ai_coordinator') and widget.ai_coordinator:
@@ -932,8 +932,8 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         All analysis is performed using the native ICP backend in a background
         thread to maintain UI responsiveness.
         """
-        from PyQt5.QtCore import QThread, pyqtSignal
-        from PyQt5.QtWidgets import QDialog, QProgressBar, QTabWidget, QTextEdit, QVBoxLayout
+        from PyQt6.QtCore import QThread, pyqtSignal
+        from PyQt6.QtWidgets import QDialog, QProgressBar, QTabWidget, QTextEdit, QVBoxLayout
 
         dialog = QDialog(self)
         dialog.setWindowTitle("Native ICP Engine Analysis")
@@ -1102,7 +1102,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             return
 
         # Create a simple dialog to choose script type
-        from PyQt5.QtWidgets import QInputDialog
+        from PyQt6.QtWidgets import QInputDialog
         script_type, ok = QInputDialog.getItem(
             self,
             "Select Script Type",

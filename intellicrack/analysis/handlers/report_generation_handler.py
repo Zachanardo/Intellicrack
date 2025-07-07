@@ -11,8 +11,8 @@ Licensed under GNU General Public License v3.0
 from datetime import datetime
 from typing import Optional
 
-from PyQt5.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
+from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,

@@ -24,8 +24,8 @@ import logging
 import os
 from typing import List, Optional, Tuple, Union
 
-from PyQt5.QtCore import QPoint, QRect, Qt, pyqtSignal
-from PyQt5.QtGui import (
+from PyQt6.QtCore import QPoint, QRect, Qt, pyqtSignal
+from PyQt6.QtGui import (
     QColor,
     QFont,
     QFontMetrics,
@@ -36,7 +36,7 @@ from PyQt5.QtGui import (
     QPen,
     QResizeEvent,
 )
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QAbstractScrollArea,
     QApplication,
     QCheckBox,
@@ -236,7 +236,7 @@ class HexViewerWidget(QAbstractScrollArea):
             self.viewport().update()
 
             # Schedule multiple updates to ensure rendering
-            from PyQt5.QtCore import QTimer
+            from PyQt6.QtCore import QTimer
             QTimer.singleShot(50, self.viewport().update)
             QTimer.singleShot(100, self.viewport().update)
             QTimer.singleShot(200, self.viewport().update)
@@ -1859,7 +1859,7 @@ class HexViewerWidget(QAbstractScrollArea):
     def show_performance_dialog(self):
         """Show a dialog with performance statistics."""
         try:
-            from PyQt5.QtWidgets import (  # pylint: disable=redefined-outer-name
+            from PyQt6.QtWidgets import (  # pylint: disable=redefined-outer-name
                 QDialog,
                 QLabel,
                 QPushButton,

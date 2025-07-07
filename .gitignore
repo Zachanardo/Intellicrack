@@ -560,3 +560,14 @@ test_*_features.py
 test_license_bypass.py
 test_network_features.py
 test_windows_activator.py
+
+# Debug and test batch files
+DEBUG_*.bat
+LAUNCH_TEST.bat
+QUICK_TEST.bat
+test_quick.bat
+run_test.sh
+output*.log
+quick*.log
+*_output.log
+*_test.log
