@@ -71,6 +71,10 @@ except ImportError as e:
     HAS_ONNX = False
 
 try:
+    # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
+    import os
+    os.environ['MKL_THREADING_LAYER'] = 'GNU'
+    
     import tensorflow as tf
     HAS_TF = True
 except ImportError as e:

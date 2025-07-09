@@ -54,7 +54,7 @@ class AIAssistantTab(BaseTab):
         
         # AI subtabs
         self.ai_subtabs = QTabWidget()
-        self.ai_subtabs.setTabPosition(QTabWidget.North)
+        self.ai_subtabs.setTabPosition(QTabWidget.TabPosition.North)
         
         # Create individual AI subtabs
         self.ai_subtabs.addTab(self.create_model_selection_tab(), "Model Selection")
@@ -472,7 +472,7 @@ class AIAssistantTab(BaseTab):
         
         # Results tabs
         self.results_tabs = QTabWidget()
-        self.results_tabs.setTabPosition(QTabWidget.North)
+        self.results_tabs.setTabPosition(QTabWidget.TabPosition.North)
         
         # AI Chat Interface
         self.ai_chat_widget = QWidget()

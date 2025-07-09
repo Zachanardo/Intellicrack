@@ -704,12 +704,15 @@ class AssemblyView(QWidget if PYQT_AVAILABLE else BaseWidget):
 
 
 class CFGWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
-    """Widget for displaying Control Flow Graph."""
+    """Widget for displaying control flow graphs."""
 
     def __init__(self, parent=None):
         """Initialize CFG widget."""
         super().__init__(parent)
         self.cfg_data = None
+        self.figure = None
+        self.canvas = None
+        self.ax = None
 
         if PYQT_AVAILABLE:
             self.setup_ui()
@@ -717,18 +720,136 @@ class CFGWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
     def setup_ui(self):
         """Setup the widget UI."""
         layout = QVBoxLayout(self)
-
-        # Placeholder for CFG visualization
-        self.cfg_label = QLabel("Control Flow Graph Visualization")
-        self.cfg_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.cfg_label)
+        
+        # Try to import matplotlib for visualization
+        try:
+            from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+            from matplotlib.figure import Figure
+            import matplotlib.pyplot as plt
+            
+            # Create matplotlib figure for CFG visualization
+            self.figure = Figure(figsize=(10, 8))
+            self.canvas = FigureCanvas(self.figure)
+            layout.addWidget(self.canvas)
+            
+            # Add toolbar for interaction
+            from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+            self.toolbar = NavigationToolbar(self.canvas, self)
+            layout.addWidget(self.toolbar)
+            
+        except ImportError:
+            # Fallback to label if matplotlib not available
+            self.cfg_label = QLabel("Control Flow Graph Visualization\n(Matplotlib not available)")
+            self.cfg_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(self.cfg_label)
 
     def set_cfg_data(self, cfg_data):
         """Set CFG data to display."""
         self.cfg_data = cfg_data
-        # CFG visualization will be rendered when graphing library is available
-        if hasattr(self, 'cfg_label'):
+        
+        if self.cfg_data and self.canvas:
+            self._render_cfg()
+        elif hasattr(self, 'cfg_label'):
             self.cfg_label.setText("CFG loaded - visualization pending")
+    
+    def _render_cfg(self):
+        """Render the control flow graph."""
+        try:
+            import matplotlib.pyplot as plt
+            import networkx as nx
+            
+            # Clear previous plot
+            self.figure.clear()
+            self.ax = self.figure.add_subplot(111)
+            
+            # Create NetworkX graph from CFG data
+            G = nx.DiGraph()
+            
+            if 'nodes' in self.cfg_data and 'edges' in self.cfg_data:
+                # Add nodes
+                for node in self.cfg_data['nodes']:
+                    G.add_node(node['id'], 
+                             label=node.get('label', f"0x{node['id']:x}"),
+                             size=node.get('size', 100))
+                
+                # Add edges
+                for edge in self.cfg_data['edges']:
+                    G.add_edge(edge['source'], edge['target'])
+                
+                # Calculate layout
+                if len(G.nodes) > 0:
+                    try:
+                        # Try hierarchical layout first (better for CFGs)
+                        pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
+                    except:
+                        # Fallback to spring layout
+                        pos = nx.spring_layout(G, k=2, iterations=50)
+                    
+                    # Draw nodes
+                    node_colors = []
+                    node_sizes = []
+                    for node in G.nodes():
+                        node_data = G.nodes[node]
+                        # Color nodes based on their properties
+                        if 'entry' in str(node_data.get('label', '')).lower():
+                            node_colors.append('#90EE90')  # Light green for entry
+                        elif 'exit' in str(node_data.get('label', '')).lower() or 'ret' in str(node_data.get('label', '')).lower():
+                            node_colors.append('#FFB6C1')  # Light red for exit
+                        else:
+                            node_colors.append('#87CEEB')  # Sky blue for regular blocks
+                        node_sizes.append(node_data.get('size', 300))
+                    
+                    # Draw the graph
+                    nx.draw_networkx_nodes(G, pos, 
+                                         node_color=node_colors,
+                                         node_size=node_sizes,
+                                         ax=self.ax,
+                                         alpha=0.9)
+                    
+                    nx.draw_networkx_edges(G, pos, 
+                                         edge_color='gray',
+                                         arrows=True,
+                                         arrowsize=20,
+                                         arrowstyle='->',
+                                         ax=self.ax,
+                                         alpha=0.6)
+                    
+                    # Draw labels
+                    labels = nx.get_node_attributes(G, 'label')
+                    nx.draw_networkx_labels(G, pos, labels, 
+                                          font_size=8,
+                                          ax=self.ax)
+                    
+                    # Set title
+                    func_name = self.cfg_data.get('function', 'Unknown Function')
+                    self.ax.set_title(f"Control Flow Graph - {func_name}", fontsize=14, fontweight='bold')
+                    
+                    # Remove axes
+                    self.ax.axis('off')
+                    
+                    # Adjust layout
+                    self.figure.tight_layout()
+                    
+                    # Refresh canvas
+                    self.canvas.draw()
+                else:
+                    self.ax.text(0.5, 0.5, 'No CFG data to display', 
+                               horizontalalignment='center',
+                               verticalalignment='center',
+                               transform=self.ax.transAxes)
+                    self.canvas.draw()
+            
+        except Exception as e:
+            # Handle errors gracefully
+            if self.ax:
+                self.ax.clear()
+                self.ax.text(0.5, 0.5, f'Error rendering CFG:\n{str(e)}', 
+                           horizontalalignment='center',
+                           verticalalignment='center',
+                           transform=self.ax.transAxes)
+                self.canvas.draw()
+            elif hasattr(self, 'cfg_label'):
+                self.cfg_label.setText(f"Error rendering CFG: {str(e)}")
 
 
 class CallGraphWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
@@ -738,6 +859,9 @@ class CallGraphWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
         """Initialize call graph widget."""
         super().__init__(parent)
         self.graph_data = None
+        self.figure = None
+        self.canvas = None
+        self.ax = None
 
         if PYQT_AVAILABLE:
             self.setup_ui()
@@ -745,18 +869,171 @@ class CallGraphWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
     def setup_ui(self):
         """Setup the widget UI."""
         layout = QVBoxLayout(self)
-
-        # Placeholder for call graph
-        self.graph_label = QLabel("Call Graph Visualization")
-        self.graph_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.graph_label)
+        
+        # Try to import matplotlib for visualization
+        try:
+            from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+            from matplotlib.figure import Figure
+            import matplotlib.pyplot as plt
+            
+            # Create matplotlib figure for call graph visualization
+            self.figure = Figure(figsize=(10, 8))
+            self.canvas = FigureCanvas(self.figure)
+            layout.addWidget(self.canvas)
+            
+            # Add toolbar for interaction
+            from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+            self.toolbar = NavigationToolbar(self.canvas, self)
+            layout.addWidget(self.toolbar)
+            
+        except ImportError:
+            # Fallback to label if matplotlib not available
+            self.graph_label = QLabel("Call Graph Visualization\n(Matplotlib not available)")
+            self.graph_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(self.graph_label)
 
     def set_graph_data(self, graph_data):
         """Set call graph data to display."""
         self.graph_data = graph_data
-        # Graph visualization will be rendered when graphing library is available
-        if hasattr(self, 'graph_label'):
+        
+        if self.graph_data and self.canvas:
+            self._render_call_graph()
+        elif hasattr(self, 'graph_label'):
             self.graph_label.setText("Call graph loaded - visualization pending")
+    
+    def _render_call_graph(self):
+        """Render the call graph."""
+        try:
+            import matplotlib.pyplot as plt
+            import networkx as nx
+            
+            # Clear previous plot
+            self.figure.clear()
+            self.ax = self.figure.add_subplot(111)
+            
+            # Create NetworkX graph from call graph data
+            G = nx.DiGraph()
+            
+            if isinstance(self.graph_data, dict):
+                # Handle different data formats
+                if 'nodes' in self.graph_data and 'edges' in self.graph_data:
+                    # Format 1: nodes and edges lists
+                    for node in self.graph_data['nodes']:
+                        node_id = node.get('id', node.get('name', ''))
+                        G.add_node(node_id, 
+                                 label=node.get('label', node.get('name', str(node_id))),
+                                 calls=node.get('calls', 0))
+                    
+                    for edge in self.graph_data['edges']:
+                        G.add_edge(edge['source'], edge['target'])
+                
+                elif 'functions' in self.graph_data:
+                    # Format 2: functions dictionary with call relationships
+                    for func_name, func_data in self.graph_data['functions'].items():
+                        G.add_node(func_name, 
+                                 label=func_name,
+                                 calls=len(func_data.get('calls', [])))
+                        
+                        # Add edges for function calls
+                        for called_func in func_data.get('calls', []):
+                            G.add_edge(func_name, called_func)
+                
+                # Calculate layout
+                if len(G.nodes) > 0:
+                    try:
+                        # Try hierarchical layout first (better for call graphs)
+                        pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
+                    except:
+                        # Fallback to spring layout
+                        pos = nx.spring_layout(G, k=3, iterations=50)
+                    
+                    # Color nodes based on call frequency
+                    node_colors = []
+                    node_sizes = []
+                    for node in G.nodes():
+                        node_data = G.nodes[node]
+                        calls = node_data.get('calls', 0)
+                        
+                        # Color gradient based on call frequency
+                        if calls == 0:
+                            node_colors.append('#FFE4B5')  # Moccasin for leaf functions
+                        elif calls < 3:
+                            node_colors.append('#87CEEB')  # Sky blue for low calls
+                        elif calls < 10:
+                            node_colors.append('#4682B4')  # Steel blue for medium calls
+                        else:
+                            node_colors.append('#191970')  # Midnight blue for high calls
+                        
+                        # Size based on importance
+                        if 'main' in str(node).lower() or 'entry' in str(node).lower():
+                            node_sizes.append(800)
+                        else:
+                            node_sizes.append(300 + calls * 50)
+                    
+                    # Draw the graph
+                    nx.draw_networkx_nodes(G, pos, 
+                                         node_color=node_colors,
+                                         node_size=node_sizes,
+                                         ax=self.ax,
+                                         alpha=0.9)
+                    
+                    nx.draw_networkx_edges(G, pos, 
+                                         edge_color='gray',
+                                         arrows=True,
+                                         arrowsize=15,
+                                         arrowstyle='->',
+                                         ax=self.ax,
+                                         alpha=0.5,
+                                         connectionstyle="arc3,rad=0.1")
+                    
+                    # Draw labels
+                    labels = nx.get_node_attributes(G, 'label')
+                    nx.draw_networkx_labels(G, pos, labels, 
+                                          font_size=7,
+                                          ax=self.ax)
+                    
+                    # Add statistics
+                    total_funcs = len(G.nodes)
+                    total_calls = len(G.edges)
+                    self.ax.set_title(f"Call Graph - {total_funcs} functions, {total_calls} calls", 
+                                    fontsize=14, fontweight='bold')
+                    
+                    # Add legend
+                    from matplotlib.patches import Patch
+                    legend_elements = [
+                        Patch(facecolor='#FFE4B5', label='Leaf function'),
+                        Patch(facecolor='#87CEEB', label='Low calls (1-2)'),
+                        Patch(facecolor='#4682B4', label='Medium calls (3-9)'),
+                        Patch(facecolor='#191970', label='High calls (10+)')
+                    ]
+                    self.ax.legend(handles=legend_elements, loc='upper right', fontsize=8)
+                    
+                    # Remove axes
+                    self.ax.axis('off')
+                    
+                    # Adjust layout
+                    self.figure.tight_layout()
+                    
+                    # Refresh canvas
+                    self.canvas.draw()
+                else:
+                    self.ax.text(0.5, 0.5, 'No call graph data to display', 
+                               horizontalalignment='center',
+                               verticalalignment='center',
+                               transform=self.ax.transAxes)
+                    self.canvas.draw()
+            
+        except Exception as e:
+            # Handle errors gracefully
+            if self.ax:
+                self.ax.clear()
+                self.ax.text(0.5, 0.5, f'Error rendering call graph:\n{str(e)}', 
+                           horizontalalignment='center',
+                           verticalalignment='center',
+                           transform=self.ax.transAxes)
+                self.canvas.draw()
+            elif hasattr(self, 'graph_label'):
+                self.graph_label.setText(f"Error rendering call graph: {str(e)}")
 
 
 class SearchBar(QWidget if PYQT_AVAILABLE else BaseWidget):
@@ -859,12 +1136,15 @@ class ToolPanel(QWidget if PYQT_AVAILABLE else BaseWidget):
 
 
 class HeatmapWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
-    """Widget for displaying data as a heatmap."""
+    """Widget for displaying heatmap data."""
 
     def __init__(self, parent=None):
         """Initialize heatmap widget."""
         super().__init__(parent)
         self.data = None
+        self.figure = None
+        self.canvas = None
+        self.ax = None
 
         if PYQT_AVAILABLE:
             self.setup_ui()
@@ -872,26 +1152,219 @@ class HeatmapWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
     def setup_ui(self):
         """Setup the widget UI."""
         layout = QVBoxLayout(self)
-
-        # Placeholder for heatmap
-        self.heatmap_label = QLabel("Heatmap Visualization")
-        self.heatmap_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.heatmap_label)
+        
+        # Try to import matplotlib for visualization
+        try:
+            from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+            from matplotlib.figure import Figure
+            import matplotlib.pyplot as plt
+            
+            # Create matplotlib figure for heatmap visualization
+            self.figure = Figure(figsize=(10, 8))
+            self.canvas = FigureCanvas(self.figure)
+            layout.addWidget(self.canvas)
+            
+            # Add toolbar for interaction
+            from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+            self.toolbar = NavigationToolbar(self.canvas, self)
+            layout.addWidget(self.toolbar)
+            
+        except ImportError:
+            # Fallback to label if matplotlib not available
+            self.heatmap_label = QLabel("Heatmap Visualization\n(Matplotlib not available)")
+            self.heatmap_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(self.heatmap_label)
 
     def set_data(self, data):
         """Set heatmap data."""
         self.data = data
-        # Heatmap visualization will be rendered when visualization library is available
-        self.update()
+        
+        if self.data and self.canvas:
+            self._render_heatmap()
+        elif hasattr(self, 'heatmap_label'):
+            self.heatmap_label.setText("Heatmap data loaded")
+    
+    def _render_heatmap(self):
+        """Render the heatmap visualization."""
+        try:
+            import matplotlib.pyplot as plt
+            import numpy as np
+            
+            # Clear previous plot
+            self.figure.clear()
+            self.ax = self.figure.add_subplot(111)
+            
+            # Determine data format and render accordingly
+            if isinstance(self.data, dict):
+                # Handle dictionary format with different types
+                data_type = self.data.get('type', 'generic')
+                
+                if data_type == 'binary':
+                    self._render_binary_heatmap()
+                elif data_type == 'frequency':
+                    self._render_frequency_heatmap()
+                elif data_type == 'entropy':
+                    self._render_entropy_heatmap()
+                else:
+                    self._render_generic_heatmap()
+            elif isinstance(self.data, (list, np.ndarray)):
+                # Handle array data directly
+                self._render_array_heatmap()
+            
+            # Refresh canvas
+            self.canvas.draw()
+            
+        except Exception as e:
+            # Handle errors gracefully
+            if self.ax:
+                self.ax.clear()
+                self.ax.text(0.5, 0.5, f'Error rendering heatmap:\n{str(e)}', 
+                           horizontalalignment='center',
+                           verticalalignment='center',
+                           transform=self.ax.transAxes)
+                self.canvas.draw()
+            elif hasattr(self, 'heatmap_label'):
+                self.heatmap_label.setText(f"Error rendering heatmap: {str(e)}")
+    
+    def _render_binary_heatmap(self):
+        """Render binary data as heatmap."""
+        import numpy as np
+        
+        binary_data = self.data.get('data', [])
+        if binary_data:
+            # Convert binary data to 2D array for visualization
+            bytes_per_row = self.data.get('bytes_per_row', 16)
+            rows = []
+            
+            for i in range(0, len(binary_data), bytes_per_row):
+                row = binary_data[i:i+bytes_per_row]
+                # Pad row if necessary
+                if len(row) < bytes_per_row:
+                    row.extend([0] * (bytes_per_row - len(row)))
+                rows.append(row)
+            
+            # Create heatmap
+            heatmap_data = np.array(rows)
+            im = self.ax.imshow(heatmap_data, cmap='hot', aspect='auto', interpolation='nearest')
+            
+            # Add colorbar
+            self.figure.colorbar(im, ax=self.ax, label='Byte Value')
+            
+            # Labels
+            self.ax.set_title(self.data.get('title', 'Binary Data Heatmap'))
+            self.ax.set_xlabel('Byte Offset')
+            self.ax.set_ylabel('Row')
+    
+    def _render_frequency_heatmap(self):
+        """Render frequency data as heatmap."""
+        import numpy as np
+        
+        freq_data = self.data.get('data', {})
+        if freq_data:
+            # Create frequency matrix
+            categories = list(freq_data.keys())
+            values = list(freq_data.values())
+            
+            # Reshape for heatmap if needed
+            if isinstance(values[0], list):
+                # 2D frequency data
+                heatmap_data = np.array(values)
+            else:
+                # 1D frequency data - create rows
+                heatmap_data = np.array([values])
+            
+            im = self.ax.imshow(heatmap_data, cmap='YlOrRd', aspect='auto')
+            self.figure.colorbar(im, ax=self.ax, label='Frequency')
+            
+            # Set labels
+            self.ax.set_xticks(range(len(categories)))
+            self.ax.set_xticklabels(categories, rotation=45, ha='right')
+            self.ax.set_title(self.data.get('title', 'Frequency Heatmap'))
+    
+    def _render_entropy_heatmap(self):
+        """Render entropy data as heatmap."""
+        import numpy as np
+        
+        entropy_data = self.data.get('data', [])
+        block_size = self.data.get('block_size', 256)
+        
+        if entropy_data:
+            # Reshape entropy values into 2D grid
+            grid_size = int(np.sqrt(len(entropy_data)))
+            if grid_size * grid_size < len(entropy_data):
+                grid_size += 1
+            
+            # Pad data if necessary
+            padded_data = entropy_data + [0] * (grid_size * grid_size - len(entropy_data))
+            heatmap_data = np.array(padded_data).reshape(grid_size, grid_size)
+            
+            im = self.ax.imshow(heatmap_data, cmap='viridis', aspect='auto', 
+                               vmin=0, vmax=8)  # Entropy range 0-8 bits
+            self.figure.colorbar(im, ax=self.ax, label='Entropy (bits)')
+            
+            self.ax.set_title(f'Entropy Heatmap (block size: {block_size} bytes)')
+            self.ax.set_xlabel('Block X')
+            self.ax.set_ylabel('Block Y')
+    
+    def _render_generic_heatmap(self):
+        """Render generic heatmap data."""
+        import numpy as np
+        
+        heatmap_data = self.data.get('data', [])
+        if heatmap_data:
+            # Convert to numpy array
+            if not isinstance(heatmap_data, np.ndarray):
+                heatmap_data = np.array(heatmap_data)
+            
+            # Ensure 2D
+            if heatmap_data.ndim == 1:
+                heatmap_data = heatmap_data.reshape(1, -1)
+            
+            im = self.ax.imshow(heatmap_data, cmap='plasma', aspect='auto')
+            self.figure.colorbar(im, ax=self.ax)
+            
+            self.ax.set_title(self.data.get('title', 'Heatmap'))
+            
+            # Add axis labels if provided
+            if 'xlabels' in self.data:
+                self.ax.set_xticks(range(len(self.data['xlabels'])))
+                self.ax.set_xticklabels(self.data['xlabels'], rotation=45, ha='right')
+            if 'ylabels' in self.data:
+                self.ax.set_yticks(range(len(self.data['ylabels'])))
+                self.ax.set_yticklabels(self.data['ylabels'])
+    
+    def _render_array_heatmap(self):
+        """Render array data as heatmap."""
+        import numpy as np
+        
+        # Convert to numpy array
+        heatmap_data = np.array(self.data)
+        
+        # Ensure 2D
+        if heatmap_data.ndim == 1:
+            # Try to make it square-ish
+            size = int(np.sqrt(len(heatmap_data)))
+            if size * size == len(heatmap_data):
+                heatmap_data = heatmap_data.reshape(size, size)
+            else:
+                # Just make it a row
+                heatmap_data = heatmap_data.reshape(1, -1)
+        
+        im = self.ax.imshow(heatmap_data, cmap='coolwarm', aspect='auto')
+        self.figure.colorbar(im, ax=self.ax)
+        self.ax.set_title('Data Heatmap')
 
 
 class GraphWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
-    """Generic graph visualization widget."""
+    """Widget for displaying generic graphs."""
 
     def __init__(self, parent=None):
         """Initialize graph widget."""
         super().__init__(parent)
         self.graph_data = None
+        self.figure = None
+        self.canvas = None
+        self.ax = None
 
         if PYQT_AVAILABLE:
             self.setup_ui()
@@ -899,27 +1372,184 @@ class GraphWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
     def setup_ui(self):
         """Setup the widget UI."""
         layout = QVBoxLayout(self)
+        
+        # Try to import matplotlib for visualization
+        try:
+            from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+            from matplotlib.figure import Figure
+            import matplotlib.pyplot as plt
+            
+            # Create matplotlib figure for graph visualization
+            self.figure = Figure(figsize=(10, 8))
+            self.canvas = FigureCanvas(self.figure)
+            layout.addWidget(self.canvas)
+            
+            # Add toolbar for interaction
+            from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+            self.toolbar = NavigationToolbar(self.canvas, self)
+            layout.addWidget(self.toolbar)
+            
+        except ImportError:
+            # Fallback to label if matplotlib not available
+            self.graph_label = QLabel("Graph Visualization\n(Matplotlib not available)")
+            self.graph_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(self.graph_label)
 
-        # Placeholder for graph
-        self.graph_label = QLabel("Graph Visualization")
-        self.graph_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.graph_label)
-
-    def set_graph_data(self, data):
-        """Set graph data."""
-        self.graph_data = data
-        # Graph visualization will be rendered when graphing library is available
-        if hasattr(self, 'graph_label'):
-            self.graph_label.setText("Graph data loaded - visualization pending")
+    def set_graph_data(self, graph_data):
+        """Set graph data to display."""
+        self.graph_data = graph_data
+        
+        if self.graph_data and self.canvas:
+            self._render_graph()
+        elif hasattr(self, 'graph_label'):
+            self.graph_label.setText("Graph loaded - visualization pending")
+    
+    def _render_graph(self):
+        """Render the generic graph."""
+        try:
+            import matplotlib.pyplot as plt
+            import networkx as nx
+            
+            # Clear previous plot
+            self.figure.clear()
+            self.ax = self.figure.add_subplot(111)
+            
+            # Determine graph type and render accordingly
+            if isinstance(self.graph_data, dict):
+                graph_type = self.graph_data.get('type', 'generic')
+                
+                if graph_type == 'line':
+                    self._render_line_graph()
+                elif graph_type == 'bar':
+                    self._render_bar_graph()
+                elif graph_type == 'scatter':
+                    self._render_scatter_plot()
+                elif graph_type == 'network':
+                    self._render_network_graph()
+                else:
+                    self._render_generic_plot()
+            else:
+                # Handle simple data arrays
+                self._render_simple_plot()
+                
+            # Refresh canvas
+            self.canvas.draw()
+            
+        except Exception as e:
+            # Handle errors gracefully
+            if self.ax:
+                self.ax.clear()
+                self.ax.text(0.5, 0.5, f'Error rendering graph:\n{str(e)}', 
+                           horizontalalignment='center',
+                           verticalalignment='center',
+                           transform=self.ax.transAxes)
+                self.canvas.draw()
+            elif hasattr(self, 'graph_label'):
+                self.graph_label.setText(f"Error rendering graph: {str(e)}")
+    
+    def _render_line_graph(self):
+        """Render a line graph."""
+        data = self.graph_data.get('data', {})
+        x = data.get('x', [])
+        y = data.get('y', [])
+        
+        if x and y:
+            self.ax.plot(x, y, 'b-', linewidth=2, markersize=8, marker='o')
+            self.ax.set_xlabel(self.graph_data.get('xlabel', 'X'))
+            self.ax.set_ylabel(self.graph_data.get('ylabel', 'Y'))
+            self.ax.set_title(self.graph_data.get('title', 'Line Graph'))
+            self.ax.grid(True, alpha=0.3)
+    
+    def _render_bar_graph(self):
+        """Render a bar graph."""
+        data = self.graph_data.get('data', {})
+        labels = data.get('labels', [])
+        values = data.get('values', [])
+        
+        if labels and values:
+            self.ax.bar(labels, values, color='skyblue', edgecolor='navy', alpha=0.7)
+            self.ax.set_xlabel(self.graph_data.get('xlabel', 'Categories'))
+            self.ax.set_ylabel(self.graph_data.get('ylabel', 'Values'))
+            self.ax.set_title(self.graph_data.get('title', 'Bar Graph'))
+            self.ax.grid(True, axis='y', alpha=0.3)
+    
+    def _render_scatter_plot(self):
+        """Render a scatter plot."""
+        data = self.graph_data.get('data', {})
+        x = data.get('x', [])
+        y = data.get('y', [])
+        
+        if x and y:
+            self.ax.scatter(x, y, c='blue', alpha=0.6, s=50)
+            self.ax.set_xlabel(self.graph_data.get('xlabel', 'X'))
+            self.ax.set_ylabel(self.graph_data.get('ylabel', 'Y'))
+            self.ax.set_title(self.graph_data.get('title', 'Scatter Plot'))
+            self.ax.grid(True, alpha=0.3)
+    
+    def _render_network_graph(self):
+        """Render a network graph."""
+        import networkx as nx
+        
+        # Create NetworkX graph
+        G = nx.Graph()
+        
+        nodes = self.graph_data.get('nodes', [])
+        edges = self.graph_data.get('edges', [])
+        
+        # Add nodes and edges
+        for node in nodes:
+            G.add_node(node.get('id', node))
+        
+        for edge in edges:
+            G.add_edge(edge.get('source', edge[0]), edge.get('target', edge[1]))
+        
+        # Layout
+        pos = nx.spring_layout(G)
+        
+        # Draw
+        nx.draw(G, pos, ax=self.ax, with_labels=True, 
+                node_color='lightblue', node_size=500,
+                font_size=10, font_weight='bold',
+                edge_color='gray', width=2)
+        
+        self.ax.set_title(self.graph_data.get('title', 'Network Graph'))
+        self.ax.axis('off')
+    
+    def _render_generic_plot(self):
+        """Render a generic plot based on available data."""
+        data = self.graph_data.get('data', {})
+        
+        # Try to intelligently render based on data structure
+        if 'x' in data and 'y' in data:
+            self.ax.plot(data['x'], data['y'])
+        elif 'values' in data:
+            self.ax.plot(data['values'])
+        else:
+            self.ax.text(0.5, 0.5, 'Unsupported data format', 
+                       horizontalalignment='center',
+                       verticalalignment='center',
+                       transform=self.ax.transAxes)
+        
+        self.ax.set_title(self.graph_data.get('title', 'Graph'))
+    
+    def _render_simple_plot(self):
+        """Render simple array data."""
+        if isinstance(self.graph_data, (list, tuple)):
+            self.ax.plot(self.graph_data)
+            self.ax.set_title('Data Plot')
+            self.ax.grid(True, alpha=0.3)
 
 
 class TimelineWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
-    """Widget for displaying timeline data."""
+    """Widget for displaying timeline of events."""
 
     def __init__(self, parent=None):
         """Initialize timeline widget."""
         super().__init__(parent)
         self.events = []
+        self.figure = None
+        self.canvas = None
+        self.ax = None
 
         if PYQT_AVAILABLE:
             self.setup_ui()
@@ -927,17 +1557,212 @@ class TimelineWidget(QWidget if PYQT_AVAILABLE else BaseWidget):
     def setup_ui(self):
         """Setup the widget UI."""
         layout = QVBoxLayout(self)
-
-        # Placeholder for timeline
-        self.timeline_label = QLabel("Timeline Visualization")
-        self.timeline_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.timeline_label)
+        
+        # Try to import matplotlib for visualization
+        try:
+            from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+            from matplotlib.figure import Figure
+            import matplotlib.pyplot as plt
+            
+            # Create matplotlib figure for timeline visualization
+            self.figure = Figure(figsize=(12, 6))
+            self.canvas = FigureCanvas(self.figure)
+            layout.addWidget(self.canvas)
+            
+            # Add toolbar for interaction
+            from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+            self.toolbar = NavigationToolbar(self.canvas, self)
+            layout.addWidget(self.toolbar)
+            
+            # Initial empty timeline
+            self._render_timeline()
+            
+        except ImportError:
+            # Fallback to label if matplotlib not available
+            self.timeline_label = QLabel("Timeline Visualization\n(Matplotlib not available)")
+            self.timeline_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(self.timeline_label)
 
     def add_event(self, timestamp, event):
-        """Add event to timeline."""
-        self.events.append((timestamp, event))
-        # Timeline visualization will be updated when rendering library is available
-        if hasattr(self, 'timeline_label'):
+        """Add an event to the timeline."""
+        self.events.append({'timestamp': timestamp, 'event': event})
+        # Sort events by timestamp
+        self.events.sort(key=lambda x: x['timestamp'])
+        
+        if self.canvas:
+            self._render_timeline()
+        elif hasattr(self, 'timeline_label'):
+            self.timeline_label.setText(f"Timeline: {len(self.events)} events")
+    
+    def _render_timeline(self):
+        """Render the timeline visualization."""
+        try:
+            import matplotlib.pyplot as plt
+            import matplotlib.dates as mdates
+            from datetime import datetime
+            import numpy as np
+            
+            # Clear previous plot
+            self.figure.clear()
+            self.ax = self.figure.add_subplot(111)
+            
+            if not self.events:
+                # Show empty timeline message
+                self.ax.text(0.5, 0.5, 'No events to display\nAdd events using add_event()', 
+                           horizontalalignment='center',
+                           verticalalignment='center',
+                           transform=self.ax.transAxes,
+                           fontsize=12)
+                self.ax.set_title('Event Timeline')
+                self.ax.axis('off')
+            else:
+                # Prepare data for visualization
+                timestamps = []
+                labels = []
+                colors = []
+                levels = []
+                
+                # Assign levels to avoid overlapping
+                level_assignments = {}
+                current_levels = []
+                
+                for i, event in enumerate(self.events):
+                    timestamp = event['timestamp']
+                    event_text = event['event']
+                    
+                    # Convert timestamp to datetime if it's a number
+                    if isinstance(timestamp, (int, float)):
+                        # Assume it's a Unix timestamp
+                        timestamp = datetime.fromtimestamp(timestamp)
+                    elif not isinstance(timestamp, datetime):
+                        # Try to parse string timestamp
+                        try:
+                            timestamp = datetime.fromisoformat(str(timestamp))
+                        except:
+                            # Use index as fallback
+                            timestamp = datetime.fromtimestamp(i * 3600)
+                    
+                    timestamps.append(timestamp)
+                    
+                    # Truncate long labels
+                    label = event_text[:50] + '...' if len(event_text) > 50 else event_text
+                    labels.append(label)
+                    
+                    # Assign color based on event type
+                    if 'error' in event_text.lower():
+                        colors.append('red')
+                    elif 'warning' in event_text.lower():
+                        colors.append('orange')
+                    elif 'success' in event_text.lower() or 'complete' in event_text.lower():
+                        colors.append('green')
+                    elif 'start' in event_text.lower() or 'begin' in event_text.lower():
+                        colors.append('blue')
+                    else:
+                        colors.append('gray')
+                    
+                    # Assign vertical level to avoid overlap
+                    level = i % 5  # Simple cycling through 5 levels
+                    levels.append(level)
+                
+                # Create the timeline plot
+                fig_height = max(6, len(set(levels)) * 1.5)
+                self.figure.set_figheight(fig_height)
+                
+                # Plot timeline base line
+                self.ax.axhline(y=0, color='black', linewidth=2, alpha=0.7)
+                
+                # Plot events
+                for i, (ts, label, color, level) in enumerate(zip(timestamps, labels, colors, levels)):
+                    y_pos = (level - 2) * 0.5  # Center around y=0
+                    
+                    # Draw stem
+                    self.ax.plot([ts, ts], [0, y_pos], color=color, linewidth=1, alpha=0.5)
+                    
+                    # Draw event marker
+                    self.ax.scatter(ts, y_pos, color=color, s=100, zorder=3, edgecolors='black', linewidth=1)
+                    
+                    # Add label
+                    ha = 'right' if i % 2 == 0 else 'left'
+                    offset = -10 if i % 2 == 0 else 10
+                    self.ax.annotate(label, (ts, y_pos), 
+                                   xytext=(offset, 5), 
+                                   textcoords='offset points',
+                                   ha=ha,
+                                   fontsize=8,
+                                   bbox=dict(boxstyle='round,pad=0.3', 
+                                           facecolor=color, 
+                                           alpha=0.3,
+                                           edgecolor=color),
+                                   arrowprops=dict(arrowstyle='->', 
+                                                 connectionstyle='arc3,rad=0.3',
+                                                 color=color,
+                                                 alpha=0.7))
+                
+                # Format x-axis
+                self.ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
+                self.ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+                plt.setp(self.ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+                
+                # Set labels and title
+                self.ax.set_xlabel('Time')
+                self.ax.set_ylabel('Events')
+                self.ax.set_title(f'Event Timeline ({len(self.events)} events)')
+                
+                # Set y-axis limits
+                y_margin = 0.5
+                if levels:
+                    self.ax.set_ylim(min(levels) * 0.5 - y_margin, max(levels) * 0.5 + y_margin)
+                
+                # Add grid
+                self.ax.grid(True, axis='x', alpha=0.3)
+                
+                # Remove y-axis ticks
+                self.ax.set_yticks([])
+                
+                # Add legend
+                from matplotlib.patches import Patch
+                legend_elements = [
+                    Patch(facecolor='blue', label='Start/Begin'),
+                    Patch(facecolor='green', label='Success/Complete'),
+                    Patch(facecolor='orange', label='Warning'),
+                    Patch(facecolor='red', label='Error'),
+                    Patch(facecolor='gray', label='Other')
+                ]
+                self.ax.legend(handles=legend_elements, loc='upper right', fontsize=8)
+            
+            # Adjust layout
+            self.figure.tight_layout()
+            
+            # Refresh canvas
+            self.canvas.draw()
+            
+        except Exception as e:
+            # Handle errors gracefully
+            if self.ax:
+                self.ax.clear()
+                self.ax.text(0.5, 0.5, f'Error rendering timeline:\n{str(e)}', 
+                           horizontalalignment='center',
+                           verticalalignment='center',
+                           transform=self.ax.transAxes)
+                self.canvas.draw()
+            elif hasattr(self, 'timeline_label'):
+                self.timeline_label.setText(f"Error rendering timeline: {str(e)}")
+    
+    def clear_events(self):
+        """Clear all events from the timeline."""
+        self.events = []
+        if self.canvas:
+            self._render_timeline()
+        elif hasattr(self, 'timeline_label'):
+            self.timeline_label.setText("Timeline: 0 events")
+    
+    def set_events(self, events_list):
+        """Set multiple events at once."""
+        self.events = events_list
+        self.events.sort(key=lambda x: x['timestamp'])
+        if self.canvas:
+            self._render_timeline()
+        elif hasattr(self, 'timeline_label'):
             self.timeline_label.setText(f"Timeline: {len(self.events)} events")
 
 

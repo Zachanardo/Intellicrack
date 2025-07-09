@@ -417,7 +417,7 @@ class QEMUTestResultsDialog(QDialog):
             issues_item = QTreeWidgetItem(["Issues Detected", ""])
             for error in results.errors:
                 error_item = QTreeWidgetItem(["Error", error])
-                error_item.setForeground(1, Qt.red)
+                error_item.setForeground(1, Qt.GlobalColor.red)
                 issues_item.addChild(error_item)
             for warning in results.warnings:
                 warning_item = QTreeWidgetItem(["Warning", warning])

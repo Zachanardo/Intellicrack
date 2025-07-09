@@ -1,6 +1,11 @@
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
+from PyQt6.QtWidgets import (
+    QWidget, QHBoxLayout, QVBoxLayout, QSplitter, QGroupBox,
+    QLabel, QPushButton, QLineEdit, QTextEdit, QComboBox,
+    QCheckBox, QSpinBox, QDoubleSpinBox, QSlider, QTabWidget,
+    QFontComboBox, QFileDialog, QMessageBox, QColorDialog
+)
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont, QColor
 from .base_tab import BaseTab
 import os
 import json
@@ -44,7 +49,7 @@ class SettingsTab(BaseTab):
         
         # Settings tabs
         self.settings_tabs = QTabWidget()
-        self.settings_tabs.setTabPosition(QTabWidget.North)
+        self.settings_tabs.setTabPosition(QTabWidget.TabPosition.North)
         
         # Add settings categories
         self.settings_tabs.addTab(self.create_appearance_tab(), "Appearance")

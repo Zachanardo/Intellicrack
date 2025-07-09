@@ -31,8 +31,8 @@ from typing import Any, Dict
 
 from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor, QFont
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
-    QAction,
     QCheckBox,
     QComboBox,
     QDialog,

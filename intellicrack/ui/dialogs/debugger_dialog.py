@@ -732,7 +732,7 @@ class CodeEditorWidget(QTextEdit):
         from PyQt6.QtGui import QPainter
 
         painter = QPainter(self.line_number_area)
-        painter.fillRect(event.rect(), Qt.lightGray)
+        painter.fillRect(event.rect(), Qt.GlobalColor.lightGray)
 
         block = self.firstVisibleBlock()
         block_number = block.blockNumber()
@@ -747,9 +747,9 @@ class CodeEditorWidget(QTextEdit):
                 if block_number + 1 in self.breakpoint_lines:
                     painter.fillRect(0, top, self.line_number_area.width(),
                                    self.fontMetrics().height(), QColor(255, 0, 0, 50))
-                    painter.setPen(Qt.red)
+                    painter.setPen(Qt.GlobalColor.red)
                 else:
-                    painter.setPen(Qt.black)
+                    painter.setPen(Qt.GlobalColor.black)
 
                 painter.drawText(0, top, self.line_number_area.width() - 3,
                                self.fontMetrics().height(),
@@ -774,7 +774,7 @@ class CodeEditorWidget(QTextEdit):
         if not self.isReadOnly():
             selection = QTextEdit.ExtraSelection()
 
-            line_color = QColor(Qt.yellow).lighter(160)
+            line_color = QColor(Qt.GlobalColor.yellow).lighter(160)
 
             selection.format.setBackground(line_color)
             selection.format.setProperty(QTextFormat.FullWidthSelection, True)
@@ -803,7 +803,7 @@ class CodeEditorWidget(QTextEdit):
         extra_selections = []
 
         selection = QTextEdit.ExtraSelection()
-        line_color = QColor(Qt.green).lighter(160)
+        line_color = QColor(Qt.GlobalColor.green).lighter(160)
         selection.format.setBackground(line_color)
         selection.format.setProperty(QTextFormat.FullWidthSelection, True)
         selection.cursor = cursor

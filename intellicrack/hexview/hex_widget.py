@@ -421,13 +421,13 @@ class HexViewerWidget(QAbstractScrollArea):
         painter.setFont(self.font())
 
         # Add a border around the viewport for debugging
-        painter.setPen(Qt.darkGray)
+        painter.setPen(Qt.GlobalColor.darkGray)
         painter.drawRect(0, 0, self.viewport().width()-1, self.viewport().height()-1)
 
         # Display debug info at the top
         file_size = self.file_handler.get_file_size()
         debug_text = f"File: {self.file_path} | Size: {file_size} bytes"
-        painter.setPen(Qt.blue)
+        painter.setPen(Qt.GlobalColor.blue)
         painter.drawText(10, 15, debug_text)
 
         # Calculate visible region
@@ -447,7 +447,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Safe calculation of end row and offset
         if file_size <= 0:
             # Handle empty file
-            painter.setPen(Qt.red)
+            painter.setPen(Qt.GlobalColor.red)
             painter.drawText(20, 60, "Empty file (0 bytes)")
             return
 
@@ -462,12 +462,12 @@ class HexViewerWidget(QAbstractScrollArea):
             painter.drawText(10, 45, offset_debug)
 
             if size <= 0:
-                painter.setPen(Qt.red)
+                painter.setPen(Qt.GlobalColor.red)
                 painter.drawText(20, 75, f"Invalid read size: {size} (rows {start_row}-{end_row})")
                 return
         except Exception as calc_error:
             logger.error("Exception in hex_widget: %s", calc_error)
-            painter.setPen(Qt.red)
+            painter.setPen(Qt.GlobalColor.red)
             painter.drawText(20, 60, f"Calculation error: {str(calc_error)}")
             return
 
@@ -481,22 +481,22 @@ class HexViewerWidget(QAbstractScrollArea):
             if not data:
                 msg = f"No data read at offset {start_offset}, size {size}"
                 logger.warning(msg)
-                painter.setPen(Qt.red)
+                painter.setPen(Qt.GlobalColor.red)
                 painter.drawText(20, 90, msg)
                 return
 
             data_debug = f"Read: {len(data)} bytes | First bytes: {data[:8].hex(' ')}"
-            painter.setPen(Qt.green)
+            painter.setPen(Qt.GlobalColor.green)
             painter.drawText(10, 60, data_debug)
         except (OSError, ValueError, RuntimeError) as e:
             logger.error(f"Exception reading data: {e}", exc_info=True)
-            painter.setPen(Qt.red)
+            painter.setPen(Qt.GlobalColor.red)
             painter.drawText(20, 90, f"Error reading data: {str(e)}")
             return
 
         # Now continue with actual rendering
         # Draw a test pattern to verify rendering is happening
-        painter.setPen(Qt.red)
+        painter.setPen(Qt.GlobalColor.red)
         painter.drawRect(10, 100, 100, 100)
         painter.drawText(20, 120, "TEST PATTERN")
 
@@ -552,14 +552,14 @@ class HexViewerWidget(QAbstractScrollArea):
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error rendering row at offset %s: %s", row_offset, e)
                     # Draw error indicator
-                    painter.setPen(Qt.red)
+                    painter.setPen(Qt.GlobalColor.red)
                     painter.drawText(10, y, f"Error: {str(e)[:30]}...")
 
                 y += self.char_height
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in row rendering loop: %s", e)
             # Draw a final error indicator at the top
-            painter.setPen(Qt.red)
+            painter.setPen(Qt.GlobalColor.red)
             painter.drawText(10, 80, f"Error in rendering: {str(e)[:50]}...")
 
     def draw_header(self, painter: QPainter, h_scroll: int):
@@ -587,7 +587,7 @@ class HexViewerWidget(QAbstractScrollArea):
         painter.drawRect(address_header_rect)
 
         # Draw separator line with stronger visibility
-        painter.setPen(QPen(Qt.darkGray, 1, Qt.SolidLine))
+        painter.setPen(QPen(Qt.GlobalColor.darkGray, 1, Qt.SolidLine))
         painter.drawLine(self.address_width, 0, self.address_width, self.header_height)
 
         # Draw data column headers based on view mode
@@ -678,7 +678,7 @@ class HexViewerWidget(QAbstractScrollArea):
             painter.drawText(addr_text_rect, Qt.AlignRight | Qt.AlignVCenter | Qt.TextDontClip, f"{offset:08X}")
 
             # Draw separator with better visibility
-            painter.setPen(QPen(Qt.darkGray, 1, Qt.SolidLine))
+            painter.setPen(QPen(Qt.GlobalColor.darkGray, 1, Qt.SolidLine))
             painter.drawLine(self.address_width, y, self.address_width, y + self.char_height)
 
             # Get highlights for this row
@@ -686,7 +686,7 @@ class HexViewerWidget(QAbstractScrollArea):
             highlights = self.highlighter.get_highlights_for_region(offset, row_end)
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Exception in draw_hex_row setup: %s", e)
-            painter.setPen(Qt.red)
+            painter.setPen(Qt.GlobalColor.red)
             painter.drawText(10, y, f"Error in hex row: {str(e)[:30]}...")
             return
 
@@ -1631,7 +1631,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # For other keys, fall back to parent implementation
         super().keyPressEvent(event)
 
-    def handle_navigation_key(self, key: int, modifiers: Qt.KeyboardModifiers):
+    def handle_navigation_key(self, key: int, modifiers: Qt.KeyboardModifier):
         """Handle navigation key events with modifier key support."""
         file_size = self.file_handler.get_file_size()
         ctrl_pressed = bool(modifiers & Qt.ControlModifier)

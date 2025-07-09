@@ -5678,6 +5678,10 @@ def _check_intercepted_traffic(proxy_server):
                 pass
 
             try:
+                # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
+                import os
+                os.environ['MKL_THREADING_LAYER'] = 'GNU'
+                
                 import tensorflow as tf
                 if tf.config.list_physical_devices('GPU'):
                     gpu_frameworks['tensorflow_gpu'] = True
@@ -9308,6 +9312,10 @@ def load_ai_model(model_path):
         # Try TensorFlow/Keras models
         if ext in ['.h5', '.keras']:
             try:
+                # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
+                import os
+                os.environ['MKL_THREADING_LAYER'] = 'GNU'
+                
                 import tensorflow as tf
                 if hasattr(tf, 'keras'):
                     model = tf.keras.models.load_model(model_path)
@@ -10531,7 +10539,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         print("[INIT] Toolbar created")
 
         print("[INIT] Creating main splitter...")
-        self.main_splitter = QSplitter(Qt.Horizontal)
+        self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
         print("[INIT] Adding splitter to layout...")
         self.main_layout.addWidget(self.main_splitter)
         print("[INIT] Splitter added to layout")
@@ -10541,7 +10549,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         print("[INIT] Tab widget created")
         # Style main tabs differently from sub-tabs to avoid visual confusion
         print("[INIT] Setting tab position...")
-        self.tabs.setTabPosition(QTabWidget.North)
+        self.tabs.setTabPosition(QTabWidget.TabPosition.North)
         print("[INIT] Setting tabs closable...")
         self.tabs.setTabsClosable(False)
         print("[INIT] Applying theme stylesheet...")
@@ -10556,7 +10564,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.tabs.setStyleSheet("QTabBar::tab { padding: 8px 16px; font-weight: bold; }")
 
         print("[INIT] Setting additional tab properties...")
-        self.tabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        self.tabs.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         self.tabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         print("[INIT] Tab properties set")
         print("[INIT] Adding tabs to splitter...")
@@ -10738,7 +10746,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
     def setup_project_dashboard_tab(self):
         """Sets up the Project & Dashboard tab with file management, project overview, and quick actions."""
         # Create main layout
-        layout = QVBoxLayout(self.project_dashboard_tab)
+        layout = QVBoxLayout(self.dashboard_tab)
 
         # Project Controls section
         project_controls_group = QGroupBox("Project Controls")
@@ -10937,7 +10945,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         # Create sub-tabs for the Analysis tab
         analysis_subtabs = QTabWidget()
-        analysis_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        analysis_subtabs.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         analysis_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
 
         # Create individual sub-tab widgets
@@ -11439,7 +11447,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         # Create sub-tabs for the Patching & Exploitation tab
         patching_subtabs = QTabWidget()
-        patching_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        patching_subtabs.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         patching_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
 
         # Create individual sub-tab widgets
@@ -11872,7 +11880,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         # Create sub-tabs for the AI Assistant tab
         ai_subtabs = QTabWidget()
-        ai_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        ai_subtabs.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         ai_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
 
         # Create individual sub-tab widgets
@@ -12010,7 +12018,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         # Create sub-tabs for the NetAnalysis & Emulation tab
         net_subtabs = QTabWidget()
-        net_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        net_subtabs.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         net_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
 
         # Create individual sub-tab widgets
@@ -12716,7 +12724,7 @@ class Plugin:
 
         # Create sub-tabs for the Tools & Plugins tab
         tools_subtabs = QTabWidget()
-        tools_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        tools_subtabs.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         tools_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
 
         # Create individual sub-tab widgets
@@ -12817,7 +12825,7 @@ class Plugin:
         # Inner tabs for plugin types
         plugin_subtabs = QTabWidget()
         plugin_subtabs.setToolTip("Organize plugins by type for easy management")
-        plugin_subtabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        plugin_subtabs.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         plugin_subtabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
         plugin_subtabs.setStyleSheet("""
             QTabWidget::pane {
@@ -13225,7 +13233,7 @@ class Plugin:
         layout = QVBoxLayout()
 
         # Create sidebar layout with tool selection
-        main_splitter = QSplitter(Qt.Horizontal)
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left sidebar for tool selection
         tool_sidebar = QWidget()
@@ -13410,7 +13418,7 @@ class Plugin:
         disasm_layout.addWidget(disasm_controls_group)
 
         # Disassembly view with split layout
-        disasm_view_splitter = QSplitter(Qt.Horizontal)
+        disasm_view_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Function list
         function_list_group = QGroupBox("Functions")
@@ -13420,8 +13428,17 @@ class Plugin:
         function_filter.setPlaceholderText("Filter functions...")
 
         function_list = QListWidget()
-        for i in range(10):  # Placeholder items
-            function_list.addItem(f"function_{i:04x}(...)")
+        # Load real functions from binary analysis
+        if hasattr(self, 'current_analysis') and self.current_analysis:
+            functions = self.current_analysis.get('functions', [])
+            for func in functions[:50]:  # Limit to first 50 for performance
+                name = func.get('name', f"sub_{func.get('address', 0):x}")
+                addr = func.get('address', 0)
+                size = func.get('size', 0)
+                function_list.addItem(f"{name} (0x{addr:x}, {size} bytes)")
+        else:
+            # Show informative message if no analysis available
+            function_list.addItem("No functions loaded - analyze a binary first")
 
         function_list_layout.addWidget(function_filter)
         function_list_layout.addWidget(function_list)
@@ -13479,7 +13496,7 @@ class Plugin:
 
         # Structure view with tabs
         struct_tabs = QTabWidget()
-        struct_tabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        struct_tabs.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         struct_tabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
 
         # Headers tab
@@ -13700,7 +13717,7 @@ class Plugin:
 
         # Create tab widget for network tools
         network_tabs = QTabWidget()
-        network_tabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        network_tabs.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         network_tabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
 
         # 1. Traffic Analysis tab
@@ -13756,7 +13773,7 @@ class Plugin:
         traffic_layout.addWidget(capture_group)
 
         # Traffic display
-        traffic_display_splitter = QSplitter(Qt.Vertical)
+        traffic_display_splitter = QSplitter(Qt.Orientation.Vertical)
 
         # Packet list
         packet_list = QTableWidget()
@@ -13987,7 +14004,7 @@ class Plugin:
         intercept_buttons_layout.addWidget(clear_intercept_btn)
 
         # Interception display (request/response)
-        intercept_display = QSplitter(Qt.Vertical)
+        intercept_display = QSplitter(Qt.Orientation.Vertical)
 
         # Request/response list
         request_list = QTableWidget()
@@ -14008,7 +14025,7 @@ class Plugin:
 
         # Request/response editor
         editor_tabs = QTabWidget()
-        editor_tabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        editor_tabs.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         editor_tabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
 
         # Request tab
@@ -14105,7 +14122,7 @@ class Plugin:
         layout.addLayout(header_layout)
 
         # Create main two-panel layout
-        plugin_splitter = QSplitter(Qt.Horizontal)
+        plugin_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left panel: Categories
         category_panel = QWidget()
@@ -14163,7 +14180,7 @@ class Plugin:
         plugins_layout = QVBoxLayout(plugins_panel)
 
         # Plugin list and details splitter
-        content_splitter = QSplitter(Qt.Vertical)
+        content_splitter = QSplitter(Qt.Orientation.Vertical)
 
         # Plugin list
         plugin_list = QTableWidget()
@@ -14323,7 +14340,7 @@ class Plugin:
         layout = QVBoxLayout()
 
         # Create main splitter to adjust space between assistant and logs
-        main_splitter = QSplitter(Qt.Vertical)
+        main_splitter = QSplitter(Qt.Orientation.Vertical)
 
         # --- ASSISTANT SECTION ---
         assistant_widget = QWidget()
@@ -14872,7 +14889,7 @@ Description: {results.get('description', 'License bypass successful')}"""
 
         # --- MAIN DASHBOARD CONTENT ---
         # Create two columns with a splitter
-        dashboard_splitter = QSplitter(Qt.Horizontal)
+        dashboard_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left column widgets
         left_column = QWidget()
@@ -15133,12 +15150,12 @@ Description: {results.get('description', 'License bypass successful')}"""
     def _create_icon_pixmap(self, size=64):
         """Create a blank pixmap for icons when the actual icon is missing."""
         pixmap = QPixmap(size, size)
-        pixmap.fill(Qt.transparent)
+        pixmap.fill(Qt.GlobalColor.transparent)
 
         painter = QPainter(pixmap)
-        painter.setPen(QPen(Qt.gray, 2))
+        painter.setPen(QPen(Qt.GlobalColor.gray, 2))
         painter.drawRect(2, 2, size-4, size-4)
-        painter.setPen(QPen(Qt.gray, 1))
+        painter.setPen(QPen(Qt.GlobalColor.gray, 1))
         painter.drawLine(2, 2, size-2, size-2)
         painter.drawLine(2, size-2, size-2, 2)
         painter.end()
@@ -15268,7 +15285,7 @@ Description: {results.get('description', 'License bypass successful')}"""
 
         ui_scale_layout = QHBoxLayout()
         ui_scale_layout.addWidget(QLabel("UI Scale:"))
-        self.ui_scale_slider = QSlider(Qt.Horizontal)
+        self.ui_scale_slider = QSlider(Qt.Orientation.Horizontal)
         self.ui_scale_slider.setRange(50, 200)
         self.ui_scale_slider.setSingleStep(10)
         if "ui_scale" in CONFIG:
@@ -15498,7 +15515,7 @@ Description: {results.get('description', 'License bypass successful')}"""
 
         # Create tabbed interface for settings categories
         settings_tabs = QTabWidget()
-        settings_tabs.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        settings_tabs.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         settings_tabs.setTabsClosable(False)  # Disable close buttons to reduce clutter
 
         # 1. AI Configuration tab
@@ -15543,7 +15560,7 @@ Description: {results.get('description', 'License bypass successful')}"""
         params_layout = QGridLayout()
 
         params_layout.addWidget(QLabel("Temperature:"), 0, 0)
-        temp_slider = QSlider(Qt.Horizontal)
+        temp_slider = QSlider(Qt.Orientation.Horizontal)
         temp_slider.setRange(0, 100)
         temp_slider.setValue(70)
         temp_value = QLabel("0.7")
@@ -15703,7 +15720,7 @@ Description: {results.get('description', 'License bypass successful')}"""
         memory_layout = QGridLayout()
 
         memory_layout.addWidget(QLabel("Maximum Memory Usage:"), 0, 0)
-        memory_slider = QSlider(Qt.Horizontal)
+        memory_slider = QSlider(Qt.Orientation.Horizontal)
         memory_slider.setRange(512, 8192)
         memory_slider.setValue(2048)
         memory_value = QLabel("2048 MB")
@@ -17149,18 +17166,18 @@ def register():
         # Create dark palette
         dark_palette = QPalette()
         dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
-        dark_palette.setColor(QPalette.WindowText, Qt.white)
+        dark_palette.setColor(QPalette.WindowText, Qt.GlobalColor.white)
         dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
         dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-        dark_palette.setColor(QPalette.ToolTipBase, Qt.white)
-        dark_palette.setColor(QPalette.ToolTipText, Qt.white)
-        dark_palette.setColor(QPalette.Text, Qt.white)
+        dark_palette.setColor(QPalette.ToolTipBase, Qt.GlobalColor.white)
+        dark_palette.setColor(QPalette.ToolTipText, Qt.GlobalColor.white)
+        dark_palette.setColor(QPalette.Text, Qt.GlobalColor.white)
         dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
-        dark_palette.setColor(QPalette.ButtonText, Qt.white)
-        dark_palette.setColor(QPalette.BrightText, Qt.red)
+        dark_palette.setColor(QPalette.ButtonText, Qt.GlobalColor.white)
+        dark_palette.setColor(QPalette.BrightText, Qt.GlobalColor.red)
         dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
         dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-        dark_palette.setColor(QPalette.HighlightedText, Qt.black)
+        dark_palette.setColor(QPalette.HighlightedText, Qt.GlobalColor.black)
 
         app.setPalette(dark_palette)
 
@@ -17326,18 +17343,18 @@ def register():
             app.setStyle("Fusion")
             palette = QPalette()
             palette.setColor(QPalette.Window, QColor(53, 53, 53))
-            palette.setColor(QPalette.WindowText, Qt.white)
+            palette.setColor(QPalette.WindowText, Qt.GlobalColor.white)
             palette.setColor(QPalette.Base, QColor(25, 25, 25))
             palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-            palette.setColor(QPalette.ToolTipBase, Qt.white)
-            palette.setColor(QPalette.ToolTipText, Qt.white)
-            palette.setColor(QPalette.Text, Qt.white)
+            palette.setColor(QPalette.ToolTipBase, Qt.GlobalColor.white)
+            palette.setColor(QPalette.ToolTipText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.Text, Qt.GlobalColor.white)
             palette.setColor(QPalette.Button, QColor(53, 53, 53))
-            palette.setColor(QPalette.ButtonText, Qt.white)
-            palette.setColor(QPalette.BrightText, Qt.red)
+            palette.setColor(QPalette.ButtonText, Qt.GlobalColor.white)
+            palette.setColor(QPalette.BrightText, Qt.GlobalColor.red)
             palette.setColor(QPalette.Link, QColor(42, 130, 218))
             palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-            palette.setColor(QPalette.HighlightedText, Qt.black)
+            palette.setColor(QPalette.HighlightedText, Qt.GlobalColor.black)
             app.setPalette(palette)
 
             # Apply dark title bar
@@ -17848,6 +17865,25 @@ def register():
         if hasattr(self, 'raw_console_output'):
             self.raw_console_output.clear()
         self.statusBar().showMessage("Output cleared")
+
+    def log_message(self, message: str, level: str = "info") -> None:
+        """Log a message to the output panel."""
+        timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+        
+        # Format message with level
+        if level.lower() == "error":
+            formatted_msg = f"{timestamp} [ERROR] {message}"
+        elif level.lower() == "warning":
+            formatted_msg = f"{timestamp} [WARNING] {message}"
+        else:
+            formatted_msg = f"{timestamp} [INFO] {message}"
+        
+        # Print to console
+        print(formatted_msg)
+        
+        # Append to output widget if available
+        if hasattr(self, 'output') and self.output is not None:
+            self.output.append(formatted_msg)
 
     def append_raw_console(self, text):
         """Append text to the raw console output."""
@@ -18987,7 +19023,7 @@ def register():
         layout = QVBoxLayout()
 
         # Create a splitter for the chat interface
-        chat_splitter = QSplitter(Qt.Vertical)
+        chat_splitter = QSplitter(Qt.Orientation.Vertical)
 
         # Chat display
         chat_frame = QGroupBox("Chat History")
@@ -19610,7 +19646,7 @@ def register():
 
         # Tabs for different repositories
         tab_widget = QTabWidget()
-        tab_widget.setTabPosition(QTabWidget.North)  # Ensure all tabs are at top
+        tab_widget.setTabPosition(QTabWidget.TabPosition.North)  # Ensure all tabs are at top
         tab_widget.setTabsClosable(False)  # Disable close buttons to reduce clutter
 
         # Get repository configurations
@@ -20107,7 +20143,7 @@ def register():
     def setup_ai_coding_assistant_tab(self, tab_widget):
         """Set up the three-panel AI coding assistant layout."""
         # Main horizontal splitter for three panels
-        main_splitter = QSplitter(Qt.Horizontal)
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
         main_layout = QVBoxLayout(tab_widget)
         main_layout.addWidget(main_splitter)
 

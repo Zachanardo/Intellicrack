@@ -560,6 +560,20 @@ test_*_features.py
 test_license_bypass.py
 test_network_features.py
 test_windows_activator.py
+test_launch.py
+test_launch_direct.py
+test_minimal_launch.py
+test_import_chain.py
+test_import_detailed.py
+test_tensorflow_import.py
+test_common_imports.py
+test_step_by_step.py
+test_torch_tf_interaction.py
+test_qt_align.py
+test_imports.py
+direct_test.py
+quick_test.py
+quick_test2.py
 
 # Debug and test batch files
 DEBUG_*.bat
@@ -571,3 +585,7 @@ output*.log
 quick*.log
 *_output.log
 *_test.log
+FINAL_TEST.bat
+RUN_TEST.bat
+test_intellicrack.bat
+run_and_capture.sh

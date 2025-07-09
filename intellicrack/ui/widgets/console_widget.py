@@ -25,7 +25,7 @@ A professional console widget with syntax highlighting, filtering, and search ca
 
 from datetime import datetime
 
-from PyQt6.QtCore import QRegExp, Qt, pyqtSignal
+from PyQt6.QtCore import QRegularExpression, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat, QTextCursor
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -51,85 +51,84 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         # Timestamps
         timestamp_format = QTextCharFormat()
         timestamp_format.setForeground(QColor("#666666"))
-        self.rules.append((QRegExp(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"), timestamp_format))
-        self.rules.append((QRegExp(r"\d{2}:\d{2}:\d{2}"), timestamp_format))
+        self.rules.append((QRegularExpression(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"), timestamp_format))
+        self.rules.append((QRegularExpression(r"\d{2}:\d{2}:\d{2}"), timestamp_format))
 
         # Log levels
         # ERROR
         error_format = QTextCharFormat()
         error_format.setForeground(QColor("#ff6b6b"))
         error_format.setFontWeight(QFont.Bold)
-        self.rules.append((QRegExp(r"\[ERROR\]|\[FAILED\]|ERROR:|FAIL:"), error_format))
+        self.rules.append((QRegularExpression(r"\[ERROR\]|\[FAILED\]|ERROR:|FAIL:"), error_format))
 
         # WARNING
         warning_format = QTextCharFormat()
         warning_format.setForeground(QColor("#ffa500"))
-        self.rules.append((QRegExp(r"\[WARNING\]|\[WARN\]|WARNING:|WARN:"), warning_format))
+        self.rules.append((QRegularExpression(r"\[WARNING\]|\[WARN\]|WARNING:|WARN:"), warning_format))
 
         # SUCCESS
         success_format = QTextCharFormat()
         success_format.setForeground(QColor("#51cf66"))
         success_format.setFontWeight(QFont.Bold)
-        self.rules.append((QRegExp(r"\[SUCCESS\]|\[OK\]|SUCCESS:|OK:"), success_format))
+        self.rules.append((QRegularExpression(r"\[SUCCESS\]|\[OK\]|SUCCESS:|OK:"), success_format))
 
         # INFO
         info_format = QTextCharFormat()
         info_format.setForeground(QColor("#339af0"))
-        self.rules.append((QRegExp(r"\[INFO\]|INFO:"), info_format))
+        self.rules.append((QRegularExpression(r"\[INFO\]|INFO:"), info_format))
 
         # DEBUG
         debug_format = QTextCharFormat()
         debug_format.setForeground(QColor("#868e96"))
-        self.rules.append((QRegExp(r"\[DEBUG\]|DEBUG:"), debug_format))
+        self.rules.append((QRegularExpression(r"\[DEBUG\]|DEBUG:"), debug_format))
 
         # Special tags
         # Script/Module names
         script_format = QTextCharFormat()
         script_format.setForeground(QColor("#a78bfa"))
-        self.rules.append((QRegExp(r"\[SCRIPT\]|\[MODULE\]|\[HOOK\]"), script_format))
+        self.rules.append((QRegularExpression(r"\[SCRIPT\]|\[MODULE\]|\[HOOK\]"), script_format))
 
         # Process/Session
         process_format = QTextCharFormat()
         process_format.setForeground(QColor("#0ea5e9"))
-        self.rules.append((QRegExp(r"\[PROCESS\]|\[SESSION\]|PID:"), process_format))
+        self.rules.append((QRegularExpression(r"\[PROCESS\]|\[SESSION\]|PID:"), process_format))
 
         # Paths (Windows and Unix)
         path_format = QTextCharFormat()
         path_format.setForeground(QColor("#94a3b8"))
         path_format.setFontItalic(True)
-        self.rules.append((QRegExp(r"[A-Za-z]:\\\\[^\s]+|/[^\s]+"), path_format))
+        self.rules.append((QRegularExpression(r"[A-Za-z]:\\\\[^\s]+|/[^\s]+"), path_format))
 
         # IP addresses
         ip_format = QTextCharFormat()
         ip_format.setForeground(QColor("#06b6d4"))
-        self.rules.append((QRegExp(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"), ip_format))
+        self.rules.append((QRegularExpression(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"), ip_format))
 
         # Hex values
         hex_format = QTextCharFormat()
         hex_format.setForeground(QColor("#f59e0b"))
         hex_format.setFontFamily("Consolas, monospace")
-        self.rules.append((QRegExp(r"0x[0-9a-fA-F]+"), hex_format))
+        self.rules.append((QRegularExpression(r"0x[0-9a-fA-F]+"), hex_format))
 
         # Numbers
         number_format = QTextCharFormat()
         number_format.setForeground(QColor("#10b981"))
-        self.rules.append((QRegExp(r"\b\d+\b"), number_format))
+        self.rules.append((QRegularExpression(r"\b\d+\b"), number_format))
 
         # Quoted strings
         string_format = QTextCharFormat()
         string_format.setForeground(QColor("#64748b"))
-        self.rules.append((QRegExp(r'"[^"]*"'), string_format))
-        self.rules.append((QRegExp(r"'[^']*'"), string_format))
+        self.rules.append((QRegularExpression(r'"[^"]*"'), string_format))
+        self.rules.append((QRegularExpression(r"'[^']*'"), string_format))
 
     def highlightBlock(self, text):
         """Apply syntax highlighting to a block of text"""
         for pattern, format in self.rules:
-            expression = QRegExp(pattern)
-            index = expression.indexIn(text)
-            while index >= 0:
-                length = expression.matchedLength()
-                self.setFormat(index, length, format)
-                index = expression.indexIn(text, index + length)
+            expression = QRegularExpression(pattern)
+            match_iterator = expression.globalMatch(text)
+            while match_iterator.hasNext():
+                match = match_iterator.next()
+                self.setFormat(match.capturedStart(), match.capturedLength(), format)
 
 
 class ConsoleWidget(QWidget):

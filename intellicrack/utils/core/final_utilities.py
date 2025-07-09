@@ -1174,16 +1174,19 @@ def center_on_screen(widget: Any) -> None:
     if not HAS_PYQT or not widget:
         return
 
-    from PyQt6.QtWidgets import QDesktopWidget
+    from PyQt6.QtWidgets import QApplication
 
-    desktop = QDesktopWidget()
-    screen_rect = desktop.screenGeometry()
-    widget_rect = widget.geometry()
+    app = QApplication.instance()
+    if app:
+        primary_screen = app.primaryScreen()
+        if primary_screen:
+            screen_rect = primary_screen.geometry()
+            widget_rect = widget.geometry()
 
-    x = (screen_rect.width() - widget_rect.width()) // 2
-    y = (screen_rect.height() - widget_rect.height()) // 2
+            x = (screen_rect.width() - widget_rect.width()) // 2
+            y = (screen_rect.height() - widget_rect.height()) // 2
 
-    widget.move(x, y)
+            widget.move(x, y)
 
 
 def copy_to_clipboard(text: str) -> bool:

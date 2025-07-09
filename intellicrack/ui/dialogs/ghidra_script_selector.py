@@ -399,10 +399,10 @@ class GhidraScriptSelector(QDialog):
         if script.is_valid:
             item.setForeground(2, Qt.darkGreen)
         else:
-            item.setForeground(2, Qt.red)
+            item.setForeground(2, Qt.GlobalColor.red)
             # Make invalid scripts slightly grayed out
             for i in range(3):
-                item.setForeground(i, Qt.darkGray)
+                item.setForeground(i, Qt.GlobalColor.darkGray)
 
         # Set tooltip
         tooltip = f"{script.description}\n\nPath: {script.path}"

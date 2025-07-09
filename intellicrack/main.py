@@ -6,6 +6,11 @@ import sys
 # Initialize logger before it's used
 logger = logging.getLogger(__name__)
 
+# Configure TensorFlow to prevent GPU initialization issues with Intel Arc B580
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow
+os.environ['MKL_THREADING_LAYER'] = 'GNU'  # Fix PyTorch + TensorFlow import conflict
+
 """
 Main Entry Point for Intellicrack
 

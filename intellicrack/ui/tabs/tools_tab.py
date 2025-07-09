@@ -1,6 +1,11 @@
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
+from PyQt6.QtWidgets import (
+    QWidget, QHBoxLayout, QVBoxLayout, QGridLayout, QSplitter, 
+    QGroupBox, QLabel, QPushButton, QLineEdit, QTextEdit, 
+    QComboBox, QListWidget, QListWidgetItem, QTabWidget,
+    QTableWidget, QTableWidgetItem, QFileDialog, QInputDialog
+)
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont, QColor
 from .base_tab import BaseTab
 import os
 import subprocess
@@ -47,7 +52,7 @@ class ToolsTab(BaseTab):
         
         # Tools tabs
         self.tools_tabs = QTabWidget()
-        self.tools_tabs.setTabPosition(QTabWidget.North)
+        self.tools_tabs.setTabPosition(QTabWidget.TabPosition.North)
         
         # Add tool categories
         self.tools_tabs.addTab(self.create_system_tools_tab(), "System Tools")
@@ -389,7 +394,7 @@ class ToolsTab(BaseTab):
         
         # Results tabs
         self.results_tabs = QTabWidget()
-        self.results_tabs.setTabPosition(QTabWidget.North)
+        self.results_tabs.setTabPosition(QTabWidget.TabPosition.North)
         
         # Output console
         self.output_console = QTextEdit()

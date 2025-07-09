@@ -57,15 +57,15 @@ class SplashScreen(QSplashScreen):
 
             # Draw some text
             painter = QPainter(pixmap)
-            painter.setPen(Qt.white)
+            painter.setPen(Qt.GlobalColor.white)
             font = QFont("Arial", 24, QFont.Bold)
             painter.setFont(font)
-            painter.drawText(pixmap.rect(), Qt.AlignCenter, "Intellicrack")
+            painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "Intellicrack")
 
             font.setPointSize(12)
             font.setBold(False)
             painter.setFont(font)
-            painter.drawText(pixmap.rect().adjusted(0, 50, 0, 0), Qt.AlignCenter,
+            painter.drawText(pixmap.rect().adjusted(0, 50, 0, 0), Qt.AlignmentFlag.AlignCenter,
                            "Advanced Binary Analysis Suite")
             painter.end()
 
@@ -80,14 +80,14 @@ class SplashScreen(QSplashScreen):
         # Status label
         self.status_label = QLabel(self)
         self.status_label.setGeometry(50, pixmap.height() - 80, pixmap.width() - 100, 20)
-        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_label.setStyleSheet("color: white; background-color: transparent;")
 
         # Connect signal
         self.progress_updated.connect(self.update_progress)
 
         # Set window flags
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
 
     def update_progress(self, value: int, message: str):
         """Update progress bar and status message."""

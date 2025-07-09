@@ -28,8 +28,8 @@ from typing import Any, Dict, List, Optional
 
 from PyQt6.QtCore import QFileSystemWatcher, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
-    QAction,
     QCheckBox,
     QComboBox,
     QDialog,

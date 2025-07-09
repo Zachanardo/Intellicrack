@@ -50,7 +50,7 @@ class AnalysisTab(BaseTab):
         
         # Analysis subtabs
         self.analysis_subtabs = QTabWidget()
-        self.analysis_subtabs.setTabPosition(QTabWidget.North)
+        self.analysis_subtabs.setTabPosition(QTabWidget.TabPosition.North)
         
         # Create individual analysis subtabs
         self.analysis_subtabs.addTab(self.create_static_analysis_tab(), "Static & Code Analysis")

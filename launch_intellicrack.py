@@ -26,6 +26,11 @@ import os
 import sys
 from pathlib import Path
 
+# Configure TensorFlow to prevent GPU initialization issues with Intel Arc B580
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow
+os.environ['MKL_THREADING_LAYER'] = 'GNU'  # Fix PyTorch + TensorFlow import conflict
+
 
 def detect_and_configure_gpu():
     """

@@ -394,9 +394,9 @@ class HelpDocumentationWidget(QWidget):
         item = QTreeWidgetItem(parent, [name, status, description])
         # Color code based on status
         if status == "✓":
-            item.setForeground(1, Qt.green)
+            item.setForeground(1, Qt.GlobalColor.green)
         else:
-            item.setForeground(1, Qt.red)
+            item.setForeground(1, Qt.GlobalColor.red)
 
     def populate_getting_started_tutorials(self, list_widget: QListWidget):
         """Populate getting started tutorials."""
@@ -812,9 +812,9 @@ class HelpDocumentationWidget(QWidget):
         for _col in range(item.columnCount()):
             if search_text in item.text(_col).lower():
                 matches = True
-                item.setBackground(_col, Qt.yellow)
+                item.setBackground(_col, Qt.GlobalColor.yellow)
             else:
-                item.setBackground(_col, Qt.transparent)
+                item.setBackground(_col, Qt.GlobalColor.transparent)
 
         # Check children
         child_matches = False
@@ -854,6 +854,6 @@ class HelpDocumentationWidget(QWidget):
         """Recursively show tree items and clear highlights."""
         item.setHidden(False)
         for _col in range(item.columnCount()):
-            item.setBackground(_col, Qt.transparent)
+            item.setBackground(_col, Qt.GlobalColor.transparent)
         for _i in range(item.childCount()):
             self.show_tree_item(item.child(_i))

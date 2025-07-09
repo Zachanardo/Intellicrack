@@ -53,8 +53,16 @@ try:
         QTextCursor,
         QTextDocument,
     )
-    from PyQt6.QtWidgets import (
+    from PyQt6.QtGui import (
         QAction,
+        QColor,
+        QKeySequence,
+        QSyntaxHighlighter,
+        QTextCharFormat,
+        QTextCursor,
+        QTextDocument,
+    )
+    from PyQt6.QtWidgets import (
         QPlainTextEdit,
         QStatusBar,
         QToolBar,

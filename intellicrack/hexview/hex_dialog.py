@@ -25,8 +25,8 @@ import os
 from typing import Optional
 
 from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
-    QAction,
     QApplication,
     QComboBox,
     QDialog,
@@ -110,7 +110,7 @@ class HexViewerDialog(QDialog):
 
         # Set background colors for better contrast
         sidebar_palette = self.sidebar.palette()
-        sidebar_palette.setColor(self.sidebar.backgroundRole(), Qt.lightGray)
+        sidebar_palette.setColor(self.sidebar.backgroundRole(), Qt.GlobalColor.lightGray)
         self.sidebar.setPalette(sidebar_palette)
         self.sidebar.setAutoFillBackground(True)
 
@@ -161,7 +161,7 @@ class HexViewerDialog(QDialog):
         """
         toolbar = QToolBar()
         toolbar.setIconSize(QSize(16, 16))
-        toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
 
         # File operations
         open_action = QAction("Open", self)

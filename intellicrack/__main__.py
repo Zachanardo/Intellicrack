@@ -34,6 +34,11 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import sys
 
+# Configure TensorFlow to prevent GPU initialization issues with Intel Arc B580
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow
+os.environ['MKL_THREADING_LAYER'] = 'GNU'  # Fix PyTorch + TensorFlow import conflict
+
 from .main import main
 
 # Set Qt to offscreen mode for WSL/headless environments if no display

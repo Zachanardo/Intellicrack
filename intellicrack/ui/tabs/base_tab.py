@@ -19,7 +19,7 @@ class BaseTab(QWidget):
         layout = QVBoxLayout(self)
         
         loading_label = QLabel("Loading...")
-        loading_label.setAlignment(Qt.AlignCenter)
+        loading_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         font = QFont()
         font.setPointSize(14)
         loading_label.setFont(font)

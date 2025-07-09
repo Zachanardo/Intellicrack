@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PyQt6.QtCore import QRegExp
+from PyQt6.QtCore import QRegularExpression
 from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
 
 
@@ -70,29 +70,29 @@ class PythonHighlighter(QSyntaxHighlighter):
             "yield",
         ]
         for keyword in keywords:
-            pattern = QRegExp(f"\\b{keyword}\\b")
+            pattern = QRegularExpression(f"\\b{keyword}\\b")
             self.highlighting_rules.append((pattern, keyword_format))
 
         # Strings
         string_format = QTextCharFormat()
         string_format.setForeground(QColor(214, 157, 133))
-        self.highlighting_rules.append((QRegExp('"[^"]*"'), string_format))
-        self.highlighting_rules.append((QRegExp("'[^']*'"), string_format))
+        self.highlighting_rules.append((QRegularExpression('"[^"]*"'), string_format))
+        self.highlighting_rules.append((QRegularExpression("'[^']*'"), string_format))
 
         # Comments
         comment_format = QTextCharFormat()
         comment_format.setForeground(QColor(106, 153, 85))
-        self.highlighting_rules.append((QRegExp("#.*"), comment_format))
+        self.highlighting_rules.append((QRegularExpression("#.*"), comment_format))
 
         # Functions
         function_format = QTextCharFormat()
         function_format.setForeground(QColor(220, 220, 170))
-        self.highlighting_rules.append((QRegExp("\\b[A-Za-z0-9_]+(?=\\()"), function_format))
+        self.highlighting_rules.append((QRegularExpression("\\b[A-Za-z0-9_]+(?=\\()"), function_format))
 
         # Numbers
         number_format = QTextCharFormat()
         number_format.setForeground(QColor(181, 206, 168))
-        self.highlighting_rules.append((QRegExp("\\b[0-9]+\\b"), number_format))
+        self.highlighting_rules.append((QRegularExpression("\\b[0-9]+\\b"), number_format))
 
         # Multi-line strings
         self.triple_single_quote_format = QTextCharFormat()
@@ -104,38 +104,45 @@ class PythonHighlighter(QSyntaxHighlighter):
         """Apply syntax highlighting to block"""
         # Single line rules
         for pattern, format in self.highlighting_rules:
-            expression = QRegExp(pattern)
-            index = expression.indexIn(text)
-            while index >= 0:
-                length = expression.matchedLength()
-                self.setFormat(index, length, format)
-                index = expression.indexIn(text, index + length)
+            expression = QRegularExpression(pattern)
+            match_iterator = expression.globalMatch(text)
+            while match_iterator.hasNext():
+                match = match_iterator.next()
+                self.setFormat(match.capturedStart(), match.capturedLength(), format)
 
         self.setCurrentBlockState(0)
 
         # Multi-line strings
-        self.match_multiline_string(text, QRegExp('"""'), 1, self.triple_double_quote_format)
-        self.match_multiline_string(text, QRegExp("'''"), 2, self.triple_single_quote_format)
+        self.match_multiline_string(text, QRegularExpression('"""'), 1, self.triple_double_quote_format)
+        self.match_multiline_string(text, QRegularExpression("'''"), 2, self.triple_single_quote_format)
 
     def match_multiline_string(self, text, expression, state, format):
         """Handle multi-line string highlighting"""
         if self.previousBlockState() == state:
-            start = 0
+            start_index = 0
             add = 0
         else:
-            start = expression.indexIn(text)
-            add = expression.matchedLength()
-
-        while start >= 0:
-            end = expression.indexIn(text, start + add)
-            if end == -1:
-                self.setCurrentBlockState(state)
-                comment_length = len(text) - start
+            match = expression.match(text)
+            if match.hasMatch():
+                start_index = match.capturedStart()
+                add = match.capturedLength()
             else:
-                comment_length = end - start + expression.matchedLength()
+                start_index = -1
+                add = 0
 
-            self.setFormat(start, comment_length, format)
-            start = expression.indexIn(text, start + comment_length)
+        while start_index >= 0:
+            match = expression.match(text, start_index + add)
+            end_index = match.capturedStart() if match.hasMatch() else -1
+            
+            if end_index == -1:
+                self.setCurrentBlockState(state)
+                comment_length = len(text) - start_index
+            else:
+                comment_length = end_index - start_index + match.capturedLength()
+
+            self.setFormat(start_index, comment_length, format)
+            match = expression.match(text, start_index + comment_length)
+            start_index = match.capturedStart() if match.hasMatch() else -1
 
 
 class JavaScriptHighlighter(QSyntaxHighlighter):
@@ -188,7 +195,7 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
             "yield",
         ]
         for keyword in keywords:
-            pattern = QRegExp(f"\\b{keyword}\\b")
+            pattern = QRegularExpression(f"\\b{keyword}\\b")
             self.highlighting_rules.append((pattern, keyword_format))
 
         # Frida API objects (optional highlighting)
@@ -213,29 +220,29 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
             "DebugSymbol",
         ]
         for api in frida_api:
-            pattern = QRegExp(f"\\b{api}\\b")
+            pattern = QRegularExpression(f"\\b{api}\\b")
             self.highlighting_rules.append((pattern, frida_format))
 
         # Strings
         string_format = QTextCharFormat()
         string_format.setForeground(QColor(214, 157, 133))
-        self.highlighting_rules.append((QRegExp('"[^"]*"'), string_format))
-        self.highlighting_rules.append((QRegExp("'[^']*'"), string_format))
+        self.highlighting_rules.append((QRegularExpression('"[^"]*"'), string_format))
+        self.highlighting_rules.append((QRegularExpression("'[^']*'"), string_format))
 
         # Comments
         comment_format = QTextCharFormat()
         comment_format.setForeground(QColor(106, 153, 85))
-        self.highlighting_rules.append((QRegExp("//.*"), comment_format))
+        self.highlighting_rules.append((QRegularExpression("//.*"), comment_format))
 
         # Functions
         function_format = QTextCharFormat()
         function_format.setForeground(QColor(220, 220, 170))
-        self.highlighting_rules.append((QRegExp("\\b[A-Za-z0-9_]+(?=\\()"), function_format))
+        self.highlighting_rules.append((QRegularExpression("\\b[A-Za-z0-9_]+(?=\\()"), function_format))
 
         # Numbers
         number_format = QTextCharFormat()
         number_format.setForeground(QColor(181, 206, 168))
-        self.highlighting_rules.append((QRegExp("\\b[0-9]+\\b"), number_format))
+        self.highlighting_rules.append((QRegularExpression("\\b[0-9]+\\b"), number_format))
 
         # Multi-line comments
         self.multiline_comment_format = QTextCharFormat()
@@ -245,18 +252,17 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
         """Apply syntax highlighting to block"""
         # Single line rules
         for pattern, format in self.highlighting_rules:
-            expression = QRegExp(pattern)
-            index = expression.indexIn(text)
-            while index >= 0:
-                length = expression.matchedLength()
-                self.setFormat(index, length, format)
-                index = expression.indexIn(text, index + length)
+            expression = QRegularExpression(pattern)
+            match_iterator = expression.globalMatch(text)
+            while match_iterator.hasNext():
+                match = match_iterator.next()
+                self.setFormat(match.capturedStart(), match.capturedLength(), format)
 
         self.setCurrentBlockState(0)
 
         # Multi-line comments
-        start_expression = QRegExp("/\\*")
-        end_expression = QRegExp("\\*/")
+        start_expression = QRegularExpression("/\\*")
+        end_expression = QRegularExpression("\\*/")
 
         if self.previousBlockState() == 1:
             start = 0

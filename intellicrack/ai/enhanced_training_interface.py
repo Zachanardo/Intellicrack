@@ -927,8 +927,8 @@ class EnhancedTrainingInterface(QDialog):
 
         # Set window palette for better theming
         palette = QPalette()
-        palette.setColor(QPalette.Window, Qt.white)
-        palette.setColor(QPalette.WindowText, Qt.black)
+        palette.setColor(QPalette.Window, Qt.GlobalColor.white)
+        palette.setColor(QPalette.WindowText, Qt.GlobalColor.black)
         self.setPalette(palette)
 
     def _apply_button_icons(self):
@@ -951,15 +951,15 @@ class EnhancedTrainingInterface(QDialog):
 
         # Apply icons (using colored squares as placeholders)
         if self.start_btn:
-            self.start_btn.setIcon(QIcon(create_colored_pixmap(Qt.green)))
+            self.start_btn.setIcon(QIcon(create_colored_pixmap(Qt.GlobalColor.green)))
         if self.pause_btn:
-            self.pause_btn.setIcon(QIcon(create_colored_pixmap(Qt.yellow)))
+            self.pause_btn.setIcon(QIcon(create_colored_pixmap(Qt.GlobalColor.yellow)))
         if self.stop_btn:
-            self.stop_btn.setIcon(QIcon(create_colored_pixmap(Qt.red)))
+            self.stop_btn.setIcon(QIcon(create_colored_pixmap(Qt.GlobalColor.red)))
         if self.save_config_btn:
-            self.save_config_btn.setIcon(QIcon(create_colored_pixmap(Qt.blue)))
+            self.save_config_btn.setIcon(QIcon(create_colored_pixmap(Qt.GlobalColor.blue)))
         if self.load_config_btn:
-            self.load_config_btn.setIcon(QIcon(create_colored_pixmap(Qt.cyan)))
+            self.load_config_btn.setIcon(QIcon(create_colored_pixmap(Qt.GlobalColor.cyan)))
 
     def create_config_tab(self) -> QWidget:
         """Create the configuration tab with scrollable area."""

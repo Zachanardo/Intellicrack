@@ -63,6 +63,10 @@ except ImportError:
     GPU_AUTOLOADER_AVAILABLE = False
 
 try:
+    # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
+    import os
+    os.environ['MKL_THREADING_LAYER'] = 'GNU'
+    
     import tensorflow as tf
     from tensorflow import keras
     HAS_TENSORFLOW = True

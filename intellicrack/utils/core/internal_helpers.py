@@ -61,6 +61,10 @@ except ImportError as e:
     HAS_TORCH = False
 
 if HAS_TENSORFLOW:
+    # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
+    import os
+    os.environ['MKL_THREADING_LAYER'] = 'GNU'
+    
     import tensorflow as tf  # pylint: disable=import-error
 else:
     tf = None

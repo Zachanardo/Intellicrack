@@ -243,7 +243,7 @@ class ModelLoadingDialog(QDialog):
             if task.state not in [LoadingState.COMPLETED, LoadingState.FAILED]:
                 item_text = f"{model_id} - {task.state.value} ({task.progress:.0%})"
                 item = QListWidgetItem(item_text)
-                item.setForeground(Qt.blue)
+                item.setForeground(Qt.GlobalColor.blue)
                 self.models_list.addItem(item)
 
     def on_model_loaded(self, model_id: str):

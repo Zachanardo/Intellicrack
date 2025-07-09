@@ -47,7 +47,6 @@ try:
         QButtonGroup,
         QCheckBox,
         QComboBox,
-        QDesktopWidget,
         QDialog,
         QDialogButtonBox,
         QFileDialog,
@@ -162,14 +161,20 @@ try:
 
     def get_desktop_geometry() -> tuple:
         """Get desktop geometry information"""
-        desktop = QApplication.desktop() if hasattr(QApplication, 'desktop') else None
-        if desktop and isinstance(desktop, QDesktopWidget):
-            rect = desktop.screenGeometry()
-            return (rect.width(), rect.height())
+        app = QApplication.instance()
+        if app:
+            primary_screen = app.primaryScreen()
+            if primary_screen:
+                rect = primary_screen.geometry()
+                return (rect.width(), rect.height())
         return (1920, 1080)  # Default fallback
 
-    def create_frame_with_style(style=QFrame.Box, shadow=QFrame.Raised) -> QFrame:
+    def create_frame_with_style(style=None, shadow=None) -> QFrame:
         """Create a styled frame"""
+        if style is None:
+            style = QFrame.Shape.Box
+        if shadow is None:
+            shadow = QFrame.Shadow.Raised
         frame = QFrame()
         frame.setFrameStyle(style | shadow)
         return frame
@@ -206,15 +211,19 @@ try:
         return scroll
 
     def create_slider_with_range(min_val: int, max_val: int,
-                                orientation=Qt.Horizontal) -> QSlider:
+                                orientation=None) -> QSlider:
         """Create a slider with specified range"""
+        if orientation is None:
+            orientation = Qt.Orientation.Horizontal
         slider = QSlider(orientation)
         slider.setMinimum(min_val)
         slider.setMaximum(max_val)
         return slider
 
-    def create_splash_screen(pixmap_path: str, flags=Qt.WindowStaysOnTopHint) -> QSplashScreen:
+    def create_splash_screen(pixmap_path: str, flags=None) -> QSplashScreen:
         """Create a splash screen with image"""
+        if flags is None:
+            flags = Qt.WindowType.WindowStaysOnTopHint
         pixmap = QPixmap(pixmap_path)
         splash = QSplashScreen(pixmap, flags)
         return splash
@@ -246,16 +255,22 @@ try:
         return page
 
     def configure_abstract_item_view(view: QAbstractItemView,
-                                   selection_mode=QAbstractItemView.SingleSelection):
+                                   selection_mode=None):
         """Configure common settings for item views"""
+        if selection_mode is None:
+            selection_mode = QAbstractItemView.SelectionMode.SingleSelection
         view.setSelectionMode(selection_mode)
         view.setAlternatingRowColors(True)
         return view
 
     def configure_abstract_scroll_area(area: QAbstractScrollArea,
-                                     h_policy=Qt.ScrollBarAsNeeded,
-                                     v_policy=Qt.ScrollBarAsNeeded):
+                                     h_policy=None,
+                                     v_policy=None):
         """Configure scroll bar policies"""
+        if h_policy is None:
+            h_policy = Qt.ScrollBarPolicy.AsNeeded
+        if v_policy is None:
+            v_policy = Qt.ScrollBarPolicy.AsNeeded
         area.setHorizontalScrollBarPolicy(h_policy)
         area.setVerticalScrollBarPolicy(v_policy)
         return area
@@ -278,19 +293,25 @@ try:
         return browser
 
     def create_standard_dialog_buttons(accept_text="OK", reject_text="Cancel",
-                                     buttons=QDialogButtonBox.Ok | QDialogButtonBox.Cancel) -> QDialogButtonBox:
+                                     buttons=None) -> QDialogButtonBox:
         """Create standard dialog buttons"""
+        if buttons is None:
+            buttons = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         button_box = QDialogButtonBox(buttons)
         if accept_text != "OK":
-            button_box.button(QDialogButtonBox.Ok).setText(accept_text)
-        if reject_text != "Cancel" and button_box.button(QDialogButtonBox.Cancel):
-            button_box.button(QDialogButtonBox.Cancel).setText(reject_text)
+            button_box.button(QDialogButtonBox.StandardButton.Ok).setText(accept_text)
+        if reject_text != "Cancel" and button_box.button(QDialogButtonBox.StandardButton.Cancel):
+            button_box.button(QDialogButtonBox.StandardButton.Cancel).setText(reject_text)
         return button_box
 
     def create_spacer_item(width: int = 20, height: int = 20,
-                          h_policy=QSizePolicy.Minimum,
-                          v_policy=QSizePolicy.Minimum) -> QSpacerItem:
+                          h_policy=None,
+                          v_policy=None) -> QSpacerItem:
         """Create a spacer item for layouts"""
+        if h_policy is None:
+            h_policy = QSizePolicy.Policy.Minimum
+        if v_policy is None:
+            v_policy = QSizePolicy.Policy.Minimum
         return QSpacerItem(width, height, h_policy, v_policy)
 
     # Export all utility functions for easy access
@@ -306,7 +327,7 @@ try:
         'QMouseEvent', 'QPainter', 'QPaintEvent', 'QPen', 'QPixmap', 'QResizeEvent',
         # Widget classes
         'QAbstractItemView', 'QAbstractScrollArea', 'QAction', 'QApplication',
-        'QButtonGroup', 'QCheckBox', 'QComboBox', 'QDesktopWidget', 'QDialog',
+        'QButtonGroup', 'QCheckBox', 'QComboBox', 'QDialog',
         'QDialogButtonBox', 'QFileDialog', 'QFormLayout', 'QFrame', 'QGridLayout',
         'QGroupBox', 'QHBoxLayout', 'QHeaderView', 'QInputDialog', 'QLabel',
         'QLineEdit', 'QListWidget', 'QListWidgetItem', 'QMainWindow', 'QMenu',
@@ -1012,7 +1033,6 @@ except ImportError as e:
     QButtonGroup = MockQtClass
     QCheckBox = MockQtClass
     QComboBox = MockQtClass
-    QDesktopWidget = MockQtClass
     QDialog = MockQtClass
     QDialogButtonBox = MockQtClass
     QFileDialog = MockQtClass

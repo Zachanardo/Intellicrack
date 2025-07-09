@@ -829,13 +829,13 @@ Description: {program_data.get('description', 'No description available')}"""
             # Set priority-based styling
             if priority >= 9:
                 if HAS_PYQT:
-                    item.setBackground(0, Qt.red)
+                    item.setBackground(0, Qt.GlobalColor.red)
             elif priority >= 7:
                 if HAS_PYQT:
-                    item.setBackground(0, Qt.yellow)
+                    item.setBackground(0, Qt.GlobalColor.yellow)
             elif priority >= 5:
                 if HAS_PYQT:
-                    item.setBackground(0, Qt.cyan)
+                    item.setBackground(0, Qt.GlobalColor.cyan)
 
             self.licensing_tree.addTopLevelItem(item)
 
