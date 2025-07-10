@@ -934,7 +934,7 @@ def main():
     }
 
     dialog = ExportDialog(mock_results)
-    dialog.exec_()
+    dialog.exec()
 
 
 if __name__ == "__main__":

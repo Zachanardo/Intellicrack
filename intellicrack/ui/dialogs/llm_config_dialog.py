@@ -1828,4 +1828,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     dialog = LLMConfigDialog()
     dialog.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

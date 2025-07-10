@@ -908,7 +908,7 @@ Description: {program_data.get('description', 'No description available')}"""
 def show_program_selector(parent=None):
     """Show the program selector dialog and return selected data."""
     dialog = ProgramSelectorDialog(parent)
-    if dialog.exec_() == QDialog.Accepted:
+    if dialog.exec() == QDialog.Accepted:
         return dialog.get_selected_program_data()
     return None
 

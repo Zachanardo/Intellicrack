@@ -985,7 +985,7 @@ class IntellicrackCLI:
             hex_viewer.show()
 
             logger.info(f"Launched hex editor for {self.binary_path}")
-            app.exec_()
+            app.exec()
 
         except ImportError:
             # Fallback to external hex editor

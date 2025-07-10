@@ -1355,7 +1355,7 @@ class HexViewerWidget(QAbstractScrollArea):
         layout.addWidget(buttons)
 
         # Show dialog
-        if dialog.exec_() == QDialog.Accepted:
+        if dialog.exec() == QDialog.Accepted:
             pattern = pattern_edit.text()
             search_type = search_type_combo.currentText().lower()
             case_sensitive = case_check.isChecked()
@@ -1431,7 +1431,7 @@ class HexViewerWidget(QAbstractScrollArea):
         layout.addWidget(buttons)
 
         # Show dialog
-        if dialog.exec_() == QDialog.Accepted:
+        if dialog.exec() == QDialog.Accepted:
             offset_text = offset_edit.text()
             size = size_spin.value()
             description = description_edit.text()
@@ -1575,7 +1575,7 @@ class HexViewerWidget(QAbstractScrollArea):
         layout.addWidget(buttons)
 
         # Show dialog
-        if dialog.exec_() == QDialog.Accepted:
+        if dialog.exec() == QDialog.Accepted:
             # Parse the edited text
             edited_text = text_edit.toPlainText()
             _, edited_data = parse_hex_view(edited_text)
@@ -1901,7 +1901,7 @@ class HexViewerWidget(QAbstractScrollArea):
             close_button.clicked.connect(dialog.close)
             layout.addWidget(close_button)
 
-            dialog.exec_()
+            dialog.exec()
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error showing performance dialog: %s", e)

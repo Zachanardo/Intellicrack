@@ -229,7 +229,7 @@ def launch_hex_viewer(file_path: str, read_only: bool = True) -> QDialog:
     app = QApplication.instance() or QApplication([])
     dialog = create_hex_viewer_dialog(None, file_path, read_only)
     dialog.show()
-    app.exec_()
+    app.exec()
     return dialog
 
 

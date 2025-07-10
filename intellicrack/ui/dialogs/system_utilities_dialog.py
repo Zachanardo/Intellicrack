@@ -954,4 +954,4 @@ class SystemUtilitiesDialog(QDialog):
 def show_system_utilities_dialog(parent=None):
     """Show the system utilities dialog."""
     dialog = SystemUtilitiesDialog(parent)
-    return dialog.exec_()
+    return dialog.exec()

@@ -247,7 +247,7 @@ class ReportGenerationHandler(QObject):
 
         # Show options dialog
         dialog = ReportOptionsDialog(parent_widget)
-        if dialog.exec_() != QDialog.Accepted:
+        if dialog.exec() != QDialog.Accepted:
             return
 
         options = dialog.get_options()

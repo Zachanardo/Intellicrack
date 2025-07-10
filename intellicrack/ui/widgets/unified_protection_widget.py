@@ -908,7 +908,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         try:
             from ...dialogs.icp_features_dialog import ICPFeaturesDialog
             dialog = ICPFeaturesDialog(self._current_file_path, self)
-            dialog.exec_()
+            dialog.exec()
         except ImportError:
             # Create a simple features dialog inline for now
             self._show_inline_icp_features()
@@ -1085,7 +1085,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         thread.start()
 
         # Show dialog
-        dialog.exec_()
+        dialog.exec()
 
     def generate_bypass_script(self):
         """Generate bypass script using the script generation handler"""

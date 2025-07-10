@@ -285,6 +285,6 @@ def show_smart_program_selector(parent=None) -> Optional[ProgramInfo]:
         return None
 
     dialog = SmartProgramSelectorDialog(parent)
-    if dialog.exec_() == QDialog.Accepted:
+    if dialog.exec() == QDialog.Accepted:
         return dialog.get_selected_program()
     return None

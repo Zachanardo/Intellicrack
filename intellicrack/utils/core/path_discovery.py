@@ -712,7 +712,7 @@ class PathDiscovery:
                     msg.setText(f"Could not find {tool_name}. Would you like to browse for it?")
                     msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
-                    if msg.exec_() == QMessageBox.Yes:
+                    if msg.exec() == QMessageBox.Yes:
                         file_filter = "Executable files (*.exe *.bat);;All files (*.*)" if self.is_windows else "All files (*)"
                         path, _ = QFileDialog.getOpenFileName(
                             parent_widget,

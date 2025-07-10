@@ -955,7 +955,7 @@ Licensing Files Found: {len(licensing_files)}"""
         """Open the ICP signature editor dialog."""
         try:
             editor_dialog = SignatureEditorDialog(self)
-            editor_dialog.exec_()
+            editor_dialog.exec()
         except Exception as e:
             QMessageBox.critical(
                 self,
@@ -985,7 +985,7 @@ Licensing Files Found: {len(licensing_files)}"""
 
             # Open export dialog
             export_dialog = ExportDialog(analysis_results, self)
-            export_dialog.exec_()
+            export_dialog.exec()
 
         except Exception as e:
             QMessageBox.critical(

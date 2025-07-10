@@ -827,7 +827,7 @@ class IntellicrackProtectionWidget(QWidget):
                     response_text.append(f"• {suggestion}")
                 response_text.append("\n<i>Type your question above or click a suggestion to use it.</i>\n")
 
-        dialog.exec_()
+        dialog.exec()
 
 
 # Backward compatibility aliases

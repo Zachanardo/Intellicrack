@@ -365,7 +365,7 @@ class ScriptGenerationHandler(QObject):
             # Show dialog if we have a parent widget
             if parent_widget:
                 dialog = ScriptDisplayDialog(result, parent_widget)
-                dialog.exec_()
+                dialog.exec()
         else:
             error_msg = result.get(
                 'error', 'Unknown error during script generation')

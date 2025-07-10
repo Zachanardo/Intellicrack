@@ -814,4 +814,4 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
 def show_script_generator_dialog(parent=None, binary_path: str = ""):
     """Show the script generator dialog."""
     dialog = ScriptGeneratorDialog(parent, binary_path)
-    return dialog.exec_()
+    return dialog.exec()

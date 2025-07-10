@@ -44,7 +44,7 @@ def main():
     editor.show()
     
     # Run the application
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

@@ -346,7 +346,7 @@ class R2UIManager(QObject):
         try:
             if 'config_dialog' in self.ui_components:
                 dialog = self.ui_components['config_dialog']
-                if dialog.exec_() == dialog.Accepted:
+                if dialog.exec() == dialog.Accepted:
                     config = dialog.get_configuration()
                     self._apply_configuration(config)
                     self.logger.info("Configuration updated")

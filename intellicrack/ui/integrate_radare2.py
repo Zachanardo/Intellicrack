@@ -253,7 +253,7 @@ def example_standalone_app():
     # app, window = create_standalone_radare2_app()
     # if app and window:
     #     window.show()
-    #     app.exec_()
+    #     app.exec()
     # else:
     #     print("Failed to create standalone application")
 

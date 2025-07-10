@@ -146,7 +146,7 @@ def run_gui_mode(args) -> int:
         launch()
 
         # Run event loop
-        return app.exec_()
+        return app.exec()
 
     except ImportError as e:
         logger.error("GUI dependencies not available: %s", e)

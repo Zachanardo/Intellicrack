@@ -173,7 +173,7 @@ def show_simulation_results(results: Dict[str, Any], parent: Any = None) -> None
     layout.addWidget(close_btn)
 
     dialog.setLayout(layout)
-    dialog.exec_()
+    dialog.exec()
 
 
 def update_training_progress(progress: float, message: str = "") -> None:

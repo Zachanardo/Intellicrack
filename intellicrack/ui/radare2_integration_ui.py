@@ -757,7 +757,7 @@ class R2IntegrationWidget(QWidget):
     def _configure_analysis(self):
         """Open configuration dialog"""
         dialog = R2ConfigurationDialog(self)
-        if dialog.exec_() == QDialog.Accepted:
+        if dialog.exec() == QDialog.Accepted:
             self.analysis_config = dialog.get_configuration()
             self.status_label.setText("Configuration updated")
 

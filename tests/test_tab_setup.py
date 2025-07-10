@@ -1,66 +1,51 @@
-#!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+"""Test script to identify all tab setup errors."""
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
-"""
-Test script to identify which tab setup method is causing the GUI hang
-"""
-import sys
 import os
-import logging
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel
+import sys
 
-# Add the project directory to the path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add parent directory to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Set up basic logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# Set environment variables
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['MKL_THREADING_LAYER'] = 'GNU'
 
-def test_minimal_app():
-    """Test creating a minimal QMainWindow"""
-    print("[TEST] Creating QApplication...")
-    app = QApplication(sys.argv)
-    
-    print("[TEST] Creating QMainWindow...")
-    window = QMainWindow()
-    window.setWindowTitle("Minimal Test Window")
-    window.setGeometry(100, 100, 800, 600)
-    
-    # Create simple central widget
-    central_widget = QWidget()
-    window.setCentralWidget(central_widget)
-    
-    layout = QVBoxLayout(central_widget)
-    label = QLabel("Minimal test window - if you see this, basic Qt works")
-    layout.addWidget(label)
-    
-    print("[TEST] Showing window...")
-    window.show()
-    
-    print("[TEST] Window should be visible now")
-    print(f"[TEST] Window visible: {window.isVisible()}")
-    print(f"[TEST] Window geometry: {window.geometry()}")
-    
-    # Don't start event loop, just test creation
-    app.processEvents()
-    
-    print("[TEST] Test completed successfully")
-    return 0
+print("Testing tab setup methods...")
+print("=" * 50)
 
-if __name__ == "__main__":
-    sys.exit(test_minimal_app())
+# Import the main app module
+try:
+    from intellicrack.ui.main_app import IntellicrackApp
+    print("✓ IntellicrackApp imported successfully")
+except Exception as e:
+    print(f"✗ Failed to import IntellicrackApp: {e}")
+    sys.exit(1)
+
+# List of tab setup methods to check
+tab_methods = [
+    'setup_project_dashboard_tab',
+    'setup_analysis_tab',
+    'setup_patching_exploitation_tab',
+    'setup_ai_assistant_tab',
+    'setup_netanalysis_emulation_tab',
+    'setup_tools_plugins_tab',
+    'setup_binary_tools_tab',
+    'setup_network_sim_tab',
+    'setup_plugins_hub_tab',
+    'setup_assistant_logs_tab',
+    'setup_dashboard_tab',
+    'setup_settings_tab',
+    'setup_hex_viewer_tab',
+    'setup_assistant_tab'
+]
+
+# Check which methods exist
+print("\nChecking tab setup methods:")
+for method in tab_methods:
+    if hasattr(IntellicrackApp, method):
+        print(f"✓ {method} exists")
+    else:
+        print(f"✗ {method} MISSING")
+
+print("\nDone!")

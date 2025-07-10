@@ -987,4 +987,4 @@ class KeygenDialog(BinarySelectionDialog):
 def show_keygen_dialog(parent=None, binary_path: str = ""):
     """Show the keygen dialog."""
     dialog = KeygenDialog(parent, binary_path)
-    return dialog.exec_()
+    return dialog.exec()

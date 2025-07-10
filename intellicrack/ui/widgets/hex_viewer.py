@@ -605,7 +605,7 @@ class HexViewer(QWidget if PYQT_AVAILABLE else BaseWidget):
             # Allow Enter to search
             search_input.returnPressed.connect(lambda: perform_search(1))
 
-            dialog.exec_()
+            dialog.exec()
 
         except ImportError as e:
             logger.error("Import error in hex_viewer: %s", e)

@@ -99,7 +99,7 @@ class FirstRunSetupDialog(QDialog):
         title_font.setPointSize(16)
         title_font.setBold(True)
         title.setFont(title_font)
-        title.setAlignment(Qt.AlignCenter)
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
 
         # Description

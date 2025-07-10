@@ -1349,7 +1349,7 @@ class FridaManagerDialog(QDialog):
 
         layout.addLayout(btn_layout)
         dialog.setLayout(layout)
-        dialog.exec_()
+        dialog.exec()
 
     def edit_script(self, script_path: Path):
         """Open script in external editor"""
@@ -2132,7 +2132,7 @@ class FridaManagerDialog(QDialog):
 
         layout.addLayout(buttons_layout)
         preview_dialog.setLayout(layout)
-        preview_dialog.exec_()
+        preview_dialog.exec()
 
     def deploy_ai_script(self):
         """Deploy generated AI scripts with optional QEMU testing."""

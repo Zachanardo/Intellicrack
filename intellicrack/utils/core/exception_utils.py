@@ -84,7 +84,7 @@ def _display_exception_dialog(exc_type, exc_value, exc_traceback) -> None:
         msg_box.setText(error_text)
         msg_box.setDetailedText(detailed_text)
         msg_box.setStandardButtons(QMessageBox.Ok)
-        msg_box.exec_()
+        msg_box.exec()
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to display exception dialog: %s", e)

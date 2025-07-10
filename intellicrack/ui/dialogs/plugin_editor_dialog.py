@@ -383,7 +383,7 @@ Process.enumerateModules().forEach(function(module) {
             from .debugger_dialog import DebuggerDialog
 
             debugger_dialog = DebuggerDialog(self, self.editor.current_file)
-            debugger_dialog.exec_()
+            debugger_dialog.exec()
 
         except ImportError as e:
             self.logger.error("Import error in plugin_editor_dialog: %s", e)
@@ -465,7 +465,7 @@ Process.enumerateModules().forEach(function(module) {
             from .test_generator_dialog import TestGeneratorDialog
 
             test_dialog = TestGeneratorDialog(self, self.editor.current_file)
-            test_dialog.exec_()
+            test_dialog.exec()
 
         except ImportError as e:
             self.logger.error("Import error in plugin_editor_dialog: %s", e)
@@ -484,7 +484,7 @@ Process.enumerateModules().forEach(function(module) {
             from .ci_cd_dialog import CICDDialog
 
             ci_cd_dialog = CICDDialog(self, self.editor.current_file)
-            ci_cd_dialog.exec_()
+            ci_cd_dialog.exec()
 
         except ImportError as e:
             self.logger.error("Import error in plugin_editor_dialog: %s", e)

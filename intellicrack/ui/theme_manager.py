@@ -116,11 +116,11 @@ QTabBar::tab {
     border-bottom-color: #2B2B2B;
     border-top-left-radius: 6px;
     border-top-right-radius: 6px;
-    padding: 10px 16px;
+    padding: 12px 20px;
     margin-right: 2px;
     margin-bottom: 0px;
     font-weight: bold;
-    font-size: 11px;
+    font-size: 13px;
 }
 
 QTabBar::tab:selected {
@@ -446,8 +446,8 @@ QMainWindow {
 
 /* Tab Styling - Light Mode */
 QTabWidget::pane {
-    background-color: #F5F5F5;
-    border: 1px solid #C0C0C0;
+    background-color: #FFFFFF;
+    border: 1px solid #AAAAAA;
     border-radius: 4px;
 }
 
@@ -456,36 +456,36 @@ QTabWidget::tab-bar {
 }
 
 QTabBar::tab {
-    background-color: #E0E0E0;
-    color: #333333;
-    border: 1px solid #C0C0C0;
+    background-color: #DEDEDE;
+    color: #1A1A1A;
+    border: 1px solid #AAAAAA;
     border-bottom-color: #F5F5F5;
     border-top-left-radius: 6px;
     border-top-right-radius: 6px;
-    padding: 10px 16px;
+    padding: 12px 20px;
     margin-right: 2px;
     margin-bottom: 0px;
     font-weight: bold;
-    font-size: 11px;
+    font-size: 13px;
 }
 
 QTabBar::tab:selected {
-    background-color: #F5F5F5;
+    background-color: #FFFFFF;
     color: #000000;
-    border-bottom-color: #F5F5F5;
-    border-top: 2px solid #0078D4;
+    border-bottom-color: #FFFFFF;
+    border-top: 3px solid #0078D4;
     font-weight: bold;
 }
 
 QTabBar::tab:hover:!selected {
-    background-color: #F0F0F0;
+    background-color: #E8E8E8;
     color: #000000;
 }
 
 /* Button Styling */
 QPushButton {
-    background-color: #F0F0F0;
-    border: 1px solid #C0C0C0;
+    background-color: #E8E8E8;
+    border: 1px solid #999999;
     color: #000000;
     padding: 6px 12px;
     border-radius: 4px;
@@ -493,12 +493,12 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background-color: #E5E5E5;
-    border-color: #A0A0A0;
+    background-color: #D8D8D8;
+    border-color: #777777;
 }
 
 QPushButton:pressed {
-    background-color: #D5D5D5;
+    background-color: #C8C8C8;
 }
 
 QPushButton:disabled {
@@ -682,7 +682,7 @@ QGroupBox::title {
 
 /* Labels */
 QLabel {
-    color: #000000;
+    color: #1A1A1A;
     background-color: transparent;
 }
 

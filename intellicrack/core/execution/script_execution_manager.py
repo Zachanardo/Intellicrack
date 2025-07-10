@@ -197,7 +197,7 @@ class ScriptExecutionManager(QObject):
             parent=self.parent()
         )
 
-        result = dialog.exec_()
+        result = dialog.exec()
 
         if result == QDialog.Accepted:
             return dialog.get_user_choice()
@@ -270,7 +270,7 @@ class ScriptExecutionManager(QObject):
             msg.setWindowTitle("QEMU Test Results")
             msg.setText("QEMU test completed successfully.\nProceed with host execution?")
             msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            return msg.exec_() == QMessageBox.Yes
+            return msg.exec() == QMessageBox.Yes
 
         dialog = self.QEMUTestResultsDialog(
             test_results=qemu_results,
@@ -280,7 +280,7 @@ class ScriptExecutionManager(QObject):
         dialog.add_action_button("Deploy to Host", "deploy")
         dialog.add_action_button("Cancel Deployment", "cancel")
 
-        result = dialog.exec_()
+        result = dialog.exec()
         user_action = dialog.get_user_action()
 
         # Handle dialog result based on both exec result and user action

@@ -1951,7 +1951,7 @@ class ModelFinetuningDialog(QDialog):
             # Show progress dialog
             progress = QProgressDialog("Saving model...", None, 0, 100, self)
             progress.setWindowTitle("Save Model")
-            progress.setWindowModality(Qt.WindowModal)
+            progress.setWindowModality(Qt.WindowModality.WindowModal)
             progress.show()
 
             # Simulate model saving process
@@ -2118,7 +2118,7 @@ class ModelFinetuningDialog(QDialog):
                 template_combo.currentText(), dialog
             ))
 
-            dialog.exec_()
+            dialog.exec()
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to create dataset: %s", e)
@@ -2345,7 +2345,7 @@ class ModelFinetuningDialog(QDialog):
             close_button.clicked.connect(preview_dialog.accept)
             layout.addWidget(close_button)
 
-            preview_dialog.exec_()
+            preview_dialog.exec()
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Augmentation preview failed: %s", e)
@@ -2650,7 +2650,7 @@ class ModelFinetuningDialog(QDialog):
                 dialog.update_ui_from_config()
 
                 # Show the dialog
-                dialog.exec_()
+                dialog.exec()
             else:
                 QMessageBox.warning(self, "Configuration Error",
                                   "Could not convert current configuration to enhanced format.")
@@ -2733,7 +2733,7 @@ class ModelFinetuningDialog(QDialog):
         close_button.clicked.connect(help_dialog.accept)
         layout.addWidget(close_button)
 
-        help_dialog.exec_()
+        help_dialog.exec()
 
     def closeEvent(self, event):
         """Handle dialog close event."""

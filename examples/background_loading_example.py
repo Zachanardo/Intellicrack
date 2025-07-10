@@ -220,7 +220,7 @@ class BackgroundLoadingExample(QMainWindow):
         """Open the model loading manager dialog."""
         dialog = ModelLoadingDialog(self)
         dialog.model_loaded.connect(self.on_model_loaded)
-        dialog.exec_()
+        dialog.exec()
 
     def cancel_all_loading(self):
         """Cancel all loading tasks."""
@@ -281,7 +281,7 @@ def main():
     window = BackgroundLoadingExample()
     window.show()
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

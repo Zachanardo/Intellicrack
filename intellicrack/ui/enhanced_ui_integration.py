@@ -351,7 +351,7 @@ class EnhancedAnalysisDashboard(QWidget):
     def _open_settings(self):
         """Open settings dialog"""
         dialog = R2ConfigurationDialog(self)
-        if dialog.exec_() == QDialog.Accepted:
+        if dialog.exec() == QDialog.Accepted:
             self.add_activity("Settings updated")
 
     def _update_visualization(self, viz_type: str):
@@ -591,7 +591,7 @@ class EnhancedMainWindow(QMainWindow):
     def _open_configuration(self):
         """Open configuration dialog"""
         dialog = R2ConfigurationDialog(self)
-        if dialog.exec_() == QDialog.Accepted:
+        if dialog.exec() == QDialog.Accepted:
             self.dashboard.add_activity("Configuration updated")
 
     def _open_hex_viewer(self):

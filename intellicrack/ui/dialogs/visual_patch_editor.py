@@ -558,7 +558,7 @@ class VisualPatchEditorDialog(QDialog):
         close_btn.clicked.connect(dialog.accept)
         layout.addWidget(close_btn)
 
-        dialog.exec_()
+        dialog.exec()
 
         self.status_label.setText("Patch test complete")
 

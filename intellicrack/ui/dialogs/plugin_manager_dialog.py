@@ -1328,4 +1328,4 @@ if __name__ == '__main__':
 
         def exec_(self):
             """Execute dialog."""
-            return 0 if not HAS_PYQT else super().exec_()
+            return 0 if not HAS_PYQT else super().exec()

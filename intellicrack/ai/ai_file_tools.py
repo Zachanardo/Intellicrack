@@ -92,7 +92,7 @@ class FileApprovalDialog(QDialog):
 def create_approval_dialog(operation_type: str, details: str, parent=None) -> bool:
     """Create and show approval dialog for AI file operations."""
     dialog = FileApprovalDialog(operation_type, details, parent)
-    return dialog.exec_() == QDialog.Accepted
+    return dialog.exec() == QDialog.Accepted
 
 
 class FileSearchTool:

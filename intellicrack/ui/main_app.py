@@ -11438,12 +11438,12 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
     def setup_patching_exploitation_tab(self):
         """Sets up the Patching & Exploitation tab with sub-tabs for patching and exploit development."""
-        # Check if layout already exists
-        if self.patching_exploitation_tab.layout() is not None:
+        # Use the exploitation_tab that was already created
+        if self.exploitation_tab.layout() is not None:
             return
 
         # Create main layout
-        layout = QVBoxLayout(self.patching_exploitation_tab)
+        layout = QVBoxLayout(self.exploitation_tab)
 
         # Create sub-tabs for the Patching & Exploitation tab
         patching_subtabs = QTabWidget()
@@ -12009,12 +12009,12 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
     def setup_netanalysis_emulation_tab(self):
         """Sets up the NetAnalysis & Emulation tab with network traffic and emulation features."""
-        # Check if layout already exists
-        if self.netanalysis_emulation_tab.layout() is not None:
+        # Use the tools_tab since network analysis is part of tools
+        if self.tools_tab.layout() is not None:
             return
 
         # Create main layout
-        layout = QVBoxLayout(self.netanalysis_emulation_tab)
+        layout = QVBoxLayout(self.tools_tab)
 
         # Create sub-tabs for the NetAnalysis & Emulation tab
         net_subtabs = QTabWidget()
@@ -12254,7 +12254,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         close_btn.clicked.connect(help_dialog.close)
         layout.addWidget(close_btn)
 
-        help_dialog.exec_()
+        help_dialog.exec()
 
     def get_help_content_for_topic(self, topic):
         """Get help content HTML for the specified topic"""
@@ -12671,7 +12671,7 @@ class Plugin:
         buttons.rejected.connect(settings_dialog.reject)
         layout.addWidget(buttons)
 
-        settings_dialog.exec_()
+        settings_dialog.exec()
 
     def find_plugin_file(self, plugin_name):
         """Find plugin file by name"""
@@ -12715,12 +12715,12 @@ class Plugin:
 
     def setup_tools_plugins_tab(self):
         """Sets up the Tools & Plugins tab with utility tools and plugin management features."""
-        # Check if layout already exists
-        if self.tools_plugins_tab.layout() is not None:
+        # Use the tools_tab since this is tools functionality
+        if self.tools_tab.layout() is not None:
             return
 
         # Create main layout
-        layout = QVBoxLayout(self.tools_plugins_tab)
+        layout = QVBoxLayout(self.tools_tab)
 
         # Create sub-tabs for the Tools & Plugins tab
         tools_subtabs = QTabWidget()
@@ -13703,7 +13703,7 @@ class Plugin:
             success = dialog.load_file(self.binary_path, read_only=read_only)
 
             if success:
-                dialog.exec_()
+                dialog.exec()
             else:
                 QMessageBox.warning(self, "Error", f"Could not open {self.binary_path}")
         except ImportError as e:
@@ -15984,7 +15984,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             wizard = PluginCreationWizard(self, plugin_type)
             wizard.plugin_created.connect(self.on_plugin_created)
 
-            if wizard.exec_():
+            if wizard.exec():
                 self.update_output(f"[Plugins] New {plugin_type} plugin created successfully")
                 # Refresh the plugin list
                 self.refresh_all_plugin_lists()
@@ -16167,7 +16167,7 @@ def register():
             # Open enhanced editor dialog
             editor_dialog = PluginEditorDialog(self, path)
             editor_dialog.plugin_saved.connect(lambda: self.refresh_all_plugin_lists())
-            editor_dialog.exec_()
+            editor_dialog.exec()
 
             self.update_output(f"[Plugins] Edited plugin: {os.path.basename(path)}")
             return
@@ -16241,7 +16241,7 @@ def register():
             cancel_btn.clicked.connect(editor_dialog.reject)
 
             # Show dialog
-            editor_dialog.exec_()
+            editor_dialog.exec()
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
@@ -16499,7 +16499,7 @@ def register():
             from .dialogs.plugin_manager_dialog import PluginManagerDialog
             dialog = PluginManagerDialog(self)
             if hasattr(dialog, 'exec_'):
-                dialog.exec_()
+                dialog.exec()
             elif hasattr(dialog, 'exec'):
                 dialog.exec()
             else:
@@ -17623,7 +17623,7 @@ def register():
             dialog = PreferencesDialog(self)
             dialog.preferences_changed.connect(self.on_preferences_changed)
 
-            if dialog.exec_() == QDialog.Accepted:
+            if dialog.exec() == QDialog.Accepted:
                 self.update_output.emit(log_message("[Settings] Preferences updated"))
         except Exception as e:
             logger.error("Error showing preferences dialog: %s", e)
@@ -17652,7 +17652,7 @@ def register():
 
         try:
             dialog = DistributedProcessingConfigDialog(self)
-            if dialog.exec_() == QDialog.Accepted:
+            if dialog.exec() == QDialog.Accepted:
                 config_data = dialog.get_config()
                 self.update_output.emit(f"[Config] Distributed processing configuration updated: {len(config_data)} settings")
                 # Optionally save the config
@@ -19130,7 +19130,7 @@ def register():
         layout.addWidget(cancel_button)
 
         import_dialog.setLayout(layout)
-        import_dialog.exec_()
+        import_dialog.exec()
 
     def _import_from_file(self, parent_dialog=None):
         """Imports a custom GGUF model file selected by the user."""
@@ -19630,7 +19630,7 @@ def register():
             populate_model_list()
 
         # Show the dialog
-        api_dialog.exec_()
+        api_dialog.exec()
 
     # handle_model_format_change removed as it's no longer needed
 
@@ -19940,7 +19940,7 @@ def register():
         layout.addLayout(button_layout)
 
         dialog.setLayout(layout)
-        dialog.exec_()
+        dialog.exec()
 
     def verify_hash(self):
         """Verifies the integrity of the selected model file using a user-provided hash."""
@@ -20037,7 +20037,7 @@ def register():
         """Open the AI model fine-tuning and training dataset management dialog."""
         try:
             dialog = ComprehensiveModelFinetuningDialog(self)
-            dialog.exec_()
+            dialog.exec()
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"Error opening model fine-tuning: {e}"))
@@ -22378,7 +22378,7 @@ Focus on:
             # Configure wizard style using QWizard constant
             wizard.setWizardStyle(QWizard.ModernStyle)
 
-            wizard.exec_()
+            wizard.exec()
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to start guided wizard: %s", e)
             QMessageBox.warning(self, "Error", f"Failed to start guided wizard:\n{str(e)}")
@@ -22418,7 +22418,7 @@ Focus on:
         """Open the AI coding assistant with three-panel layout."""
         try:
             dialog = AICodingAssistantDialog(parent=self)
-            dialog.exec_()
+            dialog.exec()
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
             self.logger.error("Failed to open AI coding assistant: %s", e)
             QMessageBox.warning(self, "Error", f"Failed to open AI coding assistant:\n{str(e)}")
@@ -22428,7 +22428,7 @@ Focus on:
         """Open the local GGUF model manager."""
         try:
             dialog = ModelManagerDialog(parent=self)
-            dialog.exec_()
+            dialog.exec()
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
             self.logger.error("Failed to open GGUF model manager: %s", e)
             QMessageBox.warning(self, "Error", f"Failed to open GGUF model manager:\n{str(e)}")
@@ -22440,7 +22440,7 @@ Focus on:
             # Get project root (try to find it from current context)
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             dialog = CodeModificationDialog(project_root=project_root, parent=self)
-            dialog.exec_()
+            dialog.exec()
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
             self.logger.error("Failed to open code modification dialog: %s", e)
             QMessageBox.warning(self, "Error", f"Failed to open code modification dialog:\n{str(e)}")
@@ -22880,7 +22880,7 @@ Focus on:
         # Open the visual patch editor dialog
         from ..ui.dialogs.visual_patch_editor import VisualPatchEditorDialog as VPEDialog
         editor = VPEDialog(self.binary_path, self.potential_patches, parent=self)
-        if editor.exec_() == QDialog.Accepted:
+        if editor.exec() == QDialog.Accepted:
             # Update patches if user accepted changes
             self.potential_patches = getattr(editor, 'patches', [])
             self.update_output.emit(log_message(
@@ -22895,7 +22895,7 @@ Focus on:
         try:
             from .dialogs.similarity_search_dialog import BinarySimilaritySearchDialog
             dialog = BinarySimilaritySearchDialog(self.binary_path, self)
-            dialog.exec_()
+            dialog.exec()
         except ImportError as e:
             self.logger.error("Import error in main_app.py: %s", e)
             QMessageBox.warning(self, "Feature Unavailable",
@@ -23463,7 +23463,7 @@ Focus on:
             dialog.setLayout(layout)
 
             # Show dialog
-            dialog.exec_()
+            dialog.exec()
 
         except Exception as e:
             self.logger.error(f"Error showing AI performance stats: {e}")
@@ -26398,7 +26398,7 @@ ANALYSIS SUMMARY
                 printer = QPrinter(QPrinter.HighResolution)
                 dialog = QPrintDialog(printer, self.report_viewer)
 
-                if dialog.exec_() == QPrintDialog.Accepted:
+                if dialog.exec() == QPrintDialog.Accepted:
                     text_edit.print_(printer)
 
             print_btn.clicked.connect(print_report)
@@ -27597,7 +27597,7 @@ ANALYSIS SUMMARY
             from .dialogs.llm_config_dialog import LLMConfigDialog
 
             dialog = LLMConfigDialog(self)
-            if dialog.exec_():
+            if dialog.exec():
                 # Configuration saved
                 self.update_output.emit(log_message("[LLM] Configuration updated"))
                 QMessageBox.information(self, "LLM Configuration", "LLM settings have been updated.")
@@ -27705,6 +27705,7 @@ def launch():
             from .dialogs.splash_screen import SplashScreen
             splash = SplashScreen(splash_image_path)
             splash.show()
+            splash.set_progress(10, "Starting Intellicrack...")
             app_instance.processEvents()
         except Exception as e:
             logger.error("Failed to show splash screen: %s", e)
@@ -27739,8 +27740,12 @@ def launch():
 
         # Try to catch any Qt-related crashes
         try:
+            if splash:
+                splash.set_progress(50, "Initializing main window...")
             window = IntellicrackApp()
             print("[LAUNCH] IntellicrackApp created successfully")
+            if splash:
+                splash.set_progress(90, "Finalizing startup...")
             logger.info("IntellicrackApp instance created successfully")
         except Exception as init_error:
             print(f"[LAUNCH] ERROR: Failed to create IntellicrackApp: {init_error}")
@@ -27768,12 +27773,17 @@ def launch():
 
         deps = check_dependencies()
         missing_deps = {k: v for k, v in deps.items() if not v}
-
-        if missing_deps:
+        
+        # Skip first-run dialog if TensorFlow is the only missing dependency
+        # or if INTELLICRACK_SKIP_FIRSTRUN is set
+        skip_firstrun = os.environ.get('INTELLICRACK_SKIP_FIRSTRUN', '0') == '1'
+        tensorflow_only = len(missing_deps) == 1 and 'TensorFlow' in missing_deps
+        
+        if missing_deps and not skip_firstrun and not tensorflow_only:
             try:
                 from .dialogs.first_run_setup import FirstRunSetupDialog
                 dialog = FirstRunSetupDialog(deps, window)
-                dialog.exec_()
+                dialog.exec()
             except ImportError:
                 logger.info("First-run setup dialog not available")
 
@@ -27781,7 +27791,7 @@ def launch():
 
         # Force window to be visible and on top
         logger.info("Setting window properties...")
-        window.setWindowState(window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
+        window.setWindowState(window.windowState() & ~Qt.WindowState.WindowMinimized | Qt.WindowState.WindowActive)
 
         # Ensure window has reasonable size first
         window.resize(1200, 800)
@@ -27805,7 +27815,28 @@ def launch():
         logger.info(f"Platform: {sys.platform}")
         logger.info(f"QT_QPA_PLATFORM: {os.environ.get('QT_QPA_PLATFORM', 'not set')}")
 
+        # Close splash screen BEFORE showing main window
+        if splash:
+            logger.info("Closing splash screen...")
+            splash.close()
+            splash.hide()  # Explicitly hide
+            splash.deleteLater()  # Schedule for deletion
+            logger.info("Splash screen closed")
+            # Process events to ensure splash is fully closed
+            app_instance.processEvents()
+        else:
+            logger.info("No splash screen to close")
+
         window.show()
+        
+        # Log successful launch
+        logger.info("🎉 INTELLICRACK LAUNCHED SUCCESSFULLY! Window is now visible.")
+        
+        # Also write to a file for verification
+        import datetime
+        with open('LAUNCH_SUCCESS.log', 'w') as f:
+            f.write(f"Intellicrack launched successfully at {datetime.datetime.now()}\n")
+            f.write("Window is visible and application is running!\n")
 
         # Force window to update
         app_instance.processEvents()
@@ -27828,7 +27859,7 @@ def launch():
         window.showNormal()
 
         # Force to foreground
-        window.setWindowState(window.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
+        window.setWindowState(window.windowState() & ~Qt.WindowState.WindowMinimized | Qt.WindowState.WindowActive)
 
         # Force Qt to process events
         app_instance.processEvents()
@@ -27843,14 +27874,7 @@ def launch():
         logger.info(f"Popup widgets: {app_instance.activePopupWidget()}")
         logger.info(f"All top level widgets: {[w.objectName() or str(w) for w in app_instance.topLevelWidgets()]}")
 
-        if splash:
-            logger.info("Closing splash screen...")
-            splash.close()
-            splash.hide()  # Explicitly hide
-            splash.deleteLater()  # Schedule for deletion
-            logger.info("Splash screen closed")
-        else:
-            logger.info("No splash screen to close")
+
 
         # Make absolutely sure the main window is on top
         try:
@@ -27862,7 +27886,7 @@ def launch():
                 logger.warning(f"Final window raise failed: {e}")
 
         window.activateWindow()
-        window.setWindowState(window.windowState() | Qt.WindowActive)
+        window.setWindowState(window.windowState() | Qt.WindowState.WindowActive)
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error creating IntellicrackApp: %s", e)
@@ -27891,6 +27915,15 @@ def launch():
         if not window.isVisible():
             logger.warning("Window is not visible after event loop start! Trying to show again...")
             window.show()
+        
+        # Log successful launch
+        logger.info("🎉 INTELLICRACK LAUNCHED SUCCESSFULLY! Window is now visible.")
+        
+        # Also write to a file for verification
+        import datetime
+        with open('LAUNCH_SUCCESS.log', 'w') as f:
+            f.write(f"Intellicrack launched successfully at {datetime.datetime.now()}\n")
+            f.write("Window is visible and application is running!\n")
             window.raise_()
             window.activateWindow()
 
@@ -27900,8 +27933,8 @@ def launch():
     timer.start(100)  # Log after 100ms
 
     # Start the Qt event loop
-    logger.info("Calling app_instance.exec_()...")
-    return app_instance.exec_()
+    logger.info("Calling app_instance.exec()...")
+    return app_instance.exec()
 
 
 if __name__ == "__main__":
