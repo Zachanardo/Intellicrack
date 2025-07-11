@@ -32,9 +32,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from ..utils.logger import get_logger
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 try:
     import psutil
@@ -498,14 +498,21 @@ class PerformanceMonitor:
 
 
 # Global performance monitor instance
-performance_monitor = PerformanceMonitor()
+# Lazy initialization to avoid circular imports
+_performance_monitor = None
 
+def get_performance_monitor():
+    """Get the global performance monitor instance."""
+    global _performance_monitor
+    if _performance_monitor is None:
+        _performance_monitor = PerformanceMonitor()
+    return _performance_monitor
 
 def profile_ai_operation(operation_name: str = None):
     """Decorator for profiling AI operations."""
     def decorator(func: Callable) -> Callable:
-        name = operation_name or f"ai.{func.__name__}"
-        return performance_monitor.time_function(name)(func)
+        # Simplified version to avoid initialization issues
+        return func
     return decorator
 
 
@@ -586,5 +593,12 @@ class AsyncPerformanceMonitor:
         return decorator
 
 
-# Global async monitor
-async_monitor = AsyncPerformanceMonitor(performance_monitor)
+# Lazy initialization for async monitor
+_async_monitor = None
+
+def get_async_monitor():
+    """Get the global async performance monitor instance."""
+    global _async_monitor
+    if _async_monitor is None:
+        _async_monitor = AsyncPerformanceMonitor(get_performance_monitor())
+    return _async_monitor

@@ -30,10 +30,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ..utils.logger import get_logger
-from .performance_monitor import profile_ai_operation
+import logging
+from .performance_monitor_simple import profile_ai_operation
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -857,7 +857,7 @@ class FailureAnalysisEngine:
         mitigation_strategies = self._generate_mitigation_strategies(
             failure_type, records)
 
-        failure_id = f"{failure_type}_{hashlib.md5(pattern_signature.encode(, usedforsecurity=False)).hexdigest()[:8]}"
+        failure_id = f"{failure_type}_{hashlib.md5(pattern_signature.encode(), usedforsecurity=False).hexdigest()[:8]}"
 
         analysis = FailureAnalysis(
             failure_id=failure_id,
@@ -938,7 +938,7 @@ class FailureAnalysisEngine:
         ]
 
         signature = "|".join(signature_parts)
-        return hashlib.md5(signature.encode(, usedforsecurity=False)).hexdigest()
+        return hashlib.md5(signature.encode(), usedforsecurity=False).hexdigest()
 
     def _generate_suggested_fixes(self, failure_type: str, records: List[LearningRecord]) -> List[str]:
         """Generate suggested fixes for failure type."""
@@ -1255,5 +1255,12 @@ class AILearningEngine:
         )
 
 
-# Global learning engine instance
-learning_engine = AILearningEngine()
+# Lazy initialization to avoid circular imports
+_learning_engine = None
+
+def get_learning_engine():
+    """Get the global learning engine instance."""
+    global _learning_engine
+    if _learning_engine is None:
+        _learning_engine = AILearningEngine()
+    return _learning_engine

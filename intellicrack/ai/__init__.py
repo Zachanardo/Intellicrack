@@ -141,12 +141,12 @@ except ImportError as e:
 
 # Import advanced AI system components
 try:
-    from .learning_engine import (
+    from .learning_engine_simple import (
         AILearningEngine,
         FailureAnalysis,
         LearningRecord,
         PatternRule,
-        learning_engine,
+        get_learning_engine,
     )
 except ImportError as e:
     logger.warning("Failed to import learning_engine: %s", e)
