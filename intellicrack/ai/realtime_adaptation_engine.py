@@ -29,7 +29,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
-from .performance_monitor import performance_monitor, profile_ai_operation
+from .performance_monitor_simple import get_performance_monitor, profile_ai_operation
 
 logger = get_logger(__name__)
 
@@ -1191,7 +1191,7 @@ class RealTimeAdaptationEngine:
             logger.info("Reducing cache size")
 
             # Clear performance monitor cache
-            performance_monitor.optimize_cache()
+            # performance_monitor.optimize_cache()
 
             # Could also modify cache size configurations
 
