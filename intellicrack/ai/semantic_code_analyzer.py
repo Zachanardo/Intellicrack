@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..utils.logger import get_logger
-from .learning_engine import learning_engine
+from .learning_engine_simple import get_learning_engine
 from .llm_backends import LLMManager
 from .performance_monitor import profile_ai_operation
 
@@ -458,7 +458,7 @@ class SemanticCodeAnalyzer:
             self.analysis_cache[file_hash] = analysis_result
 
             # Record learning experience
-            learning_engine.record_experience(
+            get_learning_engine().record_experience(
                 task_type="semantic_code_analysis",
                 input_data={"file_path": file_path,
                             "content_length": len(content)},
@@ -481,7 +481,7 @@ class SemanticCodeAnalyzer:
             logger.error(f"Semantic analysis failed for {file_path}: {e}")
 
             # Record learning experience for failure
-            learning_engine.record_experience(
+            get_learning_engine().record_experience(
                 task_type="semantic_code_analysis",
                 input_data={"file_path": file_path},
                 output_data={},
@@ -498,7 +498,7 @@ class SemanticCodeAnalyzer:
 
     def _perform_semantic_analysis(self, file_path: str, content: str) -> SemanticAnalysisResult:
         """Perform the actual semantic analysis."""
-        analysis_id = f"semantic_{hashlib.md5(f'{file_path}{datetime.now(, usedforsecurity=False)}'.encode()).hexdigest()[:8]}"
+        analysis_id = f"semantic_{hashlib.md5(f'{file_path}{datetime.now()}'.encode(), usedforsecurity=False).hexdigest()[:8]}"
 
         # Parse code structure
         ast_nodes = self._parse_code_structure(content, file_path)
@@ -1064,7 +1064,7 @@ class SemanticCodeAnalyzer:
                 self.logger.error("Exception in semantic_code_analyzer: %s", e)
                 content = ""
 
-        return hashlib.md5(f"{file_path}:{content}".encode(, usedforsecurity=False)).hexdigest()
+        return hashlib.md5(f"{file_path}:{content}".encode(), usedforsecurity=False).hexdigest()
 
     def _create_empty_result(self, file_path: str) -> SemanticAnalysisResult:
         """Create empty analysis result for failed analysis."""

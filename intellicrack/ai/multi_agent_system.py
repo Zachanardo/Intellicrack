@@ -33,7 +33,7 @@ from queue import Empty, PriorityQueue, Queue
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ..utils.logger import get_logger
-from .learning_engine import learning_engine
+from .learning_engine_simple import get_learning_engine
 from .llm_backends import LLMManager
 from .performance_monitor import profile_ai_operation
 
