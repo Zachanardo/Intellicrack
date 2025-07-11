@@ -44,6 +44,10 @@ improving performance for large binaries.
 try:
     from PyQt6.QtWidgets import QMessageBox
     PYQT_AVAILABLE = True
+except ImportError as e:
+    logger.error("Import error in incremental_manager: %s", e)
+    PYQT_AVAILABLE = False
+
 import hmac
 
 # Security configuration for pickle
@@ -76,9 +80,6 @@ def secure_pickle_load(file_path):
     
     # Load object
     return pickle.loads(data)
-except ImportError as e:
-    logger.error("Import error in incremental_manager: %s", e)
-    PYQT_AVAILABLE = False
 
 
 class IncrementalAnalysisManager:
