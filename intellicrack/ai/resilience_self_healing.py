@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set
 
 from ..utils.logger import get_logger
-from .learning_engine import learning_engine
+from .learning_engine_simple import get_learning_engine
 from .performance_monitor import performance_monitor, profile_ai_operation
 
 logger = get_logger(__name__)

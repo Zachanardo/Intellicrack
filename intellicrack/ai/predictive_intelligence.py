@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from intellicrack.logger import logger
 
 from ..utils.logger import get_logger
-from .learning_engine import learning_engine
+from .learning_engine_simple import get_learning_engine
 from .performance_monitor import profile_ai_operation
 
 try:
@@ -1016,7 +1016,7 @@ class PredictiveIntelligenceEngine:
         """Generate cache key for prediction."""
         import hashlib
         key_data = f"{prediction_type.value}_{json.dumps(context, sort_keys=True)}"
-        return hashlib.md5(key_data.encode(, usedforsecurity=False)).hexdigest()
+        return hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()
 
     def verify_prediction_accuracy(self, prediction_id: str, actual_value: float):
         """Record actual outcome to improve accuracy tracking."""
