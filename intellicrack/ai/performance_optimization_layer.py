@@ -258,7 +258,7 @@ class PerformanceOptimizer:
         """Generate cache key for operation."""
         # Create deterministic hash from operation and arguments
         content = f"{operation_id}_{str(args)}_{str(sorted(kwargs.items()))}"
-        return hashlib.md5(content.encode()).hexdigest()
+        return hashlib.md5(content.encode(, usedforsecurity=False)).hexdigest()
 
     def _apply_optimizations(self, operation_id: str, operation_func: Callable) -> Callable:
         """Apply applicable optimizations to operation."""

@@ -47,6 +47,10 @@ from functools import partial
 # Import AI file tools for directory analysis
 from ..ai.ai_file_tools import get_ai_file_tools
 
+# Import core components for state management and background tasks
+from ..core.app_context import get_app_context
+from ..core.task_manager import get_task_manager
+
 # Import analysis components
 try:
     from ..core.analysis.dynamic_analyzer import AdvancedDynamicAnalyzer
@@ -109,6 +113,40 @@ try:
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
     joblib = None
+
+import hmac
+import pickle
+
+# Security configuration for pickle
+PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+
+def secure_pickle_dump(obj, file_path):
+    """Securely dump object with integrity check."""
+    # Serialize object
+    data = pickle.dumps(obj)
+    
+    # Calculate HMAC for integrity
+    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    
+    # Write MAC + data
+    with open(file_path, 'wb') as f:
+        f.write(mac)
+        f.write(data)
+
+def secure_pickle_load(file_path):
+    """Securely load object with integrity verification."""
+    with open(file_path, 'rb') as f:
+        # Read MAC
+        stored_mac = f.read(32)  # SHA256 produces 32 bytes
+        data = f.read()
+    
+    # Verify integrity
+    expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    if not hmac.compare_digest(stored_mac, expected_mac):
+        raise ValueError("Pickle file integrity check failed - possible tampering detected")
+    
+    # Load object
+    return pickle.loads(data)
 
 # PDF generation libraries are imported locally in _generate_pdf_report()
 # This reduces startup time and makes PDF dependencies optional
@@ -9353,9 +9391,7 @@ def load_ai_model(model_path):
         # Try pickle for generic Python objects
         if ext == '.pickle':
             try:
-                import pickle
-                with open(model_path, 'rb') as f:
-                    model = pickle.load(f)
+                model = secure_pickle_load(model_path)
                 print(f"Loaded pickle model from {model_path}")
                 return model
             except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
@@ -10243,6 +10279,11 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.logger.debug(f"Initial window state: {self.windowState()}")
         self.logger.info("IntellicrackApp constructor called. Initializing main application window.")
 
+        # Initialize core components
+        self.app_context = get_app_context()
+        self.task_manager = get_task_manager()
+        self.logger.info("Initialized AppContext and TaskManager for state management")
+
         # Initialize the ModelManager
         models_dir = CONFIG.get('model_repositories', {}).get('local', {}).get('models_directory', 'models')
         if ModelManager is not None:
@@ -10298,6 +10339,14 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.set_keygen_version.connect(self.handle_set_keygen_version)
         self.switch_tab.connect(self.handle_switch_tab)
         self.generate_key_signal.connect(self.handle_generate_key)
+
+        # Connect AppContext signals
+        self.app_context.binary_loaded.connect(self._on_binary_loaded)
+        self.app_context.analysis_completed.connect(self._on_analysis_completed)
+        self.app_context.task_started.connect(self._on_task_started)
+        self.app_context.task_progress.connect(self._on_task_progress)
+        self.app_context.task_completed.connect(self._on_task_completed)
+        self.app_context.task_failed.connect(self._on_task_failed)
 
         # Set up main window
         self.setWindowTitle("Intellicrack")
@@ -10605,7 +10654,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         # Create shared context for tabs
         shared_context = {
             'main_window': self,
-            'log_message': self.log_message
+            'log_message': self.log_message,
+            'app_context': self.app_context,
+            'task_manager': self.task_manager
         }
         
         # Create new modular tabs with lazy loading
@@ -17070,6 +17121,42 @@ def register():
             if any(keyword in clean_message.lower() for keyword in important_keywords):
                 self.log_to_file(f"STATUS: {clean_message}")
 
+    # AppContext signal handlers
+    def _on_binary_loaded(self, binary_info):
+        """Handle binary loaded signal from AppContext."""
+        self.binary_path = binary_info['path']
+        self.append_output(f"[Binary Loaded] {binary_info['name']} ({binary_info['size']} bytes)")
+        
+        # Update binary info display if dashboard tab is available
+        if hasattr(self, 'dashboard_tab') and hasattr(self.dashboard_tab, 'on_binary_loaded'):
+            self.dashboard_tab.on_binary_loaded(binary_info)
+    
+    def _on_analysis_completed(self, analysis_type, results):
+        """Handle analysis completed signal from AppContext."""
+        self.append_output(f"[Analysis Complete] {analysis_type}")
+        
+        # Update analysis tab if available
+        if hasattr(self, 'analysis_tab') and hasattr(self.analysis_tab, 'on_analysis_completed'):
+            self.analysis_tab.on_analysis_completed(analysis_type, results)
+    
+    def _on_task_started(self, task_id, description):
+        """Handle task started signal from AppContext."""
+        self.append_output(f"[Task Started] {description}")
+    
+    def _on_task_progress(self, task_id, progress):
+        """Handle task progress signal from AppContext."""
+        # Update progress bar if available
+        if hasattr(self, 'progress_bar'):
+            self.progress_bar.setValue(progress)
+    
+    def _on_task_completed(self, task_id, result):
+        """Handle task completed signal from AppContext."""
+        self.append_output(f"[Task Complete] Task {task_id[:8]}...")
+    
+    def _on_task_failed(self, task_id, error_message):
+        """Handle task failed signal from AppContext."""
+        self.append_output(f"[Task Failed] {error_message}")
+
     def log_to_file(self, message):
         """
         Log a message to a file in the logs directory.
@@ -20682,7 +20769,7 @@ Focus on:
                 CONFIG["selected_model_path"] = self.selected_model_path
 
             # Save to file
-            config_path = "intellicrack_config.json"
+            config_path = "config/intellicrack_config.json"
             print(f"DEBUG: Saving configuration to {os.path.abspath(config_path)}")
             print(f"DEBUG: CONFIG keys to save: {', '.join(CONFIG.keys())}")
 

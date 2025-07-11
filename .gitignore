@@ -1,13 +1,13 @@
+# Intellicrack .gitignore
+# Comprehensive ignore file for the Intellicrack project
+
+# ==============================================================================
+# PYTHON
+# ==============================================================================
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Intellicrack runtime data directories
-data/logs/
-data/plugin_cache/
-data/visualizations/
-data/reports/
 
 # C extensions
 *.so
@@ -59,17 +59,15 @@ cover/
 *.mo
 *.pot
 
-# Django stuff:
+# Django/Flask stuff
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-
-# Flask stuff:
 instance/
 .webassets-cache
 
-# Scrapy stuff:
+# Scrapy stuff
 .scrapy
 
 # Sphinx documentation
@@ -144,72 +142,9 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# PyCharm
-.idea/
-
-# VS Code
-.vscode/
-*.code-workspace
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
-[Dd]esktop.ini
-$RECYCLE.BIN/
-
-# Linux
-*~
-.directory
-.Trash-*
-.nfs*
-
-# Intellicrack specific
-intellicrack_config.json
-intellicrack_error.log
-*.patched
-*.backup
-*.orig
-
-# Data directory - runtime files
-data/
-
-# Environment files (should not be in repo)
-.env.example
-.env.production
-.env.local
-.env.*
-
-# Development analysis and temp files
-analyze_stubs.py
-stub_analysis_report.txt
-COMPLETE_IMPLEMENTATION_TODO.md
-PRODUCTION_REFACTORING_REPORT.md
-SCRIPT_ENHANCEMENT_PLAN.md
-
-# Dev folder - exclude entire directory
-dev/
-dev/**
-
-# PowerShell scripts for AI assistants
-claude*.ps1
-Claude*.ps1
-gemini*.ps1
-Gemini*.ps1
-codex*.ps1
-Codex*.ps1
-*claude*.ps1
-*gemini*.ps1
-*codex*.ps1
-
-# Virtual environments (all variations)
+# ==============================================================================
+# VIRTUAL ENVIRONMENTS (ALL VARIATIONS)
+# ==============================================================================
 venv/
 venv*/
 .venv/
@@ -229,105 +164,36 @@ pyenv*/
 .pyenv*/
 *_venv/
 *_env/
+.conda/
+conda-env/
 
-# Project docs temporary files
-project-docs/*AUDIT*
-project-docs/*MOCK*
-project-docs/*TODO*
-project-docs/SPECIFIC_*
+# ==============================================================================
+# INTELLICRACK SPECIFIC
+# ==============================================================================
+# Configuration files
+intellicrack_config.json
+security.ini
 
-# Windows specific artifacts
-nul
+# Runtime data directories
+data/
+data/logs/
+data/plugin_cache/
+data/visualizations/
+data/reports/
 
-# Local-specific files and development artifacts
-CLAUDE.md
-ClaudeCode.ps1
-Codex.ps1
-GeminiCLI.ps1
-.claude/
-.serena/
-.zen_venv/
-.venv_wsl/
-docs/CLAUDE.md
-docs/verification/
-IntellicrackFeatures.txt
-docs/IntellicrackFeatures.txt
-launch_working.py
-diagnose_launch.py
-verify_fixes.py
-test_*_features.py
-test_license_bypass.py
-test_network_features.py
-test_windows_activator.py
-FIXES_APPLIED.md
-INSTALLATION.md
-REFACTORING*.md
-TEST_ALL_FEATURES.bat
-install_helper.py
-siphash24_replacement.py
-Install_Dependencies.ps1
-install_dependencies.bat
-run_vulture_windows.py
+# Cache directories
+plugin_cache/
+.intellicrack_cache/
+.analysis_cache/
 
-# AI/LLM specific
-.llm_cache/
-llm_configs/
-api_keys.txt
-*.api_key
-model_cache/
-conversation_history/
+# Generated files
+*.patched
+*.backup
+*.orig
+*.generated.py
+*.generated.js
 
-# Ruff and linting
-.ruff_cache/
-.pylint.d/
-.flake8_cache/
-
-# Additional generated/compiled files
-*.compiled
-*.optimized
-*.analysis_result
-*.workflow_result
-*_analysis_results.md
-*_scan.py
-*_fixer.py
-*_patterns.md
-
-# Pylint and error analysis files
-pylint_errors*.txt
-*_errors.txt
-error_analysis.txt
-combined_errors.txt
-full_pylint_errors.txt
-core_errors.txt
-scripts_errors.txt
-all_errors_found.txt
-missing_*_list.txt
-
-# Project reorganization files
-PROJECT_STRUCTURE_REORGANIZATION_DETAILED.md
-MissingMethods.md
-
-# Development tools
-lint.ps1
-format.ps1
-dev_scripts/
-
-# Output directories
-logs/
-logs/*
-output/
-temp/
-temp_venv/
-cache/
-reports/
-
-# Binary files for testing
-test_binaries/
-sample_binaries/
-
-# Model files
-models/downloads/
-models/repositories/
+# ML Models and artifacts
 *.bin
 *.onnx
 *.gguf
@@ -341,68 +207,286 @@ advanced_licensing_model.joblib
 advanced_licensing_metadata.json
 model_training_data/
 ml_training_cache/
+model_cache/
+
+# Binary files for testing
+test_binaries/
+sample_binaries/
 
 # Capture files
 *.pcap
 *.pcapng
 *.cap
 
-# Generated files
-*.generated.py
-*.generated.js
-
-# Temporary analysis files
-.analysis_cache/
-.intellicrack_cache/
+# Signature files
+signatures/
+*.signature
+*.yara
+*.rules
 
 # Plugin development
 plugins/dev/
 plugins/test/
 
-# Documentation build
-docs/build/
-docs/api/
+# ==============================================================================
+# LOGS AND OUTPUT FILES
+# ==============================================================================
+# All log files
+*.log
+logs/
+logs/*
+output/
+output*.log
+*_output.log
+*_test.log
+*.log.*
 
-# Test data
-tests/data/temp/
-tests/fixtures/generated/
+# Specific log files
+intellicrack_error.log
+launch_output.log
+launch_test.log
+final_test.log
+quick_output.log
+test_output.log
+diagnostic_output.log
+diagnostic_output*.log
+debug_output_wsl.txt
+LAUNCH_SUCCESS.log
 
-# IDE specific
+# ==============================================================================
+# DEVELOPMENT AND TESTING
+# ==============================================================================
+# Development analysis files
+analyze_stubs.py
+stub_analysis_report.txt
+*_analysis.py
+*_analysis.md
+*_analysis_results.md
+*_scan.py
+*_fixer.py
+*_patterns.md
+
+# Test artifacts
+test_launch_*
+comprehensive_placeholder_check.py
+detailed_placeholder_analysis.py
+fix_tuple_imports.py
+quick_integration_check.py
+verify_integration.py
+
+# Development documentation
+COMPLETE_IMPLEMENTATION_TODO.md
+PRODUCTION_REFACTORING_REPORT.md
+SCRIPT_ENHANCEMENT_PLAN.md
+PROJECT_STRUCTURE_REORGANIZATION_DETAILED.md
+MissingMethods.md
+FIXES_APPLIED.md
+INSTALLATION.md
+REFACTORING*.md
+
+# Pylint and error analysis
+pylint_errors*.txt
+*_errors.txt
+error_analysis.txt
+combined_errors.txt
+full_pylint_errors.txt
+core_errors.txt
+scripts_errors.txt
+all_errors_found.txt
+missing_*_list.txt
+
+# ==============================================================================
+# SECURITY AND SECRETS
+# ==============================================================================
+# API keys and secrets
+*.key
+*.pem
+*.crt
+*.pfx
+*.api_key
+api_keys.txt
+secrets/
+credentials/
+
+# Environment files
+.env.*
+!.env.example
+
+# Security scan results
+security_scan_results.json
+security_scan_results_*.json
+
+# ==============================================================================
+# AI/LLM TOOLS AND CONFIGS
+# ==============================================================================
+# Claude and AI assistants
+CLAUDE.md
+.claude/
+ClaudeCode.ps1
+claude*.ps1
+Claude*.ps1
+*claude*.ps1
+
+# Other AI tools
+gemini*.ps1
+Gemini*.ps1
+*gemini*.ps1
+codex*.ps1
+Codex*.ps1
+*codex*.ps1
+GeminiCLI.ps1
+Codex.ps1
+
+# AI cache and configs
+.llm_cache/
+llm_configs/
+conversation_history/
+.serena/
+.zen*/
+.zen_venv/
+.mcp.json
+
+# ==============================================================================
+# EDITORS AND IDEs
+# ==============================================================================
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-*
+
+# Other editors
 *.swp
 *.swo
 .project
 .pydevproject
 .settings/
+*.iml
 
-# Security sensitive files
-*.key
-*.pem
-*.crt
-*.pfx
-secrets/
-credentials/
+# ==============================================================================
+# OPERATING SYSTEMS
+# ==============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+Icon?
 
-# Large binary files
-ghidra/
-radare2/
-ida/
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+nul
+
+# Linux
+*~
+.directory
+.Trash-*
+.nfs*
+
+# ==============================================================================
+# LINTING AND FORMATTING
+# ==============================================================================
+# Ruff
+.ruff_cache/
+ruff.toml
+
+# Pylint
+.pylint.d/
+.pylintrc
+
+# Flake8
+.flake8_cache/
+.flake8
+
+# mypy
+mypy.ini
+
+# ==============================================================================
+# TOOLS AND BINARIES
+# ==============================================================================
+# Legacy tools
+tools/icp_engine/
+tools/icp_engine/**
+*.dll
+*.exe
+*.ini
+Qt*.dll
+vcruntime*.dll
 
 # Compiled Frida scripts
 frida_compiled/
 
-# Node modules (if any JS components)
+# Ghidra, IDA, etc.
+ghidra/
+radare2/
+ida/
+
+# ==============================================================================
+# DOCUMENTATION
+# ==============================================================================
+# Documentation build
+docs/build/
+docs/_build/
+docs/api/
+docs/verification/
+docs/CLAUDE.md
+
+# Project docs temporary files
+project-docs/*AUDIT*
+project-docs/*MOCK*
+project-docs/*TODO*
+project-docs/SPECIFIC_*
+
+# ==============================================================================
+# PACKAGE MANAGERS AND DEPENDENCIES
+# ==============================================================================
+# Node.js
 node_modules/
+package-lock.json
+yarn.lock
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-data/*.db
+# Python package files
+Pipfile
+requirements-dev.txt
+setup.cfg
+pyproject.toml
 
-# Profiling data
-*.prof
-*.lprof
-.benchmarks/
+# UV package manager
+uv.lock
+
+# Requirements (using structure in requirements/ directory)
+requirements.txt
+requirements/base.txt
+requirements/core.txt
+requirements/dev.txt
+requirements/optional.txt
+requirements/requirements_working.txt
+requirements/test.txt
+
+# ==============================================================================
+# TEMPORARY AND CACHE FILES
+# ==============================================================================
+# Temporary files
+temp/
+temp_venv/
+cache/
+.cache/
+
+# Backup files
+backups/
+backup/
+*.backup/
 
 # Archive files (except in specific directories)
 *.zip
@@ -413,128 +497,59 @@ data/*.db
 !plugins/*.zip
 !examples/*.zip
 
-# Python virtual environments and package managers
-venv*/
-.conda/
-conda-env/
-Pipfile
-requirements-dev.txt
-setup.cfg
+# ==============================================================================
+# PROFILING AND PERFORMANCE
+# ==============================================================================
+# Profiling data
+*.prof
+*.lprof
+.benchmarks/
 
-# UV package manager
-uv.lock
-.python-version
+# Performance testing
+performance_*.json
+benchmark_*.json
 
-# Environment files
-.env.*
-!.env.example
+# ==============================================================================
+# DATABASE FILES
+# ==============================================================================
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
 
-# Backup directories
-backups/
-backup/
-*.backup/
+# ==============================================================================
+# SPECIFIC FILES TO IGNORE
+# ==============================================================================
+# Screenshots and images (except documentation)
+*.png
+*.jpg
+*.jpeg
+*.gif
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+!docs/**/*.gif
 
-# Cache directories
-plugin_cache/
-__pycache__/
-.ruff_cache/
-
-# Output directories
-visualizations/
-reports/
-
-# Node.js (if any frontend components)
-node_modules/
-package-lock.json
-yarn.lock
-
-# Serena and other tool configs
-.serena/
-.zen*/
+# Specific helper files
+launch_working.py
+diagnose_launch.py
+verify_fixes.py
+install_helper.py
+siphash24_replacement.py
+Install_Dependencies.ps1
+install_dependencies.bat
+run_vulture_windows.py
 
 # WSL specific files
 *_wsl.*
 run_*_wsl.sh
+run_intellicrack_wsl.sh
 
-# Python cache and compiled files
-*.pyc
-*.pyo
-*.pyd
-__pycache__/
-.Python
+# Docker and containerization
+.docker/
+docker-compose.override.yml
 
-# Development and testing
-.tox/
-.coverage
-.pytest_cache/
-.mypy_cache/
-htmlcov/
-
-# Editor and IDE files
-*.sublime-*
-.idea/
-.vscode/
-*.iml
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-Icon?
-ehthumbs.db
-Thumbs.db
-
-# Recent development and analysis files
-*_analysis.py
-comprehensive_placeholder_check.py
-detailed_placeholder_analysis.py
-fix_tuple_imports.py
-quick_integration_check.py
-verify_integration.py
-
-# Requirements files (using new structure in requirements/ directory)
-pyproject.toml
-requirements.txt
-requirements/base.txt
-requirements/core.txt
-requirements/dev.txt
-requirements/optional.txt
-requirements/requirements_working.txt
-requirements/test.txt
-
-# Legacy tools and binaries
-tools/icp_engine/
-tools/icp_engine/**
-*.dll
-*.exe
-*.ini
-Qt*.dll
-vcruntime*.dll
-
-# Signature files and detection patterns
-signatures/
-*.signature
-*.yara
-*.rules
-
-# Model files and ML artifacts
-ML_MODEL_GUIDE.md
-*.joblib
-*.json
-model_training_data/
-ml_training_cache/
-advanced_licensing_model.*
-advanced_licensing_metadata.*
-
-# F405 and linting artifacts
-.flake8
-.pylintrc
-ruff.toml
-mypy.ini
-
-# Git and version control artifacts
+# Git artifacts
 *.orig
 *.rej
 .git/hooks/
@@ -542,50 +557,6 @@ mypy.ini
 .git/logs/
 .git/refs/
 
-# Additional Python cache patterns
-*.py[cod]
-*$py.class
-*.so
-__pycache__/
-.Python
-
-# Documentation build artifacts
-docs/build/
-docs/_build/
-docs/api/
-docs/verification/
-
-# Test artifacts and temporary files
-test_*_features.py
-test_license_bypass.py
-test_network_features.py
-test_windows_activator.py
-test_launch.py
-test_launch_direct.py
-test_minimal_launch.py
-test_import_chain.py
-test_import_detailed.py
-test_tensorflow_import.py
-test_common_imports.py
-test_step_by_step.py
-test_torch_tf_interaction.py
-test_qt_align.py
-test_imports.py
-direct_test.py
-quick_test.py
-quick_test2.py
-
-# Debug and test batch files
-DEBUG_*.bat
-LAUNCH_TEST.bat
-QUICK_TEST.bat
-test_quick.bat
-run_test.sh
-output*.log
-quick*.log
-*_output.log
-*_test.log
-FINAL_TEST.bat
-RUN_TEST.bat
-test_intellicrack.bat
-run_and_capture.sh
+# JSON results and reports
+*_integration_test_report*.json
+*_scan_results*.json

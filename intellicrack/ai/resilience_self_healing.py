@@ -46,6 +46,41 @@ except ImportError as e:
     PSUTIL_AVAILABLE = False
 
 
+import hashlib
+import hmac
+import os
+
+# Security configuration for pickle
+PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+
+def secure_pickle_dump(obj, file_path):
+    """Securely dump object with integrity check."""
+    # Serialize object
+    data = pickle.dumps(obj)
+    
+    # Calculate HMAC for integrity
+    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    
+    # Write MAC + data
+    with open(file_path, 'wb') as f:
+        f.write(mac)
+        f.write(data)
+
+def secure_pickle_load(file_path):
+    """Securely load object with integrity verification."""
+    with open(file_path, 'rb') as f:
+        # Read MAC
+        stored_mac = f.read(32)  # SHA256 produces 32 bytes
+        data = f.read()
+    
+    # Verify integrity
+    expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    if not hmac.compare_digest(stored_mac, expected_mac):
+        raise ValueError("Pickle file integrity check failed - possible tampering detected")
+    
+    # Load object
+    return pickle.loads(data)
+
 class FailureType(Enum):
     """Types of system failures."""
     COMPONENT_CRASH = "component_crash"
@@ -1028,8 +1063,7 @@ class StateManager:
                 "recent_states": list(self.state_history)[-10:]
             }
 
-            with open(self.state_file, 'wb') as f:
-                pickle.dump(checkpoint_data, f)
+            secure_pickle_dump(checkpoint_data, self.state_file)
 
             logger.debug("System state checkpoint saved")
 
@@ -1043,8 +1077,7 @@ class StateManager:
                 logger.info("No state checkpoint found")
                 return None
 
-            with open(self.state_file, 'rb') as f:
-                checkpoint_data = pickle.load(f)
+            checkpoint_data = secure_pickle_load(self.state_file)
 
             restored_state = checkpoint_data.get("current_state")
             recent_states = checkpoint_data.get("recent_states", [])

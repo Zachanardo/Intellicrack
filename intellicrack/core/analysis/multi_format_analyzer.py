@@ -1073,6 +1073,73 @@ class MultiFormatBinaryAnalyzer:
         return result
 
 
+
+    def analyze(self, binary_path: Union[str, Path]) -> Dict[str, Any]:
+        """
+        Analyze a binary file and extract structure information.
+        
+        Args:
+            binary_path: Path to the binary file
+            
+        Returns:
+            Dictionary containing structure analysis results
+        """
+        binary_path = Path(binary_path)
+        
+        if not binary_path.exists():
+            return {"error": f"File not found: {binary_path}"}
+            
+        # Identify format
+        format_type = self.identify_format(binary_path)
+        
+        result = {
+            "format": format_type,
+            "file_path": str(binary_path),
+            "file_size": binary_path.stat().st_size,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Analyze based on format
+        if format_type == "PE":
+            result.update(self.analyze_pe(binary_path))
+        elif format_type == "ELF":
+            result.update(self.analyze_elf(binary_path))
+        elif format_type == "MACHO":
+            result.update(self.analyze_macho(binary_path))
+        else:
+            # Try generic analysis with LIEF
+            if self.lief_available:
+                try:
+                    binary = lief.parse(str(binary_path))
+                    if binary:
+                        result.update(self._analyze_lief_binary(binary))
+                except Exception as e:
+                    self.logger.error(f"LIEF analysis failed: {e}")
+                    
+        return result
+
+    def _analyze_lief_binary(self, binary) -> Dict[str, Any]:
+        """Analyze a binary using LIEF"""
+        result = {}
+        
+        # Get basic info
+        result["architecture"] = str(binary.header.architecture) if hasattr(binary.header, 'architecture') else "Unknown"
+        result["endianness"] = str(binary.header.endianness) if hasattr(binary.header, 'endianness') else "Unknown"
+        
+        # Get sections
+        if hasattr(binary, 'sections'):
+            sections = []
+            for section in binary.sections:
+                sections.append({
+                    "name": section.name,
+                    "virtual_address": section.virtual_address,
+                    "virtual_size": section.virtual_size,
+                    "size": section.size,
+                    "entropy": section.entropy if hasattr(section, 'entropy') else 0
+                })
+            result["sections"] = sections
+            
+        return result
 def run_multi_format_analysis(app, binary_path: Optional[Union[str, Path]] = None) -> Dict[str, Any]:
     """
     Run analysis on a binary of any supported format.

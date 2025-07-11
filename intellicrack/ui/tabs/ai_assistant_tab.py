@@ -3,12 +3,14 @@ from PyQt6.QtWidgets import (
     QTextEdit, QTabWidget, QCheckBox, QComboBox, QSpinBox,
     QLineEdit, QListWidget, QSplitter, QWidget, QScrollArea,
     QTableWidget, QTableWidgetItem, QHeaderView, QFrame,
-    QSlider, QProgressBar
+    QSlider, QProgressBar, QMessageBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QTimer
 from PyQt6.QtGui import QFont, QTextOption
+from datetime import datetime
 
 from .base_tab import BaseTab
+from ...core.ai_model_manager import AIModelManager, ModelConfig, ModelProvider
 
 class AIAssistantTab(BaseTab):
     """
@@ -26,6 +28,13 @@ class AIAssistantTab(BaseTab):
         self.current_model = None
         self.analysis_history = []
         self.generated_scripts = []
+        
+        # Initialize AI Model Manager
+        self.ai_model_manager = AIModelManager()
+        self.ai_model_manager.model_loaded.connect(self._on_model_loaded)
+        self.ai_model_manager.model_unloaded.connect(self._on_model_unloaded)
+        self.ai_model_manager.response_received.connect(self._on_response_received)
+        self.ai_model_manager.error_occurred.connect(self._on_ai_error)
         
     def setup_content(self):
         """Setup the complete AI Assistant tab content"""
@@ -612,14 +621,37 @@ class AIAssistantTab(BaseTab):
             self.model_progress.setVisible(True)
             self.model_progress.setRange(0, 0)  # Indeterminate progress
             
-            # Simulate model loading
-            QTimer.singleShot(2000, lambda: self.on_model_loaded(model, True))
+            # Map provider names to enum
+            provider_map = {
+                "OpenAI": ModelProvider.OPENAI,
+                "Anthropic": ModelProvider.ANTHROPIC,
+                "Local (Ollama)": ModelProvider.OLLAMA,
+                "Google Gemini": ModelProvider.GOOGLE,
+                "Groq": ModelProvider.GROQ
+            }
             
-            self.log_ai_message(f"Loading {provider} model: {model}...")
+            provider_enum = provider_map.get(provider, ModelProvider.LOCAL)
+            
+            # Create model configuration
+            config = ModelConfig(
+                name=f"{provider}_{model}",
+                provider=provider_enum,
+                model_id=model,
+                api_key=api_key if api_key else None,
+                temperature=self.temperature_slider.value() / 100.0,
+                max_tokens=self.max_tokens_spin.value()
+            )
+            
+            # Register and load model
+            if self.ai_model_manager.register_model(config):
+                self.ai_model_manager.load_model(config.name)
+                self.log_ai_message(f"Loading {provider} model: {model}...")
+            else:
+                raise Exception("Failed to register model")
             
         except Exception as e:
             self.log_ai_message(f"Error loading model: {str(e)}", "error")
-            self.on_model_loaded(model, False)
+            self.model_progress.setVisible(False)
     
     def on_model_loaded(self, model_name, success):
         """Handle model loading completion"""
@@ -803,6 +835,29 @@ class AIAssistantTab(BaseTab):
     def _generate_script_content(self, script_type, target, requirements):
         """Generate actual script content based on type and requirements"""
         try:
+            # Use AI model if available
+            if self.current_model and self.ai_model_manager.get_loaded_models():
+                script_type_map = {
+                    "Frida Hook Script": "frida",
+                    "Ghidra Analysis Script": "ghidra",
+                    "License Bypass Script": "license_bypass",
+                    "API Hook Script": "api_hook"
+                }
+                
+                ai_script_type = script_type_map.get(script_type, script_type.lower())
+                
+                # Generate using AI model
+                generated_script = self.ai_model_manager.generate_script(
+                    self.current_model,
+                    ai_script_type,
+                    target,
+                    requirements
+                )
+                
+                if generated_script:
+                    return generated_script
+            
+            # Fallback to template-based generation
             if script_type == "Frida Hook Script":
                 return self._generate_frida_script(target, requirements)
             elif script_type == "Ghidra Analysis Script":
@@ -1155,3 +1210,38 @@ main();
             self.shared_context.log_message(message, level)
         else:
             print(f"[{level.upper()}] {message}")
+    
+    def _on_model_loaded(self, model_name: str):
+        """Handle model loaded signal from AI model manager"""
+        self.model_progress.setVisible(False)
+        self.current_model = model_name
+        self.model_status_label.setText(f"Model loaded: {model_name}")
+        self.model_status_label.setStyleSheet("color: #66bb6a;")
+        self.log_ai_message(f"Successfully loaded model: {model_name}", "success")
+        self.model_loaded.emit(model_name, True)
+        
+        # Update AppContext if available
+        if self.app_context:
+            self.app_context.register_model(model_name, {
+                "provider": self.provider_combo.currentText(),
+                "model_id": self.model_combo.currentText(),
+                "loaded_at": datetime.now().isoformat()
+            })
+    
+    def _on_model_unloaded(self, model_name: str):
+        """Handle model unloaded signal"""
+        self.log_ai_message(f"Model unloaded: {model_name}", "info")
+        if self.current_model == model_name:
+            self.current_model = None
+            self.model_status_label.setText("No model loaded")
+    
+    def _on_response_received(self, model_name: str, response: str):
+        """Handle response received from AI model"""
+        # This is handled in the script generation callbacks
+        pass
+    
+    def _on_ai_error(self, model_name: str, error: str):
+        """Handle AI model error"""
+        self.model_progress.setVisible(False)
+        self.log_ai_message(f"AI Error ({model_name}): {error}", "error")
+        QMessageBox.warning(self, "AI Model Error", f"Error with {model_name}:\n{error}")

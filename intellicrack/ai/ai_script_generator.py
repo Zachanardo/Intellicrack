@@ -945,7 +945,7 @@ class AIScriptGenerator:
     def _generate_script_id(self, target_binary: str, script_type: ScriptType) -> str:
         """Generate unique script ID."""
         content = f"{target_binary}_{script_type.value}_{datetime.now().isoformat()}"
-        return hashlib.md5(content.encode()).hexdigest()[:16]
+        return hashlib.md5(content.encode(, usedforsecurity=False)).hexdigest()[:16]
 
     def _calculate_success_probability(self, protection_types: List[ProtectionType]) -> float:
         """Calculate estimated success probability based on protection types."""

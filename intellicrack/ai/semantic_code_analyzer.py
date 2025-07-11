@@ -498,7 +498,7 @@ class SemanticCodeAnalyzer:
 
     def _perform_semantic_analysis(self, file_path: str, content: str) -> SemanticAnalysisResult:
         """Perform the actual semantic analysis."""
-        analysis_id = f"semantic_{hashlib.md5(f'{file_path}{datetime.now()}'.encode()).hexdigest()[:8]}"
+        analysis_id = f"semantic_{hashlib.md5(f'{file_path}{datetime.now(, usedforsecurity=False)}'.encode()).hexdigest()[:8]}"
 
         # Parse code structure
         ast_nodes = self._parse_code_structure(content, file_path)
@@ -1064,7 +1064,7 @@ class SemanticCodeAnalyzer:
                 self.logger.error("Exception in semantic_code_analyzer: %s", e)
                 content = ""
 
-        return hashlib.md5(f"{file_path}:{content}".encode()).hexdigest()
+        return hashlib.md5(f"{file_path}:{content}".encode(, usedforsecurity=False)).hexdigest()
 
     def _create_empty_result(self, file_path: str) -> SemanticAnalysisResult:
         """Create empty analysis result for failed analysis."""

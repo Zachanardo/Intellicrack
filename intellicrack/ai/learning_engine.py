@@ -857,7 +857,7 @@ class FailureAnalysisEngine:
         mitigation_strategies = self._generate_mitigation_strategies(
             failure_type, records)
 
-        failure_id = f"{failure_type}_{hashlib.md5(pattern_signature.encode()).hexdigest()[:8]}"
+        failure_id = f"{failure_type}_{hashlib.md5(pattern_signature.encode(, usedforsecurity=False)).hexdigest()[:8]}"
 
         analysis = FailureAnalysis(
             failure_id=failure_id,
@@ -938,7 +938,7 @@ class FailureAnalysisEngine:
         ]
 
         signature = "|".join(signature_parts)
-        return hashlib.md5(signature.encode()).hexdigest()
+        return hashlib.md5(signature.encode(, usedforsecurity=False)).hexdigest()
 
     def _generate_suggested_fixes(self, failure_type: str, records: List[LearningRecord]) -> List[str]:
         """Generate suggested fixes for failure type."""

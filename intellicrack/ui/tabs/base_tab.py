@@ -10,7 +10,7 @@ class BaseTab(QWidget):
     
     def __init__(self, shared_context=None, parent=None):
         super().__init__(parent)
-        self.shared_context = shared_context
+        self.shared_context = shared_context or {}
         self.is_loaded = False
         self.setup_loading_ui()
         
@@ -53,3 +53,30 @@ class BaseTab(QWidget):
         """Log activity to shared context if available"""
         if self.shared_context and hasattr(self.shared_context, 'log_activity'):
             self.shared_context.log_activity(message)
+    
+    @property
+    def app_context(self):
+        """Get the application context from shared context"""
+        return self.shared_context.get('app_context')
+    
+    @property
+    def task_manager(self):
+        """Get the task manager from shared context"""
+        return self.shared_context.get('task_manager')
+    
+    @property
+    def main_window(self):
+        """Get the main window from shared context"""
+        return self.shared_context.get('main_window')
+    
+    def submit_task(self, task):
+        """Submit a task to the task manager"""
+        if self.task_manager:
+            return self.task_manager.submit_task(task)
+        return None
+    
+    def submit_callable(self, func, args=(), kwargs=None, description=""):
+        """Submit a callable to the task manager"""
+        if self.task_manager:
+            return self.task_manager.submit_callable(func, args, kwargs, description=description)
+        return None

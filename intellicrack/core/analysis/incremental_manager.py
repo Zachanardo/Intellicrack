@@ -44,6 +44,38 @@ improving performance for large binaries.
 try:
     from PyQt6.QtWidgets import QMessageBox
     PYQT_AVAILABLE = True
+import hmac
+
+# Security configuration for pickle
+PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+
+def secure_pickle_dump(obj, file_path):
+    """Securely dump object with integrity check."""
+    # Serialize object
+    data = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
+    
+    # Calculate HMAC for integrity
+    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    
+    # Write MAC + data
+    with open(file_path, 'wb') as f:
+        f.write(mac)
+        f.write(data)
+
+def secure_pickle_load(file_path):
+    """Securely load object with integrity verification."""
+    with open(file_path, 'rb') as f:
+        # Read MAC
+        stored_mac = f.read(32)  # SHA256 produces 32 bytes
+        data = f.read()
+    
+    # Verify integrity
+    expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    if not hmac.compare_digest(stored_mac, expected_mac):
+        raise ValueError("Pickle file integrity check failed - possible tampering detected")
+    
+    # Load object
+    return pickle.loads(data)
 except ImportError as e:
     logger.error("Import error in incremental_manager: %s", e)
     PYQT_AVAILABLE = False
@@ -313,8 +345,7 @@ class IncrementalAnalysisManager:
 
         try:
             self.logger.warning("Loading cache with pickle - ensure cache is from trusted source")
-            with open(cache_file, 'rb') as f:
-                result = pickle.load(f)  # Security: Cache files are internally generated and trusted
+            result = secure_pickle_load(cache_file)
 
             self.logger.info("Loaded cached analysis: %s", analysis_type)
             return result
@@ -362,8 +393,7 @@ class IncrementalAnalysisManager:
         )
 
         try:
-            with open(cache_file, 'wb') as f:
-                pickle.dump(results, f, protocol=pickle.HIGHEST_PROTOCOL)
+            secure_pickle_dump(results, cache_file)
 
             # Update cache index
             self.cache[self.current_binary_hash][analysis_type] = cache_file

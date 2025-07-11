@@ -47,6 +47,37 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from sklearn.cluster import DBSCAN
 
+import hmac
+import os
+
+# Security configuration for pickle
+PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+
+def secure_pickle_dumps(obj):
+    """Securely serialize object with integrity check."""
+    # Serialize object
+    data = pickle.dumps(obj)
+    
+    # Calculate HMAC for integrity
+    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    
+    # Return MAC + data as bytes
+    return mac + data
+
+def secure_pickle_loads(data):
+    """Securely deserialize object with integrity verification."""
+    # Split MAC and data
+    stored_mac = data[:32]  # SHA256 produces 32 bytes
+    obj_data = data[32:]
+    
+    # Verify integrity
+    expected_mac = hmac.new(PICKLE_SECURITY_KEY, obj_data, hashlib.sha256).digest()
+    if not hmac.compare_digest(stored_mac, expected_mac):
+        raise ValueError("Pickle data integrity check failed - possible tampering detected")
+    
+    # Deserialize object
+    return pickle.loads(obj_data)
+
 
 class PatternType(Enum):
     """Types of patterns that can evolve"""
@@ -412,7 +443,7 @@ class PatternStorage:
             cursor = self.conn.cursor()
 
             # Serialize pattern data
-            pattern_blob = pickle.dumps(pattern.pattern_data)
+            pattern_blob = secure_pickle_dumps(pattern.pattern_data)
             parent_ids_json = json.dumps(pattern.parent_ids)
             mutation_history_json = json.dumps([m.value for m in pattern.mutation_history])
             metadata_json = json.dumps(pattern.metadata)
@@ -461,7 +492,7 @@ class PatternStorage:
             pattern = PatternGene(
                 id=pattern_id,
                 type=PatternType(type_str),
-                pattern_data=pickle.loads(pattern_blob),
+                pattern_data=secure_pickle_loads(pattern_blob),
                 fitness=fitness,
                 generation=generation,
                 parent_ids=json.loads(parent_ids_json),

@@ -36,6 +36,41 @@ except ImportError as e:
     QMessageBox = None
     QApplication = None
 
+import hashlib
+import hmac
+import pickle
+
+# Security configuration for pickle
+PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+
+def secure_pickle_dump(obj, file_path):
+    """Securely dump object with integrity check."""
+    # Serialize object
+    data = pickle.dumps(obj)
+    
+    # Calculate HMAC for integrity
+    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    
+    # Write MAC + data
+    with open(file_path, 'wb') as f:
+        f.write(mac)
+        f.write(data)
+
+def secure_pickle_load(file_path):
+    """Securely load object with integrity verification."""
+    with open(file_path, 'rb') as f:
+        # Read MAC
+        stored_mac = f.read(32)  # SHA256 produces 32 bytes
+        data = f.read()
+    
+    # Verify integrity
+    expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    if not hmac.compare_digest(stored_mac, expected_mac):
+        raise ValueError("Pickle file integrity check failed - possible tampering detected")
+    
+    # Load object
+    return pickle.loads(data)
+
 
 def handle_exception(exc_type, exc_value, exc_traceback) -> None:
     """
@@ -327,8 +362,7 @@ def load_ai_model(model_path: str) -> Optional[Any]:
                     if stat_info.st_mode & 0o002:
                         logger.warning("Model file is world-writable - potential security risk")
 
-                with open(model_path, 'rb') as f:
-                    model = pickle.load(f)  # Security: Models are from trusted project directory
+                model = secure_pickle_load(model_path)
                 logger.info("Pickle model loaded: %s", model_path)
                 return model
             except (OSError, ValueError, RuntimeError) as e:

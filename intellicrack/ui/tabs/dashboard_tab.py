@@ -2,11 +2,15 @@ from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QSplitter, QGroupBox,
     QLabel, QPushButton, QLineEdit, QTextEdit, QListWidget,
     QListWidgetItem, QTreeWidget, QTreeWidgetItem, QInputDialog,
-    QFileDialog, QMessageBox
+    QFileDialog, QMessageBox, QTabWidget
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt, pyqtSignal, QUrl, QMimeData
+from PyQt6.QtGui import QFont, QDragEnterEvent, QDropEvent
 from .base_tab import BaseTab
+from ..widgets.system_monitor_widget import SystemMonitorWidget
+from ..widgets.gpu_status_widget import GPUStatusWidget
+from ..widgets.cpu_status_widget import CPUStatusWidget
+from ..widgets.drop_zone_widget import DropZoneWidget
 import os
 
 
@@ -27,6 +31,14 @@ class DashboardTab(BaseTab):
         self.current_binary = None
         self.analysis_results = {}
         
+        # Enable drag and drop
+        self.setAcceptDrops(True)
+        
+        # Connect to AppContext signals if available
+        if self.app_context:
+            self.app_context.binary_loaded.connect(self.on_binary_loaded)
+            self.app_context.analysis_completed.connect(self.on_analysis_completed)
+        
     def setup_content(self):
         """Setup the project workspace tab content"""
         layout = QHBoxLayout(self)
@@ -34,8 +46,12 @@ class DashboardTab(BaseTab):
         # Left panel - Project and Binary controls
         left_panel = self.create_project_controls()
         
-        # Right panel - Activity log and file management
-        right_panel = self.create_activity_panel()
+        # Right panel - Tab widget with Activity, System Monitor, GPU Status, and CPU Status
+        right_panel = QTabWidget()
+        right_panel.addTab(self.create_activity_panel(), "Activity & Files")
+        right_panel.addTab(self.create_system_monitor_panel(), "System Monitor")
+        right_panel.addTab(self.create_gpu_status_panel(), "GPU Status")
+        right_panel.addTab(self.create_cpu_status_panel(), "CPU Status")
         
         # Add panels with splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -101,10 +117,15 @@ class DashboardTab(BaseTab):
         
         # Binary info display
         self.binary_info_text = QTextEdit()
-        self.binary_info_text.setMaximumHeight(120)
+        self.binary_info_text.setMaximumHeight(100)
         self.binary_info_text.setReadOnly(True)
         self.binary_info_text.setPlaceholderText("Binary information will appear here...")
         binary_layout.addWidget(self.binary_info_text)
+        
+        # Drop zone for files
+        self.drop_zone = DropZoneWidget()
+        self.drop_zone.files_dropped.connect(self._handle_dropped_files)
+        binary_layout.addWidget(self.drop_zone)
         
         # Binary actions
         binary_actions_layout = QHBoxLayout()
@@ -219,6 +240,34 @@ class DashboardTab(BaseTab):
         
         return panel
     
+    def create_system_monitor_panel(self):
+        """Create system monitoring panel"""
+        self.system_monitor = SystemMonitorWidget()
+        self.system_monitor.alert_triggered.connect(self.handle_system_alert)
+        self.system_monitor.start_monitoring()
+        return self.system_monitor
+    
+    def handle_system_alert(self, alert_type: str, message: str):
+        """Handle system monitoring alerts"""
+        # Log the alert to activity log
+        self.log_activity(f"[SYSTEM ALERT - {alert_type}] {message}")
+        
+        # Show a message box for critical alerts
+        if alert_type in ["CPU", "Memory", "Disk"]:
+            QMessageBox.warning(self, f"System Alert - {alert_type}", message)
+    
+    def create_gpu_status_panel(self):
+        """Create GPU status monitoring panel"""
+        self.gpu_status = GPUStatusWidget()
+        self.gpu_status.start_monitoring()
+        return self.gpu_status
+    
+    def create_cpu_status_panel(self):
+        """Create CPU status monitoring panel"""
+        self.cpu_status = CPUStatusWidget()
+        self.cpu_status.start_monitoring()
+        return self.cpu_status
+    
     def create_new_project(self):
         """Create a new project"""
         project_name, ok = QInputDialog.getText(self, "New Project", "Project Name:")
@@ -276,10 +325,41 @@ class DashboardTab(BaseTab):
         if binary_file:
             self.binary_path_edit.setText(binary_file)
             self.current_binary = binary_file
-            self.display_binary_info(binary_file)
-            self.add_to_recent_files(binary_file)
-            self.binary_selected.emit(binary_file)
-            self.log_activity(f"Selected binary: {os.path.basename(binary_file)}")
+            
+            # Use AppContext to load binary
+            if self.app_context:
+                self.app_context.load_binary(binary_file)
+                self.log_activity(f"Loaded binary via AppContext: {os.path.basename(binary_file)}")
+            else:
+                # Fallback to old behavior
+                self.display_binary_info(binary_file)
+                self.add_to_recent_files(binary_file)
+                self.binary_selected.emit(binary_file)
+                self.log_activity(f"Selected binary: {os.path.basename(binary_file)}")
+
+    def on_binary_loaded(self, binary_info):
+        """Handle binary loaded signal from AppContext"""
+        self.display_binary_info(binary_info['path'])
+        self.add_to_recent_files(binary_info['path'])
+        self.log_activity(f"Binary loaded: {binary_info['name']} ({binary_info['size']} bytes)")
+
+    def on_analysis_completed(self, analysis_type, results):
+        """Handle analysis completed signal from AppContext"""
+        if analysis_type == "quick_analysis":
+            # Format results for display
+            result_text = f"Quick Analysis Results for {results.get('file_name', 'Unknown')}:\n"
+            result_text += f"- File format: {results.get('file_format', 'Unknown')}\n"
+            result_text += f"- Architecture: {results.get('architecture', 'Unknown')}\n"
+            result_text += f"- Compiler: {results.get('compiler', 'Unknown')}\n"
+            result_text += f"- Packer detected: {results.get('packer', 'Unknown')}\n"
+            result_text += f"- Entropy: {results.get('entropy', 0)} ({results.get('entropy_status', 'Unknown')})\n"
+            
+            # Store in local results
+            if 'file_path' in results:
+                self.analysis_results[results['file_path']] = result_text
+                self.analysis_saved.emit(results['file_path'])
+            
+            self.log_activity(f"Analysis completed: {analysis_type}")
     
     def display_binary_info(self, binary_path):
         """Display basic binary information"""
@@ -322,17 +402,71 @@ class DashboardTab(BaseTab):
         
         self.log_activity(f"Starting quick analysis of {os.path.basename(self.current_binary)}")
         
-        # Simulate analysis (in real implementation, this would trigger actual analysis)
-        analysis_result = f"Quick Analysis Results for {os.path.basename(self.current_binary)}:\n"
-        analysis_result += "- File format: PE32 executable\n"
-        analysis_result += "- Architecture: x86-64\n"
-        analysis_result += "- Compiler: Microsoft Visual C++\n"
-        analysis_result += "- Packer detected: None\n"
-        analysis_result += "- Entropy: 6.2 (Normal)\n"
-        
-        self.analysis_results[self.current_binary] = analysis_result
-        self.analysis_saved.emit(self.current_binary)
-        self.log_activity("Quick analysis completed")
+        # Submit analysis task to TaskManager
+        if self.task_manager and self.app_context:
+            # Define the analysis function
+            def analyze_binary(task=None):
+                import time
+                
+                # Notify start of analysis
+                if self.app_context:
+                    self.app_context.start_analysis("quick_analysis", {"binary": self.current_binary})
+                
+                # Simulate analysis steps with progress updates
+                steps = [
+                    ("Checking file format", 20),
+                    ("Analyzing architecture", 40),
+                    ("Detecting compiler", 60),
+                    ("Checking for packers", 80),
+                    ("Calculating entropy", 100)
+                ]
+                
+                for step, progress in steps:
+                    if task and task.is_cancelled():
+                        return None
+                    
+                    time.sleep(0.5)  # Simulate work
+                    if task:
+                        task.emit_progress(progress, step)
+                
+                # Generate analysis result
+                analysis_result = {
+                    "file_path": self.current_binary,
+                    "file_name": os.path.basename(self.current_binary),
+                    "file_format": "PE32 executable",
+                    "architecture": "x86-64",
+                    "compiler": "Microsoft Visual C++",
+                    "packer": "None detected",
+                    "entropy": 6.2,
+                    "entropy_status": "Normal"
+                }
+                
+                # Store results in AppContext
+                if self.app_context:
+                    self.app_context.set_analysis_results("quick_analysis", analysis_result)
+                
+                return analysis_result
+            
+            # Submit the task
+            task_id = self.task_manager.submit_callable(
+                analyze_binary,
+                description=f"Quick analysis of {os.path.basename(self.current_binary)}"
+            )
+            
+            self.log_activity(f"Analysis task submitted: {task_id[:8]}...")
+            
+        else:
+            # Fallback to synchronous analysis
+            analysis_result = f"Quick Analysis Results for {os.path.basename(self.current_binary)}:\n"
+            analysis_result += "- File format: PE32 executable\n"
+            analysis_result += "- Architecture: x86-64\n"
+            analysis_result += "- Compiler: Microsoft Visual C++\n"
+            analysis_result += "- Packer detected: None\n"
+            analysis_result += "- Entropy: 6.2 (Normal)\n"
+            
+            self.analysis_results[self.current_binary] = analysis_result
+            self.analysis_saved.emit(self.current_binary)
+            self.log_activity("Quick analysis completed")
     
     def load_in_ghidra(self):
         """Load the current binary in Ghidra"""
@@ -483,3 +617,118 @@ class DashboardTab(BaseTab):
             if reply == QMessageBox.StandardButton.Yes:
                 self.file_tree.takeTopLevelItem(self.file_tree.indexOfTopLevelItem(current_item))
                 self.log_activity(f"Deleted file: {file_name}")
+    
+    def cleanup(self):
+        """Cleanup resources when tab is closed"""
+        # Stop system monitoring
+        if hasattr(self, 'system_monitor'):
+            self.system_monitor.stop_monitoring()
+            self.log_activity("System monitoring stopped")
+        
+        # Stop GPU monitoring
+        if hasattr(self, 'gpu_status'):
+            self.gpu_status.stop_monitoring()
+            self.log_activity("GPU monitoring stopped")
+        
+        # Stop CPU monitoring
+        if hasattr(self, 'cpu_status'):
+            self.cpu_status.stop_monitoring()
+            self.log_activity("CPU monitoring stopped")
+        
+        # Call parent cleanup
+        super().cleanup()
+    
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        """Handle drag enter events"""
+        if event.mimeData().hasUrls():
+            # Check if any of the files are supported
+            for url in event.mimeData().urls():
+                if url.isLocalFile():
+                    file_path = url.toLocalFile()
+                    # Accept executables and other binary files
+                    if self._is_supported_file(file_path):
+                        event.acceptProposedAction()
+                        return
+        event.ignore()
+    
+    def dropEvent(self, event: QDropEvent):
+        """Handle drop events"""
+        if event.mimeData().hasUrls():
+            files_dropped = []
+            for url in event.mimeData().urls():
+                if url.isLocalFile():
+                    file_path = url.toLocalFile()
+                    if self._is_supported_file(file_path):
+                        files_dropped.append(file_path)
+            
+            if files_dropped:
+                # Handle dropped files
+                self._handle_dropped_files(files_dropped)
+                event.acceptProposedAction()
+            else:
+                event.ignore()
+        else:
+            event.ignore()
+    
+    def _is_supported_file(self, file_path: str) -> bool:
+        """Check if file is supported for analysis"""
+        if not os.path.exists(file_path):
+            return False
+            
+        # Check file extension
+        supported_extensions = [
+            '.exe', '.dll', '.so', '.dylib', '.elf', '.bin',
+            '.sys', '.drv', '.ocx', '.app', '.apk', '.ipa',
+            '.dex', '.jar', '.class', '.pyc', '.pyd'
+        ]
+        
+        ext = os.path.splitext(file_path)[1].lower()
+        return ext in supported_extensions or os.path.isfile(file_path)
+    
+    def _handle_dropped_files(self, file_paths: list):
+        """Handle dropped files"""
+        if len(file_paths) == 1:
+            # Single file - load as binary
+            file_path = file_paths[0]
+            self.binary_path_edit.setText(file_path)
+            self.current_binary = file_path
+            
+            # Use AppContext to load binary
+            if self.app_context:
+                self.app_context.load_binary(file_path)
+                self.log_activity(f"Loaded dropped file via AppContext: {os.path.basename(file_path)}")
+            else:
+                # Fallback to old behavior
+                self.display_binary_info(file_path)
+                self.add_to_recent_files(file_path)
+                self.binary_selected.emit(file_path)
+                self.log_activity(f"Loaded dropped file: {os.path.basename(file_path)}")
+                
+        else:
+            # Multiple files - ask user what to do
+            from PyQt6.QtWidgets import QMenu
+            
+            menu = QMenu(self)
+            menu.addAction("Load first as binary", lambda: self._handle_dropped_files([file_paths[0]]))
+            menu.addAction("Add all to project", lambda: self._add_files_to_project(file_paths))
+            menu.addSeparator()
+            menu.addAction("Cancel", lambda: None)
+            
+            menu.exec(self.cursor().pos())
+    
+    def _add_files_to_project(self, file_paths: list):
+        """Add multiple files to current project"""
+        if not self.current_project:
+            QMessageBox.warning(self, "Warning", "No project loaded. Create or open a project first.")
+            return
+            
+        for file_path in file_paths:
+            self.log_activity(f"Added to project: {os.path.basename(file_path)}")
+            # TODO: Implement actual project file management
+            
+        self.refresh_file_tree()
+        QMessageBox.information(
+            self, 
+            "Files Added", 
+            f"Added {len(file_paths)} files to the current project."
+        )

@@ -38,6 +38,40 @@ get_gpu_info = None
 to_device = None
 memory_allocated = None
 memory_reserved = None
+import hashlib
+import hmac
+import os
+
+# Security configuration for pickle
+PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+
+def secure_pickle_dump(obj, file_path):
+    """Securely dump object with integrity check."""
+    # Serialize object
+    data = pickle.dumps(obj)
+    
+    # Calculate HMAC for integrity
+    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    
+    # Write MAC + data
+    with open(file_path, 'wb') as f:
+        f.write(mac)
+        f.write(data)
+
+def secure_pickle_load(file_path):
+    """Securely load object with integrity verification."""
+    with open(file_path, 'rb') as f:
+        # Read MAC
+        stored_mac = f.read(32)  # SHA256 produces 32 bytes
+        data = f.read()
+    
+    # Verify integrity
+    expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    if not hmac.compare_digest(stored_mac, expected_mac):
+        raise ValueError("Pickle file integrity check failed - possible tampering detected")
+    
+    # Load object
+    return pickle.loads(data)
 empty_cache = None
 gpu_autoloader = None
 
@@ -394,14 +428,12 @@ class ModelCacheManager:
 
             # Save model
             model_path = model_dir / "model.pkl"
-            with open(model_path, 'wb') as f:
-                pickle.dump(entry.model_object, f)
+            secure_pickle_dump(entry.model_object, model_path)
 
             # Save tokenizer if present
             if entry.tokenizer_object:
                 tokenizer_path = model_dir / "tokenizer.pkl"
-                with open(tokenizer_path, 'wb') as f:
-                    pickle.dump(entry.tokenizer_object, f)
+                secure_pickle_dump(entry.tokenizer_object, tokenizer_path)
 
             # Save metadata
             metadata = {
@@ -461,16 +493,14 @@ class ModelCacheManager:
 
             # Load model
             model_path = model_dir / "model.pkl"
-            with open(model_path, 'rb') as f:
-                model = pickle.load(f)
+            model = secure_pickle_load(model_path)
 
             # Load tokenizer if present
             tokenizer = None
             if metadata.get("has_tokenizer"):
                 tokenizer_path = model_dir / "tokenizer.pkl"
                 if tokenizer_path.exists():
-                    with open(tokenizer_path, 'rb') as f:
-                        tokenizer = pickle.load(f)
+                    tokenizer = secure_pickle_load(tokenizer_path)
 
             # Move model to appropriate device if GPU autoloader is available
             if GPU_AUTOLOADER_AVAILABLE and to_device and metadata.get("device", "cpu") != "cpu":

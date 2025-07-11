@@ -22,6 +22,39 @@ from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+import hmac
+
+# Security configuration for pickle
+PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
+
+def secure_pickle_dump(obj, file_path):
+    """Securely dump object with integrity check."""
+    # Serialize object
+    data = pickle.dumps(obj)
+    
+    # Calculate HMAC for integrity
+    mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    
+    # Write MAC + data
+    with open(file_path, 'wb') as f:
+        f.write(mac)
+        f.write(data)
+
+def secure_pickle_load(file_path):
+    """Securely load object with integrity verification."""
+    with open(file_path, 'rb') as f:
+        # Read MAC
+        stored_mac = f.read(32)  # SHA256 produces 32 bytes
+        data = f.read()
+    
+    # Verify integrity
+    expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
+    if not hmac.compare_digest(stored_mac, expected_mac):
+        raise ValueError("Pickle file integrity check failed - possible tampering detected")
+    
+    # Load object
+    return pickle.loads(data)
+
 
 @dataclass
 class CacheEntry:
@@ -337,8 +370,7 @@ class AnalysisCache:
         try:
             with self._lock:
                 # Save cache data
-                with open(self.cache_file, 'wb') as f:
-                    pickle.dump(self._cache, f)
+                secure_pickle_dump(self._cache, self.cache_file)
 
                 # Save statistics
                 with open(self.stats_file, 'w') as f:
@@ -405,8 +437,7 @@ class AnalysisCache:
         try:
             # Load cache data
             if self.cache_file.exists():
-                with open(self.cache_file, 'rb') as f:
-                    self._cache = pickle.load(f)
+                self._cache = secure_pickle_load(self.cache_file)
                 logger.info(f"Loaded cache: {len(self._cache)} entries")
 
             # Load statistics

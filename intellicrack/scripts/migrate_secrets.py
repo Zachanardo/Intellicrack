@@ -107,12 +107,18 @@ def migrate_env_files():
     """Check for .env files and provide guidance."""
     env_files = ['.env', '.env.local', '.env.production']
     project_root = Path.cwd()
+    config_dir = project_root / 'config'
 
     found_env_files = []
     for env_file in env_files:
+        # Check both root and config directory
         env_path = project_root / env_file
+        config_env_path = config_dir / env_file
+        
         if env_path.exists():
             found_env_files.append(env_path)
+        elif config_env_path.exists():
+            found_env_files.append(config_env_path)
 
     if found_env_files:
         logger.info("\nFound environment files:")
