@@ -1,4 +1,4 @@
-aiohttp==3.12.13
+aiohttp==3.12.14
 angr==9.2.158
 anthropic==0.54.0
 azure_storage==0.37.0
