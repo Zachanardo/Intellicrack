@@ -108,6 +108,7 @@ class CodeMeterProtocolParser:
     }
 
     def __init__(self):
+        """Initialize the CodeMeter protocol parser with session tracking and container info."""
         self.logger = get_logger(__name__)
         self.active_sessions = {}  # Track active sessions
         self.container_info = self._generate_container_info()

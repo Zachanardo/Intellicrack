@@ -160,44 +160,57 @@ else:
     class PluginManagerDialog(QDialog):
         """Dialog for managing Intellicrack plugins."""
 
-        def __init__(self, parent=None):
-            # Initialize UI attributes
-            self.author_edit = None
-            self.auto_enable = None
-            self.available_list = None
-            self.backup_existing = None
-            self.configure_btn = None
-            self.disable_btn = None
-            self.enable_btn = None
-            self.file_path_edit = None
-            self.install_btn = None
-            self.install_thread = None
-            self.installed_list = None
-            self.plugin_details = None
-            self.plugin_info = None
-            self.plugin_name_edit = None
-            self.plugin_type_combo = None
-            self.preview_btn = None
-            self.progress_bar = None
-            self.remove_btn = None
-            self.repo_combo = None
-            self.status_label = None
-            self.test_file_edit = None
-            self.test_output = None
-            if HAS_PYQT:
-                super().__init__(parent)
-            self.parent = parent
-            self.plugins_dir = "plugins"
-            self.installed_plugins = []
-            self.available_plugins = []
-
-            # Ensure plugins directory exists
-            os.makedirs(self.plugins_dir, exist_ok=True)
-
-            if HAS_PYQT:
-                self.setup_ui()
-                self.load_installed_plugins()
-                self.load_available_plugins()
+        def __init__(self, parent=None, app_context=None):
+        """Initialize plugin manager dialog with plugin discovery and management capabilities."""
+        super().__init__(parent)
+        self.setWindowTitle("Plugin Manager")
+        self.setMinimumSize(900, 600)
+        
+        # App context
+        self.app_context = app_context
+        
+        # Plugin management
+        self.installed_plugins = {}
+        self.available_plugins = {}
+        self.plugin_categories = ['Analysis', 'Exploitation', 'Network', 'UI', 'Utilities']
+        
+        # Threading
+        self.install_thread = None
+        self.discovery_thread = None
+        
+        # Current state
+        self.current_plugin = None
+        self.filter_category = 'All'
+        self.search_text = ''
+        
+        # Setup UI
+        self.setup_ui()
+        self.setup_connections()
+        
+        # Load plugins
+        self.refresh_plugin_lists()
+        
+        # Setup drag and drop
+        self.setAcceptDrops(True)
+        
+        # Load settings
+        self.load_settings()
+        
+        # Auto-refresh timer
+        self.auto_refresh_timer = QTimer()
+        self.auto_refresh_timer.timeout.connect(self.auto_refresh_plugins)
+        
+        # Check for updates on startup
+        if hasattr(self.app_context, 'config') and self.app_context.config.get('plugin_auto_update', True):
+            QTimer.singleShot(2000, self.check_for_updates)
+        
+        logger.info("Plugin Manager Dialog initialized")
+        
+        # Show welcome message for first time users
+        if not hasattr(self.app_context, 'plugin_manager_shown_before'):
+            self.show_welcome_message()
+            if hasattr(self.app_context, 'config'):
+                self.app_context.config['plugin_manager_shown_before'] = True
 
         def setup_ui(self):
             """Set up the user interface."""

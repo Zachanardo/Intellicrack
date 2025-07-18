@@ -35,9 +35,8 @@ class BinarySelectionDialog(QDialog):
     """Dialog for selecting binary files for analysis."""
 
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.selected_binary = None
-        self.init_ui()
+    """Initialize binary selection dialog for choosing executable files to analyze."""
+    super().__init__(parent)
 
     def init_ui(self):
         """Initialize the user interface."""
@@ -113,10 +112,8 @@ class BaseTemplateDialog(QDialog):
     """Base dialog class for template-based dialogs."""
 
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setModal(True)
-        self.setMinimumWidth(800)
-        self.setMinimumHeight(600)
+    """Initialize base template dialog with common UI setup patterns."""
+    super().__init__(parent)
 
 
 __all__ = ['BinarySelectionDialog', 'BaseTemplateDialog']

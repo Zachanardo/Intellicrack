@@ -1442,6 +1442,13 @@ class FridaManager:
         """Handle messages from Frida scripts including binary data"""
         msg_type = message.get('type')
         payload = message.get('payload', {})
+        
+        # Handle new structured messages from updated Frida scripts
+        if msg_type == 'send' and isinstance(payload, dict):
+            structured_type = payload.get('type')
+            if structured_type in ['info', 'warning', 'error', 'status', 'bypass', 'success', 'detection', 'notification']:
+                self._handle_structured_message(session_id, script_name, payload)
+                return
 
         # Handle binary data if present
         if data is not None:
@@ -2383,6 +2390,281 @@ class FridaManager:
         # Clear collections
         self.sessions.clear()
         self.scripts.clear()
+    
+    def _handle_structured_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
+        """Handle structured messages from updated Frida scripts"""
+        msg_type = payload.get('type')
+        target = payload.get('target', script_name)
+        action = payload.get('action', 'unknown')
+        
+        # Route message based on type
+        if msg_type == 'info':
+            self._handle_info_message(session_id, script_name, payload)
+        elif msg_type == 'warning':
+            self._handle_warning_message(session_id, script_name, payload)
+        elif msg_type == 'error':
+            self._handle_error_message(session_id, script_name, payload)
+        elif msg_type == 'status':
+            self._handle_status_message(session_id, script_name, payload)
+        elif msg_type == 'bypass':
+            self._handle_bypass_message(session_id, script_name, payload)
+        elif msg_type == 'success':
+            self._handle_success_message(session_id, script_name, payload)
+        elif msg_type == 'detection':
+            self._handle_detection_message(session_id, script_name, payload)
+        elif msg_type == 'notification':
+            self._handle_notification_message(session_id, script_name, payload)
+        
+        # Always log structured message for debugging
+        self.logger.log_operation(
+            f"structured_{msg_type}:{script_name}",
+            {
+                'session_id': session_id,
+                'target': target,
+                'action': action,
+                'payload': payload
+            },
+            success=True
+        )
+    
+    def _handle_info_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
+        """Handle informational messages"""
+        target = payload.get('target', script_name)
+        action = payload.get('action', 'info')
+        
+        # Log as informational operation
+        self.logger.log_operation(
+            f"info:{target}",
+            {
+                'session_id': session_id,
+                'action': action,
+                'details': {k: v for k, v in payload.items() if k not in ['type', 'target', 'action']}
+            },
+            success=True
+        )
+        
+        # Call UI callback if available
+        if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
+            self._ui_message_callback('info', session_id, script_name, payload)
+    
+    def _handle_warning_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
+        """Handle warning messages"""
+        target = payload.get('target', script_name)
+        action = payload.get('action', 'warning')
+        
+        # Log as warning
+        logger.warning(f"[{target}] {action}: {payload}")
+        
+        self.logger.log_operation(
+            f"warning:{target}",
+            {
+                'session_id': session_id,
+                'action': action,
+                'details': {k: v for k, v in payload.items() if k not in ['type', 'target', 'action']}
+            },
+            success=True
+        )
+        
+        # Call UI callback if available
+        if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
+            self._ui_message_callback('warning', session_id, script_name, payload)
+    
+    def _handle_error_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
+        """Handle error messages"""
+        target = payload.get('target', script_name)
+        action = payload.get('action', 'error')
+        error_details = payload.get('error', 'Unknown error')
+        
+        # Log as error
+        logger.error(f"[{target}] {action}: {error_details}")
+        
+        self.logger.log_operation(
+            f"error:{target}",
+            {
+                'session_id': session_id,
+                'action': action,
+                'error': error_details,
+                'details': {k: v for k, v in payload.items() if k not in ['type', 'target', 'action', 'error']}
+            },
+            success=False,
+            error=str(error_details)
+        )
+        
+        # Call UI callback if available
+        if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
+            self._ui_message_callback('error', session_id, script_name, payload)
+    
+    def _handle_status_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
+        """Handle status messages"""
+        target = payload.get('target', script_name)
+        action = payload.get('action', 'status')
+        status = payload.get('status', 'unknown')
+        
+        # Log as status update
+        self.logger.log_operation(
+            f"status:{target}",
+            {
+                'session_id': session_id,
+                'action': action,
+                'status': status,
+                'details': {k: v for k, v in payload.items() if k not in ['type', 'target', 'action', 'status']}
+            },
+            success=True
+        )
+        
+        # Call UI callback if available
+        if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
+            self._ui_message_callback('status', session_id, script_name, payload)
+    
+    def _handle_bypass_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
+        """Handle bypass attempt messages"""
+        target = payload.get('target', script_name)
+        action = payload.get('action', 'bypass_attempt')
+        technique = payload.get('technique', action)
+        success = payload.get('success', True)
+        
+        # Determine protection type from target or action
+        protection_type = self._infer_protection_type(target, action, payload)
+        
+        # Log bypass attempt
+        self.logger.log_bypass_attempt(
+            protection_type,
+            technique,
+            success,
+            {
+                'session_id': session_id,
+                'target': target,
+                'action': action,
+                'details': {k: v for k, v in payload.items() if k not in ['type', 'target', 'action', 'technique', 'success']}
+            }
+        )
+        
+        # Notify protection detector if bypass was successful
+        if success:
+            self.detector.notify_protection_detected(
+                protection_type,
+                {
+                    'evidence': f"Bypass successful: {technique}",
+                    'script': script_name,
+                    'session': session_id,
+                    'details': payload
+                }
+            )
+        
+        # Call UI callback if available
+        if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
+            self._ui_message_callback('bypass', session_id, script_name, payload)
+    
+    def _handle_success_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
+        """Handle success messages"""
+        target = payload.get('target', script_name)
+        action = payload.get('action', 'success')
+        
+        # Log as successful operation
+        self.logger.log_operation(
+            f"success:{target}",
+            {
+                'session_id': session_id,
+                'action': action,
+                'details': {k: v for k, v in payload.items() if k not in ['type', 'target', 'action']}
+            },
+            success=True
+        )
+        
+        # Call UI callback if available
+        if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
+            self._ui_message_callback('success', session_id, script_name, payload)
+    
+    def _handle_detection_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
+        """Handle detection messages"""
+        target = payload.get('target', script_name)
+        action = payload.get('action', 'detection')
+        detected_item = payload.get('detected', 'unknown')
+        
+        # Determine protection type from detection
+        protection_type = self._infer_protection_type(target, action, payload)
+        
+        # Log detection
+        self.logger.log_operation(
+            f"detection:{target}",
+            {
+                'session_id': session_id,
+                'action': action,
+                'detected': detected_item,
+                'details': {k: v for k, v in payload.items() if k not in ['type', 'target', 'action', 'detected']}
+            },
+            success=True
+        )
+        
+        # Notify protection detector
+        self.detector.notify_protection_detected(
+            protection_type,
+            {
+                'evidence': f"Detection: {detected_item}",
+                'script': script_name,
+                'session': session_id,
+                'details': payload
+            }
+        )
+        
+        # Call UI callback if available
+        if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
+            self._ui_message_callback('detection', session_id, script_name, payload)
+    
+    def _handle_notification_message(self, session_id: str, script_name: str, payload: Dict[str, Any]):
+        """Handle notification messages"""
+        target = payload.get('target', script_name)
+        action = payload.get('action', 'notification')
+        
+        # Log as notification
+        self.logger.log_operation(
+            f"notification:{target}",
+            {
+                'session_id': session_id,
+                'action': action,
+                'details': {k: v for k, v in payload.items() if k not in ['type', 'target', 'action']}
+            },
+            success=True
+        )
+        
+        # Call UI callback if available
+        if hasattr(self, '_ui_message_callback') and self._ui_message_callback:
+            self._ui_message_callback('notification', session_id, script_name, payload)
+    
+    def _infer_protection_type(self, target: str, action: str, payload: Dict[str, Any]) -> ProtectionType:
+        """Infer protection type from message context"""
+        # Check target module name for protection type hints
+        target_lower = target.lower()
+        action_lower = action.lower()
+        
+        # Map common targets to protection types
+        if 'debug' in target_lower or 'debug' in action_lower:
+            return ProtectionType.ANTI_DEBUG
+        elif 'vm' in target_lower or 'virtual' in target_lower:
+            return ProtectionType.ANTI_VM
+        elif 'license' in target_lower or 'license' in action_lower:
+            return ProtectionType.LICENSE
+        elif 'integrity' in target_lower or 'checksum' in action_lower:
+            return ProtectionType.INTEGRITY
+        elif 'hardware' in target_lower or 'hwid' in action_lower:
+            return ProtectionType.HARDWARE
+        elif 'cloud' in target_lower or 'server' in action_lower:
+            return ProtectionType.CLOUD
+        elif 'time' in target_lower or 'time' in action_lower:
+            return ProtectionType.TIME
+        elif 'memory' in target_lower or 'memory' in action_lower:
+            return ProtectionType.MEMORY
+        elif 'kernel' in target_lower or 'kernel' in action_lower:
+            return ProtectionType.KERNEL
+        else:
+            # Check payload for additional hints
+            payload_str = str(payload).lower()
+            if 'license' in payload_str:
+                return ProtectionType.LICENSE
+            elif 'debug' in payload_str:
+                return ProtectionType.ANTI_DEBUG
+            else:
+                return ProtectionType.UNKNOWN
 
 
 # Export main components

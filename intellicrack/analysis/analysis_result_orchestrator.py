@@ -46,6 +46,11 @@ class AnalysisResultOrchestrator(QObject):
     handler_status = pyqtSignal(str, str)  # handler_name, status_message
 
     def __init__(self, parent=None):
+        """Initialize the analysis result orchestrator.
+        
+        Args:
+            parent: Optional parent widget for Qt integration.
+        """
         super().__init__(parent)
         self.handlers = []
         self._current_result: Optional[UnifiedProtectionResult] = None

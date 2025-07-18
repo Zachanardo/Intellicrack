@@ -61,6 +61,7 @@ class R2UIManager(QObject):
     binary_loaded = pyqtSignal(str)  # binary path
 
     def __init__(self, main_app=None):
+        """Initialize the radare2 UI manager with main application integration."""
         super().__init__()
         self.logger = logger
         self.main_app = main_app

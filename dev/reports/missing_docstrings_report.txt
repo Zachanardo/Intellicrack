@@ -1,0 +1,615 @@
+Missing __init__ Docstrings Report
+================================================================================
+
+intellicrack\plugins\custom_modules\intellicrack_core_engine.py: 12 missing
+  - Line 232
+  - Line 418
+  - Line 652
+  - Line 745
+  - Line 985
+  - Line 1271
+  - Line 1463
+  - Line 1673
+  - Line 2223
+  - Line 2686
+  - Line 3016
+  - Line 3251
+
+intellicrack\ui\dialogs\model_finetuning_dialog.py: 10 missing
+  - Line 396
+  - Line 422
+  - Line 489
+  - Line 574
+  - Line 595
+  - Line 612
+  - Line 676
+  - Line 702
+  - Line 780
+  - Line 968
+
+intellicrack\plugins\custom_modules\performance_optimizer.py: 9 missing
+  - Line 140
+  - Line 214
+  - Line 342
+  - Line 424
+  - Line 495
+  - Line 596
+  - Line 738
+  - Line 889
+  - Line 985
+
+intellicrack\utils\core\common_imports.py: 9 missing
+  - Line 163
+  - Line 292
+  - Line 417
+  - Line 559
+  - Line 686
+  - Line 815
+  - Line 863
+  - Line 966
+  - Line 1187
+
+intellicrack\plugins\custom_modules\anti_anti_debug_suite.py: 8 missing
+  - Line 82
+  - Line 296
+  - Line 505
+  - Line 640
+  - Line 723
+  - Line 918
+  - Line 995
+  - Line 1146
+
+intellicrack\plugins\custom_modules\hardware_dongle_emulator.py: 8 missing
+  - Line 195
+  - Line 298
+  - Line 428
+  - Line 502
+  - Line 565
+  - Line 618
+  - Line 700
+  - Line 807
+
+intellicrack\plugins\custom_modules\license_server_emulator.py: 8 missing
+  - Line 206
+  - Line 318
+  - Line 443
+  - Line 555
+  - Line 599
+  - Line 663
+  - Line 796
+  - Line 880
+
+intellicrack\hexview\hex_commands.py: 7 missing
+  - Line 51
+  - Line 127
+  - Line 193
+  - Line 233
+  - Line 278
+  - Line 327
+  - Line 388
+
+intellicrack\plugins\custom_modules\success_rate_analyzer.py: 7 missing
+  - Line 166
+  - Line 201
+  - Line 262
+  - Line 497
+  - Line 645
+  - Line 771
+  - Line 938
+
+intellicrack\plugins\custom_modules\ui_enhancement_module.py: 7 missing
+  - Line 167
+  - Line 238
+  - Line 411
+  - Line 526
+  - Line 876
+  - Line 1231
+  - Line 1768
+
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py: 6 missing
+  - Line 169
+  - Line 350
+  - Line 587
+  - Line 784
+  - Line 1048
+  - Line 1272
+
+intellicrack\scripts\cli\pipeline.py: 6 missing
+  - Line 76
+  - Line 144
+  - Line 187
+  - Line 244
+  - Line 364
+  - Line 397
+
+intellicrack\ui\dialogs\ai_coding_assistant_dialog.py: 6 missing
+  - Line 66
+  - Line 116
+  - Line 170
+  - Line 312
+  - Line 407
+  - Line 506
+
+intellicrack\ui\dialogs\common_imports.py: 6 missing
+  - Line 120
+  - Line 158
+  - Line 198
+  - Line 263
+  - Line 271
+  - Line 279
+
+intellicrack\ui\dialogs\plugin_creation_wizard.py: 6 missing
+  - Line 58
+  - Line 394
+  - Line 449
+  - Line 557
+  - Line 612
+  - Line 688
+
+intellicrack\core\network\dynamic_response_generator.py: 5 missing
+  - Line 62
+  - Line 150
+  - Line 215
+  - Line 308
+  - Line 361
+
+intellicrack\hexview\advanced_search.py: 5 missing
+  - Line 79
+  - Line 112
+  - Line 171
+  - Line 484
+  - Line 521
+
+intellicrack\plugins\custom_modules\vm_protection_unwrapper.py: 5 missing
+  - Line 112
+  - Line 362
+  - Line 415
+  - Line 648
+  - Line 847
+
+intellicrack\ui\main_app.py: 5 missing
+  - Line 7060
+  - Line 9717
+  - Line 9747
+  - Line 9858
+  - Line 19802
+
+intellicrack\ui\dialogs\export_dialog.py: 5 missing
+  - Line 51
+  - Line 434
+  - Line 803
+  - Line 909
+  - Line 916
+
+intellicrack\ai\enhanced_training_interface.py: 4 missing
+  - Line 245
+  - Line 325
+  - Line 456
+  - Line 609
+
+intellicrack\hexview\large_file_handler.py: 4 missing
+  - Line 94
+  - Line 206
+  - Line 281
+  - Line 350
+
+intellicrack\models\model_manager.py: 4 missing
+  - Line 62
+  - Line 69
+  - Line 74
+  - Line 505
+
+intellicrack\plugins\custom_modules\test_suite_comprehensive.py: 4 missing
+  - Line 159
+  - Line 380
+  - Line 407
+  - Line 1554
+
+intellicrack\ui\radare2_integration_ui.py: 4 missing
+  - Line 78
+  - Line 220
+  - Line 328
+  - Line 648
+
+intellicrack\ui\dialogs\debugger_dialog.py: 4 missing
+  - Line 56
+  - Line 82
+  - Line 675
+  - Line 838
+
+intellicrack\utils\dependency_fallbacks.py: 4 missing
+  - Line 270
+  - Line 299
+  - Line 318
+  - Line 390
+
+intellicrack\utils\runtime\performance_optimizer.py: 4 missing
+  - Line 47
+  - Line 105
+  - Line 211
+  - Line 296
+
+intellicrack\core\analysis\concolic_executor.py: 3 missing
+  - Line 541
+  - Line 688
+  - Line 904
+
+intellicrack\ml\pattern_evolution_tracker.py: 3 missing
+  - Line 312
+  - Line 380
+  - Line 563
+
+intellicrack\scripts\cli\ai_integration.py: 3 missing
+  - Line 51
+  - Line 282
+  - Line 351
+
+intellicrack\ui\dialogs\code_modification_dialog.py: 3 missing
+  - Line 62
+  - Line 115
+  - Line 134
+
+intellicrack\ui\dialogs\plugin_manager_dialog.py: 3 missing
+  - Line 68
+  - Line 125
+  - Line 163
+
+intellicrack\ui\dialogs\script_generator_dialog.py: 3 missing
+  - Line 68
+  - Line 110
+  - Line 199
+
+intellicrack\ui\dialogs\signature_editor_dialog.py: 3 missing
+  - Line 58
+  - Line 123
+  - Line 197
+
+intellicrack\ui\dialogs\text_editor_dialog.py: 3 missing
+  - Line 74
+  - Line 138
+  - Line 238
+
+intellicrack\ui\widgets\cache_management_widget.py: 3 missing
+  - Line 40
+  - Line 121
+  - Line 169
+
+intellicrack\ui\widgets\intellicrack_advanced_protection_widget.py: 3 missing
+  - Line 69
+  - Line 104
+  - Line 165
+
+intellicrack\core\exploitation\windows_persistence.py: 2 missing
+  - Line 603
+  - Line 802
+
+intellicrack\core\network\license_server_emulator.py: 2 missing
+  - Line 781
+  - Line 945
+
+intellicrack\core\patching\memory_patcher.py: 2 missing
+  - Line 52
+  - Line 56
+
+intellicrack\core\vulnerability_research\exploit_developer\__init__.py: 2 missing
+  - Line 33
+  - Line 59
+
+intellicrack\plugins\ghidra_scripts\user\AntiAnalysisDetector.py: 2 missing
+  - Line 187
+  - Line 210
+
+intellicrack\scripts\cli\ai_wrapper.py: 2 missing
+  - Line 82
+  - Line 186
+
+intellicrack\scripts\cli\config_profiles.py: 2 missing
+  - Line 43
+  - Line 86
+
+intellicrack\scripts\cli\interactive_mode.py: 2 missing
+  - Line 95
+  - Line 203
+
+intellicrack\scripts\cli\progress_manager.py: 2 missing
+  - Line 86
+  - Line 258
+
+intellicrack\tools\plugin_debugger.py: 2 missing
+  - Line 81
+  - Line 660
+
+intellicrack\tools\plugin_test_generator.py: 2 missing
+  - Line 35
+  - Line 702
+
+intellicrack\ui\enhanced_ui_integration.py: 2 missing
+  - Line 60
+  - Line 392
+
+intellicrack\ui\dialogs\base_dialog.py: 2 missing
+  - Line 37
+  - Line 115
+
+intellicrack\ui\dialogs\c2_management_dialog.py: 2 missing
+  - Line 68
+  - Line 137
+
+intellicrack\ui\dialogs\ci_cd_dialog.py: 2 missing
+  - Line 70
+  - Line 107
+
+intellicrack\ui\dialogs\first_run_setup.py: 2 missing
+  - Line 39
+  - Line 82
+
+intellicrack\ui\dialogs\frida_manager_dialog.py: 2 missing
+  - Line 131
+  - Line 173
+
+intellicrack\ui\dialogs\ghidra_script_selector.py: 2 missing
+  - Line 57
+  - Line 190
+
+intellicrack\ui\dialogs\keygen_dialog.py: 2 missing
+  - Line 70
+  - Line 159
+
+intellicrack\ui\dialogs\llm_config_dialog.py: 2 missing
+  - Line 101
+  - Line 149
+
+intellicrack\ui\dialogs\model_manager_dialog.py: 2 missing
+  - Line 99
+  - Line 152
+
+intellicrack\ui\dialogs\payload_generator_dialog.py: 2 missing
+  - Line 69
+  - Line 102
+
+intellicrack\ui\dialogs\program_selector_dialog.py: 2 missing
+  - Line 77
+  - Line 138
+
+intellicrack\ui\dialogs\qemu_test_results_dialog.py: 2 missing
+  - Line 77
+  - Line 200
+
+intellicrack\ui\dialogs\report_manager_dialog.py: 2 missing
+  - Line 74
+  - Line 163
+
+intellicrack\ui\dialogs\smart_program_selector_dialog.py: 2 missing
+  - Line 99
+  - Line 138
+
+intellicrack\ui\dialogs\system_utilities_dialog.py: 2 missing
+  - Line 88
+  - Line 208
+
+intellicrack\ui\dialogs\test_generator_dialog.py: 2 missing
+  - Line 62
+  - Line 99
+
+intellicrack\ui\dialogs\vulnerability_research_dialog.py: 2 missing
+  - Line 1160
+  - Line 1244
+
+intellicrack\ui\widgets\console_widget.py: 2 missing
+  - Line 45
+  - Line 140
+
+intellicrack\ui\widgets\cpu_status_widget.py: 2 missing
+  - Line 32
+  - Line 126
+
+intellicrack\ui\widgets\gpu_status_widget.py: 2 missing
+  - Line 31
+  - Line 164
+
+intellicrack\ui\widgets\hex_viewer.py: 2 missing
+  - Line 23
+  - Line 188
+
+intellicrack\ui\widgets\hex_viewer_widget.py: 2 missing
+  - Line 50
+  - Line 101
+
+intellicrack\ui\widgets\intellicrack_protection_widget.py: 2 missing
+  - Line 52
+  - Line 120
+
+intellicrack\ui\widgets\memory_dumper.py: 2 missing
+  - Line 26
+  - Line 510
+
+intellicrack\ui\widgets\model_loading_progress_widget.py: 2 missing
+  - Line 44
+  - Line 143
+
+intellicrack\ui\widgets\pe_file_model.py: 2 missing
+  - Line 89
+  - Line 126
+
+intellicrack\ui\widgets\pe_structure_model.py: 2 missing
+  - Line 21
+  - Line 86
+
+intellicrack\ui\widgets\string_extraction_widget.py: 2 missing
+  - Line 51
+  - Line 144
+
+intellicrack\ui\widgets\syntax_highlighters.py: 2 missing
+  - Line 27
+  - Line 151
+
+intellicrack\ui\widgets\system_monitor_widget.py: 2 missing
+  - Line 71
+  - Line 166
+
+intellicrack\ui\widgets\unified_protection_widget.py: 2 missing
+  - Line 100
+  - Line 975
+
+intellicrack\ai\background_loader.py: 1 missing
+  - Line 441
+
+intellicrack\ai\model_manager_module.py: 1 missing
+  - Line 943
+
+intellicrack\core\analysis\radare2_realtime_analyzer.py: 1 missing
+  - Line 99
+
+intellicrack\core\analysis\symbolic_executor.py: 1 missing
+  - Line 2828
+
+intellicrack\core\exploitation\privilege_escalation.py: 1 missing
+  - Line 5139
+
+intellicrack\core\network\cloud_license_hooker.py: 1 missing
+  - Line 1927
+
+intellicrack\core\patching\payload_generator.py: 1 missing
+  - Line 459
+
+intellicrack\core\vulnerability_research\base_analyzer.py: 1 missing
+  - Line 37
+
+intellicrack\core\vulnerability_research\fuzzing_engine.py: 1 missing
+  - Line 62
+
+intellicrack\core\vulnerability_research\patch_analyzer.py: 1 missing
+  - Line 40
+
+intellicrack\core\vulnerability_research\research_manager.py: 1 missing
+  - Line 63
+
+intellicrack\hexview\performance_monitor.py: 1 missing
+  - Line 465
+
+intellicrack\models\protection_knowledge_base.py: 1 missing
+  - Line 89
+
+intellicrack\protection\icp_report_generator.py: 1 missing
+  - Line 37
+
+intellicrack\protection\intellicrack_protection_advanced.py: 1 missing
+  - Line 113
+
+intellicrack\scripts\cli\enhanced_runner.py: 1 missing
+  - Line 56
+
+intellicrack\scripts\cli\main.py: 1 missing
+  - Line 181
+
+intellicrack\tools\plugin_ci_cd.py: 1 missing
+  - Line 40
+
+intellicrack\tools\protection_analyzer_tool.py: 1 missing
+  - Line 53
+
+intellicrack\ui\comprehensive_integration.py: 1 missing
+  - Line 42
+
+intellicrack\ui\emulator_ui_enhancements.py: 1 missing
+  - Line 47
+
+intellicrack\ui\radare2_ui_manager.py: 1 missing
+  - Line 63
+
+intellicrack\ui\theme_manager.py: 1 missing
+  - Line 15
+
+intellicrack\ui\dialogs\event_handler_utils.py: 1 missing
+  - Line 157
+
+intellicrack\ui\dialogs\model_loading_dialog.py: 1 missing
+  - Line 45
+
+intellicrack\ui\dialogs\plugin_dialog_base.py: 1 missing
+  - Line 37
+
+intellicrack\ui\dialogs\plugin_editor_dialog.py: 1 missing
+  - Line 53
+
+intellicrack\ui\dialogs\preferences_dialog.py: 1 missing
+  - Line 47
+
+intellicrack\ui\dialogs\qemu_test_dialog.py: 1 missing
+  - Line 41
+
+intellicrack\ui\dialogs\similarity_search_dialog.py: 1 missing
+  - Line 249
+
+intellicrack\ui\tabs\ai_assistant_tab.py: 1 missing
+  - Line 46
+
+intellicrack\ui\tabs\analysis_tab.py: 1 missing
+  - Line 42
+
+intellicrack\ui\tabs\base_tab.py: 1 missing
+  - Line 17
+
+intellicrack\ui\tabs\dashboard_tab.py: 1 missing
+  - Line 54
+
+intellicrack\ui\tabs\exploitation_tab.py: 1 missing
+  - Line 42
+
+intellicrack\ui\tabs\project_workspace_tab.py: 1 missing
+  - Line 35
+
+intellicrack\ui\tabs\settings_tab.py: 1 missing
+  - Line 42
+
+intellicrack\ui\tabs\tools_tab.py: 1 missing
+  - Line 42
+
+intellicrack\ui\widgets\batch_analysis_widget.py: 1 missing
+  - Line 223
+
+intellicrack\ui\widgets\drop_zone_widget.py: 1 missing
+  - Line 18
+
+intellicrack\ui\widgets\entropy_graph_widget.py: 1 missing
+  - Line 63
+
+intellicrack\ui\widgets\entropy_visualizer.py: 1 missing
+  - Line 17
+
+intellicrack\ui\widgets\icp_analysis_widget.py: 1 missing
+  - Line 44
+
+intellicrack\ui\widgets\plugin_editor.py: 1 missing
+  - Line 93
+
+intellicrack\ui\widgets\structure_visualizer.py: 1 missing
+  - Line 47
+
+intellicrack\utils\analysis_stats.py: 1 missing
+  - Line 500
+
+intellicrack\utils\api_client.py: 1 missing
+  - Line 32
+
+intellicrack\utils\font_manager.py: 1 missing
+  - Line 33
+
+intellicrack\utils\gpu_autoloader.py: 1 missing
+  - Line 23
+
+intellicrack\utils\import_checks.py: 1 missing
+  - Line 31
+
+intellicrack\utils\binary\certificate_extractor.py: 1 missing
+  - Line 90
+
+intellicrack\utils\patching\patch_generator.py: 1 missing
+  - Line 73
+
+intellicrack\utils\ui\ui_setup_functions.py: 1 missing
+  - Line 50
+
+
+Total files with issues: 134
+Total missing docstrings: 341

@@ -1,3 +1,8 @@
+"""Hexview package for Intellicrack.
+
+This package provides advanced hexadecimal viewing and editing capabilities
+including search functionality, data visualization, and binary analysis tools.
+"""
 from intellicrack.logger import logger
 
 # Core components

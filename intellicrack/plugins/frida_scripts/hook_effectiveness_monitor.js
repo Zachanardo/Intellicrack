@@ -142,13 +142,22 @@
     },
     
     onAttach: function(pid) {
-        console.log("[Hook Monitor] Attaching to process: " + pid);
+        send({
+            type: "info",
+            target: "hook_effectiveness_monitor",
+            action: "attaching_to_process",
+            process_id: pid
+        });
         this.processId = pid;
         this.monitor.startTime = Date.now();
     },
     
     run: function() {
-        console.log("[Hook Monitor] Starting hook effectiveness monitoring system...");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "starting_monitoring_system"
+        });
         
         // Initialize monitoring components
         this.initializeMonitoring();
@@ -162,7 +171,11 @@
     
     // === MONITORING INITIALIZATION ===
     initializeMonitoring: function() {
-        console.log("[Hook Monitor] Initializing effectiveness monitoring...");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "initializing_monitoring"
+        });
         
         this.monitor.isRunning = true;
         this.monitor.startTime = Date.now();
@@ -185,7 +198,11 @@
         // Reset statistics
         this.resetStatistics();
         
-        console.log("[Hook Monitor] Monitoring system initialized");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "monitoring_system_initialized"
+        });
     },
     
     resetStatistics: function() {
@@ -203,7 +220,11 @@
     
     // === HOOK TRACKING SETUP ===
     setupHookTracking: function() {
-        console.log("[Hook Monitor] Setting up hook tracking...");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "setting_up_hook_tracking"
+        });
         
         // Monitor Frida's hook installation
         this.setupHookInstallationTracking();
@@ -217,11 +238,19 @@
         // Monitor performance impact
         this.setupPerformanceTracking();
         
-        console.log("[Hook Monitor] Hook tracking configured");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "hook_tracking_configured"
+        });
     },
     
     setupHookInstallationTracking: function() {
-        console.log("[Hook Monitor] Setting up hook installation tracking...");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "setting_up_hook_installation_tracking"
+        });
         
         // Track when hooks are installed
         var originalInterceptorAttach = Interceptor.attach;
@@ -274,7 +303,11 @@
     },
     
     setupHookExecutionTracking: function() {
-        console.log("[Hook Monitor] Setting up hook execution tracking...");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "setting_up_hook_execution_tracking"
+        });
         
         // This will be used to wrap hook callbacks to measure execution
         this.wrapHookCallbacks = function(originalCallbacks, hookId) {
@@ -318,7 +351,11 @@
     },
     
     setupBypassTracking: function() {
-        console.log("[Hook Monitor] Setting up bypass tracking...");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "setting_up_bypass_tracking"
+        });
         
         // Track bypass attempts and their success/failure
         this.trackBypassAttempt = function(technique, success, details) {
@@ -337,7 +374,11 @@
     },
     
     setupPerformanceTracking: function() {
-        console.log("[Hook Monitor] Setting up performance tracking...");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "setting_up_performance_tracking"
+        });
         
         // Monitor CPU and memory usage
         setInterval(() => {
@@ -347,7 +388,11 @@
     
     // === METRICS COLLECTION ===
     startMetricsCollection: function() {
-        console.log("[Hook Monitor] Starting metrics collection...");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "starting_metrics_collection"
+        });
         
         // Start continuous metrics collection
         setInterval(() => {
@@ -359,7 +404,11 @@
             this.updateStatistics();
         }, 10000); // Every 10 seconds
         
-        console.log("[Hook Monitor] Metrics collection started");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "metrics_collection_started"
+        });
     },
     
     collectMetrics: function() {
@@ -383,7 +432,12 @@
             this.statistics.totalMeasurements++;
             
         } catch(e) {
-            console.log("[Hook Monitor] Error collecting metrics: " + e);
+            send({
+                type: "error",
+                target: "hook_effectiveness_monitor",
+                action: "metrics_collection_error",
+                error: e.toString()
+            });
         }
     },
     
@@ -475,9 +529,21 @@
             });
             
             this.monitor.totalHooks++;
-            console.log("[Hook Monitor] Hook installed: " + hookId + " (" + installTime + "ms)");
+            send({
+                type: "success",
+                target: "hook_effectiveness_monitor",
+                action: "hook_installed",
+                hook_id: hookId,
+                install_time: installTime
+            });
         } else {
-            console.log("[Hook Monitor] Hook installation failed: " + hookId + " - " + error);
+            send({
+                type: "error",
+                target: "hook_effectiveness_monitor",
+                action: "hook_installation_failed",
+                hook_id: hookId,
+                error: error.toString()
+            });
         }
     },
     
@@ -498,9 +564,21 @@
         this.metrics.installation.set(hookId + "_replace", replaceData);
         
         if (success) {
-            console.log("[Hook Monitor] Hook replaced: " + hookId + " (" + replaceTime + "ms)");
+            send({
+                type: "success",
+                target: "hook_effectiveness_monitor",
+                action: "hook_replaced",
+                hook_id: hookId,
+                replace_time: replaceTime
+            });
         } else {
-            console.log("[Hook Monitor] Hook replacement failed: " + hookId + " - " + error);
+            send({
+                type: "error",
+                target: "hook_effectiveness_monitor",
+                action: "hook_replacement_failed",
+                hook_id: hookId,
+                error: error.toString()
+            });
         }
     },
     
@@ -534,7 +612,14 @@
         this.metrics.execution.set(executionKey, executionData);
         
         if (!success && error) {
-            console.log("[Hook Monitor] Hook execution failed: " + hookId + "." + phase + " - " + error);
+            send({
+                type: "error",
+                target: "hook_effectiveness_monitor",
+                action: "hook_execution_failed",
+                hook_id: hookId,
+                phase: phase,
+                error: error.toString()
+            });
         }
     },
     
@@ -549,7 +634,13 @@
         var successKey = technique + "_" + Date.now();
         this.metrics.success.set(successKey, successData);
         
-        console.log("[Hook Monitor] Bypass success: " + technique);
+        send({
+            type: "bypass",
+            target: "hook_effectiveness_monitor",
+            action: "bypass_success",
+            technique: technique,
+            details: details
+        });
     },
     
     recordBypassFailure: function(technique, details) {
@@ -563,7 +654,13 @@
         var failureKey = technique + "_" + Date.now();
         this.metrics.failure.set(failureKey, failureData);
         
-        console.log("[Hook Monitor] Bypass failure: " + technique);
+        send({
+            type: "error",
+            target: "hook_effectiveness_monitor",
+            action: "bypass_failure",
+            technique: technique,
+            details: details
+        });
     },
     
     // === STATISTICS CALCULATION ===
@@ -578,7 +675,12 @@
             this.statistics.totalHooksMonitored = this.monitor.activeHooks.size;
             
         } catch(e) {
-            console.log("[Hook Monitor] Error updating statistics: " + e);
+            send({
+                type: "error",
+                target: "hook_effectiveness_monitor",
+                action: "statistics_update_error",
+                error: e.toString()
+            });
         }
     },
     
@@ -674,7 +776,12 @@
             this.recordPerformanceImpact(currentMetrics);
             
         } catch(e) {
-            console.log("[Hook Monitor] Error measuring performance: " + e);
+            send({
+                type: "error",
+                target: "hook_effectiveness_monitor",
+                action: "performance_measurement_error",
+                error: e.toString()
+            });
         }
     },
     
@@ -684,11 +791,23 @@
         
         // Check for performance issues
         if (metrics.cpuUsage > this.config.thresholds.maxCpuUsage) {
-            console.log("[Hook Monitor] WARNING: High CPU usage: " + metrics.cpuUsage + "%");
+            send({
+                type: "warning",
+                target: "hook_effectiveness_monitor",
+                action: "high_cpu_usage",
+                cpu_usage: metrics.cpuUsage,
+                threshold: this.config.thresholds.maxCpuUsage
+            });
         }
         
         if (metrics.memoryUsage > this.config.thresholds.maxMemoryUsage) {
-            console.log("[Hook Monitor] WARNING: High memory usage: " + metrics.memoryUsage + "MB");
+            send({
+                type: "warning",
+                target: "hook_effectiveness_monitor",
+                action: "high_memory_usage",
+                memory_usage: metrics.memoryUsage,
+                threshold: this.config.thresholds.maxMemoryUsage
+            });
         }
     },
     
@@ -741,7 +860,11 @@
     
     // === REPORTING SYSTEM ===
     startReporting: function() {
-        console.log("[Hook Monitor] Starting reporting system...");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "starting_reporting_system"
+        });
         
         // Start real-time reporting
         if (this.config.reporting.enableRealtimeReports) {
@@ -758,7 +881,11 @@
             this.startSummaryReporting();
         }
         
-        console.log("[Hook Monitor] Reporting system started");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "reporting_system_started"
+        });
     },
     
     startRealtimeReporting: function() {
@@ -796,10 +923,14 @@
         this.reports.realtime = report;
         
         if (this.config.monitoring.detailedLogging) {
-            console.log("[Hook Monitor] Realtime Report: " +
-                      "Success Rate: " + (report.statistics.averageSuccessRate * 100).toFixed(1) + "%, " +
-                      "Response Time: " + report.statistics.averageResponseTime.toFixed(1) + "ms, " +
-                      "Effectiveness: " + (report.statistics.overallEffectiveness * 100).toFixed(1) + "%");
+            send({
+                type: "info",
+                target: "hook_effectiveness_monitor",
+                action: "realtime_report",
+                success_rate: (report.statistics.averageSuccessRate * 100).toFixed(1),
+                response_time: report.statistics.averageResponseTime.toFixed(1),
+                effectiveness: (report.statistics.overallEffectiveness * 100).toFixed(1)
+            });
         }
     },
     
@@ -823,9 +954,13 @@
             this.reports.periodic.shift();
         }
         
-        console.log("[Hook Monitor] Periodic Report Generated - " +
-                  "Hooks: " + this.monitor.activeHooks.size + ", " +
-                  "Effectiveness: " + (report.statistics.overallEffectiveness * 100).toFixed(1) + "%");
+        send({
+            type: "info",
+            target: "hook_effectiveness_monitor",
+            action: "periodic_report_generated",
+            hooks_count: this.monitor.activeHooks.size,
+            effectiveness: (report.statistics.overallEffectiveness * 100).toFixed(1)
+        });
     },
     
     generateSummaryReport: function() {
@@ -844,7 +979,11 @@
         
         this.reports.summary = report;
         
-        console.log("[Hook Monitor] Summary Report Generated");
+        send({
+            type: "info",
+            target: "hook_effectiveness_monitor",
+            action: "summary_report_generated"
+        });
         this.logSummaryReport(report);
     },
     
@@ -1353,7 +1492,11 @@
     setupAnalysisEngine: function() {
         if (!this.config.analysis.enableTrendAnalysis) return;
         
-        console.log("[Hook Monitor] Setting up analysis engine...");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "setting_up_analysis_engine"
+        });
         
         // Start trend analysis
         setInterval(() => {
@@ -1374,7 +1517,11 @@
             }, 120000); // Every 2 minutes
         }
         
-        console.log("[Hook Monitor] Analysis engine started");
+        send({
+            type: "status",
+            target: "hook_effectiveness_monitor",
+            action: "analysis_engine_started"
+        });
     },
     
     performTrendAnalysis: function() {
@@ -1464,7 +1611,12 @@
         this.reports.anomalies = anomalies;
         
         if (anomalies.length > 0) {
-            console.log("[Hook Monitor] Anomalies detected: " + anomalies.length);
+            send({
+                type: "detection",
+                target: "hook_effectiveness_monitor",
+                action: "anomalies_detected",
+                anomaly_count: anomalies.length
+            });
         }
     },
     
@@ -1497,39 +1649,44 @@
     
     // === REPORT LOGGING ===
     logSummaryReport: function(report) {
-        console.log("\n[Hook Monitor] ========================================");
-        console.log("[Hook Monitor] Hook Effectiveness Summary Report");
-        console.log("[Hook Monitor] ========================================");
-        
-        console.log("[Hook Monitor] Overall Statistics:");
-        console.log("[Hook Monitor]   • Total Hooks: " + report.overallStatistics.totalHooksMonitored);
-        console.log("[Hook Monitor]   • Success Rate: " + (report.overallStatistics.averageSuccessRate * 100).toFixed(1) + "%");
-        console.log("[Hook Monitor]   • Response Time: " + report.overallStatistics.averageResponseTime.toFixed(1) + "ms");
-        console.log("[Hook Monitor]   • Stability Score: " + (report.overallStatistics.stabilityScore * 100).toFixed(1) + "%");
-        console.log("[Hook Monitor]   • Performance Score: " + (report.overallStatistics.performanceScore * 100).toFixed(1) + "%");
-        console.log("[Hook Monitor]   • Overall Effectiveness: " + (report.overallStatistics.overallEffectiveness * 100).toFixed(1) + "%");
-        
-        console.log("[Hook Monitor] Performance Analysis:");
-        console.log("[Hook Monitor]   • CPU Usage: " + report.performanceAnalysis.cpuUsage.toFixed(1) + "%");
-        console.log("[Hook Monitor]   • Memory Usage: " + report.performanceAnalysis.memoryUsage.toFixed(1) + "MB");
-        console.log("[Hook Monitor]   • Throughput: " + report.performanceAnalysis.throughput.toFixed(1) + " ops/sec");
-        
+        send({
+            type: "info",
+            target: "hook_effectiveness_monitor",
+            action: "summary_report_details",
+            total_hooks: report.overallStatistics.totalHooksMonitored,
+            success_rate: (report.overallStatistics.averageSuccessRate * 100).toFixed(1),
+            response_time: report.overallStatistics.averageResponseTime.toFixed(1),
+            stability_score: (report.overallStatistics.stabilityScore * 100).toFixed(1),
+            performance_score: (report.overallStatistics.performanceScore * 100).toFixed(1),
+            overall_effectiveness: (report.overallStatistics.overallEffectiveness * 100).toFixed(1),
+            cpu_usage: report.performanceAnalysis.cpuUsage.toFixed(1),
+            memory_usage: report.performanceAnalysis.memoryUsage.toFixed(1),
+            throughput: report.performanceAnalysis.throughput.toFixed(1)
+        });
+
         if (report.alerts.length > 0) {
-            console.log("[Hook Monitor] Alerts:");
             for (var i = 0; i < report.alerts.length; i++) {
                 var alert = report.alerts[i];
-                console.log("[Hook Monitor]   ⚠ " + alert.level.toUpperCase() + ": " + alert.message);
+                send({
+                    type: alert.level === "critical" ? "error" : "warning",
+                    target: "hook_effectiveness_monitor",
+                    action: "summary_alert",
+                    alert_level: alert.level,
+                    alert_message: alert.message
+                });
             }
         }
         
         if (report.recommendations.length > 0) {
-            console.log("[Hook Monitor] Recommendations:");
             for (var i = 0; i < report.recommendations.length; i++) {
-                console.log("[Hook Monitor]   → " + report.recommendations[i]);
+                send({
+                    type: "info",
+                    target: "hook_effectiveness_monitor",
+                    action: "recommendation",
+                    recommendation: report.recommendations[i]
+                });
             }
         }
-        
-        console.log("[Hook Monitor] ========================================");
     },
     
     // === CLEANUP ===
@@ -1600,9 +1757,15 @@
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
-            console.log("\n[Hook Monitor] ========================================");
-            console.log("[Hook Monitor] Hook Effectiveness Monitor Summary:");
-            console.log("[Hook Monitor] ========================================");
+            send({
+                type: "status",
+                target: "hook_effectiveness_monitor",
+                action: "installation_summary",
+                monitoring_active: this.monitor.isRunning,
+                active_hooks: this.monitor.activeHooks.size,
+                total_measurements: this.statistics.totalMeasurements,
+                overall_effectiveness: (this.statistics.overallEffectiveness * 100).toFixed(1)
+            });
             
             var activeFeatures = [];
             
@@ -1631,51 +1794,19 @@
                 activeFeatures.push("Anomaly Detection");
             }
             
-            for (var i = 0; i < activeFeatures.length; i++) {
-                console.log("[Hook Monitor]   ✓ " + activeFeatures[i]);
-            }
+            send({
+                type: "info",
+                target: "hook_effectiveness_monitor",
+                action: "active_features",
+                features: activeFeatures
+            });
             
-            console.log("[Hook Monitor] ========================================");
-            console.log("[Hook Monitor] Monitoring Categories:");
-            
-            var categories = [
-                "hookInstallation", "hookExecution", "bypassSuccess", "protectionDetection",
-                "performanceImpact", "resourceUsage", "stabilityMetrics", "compatibilityMetrics"
-            ];
-            
-            for (var i = 0; i < categories.length; i++) {
-                var category = categories[i];
-                if (this.config.categories[category]) {
-                    console.log("[Hook Monitor]   • " + category + ": enabled");
-                }
-            }
-            
-            console.log("[Hook Monitor] ========================================");
-            console.log("[Hook Monitor] Performance Thresholds:");
-            console.log("[Hook Monitor]   • Min Success Rate: " + (this.config.thresholds.minSuccessRate * 100) + "%");
-            console.log("[Hook Monitor]   • Max Response Time: " + this.config.thresholds.maxResponseTime + "ms");
-            console.log("[Hook Monitor]   • Max CPU Usage: " + this.config.thresholds.maxCpuUsage + "%");
-            console.log("[Hook Monitor]   • Max Memory Usage: " + this.config.thresholds.maxMemoryUsage + "MB");
-            console.log("[Hook Monitor]   • Min Stability Score: " + (this.config.thresholds.minStabilityScore * 100) + "%");
-            
-            console.log("[Hook Monitor] ========================================");
-            console.log("[Hook Monitor] Reporting Configuration:");
-            console.log("[Hook Monitor]   • Real-time Reports: " + this.config.reporting.enableRealtimeReports);
-            console.log("[Hook Monitor]   • Report Interval: " + this.config.reporting.reportInterval + "ms");
-            console.log("[Hook Monitor]   • Summary Interval: " + this.config.reporting.summaryInterval + "ms");
-            console.log("[Hook Monitor]   • Detailed Interval: " + this.config.reporting.detailedInterval + "ms");
-            console.log("[Hook Monitor]   • Retention Period: " + (this.config.reporting.retentionPeriod / 60000) + " minutes");
-            
-            console.log("[Hook Monitor] ========================================");
-            console.log("[Hook Monitor] Current Status:");
-            console.log("[Hook Monitor]   • Monitoring Active: " + this.monitor.isRunning);
-            console.log("[Hook Monitor]   • Active Hooks: " + this.monitor.activeHooks.size);
-            console.log("[Hook Monitor]   • Total Measurements: " + this.statistics.totalMeasurements);
-            console.log("[Hook Monitor]   • Overall Effectiveness: " + (this.statistics.overallEffectiveness * 100).toFixed(1) + "%");
-            
-            console.log("[Hook Monitor] ========================================");
-            console.log("[Hook Monitor] Hook effectiveness monitoring system is now ACTIVE!");
-            console.log("[Hook Monitor] Continuously measuring and reporting hook performance...");
+            send({
+                type: "success",
+                target: "hook_effectiveness_monitor",
+                action: "system_active",
+                message: "Hook effectiveness monitoring system is now ACTIVE!"
+            });
         }, 100);
     }
 }

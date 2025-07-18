@@ -85,6 +85,12 @@ class LocalGGUFServer:
     """Local GGUF model server using llama.cpp Python bindings."""
 
     def __init__(self, host: str = "127.0.0.1", port: int = 8000):
+        """Initialize the local GGUF model server.
+        
+        Args:
+            host: The host address to bind the server to.
+            port: The port number to run the server on.
+        """
         self.logger = get_logger(__name__ + ".LocalGGUFServer")
         self.host = host
         self.port = port
@@ -264,8 +270,6 @@ class LocalGGUFServer:
                 "f16_kv": kwargs.get("f16_kv", True),  # Use FP16 for KV cache
                 "logits_all": kwargs.get("logits_all", False),
                 "vocab_only": kwargs.get("vocab_only", False),
-                "use_mmap": kwargs.get("use_mmap", True),
-                "use_mlock": kwargs.get("use_mlock", False),
                 "embedding": kwargs.get("embedding", False)
             }
 
@@ -685,6 +689,12 @@ class GGUFModelManager:
     """Manager for GGUF models and local server."""
 
     def __init__(self, models_directory: Optional[str] = None):
+        """Initialize the GGUF model manager.
+        
+        Args:
+            models_directory: Directory path for storing GGUF models.
+                            Defaults to ~/.intellicrack/models if not provided.
+        """
         self.models_directory = Path(
             models_directory) if models_directory else Path.home() / ".intellicrack" / "models"
         self.models_directory.mkdir(parents=True, exist_ok=True)

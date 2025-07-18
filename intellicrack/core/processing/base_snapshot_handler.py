@@ -35,8 +35,11 @@ class BaseSnapshotHandler(ABC):
     """
 
     def __init__(self):
+        """Initialize the base snapshot handler with snapshot tracking and logging setup."""
         self.snapshots: Dict[str, Dict[str, Any]] = {}
         self.logger = logging.getLogger("IntellicrackLogger.SnapshotHandler")
+        self.max_snapshots = 10
+        self.snapshot_index = 0
 
     def compare_snapshots_base(self, snapshot1: str, snapshot2: str) -> Dict[str, Any]:
         """

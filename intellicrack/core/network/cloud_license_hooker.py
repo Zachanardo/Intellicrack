@@ -1925,6 +1925,7 @@ class CloudLicenseResponseGenerator:
             class HookedSocket(socket.socket):
                 """Wrapper socket class for license server communication hooking."""
                 def __init__(self, *args, **kwargs):
+                    """Initialize hooked socket with logging and app reference."""
                     super().__init__(*args, **kwargs)
                     self._logger = logging.getLogger(__name__)
                     self._app_ref = None

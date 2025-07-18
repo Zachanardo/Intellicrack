@@ -58,6 +58,7 @@ class EnhancedAnalysisDashboard(QWidget):
     """Enhanced dashboard integrating all radare2 capabilities"""
 
     def __init__(self, parent=None):
+        """Initialize the enhanced analysis dashboard with UI components and logging."""
         super().__init__(parent)
         self.logger = logger
         self.main_app = parent
@@ -390,6 +391,7 @@ class EnhancedMainWindow(QMainWindow):
     """Enhanced main window with integrated radare2 features"""
 
     def __init__(self):
+        """Initialize the enhanced main window with UI setup, menu bar, toolbar, and status bar."""
         super().__init__()
         self.logger = logger
         self.binary_path = None

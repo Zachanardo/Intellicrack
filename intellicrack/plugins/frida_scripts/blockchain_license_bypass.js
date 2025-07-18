@@ -89,7 +89,11 @@
     
     // Initialize the bypass system
     initialize: function() {
-        console.log("[Blockchain Bypass] Initializing Web3 license bypass...");
+        send({
+            type: "status",
+            target: "blockchain_license_bypass",
+            action: "initializing_web3_bypass"
+        });
         
         // Hook common Web3 libraries
         this.hookWeb3Libraries();
@@ -106,7 +110,11 @@
         // Start monitoring
         this.startMonitoring();
         
-        console.log("[Blockchain Bypass] Initialization complete!");
+        send({
+            type: "status",
+            target: "blockchain_license_bypass",
+            action: "initialization_complete"
+        });
     },
     
     // Hook Web3 libraries
@@ -129,7 +137,11 @@
             if (Contract) {
                 Interceptor.attach(Contract, {
                     onEnter: function(args) {
-                        console.log("[Web3.js] Contract creation detected");
+                        send({
+                            type: "info",
+                            target: "blockchain_license_bypass",
+                            action: "web3js_contract_creation_detected"
+                        });
                     }
                 });
             }
@@ -138,7 +150,13 @@
             if (typeof web3 !== 'undefined') {
                 const original_send = web3.eth.send;
                 web3.eth.send = function(method, params) {
-                    console.log(`[Web3.js] Method: ${method}, Params:`, params);
+                    send({
+                        type: "info",
+                        target: "blockchain_license_bypass",
+                        action: "web3js_method_called",
+                        method: method,
+                        params: params
+                    });
                     
                     // Intercept license validation calls
                     if (this.isLicenseCall(method, params)) {
@@ -153,7 +171,12 @@
             this.hookWeb3Call();
             
         } catch (e) {
-            console.log("[Web3.js] Not found or error:", e);
+            send({
+                type: "warning",
+                target: "blockchain_license_bypass",
+                action: "web3js_not_found",
+                error: e.toString()
+            });
         }
     },
     
@@ -172,7 +195,13 @@
                     'utf8:' + pattern);
                 
                 matches.forEach(match => {
-                    console.log(`[Web3] Found ${pattern} at ${match.address}`);
+                    send({
+                        type: "info",
+                        target: "blockchain_license_bypass",
+                        action: "web3_pattern_found",
+                        pattern: pattern,
+                        address: match.address.toString()
+                    });
                     
                     // Hook the function containing this string
                     this.hookNearbyFunction(match.address, pattern);
@@ -180,7 +209,12 @@
             });
             
         } catch (e) {
-            console.log("[Web3 Call] Hook error:", e);
+            send({
+                type: "error",
+                target: "blockchain_license_bypass",
+                action: "web3_call_hook_error",
+                error: e.toString()
+            });
         }
     },
     
@@ -199,7 +233,12 @@
                     'utf8:' + pattern);
                 
                 matches.forEach(match => {
-                    console.log(`[Ethers.js] Found ${pattern}`);
+                    send({
+                        type: "info",
+                        target: "blockchain_license_bypass",
+                        action: "ethersjs_pattern_found",
+                        pattern: pattern
+                    });
                     this.hookEthersContract(match.address);
                 });
             });
@@ -208,7 +247,12 @@
             this.hookEthersProviders();
             
         } catch (e) {
-            console.log("[Ethers.js] Not found or error:", e);
+            send({
+                type: "warning",
+                target: "blockchain_license_bypass",
+                action: "ethersjs_not_found",
+                error: e.toString()
+            });
         }
     },
     
@@ -223,19 +267,33 @@
                 onEnter: function(args) {
                     // Log contract call
                     const method = this.context.r0 || this.context.rdi;
-                    console.log("[Ethers] Contract call:", method);
+                    send({
+                        type: "info",
+                        target: "blockchain_license_bypass",
+                        action: "ethers_contract_call",
+                        method: method ? method.toString() : "unknown"
+                    });
                 },
                 onLeave: function(retval) {
                     // Modify return value if needed
                     if (this.isLicenseResponse(retval)) {
-                        console.log("[Ethers] Bypassing license check");
+                        send({
+                            type: "bypass",
+                            target: "blockchain_license_bypass",
+                            action: "ethers_license_check_bypassed"
+                        });
                         retval.replace(this.getSuccessValue());
                     }
                 }.bind(this)
             });
             
         } catch (e) {
-            console.log("[Ethers Hook] Error:", e);
+            send({
+                type: "error",
+                target: "blockchain_license_bypass",
+                action: "ethers_hook_error",
+                error: e.toString()
+            });
         }
     },
     
@@ -269,19 +327,41 @@
                 'hex:' + signature.replace('0x', ''));
             
             matches.forEach(match => {
-                console.log(`[Contract] Found ${name} at ${match.address}`);
+                send({
+                    type: "info",
+                    target: "blockchain_license_bypass",
+                    action: "contract_function_found",
+                    function_name: name,
+                    address: match.address.toString()
+                });
                 
                 Interceptor.attach(match.address, {
                     onEnter: function(args) {
-                        console.log(`[Contract] ${name} called`);
+                        send({
+                            type: "info",
+                            target: "blockchain_license_bypass",
+                            action: "contract_function_called",
+                            function_name: name
+                        });
                         this.lastCallName = name;
                     },
                     onLeave: function(retval) {
-                        console.log(`[Contract] ${name} returned:`, retval);
+                        send({
+                            type: "info",
+                            target: "blockchain_license_bypass",
+                            action: "contract_function_returned",
+                            function_name: name,
+                            return_value: retval ? retval.toString() : "null"
+                        });
                         
                         // Bypass license checks
                         if (this.isLicenseFunction(name)) {
-                            console.log(`[Contract] Bypassing ${name}`);
+                            send({
+                                type: "bypass",
+                                target: "blockchain_license_bypass",
+                                action: "contract_function_bypassed",
+                                function_name: name
+                            });
                             retval.replace(this.getBypassValue(name));
                         }
                     }.bind(this)
@@ -291,7 +371,13 @@
             });
             
         } catch (e) {
-            console.log(`[Hook Signature] Error for ${name}:`, e);
+            send({
+                type: "error",
+                target: "blockchain_license_bypass",
+                action: "hook_signature_error",
+                function_name: name,
+                error: e.toString()
+            });
         }
     },
     
@@ -318,7 +404,13 @@
                     
                     // Check for eth_call or eth_sendTransaction
                     if (json.method === 'eth_call' || json.method === 'eth_sendTransaction') {
-                        console.log("[JSON-RPC] Intercepted:", json);
+                        send({
+                            type: "info",
+                            target: "blockchain_license_bypass",
+                            action: "jsonrpc_intercepted",
+                            method: json.method,
+                            id: json.id
+                        });
                         
                         // Check if this is a license call
                         if (this.isLicenseRPCCall(json)) {
@@ -345,7 +437,12 @@
         window.fetch = async function(url, options) {
             // Check if this is a blockchain RPC call
             if (this.isBlockchainURL(url)) {
-                console.log("[Fetch] Blockchain call to:", url);
+                send({
+                    type: "info",
+                    target: "blockchain_license_bypass",
+                    action: "fetch_blockchain_call",
+                    url: url
+                });
                 
                 // Intercept request body
                 if (options && options.body) {
@@ -353,7 +450,11 @@
                         const body = JSON.parse(options.body);
                         
                         if (this.isLicenseRPCCall(body)) {
-                            console.log("[Fetch] License call detected, bypassing...");
+                            send({
+                                type: "bypass",
+                                target: "blockchain_license_bypass",
+                                action: "fetch_license_call_bypassed"
+                            });
                             
                             // Return fake successful response
                             return new Response(JSON.stringify({
@@ -382,7 +483,11 @@
                     
                     // Check if this is a license response
                     if (this.isLicenseResponse(data)) {
-                        console.log("[Fetch] Modifying license response");
+                        send({
+                            type: "bypass",
+                            target: "blockchain_license_bypass",
+                            action: "fetch_license_response_modified"
+                        });
                         
                         // Return modified response
                         return new Response(JSON.stringify(
@@ -419,11 +524,21 @@
     // Hook MetaMask provider
     hookMetaMask: function() {
         if (typeof window !== 'undefined' && window.ethereum) {
-            console.log("[MetaMask] Provider detected, hooking...");
+            send({
+                type: "info",
+                target: "blockchain_license_bypass",
+                action: "metamask_provider_detected"
+            });
             
             const originalRequest = window.ethereum.request;
             window.ethereum.request = async function(args) {
-                console.log("[MetaMask] Request:", args);
+                send({
+                    type: "info",
+                    target: "blockchain_license_bypass",
+                    action: "metamask_request",
+                    method: args.method,
+                    params: args.params
+                });
                 
                 // Intercept specific methods
                 if (args.method === 'eth_call') {
@@ -431,7 +546,11 @@
                     
                     // Check if this is a license call
                     if (this.isLicenseCallData(params.data)) {
-                        console.log("[MetaMask] License call detected, bypassing...");
+                        send({
+                            type: "bypass",
+                            target: "blockchain_license_bypass",
+                            action: "metamask_license_call_bypassed"
+                        });
                         
                         // Return success
                         return this.getSuccessfulLicenseData();
@@ -475,12 +594,21 @@
                 'utf8:' + pattern);
             
             matches.forEach(match => {
-                console.log(`[Signature] Found ${pattern}`);
+                send({
+                    type: "info",
+                    target: "blockchain_license_bypass",
+                    action: "signature_pattern_found",
+                    pattern: pattern
+                });
                 
                 Interceptor.attach(this.findNearestFunction(match.address), {
                     onLeave: function(retval) {
                         // Always return valid signature
-                        console.log("[Signature] Bypassing verification");
+                        send({
+                            type: "bypass",
+                            target: "blockchain_license_bypass",
+                            action: "signature_verification_bypassed"
+                        });
                         retval.replace(ptr(1));
                     }
                 });
@@ -493,14 +621,22 @@
         // ERC-721 ownerOf
         this.hookContractMethod("ownerOf", function(retval) {
             // Return user's address
-            console.log("[NFT] Faking ownership");
+            send({
+                type: "bypass",
+                target: "blockchain_license_bypass",
+                action: "nft_ownership_faked"
+            });
             retval.replace(this.getUserAddress());
         });
         
         // ERC-1155 balanceOf
         this.hookContractMethod("balanceOf", function(retval) {
             // Return positive balance
-            console.log("[NFT] Faking balance");
+            send({
+                type: "bypass",
+                target: "blockchain_license_bypass",
+                action: "nft_balance_faked"
+            });
             retval.replace(ptr(1));
         });
     },
@@ -672,7 +808,11 @@
     
     // Monitor blockchain activity
     startMonitoring: function() {
-        console.log("[Monitor] Starting blockchain monitoring...");
+        send({
+            type: "status",
+            target: "blockchain_license_bypass",
+            action: "starting_blockchain_monitoring"
+        });
         
         // Monitor contract creations
         this.monitorContractCreation();
@@ -705,7 +845,12 @@
                 'utf8:' + pattern);
             
             matches.forEach(match => {
-                console.log(`[Deploy] Found ${pattern}`);
+                send({
+                    type: "info",
+                    target: "blockchain_license_bypass",
+                    action: "deployment_pattern_found",
+                    pattern: pattern
+                });
                 
                 // Hook deployment function
                 this.hookDeployment(match.address);
@@ -715,19 +860,26 @@
     
     // Print statistics
     printStats: function() {
-        console.log("\n[Stats] Blockchain Bypass Statistics:");
-        console.log(`  Hooked contracts: ${this.state.hooked_contracts.size}`);
-        console.log(`  Hooked providers: ${this.state.hooked_providers.size}`);
-        console.log(`  Bypassed calls: ${this.state.bypassed_calls.length}`);
-        console.log(`  Active hooks: ${this.state.active_hooks.size}`);
-        
-        // Recent bypasses
+        var recentBypasses = [];
         if (this.state.bypassed_calls.length > 0) {
-            console.log("\n  Recent bypasses:");
-            this.state.bypassed_calls.slice(-5).forEach(call => {
-                console.log(`    - ${call.method} at ${call.timestamp}`);
-            });
+            recentBypasses = this.state.bypassed_calls.slice(-5).map(call => ({
+                method: call.method,
+                timestamp: call.timestamp
+            }));
         }
+        
+        send({
+            type: \"summary\",
+            target: \"blockchain_license_bypass\",
+            action: \"statistics_report\",
+            stats: {
+                hooked_contracts: this.state.hooked_contracts.size,
+                hooked_providers: this.state.hooked_providers.size,
+                bypassed_calls: this.state.bypassed_calls.length,
+                active_hooks: this.state.active_hooks.size,
+                recent_bypasses: recentBypasses
+            }
+        });
     },
     
     // Helper function to hook contract methods
@@ -742,17 +894,26 @@
                     onLeave: callback.bind(this)
                 });
                 
-                console.log(`[Hook] Hooked ${methodName} at ${funcAddr}`);
+                send({
+                    type: "info",
+                    target: "blockchain_license_bypass",
+                    action: "contract_method_hooked",
+                    method_name: methodName,
+                    address: funcAddr.toString()
+                });
             }
         });
     },
     
     // Entry point
     run: function() {
-        console.log("=====================================");
-        console.log("Blockchain License Bypass v2.0.0");
-        console.log("Web3/Smart Contract Protection Bypass");
-        console.log("=====================================\n");
+        send({
+            type: "status",
+            target: "blockchain_license_bypass",
+            action: "banner_displayed",
+            version: "2.0.0",
+            description: "Web3/Smart Contract Protection Bypass"
+        });
         
         this.initialize();
     }

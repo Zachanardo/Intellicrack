@@ -43,49 +43,71 @@ class C2Server(BaseC2):
     and enterprise-grade security features.
     """
 
-    def __init__(self, config: Dict[str, Any]):
-        super().__init__()
-        self.logger = logging.getLogger("IntellicrackLogger.C2Server")
-        self.config = config
+    def __init__(self, host: str = '0.0.0.0', port: int = 8080):
+        """Initialize the C2 server with host and port configuration."""
+        self.host = host
+        self.port = port
         self.running = False
-
-        # Core components
-        self.encryption_manager = EncryptionManager()
-        self.session_manager = SessionManager()
-        self.beacon_manager = BeaconManager()
-
-        # Protocol handlers
-        self.protocols = {}
-        self._initialize_protocols()
-
-        # Server statistics
-        self.stats = {
-            'start_time': None,
-            'total_connections': 0,
-            'active_sessions': 0,
-            'commands_executed': 0,
-            'data_transferred': 0,
-            'uptime_seconds': 0
+        self.server = None
+        self.logger = logging.getLogger(__name__)
+        self.clients: Dict[str, Any] = {}
+        self.sessions: Dict[str, Any] = {}
+        self.commands_queue = queue.Queue()
+        self.event_handlers: Dict[str, List[Callable]] = {
+            'client_connected': [],
+            'client_disconnected': [],
+            'command_received': [],
+            'message_received': []
         }
-
-        # Event handlers
-        self.event_handlers = {
-            'session_connected': [],
-            'session_disconnected': [],
-            'command_executed': [],
-            'beacon_received': [],
-            'error_occurred': []
-        }
-
-        # Command queue for session management
-        self.command_queue = asyncio.Queue()
-
-        # Authentication system
-        self.auth_tokens = set()
-        self.failed_auth_attempts = {}  # Track failed attempts by IP
-        self.max_auth_attempts = 5
-        self.auth_lockout_duration = 300  # 5 minutes
-        self._initialize_auth_tokens()
+    """Initialize the C2 server with host and port configuration.
+    
+    Args:
+        host: The host address to bind the server to.
+        port: The port number to bind the server to.
+    """
+    super().__init__()
+    
+    self.host = host
+    self.port = port
+    self.app = Flask(__name__)
+    self.server_thread = None
+    self.running = False
+    self.logger = get_logger(__name__)
+    
+    # Session management
+    self.active_sessions = {}
+    self.command_queue = {}
+    self.response_queue = {}
+    
+    # Request statistics
+    self.stats = {
+        'requests': 0,
+        'unique_agents': set(),
+        'start_time': None,
+        'last_request': None
+    }
+    
+    # Setup routes
+    self._setup_routes()
+    
+    # Configure Flask for C2 (disable logging for stealth)
+    import logging
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    
+    # Security headers for better OPSEC
+    @self.app.after_request
+    def add_security_headers(response):
+        # Mimic common server headers
+        response.headers['Server'] = 'nginx/1.18.0'
+        response.headers['X-Powered-By'] = 'PHP/7.4.3'
+        
+        # Basic security headers
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        
+        return response
+    
+    self.logger.info(f"C2Server initialized on {host}:{port}")
 
     def _initialize_protocols(self):
         """Initialize all supported communication protocols."""

@@ -53,6 +53,15 @@ class FileTypeInfo:
 
     def __init__(self, extension: str, description: str, category: str,
                  supported: bool = True, analyzer_hint: str = None):
+        """Initialize file type information.
+        
+        Args:
+            extension: File extension (e.g., '.exe')
+            description: Human-readable description of file type
+            category: Category of file (e.g., 'executable', 'library')
+            supported: Whether this file type is supported for analysis
+            analyzer_hint: Hint for which analyzer to use
+        """
         self.extension = extension.lower()
         self.description = description
         self.category = category

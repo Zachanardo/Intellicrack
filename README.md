@@ -16,7 +16,7 @@ A comprehensive binary analysis and security research tool with GUI, AI integrat
 - **Network Analysis**: Traffic capture, protocol fingerprinting, SSL interception
 
 ### Advanced Features
-- **AI/ML Integration**: Pattern recognition and vulnerability prediction
+- **AI/ML Integration**: 16+ AI providers with dynamic model fetching (OpenAI, Anthropic, Google, Local models, and more)
 - **GPU Acceleration**: NVIDIA, AMD, and Intel GPU support for intensive operations
 - **Distributed Processing**: Ray, Dask, and multiprocessing support
 - **Symbolic Execution**: Advanced path exploration and constraint solving
@@ -141,6 +141,8 @@ print(f"Protections: {result['protections']}")
 Comprehensive documentation is available in the `docs/` directory:
 
 - [Getting Started](docs/index.md)
+- [AI Assistant Guide](docs/usage/ai_assistant.md) - **NEW**: Dynamic model selection with 16+ providers
+- [AI Models Quick Reference](docs/AI_MODELS_QUICK_REFERENCE.md) - Provider setup and model recommendations
 - [Basic Analysis Guide](docs/usage/basic_analysis.md)
 - [Patching Guide](docs/usage/patching.md)
 - [Plugin Development](docs/development/plugins.md)

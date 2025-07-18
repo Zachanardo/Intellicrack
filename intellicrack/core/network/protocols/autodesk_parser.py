@@ -162,6 +162,7 @@ class AutodeskLicensingParser:
     }
 
     def __init__(self):
+        """Initialize the Autodesk licensing parser with tracking and server key setup."""
         self.logger = get_logger(__name__)
         self.active_activations = {}  # Track active activations
         self.entitlement_cache = {}   # Cache entitlement data
@@ -281,13 +282,17 @@ class AutodeskLicensingParser:
 
         # Check URL patterns
         if '/activate' in request_line_lower or '/activation' in request_line_lower:
-            if is_oauth:
+            if 'application/x-amf' in content_type or 'application/octet-stream' in content_type:
+                return 'legacy_activation'
+            elif is_oauth:
                 return 'oauth_activation'
             elif is_fusion360:
                 return 'fusion360_activation'
             else:
                 return 'activation'
         elif '/validate' in request_line_lower or '/validation' in request_line_lower:
+            if x_autodesk_version:
+                return f'validation_v{x_autodesk_version}'
             return 'validation'
         elif '/deactivate' in request_line_lower or '/deactivation' in request_line_lower:
             return 'deactivation'
@@ -323,8 +328,19 @@ class AutodeskLicensingParser:
         elif '/api/entitlements' in request_line_lower:
             return 'entitlement'
 
+        # Refine request type based on detected Autodesk product
+        base_type = 'validation'  # default
+        if is_autocad:
+            return f'{base_type}_autocad'
+        elif is_inventor:
+            return f'{base_type}_inventor'
+        elif is_maya:
+            return f'{base_type}_maya'
+        elif is_3dsmax:
+            return f'{base_type}_3dsmax'
+
         # Default to validation
-        return 'validation'
+        return base_type
 
     def _extract_field(self, data: Dict[str, Any], headers: Dict[str, str],
                       field_names: List[str]) -> Optional[str]:

@@ -243,7 +243,7 @@ class ConfigManager:
             "log_dir": str(config.get_logs_dir()),
             "output_dir": str(config.get_output_dir()),
             "temp_dir": config.get('directories.temp', str(config.get_cache_dir())),
-            "plugin_directory": "plugins",
+            "plugin_directory": "intellicrack/plugins",
             "download_directory": str(config.get_cache_dir() / "downloads"),
 
             # Tool paths

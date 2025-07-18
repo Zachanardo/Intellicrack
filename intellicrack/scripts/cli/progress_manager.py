@@ -65,6 +65,7 @@ class AnalysisTask:
     subtasks: List['AnalysisTask'] = None
 
     def __post_init__(self):
+        """Initialize analysis task with empty subtasks list if not provided."""
         if self.subtasks is None:
             self.subtasks = []
 

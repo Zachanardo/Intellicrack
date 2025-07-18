@@ -56,12 +56,13 @@ class WindowsActivator:
     """
 
     def __init__(self):
+        """Initialize the Windows activator with script path and temporary directory setup."""
         self.script_path = Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
         self.temp_dir = Path(tempfile.gettempdir()) / "intellicrack_activation"
-        self.temp_dir.mkdir(exist_ok=True)
-
-        if not self.script_path.exists():
-            logger.error("Windows activator script not found: %s", self.script_path)
+        self.logger = get_logger(__name__)
+        self.last_validation_time = None
+        self.last_validation_result = None
+        self.validation_cache_duration = 300  # 5 minutes
 
     def check_prerequisites(self) -> Tuple[bool, List[str]]:
         """

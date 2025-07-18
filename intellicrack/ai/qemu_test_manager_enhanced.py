@@ -23,6 +23,7 @@ Captures actual execution data from QEMU VMs.
 """
 
 import json
+import os
 import subprocess
 from typing import Any, Callable, Dict
 
@@ -162,7 +163,6 @@ Process.enumerateModules().forEach(module => {{{{
 '''
 
         # Write wrapper script to temporary file for execution
-        import os
         import tempfile
 
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as script_file:

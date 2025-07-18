@@ -646,26 +646,26 @@ class DistributedProcessingManager:
                 return {'error': f"Section {section_name} not found"}
 
             section_data = section.get_data()
-            
+
             # Process section data in chunks based on chunk_size parameter
             results = []
             total_strings = []
             total_entropy_samples = []
-            
+
             # Process data in chunks for better memory efficiency and progress tracking
             for chunk_start in range(0, len(section_data), chunk_size):
                 chunk_end = min(chunk_start + chunk_size, len(section_data))
                 chunk_data = section_data[chunk_start:chunk_end]
-                
+
                 # Calculate entropy for this chunk
                 chunk_entropy = self._calculate_entropy(chunk_data)
                 total_entropy_samples.append(chunk_entropy)
-                
+
                 # String extraction for this chunk
                 chunk_strings = []
                 current_string = b""
                 min_length = 4  # Minimum string length
-                
+
                 for _byte in chunk_data:
                     if 32 <= _byte <= 126:  # Printable ASCII
                         current_string += bytes([_byte])
@@ -673,13 +673,13 @@ class DistributedProcessingManager:
                         if len(current_string) >= min_length:
                             chunk_strings.append(current_string.decode('ascii'))
                         current_string = b""
-                
+
                 # Add last string if needed
                 if len(current_string) >= min_length:
                     chunk_strings.append(current_string.decode('ascii'))
-                
+
                 total_strings.extend(chunk_strings)
-                
+
                 # Store chunk analysis results
                 results.append({
                     'chunk_start': chunk_start,
@@ -689,7 +689,7 @@ class DistributedProcessingManager:
                     'string_count': len(chunk_strings),
                     'strings': chunk_strings[:10]  # Limit to first 10 strings per chunk
                 })
-            
+
             # Calculate overall entropy as average of chunk entropies
             entropy = sum(total_entropy_samples) / len(total_entropy_samples) if total_entropy_samples else 0.0
             strings = total_strings
@@ -765,22 +765,22 @@ class DistributedProcessingManager:
             vulnerabilities = []
             exploration_chunks = []
             chunk_number = 0
-            
+
             # Process symbolic execution in chunks based on chunk_size parameter
             # Each chunk processes a limited number of states for better control and monitoring
             while simgr.active and time.time() - start_time < max_time:
                 chunk_start_time = time.time()
                 chunk_paths_explored = 0
                 chunk_start_states = len(simgr.active)
-                
+
                 # Process chunk_size number of states or until no more active states
                 for _ in range(min(chunk_size, len(simgr.active))):
                     if not simgr.active or time.time() - start_time >= max_time:
                         break
-                    
+
                     simgr.step()
                     chunk_paths_explored += 1
-                    
+
                     # Check for potential vulnerabilities in current states
                     for state in simgr.active:
                         # Simple vulnerability detection (stack overflow patterns)
@@ -797,10 +797,10 @@ class DistributedProcessingManager:
                                     })
                             except (AttributeError, Exception):
                                 pass  # Skip states that can't be analyzed
-                
+
                 chunk_end_time = time.time()
                 chunk_duration = chunk_end_time - chunk_start_time
-                
+
                 exploration_chunks.append({
                     'chunk_number': chunk_number,
                     'states_processed': chunk_paths_explored,
@@ -809,10 +809,10 @@ class DistributedProcessingManager:
                     'chunk_duration': chunk_duration,
                     'vulnerabilities_found': len([v for v in vulnerabilities if v.get('chunk') == chunk_number])
                 })
-                
+
                 paths_explored += chunk_paths_explored
                 chunk_number += 1
-                
+
                 if paths_explored >= max_states:
                     break
 

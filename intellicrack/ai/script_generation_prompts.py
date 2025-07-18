@@ -43,6 +43,11 @@ class ScriptGenerationPrompts:
     """
 
     def __init__(self):
+        """Initialize the script generation prompts manager.
+        
+        Sets up prompts for various script generation tasks including
+        Frida, Ghidra, and other dynamic analysis tools.
+        """
         self.logger = logging.getLogger(__name__ + ".ScriptGenerationPrompts")
         self.prompts = self._initialize_prompts()
 

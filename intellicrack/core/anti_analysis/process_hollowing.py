@@ -124,30 +124,31 @@ class ProcessHollowing:
     """
 
     def __init__(self):
+        """Initialize the process hollowing engine with supported target processes."""
         self.logger = logging.getLogger("IntellicrackLogger.ProcessHollowing")
         self.supported_targets = {
             'svchost.exe': {
-                'path': 'C:\\Windows\\System32\\svchost.exe',
+                'path': 'C:\\\\Windows\\\\System32\\\\svchost.exe',
                 'args': '-k netsvcs',
                 'suitable_for': ['service', 'network']
             },
             'explorer.exe': {
-                'path': 'C:\\Windows\\explorer.exe',
+                'path': 'C:\\\\Windows\\\\explorer.exe',
                 'args': '',
                 'suitable_for': ['gui', 'user_interaction']
             },
             'notepad.exe': {
-                'path': 'C:\\Windows\\System32\\notepad.exe',
+                'path': 'C:\\\\Windows\\\\System32\\\\notepad.exe',
                 'args': '',
                 'suitable_for': ['simple', 'test']
             },
             'calc.exe': {
-                'path': 'C:\\Windows\\System32\\calc.exe',
+                'path': 'C:\\\\Windows\\\\System32\\\\calc.exe',
                 'args': '',
                 'suitable_for': ['simple', 'test']
             },
             'dllhost.exe': {
-                'path': 'C:\\Windows\\System32\\dllhost.exe',
+                'path': 'C:\\\\Windows\\\\System32\\\\dllhost.exe',
                 'args': '/Processid:{E10F6C3A-F1AE-4ADC-AA9D-2FE65525666E}',
                 'suitable_for': ['com', 'background']
             }

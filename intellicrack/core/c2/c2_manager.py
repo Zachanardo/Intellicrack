@@ -33,10 +33,14 @@ class C2Manager:
     """Central manager for C2 infrastructure operations."""
 
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
-        self.server = None
-        self.sessions = SessionManager()
-        self.encryption = EncryptionManager()
+        """Initialize the C2 manager with protocol and session management."""
+        self.protocols = {}
+        self.sessions = {}
+        self.logger = get_logger(__name__)
+    """Initialize the C2 manager with protocol and session management."""
+    self.protocols = {}
+    self.sessions = {}
+    self.logger = get_logger(__name__)
 
     def start_server(self, config):
         """Start C2 server with given configuration."""

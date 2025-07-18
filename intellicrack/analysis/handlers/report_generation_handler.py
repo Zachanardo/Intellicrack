@@ -66,6 +66,14 @@ class ReportGeneratorWorker(QRunnable):
 
     def __init__(self, result: UnifiedProtectionResult, format_type: str,
                  output_path: str, options: dict):
+        """Initialize the report generator worker.
+        
+        Args:
+            result: The unified protection result to generate a report for.
+            format_type: The format type for the report (e.g., 'pdf', 'html').
+            output_path: The path where the report should be saved.
+            options: Additional options for report generation.
+        """
         super().__init__()
         self.result = result
         self.format_type = format_type
@@ -118,6 +126,11 @@ class ReportOptionsDialog(QDialog):
     """Dialog for selecting report generation options"""
 
     def __init__(self, parent=None):
+        """Initialize the report options dialog.
+        
+        Args:
+            parent: Optional parent widget for Qt integration.
+        """
         super().__init__(parent)
         self.setWindowTitle("Report Generation Options")
         self.setMinimumWidth(400)
@@ -225,6 +238,11 @@ class ReportGenerationHandler(QObject):
     report_progress = pyqtSignal(str)
 
     def __init__(self, parent=None):
+        """Initialize the report generation handler.
+        
+        Args:
+            parent: Optional parent widget for Qt integration.
+        """
         super().__init__(parent)
         self.thread_pool = QThreadPool.globalInstance()
         self.current_result: Optional[UnifiedProtectionResult] = None

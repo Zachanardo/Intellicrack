@@ -87,12 +87,21 @@
     basePerformanceCounter: Date.now() * 10000,
     
     onAttach: function(pid) {
-        console.log("[Enhanced Anti-Debug] Attaching to process: " + pid);
+        send({
+            type: "status",
+            message: "Enhanced Anti-Debug attaching to process",
+            pid: pid,
+            timestamp: Date.now()
+        });
         this.processId = pid;
     },
     
     run: function() {
-        console.log("[Enhanced Anti-Debug] Installing comprehensive anti-debugging countermeasures...");
+        send({
+            type: "status", 
+            message: "Installing comprehensive anti-debugging countermeasures",
+            timestamp: Date.now()
+        });
         
         // Core anti-debug bypass
         this.hookDebuggerDetection();
@@ -115,13 +124,22 @@
     
     // === CORE DEBUGGER DETECTION BYPASS ===
     hookDebuggerDetection: function() {
-        console.log("[Enhanced Anti-Debug] Installing debugger detection bypass...");
+        send({
+            type: "info",
+            message: "Installing debugger detection bypass",
+            category: "core_detection"
+        });
         
         // Hook IsDebuggerPresent
         var isDebuggerPresent = Module.findExportByName("kernel32.dll", "IsDebuggerPresent");
         if (isDebuggerPresent) {
             Interceptor.replace(isDebuggerPresent, new NativeCallback(function() {
-                console.log("[Enhanced Anti-Debug] IsDebuggerPresent called - returning FALSE");
+                send({
+                    type: "bypass",
+                    target: "IsDebuggerPresent",
+                    action: "debugger_detection_spoofed",
+                    result: "FALSE"
+                });
                 return 0; // FALSE
             }, 'int', []));
             
@@ -138,7 +156,12 @@
                         var pbDebugger = this.context.rdx; // Second parameter
                         if (pbDebugger && !pbDebugger.isNull()) {
                             pbDebugger.writeU8(0); // FALSE
-                            console.log("[Enhanced Anti-Debug] CheckRemoteDebuggerPresent spoofed to FALSE");
+                            send({
+                                type: "bypass",
+                                target: "CheckRemoteDebuggerPresent",
+                                action: "remote_debugger_spoofed",
+                                result: "FALSE"
+                            });
                         }
                     }
                 }
@@ -150,7 +173,11 @@
     
     // === NTDLL ANTI-DEBUG BYPASS ===
     hookNtdllAntiDebug: function() {
-        console.log("[Enhanced Anti-Debug] Installing NTDLL anti-debug bypass...");
+        send({
+            type: "info",
+            message: "Installing NTDLL anti-debug bypass",
+            category: "ntdll_bypass"
+        });
         
         // Hook NtQueryInformationProcess for debug flags
         var ntQueryInfo = Module.findExportByName("ntdll.dll", "NtQueryInformationProcess");
@@ -174,17 +201,35 @@
                     switch(this.infoClass) {
                         case 7: // ProcessDebugPort
                             this.processInfo.writePointer(ptr(0));
-                            console.log("[Enhanced Anti-Debug] ProcessDebugPort spoofed to NULL");
+                            send({
+                                type: "bypass",
+                                target: "NtQueryInformationProcess",
+                                action: "ProcessDebugPort_spoofed",
+                                info_class: 7,
+                                result: "NULL"
+                            });
                             break;
                             
                         case 30: // ProcessDebugObjectHandle
                             this.processInfo.writePointer(ptr(0));
-                            console.log("[Enhanced Anti-Debug] ProcessDebugObjectHandle spoofed to NULL");
+                            send({
+                                type: "bypass",
+                                target: "NtQueryInformationProcess",
+                                action: "ProcessDebugObjectHandle_spoofed",
+                                info_class: 30,
+                                result: "NULL"
+                            });
                             break;
                             
                         case 31: // ProcessDebugFlags
                             this.processInfo.writeU32(1); // PROCESS_DEBUG_INHERIT
-                            console.log("[Enhanced Anti-Debug] ProcessDebugFlags spoofed");
+                            send({
+                                type: "bypass",
+                                target: "NtQueryInformationProcess",
+                                action: "ProcessDebugFlags_spoofed",
+                                info_class: 31,
+                                result: "PROCESS_DEBUG_INHERIT"
+                            });
                             break;
                             
                         case 0: // ProcessBasicInformation
@@ -199,7 +244,12 @@
                                 for (var i = 0; i < this.processInfoLength; i++) {
                                     this.processInfo.add(i).writeU8(0);
                                 }
-                                console.log("[Enhanced Anti-Debug] Unknown debug info class " + this.infoClass + " zeroed");
+                                send({
+                                    type: "bypass",
+                                    target: "NtQueryInformationProcess",
+                                    action: "unknown_debug_info_zeroed",
+                                    info_class: this.infoClass
+                                });
                             }
                             break;
                     }
@@ -218,7 +268,12 @@
                     var infoClass = args[1].toInt32();
                     
                     if (infoClass === 17) { // ThreadHideFromDebugger
-                        console.log("[Enhanced Anti-Debug] Blocked ThreadHideFromDebugger attempt");
+                        send({
+                            type: "bypass",
+                            target: "NtSetInformationThread",
+                            action: "ThreadHideFromDebugger_blocked",
+                            info_class: 17
+                        });
                         this.replace();
                         this.returnValue = ptr(0); // STATUS_SUCCESS
                     }
@@ -233,7 +288,11 @@
         if (ntCreateThreadEx) {
             Interceptor.attach(ntCreateThreadEx, {
                 onEnter: function(args) {
-                    console.log("[Enhanced Anti-Debug] Thread creation detected - monitoring for debug threads");
+                    send({
+                        type: "info",
+                        target: "NtCreateThreadEx",
+                        message: "Thread creation detected - monitoring for debug threads"
+                    });
                 }
             });
             
@@ -243,7 +302,11 @@
     
     // === DEBUG OUTPUT SUPPRESSION ===
     hookDebugOutput: function() {
-        console.log("[Enhanced Anti-Debug] Installing debug output suppression...");
+        send({
+            type: "info",
+            message: "Installing debug output suppression",
+            category: "debug_output"
+        });
         
         // Hook OutputDebugString functions
         var outputDebugStringA = Module.findExportByName("kernel32.dll", "OutputDebugStringA");
@@ -269,7 +332,11 @@
     
     // === PEB MANIPULATION ===
     manipulatePebFlags: function() {
-        console.log("[Enhanced Anti-Debug] Manipulating PEB debug flags...");
+        send({
+            type: "info",
+            message: "Manipulating PEB debug flags",
+            category: "peb_manipulation"
+        });
         
         // Clear PEB debug flags
         setTimeout(() => {
@@ -293,18 +360,32 @@
                             processHeap.add(0x44).writeU32(0x00); // Clear force flags
                         }
                         
-                        console.log("[Enhanced Anti-Debug] PEB debug flags cleared successfully");
+                        send({
+                            type: "bypass",
+                            target: "PEB",
+                            action: "debug_flags_cleared",
+                            cleared_flags: ["BeingDebugged", "NtGlobalFlag", "HeapFlags"]
+                        });
                     }
                 }
             } catch (e) {
-                console.log("[Enhanced Anti-Debug] PEB manipulation failed (expected): " + e);
+                send({
+                    type: "warning",
+                    target: "PEB",
+                    message: "PEB manipulation failed (expected)",
+                    error: e.message
+                });
             }
         }, 100);
     },
     
     // === HARDWARE BREAKPOINT BYPASS ===
     hookHardwareBreakpoints: function() {
-        console.log("[Enhanced Anti-Debug] Installing hardware breakpoint bypass...");
+        send({
+            type: "info",
+            message: "Installing hardware breakpoint bypass",
+            category: "hardware_breakpoints"
+        });
         
         // Hook GetThreadContext to clear debug registers
         var getThreadContext = Module.findExportByName("kernel32.dll", "GetThreadContext");
@@ -338,7 +419,12 @@
                             if (config.hardwareBreakpoints.clearDr6) context.add(dr6Offset).writeU64(0);
                             if (config.hardwareBreakpoints.clearDr7) context.add(dr7Offset).writeU64(0);
                             
-                            console.log("[Enhanced Anti-Debug] Hardware breakpoints cleared in thread context");
+                            send({
+                                type: "bypass",
+                                target: "GetThreadContext", 
+                                action: "hardware_breakpoints_cleared",
+                                cleared_registers: ["DR0", "DR1", "DR2", "DR3", "DR6", "DR7"]
+                            });
                         }
                     } catch(e) {
                         // Context manipulation failed - this is expected in some cases
@@ -376,7 +462,12 @@
                                 context.add(0xB0).writeU64(0); // DR6
                                 context.add(0xB8).writeU64(0); // DR7
                                 
-                                console.log("[Enhanced Anti-Debug] Prevented hardware breakpoint installation");
+                                send({
+                                    type: "bypass",
+                                    target: "SetThreadContext",
+                                    action: "hardware_breakpoint_installation_prevented",
+                                    dr7_value: dr7.toNumber()
+                                });
                             }
                         }
                     } catch(e) {
@@ -421,7 +512,11 @@
     
     // === TIMING ATTACK COUNTERMEASURES ===
     hookTimingAttacks: function() {
-        console.log("[Enhanced Anti-Debug] Installing timing attack countermeasures...");
+        send({
+            type: "info",
+            message: "Installing timing attack countermeasures",
+            category: "timing_protection"
+        });
         
         // Hook RDTSC instruction results
         this.hookRdtscTiming();
@@ -481,7 +576,13 @@
                         this.context.eax = ptr(currentTime & 0xFFFFFFFF);
                         this.context.edx = ptr((currentTime >>> 32) & 0xFFFFFFFF);
                         
-                        console.log("[Enhanced Anti-Debug] RDTSC timing spoofed in " + moduleName);
+                        send({
+                            type: "bypass",
+                            target: "RDTSC",
+                            action: "timing_spoofed",
+                            module: moduleName,
+                            spoofed_time: currentTime
+                        });
                     }
                 }
             });
@@ -504,7 +605,12 @@
                                 var currentCounter = this.parent.parent.basePerformanceCounter + (Date.now() * 10000);
                                 counterPtr.writeU64(currentCounter);
                                 
-                                console.log("[Enhanced Anti-Debug] QueryPerformanceCounter spoofed");
+                                send({
+                                    type: "bypass",
+                                    target: "QueryPerformanceCounter",
+                                    action: "performance_counter_spoofed",
+                                    counter_value: currentCounter
+                                });
                             }
                         }
                     }
@@ -540,7 +646,13 @@
                         // Reduce excessive sleep times that might be used for timing checks
                         if (milliseconds > 1000) {
                             args[0] = ptr(100); // Reduce to 100ms
-                            console.log("[Enhanced Anti-Debug] Long sleep reduced: " + milliseconds + "ms -> 100ms");
+                            send({
+                                type: "bypass",
+                                target: "Sleep",
+                                action: "long_sleep_reduced",
+                                original_ms: milliseconds,
+                                reduced_ms: 100
+                            });
                         }
                     }
                 }
@@ -559,7 +671,13 @@
                     if (config.timingProtection.enabled && config.timingProtection.sleepManipulation) {
                         if (milliseconds > 1000) {
                             args[0] = ptr(100);
-                            console.log("[Enhanced Anti-Debug] SleepEx time reduced: " + milliseconds + "ms -> 100ms");
+                            send({
+                                type: "bypass",
+                                target: "SleepEx",
+                                action: "long_sleep_reduced",
+                                original_ms: milliseconds,
+                                reduced_ms: 100
+                            });
                         }
                     }
                 }
@@ -605,7 +723,11 @@
     
     // === PROCESS INFORMATION SPOOFING ===
     hookProcessInformation: function() {
-        console.log("[Enhanced Anti-Debug] Installing process information spoofing...");
+        send({
+            type: "info",
+            message: "Installing process information spoofing",
+            category: "process_info"
+        });
         
         // Hook process name queries
         this.hookProcessNameQueries();
@@ -632,7 +754,12 @@
                         if (filename && !filename.isNull() && config.processInfo.spoofParentProcess) {
                             var spoofedPath = "C:\\Windows\\" + config.processInfo.spoofProcessName;
                             filename.writeUtf16String(spoofedPath);
-                            console.log("[Enhanced Anti-Debug] Process name spoofed to: " + spoofedPath);
+                            send({
+                                type: "bypass",
+                                target: "GetModuleFileNameW",
+                                action: "process_name_spoofed",
+                                spoofed_path: spoofedPath
+                            });
                         }
                     }
                 }
@@ -651,7 +778,12 @@
                     
                     // TH32CS_SNAPPROCESS = 0x00000002
                     if (flags & 0x00000002) {
-                        console.log("[Enhanced Anti-Debug] Process snapshot creation detected");
+                        send({
+                            type: "info",
+                            target: "CreateToolhelp32Snapshot",
+                            message: "Process snapshot creation detected",
+                            flags: flags
+                        });
                         this.isProcessSnapshot = true;
                     }
                 }
@@ -689,8 +821,13 @@
                                 // Spoof executable name
                                 szExeFile.writeUtf16String(config.processInfo.spoofProcessName);
                                 
-                                console.log("[Enhanced Anti-Debug] Parent process spoofed to PID " + 
-                                          config.processInfo.spoofParentPid);
+                                send({
+                                    type: "bypass",
+                                    target: "Process32FirstW",
+                                    action: "parent_process_spoofed",
+                                    spoofed_parent_pid: config.processInfo.spoofParentPid,
+                                    spoofed_executable: config.processInfo.spoofProcessName
+                                });
                             }
                         }
                     } catch(e) {
@@ -710,7 +847,12 @@
                 var config = this.parent.config;
                 if (config.processInfo.spoofParentProcess) {
                     var spoofedCmdLine = Memory.allocUtf16String(config.processInfo.spoofCommandLine);
-                    console.log("[Enhanced Anti-Debug] Command line spoofed");
+                    send({
+                        type: "bypass",
+                        target: "GetCommandLineW",
+                        action: "command_line_spoofed",
+                        spoofed_cmdline: config.processInfo.spoofCommandLine
+                    });
                     return spoofedCmdLine;
                 }
                 // Return original command line
@@ -730,7 +872,12 @@
                     
                     // TOKEN_QUERY = 0x0008
                     if (desiredAccess & 0x0008) {
-                        console.log("[Enhanced Anti-Debug] Process token query detected");
+                        send({
+                            type: "info",
+                            target: "OpenProcessToken",
+                            message: "Process token query detected",
+                            desired_access: desiredAccess
+                        });
                         this.isTokenQuery = true;
                     }
                 }
@@ -747,7 +894,12 @@
                     
                     // TokenPrivileges = 3
                     if (tokenInfoClass === 3) {
-                        console.log("[Enhanced Anti-Debug] Token privileges query detected");
+                        send({
+                            type: "info",
+                            target: "GetTokenInformation",
+                            message: "Token privileges query detected",
+                            token_info_class: tokenInfoClass
+                        });
                         this.isPrivilegeQuery = true;
                     }
                 },
@@ -757,7 +909,11 @@
                         var config = this.parent.parent.config;
                         if (config.processInfo.hideDebugPrivileges) {
                             // Could modify privilege information here to hide debug privileges
-                            console.log("[Enhanced Anti-Debug] Token privileges query intercepted");
+                            send({
+                                type: "bypass",
+                                target: "GetTokenInformation",
+                                action: "token_privileges_intercepted"
+                            });
                         }
                     }
                 }
@@ -769,7 +925,11 @@
     
     // === THREAD CONTEXT MANIPULATION ===
     hookThreadContext: function() {
-        console.log("[Enhanced Anti-Debug] Installing thread context manipulation...");
+        send({
+            type: "info",
+            message: "Installing thread context manipulation",
+            category: "thread_context"
+        });
         
         // Additional thread context protection beyond hardware breakpoints
         this.hookSingleStepDetection();
@@ -791,7 +951,12 @@
                         if (exceptionCode === 0x80000004) {
                             var config = this.parent.parent.config;
                             if (config.threadProtection.enabled && config.threadProtection.protectSingleStep) {
-                                console.log("[Enhanced Anti-Debug] Single-step exception intercepted");
+                                send({
+                                    type: "bypass",
+                                    target: "NtRaiseException",
+                                    action: "single_step_exception_intercepted",
+                                    exception_code: exceptionCode
+                                });
                                 // Could modify or suppress the exception
                             }
                         }
@@ -819,7 +984,12 @@
                                 var eflags = context.add(0x44).readU32(); // EFLAGS offset in CONTEXT
                                 if (eflags & 0x100) { // Trap flag set
                                     context.add(0x44).writeU32(eflags & ~0x100); // Clear trap flag
-                                    console.log("[Enhanced Anti-Debug] Trap flag cleared in thread context");
+                                    send({
+                                        type: "bypass",
+                                        target: "NtSetContextThread",
+                                        action: "trap_flag_cleared",
+                                        original_eflags: eflags
+                                    });
                                 }
                             }
                         }
@@ -841,7 +1011,11 @@
                         var threadEntry = this.context.rdx; // THREADENTRY32
                         if (threadEntry && !threadEntry.isNull()) {
                             // Could filter out threads that belong to debugger processes
-                            console.log("[Enhanced Anti-Debug] Thread enumeration detected");
+                            send({
+                                type: "info",
+                                target: "Thread32First",
+                                message: "Thread enumeration detected"
+                            });
                         }
                     }
                 }
@@ -853,7 +1027,11 @@
     
     // === EXCEPTION HANDLING ===
     hookExceptionHandling: function() {
-        console.log("[Enhanced Anti-Debug] Installing exception handling hooks...");
+        send({
+            type: "info",
+            message: "Installing exception handling hooks",
+            category: "exception_handling"
+        });
         
         // Hook vectored exception handlers
         this.hookVectoredExceptionHandlers();
@@ -873,7 +1051,12 @@
                     var first = args[0].toInt32();
                     var handler = args[1];
                     
-                    console.log("[Enhanced Anti-Debug] Vectored exception handler registered");
+                    send({
+                        type: "info",
+                        target: "AddVectoredExceptionHandler",
+                        message: "Vectored exception handler registered",
+                        first: first === 1
+                    });
                     
                     var config = this.parent.parent.config;
                     if (config.exceptionHandling.bypassVectoredHandlers) {
@@ -884,7 +1067,12 @@
                 
                 onLeave: function(retval) {
                     if (this.monitorHandler && !retval.isNull()) {
-                        console.log("[Enhanced Anti-Debug] Vectored exception handler installed at " + retval);
+                        send({
+                            type: "info",
+                            target: "AddVectoredExceptionHandler",
+                            message: "Vectored exception handler installed",
+                            handler_address: retval.toString()
+                        });
                     }
                 }
             });
@@ -900,7 +1088,11 @@
                 onEnter: function(args) {
                     var lpTopLevelExceptionFilter = args[0];
                     
-                    console.log("[Enhanced Anti-Debug] Unhandled exception filter set");
+                    send({
+                        type: "bypass",
+                        target: "anti_debugger",
+                        action: "unhandled_exception_filter_set"
+                    });
                     
                     var config = this.parent.parent.config;
                     if (config.exceptionHandling.spoofUnhandledExceptions) {
@@ -919,7 +1111,11 @@
         var debugBreak = Module.findExportByName("kernel32.dll", "DebugBreak");
         if (debugBreak) {
             Interceptor.replace(debugBreak, new NativeCallback(function() {
-                console.log("[Enhanced Anti-Debug] DebugBreak instruction intercepted and suppressed");
+                send({
+                    type: "bypass",
+                    target: "DebugBreak",
+                    action: "debug_break_suppressed"
+                });
                 // Do nothing - suppress the debug break
             }, 'void', []));
             
@@ -930,7 +1126,11 @@
         var debugBreakProcess = Module.findExportByName("kernel32.dll", "DebugBreakProcess");
         if (debugBreakProcess) {
             Interceptor.replace(debugBreakProcess, new NativeCallback(function(process) {
-                console.log("[Enhanced Anti-Debug] DebugBreakProcess blocked");
+                send({
+                    type: "bypass",
+                    target: "DebugBreakProcess",
+                    action: "debug_break_process_blocked"
+                });
                 return 1; // TRUE - fake success
             }, 'int', ['pointer']));
             
@@ -940,7 +1140,11 @@
     
     // === ADVANCED DETECTION BYPASS ===
     hookAdvancedDetection: function() {
-        console.log("[Enhanced Anti-Debug] Installing advanced detection bypass...");
+        send({
+            type: "info",
+            message: "Installing advanced detection bypass",
+            category: "advanced_detection"
+        });
         
         // Hook debug object creation
         this.hookDebugObjectCreation();
@@ -958,7 +1162,11 @@
             Interceptor.attach(ntCreateDebugObject, {
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // STATUS_SUCCESS
-                        console.log("[Enhanced Anti-Debug] Debug object creation blocked");
+                        send({
+                            type: "bypass",
+                            target: "NtCreateDebugObject",
+                            action: "debug_object_creation_blocked"
+                        });
                         retval.replace(0xC0000022); // STATUS_ACCESS_DENIED
                     }
                 }
@@ -971,7 +1179,11 @@
         if (ntDebugActiveProcess) {
             Interceptor.attach(ntDebugActiveProcess, {
                 onLeave: function(retval) {
-                    console.log("[Enhanced Anti-Debug] Debug active process blocked");
+                    send({
+                        type: "bypass",
+                        target: "anti_debugger",
+                        action: "debug_active_process_blocked"
+                    });
                     retval.replace(0xC0000022); // STATUS_ACCESS_DENIED
                 }
             });
@@ -984,7 +1196,11 @@
         var waitForDebugEvent = Module.findExportByName("kernel32.dll", "WaitForDebugEvent");
         if (waitForDebugEvent) {
             Interceptor.replace(waitForDebugEvent, new NativeCallback(function(lpDebugEvent, dwMilliseconds) {
-                console.log("[Enhanced Anti-Debug] WaitForDebugEvent blocked");
+                send({
+                    type: "bypass",
+                    target: "anti_debugger",
+                    action: "wait_for_debug_event_blocked"
+                });
                 return 0; // FALSE - no debug events
             }, 'int', ['pointer', 'uint32']));
             
@@ -994,7 +1210,11 @@
         var continueDebugEvent = Module.findExportByName("kernel32.dll", "ContinueDebugEvent");
         if (continueDebugEvent) {
             Interceptor.replace(continueDebugEvent, new NativeCallback(function(dwProcessId, dwThreadId, dwContinueStatus) {
-                console.log("[Enhanced Anti-Debug] ContinueDebugEvent blocked");
+                send({
+                    type: "bypass",
+                    target: "anti_debugger",
+                    action: "continue_debug_event_blocked"
+                });
                 return 1; // TRUE - fake success
             }, 'int', ['uint32', 'uint32', 'uint32']));
             
@@ -1006,7 +1226,12 @@
         var debugActiveProcess = Module.findExportByName("kernel32.dll", "DebugActiveProcess");
         if (debugActiveProcess) {
             Interceptor.replace(debugActiveProcess, new NativeCallback(function(dwProcessId) {
-                console.log("[Enhanced Anti-Debug] DebugActiveProcess blocked for PID " + dwProcessId);
+                send({
+                    type: "bypass",
+                    target: "anti_debugger",
+                    action: "debug_active_process_blocked_with_pid",
+                    process_id: dwProcessId
+                });
                 return 0; // FALSE - failed
             }, 'int', ['uint32']));
             
@@ -1016,7 +1241,11 @@
         var debugActiveProcessStop = Module.findExportByName("kernel32.dll", "DebugActiveProcessStop");
         if (debugActiveProcessStop) {
             Interceptor.replace(debugActiveProcessStop, new NativeCallback(function(dwProcessId) {
-                console.log("[Enhanced Anti-Debug] DebugActiveProcessStop intercepted");
+                send({
+                    type: "bypass",
+                    target: "anti_debugger",
+                    action: "debug_active_process_stop_intercepted"
+                });
                 return 1; // TRUE - fake success
             }, 'int', ['uint32']));
             
@@ -1026,7 +1255,11 @@
     
     // === DEBUGGER COMMUNICATION BYPASS ===
     hookDebuggerCommunication: function() {
-        console.log("[Enhanced Anti-Debug] Installing debugger communication bypass...");
+        send({
+            type: "info",
+            target: "anti_debugger",
+            action: "installing_debugger_communication_bypass"
+        });
         
         // Hook named pipes used by debuggers
         this.hookNamedPipes();
@@ -1050,7 +1283,12 @@
                         var debuggerPipes = ["\\\\.\\\pipe\\dbg", "\\\\.\\\pipe\\debug", "\\\\.\\\pipe\\windbg"];
                         
                         if (debuggerPipes.some(name => pipeName.toLowerCase().includes(name.toLowerCase()))) {
-                            console.log("[Enhanced Anti-Debug] Debugger pipe creation blocked: " + pipeName);
+                            send({
+                                type: "bypass",
+                                target: "anti_debugger",
+                                action: "debugger_pipe_creation_blocked",
+                                pipe_name: pipeName
+                            });
                             this.blockPipe = true;
                         }
                     }
@@ -1079,7 +1317,12 @@
                         var debuggerMappings = ["dbg_", "debug_", "windbg_"];
                         
                         if (debuggerMappings.some(name => mappingName.toLowerCase().includes(name))) {
-                            console.log("[Enhanced Anti-Debug] Debugger mapping blocked: " + mappingName);
+                            send({
+                                type: "bypass",
+                                target: "anti_debugger",
+                                action: "debugger_mapping_blocked",
+                                mapping_name: mappingName
+                            });
                             this.blockMapping = true;
                         }
                     }
@@ -1108,7 +1351,12 @@
                         var debuggerKeys = ["windbg", "debugger", "aedebug"];
                         
                         if (debuggerKeys.some(name => keyName.toLowerCase().includes(name))) {
-                            console.log("[Enhanced Anti-Debug] Debugger registry access blocked: " + keyName);
+                            send({
+                                type: "bypass",
+                                target: "anti_debugger",
+                                action: "debugger_registry_access_blocked",
+                                key_name: keyName
+                            });
                             this.blockRegAccess = true;
                         }
                     }
@@ -1127,7 +1375,11 @@
     
     // === MEMORY PROTECTION ===
     hookMemoryProtection: function() {
-        console.log("[Enhanced Anti-Debug] Installing memory protection bypass...");
+        send({
+            type: "info",
+            target: "anti_debugger",
+            action: "installing_memory_protection_bypass"
+        });
         
         // Hook memory allocation with PAGE_NOACCESS
         var virtualAlloc = Module.findExportByName("kernel32.dll", "VirtualAlloc");
@@ -1138,7 +1390,11 @@
                     
                     // PAGE_NOACCESS = 0x01 (could be used for anti-debug)
                     if (protect === 0x01) {
-                        console.log("[Enhanced Anti-Debug] PAGE_NOACCESS allocation detected");
+                        send({
+                            type: "info",
+                            target: "anti_debugger",
+                            action: "page_noaccess_allocation_detected"
+                        });
                         args[3] = ptr(0x04); // Change to PAGE_READWRITE
                     }
                 }
@@ -1156,7 +1412,11 @@
                     
                     // Detect potential anti-debug memory tricks
                     if (newProtect === 0x01) { // PAGE_NOACCESS
-                        console.log("[Enhanced Anti-Debug] Memory protection change to PAGE_NOACCESS blocked");
+                        send({
+                            type: "bypass",
+                            target: "anti_debugger",
+                            action: "page_noaccess_protection_change_blocked"
+                        });
                         args[2] = ptr(0x04); // Change to PAGE_READWRITE
                     }
                 }
@@ -1169,9 +1429,11 @@
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
-            console.log("\\n[Enhanced Anti-Debug] =======================================");
-            console.log("[Enhanced Anti-Debug] Anti-Debugging Bypass Summary:");
-            console.log("[Enhanced Anti-Debug] =======================================");
+            send({
+                type: "summary",
+                message: "Anti-Debugging Bypass Summary",
+                separator: "======================================="
+            });
             
             var categories = {
                 "Core Detection": 0,
@@ -1207,36 +1469,39 @@
                 }
             }
             
-            for (var category in categories) {
-                if (categories[category] > 0) {
-                    console.log("[Enhanced Anti-Debug]   ✓ " + category + ": " + categories[category] + " hooks");
-                }
-            }
-            
-            console.log("[Enhanced Anti-Debug] =======================================");
-            console.log("[Enhanced Anti-Debug] Configuration Active:");
+            send({
+                type: "summary",
+                message: "Hook installation summary",
+                categories: categories,
+                total_hooks: Object.keys(this.hooksInstalled).length
+            });
             
             var config = this.config;
+            var activeFeatures = [];
+            
             if (config.hardwareBreakpoints.enabled) {
-                console.log("[Enhanced Anti-Debug]   ✓ Hardware Breakpoint Bypass");
+                activeFeatures.push("Hardware Breakpoint Bypass");
             }
             if (config.timingProtection.enabled) {
-                console.log("[Enhanced Anti-Debug]   ✓ Timing Attack Countermeasures");
+                activeFeatures.push("Timing Attack Countermeasures");
             }
             if (config.processInfo.spoofParentProcess) {
-                console.log("[Enhanced Anti-Debug]   ✓ Process Information Spoofing");
+                activeFeatures.push("Process Information Spoofing");
             }
             if (config.threadProtection.enabled) {
-                console.log("[Enhanced Anti-Debug]   ✓ Thread Context Protection");
+                activeFeatures.push("Thread Context Protection");
             }
             if (config.exceptionHandling.bypassVectoredHandlers) {
-                console.log("[Enhanced Anti-Debug]   ✓ Exception Handler Bypass");
+                activeFeatures.push("Exception Handler Bypass");
             }
             
-            console.log("[Enhanced Anti-Debug] =======================================");
-            console.log("[Enhanced Anti-Debug] Total hooks installed: " + Object.keys(this.hooksInstalled).length);
-            console.log("[Enhanced Anti-Debug] =======================================");
-            console.log("[Enhanced Anti-Debug] Enhanced anti-debugging protection is now ACTIVE!");
+            send({
+                type: "summary",
+                message: "Enhanced anti-debugging protection is now ACTIVE!",
+                active_features: activeFeatures,
+                total_hooks: Object.keys(this.hooksInstalled).length,
+                configuration: config
+            });
         }, 100);
     }
 }

@@ -247,6 +247,7 @@ class BinarySimilaritySearchDialog(QDialog):
             result_signal = pyqtSignal(list)
 
             def __init__(self, search_engine, binary_path: str, threshold: float):
+                """Initialize the SearchThread with default values."""
                 super().__init__()
                 self.search_engine = search_engine
                 self.binary_path = binary_path

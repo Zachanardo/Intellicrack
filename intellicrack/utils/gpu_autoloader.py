@@ -21,6 +21,7 @@ class GPUAutoLoader:
     """Automatic GPU detection and configuration system"""
 
     def __init__(self):
+        """Initialize the GPU autoloader with default values."""
         self.gpu_available = False
         self.gpu_type = None
         self.gpu_info = {}

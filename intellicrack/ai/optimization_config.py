@@ -83,6 +83,12 @@ class OptimizationManager:
     """Manages AI system optimization."""
 
     def __init__(self, config: Optional[PerformanceConfig] = None):
+        """Initialize the optimization manager.
+        
+        Args:
+            config: Performance configuration settings. 
+                   Uses default configuration if not provided.
+        """
         self.config = config or self._create_default_config()
         self.active_optimizations: Dict[str, bool] = {}
         self.optimization_stats: Dict[str, Dict[str, Any]] = {}

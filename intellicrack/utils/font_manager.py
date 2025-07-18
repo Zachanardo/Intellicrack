@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 class FontManager:
     """Manages custom font loading and configuration for the application."""
     def __init__(self):
+        """Initialize the font manager with configuration and setup font directories."""
         self.fonts_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'fonts')
         self.config_file = os.path.join(self.fonts_dir, 'font_config.json')
         self.loaded_fonts = []

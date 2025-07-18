@@ -216,18 +216,19 @@ class FirmwareAnalyzer:
     """
 
     def __init__(self, work_directory: Optional[str] = None):
-        """
-        Initialize firmware analyzer
+        """Initialize the firmware analyzer with working directory configuration."""
+        if work_directory:
+            self.work_directory = Path(work_directory)
+        else:
+            # Create temporary directory
+            self.work_directory = Path(tempfile.mkdtemp(prefix="firmware_analysis_"))
         
-        Args:
-            work_directory: Optional working directory for extractions
-        """
-        if not BINWALK_AVAILABLE:
-            logger.warning("Binwalk not available - some features disabled")
-
-        self.work_directory = work_directory or tempfile.gettempdir()
-        self.analyzed_files: Set[str] = set()
-        self.extraction_depth_limit = 3  # Prevent infinite recursion
+        self.work_directory.mkdir(parents=True, exist_ok=True)
+        self.logger = logging.getLogger("IntellicrackLogger.FirmwareAnalyzer")
+        
+        # Storage for analysis results
+        self.extracted_files = []
+        self.analysis_results = {}  # Prevent infinite recursion
 
     def analyze_firmware(
         self,

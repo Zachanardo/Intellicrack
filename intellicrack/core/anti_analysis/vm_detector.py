@@ -38,6 +38,7 @@ class VMDetector(BaseDetector):
     """
 
     def __init__(self):
+        """Initialize the virtual machine detector with detection methods and signatures."""
         super().__init__()
         self.logger = logging.getLogger("IntellicrackLogger.VMDetector")
         self.detection_methods = {
@@ -57,22 +58,22 @@ class VMDetector(BaseDetector):
         self.vm_signatures = {
             'vmware': {
                 'processes': ['vmtoolsd.exe', 'vmwaretray.exe', 'vmwareuser.exe'],
-                'files': [os.path.join(os.environ.get('ProgramFiles', 'C:\\Program Files'), 'VMware', 'VMware Tools'), '/usr/bin/vmware-toolbox-cmd'],
-                'registry': [r'HKLM\SOFTWARE\VMware, Inc.\VMware Tools'],
+                'files': [os.path.join(os.environ.get('ProgramFiles', 'C:\\\\Program Files'), 'VMware', 'VMware Tools'), '/usr/bin/vmware-toolbox-cmd'],
+                'registry': [r'HKLM\\SOFTWARE\\VMware, Inc.\\VMware Tools'],
                 'hardware': ['VMware Virtual Platform', 'VMware SVGA', 'VMware Virtual USB'],
                 'mac_prefixes': ['00:05:69', '00:0C:29', '00:1C:14', '00:50:56']
             },
             'virtualbox': {
                 'processes': ['VBoxService.exe', 'VBoxTray.exe'],
-                'files': [os.path.join(os.environ.get('ProgramFiles', r'C:\Program Files'), 'Oracle', 'VirtualBox Guest Additions')],
-                'registry': [r'HKLM\SOFTWARE\Oracle\VirtualBox Guest Additions'],
+                'files': [os.path.join(os.environ.get('ProgramFiles', r'C:\\Program Files'), 'Oracle', 'VirtualBox Guest Additions')],
+                'registry': [r'HKLM\\SOFTWARE\\Oracle\\VirtualBox Guest Additions'],
                 'hardware': ['VirtualBox', 'VBOX HARDDISK', 'VBOX CD-ROM'],
                 'mac_prefixes': ['08:00:27']
             },
             'hyperv': {
                 'processes': ['vmconnect.exe', 'vmms.exe'],
-                'files': [os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'System32', 'drivers', 'vmbus.sys')],
-                'registry': [r'HKLM\SOFTWARE\Microsoft\Virtual Machine\Guest\Parameters'],
+                'files': [os.path.join(os.environ.get('SystemRoot', 'C:\\\\Windows'), 'System32', 'drivers', 'vmbus.sys')],
+                'registry': [r'HKLM\\SOFTWARE\\Microsoft\\Virtual Machine\\Guest\\Parameters'],
                 'hardware': ['Microsoft Corporation Virtual Machine'],
                 'mac_prefixes': ['00:15:5D']
             },
@@ -84,7 +85,7 @@ class VMDetector(BaseDetector):
             },
             'parallels': {
                 'processes': ['prl_tools.exe', 'prl_cc.exe'],
-                'files': [os.path.join(os.environ.get('ProgramFiles', r'C:\Program Files'), 'Parallels', 'Parallels Tools')],
+                'files': [os.path.join(os.environ.get('ProgramFiles', r'C:\\Program Files'), 'Parallels', 'Parallels Tools')],
                 'hardware': ['Parallels Virtual Platform'],
                 'mac_prefixes': ['00:1C:42']
             }

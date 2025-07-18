@@ -73,6 +73,12 @@ class QEMUTestManager:
     """
 
     def __init__(self):
+        """Initialize the QEMU test manager.
+        
+        Sets up QEMU snapshots, base images for Windows and Linux,
+        and integrates with existing QEMU emulator if available.
+        Creates a working directory for test operations.
+        """
         self.logger = logging.getLogger(__name__ + ".QEMUTestManager")
         self.snapshots = {}
         self.base_images = {

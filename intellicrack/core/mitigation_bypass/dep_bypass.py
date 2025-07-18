@@ -27,6 +27,7 @@ class DEPBypass:
     """DEP bypass implementation."""
 
     def __init__(self):
+        """Initialize the DEP bypass engine with available bypass techniques."""
         self.techniques = [
             'rop_chain',
             'jop_chain',

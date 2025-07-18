@@ -2,12 +2,12 @@
 Tab components for Intellicrack UI
 """
 
-from .dashboard_tab import DashboardTab
-from .analysis_tab import AnalysisTab
-from .exploitation_tab import ExploitationTab
 from .ai_assistant_tab import AIAssistantTab
-from .tools_tab import ToolsTab
+from .analysis_tab import AnalysisTab
+from .dashboard_tab import DashboardTab
+from .exploitation_tab import ExploitationTab
 from .settings_tab import SettingsTab
+from .tools_tab import ToolsTab
 
 __all__ = [
     'DashboardTab',

@@ -498,8 +498,12 @@ class PerformanceTracker:
     """
 
     def __init__(self):
+        """Initialize the performance tracker with empty metrics and timing data."""
         self.metrics = {}
         self.start_times = {}
+    """Initialize the performance tracker with empty metrics and timing data."""
+    self.metrics = {}
+    self.start_times = {}
 
     def start_operation(self, operation_name: str):
         """Start tracking an operation."""

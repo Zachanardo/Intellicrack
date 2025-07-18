@@ -54,15 +54,7 @@ class HexViewRenderer:
 
     def __init__(self, bytes_per_row: int = 16, group_size: int = 1,
                  show_ascii: bool = True, show_address: bool = True):
-        """
-        Initialize the hex view renderer.
-
-        Args:
-            bytes_per_row: Number of bytes to display per row
-            group_size: Number of bytes to group together (1, 2, 4, or 8)
-            show_ascii: Whether to show ASCII representation
-            show_address: Whether to show address/offset column
-        """
+        """Initialize the HexViewRenderer with display configuration."""
         self.bytes_per_row = bytes_per_row
         self.group_size = group_size
         self.show_ascii = show_ascii

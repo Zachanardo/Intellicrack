@@ -32,7 +32,12 @@ Java.perform(function() {
             onEnter: function(args) {
                 var keyPath = args[1].readUtf16String();
                 if (keyPath && registryKeys.some(key => keyPath.includes(key))) {
-                    console.log("[Registry] Opening key: " + keyPath);
+                    send({
+                        type: "info",
+                        target: "registry_monitor",
+                        action: "opening_key",
+                        key_path: keyPath
+                    });
                 }
             }
         });
@@ -47,7 +52,12 @@ Java.perform(function() {
             },
             onLeave: function(retval) {
                 if (this.valueName && this.valueName.toLowerCase().includes("licens")) {
-                    console.log("[Registry] Querying value: " + this.valueName);
+                    send({
+                        type: "info",
+                        target: "registry_monitor",
+                        action: "querying_value",
+                        value_name: this.valueName
+                    });
                 }
             }
         });

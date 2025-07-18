@@ -98,7 +98,12 @@
     },
     
     run: function() {
-        console.log("[TPM Emulator] Starting TPM 2.0 emulation...");
+        send({
+            type: "status",
+            target: "tpm_emulator",
+            action: "starting_tpm_emulation",
+            version: "2.0"
+        });
         
         // Windows TPM Base Services (TBS)
         this.hookTBSInterface();
@@ -116,7 +121,11 @@
             this.hookLinuxTPMDevice();
         }
         
-        console.log("[TPM Emulator] TPM 2.0 emulation active");
+        send({
+            type: "status",
+            target: "tpm_emulator",
+            action: "tpm_emulation_active"
+        });
     },
     
     // Hook Windows TBS (TPM Base Services) API
@@ -143,12 +152,21 @@
                             created: Date.now()
                         };
                         
-                        console.log("[TPM Emulator] Created TPM context: " + contextHandle);
+                        send({
+                            type: "info",
+                            target: "tpm_emulator",
+                            action: "tpm_context_created",
+                            context_handle: contextHandle.toString()
+                        });
                         retval.replace(0); // TBS_SUCCESS
                     }
                 }
             });
-            console.log("[TPM Emulator] Hooked Tbsi_Context_Create");
+            send({
+                type: "info",
+                target: "tpm_emulator",
+                action: "hooked_tbsi_context_create"
+            });
         }
         
         // Tbsi_Submit_Command
@@ -168,7 +186,12 @@
                     var commandBytes = this.pCommandBuf.readByteArray(this.commandBufLen);
                     self.commandBuffer = new Uint8Array(commandBytes);
                     
-                    console.log("[TPM Emulator] TPM command received (length: " + this.commandBufLen + ")");
+                    send({
+                        type: "info",
+                        target: "tpm_emulator",
+                        action: "tpm_command_received",
+                        command_length: this.commandBufLen
+                    });
                 },
                 onLeave: function(retval) {
                     // Process TPM command and generate response
@@ -182,7 +205,11 @@
                     retval.replace(0); // TBS_SUCCESS
                 }
             });
-            console.log("[TPM Emulator] Hooked Tbsi_Submit_Command");
+            send({
+                type: "info",
+                target: "tpm_emulator",
+                action: "hooked_tbsi_submit_command"
+            });
         }
         
         // Tbsi_GetDeviceInfo
@@ -201,7 +228,11 @@
                         this.pDeviceInfo.add(8).writeU32(1); // tpmInterfaceType (TIS)
                         this.pDeviceInfo.add(12).writeU32(1); // tpmImpRevision
                         
-                        console.log("[TPM Emulator] Returned TPM 2.0 device info");
+                        send({
+                            type: "info",
+                            target: "tpm_emulator",
+                            action: "returned_device_info"
+                        });
                         retval.replace(0); // TBS_SUCCESS
                     }
                 }
@@ -212,7 +243,11 @@
         var tbsiPhysicalPresence = Module.findExportByName("tbs.dll", "Tbsi_Physical_Presence_Command");
         if (tbsiPhysicalPresence) {
             Interceptor.replace(tbsiPhysicalPresence, new NativeCallback(function(hContext, pInput, inputLen, pOutput, pOutputLen) {
-                console.log("[TPM Emulator] Physical presence command bypassed");
+                send({
+                    type: "bypass",
+                    target: "tpm_emulator",
+                    action: "physical_presence_bypassed"
+                });
                 
                 // Always report physical presence confirmed
                 if (pOutput && pOutputLen) {
@@ -233,7 +268,12 @@
         var commandCode = (commandBuffer[6] << 24) | (commandBuffer[7] << 16) | 
                          (commandBuffer[8] << 8) | commandBuffer[9];
         
-        console.log("[TPM Emulator] Processing command: 0x" + commandCode.toString(16));
+        send({
+            type: "info",
+            target: "tpm_emulator",
+            action: "processing_command",
+            command_code: "0x" + commandCode.toString(16)
+        });
         
         // Process based on command code
         switch(commandCode) {
@@ -274,7 +314,12 @@
                 return this.handleUnseal(commandBuffer);
                 
             default:
-                console.log("[TPM Emulator] Unhandled command: 0x" + commandCode.toString(16));
+                send({
+                    type: "warning",
+                    target: "tpm_emulator",
+                    action: "unhandled_command",
+                    command_code: "0x" + commandCode.toString(16)
+                });
                 return this.createErrorResponse(tag, 0x0000000D); // TPM_RC_COMMAND_CODE
         }
     },
@@ -288,8 +333,13 @@
         var propertyCount = (commandBuffer[18] << 24) | (commandBuffer[19] << 16) | 
                            (commandBuffer[20] << 8) | commandBuffer[21];
         
-        console.log("[TPM Emulator] GetCapability - cap: 0x" + capability.toString(16) + 
-                   ", prop: 0x" + property.toString(16));
+        send({
+            type: "info",
+            target: "tpm_emulator",
+            action: "get_capability",
+            capability: "0x" + capability.toString(16),
+            property: "0x" + property.toString(16)
+        });
         
         var response = new Uint8Array(1024);
         var offset = 0;
@@ -364,7 +414,11 @@
     
     // Handle TPM2_PCR_Read
     handlePCRRead: function(commandBuffer) {
-        console.log("[TPM Emulator] PCR_Read command");
+        send({
+            type: "info",
+            target: "tpm_emulator",
+            action: "pcr_read_command"
+        });
         
         var response = new Uint8Array(512);
         var offset = 0;
@@ -408,7 +462,11 @@
     
     // Handle TPM2_Quote (attestation)
     handleQuote: function(commandBuffer) {
-        console.log("[TPM Emulator] Quote (attestation) command");
+        send({
+            type: "bypass",
+            target: "tpm_emulator",
+            action: "quote_attestation_command"
+        });
         
         this.stats.attestationsForged++;
         
@@ -520,7 +578,12 @@
         var nvIndex = (commandBuffer[10] << 24) | (commandBuffer[11] << 16) | 
                      (commandBuffer[12] << 8) | commandBuffer[13];
         
-        console.log("[TPM Emulator] NV_Read - index: 0x" + nvIndex.toString(16));
+        send({
+            type: "info",
+            target: "tpm_emulator",
+            action: "nv_read",
+            nv_index: "0x" + nvIndex.toString(16)
+        });
         
         this.stats.nvReads++;
         
@@ -549,7 +612,12 @@
         var nvIndex = (commandBuffer[10] << 24) | (commandBuffer[11] << 16) | 
                      (commandBuffer[12] << 8) | commandBuffer[13];
         
-        console.log("[TPM Emulator] NV_Write - index: 0x" + nvIndex.toString(16));
+        send({
+            type: "info",
+            target: "tpm_emulator",
+            action: "nv_write",
+            nv_index: "0x" + nvIndex.toString(16)
+        });
         
         this.stats.nvWrites++;
         
@@ -562,7 +630,11 @@
     
     // Handle TPM2_CreatePrimary
     handleCreatePrimary: function(commandBuffer) {
-        console.log("[TPM Emulator] CreatePrimary command");
+        send({
+            type: "bypass",
+            target: "tpm_emulator",
+            action: "create_primary_command"
+        });
         
         this.stats.keysGenerated++;
         
@@ -657,7 +729,12 @@
     handleGetRandom: function(commandBuffer) {
         var bytesRequested = (commandBuffer[10] << 8) | commandBuffer[11];
         
-        console.log("[TPM Emulator] GetRandom - " + bytesRequested + " bytes");
+        send({
+            type: "info",
+            target: "tpm_emulator",
+            action: "get_random",
+            bytes_requested: bytesRequested
+        });
         
         var response = new Uint8Array(bytesRequested + 32);
         var offset = 0;
@@ -697,7 +774,12 @@
                     
                     // Check if it's TPM device
                     if (self.isTPMDevice(this.fileHandle)) {
-                        console.log("[TPM Emulator] TPM IOCTL: 0x" + this.ioControlCode.toString(16));
+                        send({
+                            type: "info",
+                            target: "tpm_emulator",
+                            action: "tpm_ioctl",
+                            control_code: "0x" + this.ioControlCode.toString(16)
+                        });
                         this.isTPM = true;
                         
                         // Read input
@@ -723,7 +805,11 @@
                     }
                 }
             });
-            console.log("[TPM Emulator] Hooked NtDeviceIoControlFile");
+            send({
+                type: "info",
+                target: "tpm_emulator",
+                action: "hooked_nt_device_io_control_file"
+            });
         }
     },
     
@@ -749,7 +835,11 @@
             if (sysGetCapability) {
                 Interceptor.attach(sysGetCapability, {
                     onLeave: function(retval) {
-                        console.log("[TPM Emulator] TSS2_Sys_GetCapability intercepted");
+                        send({
+                            type: "info",
+                            target: "tpm_emulator",
+                            action: "tss2_sys_getcapability_intercepted"
+                        });
                         retval.replace(0); // TSS2_RC_SUCCESS
                     }
                 });
@@ -770,7 +860,11 @@
                     this.pszProviderName = args[1].readUtf16String();
                     
                     if (this.pszProviderName && this.pszProviderName.includes("TPM")) {
-                        console.log("[TPM Emulator] NCrypt TPM provider requested");
+                        send({
+                            type: "info",
+                            target: "tpm_emulator",
+                            action: "ncrypt_tpm_provider_requested"
+                        });
                         this.isTPMProvider = true;
                     }
                 },
@@ -794,7 +888,11 @@
             var getTpmKey = Module.findExportByName("fveapi.dll", "FveGetTpmBootstrapKeyFromTPM");
             if (getTpmKey) {
                 Interceptor.replace(getTpmKey, new NativeCallback(function() {
-                    console.log("[TPM Emulator] BitLocker TPM key request intercepted");
+                    send({
+                        type: "bypass",
+                        target: "tpm_emulator",
+                        action: "bitlocker_tpm_key_intercepted"
+                    });
                     // Return fake key
                     return 0; // Success
                 }, 'int', ['pointer', 'pointer', 'pointer']));
@@ -814,7 +912,12 @@
                     this.pathname = args[0].readUtf8String();
                     
                     if (this.pathname && this.pathname.includes("/dev/tpm")) {
-                        console.log("[TPM Emulator] TPM device open: " + this.pathname);
+                        send({
+                            type: "info",
+                            target: "tpm_emulator",
+                            action: "tpm_device_open",
+                            pathname: this.pathname
+                        });
                         this.isTPMDevice = true;
                     }
                 },
@@ -841,7 +944,12 @@
                     this.argp = args[2];
                     
                     if (self.tpmHandles[this.fd]) {
-                        console.log("[TPM Emulator] TPM ioctl: 0x" + this.request.toString(16));
+                        send({
+                            type: "info",
+                            target: "tpm_emulator",
+                            action: "tpm_ioctl_linux",
+                            request: "0x" + this.request.toString(16)
+                        });
                         this.isTPM = true;
                     }
                 },
@@ -987,13 +1095,21 @@
     
     // Handle other TPM2 commands
     handlePCRExtend: function(commandBuffer) {
-        console.log("[TPM Emulator] PCR_Extend command");
+        send({
+            type: "info",
+            target: "tpm_emulator",
+            action: "pcr_extend_command"
+        });
         // Update internal PCR values (not implemented for brevity)
         return this.createSuccessResponse(0x8001);
     },
     
     handleStartAuthSession: function(commandBuffer) {
-        console.log("[TPM Emulator] StartAuthSession command");
+        send({
+            type: "info",
+            target: "tpm_emulator",
+            action: "start_auth_session_command"
+        });
         
         var response = new Uint8Array(256);
         var offset = 0;
@@ -1015,7 +1131,11 @@
     },
     
     handleCreate: function(commandBuffer) {
-        console.log("[TPM Emulator] Create command");
+        send({
+            type: "bypass",
+            target: "tpm_emulator",
+            action: "create_command"
+        });
         this.stats.keysGenerated++;
         
         // Return dummy created object
@@ -1054,7 +1174,11 @@
     },
     
     handleSign: function(commandBuffer) {
-        console.log("[TPM Emulator] Sign command");
+        send({
+            type: "bypass",
+            target: "tpm_emulator",
+            action: "sign_command"
+        });
         
         var response = new Uint8Array(512);
         var offset = 0;
@@ -1076,7 +1200,11 @@
     },
     
     handleUnseal: function(commandBuffer) {
-        console.log("[TPM Emulator] Unseal command");
+        send({
+            type: "bypass",
+            target: "tpm_emulator",
+            action: "unseal_command"
+        });
         
         var response = new Uint8Array(256);
         var offset = 0;

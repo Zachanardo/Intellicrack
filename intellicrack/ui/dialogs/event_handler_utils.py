@@ -155,6 +155,7 @@ class UIStateManager:
     """Manages UI state transitions for dialogs."""
 
     def __init__(self):
+        """Initialize the UIStateManager with default values."""
         self.state_mappings = {}
 
     def register_state_mapping(self, state_name: str, widget_states: Dict[QWidget, bool]):

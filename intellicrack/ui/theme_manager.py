@@ -4,34 +4,30 @@ Handles dynamic theme switching and stylesheet application
 """
 
 import os
-from PyQt6.QtWidgets import QApplication
+
 from PyQt6.QtCore import QSettings
+from PyQt6.QtWidgets import QApplication
 
 
 class ThemeManager:
     """Manages application themes and dynamic stylesheet switching"""
-    
+
     def __init__(self):
-        self.themes = {
-            "dark": "dark_theme.qss",
-            "light": "light_theme.qss"
-        }
-        self.styles_dir = os.path.join(os.path.dirname(__file__), "styles")
-        self.settings = QSettings("Intellicrack", "ThemeManager")
-        self.current_theme = self.load_theme_preference()
-        
+    """Initialize theme manager with default themes and UI styling options."""
+    self.themes = {
+
     def get_current_theme(self):
         """Get the currently active theme name"""
         return self.current_theme
-    
+
     def load_theme_preference(self):
         """Load theme preference from QSettings, default to light"""
         return self.settings.value("theme", "light", type=str)
-    
+
     def save_theme_preference(self):
         """Save current theme preference to QSettings"""
         self.settings.setValue("theme", self.current_theme)
-    
+
     def set_theme(self, theme_name):
         """
         Set the application theme
@@ -42,17 +38,17 @@ class ThemeManager:
         if theme_name not in self.themes:
             print(f"Warning: Unknown theme '{theme_name}', using light theme")
             theme_name = "light"
-            
+
         self.current_theme = theme_name
         self.save_theme_preference()
         self._apply_theme()
-    
+
     def _apply_theme(self):
         """Apply the current theme's stylesheet to the application"""
         try:
             # Get the stylesheet content
             stylesheet_content = self._get_theme_stylesheet()
-            
+
             # Apply to the QApplication instance
             app = QApplication.instance()
             if app:
@@ -60,17 +56,17 @@ class ThemeManager:
                 print(f"Applied {self.current_theme} theme successfully")
             else:
                 print("Warning: No QApplication instance found")
-                
+
         except Exception as e:
             print(f"Error applying theme: {e}")
             # Fallback to built-in dark theme
             self._apply_builtin_dark_theme()
-    
+
     def _get_theme_stylesheet(self):
         """Load theme stylesheet from file or return built-in stylesheet"""
         theme_file = self.themes[self.current_theme]
         theme_path = os.path.join(self.styles_dir, theme_file)
-        
+
         # Try to load from file first
         if os.path.exists(theme_path):
             try:
@@ -78,17 +74,17 @@ class ThemeManager:
                     return f.read()
             except Exception as e:
                 print(f"Error loading theme file {theme_path}: {e}")
-        
+
         # Fallback to built-in themes
         return self._get_builtin_theme_stylesheet()
-    
+
     def _get_builtin_theme_stylesheet(self):
         """Get built-in theme stylesheet when external files are not available"""
         if self.current_theme == "dark":
             return self._get_builtin_dark_stylesheet()
         else:
             return self._get_builtin_light_stylesheet()
-    
+
     def _get_builtin_dark_stylesheet(self):
         """Built-in dark theme stylesheet with proper contrast"""
         return """
@@ -434,7 +430,7 @@ QStatusBar {
     border-top: 1px solid #4A4A4A;
 }
 """
-    
+
     def _get_builtin_light_stylesheet(self):
         """Built-in light theme stylesheet"""
         return """
@@ -781,7 +777,7 @@ QStatusBar {
     border-top: 1px solid #C0C0C0;
 }
 """
-    
+
     def _apply_builtin_dark_theme(self):
         """Apply built-in dark theme as fallback"""
         try:

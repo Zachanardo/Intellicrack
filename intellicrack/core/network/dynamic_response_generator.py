@@ -60,6 +60,7 @@ class FlexLMProtocolHandler:
     """Handler for FlexLM license protocol"""
 
     def __init__(self):
+        """Initialize FlexLM handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.FlexLMHandler")
 
     def parse_request(self, data: bytes) -> Optional[Dict[str, Any]]:
@@ -148,6 +149,7 @@ class HASPProtocolHandler:
     """Handler for HASP/Sentinel license protocol"""
 
     def __init__(self):
+        """Initialize HASP handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.HASPHandler")
 
     def parse_request(self, data: bytes) -> Optional[Dict[str, Any]]:
@@ -213,6 +215,7 @@ class AdobeProtocolHandler:
     """Handler for Adobe license protocol"""
 
     def __init__(self):
+        """Initialize Adobe handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.AdobeHandler")
 
     def parse_request(self, data: bytes) -> Optional[Dict[str, Any]]:
@@ -306,6 +309,7 @@ class MicrosoftKMSHandler:
     """Handler for Microsoft KMS protocol"""
 
     def __init__(self):
+        """Initialize Microsoft KMS handler with logging for activation request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.KMSHandler")
 
     def parse_request(self, data: bytes) -> Optional[Dict[str, Any]]:
@@ -359,6 +363,7 @@ class AutodeskProtocolHandler:
     """Handler for Autodesk license protocol"""
 
     def __init__(self):
+        """Initialize Autodesk handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.AutodeskHandler")
 
     def parse_request(self, data: bytes) -> Optional[Dict[str, Any]]:

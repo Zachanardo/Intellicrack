@@ -55,6 +55,7 @@ class ScriptInfoWidget(QWidget):
     """Widget to display detailed script information."""
 
     def __init__(self, parent=None):
+        """Initialize the ScriptInfoWidget with default values."""
         super().__init__(parent)
         self.current_script = None
         self._init_ui()
@@ -188,6 +189,7 @@ class GhidraScriptSelector(QDialog):
     script_selected = pyqtSignal(str)  # Emits script path
 
     def __init__(self, parent=None, show_invalid=False):
+        """Initialize the GhidraScriptSelector with default values."""
         super().__init__(parent)
         self.script_manager = get_script_manager()
         self.show_invalid = show_invalid

@@ -38,6 +38,7 @@ class CacheStatsWidget(QWidget):
     """Widget displaying cache statistics"""
 
     def __init__(self, parent=None):
+        """Initialize the cache statistics widget with UI components."""
         super().__init__(parent)
         self.init_ui()
 
@@ -119,6 +120,7 @@ class CacheTopEntriesWidget(QWidget):
     """Widget showing most accessed cache entries"""
 
     def __init__(self, parent=None):
+        """Initialize the cache top entries widget with UI components."""
         super().__init__(parent)
         self.init_ui()
 

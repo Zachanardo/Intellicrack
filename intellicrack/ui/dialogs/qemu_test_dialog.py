@@ -40,6 +40,7 @@ class QEMUTestDialog(QDialog):
 
     def __init__(self, script_type: str, target_binary: str,
                  script_preview: str = "", parent=None):
+        """Initialize the QEMUTestDialog with default values."""
         super().__init__(parent)
         self.script_type = script_type
         self.target_binary = target_binary

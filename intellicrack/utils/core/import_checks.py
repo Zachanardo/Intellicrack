@@ -104,10 +104,10 @@ try:
     import os
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-    
+
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     os.environ['MKL_THREADING_LAYER'] = 'GNU'
-    
+
     import tensorflow as tf
     # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
     tf.config.set_visible_devices([], 'GPU')

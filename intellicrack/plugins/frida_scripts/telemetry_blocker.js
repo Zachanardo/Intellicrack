@@ -20,7 +20,12 @@
 // Blocks software telemetry and phone-home functionality
 // Prevents unauthorized data transmission and license validation calls
 
-console.log("[Telemetry] Starting telemetry blocking...");
+send({
+    type: "status",
+    target: "telemetry_blocker",
+    action: "starting_telemetry_blocking",
+    timestamp: Date.now()
+});
 
 // === HTTP/HTTPS REQUEST BLOCKING ===
 
@@ -48,7 +53,13 @@ if (winHttpConnect) {
             
             for (var domain of blockedDomains) {
                 if (serverName && serverName.toLowerCase().includes(domain)) {
-                    console.log("[Telemetry] Blocked connection to: " + serverName);
+                    send({
+                        type: "bypass",
+                        target: "telemetry_blocker",
+                        action: "connection_blocked",
+                        hostname: serverName,
+                        timestamp: Date.now()
+                    });
                     this.replace = true;
                     return;
                 }
@@ -71,7 +82,13 @@ if (winHttpSendRequest) {
             try {
                 var headers = args[2].readUtf16String();
                 if (headers && (headers.includes("telemetry") || headers.includes("activation"))) {
-                    console.log("[Telemetry] Blocked HTTP request with telemetry headers");
+                    send({
+                        type: "bypass",
+                        target: "telemetry_blocker", 
+                        action: "http_request_blocked",
+                        reason: "telemetry_headers_detected",
+                        timestamp: Date.now()
+                    });
                     this.block = true;
                 }
             } catch (e) {
@@ -108,7 +125,14 @@ if (wsaConnect) {
                                    ((ip >> 16) & 0xFF) + "." + 
                                    ((ip >> 24) & 0xFF);
                         
-                        console.log("[Telemetry] Blocking connection to " + ipStr + ":" + port);
+                        send({
+                            type: "bypass",
+                            target: "telemetry_blocker",
+                            action: "socket_connection_blocked",
+                            ip_address: ipStr,
+                            port: port,
+                            timestamp: Date.now()
+                        });
                         this.block = true;
                     }
                 }
@@ -136,7 +160,13 @@ if (connectFunc) {
                     // Block suspicious ports
                     var suspiciousPorts = [80, 443, 8080, 8443, 9001, 9443];
                     if (suspiciousPorts.includes(port)) {
-                        console.log("[Telemetry] Blocked connect() to port " + port);
+                        send({
+                            type: "bypass",
+                            target: "telemetry_blocker",
+                            action: "connect_call_blocked", 
+                            port: port,
+                            timestamp: Date.now()
+                        });
                         this.block = true;
                     }
                 }
@@ -170,7 +200,13 @@ if (getAddrInfoW) {
                 
                 for (var pattern of blockedPatterns) {
                     if (nodeName.toLowerCase().includes(pattern)) {
-                        console.log("[Telemetry] Blocked DNS resolution for: " + nodeName);
+                        send({
+                            type: "bypass",
+                            target: "telemetry_blocker",
+                            action: "dns_resolution_blocked",
+                            hostname: nodeName,
+                            timestamp: Date.now()
+                        });
                         this.block = true;
                         return;
                     }
@@ -204,7 +240,13 @@ if (createProcessW) {
                 
                 for (var cmd of suspiciousCommands) {
                     if (cmdLine.toLowerCase().includes(cmd.toLowerCase())) {
-                        console.log("[Telemetry] Blocked process creation: " + cmdLine);
+                        send({
+                            type: "bypass",
+                            target: "telemetry_blocker",
+                            action: "process_creation_blocked",
+                            command_line: cmdLine,
+                            timestamp: Date.now()
+                        });
                         this.block = true;
                         return;
                     }
@@ -228,7 +270,13 @@ if (regSetValueExW) {
         onEnter: function(args) {
             var valueName = args[1].readUtf16String();
             if (valueName && (valueName.includes("Telemetry") || valueName.includes("DiagTrack"))) {
-                console.log("[Telemetry] Blocked registry write: " + valueName);
+                send({
+                    type: "bypass",
+                    target: "telemetry_blocker",
+                    action: "registry_write_blocked",
+                    value_name: valueName,
+                    timestamp: Date.now()
+                });
                 this.block = true;
             }
         },
@@ -259,7 +307,13 @@ if (createFileW) {
                 
                 for (var path of blockedPaths) {
                     if (fileName.toLowerCase().includes(path.toLowerCase())) {
-                        console.log("[Telemetry] Blocked file access: " + fileName);
+                        send({
+                            type: "bypass",
+                            target: "telemetry_blocker",
+                            action: "file_access_blocked",
+                            file_name: fileName,
+                            timestamp: Date.now()
+                        });
                         this.block = true;
                         return;
                     }
@@ -274,4 +328,10 @@ if (createFileW) {
     });
 }
 
-console.log("[Telemetry] Telemetry blocking installed successfully!");
+send({
+    type: "status",
+    target: "telemetry_blocker",
+    action: "installation_complete",
+    message: "Telemetry blocking installed successfully",
+    timestamp: Date.now()
+});

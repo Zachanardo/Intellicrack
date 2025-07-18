@@ -78,6 +78,7 @@ class DongleSpec:
     features: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
+        """Initialize dongle specification with generated serial number if not provided."""
         if not self.serial_number:
             self.serial_number = f"{self.vendor_id:04X}{self.product_id:04X}{random.randint(1000, 9999)}"
 
@@ -91,6 +92,7 @@ class DongleMemory:
     protected_ranges: List[Tuple[int, int]] = field(default_factory=list)
 
     def __post_init__(self):
+        """Initialize dongle memory with empty data if not provided."""
         if not self.data:
             self.data = bytearray(self.size)
 
@@ -191,6 +193,7 @@ class BaseDongleEmulator:
     """Base class for dongle emulators"""
 
     def __init__(self, spec: DongleSpec):
+        """Initialize base dongle emulator with specification and crypto engine."""
         self.spec = spec
         self.memory = DongleMemory(spec.memory_size * 1024)
         self.crypto = CryptoEngine()
@@ -294,6 +297,7 @@ class HASPEmulator(BaseDongleEmulator):
     """HASP dongle emulator"""
 
     def __init__(self, spec: DongleSpec):
+        """Initialize HASP dongle emulator with command handlers and memory layout."""
         super().__init__(spec)
         self.hasp_commands = {
             0x01: self._hasp_login,
@@ -424,6 +428,7 @@ class SentinelEmulator(BaseDongleEmulator):
     """Sentinel dongle emulator"""
 
     def __init__(self, spec: DongleSpec):
+        """Initialize Sentinel dongle emulator with cell data and memory layout."""
         super().__init__(spec)
         self.cell_data = {}
         self._init_sentinel_memory()
@@ -498,6 +503,7 @@ class USBDongleDriver:
     """USB dongle driver simulation"""
 
     def __init__(self):
+        """Initialize USB dongle driver for managing USB-connected dongles."""
         self.dongles = {}
         self.logger = logging.getLogger(f"{__name__}.USBDriver")
 
@@ -561,6 +567,7 @@ class ParallelPortEmulator:
     """Parallel port dongle emulation"""
 
     def __init__(self, port_address: int = 0x378):
+        """Initialize parallel port emulator for legacy dongle communication."""
         self.port_address = port_address
         self.data_register = 0
         self.status_register = 0
@@ -614,6 +621,7 @@ class DongleRegistryManager:
     """Manage Windows registry for dongle drivers"""
 
     def __init__(self):
+        """Initialize dongle registry manager for Windows registry simulation."""
         self.logger = logging.getLogger(f"{__name__}.Registry")
 
     def install_driver_entries(self, spec: DongleSpec):
@@ -696,6 +704,7 @@ class DongleAPIHooker:
     """Hook dongle-related APIs"""
 
     def __init__(self, emulator_manager):
+        """Initialize dongle API hooker for intercepting hardware dongle calls."""
         self.manager = emulator_manager
         self.logger = logging.getLogger(f"{__name__}.APIHooker")
         self.hooks = {}
@@ -803,6 +812,7 @@ class HardwareDongleEmulator:
     """Main hardware dongle emulation manager"""
 
     def __init__(self):
+        """Initialize hardware dongle emulator with all dongle types and drivers."""
         self.logger = logging.getLogger(__name__)
         self.dongles: Dict[str, BaseDongleEmulator] = {}
         self.usb_driver = USBDongleDriver()

@@ -394,6 +394,7 @@ class TrainingThread(QThread):
             encoding, and layer normalization placement following GPT architecture.
             """
             def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
+                """Initialize GPT model architecture with specified parameters."""
                 super().__init__()
                 self.hidden_size = hidden_size
                 self.num_layers = num_layers
@@ -420,6 +421,7 @@ class TrainingThread(QThread):
                 class GPTBlock(nn.Module):
                     """A single GPT transformer block with attention and feed-forward layers."""
                     def __init__(self, hidden_size, num_heads):
+                        """Initialize GPT block with attention and feed-forward layers."""
                         super().__init__()
                         self.attention = nn.MultiheadAttention(
                             hidden_size, num_heads, dropout=0.1, batch_first=True
@@ -487,6 +489,7 @@ class TrainingThread(QThread):
             and masked language modeling head.
             """
             def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
+                """Initialize BERT model architecture with specified parameters."""
                 super().__init__()
                 self.hidden_size = hidden_size
                 self.max_position_embeddings = 512
@@ -572,6 +575,7 @@ class TrainingThread(QThread):
             RMSNorm, SwiGLU activation, and rotary positional embeddings.
             """
             def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
+                """Initialize LLaMA model architecture with specified parameters."""
                 super().__init__()
                 self.hidden_size = hidden_size
                 self.num_heads = num_heads
@@ -593,6 +597,7 @@ class TrainingThread(QThread):
                 class RMSNorm(nn.Module):
                     """RMS normalization layer for transformer models."""
                     def __init__(self, hidden_size, eps=1e-6):
+                        """Initialize RMS normalization with hidden size and epsilon."""
                         super().__init__()
                         self.weight = nn.Parameter(torch.ones(hidden_size))
                         self.eps = eps
@@ -610,6 +615,7 @@ class TrainingThread(QThread):
                 class LlamaLayer(nn.Module):
                     """Single layer of a LLaMA transformer model."""
                     def __init__(self, hidden_size, num_heads):
+                        """Initialize LLaMA layer with attention and feed-forward networks."""
                         super().__init__()
                         self.attention_norm = parent._create_rms_norm(hidden_size)
                         self.attention = nn.MultiheadAttention(
@@ -674,6 +680,7 @@ class TrainingThread(QThread):
             and optional techniques like gradient checkpointing support.
             """
             def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
+                """Initialize enhanced transformer with modern architectural improvements."""
                 super().__init__()
                 self.hidden_size = hidden_size
                 self.num_heads = num_heads
@@ -700,6 +707,7 @@ class TrainingThread(QThread):
                 class EnhancedTransformerLayer(nn.Module):
                     """Enhanced transformer layer with modern improvements and optimizations."""
                     def __init__(self, hidden_size, num_heads):
+                        """Initialize enhanced transformer layer with pre-norm and improved attention."""
                         super().__init__()
                         # Pre-norm attention
                         self.attention_norm = nn.LayerNorm(hidden_size)
@@ -966,6 +974,7 @@ class TrainingThread(QThread):
         class FallbackModel:
             """Minimal model placeholder when PyTorch is not available."""
             def __init__(self):
+                """Initialize fallback model with basic configuration parameters."""
                 self.config = {
                     'model_type': 'fallback',
                     'vocab_size': 32000,

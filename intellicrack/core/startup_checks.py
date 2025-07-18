@@ -66,21 +66,21 @@ def check_dependencies() -> Dict[str, bool]:
         import os
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-        
+
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ['MKL_THREADING_LAYER'] = 'GNU'
-        
+
         import tensorflow as tf
         # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
         tf.config.set_visible_devices([], 'GPU')
 
         # Test TensorFlow by checking version and GPU availability
-        tf_version = tensorflow.__version__
-        gpu_available = len(tensorflow.config.list_physical_devices('GPU')) > 0
+        tf_version = tf.__version__
+        gpu_available = len(tf.config.list_physical_devices('GPU')) > 0
 
         # Test basic tensor operations
-        test_tensor = tensorflow.constant([[1.0, 2.0], [3.0, 4.0]])
-        test_result = tensorflow.reduce_sum(test_tensor)
+        test_tensor = tf.constant([[1.0, 2.0], [3.0, 4.0]])
+        test_result = tf.reduce_sum(test_tensor)
 
         # Validate tensor operation result
         expected_sum = 10.0  # 1.0 + 2.0 + 3.0 + 4.0
@@ -95,7 +95,7 @@ def check_dependencies() -> Dict[str, bool]:
             return dependencies
 
         # Check if models can be loaded
-        if tensorflow.saved_model.contains_saved_model('.'):
+        if tf.saved_model.contains_saved_model('.'):
             logger.debug("TensorFlow SavedModel support verified")
 
     except ImportError:
@@ -300,10 +300,10 @@ def validate_tensorflow_models() -> Dict[str, any]:
         import os
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-        
+
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ['MKL_THREADING_LAYER'] = 'GNU'
-        
+
         import tensorflow as tf
         # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
         tf.config.set_visible_devices([], 'GPU')
@@ -514,10 +514,10 @@ def get_system_health_report() -> Dict[str, any]:
         import os
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-        
+
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ['MKL_THREADING_LAYER'] = 'GNU'
-        
+
         import tensorflow as tf
         # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
         tf.config.set_visible_devices([], 'GPU')

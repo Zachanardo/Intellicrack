@@ -59,6 +59,11 @@ class AdvancedPatternLibrary:
     """
 
     def __init__(self):
+        """Initialize the advanced pattern library.
+        
+        Sets up pattern storage, success tracking, and learning data structures
+        for AI-driven pattern recognition and exploitation.
+        """
         self.patterns = {}
         self.success_history = {}
         self.learning_data = {}

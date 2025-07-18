@@ -19,7 +19,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 # Import all functions from the tools ghidra_script_manager module
 from .tools.ghidra_script_manager import (
-    GhidraScript, GhidraScriptManager, get_script_manager, add_script_directory
+    GhidraScript,
+    GhidraScriptManager,
+    add_script_directory,
+    get_script_manager,
 )
 
 __all__ = ['GhidraScript', 'GhidraScriptManager', 'get_script_manager', 'add_script_directory']

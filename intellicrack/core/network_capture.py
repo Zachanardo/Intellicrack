@@ -122,6 +122,9 @@ def capture_with_scapy(interface: str = 'any', filter_str: str = '', count: int 
             store=False  # Don't store packets in memory
         )
 
+        # Log capture completion status
+        logger.info(f"[Scapy] Packet capture completed. Session info: {packets}")
+
         # Analyze captured packets
         license_packets = [p for p in captured_packets if p.get('license_related')]
         unique_ips = set()
@@ -391,7 +394,12 @@ def parse_pcap_with_dpkt(pcap_file: str) -> Dict[str, Any]:
                             if udp.dport == 53 or udp.sport == 53:
                                 try:
                                     dns = dpkt.dns.DNS(udp.data)
-                                    # Process DNS data if needed
+                                    # Log DNS queries for analysis
+                                    if dns.qd:  # If there are questions (queries)
+                                        for question in dns.qd:
+                                            queried_domain = question.name
+                                            if queried_domain and len(queried_domain) > 1:
+                                                logger.debug(f"DNS query detected: {queried_domain}")
                                 except:
                                     pass
 

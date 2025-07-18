@@ -39,12 +39,18 @@ class ScriptExecutionManager(QObject):
     qemu_test_started = pyqtSignal(str, str)  # script_type, target_binary
     qemu_test_completed = pyqtSignal(str, bool, dict)  # script_type, success, results
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.settings = QSettings('Intellicrack', 'ScriptExecution')
+    def __init__(self):
+        """Initialize the script execution manager with task queues and monitoring."""
+        super().__init__()
+        self.running_scripts = {}
+        self.script_history = {}
+        self.script_queue = []
+        self.logger = get_logger(__name__)
+        self.max_concurrent_scripts = 5
+        self.settings = QSettings()
         self.qemu_manager = None
-        self.qemu_test_dialog = None
-        self.qemu_results_dialog = None
+        self.QEMUTestDialog = None
+        self.QEMUTestResultsDialog = None
         self._initialize_managers()
 
     def _initialize_managers(self):

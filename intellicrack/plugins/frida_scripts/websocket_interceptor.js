@@ -90,14 +90,22 @@
     spoofedResponses: 0,
     
     run: function() {
-        console.log("[WebSocket] Starting WebSocket interceptor...");
+        send({
+            type: "status",
+            target: "websocket_interceptor",
+            action: "starting_interceptor"
+        });
         
         this.hookWebSocketConstructor();
         this.hookWebSocketMethods();
         this.hookXMLHttpRequestForSocketIO();
         this.hookWindowsWebSocket();
         
-        console.log("[WebSocket] Interceptor installed");
+        send({
+            type: "status",
+            target: "websocket_interceptor",
+            action: "interceptor_installed"
+        });
     },
     
     // Hook WebSocket constructor
@@ -111,7 +119,12 @@
                 Interceptor.attach(WebSocketCtor.prototype.constructor, {
                     onEnter: function(args) {
                         var url = args[0];
-                        console.log("[WebSocket] New WebSocket connection: " + url);
+                        send({
+                            type: "info",
+                            target: "websocket_interceptor",
+                            action: "websocket_connection",
+                            url: url
+                        });
                         
                         // Check if URL matches our targets
                         if (self.shouldInterceptUrl(url)) {
@@ -156,7 +169,12 @@
                                 state: "created",
                                 messages: []
                             };
-                            console.log("[WebSocket] Created native handle: " + handle);
+                            send({
+                                type: "info",
+                                target: "websocket_interceptor",
+                                action: "native_handle_created",
+                                handle: handle.toString()
+                            });
                         }
                     }
                 });
@@ -174,14 +192,27 @@
                         
                         if (self.sockets[handle.toString()]) {
                             var message = self.readWebSocketBuffer(buffer, bufferLength, bufferType);
-                            console.log("[WebSocket] Outgoing: " + message);
+                            send({
+                                type: "info",
+                                target: "websocket_interceptor",
+                                action: "outgoing_message",
+                                message: message,
+                                handle: handle.toString()
+                            });
                             
                             // Check if we should modify the message
                             var modified = self.processOutgoingMessage(message);
                             if (modified !== message) {
                                 self.replaceWebSocketBuffer(args[2], modified, bufferType);
                                 if (args[3]) args[3].writeU32(modified.length);
-                                console.log("[WebSocket] Modified outgoing: " + modified);
+                                send({
+                                    type: "bypass",
+                                    target: "websocket_interceptor",
+                                    action: "modified_outgoing_message",
+                                    original: message,
+                                    modified: modified,
+                                    handle: handle.toString()
+                                });
                             }
                             
                             self.interceptedMessages++;
@@ -205,14 +236,27 @@
                             var bufferType = this.context.r9 ? this.context.r9.readU32() : 1;
                             
                             var message = self.readWebSocketBuffer(this.buffer, length, bufferType);
-                            console.log("[WebSocket] Incoming: " + message);
+                            send({
+                                type: "info",
+                                target: "websocket_interceptor",
+                                action: "incoming_message",
+                                message: message,
+                                handle: this.handle.toString()
+                            });
                             
                             // Process and potentially modify the message
                             var modified = self.processIncomingMessage(message);
                             if (modified !== message) {
                                 self.replaceWebSocketBuffer(this.buffer, modified, bufferType);
                                 this.bufferLength.writeU32(modified.length);
-                                console.log("[WebSocket] Modified incoming: " + modified);
+                                send({
+                                    type: "bypass",
+                                    target: "websocket_interceptor",
+                                    action: "modified_incoming_message",
+                                    original: message,
+                                    modified: modified,
+                                    handle: this.handle.toString()
+                                });
                                 self.spoofedResponses++;
                             }
                             
@@ -234,11 +278,22 @@
         
         // Hook send method
         ws.send = function(data) {
-            console.log("[WebSocket] Send intercepted: " + data);
+            send({
+                type: "info",
+                target: "websocket_interceptor",
+                action: "send_intercepted",
+                data: data.toString()
+            });
             
             var modified = self.processOutgoingMessage(data);
             if (modified !== data) {
-                console.log("[WebSocket] Modified send: " + modified);
+                send({
+                    type: "bypass",
+                    target: "websocket_interceptor",
+                    action: "modified_send",
+                    original: data.toString(),
+                    modified: modified.toString()
+                });
                 self.interceptedMessages++;
             }
             
@@ -248,7 +303,12 @@
         // Hook message event
         ws.addEventListener('message', function(event) {
             var data = event.data;
-            console.log("[WebSocket] Message received: " + data);
+            send({
+                type: "info",
+                target: "websocket_interceptor",
+                action: "message_received",
+                data: data.toString()
+            });
             
             var modified = self.processIncomingMessage(data);
             if (modified !== data) {
@@ -262,7 +322,13 @@
                     ports: event.ports
                 });
                 
-                console.log("[WebSocket] Modified message: " + modified);
+                send({
+                    type: "bypass",
+                    target: "websocket_interceptor",
+                    action: "modified_message_received",
+                    original: data.toString(),
+                    modified: modified.toString()
+                });
                 self.spoofedResponses++;
                 
                 // Dispatch modified event
@@ -276,7 +342,13 @@
         
         // Hook close method
         ws.close = function(code, reason) {
-            console.log("[WebSocket] Connection closing: " + code + " " + reason);
+            send({
+                type: "info",
+                target: "websocket_interceptor",
+                action: "connection_closing",
+                code: code,
+                reason: reason
+            });
             return originalClose.call(this, code, reason);
         };
     },
@@ -294,7 +366,12 @@
                 },
                 onLeave: function(retval) {
                     if (!retval.isNull()) {
-                        console.log("[WebSocket] WinHTTP WebSocket upgraded");
+                        send({
+                            type: "info",
+                            target: "websocket_interceptor",
+                            action: "winhttp_websocket_upgraded",
+                            handle: retval.toString()
+                        });
                         self.sockets[retval.toString()] = {
                             handle: retval,
                             state: "connected",
@@ -322,13 +399,25 @@
                             var message = self.readWebSocketBuffer(this.buffer, this.bufferLength, this.bufferType);
                             
                             if (this.isSend) {
-                                console.log("[WebSocket] WinHTTP Send: " + message);
+                                send({
+                                    type: "info",
+                                    target: "websocket_interceptor",
+                                    action: "winhttp_send",
+                                    message: message,
+                                    handle: this.handle.toString()
+                                });
                                 var modified = self.processOutgoingMessage(message);
                                 if (modified !== message) {
                                     self.replaceWebSocketBuffer(this.buffer, modified, this.bufferType);
                                 }
                             } else {
-                                console.log("[WebSocket] WinHTTP Receive: " + message);
+                                send({
+                                    type: "info",
+                                    target: "websocket_interceptor",
+                                    action: "winhttp_receive",
+                                    message: message,
+                                    handle: this.handle.toString()
+                                });
                                 var modified = self.processIncomingMessage(message);
                                 if (modified !== message) {
                                     self.replaceWebSocketBuffer(this.buffer, modified, this.bufferType);
@@ -357,7 +446,12 @@
                     var url = args[1];
                     
                     if (url && url.toString().match(/socket\.io|engine\.io/i)) {
-                        console.log("[WebSocket] Socket.IO request detected: " + url);
+                        send({
+                            type: "info",
+                            target: "websocket_interceptor",
+                            action: "socketio_request_detected",
+                            url: url
+                        });
                         this.isSocketIO = true;
                     }
                 }
@@ -376,7 +470,12 @@
                 Interceptor.attach(messageWebSocket["- connectAsync:"], {
                     onEnter: function(args) {
                         var uri = new ObjC.Object(args[2]);
-                        console.log("[WebSocket] UWP WebSocket connecting to: " + uri.toString());
+                        send({
+                            type: "info",
+                            target: "websocket_interceptor",
+                            action: "uwp_websocket_connecting",
+                            uri: uri.toString()
+                        });
                     }
                 });
             }
@@ -442,7 +541,12 @@
                 Memory.writeUtf8String(buffer, newContent);
             }
         } catch(e) {
-            console.log("[WebSocket] Failed to replace buffer: " + e);
+            send({
+                type: "error",
+                target: "websocket_interceptor",
+                action: "buffer_replace_failed",
+                error: e.toString()
+            });
         }
     },
     
@@ -454,7 +558,13 @@
         for (var i = 0; i < this.config.messagePatterns.requests.length; i++) {
             var pattern = this.config.messagePatterns.requests[i];
             if (message.match(pattern.pattern)) {
-                console.log("[WebSocket] Matched request pattern: " + pattern.pattern);
+                send({
+                    type: "info",
+                    target: "websocket_interceptor",
+                    action: "matched_request_pattern",
+                    pattern: pattern.pattern,
+                    message: message
+                });
                 
                 // Don't modify outgoing, but prepare for response spoofing
                 var handler = this[pattern.handler];
@@ -487,7 +597,13 @@
         for (var i = 0; i < this.config.messagePatterns.responses.length; i++) {
             var pattern = this.config.messagePatterns.responses[i];
             if (modified.match(pattern.pattern)) {
-                console.log("[WebSocket] Matched response pattern: " + pattern.pattern);
+                send({
+                    type: "info",
+                    target: "websocket_interceptor",
+                    action: "matched_response_pattern",
+                    pattern: pattern.pattern,
+                    message: modified
+                });
                 modified = modified.replace(pattern.pattern, pattern.replacement);
             }
         }

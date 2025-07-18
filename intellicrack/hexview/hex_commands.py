@@ -49,6 +49,7 @@ class HexCommand(ABC):
     """Abstract base class for hex editor commands."""
 
     def __init__(self, description: str, operation_type: OperationType):
+        """Initialize the HexCommand with description and operation type."""
         self.description = description
         self.operation_type = operation_type
         self.timestamp = None
@@ -125,6 +126,7 @@ class ReplaceCommand(HexCommand):
     """Command for replacing bytes at a specific offset."""
 
     def __init__(self, offset: int, new_data: bytes, old_data: bytes = None):
+        """Initialize the ReplaceCommand with offset and data."""
         super().__init__(f"Replace {len(new_data)} bytes at 0x{offset:X}", OperationType.REPLACE)
         self.offset = offset
         self.new_data = new_data
@@ -191,6 +193,7 @@ class InsertCommand(HexCommand):
     """Command for inserting bytes at a specific offset."""
 
     def __init__(self, offset: int, data: bytes):
+        """Initialize the InsertCommand with offset and data."""
         super().__init__(f"Insert {len(data)} bytes at 0x{offset:X}", OperationType.INSERT)
         self.offset = offset
         self.data = data
@@ -231,6 +234,7 @@ class DeleteCommand(HexCommand):
     """Command for deleting bytes at a specific offset."""
 
     def __init__(self, offset: int, length: int, deleted_data: bytes = None):
+        """Initialize the DeleteCommand with offset, length, and deleted data."""
         super().__init__(f"Delete {length} bytes at 0x{offset:X}", OperationType.DELETE)
         self.offset = offset
         self.length = length
@@ -276,6 +280,7 @@ class FillCommand(HexCommand):
     """Command for filling a range with a specific value."""
 
     def __init__(self, offset: int, length: int, fill_value: int, old_data: bytes = None):
+        """Initialize the FillCommand with offset, length, fill value, and old data."""
         super().__init__(f"Fill {length} bytes at 0x{offset:X} with 0x{fill_value:02X}", OperationType.FILL)
         self.offset = offset
         self.length = length
@@ -325,6 +330,7 @@ class PasteCommand(HexCommand):
     """Command for pasting data at a specific offset."""
 
     def __init__(self, offset: int, data: bytes, insert_mode: bool = False, old_data: bytes = None):
+        """Initialize the PasteCommand with offset, data, insert mode, and old data."""
         mode_str = "insert" if insert_mode else "overwrite"
         super().__init__(f"Paste {len(data)} bytes at 0x{offset:X} ({mode_str})", OperationType.PASTE)
         self.offset = offset
@@ -386,6 +392,7 @@ class CommandManager:
     """Manages command execution and undo/redo functionality."""
 
     def __init__(self, max_history: int = 100):
+        """Initialize the CommandManager with maximum history size."""
         self.max_history = max_history
         self.command_history: List[HexCommand] = []
         self.current_index = -1

@@ -57,10 +57,10 @@ def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
     # Serialize object
     data = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
-    
+
     # Calculate HMAC for integrity
     mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-    
+
     # Write MAC + data
     with open(file_path, 'wb') as f:
         f.write(mac)
@@ -72,12 +72,12 @@ def secure_pickle_load(file_path):
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
         data = f.read()
-    
+
     # Verify integrity
     expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
     if not hmac.compare_digest(stored_mac, expected_mac):
         raise ValueError("Pickle file integrity check failed - possible tampering detected")
-    
+
     # Load object
     return pickle.loads(data)
 
@@ -99,37 +99,36 @@ class IncrementalAnalysisManager:
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize the incremental analysis manager with configuration.
-
-        Args:
-            config: Configuration dictionary with cache settings
-        """
+        """Initialize the incremental analysis manager with configuration and cache setup."""
         self.config = config or {}
-        self.logger = logging.getLogger(__name__)
-
-        # Configure cache settings
-        self.cache_dir = self.config.get('cache_dir', os.path.join(os.getcwd(), 'analysis_cache'))
-        self.enable_caching = self.config.get('enable_caching', True)
-        self.cache_max_size = self.config.get('cache_max_size', 1024 * 1024 * 100)  # 100MB default
-        self.cache_max_age = self.config.get('cache_max_age', 30)  # 30 days default
-
-        # Initialize cache state
-        self.cache: Dict[str, Dict[str, Any]] = {}
-        self.current_binary: Optional[str] = None
-        self.current_binary_hash: Optional[str] = None
-
-        # Create cache directory if it doesn't exist
-        if self.enable_caching:
-            try:
-                os.makedirs(self.cache_dir, exist_ok=True)
-                self.logger.info("Cache directory initialized: %s", self.cache_dir)
-            except OSError as e:
-                self.logger.error("Failed to create cache directory: %s", e)
-                self.enable_caching = False
-
-        # Load cache index
-        self._load_cache_index()
+        self.logger = logging.getLogger("IntellicrackLogger.IncrementalAnalysis")
+        
+        # Set default configuration
+        self.cache_dir = Path(self.config.get('cache_dir', './cache/incremental'))
+        self.chunk_size = self.config.get('chunk_size', 1024 * 1024)  # 1MB chunks
+        self.max_cache_size = self.config.get('max_cache_size', 100)  # 100 files
+        self.enable_compression = self.config.get('enable_compression', True)
+        
+        # Create cache directory
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize cache
+        self.analysis_cache = {}
+        self.file_hashes = {}
+        self.chunk_cache = {}
+        
+        # Statistics
+        self.cache_hits = 0
+        self.cache_misses = 0
+        
+        try:
+            self._load_cache_metadata()
+        except Exception as e:
+            self.logger.warning(f"Failed to load cache metadata: {e}")
+            # Initialize empty metadata
+            self._init_empty_cache()
+        
+        self.logger.info(f"Incremental analysis manager initialized with cache dir: {self.cache_dir}")
 
     def _validate_cache_file(self, file_path: str) -> bool:
         """

@@ -99,6 +99,7 @@ class ModelTestThread(QThread):
     test_progress = pyqtSignal(str)  # progress message
 
     def __init__(self, config: 'LLMConfig'):
+        """Initialize the ModelTestThread with default values."""
         super().__init__()
         self.config = config
 
@@ -147,6 +148,7 @@ class LLMConfigDialog(QDialog):
     """Dialog for configuring LLM models in Intellicrack."""
 
     def __init__(self, parent=None):
+        """Initialize the LLMConfigDialog with default values."""
 
         # Initialize UI attributes
         self.anthropic_api_key = None

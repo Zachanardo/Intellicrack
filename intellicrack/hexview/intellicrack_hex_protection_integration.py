@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import os
 from typing import Dict, Optional
 
-from PyQt6.QtCore import QObject, QProcess, pyqtSignal
+from PyQt6.QtCore import QObject, QProcess, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from ..protection.intellicrack_protection_core import IntellicrackProtectionCore
@@ -65,13 +65,13 @@ class IntellicrackHexProtectionIntegration(QObject):
 
             # Build command
             cmd = [protection_viewer_path, file_path]
-            
+
             # Handle offset parameter for better integration
             if offset is not None:
                 # Try command-line offset support first
                 cmd.extend(['--offset', hex(offset)])
                 logger.info(f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer")
-                
+
                 # Create offset sync file for advanced integration
                 try:
                     sync_dir = os.path.join(os.path.dirname(protection_viewer_path), 'sync')
@@ -88,7 +88,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             # Start protection viewer
             self.engine_process = QProcess()
             self.engine_process.start(cmd[0], cmd[1:])
-            
+
             # Schedule offset sync if process starts successfully and offset provided
             if offset is not None:
                 self.engine_process.finished.connect(lambda: self._cleanup_sync_files())

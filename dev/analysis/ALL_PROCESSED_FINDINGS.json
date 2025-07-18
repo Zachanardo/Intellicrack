@@ -1,0 +1,53 @@
+{
+  "exploit_simulations": [
+    {
+      "file_path": "intellicrack/ai/ai_script_generator.py",
+      "line_number": 2021,
+      "pattern_type": "fake",
+      "code_snippet": "// Configurable fake hardware IDs",
+      "classification": "exploit_simulation",
+      "confidence": 0.95,
+      "reason": "Matches exploit pattern: fake[_\\s]*hardware[_\\s]*id"
+    },
+    {
+      "file_path": "intellicrack/ai/ai_script_generator.py",
+      "line_number": 3288,
+      "pattern_type": "fake",
+      "code_snippet": "// Inject fake license response",
+      "classification": "exploit_simulation",
+      "confidence": 0.95,
+      "reason": "Matches exploit pattern: fake[_\\s]*license[_\\s]*response"
+    }
+  ],
+  "missing_implementations": [
+    {
+      "file_path": "intellicrack/ai/learning_engine.py",
+      "line_number": 95,
+      "pattern_type": "NotImplementedError",
+      "code_snippet": "raise NotImplementedError('Actual learning algorithm not implemented yet')",
+      "classification": "missing_implementation",
+      "confidence": 0.95,
+      "reason": "Matches missing impl pattern: NotImplementedError"
+    },
+    {
+      "file_path": "intellicrack/ui/dialogs/text_editor_dialog.py",
+      "line_number": 358,
+      "pattern_type": "TODO",
+      "code_snippet": "# TODO: Implement export function",
+      "classification": "missing_implementation",
+      "confidence": 0.95,
+      "reason": "Matches missing impl pattern: TODO"
+    }
+  ],
+  "needs_review": [
+    {
+      "file_path": "intellicrack/ui/main_app.py",
+      "line_number": 321,
+      "pattern_type": "mock",
+      "code_snippet": "def dummy_signal(*args, **kwargs):",
+      "classification": "needs_review",
+      "confidence": 0.5,
+      "reason": "Requires manual verification"
+    }
+  ]
+}

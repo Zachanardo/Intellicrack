@@ -135,6 +135,7 @@ class AdobeLicensingParser:
     }
 
     def __init__(self):
+        """Initialize the Adobe licensing parser with tracking and server key setup."""
         self.logger = get_logger(__name__)
         self.active_activations = {}  # Track active activations
         self.machine_signatures = {}  # Store machine fingerprints
@@ -243,6 +244,8 @@ class AdobeLicensingParser:
 
         # Check URL patterns
         if '/activate' in request_line_lower or 'activation' in request_line_lower:
+            if is_legacy_activation:
+                return 'legacy_activation'
             return 'subscription_activation' if is_subscription_check else 'activation'
         elif '/verify' in request_line_lower or 'verification' in request_line_lower:
             return 'subscription_verification' if is_creative_cloud else 'verification'
@@ -512,7 +515,8 @@ class AdobeLicensingParser:
                 "next_heartbeat": int(time.time() + heartbeat_interval),
                 "sync_interval": heartbeat_interval,
                 "app_version": app_version,
-                "last_contact": int(time.time())
+                "last_contact": int(time.time()),
+                "last_sync": last_sync
             },
             digital_signature="",
             response_headers={"Content-Type": "application/json"}
@@ -653,7 +657,8 @@ class AdobeLicensingParser:
             "total_usage_time": session_duration,
             "features_accessed": len(set(feature_usage)) if feature_usage else 0,
             "last_feature_used": feature_usage[-1] if feature_usage else "unknown",
-            "compliance_status": "compliant"
+            "compliance_status": "compliant",
+            "app_usage_data": app_usage
         }
 
         return AdobeResponse(

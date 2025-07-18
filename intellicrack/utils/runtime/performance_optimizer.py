@@ -398,6 +398,12 @@ class PerformanceOptimizer:
     """Main performance optimization controller."""
 
     def __init__(self, max_memory_mb: int = 2048, cache_dir: str = "cache"):
+        """Initialize the performance optimizer.
+        
+        Args:
+            max_memory_mb: Maximum memory limit in MB
+            cache_dir: Directory for cache storage
+        """
         self.memory_manager = MemoryManager(max_memory_mb)
         self.cache_manager = CacheManager(cache_dir)
         self.binary_chunker = BinaryChunker(self.memory_manager)

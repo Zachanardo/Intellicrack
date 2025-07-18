@@ -54,6 +54,7 @@ class DebuggerOutputThread(QThread):
     output_received = pyqtSignal(str, object)
 
     def __init__(self, output_queue: queue.Queue):
+        """Initialize the DebuggerOutputThread with default values."""
         super().__init__()
         self.output_queue = output_queue
         self.running = True
@@ -80,6 +81,7 @@ class DebuggerDialog(QDialog):
     """Advanced debugger dialog with breakpoint support"""
 
     def __init__(self, parent=None, plugin_path=None):
+        """Initialize the DebuggerDialog with default values."""
         super().__init__(parent)
         self.plugin_path = plugin_path
         self.debugger = PluginDebugger()
@@ -673,6 +675,7 @@ class CodeEditorWidget(QTextEdit):
     breakpoint_toggled = pyqtSignal(int)
 
     def __init__(self, parent=None):
+        """Initialize the CodeEditorWidget with default values."""
         super().__init__(parent)
         self.file_path = None
         self.breakpoint_lines = set()
@@ -836,6 +839,7 @@ class LineNumberArea(QWidget):
     """Line number area widget"""
 
     def __init__(self, editor):
+        """Initialize the LineNumberArea with default values."""
         super().__init__(editor)
         self.code_editor = editor
 

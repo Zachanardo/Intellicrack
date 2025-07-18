@@ -114,11 +114,18 @@ class DataCollector:
     """Collects data from various AI components for visualization."""
 
     def __init__(self):
+        """Initialize the data collector for visualization.
+        
+        Sets up metric storage, collection functions, and automated
+        data gathering from various AI components for real-time
+        visualization and analytics.
+        """
         self.data_store: Dict[str, deque] = defaultdict(
             lambda: deque(maxlen=1000))
         self.collectors: Dict[MetricType, Callable] = {}
         self.collection_enabled = True
         self.collection_interval = 10  # seconds
+        self.learning_engine = get_learning_engine()
 
         # Initialize data collectors
         self._initialize_collectors()
@@ -199,7 +206,7 @@ class DataCollector:
         """Collect success rate metrics."""
         try:
             # Get learning insights for success rates
-            insights = learning_engine.get_learning_insights()
+            insights = self.learning_engine.get_learning_insights()
             data_points = []
 
             if "success_rate" in insights:
@@ -308,7 +315,7 @@ class DataCollector:
     def _collect_learning_metrics(self) -> List[DataPoint]:
         """Collect learning progress metrics."""
         try:
-            insights = learning_engine.get_learning_insights()
+            insights = self.learning_engine.get_learning_insights()
             data_points = []
 
             if "total_records" in insights:
@@ -421,6 +428,12 @@ class ChartGenerator:
     """Generates various types of charts for visualization."""
 
     def __init__(self, data_collector: DataCollector):
+        """Initialize the chart generator.
+        
+        Args:
+            data_collector: Data collector instance providing
+                metrics and data for visualization.
+        """
         self.data_collector = data_collector
         self.chart_templates = self._load_chart_templates()
 
@@ -616,6 +629,12 @@ class DashboardManager:
     """Manages visualization dashboards."""
 
     def __init__(self, data_collector: DataCollector):
+        """Initialize the dashboard manager for real-time visualization.
+        
+        Args:
+            data_collector: Data collector instance providing
+                metrics for dashboard visualization.
+        """
         self.data_collector = data_collector
         self.chart_generator = ChartGenerator(data_collector)
         self.dashboards: Dict[str, Dashboard] = {}
@@ -819,6 +838,12 @@ class AnalyticsEngine:
     """Advanced analytics engine for AI metrics."""
 
     def __init__(self, data_collector: DataCollector):
+        """Initialize the analytics engine.
+        
+        Args:
+            data_collector: Data collector instance providing
+                metrics for analysis and reporting.
+        """
         self.data_collector = data_collector
         self.analysis_cache: Dict[str, Any] = {}
 
@@ -1041,6 +1066,12 @@ class VisualizationAnalytics:
     """Main visualization and analytics system."""
 
     def __init__(self):
+        """Initialize the visualization and analytics system.
+        
+        Creates and initializes the data collector, dashboard manager, and
+        analytics engine components to provide comprehensive visualization
+        and analytics capabilities for AI operations.
+        """
         self.data_collector = DataCollector()
         self.dashboard_manager = DashboardManager(self.data_collector)
         self.analytics_engine = AnalyticsEngine(self.data_collector)

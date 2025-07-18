@@ -25,7 +25,7 @@ import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import psutil
 

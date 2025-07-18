@@ -37,6 +37,7 @@ class SetupWorker(QThread):
     finished = pyqtSignal(bool)
 
     def __init__(self, tasks: List[str]):
+        """Initialize the SetupWorker with default values."""
         super().__init__()
         self.tasks = tasks
         self.success = True
@@ -80,6 +81,7 @@ class FirstRunSetupDialog(QDialog):
     """Dialog for first-run setup"""
 
     def __init__(self, missing_components: Dict[str, bool], parent=None):
+        """Initialize the FirstRunSetupDialog with default values."""
         super().__init__(parent)
         self.missing_components = missing_components
         self.setup_complete = False

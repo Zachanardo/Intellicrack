@@ -46,6 +46,12 @@ except ImportError:
         """Fallback QEMUTestManager when real implementation not available."""
 
         def __init__(self, *_args, **_kwargs):
+            """Initialize the fallback QEMU test manager.
+            
+            Args:
+                *_args: Ignored positional arguments
+                **_kwargs: Ignored keyword arguments
+            """
             logger.warning("QEMUTestManager fallback initialized")
             pass
 
@@ -111,6 +117,11 @@ class IntegrationManager:
     """Manages integration and coordination of AI components."""
 
     def __init__(self, llm_manager: Optional[LLMManager] = None):
+        """Initialize the integration manager.
+        
+        Args:
+            llm_manager: Optional LLM manager for AI components
+        """
         self.logger = get_logger(__name__ + ".IntegrationManager")
         self.llm_manager = llm_manager or LLMManager()
 

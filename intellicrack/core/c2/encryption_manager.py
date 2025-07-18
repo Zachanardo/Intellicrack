@@ -63,28 +63,47 @@ class EncryptionManager:
     and perfect forward secrecy for C2 communications.
     """
 
-    def __init__(self):
-        self.logger = logging.getLogger("IntellicrackLogger.EncryptionManager")
-
-        # Encryption settings
-        self.key_size = 32  # AES-256
-        self.iv_size = 16   # AES block size
-        self.hmac_size = 32 # HMAC-SHA256
-
-        # Session keys
-        self.session_keys = {}
-        self.master_key = None
-
-        # RSA keypair for key exchange
-        self.rsa_private_key = None
-        self.rsa_public_key = None
-
-        # Key rotation settings
-        self.key_rotation_interval = 3600  # 1 hour
-        self.last_key_rotation = time.time()
-
-        # Initialize encryption system
+    def __init__(self, encryption_type='AES256', key_file=None):
+        """Initialize the encryption manager with specified encryption type and key configuration."""
+        self.encryption_type = encryption_type.upper()
+        self.key_file = key_file
+        self.logger = logging.getLogger(__name__)
+        
+        # Encryption components
+        self.cipher = None
+        self.key = None
+        self.iv = None
+        
+        # Supported encryption types
+        self.supported_types = ['AES128', 'AES256', 'CHACHA20', 'RSA2048', 'RSA4096']
+        
+        if self.encryption_type not in self.supported_types:
+            raise ValueError(f"Unsupported encryption type: {self.encryption_type}")
+        
+        # Key management
+        self.key_size = self._get_key_size()
+        self.block_size = self._get_block_size()
+        
+        # Initialize encryption
         self._initialize_encryption()
+        
+        # Load or generate keys
+        if self.key_file and os.path.exists(self.key_file):
+            self._load_key_from_file()
+        else:
+            self._generate_new_key()
+            if self.key_file:
+                self._save_key_to_file()
+        
+        self.logger.info(f"Encryption manager initialized with {self.encryption_type}")
+        
+        # Statistics
+        self.stats = {
+            'encryptions': 0,
+            'decryptions': 0,
+            'key_rotations': 0,
+            'last_key_rotation': time.time()
+        }
 
     def _initialize_encryption(self):
         """Initialize encryption system with master keys."""

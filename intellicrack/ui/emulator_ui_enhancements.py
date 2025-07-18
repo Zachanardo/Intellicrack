@@ -45,6 +45,7 @@ class EmulatorStatusWidget(QWidget):
     """Widget showing emulator status with visual indicators."""
 
     def __init__(self, parent=None):
+        """Initialize the emulator status widget with UI components and status tracking."""
         super().__init__(parent)
         self.setup_ui()
 

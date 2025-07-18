@@ -37,6 +37,7 @@ class TimingAttackDefense:
     """
 
     def __init__(self):
+        """Initialize the timing attack defense system with available timing methods."""
         self.logger = logging.getLogger("IntellicrackLogger.TimingAttackDefense")
         self.timing_threads = []
         self.timing_checks = {

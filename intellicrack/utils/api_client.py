@@ -30,6 +30,7 @@ class APIClient:
     """Production-ready API client with retry logic and error handling."""
 
     def __init__(self, base_url: Optional[str] = None):
+        """Initialize the API client with configuration from environment or defaults."""
         if not HAS_AIOHTTP:
             logger.warning("aiohttp not available - API client will use fallback implementation")
         self.base_url = base_url or get_secret('API_BASE_URL', 'https://api.intellicrack.com')

@@ -202,7 +202,7 @@ def test_cross_module_integration():
         print(f"  Engine plugin support: {hasattr(engine, 'load_plugins')}")
 
         # Test config-based initialization
-        plugin_dir = config_manager.get("plugin_directory", "plugins")
+        plugin_dir = config_manager.get("plugin_directory", "intellicrack/plugins")
         print(f"✓ Vulnerability engine + Config integration works: {plugin_dir}")
 
         return True

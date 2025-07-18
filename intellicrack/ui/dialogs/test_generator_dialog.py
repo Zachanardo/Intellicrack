@@ -60,6 +60,7 @@ class TestGenerationThread(QThread):
     error = pyqtSignal(str)
 
     def __init__(self, plugin_path: str, options: Dict[str, Any]):
+        """Initialize the TestGenerationThread with default values."""
         super().__init__()
         self.plugin_path = plugin_path
         self.options = options
@@ -97,6 +98,7 @@ class TestGeneratorDialog(PluginDialogBase):
     """Dialog for generating and managing plugin tests"""
 
     def __init__(self, parent=None, plugin_path=None):
+        """Initialize the TestGeneratorDialog with default values."""
         self.generator = PluginTestGenerator()
         self.mock_generator = MockDataGenerator()
         self.generation_thread = None

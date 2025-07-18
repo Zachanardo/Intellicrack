@@ -36,11 +36,10 @@ class BaseWindowsPatcher(ABC):
     """
 
     def __init__(self):
+        """Initialize the base Windows patcher with logging and NTDLL detection."""
         self.logger = logging.getLogger(self.__class__.__name__)
         # Optional flag that derived classes can set to require ntdll
-        self._requires_ntdll = False
-        self._initialize_windows_libraries()
-        self._initialize_windows_constants()
+        self.requires_ntdll = False
 
     def _initialize_windows_libraries(self):
         """Initialize Windows libraries required for patching operations."""

@@ -56,6 +56,7 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for ICP signature format"""
 
     def __init__(self, parent):
+        """Initialize the SignatureSyntaxHighlighter with default values."""
         super().__init__(parent)
         self.highlighting_rules = []
 
@@ -121,6 +122,7 @@ class SignatureTestWorker(QThread):
     progress_update = pyqtSignal(int, str)       # progress, current_file
 
     def __init__(self, signature_content: str, test_files: List[str]):
+        """Initialize the SignatureTestWorker with default values."""
         super().__init__()
         self.signature_content = signature_content
         self.test_files = test_files
@@ -195,6 +197,7 @@ class SignatureEditorDialog(QDialog):
     """Main signature editor dialog"""
 
     def __init__(self, parent=None):
+        """Initialize the signature editor dialog with UI components and data structures."""
         super().__init__(parent)
         self.setWindowTitle("ICP Signature Editor")
         self.setModal(True)

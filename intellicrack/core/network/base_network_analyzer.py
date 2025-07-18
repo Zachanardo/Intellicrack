@@ -33,6 +33,7 @@ class BaseNetworkAnalyzer:
     """
 
     def __init__(self):
+        """Initialize the base network analyzer with logging."""
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def create_packet_handler(self, scapy_module: Any,

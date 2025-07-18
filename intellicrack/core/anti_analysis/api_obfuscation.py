@@ -37,30 +37,38 @@ class APIObfuscator:
     """
 
     def __init__(self):
+        """Initialize the API obfuscation system."""
         self.logger = logging.getLogger("IntellicrackLogger.APIObfuscator")
-        self.resolved_apis = {}
-        self.obfuscation_methods = {
-            'hash_lookup': self._resolve_by_hash,
-            'ordinal_lookup': self._resolve_by_ordinal,
-            'dynamic_resolution': self._dynamic_resolve,
-            'string_obfuscation': self._obfuscated_string,
-            'indirect_call': self._indirect_call
+        
+        # Import resolution techniques
+        self.import_resolution_methods = {
+            'hash_resolution': self._resolve_by_hash,
+            'string_encryption': self._resolve_encrypted_strings,
+            'dynamic_loading': self._resolve_dynamic_imports,
+            'api_redirection': self._resolve_redirected_apis,
+            'delayed_loading': self._resolve_delayed_imports
         }
-
-        # Common API hashes (CRC32)
-        self.api_hashes = {
-            0x7C0DFCAA: ('kernel32.dll', 'VirtualAlloc'),
-            0x91AFCA54: ('kernel32.dll', 'VirtualProtect'),
-            0x1EAE4CB6: ('kernel32.dll', 'CreateThread'),
-            0x4FD18963: ('kernel32.dll', 'ExitProcess'),
-            0xE183277B: ('kernel32.dll', 'LoadLibraryA'),
-            0x7802F749: ('kernel32.dll', 'GetProcAddress'),
-            0x876F8B31: ('ws2_32.dll', 'WSAStartup'),
-            0xE0DF0FEA: ('ws2_32.dll', 'socket'),
-            0x6174A599: ('ws2_32.dll', 'connect'),
-            0x5FC8D902: ('ws2_32.dll', 'send'),
-            0x5F38EBC2: ('ws2_32.dll', 'recv')
+        
+        # API call obfuscation methods
+        self.call_obfuscation_methods = {
+            'indirect_calls': self._generate_indirect_calls,
+            'trampoline_calls': self._generate_trampoline_calls,
+            'encrypted_payloads': self._generate_encrypted_payloads,
+            'polymorphic_wrappers': self._generate_polymorphic_wrappers
         }
+        
+        # Known API hash databases
+        self.api_hash_db = {}
+        self.encrypted_strings_db = {}
+        
+        # Load known hash databases
+        self._load_api_databases()
+        
+        # Statistics
+        self.resolved_apis = 0
+        self.failed_resolutions = 0
+        
+        self.logger.info("API obfuscation system initialized")
 
     def obfuscate_api_calls(self, code: str, method: str = 'hash_lookup') -> str:
         """
@@ -201,20 +209,20 @@ class APIObfuscator:
 
             # Validate export table consistency
             if num_functions == 0:
-                logger.warning(f"DLL {dll_name} has no exported functions")
+                self.logger.warning(f"DLL {dll_name} has no exported functions")
                 return None
 
             if num_names > num_functions:
-                logger.warning(f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption")
+                self.logger.warning(f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption")
                 return None
 
             # Check for suspiciously large export tables (possible anti-analysis)
             if num_functions > 10000:
-                logger.warning(f"DLL {dll_name} has unusually large export table ({num_functions} functions) - possible anti-analysis technique")
+                self.logger.warning(f"DLL {dll_name} has unusually large export table ({num_functions} functions) - possible anti-analysis technique")
 
             # Validate that we have named exports to search through
             if num_names == 0:
-                logger.info(f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)")
+                self.logger.info(f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)")
                 return None
 
             names_array = h_module + names_rva

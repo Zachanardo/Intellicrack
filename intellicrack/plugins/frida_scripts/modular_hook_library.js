@@ -114,13 +114,23 @@
     },
     
     onAttach: function(pid) {
-        console.log("[Hook Library] Attaching to process: " + pid);
+        send({
+            type: "status",
+            target: "hook_library",
+            action: "attaching_to_process",
+            process_id: pid
+        });
         this.processId = pid;
         this.startTime = Date.now();
     },
     
     run: function() {
-        console.log("[Hook Library] Initializing modular hook library system...");
+        send({
+            type: "status",
+            target: "hook_library",
+            action: "initializing_modular_system",
+            timestamp: Date.now()
+        });
         
         // Initialize core components
         this.initializeModuleSystem();
@@ -137,7 +147,12 @@
     
     // === MODULE SYSTEM INITIALIZATION ===
     initializeModuleSystem: function() {
-        console.log("[Hook Library] Initializing module system...");
+        send({
+            type: "info",
+            target: "module_system",
+            action: "initializing_module_system",
+            timestamp: Date.now()
+        });
         
         // Initialize module registry
         this.moduleRegistry.clear();
@@ -159,7 +174,12 @@
         // Setup dependency resolver
         this.dependencyResolver = this.createDependencyResolver();
         
-        console.log("[Hook Library] Module system initialized");
+        send({
+            type: "info",
+            target: "module_system",
+            action: "module_system_initialized",
+            timestamp: Date.now()
+        });
     },
     
     createModuleLoader: function() {
@@ -200,7 +220,12 @@
     
     // === BUILTIN MODULES REGISTRATION ===
     registerBuiltinModules: function() {
-        console.log("[Hook Library] Registering builtin modules...");
+        send({
+            type: "info",
+            target: "builtin_modules",
+            action: "registering_builtin_modules",
+            timestamp: Date.now()
+        });
         
         // Register core modules
         this.registerAntiDebugModules();
@@ -214,11 +239,21 @@
         this.registerMemoryModules();
         this.registerRegistryModules();
         
-        console.log("[Hook Library] " + this.moduleRegistry.size + " builtin modules registered");
+        send({
+            type: "info",
+            target: "builtin_modules",
+            action: "builtin_modules_registered",
+            module_count: this.moduleRegistry.size
+        });
     },
     
     registerAntiDebugModules: function() {
-        console.log("[Hook Library] Registering anti-debug modules...");
+        send({
+            type: "info",
+            target: "antidebug_modules",
+            action: "registering_antidebug_modules",
+            category: "antidebug"
+        });
         
         // Basic anti-debug module
         this.registerModule("antidebug.basic", {
@@ -318,7 +353,12 @@
     },
     
     registerLicensingModules: function() {
-        console.log("[Hook Library] Registering licensing modules...");
+        send({
+            type: "info",
+            target: "licensing_modules",
+            action: "registering_licensing_modules",
+            category: "licensing"
+        });
         
         // Local license module
         this.registerModule("licensing.local", {
@@ -400,7 +440,12 @@
     },
     
     registerDrmModules: function() {
-        console.log("[Hook Library] Registering DRM modules...");
+        send({
+            type: "info",
+            target: "drm_modules",
+            action: "registering_drm_modules",
+            category: "drm"
+        });
         
         // HDCP module
         this.registerModule("drm.hdcp", {
@@ -482,7 +527,12 @@
     },
     
     registerNetworkingModules: function() {
-        console.log("[Hook Library] Registering networking modules...");
+        send({
+            type: "info",
+            target: "networking_modules",
+            action: "registering_networking_modules",
+            category: "networking"
+        });
         
         // HTTP module
         this.registerModule("networking.http", {
@@ -565,7 +615,12 @@
     },
     
     registerCryptographyModules: function() {
-        console.log("[Hook Library] Registering cryptography modules...");
+        send({
+            type: "info",
+            target: "crypto_modules",
+            action: "registering_cryptography_modules",
+            category: "cryptography"
+        });
         
         // Base crypto module
         this.registerModule("crypto.base", {
@@ -676,7 +731,12 @@
     },
     
     registerVirtualizationModules: function() {
-        console.log("[Hook Library] Registering virtualization modules...");
+        send({
+            type: "info",
+            target: "virtualization_modules",
+            action: "registering_virtualization_modules",
+            category: "virtualization"
+        });
         
         // VMware detection bypass
         this.registerModule("virtualization.vmware", {
@@ -732,7 +792,12 @@
     },
     
     registerIntegrityModules: function() {
-        console.log("[Hook Library] Registering integrity modules...");
+        send({
+            type: "info",
+            target: "integrity_modules",
+            action: "registering_integrity_modules",
+            category: "integrity"
+        });
         
         // Code integrity module
         this.registerModule("integrity.code", {
@@ -788,7 +853,12 @@
     },
     
     registerHardwareModules: function() {
-        console.log("[Hook Library] Registering hardware modules...");
+        send({
+            type: "info",
+            target: "hardware_modules",
+            action: "registering_hardware_modules",
+            category: "hardware"
+        });
         
         // Base hardware module
         this.registerModule("hardware.base", {
@@ -844,7 +914,12 @@
     },
     
     registerMemoryModules: function() {
-        console.log("[Hook Library] Registering memory modules...");
+        send({
+            type: "info",
+            target: "memory_modules",
+            action: "registering_memory_modules",
+            category: "memory"
+        });
         
         // Base memory module
         this.registerModule("memory.base", {
@@ -903,7 +978,12 @@
     },
     
     registerRegistryModules: function() {
-        console.log("[Hook Library] Registering registry modules...");
+        send({
+            type: "info",
+            target: "registry_modules",
+            action: "registering_registry_modules",
+            category: "registry"
+        });
         
         // Registry access module
         this.registerModule("registry.access", {
@@ -964,12 +1044,23 @@
     // === MODULE MANAGEMENT ===
     registerModule: function(moduleId, moduleDefinition) {
         if (this.moduleRegistry.has(moduleId)) {
-            console.log("[Hook Library] Warning: Module " + moduleId + " already registered, overwriting");
+            send({
+                type: "warning",
+                target: "hook_library",
+                action: "module_overwrite",
+                module_id: moduleId,
+                message: "Module already registered, overwriting"
+            });
         }
         
         // Validate module definition
         if (!this.validateModuleDefinition(moduleDefinition)) {
-            console.log("[Hook Library] Error: Invalid module definition for " + moduleId);
+            send({
+                type: "error",
+                target: "hook_library",
+                action: "invalid_module_definition",
+                module_id: moduleId
+            });
             return false;
         }
         
@@ -979,7 +1070,12 @@
         moduleDefinition.status = "registered";
         
         this.moduleRegistry.set(moduleId, moduleDefinition);
-        console.log("[Hook Library] Module registered: " + moduleId);
+        send({
+            type: "success",
+            target: "hook_library",
+            action: "module_registered",
+            module_id: moduleId
+        });
         
         return true;
     },
@@ -1009,14 +1105,24 @@
     },
     
     loadModule: function(moduleId, options) {
-        console.log("[Hook Library] Loading module: " + moduleId);
+        send({
+            type: "info",
+            target: "hook_library",
+            action: "loading_module",
+            module_id: moduleId
+        });
         
         options = options || {};
         
         try {
             // Check if already loaded
             if (this.loadedModules.has(moduleId)) {
-                console.log("[Hook Library] Module " + moduleId + " already loaded");
+                send({
+                    type: "info",
+                    target: "hook_library",
+                    action: "module_already_loaded",
+                    module_id: moduleId
+                });
                 return this.loadedModules.get(moduleId);
             }
             
@@ -1031,7 +1137,12 @@
                 var cachedModule = this.moduleCache.get(moduleId);
                 this.loadedModules.set(moduleId, cachedModule);
                 this.stats.cacheHits++;
-                console.log("[Hook Library] Module loaded from cache: " + moduleId);
+                send({
+                    type: "info",
+                    target: "hook_library",
+                    action: "module_loaded_from_cache",
+                    module_id: moduleId
+                });
                 return cachedModule;
             }
             
@@ -1065,11 +1176,22 @@
             this.loadedModules.set(moduleId, moduleInstance);
             this.stats.modulesLoaded++;
             
-            console.log("[Hook Library] Module loaded successfully: " + moduleId);
+            send({
+                type: "success",
+                target: "hook_library",
+                action: "module_loaded_successfully",
+                module_id: moduleId
+            });
             return moduleInstance;
             
         } catch (e) {
-            console.log("[Hook Library] Error loading module " + moduleId + ": " + e);
+            send({
+                type: "error",
+                target: "hook_library",
+                action: "module_load_error",
+                module_id: moduleId,
+                error: e.message || e.toString()
+            });
             this.stats.errors++;
             return null;
         }
@@ -1111,12 +1233,22 @@
     },
     
     unloadModule: function(moduleId) {
-        console.log("[Hook Library] Unloading module: " + moduleId);
+        send({
+            type: "info",
+            target: "hook_library",
+            action: "module_unloading",
+            module_id: moduleId
+        });
         
         try {
             var moduleInstance = this.loadedModules.get(moduleId);
             if (!moduleInstance) {
-                console.log("[Hook Library] Module not loaded: " + moduleId);
+                send({
+                    type: "warning",
+                    target: "hook_library",
+                    action: "module_not_loaded",
+                    module_id: moduleId
+                });
                 return false;
             }
             
@@ -1131,18 +1263,34 @@
             // Remove from cache
             this.moduleCache.delete(moduleId);
             
-            console.log("[Hook Library] Module unloaded: " + moduleId);
+            send({
+                type: "success",
+                target: "hook_library",
+                action: "module_unloaded",
+                module_id: moduleId
+            });
             return true;
             
         } catch (e) {
-            console.log("[Hook Library] Error unloading module " + moduleId + ": " + e);
+            send({
+                type: "error",
+                target: "hook_library",
+                action: "module_unload_error",
+                module_id: moduleId,
+                error: e.message || e.toString()
+            });
             this.stats.errors++;
             return false;
         }
     },
     
     reloadModule: function(moduleId) {
-        console.log("[Hook Library] Reloading module: " + moduleId);
+        send({
+            type: "info",
+            target: "hook_library",
+            action: "module_reloading",
+            module_id: moduleId
+        });
         
         this.unloadModule(moduleId);
         return this.loadModule(moduleId);
@@ -1160,7 +1308,12 @@
     
     // === HOOK MANAGEMENT ===
     installHook: function(hookId, hookDefinition, moduleId) {
-        console.log("[Hook Library] Installing hook: " + hookId);
+        send({
+            type: "info",
+            target: "hook_library",
+            action: "hook_installing",
+            hook_id: hookId
+        });
         
         try {
             var hookInfo = {
@@ -1181,14 +1334,25 @@
                 this.activeHooks.set(hookId, hookInfo);
                 this.stats.hooksInstalled++;
                 
-                console.log("[Hook Library] Hook installed: " + hookId);
+                send({
+            type: "success",
+            target: "hook_library",
+            action: "hook_installed",
+            hook_id: hookId
+        });
                 return true;
             }
             
             return false;
             
         } catch (e) {
-            console.log("[Hook Library] Error installing hook " + hookId + ": " + e);
+            send({
+                type: "error",
+                target: "hook_library",
+                action: "hook_install_error",
+                hook_id: hookId,
+                error: e.message || e.toString()
+            });
             this.stats.errors++;
             return false;
         }
@@ -1216,11 +1380,21 @@
                     return this.createBlockRequestsHook(hookDefinition);
                     
                 default:
-                    console.log("[Hook Library] Unknown hook strategy: " + strategy);
+                    send({
+                        type: "warning",
+                        target: "hook_library",
+                        action: "unknown_hook_strategy",
+                        strategy: strategy
+                    });
                     return null;
             }
         } catch (e) {
-            console.log("[Hook Library] Error creating Frida hook: " + e);
+            send({
+                type: "error",
+                target: "hook_library",
+                action: "frida_hook_creation_error",
+                error: e.message || e.toString()
+            });
             return null;
         }
     },
@@ -1228,12 +1402,22 @@
     createReplaceReturnHook: function(hookDefinition) {
         var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
-            console.log("[Hook Library] Function not found: " + hookDefinition.target);
+            send({
+                type: "warning",
+                target: "hook_library",
+                action: "function_not_found",
+                target_function: hookDefinition.target
+            });
             return null;
         }
         
         return Interceptor.replace(targetFunc, new NativeCallback(function() {
-            console.log("[Hook Library] Hook executed: " + hookDefinition.target);
+            send({
+                type: "info",
+                target: "hook_library",
+                action: "hook_executed",
+                target_function: hookDefinition.target
+            });
             return hookDefinition.returnValue || 0;
         }, 'int', []));
     },
@@ -1254,7 +1438,12 @@
                 if (this.hookDef.modifyReturn) {
                     retval.replace(this.hookDef.modifyReturn);
                 }
-                console.log("[Hook Library] Intercept hook executed: " + this.hookDef.target);
+                send({
+                    type: "bypass",
+                    target: "hook_library",
+                    action: "intercept_hook_executed",
+                    target_function: this.hookDef.target
+                });
             }
         });
     },
@@ -1267,7 +1456,12 @@
         
         return Interceptor.attach(targetFunc, {
             onEnter: function(args) {
-                console.log("[Hook Library] Monitor: " + hookDefinition.target + " called");
+                send({
+                    type: "info",
+                    target: "hook_library",
+                    action: "monitor_function_called",
+                    target_function: hookDefinition.target
+                });
             }
         });
     },
@@ -1282,7 +1476,12 @@
             onLeave: function(retval) {
                 if (hookDefinition.spoofedValues) {
                     // Apply spoofed values based on hook configuration
-                    console.log("[Hook Library] Values spoofed for: " + hookDefinition.target);
+                    send({
+                        type: "bypass",
+                        target: "hook_library",
+                        action: "values_spoofed",
+                        target_function: hookDefinition.target
+                    });
                 }
             }
         });
@@ -1297,17 +1496,32 @@
         return Interceptor.attach(targetFunc, {
             onLeave: function(retval) {
                 retval.replace(-1); // Block by returning error
-                console.log("[Hook Library] Request blocked: " + hookDefinition.target);
+                send({
+                    type: "bypass",
+                    target: "hook_library",
+                    action: "request_blocked",
+                    target_function: hookDefinition.target
+                });
             }
         });
     },
     
     uninstallHook: function(hookId) {
-        console.log("[Hook Library] Uninstalling hook: " + hookId);
+        send({
+            type: "info",
+            target: "hook_library",
+            action: "hook_uninstalling",
+            hook_id: hookId
+        });
         
         var hookInfo = this.activeHooks.get(hookId);
         if (!hookInfo) {
-            console.log("[Hook Library] Hook not found: " + hookId);
+            send({
+                type: "warning",
+                target: "hook_library",
+                action: "hook_not_found",
+                hook_id: hookId
+            });
             return false;
         }
         
@@ -1318,18 +1532,34 @@
             }
             
             this.activeHooks.delete(hookId);
-            console.log("[Hook Library] Hook uninstalled: " + hookId);
+            send({
+                type: "success",
+                target: "hook_library",
+                action: "hook_uninstalled",
+                hook_id: hookId
+            });
             return true;
             
         } catch (e) {
-            console.log("[Hook Library] Error uninstalling hook " + hookId + ": " + e);
+            send({
+                type: "error",
+                target: "hook_library",
+                action: "hook_uninstall_error",
+                hook_id: hookId,
+                error: e.message || e.toString()
+            });
             return false;
         }
     },
     
     // === HOOK GROUPS AND CHAINS ===
     createHookGroup: function(groupId, hookIds, options) {
-        console.log("[Hook Library] Creating hook group: " + groupId);
+        send({
+            type: "info",
+            target: "hook_library",
+            action: "hook_group_creating",
+            group_id: groupId
+        });
         
         var group = {
             id: groupId,
@@ -1344,11 +1574,21 @@
     },
     
     executeHookGroup: function(groupId) {
-        console.log("[Hook Library] Executing hook group: " + groupId);
+        send({
+            type: "info",
+            target: "hook_library",
+            action: "hook_group_executing",
+            group_id: groupId
+        });
         
         var group = this.hookGroups.get(groupId);
         if (!group) {
-            console.log("[Hook Library] Hook group not found: " + groupId);
+            send({
+                type: "warning",
+                target: "hook_library",
+                action: "hook_group_not_found",
+                group_id: groupId
+            });
             return false;
         }
         
@@ -1370,7 +1610,12 @@
     },
     
     createHookChain: function(chainId, hookIds, options) {
-        console.log("[Hook Library] Creating hook chain: " + chainId);
+        send({
+            type: "info",
+            target: "hook_library",
+            action: "hook_chain_creating",
+            chain_id: chainId
+        });
         
         var chain = {
             id: chainId,
@@ -1385,11 +1630,21 @@
     },
     
     executeHookChain: function(chainId) {
-        console.log("[Hook Library] Executing hook chain: " + chainId);
+        send({
+            type: "info",
+            target: "hook_library",
+            action: "hook_chain_executing",
+            chain_id: chainId
+        });
         
         var chain = this.hookChains.get(chainId);
         if (!chain) {
-            console.log("[Hook Library] Hook chain not found: " + chainId);
+            send({
+                type: "warning",
+                target: "hook_library",
+                action: "hook_chain_not_found",
+                chain_id: chainId
+            });
             return false;
         }
         
@@ -1419,7 +1674,12 @@
     
     // === DEPENDENCY MANAGEMENT ===
     setupDependencyManager: function() {
-        console.log("[Hook Library] Setting up dependency manager...");
+        send({
+            type: "info",
+            target: "dependency_manager",
+            action: "setting_up_dependency_manager",
+            component: "dependency_system"
+        });
         
         if (this.config.library.enableDependencyTracking) {
             this.buildDependencyGraph();
@@ -1427,7 +1687,12 @@
     },
     
     buildDependencyGraph: function() {
-        console.log("[Hook Library] Building dependency graph...");
+        send({
+            type: "info",
+            target: "dependency_manager",
+            action: "building_dependency_graph",
+            component: "dependency_graph"
+        });
         
         this.dependencyGraph.clear();
         
@@ -1439,7 +1704,12 @@
         
         // Check for circular dependencies
         if (this.detectCircularDependencies()) {
-            console.log("[Hook Library] Warning: Circular dependencies detected!");
+            send({
+                type: "warning",
+                target: "dependency_manager",
+                action: "circular_dependencies_detected",
+                component: "dependency_validation"
+            });
         }
     },
     
@@ -1514,7 +1784,12 @@
     
     // === HOOK EXECUTOR ===
     setupHookExecutor: function() {
-        console.log("[Hook Library] Setting up hook executor...");
+        send({
+            type: "info",
+            target: "hook_executor",
+            action: "setting_up_hook_executor",
+            component: "execution_engine"
+        });
         
         this.hookExecutor = {
             executeAsync: this.config.execution.enableAsync,
@@ -1527,7 +1802,12 @@
     
     // === PERFORMANCE MONITORING ===
     setupPerformanceMonitor: function() {
-        console.log("[Hook Library] Setting up performance monitor...");
+        send({
+            type: "info",
+            target: "performance_monitor",
+            action: "setting_up_performance_monitor",
+            component: "monitoring_system"
+        });
         
         if (this.config.debug.measurePerformance) {
             setInterval(() => {
@@ -1555,7 +1835,12 @@
     
     // === LIBRARY SERVICES ===
     startLibraryServices: function() {
-        console.log("[Hook Library] Starting library services...");
+        send({
+            type: "status",
+            target: "library_services",
+            action: "starting_library_services",
+            component: "service_manager"
+        });
         
         // Auto-load configured modules
         if (this.config.library.autoLoad) {
@@ -1574,7 +1859,12 @@
     },
     
     autoLoadModules: function() {
-        console.log("[Hook Library] Auto-loading modules...");
+        send({
+            type: "info",
+            target: "auto_loader",
+            action: "auto_loading_modules",
+            component: "module_loader"
+        });
         
         // Load essential modules
         var essentialModules = [
@@ -1595,15 +1885,30 @@
     },
     
     startConflictDetection: function() {
-        console.log("[Hook Library] Starting conflict detection...");
+        send({
+            type: "info",
+            target: "conflict_detection",
+            action: "starting_conflict_detection",
+            component: "conflict_detector"
+        });
         
         // This would monitor for conflicting hooks
         // For now, just log that it's started
-        console.log("[Hook Library] Conflict detection service started");
+        send({
+            type: "success",
+            target: "conflict_detection",
+            action: "conflict_detection_service_started",
+            component: "conflict_detector"
+        });
     },
     
     startPerformanceMonitoring: function() {
-        console.log("[Hook Library] Starting performance monitoring...");
+        send({
+            type: "info",
+            target: "performance_monitoring",
+            action: "starting_performance_monitoring",
+            component: "performance_monitor"
+        });
         
         setInterval(() => {
             this.logPerformanceMetrics();
@@ -1611,12 +1916,16 @@
     },
     
     logPerformanceMetrics: function() {
-        console.log("[Hook Library] Performance: " +
-                  "Modules: " + this.stats.modulesLoaded + ", " +
-                  "Hooks: " + this.stats.hooksInstalled + ", " +
-                  "Executions: " + this.stats.hooksExecuted + ", " +
-                  "Cache hits: " + this.stats.cacheHits + "/" + 
-                  (this.stats.cacheHits + this.stats.cacheMisses));
+        send({
+            type: "info",
+            target: "modular_hook_library",
+            action: "performance_stats",
+            modules_loaded: this.stats.modulesLoaded,
+            hooks_installed: this.stats.hooksInstalled,
+            hooks_executed: this.stats.hooksExecuted,
+            cache_hits: this.stats.cacheHits,
+            cache_misses: this.stats.cacheMisses
+        });
     },
     
     // === API METHODS ===
@@ -1649,9 +1958,12 @@
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
-            console.log("\n[Hook Library] ========================================");
-            console.log("[Hook Library] Modular Hook Library Summary:");
-            console.log("[Hook Library] ========================================");
+            send({
+                type: "status",
+                target: "summary",
+                action: "displaying_library_summary",
+                section: "header"
+            });
             
             var activeFeatures = [];
             
@@ -1675,50 +1987,186 @@
             }
             
             for (var i = 0; i < activeFeatures.length; i++) {
-                console.log("[Hook Library]   ✓ " + activeFeatures[i]);
+                send({
+                    type: "info",
+                    target: "hook_library",
+                    action: "active_feature_listed",
+                    feature: activeFeatures[i]
+                });
             }
             
-            console.log("[Hook Library] ========================================");
-            console.log("[Hook Library] Module Categories:");
+            send({
+                type: "info",
+                target: "summary",
+                action: "displaying_module_categories",
+                section: "categories"
+            });
             
             var categories = Object.keys(this.config.categories);
             for (var i = 0; i < categories.length; i++) {
                 var category = categories[i];
                 if (this.config.categories[category]) {
                     var moduleCount = this.getModulesByCategory(category).length;
-                    console.log("[Hook Library]   • " + category + ": " + moduleCount + " modules");
+                    send({
+                        type: "info",
+                        target: "hook_library",
+                        action: "category_module_count",
+                        category: category,
+                        module_count: moduleCount
+                    });
                 }
             }
             
-            console.log("[Hook Library] ========================================");
-            console.log("[Hook Library] Library Configuration:");
-            console.log("[Hook Library]   • Auto Load: " + this.config.library.autoLoad);
-            console.log("[Hook Library]   • Caching: " + this.config.library.enableCaching);
-            console.log("[Hook Library]   • Cache Size: " + this.config.library.maxCacheSize);
-            console.log("[Hook Library]   • Dependency Tracking: " + this.config.library.enableDependencyTracking);
-            console.log("[Hook Library]   • Conflict Detection: " + this.config.library.enableConflictDetection);
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "status_separator"
+            });
+            send({
+                type: "info",
+                target: "hook_library",
+                action: "library_configuration_header"
+            });
+            send({
+                type: "info",
+                target: "hook_library",
+                action: "config_auto_load",
+                value: this.config.library.autoLoad
+            });
+            send({
+                type: "info",
+                target: "hook_library",
+                action: "config_caching",
+                value: this.config.library.enableCaching
+            });
+            send({
+                type: "info",
+                target: "hook_library",
+                action: "config_cache_size",
+                value: this.config.library.maxCacheSize
+            });
+            send({
+                type: "info",
+                target: "hook_library",
+                action: "config_dependency_tracking",
+                value: this.config.library.enableDependencyTracking
+            });
+            send({
+                type: "info",
+                target: "hook_library",
+                action: "config_conflict_detection",
+                value: this.config.library.enableConflictDetection
+            });
             
-            console.log("[Hook Library] ========================================");
-            console.log("[Hook Library] Execution Settings:");
-            console.log("[Hook Library]   • Async Execution: " + this.config.execution.enableAsync);
-            console.log("[Hook Library]   • Hook Batching: " + this.config.execution.enableBatching);
-            console.log("[Hook Library]   • Retry on Failure: " + this.config.execution.enableRetry);
-            console.log("[Hook Library]   • Max Retries: " + this.config.execution.maxRetries);
-            console.log("[Hook Library]   • Timeout: " + this.config.execution.timeout + "ms");
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "status_separator"
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "execution_settings_header"
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "config_setting",
+                setting: "async_execution",
+                value: this.config.execution.enableAsync
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "config_setting",
+                setting: "hook_batching",
+                value: this.config.execution.enableBatching
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "config_setting",
+                setting: "retry_on_failure",
+                value: this.config.execution.enableRetry
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "config_setting",
+                setting: "max_retries",
+                value: this.config.execution.maxRetries
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "config_setting",
+                setting: "timeout",
+                value: this.config.execution.timeout + "ms"
+            });
             
-            console.log("[Hook Library] ========================================");
-            console.log("[Hook Library] Runtime Statistics:");
-            console.log("[Hook Library]   • Registered Modules: " + this.moduleRegistry.size);
-            console.log("[Hook Library]   • Loaded Modules: " + this.stats.modulesLoaded);
-            console.log("[Hook Library]   • Installed Hooks: " + this.stats.hooksInstalled);
-            console.log("[Hook Library]   • Cache Hits: " + this.stats.cacheHits);
-            console.log("[Hook Library]   • Cache Misses: " + this.stats.cacheMisses);
-            console.log("[Hook Library]   • Cache Hit Rate: " + 
-                      (this.stats.cacheHits + this.stats.cacheMisses > 0 ? 
-                       (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses) * 100).toFixed(1) + "%" : "N/A"));
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "status_separator"
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "runtime_statistics_header"
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "runtime_statistic",
+                metric: "registered_modules",
+                value: this.moduleRegistry.size
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "runtime_statistic",
+                metric: "loaded_modules",
+                value: this.stats.modulesLoaded
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "runtime_statistic",
+                metric: "installed_hooks",
+                value: this.stats.hooksInstalled
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "runtime_statistic",
+                metric: "cache_hits",
+                value: this.stats.cacheHits
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "runtime_statistic",
+                metric: "cache_misses",
+                value: this.stats.cacheMisses
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "runtime_statistic",
+                metric: "cache_hit_rate",
+                value: (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses) * 100).toFixed(1) + "%"
+            });
             
-            console.log("[Hook Library] ========================================");
-            console.log("[Hook Library] Available Modules:");
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "status_separator"
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "available_modules_header"
+            });
             
             var modulesByCategory = {};
             this.moduleRegistry.forEach((module, moduleId) => {
@@ -1729,19 +2177,42 @@
             });
             
             for (var category in modulesByCategory) {
-                console.log("[Hook Library]   " + category + ":");
+                send({
+                    type: "info",
+                    target: "modular_hook_library",
+                    action: "module_category",
+                    category: category
+                });
                 var modules = modulesByCategory[category];
                 for (var i = 0; i < modules.length; i++) {
                     var moduleId = modules[i];
                     var isLoaded = this.loadedModules.has(moduleId);
                     var status = isLoaded ? "loaded" : "available";
-                    console.log("[Hook Library]     - " + moduleId + " (" + status + ")");
+                    send({
+                        type: "info",
+                        target: "modular_hook_library",
+                        action: "module_status",
+                        module_id: moduleId,
+                        status: status
+                    });
                 }
             }
             
-            console.log("[Hook Library] ========================================");
-            console.log("[Hook Library] Modular hook library system is now ACTIVE!");
-            console.log("[Hook Library] Use library API to load and manage hook modules dynamically.");
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "status_separator"
+            });
+            send({
+                type: "success",
+                target: "modular_hook_library",
+                action: "system_active"
+            });
+            send({
+                type: "info",
+                target: "modular_hook_library",
+                action: "usage_instructions"
+            });
         }, 100);
     }
 }

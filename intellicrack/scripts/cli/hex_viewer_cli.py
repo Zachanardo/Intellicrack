@@ -343,8 +343,8 @@ class TerminalHexViewer:
         """Handle input in view mode."""
         if key == ord('q'):
             if self.modified:
-                # TODO: Add confirmation dialog
-                pass
+                if not self._confirm_exit():
+                    return True
             return False
 
         elif key == ord('e'):
@@ -573,9 +573,123 @@ class TerminalHexViewer:
             self.modifications.clear()
             self.modified = False
 
-        except IOError:
-            # TODO: Show error message
-            pass
+        except IOError as e:
+            # Show error message dialog
+            self._show_error_dialog(f"Failed to save changes: {str(e)}")
+
+    def _confirm_exit(self) -> bool:
+        """Show confirmation dialog for unsaved changes.
+        
+        Returns:
+            True if user wants to exit, False otherwise
+        """
+        # Save current screen state
+        curses.def_prog_mode()
+
+        # Calculate dialog dimensions and position
+        dialog_width = 50
+        dialog_height = 7
+        dialog_y = (self.screen_height - dialog_height) // 2
+        dialog_x = (self.screen_width - dialog_width) // 2
+
+        # Create dialog window
+        dialog = curses.newwin(dialog_height, dialog_width, dialog_y, dialog_x)
+        dialog.box()
+
+        # Draw dialog content
+        dialog.addstr(1, 2, "Unsaved Changes", curses.A_BOLD)
+        dialog.addstr(2, 2, "-" * (dialog_width - 4))
+        dialog.addstr(3, 2, "You have unsaved modifications.")
+        dialog.addstr(4, 2, "Do you want to exit without saving?")
+        dialog.addstr(5, 2, "[Y]es  [N]o  [S]ave and exit")
+
+        dialog.refresh()
+
+        # Get user response
+        while True:
+            key = dialog.getch()
+
+            if key in [ord('y'), ord('Y')]:
+                # Exit without saving
+                curses.reset_prog_mode()
+                self.stdscr.refresh()
+                return True
+
+            elif key in [ord('n'), ord('N'), 27]:  # 27 is ESC
+                # Don't exit
+                curses.reset_prog_mode()
+                self.stdscr.refresh()
+                return False
+
+            elif key in [ord('s'), ord('S')]:
+                # Save and exit
+                self._save_changes()
+                curses.reset_prog_mode()
+                self.stdscr.refresh()
+                return True
+
+    def _show_error_dialog(self, error_message: str):
+        """Display an error dialog with the given message.
+        
+        Args:
+            error_message: The error message to display
+        """
+        # Save current screen state
+        curses.def_prog_mode()
+        
+        # Calculate dialog dimensions
+        max_msg_width = min(len(error_message) + 4, self.screen_width - 10)
+        wrapped_lines = []
+        
+        # Word wrap the error message if needed
+        words = error_message.split()
+        current_line = []
+        current_length = 0
+        
+        for word in words:
+            if current_length + len(word) + 1 <= max_msg_width - 4:
+                current_line.append(word)
+                current_length += len(word) + 1
+            else:
+                if current_line:
+                    wrapped_lines.append(' '.join(current_line))
+                current_line = [word]
+                current_length = len(word)
+        
+        if current_line:
+            wrapped_lines.append(' '.join(current_line))
+        
+        # Dialog dimensions
+        dialog_width = max(30, min(max_msg_width, self.screen_width - 10))
+        dialog_height = 5 + len(wrapped_lines)
+        dialog_y = (self.screen_height - dialog_height) // 2
+        dialog_x = (self.screen_width - dialog_width) // 2
+        
+        # Create dialog window
+        dialog = curses.newwin(dialog_height, dialog_width, dialog_y, dialog_x)
+        dialog.box()
+        
+        # Draw dialog content
+        dialog.addstr(1, 2, "Error", curses.A_BOLD | curses.color_pair(1) if hasattr(self, 'color_pairs') else curses.A_BOLD)
+        dialog.addstr(2, 2, "-" * (dialog_width - 4))
+        
+        # Display wrapped error message
+        for i, line in enumerate(wrapped_lines):
+            dialog.addstr(3 + i, 2, line[:dialog_width - 4])
+        
+        # Show OK button
+        ok_text = "[ OK ]"
+        ok_x = (dialog_width - len(ok_text)) // 2
+        dialog.addstr(dialog_height - 2, ok_x, ok_text, curses.A_REVERSE)
+        
+        dialog.refresh()
+        
+        # Wait for user to press any key
+        dialog.getch()
+        
+        # Restore screen
+        curses.reset_prog_mode()
+        self.stdscr.refresh()
 
     def _cleanup(self):
         """Clean up resources."""

@@ -21,9 +21,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Import all functions from the templates module
+# Import specific functions from the templates module
 try:
-    from .templates.import_patterns import *
+    from .templates.import_patterns import analyze_import_patterns, detect_api_hooks
 except ImportError:
     # Fallback implementations
     def analyze_import_patterns(binary_path):

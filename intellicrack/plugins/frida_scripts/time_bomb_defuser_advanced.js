@@ -74,7 +74,11 @@
     },
     
     run: function() {
-        console.log("[Time Defuser] Starting advanced time manipulation system...");
+        send({
+            type: "status",
+            target: "time_bomb_defuser_advanced",
+            action: "initializing_time_manipulation"
+        });
         
         // Core time hooks
         this.hookSystemTime();
@@ -92,7 +96,11 @@
         // Process tracking
         this.setupProcessTracking();
         
-        console.log("[Time Defuser] All time manipulation hooks installed");
+        send({
+            type: "status",
+            target: "time_bomb_defuser_advanced",
+            action: "all_hooks_installed"
+        });
         this.startProgressionTimer();
     },
     
@@ -160,7 +168,11 @@
                     }
                 }
             });
-            console.log("[Time Defuser] Hooked GetSystemTime");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_get_system_time"
+            });
         }
         
         // GetLocalTime
@@ -181,7 +193,11 @@
                     }
                 }
             });
-            console.log("[Time Defuser] Hooked GetLocalTime");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_get_local_time"
+            });
         }
         
         // GetSystemTimeAsFileTime
@@ -200,7 +216,11 @@
                     }
                 }
             });
-            console.log("[Time Defuser] Hooked GetSystemTimeAsFileTime");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_get_system_time_as_file_time"
+            });
         }
     },
     
@@ -236,7 +256,11 @@
                     }
                 }
             });
-            console.log("[Time Defuser] Hooked GetFileTime");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_get_file_time"
+            });
         }
         
         // FindFirstFile (contains file times)
@@ -260,7 +284,12 @@
                         }
                     }
                 });
-                console.log("[Time Defuser] Hooked " + api);
+                send({
+                    type: "info",
+                    target: "time_bomb_defuser_advanced",
+                    action: "hooked_api",
+                    api_name: api
+                });
             }
         });
     },
@@ -281,7 +310,11 @@
                 self.statistics.timeCalls++;
                 return (baseTickCount + progressed) & 0xFFFFFFFF; // 32-bit wrap
             }, 'uint32', []));
-            console.log("[Time Defuser] Hooked GetTickCount");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_get_tick_count"
+            });
         }
         
         // GetTickCount64
@@ -293,7 +326,11 @@
                 self.statistics.timeCalls++;
                 return baseTickCount + progressed;
             }, 'uint64', []));
-            console.log("[Time Defuser] Hooked GetTickCount64");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_get_tick_count64"
+            });
         }
     },
     
@@ -338,7 +375,11 @@
                 });
             }
             
-            console.log("[Time Defuser] Hooked QueryPerformanceCounter");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_query_performance_counter"
+            });
         }
     },
     
@@ -356,7 +397,11 @@
         });
         
         if (!clrModule) {
-            console.log("[Time Defuser] .NET CLR not found, skipping .NET hooks");
+            send({
+                type: "warning",
+                target: "time_bomb_defuser_advanced",
+                action: "dotnet_clr_not_found"
+            });
             return;
         }
         
@@ -381,7 +426,11 @@
                         self.statistics.dotNetCalls++;
                     }
                 });
-                console.log("[Time Defuser] Hooked .NET DateTime.Now");
+                send({
+                    type: "info",
+                    target: "time_bomb_defuser_advanced",
+                    action: "hooked_dotnet_datetime_now"
+                });
             }
             
             // Hook DateTime.UtcNow
@@ -402,11 +451,20 @@
                         self.statistics.dotNetCalls++;
                     }
                 });
-                console.log("[Time Defuser] Hooked .NET DateTime.UtcNow");
+                send({
+                    type: "info",
+                    target: "time_bomb_defuser_advanced",
+                    action: "hooked_dotnet_datetime_utcnow"
+                });
             }
             
         } catch(e) {
-            console.log("[Time Defuser] Failed to hook .NET DateTime: " + e);
+            send({
+                type: "error",
+                target: "time_bomb_defuser_advanced",
+                action: "dotnet_hook_failed",
+                error: e.toString()
+            });
         }
     },
     
@@ -426,7 +484,12 @@
                     // Check if it's an NTP server
                     for (var i = 0; i < self.config.ntpServers.length; i++) {
                         if (hostname && hostname.toLowerCase().indexOf(self.config.ntpServers[i]) !== -1) {
-                            console.log("[Time Defuser] Blocking NTP server: " + hostname);
+                            send({
+                                type: "bypass",
+                                target: "time_bomb_defuser_advanced",
+                                action: "ntp_server_blocked",
+                                hostname: hostname
+                            });
                             this.blockNtp = true;
                             self.statistics.ntpBlocked++;
                             break;
@@ -455,7 +518,12 @@
                             port = ((port & 0xFF) << 8) | ((port & 0xFF00) >> 8); // ntohs
                             
                             if (port === 123) { // NTP port
-                                console.log("[Time Defuser] Blocking NTP connection on port 123");
+                                send({
+                                    type: "bypass",
+                                    target: "time_bomb_defuser_advanced",
+                                    action: "ntp_connection_blocked",
+                                    port: 123
+                                });
                                 this.blockConnection = true;
                                 self.statistics.ntpBlocked++;
                             }
@@ -477,7 +545,12 @@
                 onEnter: function(args) {
                     var userAgent = args[0].readUtf16String();
                     if (userAgent && userAgent.toLowerCase().indexOf("time") !== -1) {
-                        console.log("[Time Defuser] Blocking time sync HTTP: " + userAgent);
+                        send({
+                            type: "bypass",
+                            target: "time_bomb_defuser_advanced",
+                            action: "time_sync_http_blocked",
+                            user_agent: userAgent
+                        });
                         this.blockHttp = true;
                         self.statistics.ntpBlocked++;
                     }
@@ -490,7 +563,11 @@
             });
         }
         
-        console.log("[Time Defuser] Network time blocking configured");
+        send({
+            type: "info",
+            target: "time_bomb_defuser_advanced",
+            action: "network_time_blocking_configured"
+        });
     },
     
     // Hook certificate validation
@@ -506,7 +583,11 @@
                 self.statistics.certsPatched++;
                 return 0; // Time is valid
             }, 'int', ['pointer', 'pointer']));
-            console.log("[Time Defuser] Hooked CertVerifyTimeValidity");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_cert_verify_time_validity"
+            });
         }
         
         // CertGetCertificateChain
@@ -522,7 +603,11 @@
                     }
                 }
             });
-            console.log("[Time Defuser] Hooked CertGetCertificateChain");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_cert_get_certificate_chain"
+            });
         }
         
         // Hook SSL/TLS certificate verification in schannel
@@ -560,7 +645,11 @@
                     }
                 }
             });
-            console.log("[Time Defuser] Hooked GetTimeZoneInformation");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_get_time_zone_information"
+            });
         }
         
         // GetDynamicTimeZoneInformation
@@ -604,7 +693,11 @@
                 self.statistics.timeCalls++;
                 return unixTime;
             }, Process.arch === 'x64' ? 'uint64' : 'uint32', ['pointer']));
-            console.log("[Time Defuser] Hooked time()");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_time_function"
+            });
         }
         
         // _time64()
@@ -623,7 +716,11 @@
                 self.statistics.timeCalls++;
                 return unixTime;
             }, 'uint64', ['pointer']));
-            console.log("[Time Defuser] Hooked _time64()");
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "hooked_time64_function"
+            });
         }
         
         // localtime() and gmtime()
@@ -645,7 +742,12 @@
                         }
                     }
                 });
-                console.log("[Time Defuser] Hooked " + func);
+                send({
+                    type: "info",
+                    target: "time_bomb_defuser_advanced",
+                    action: "hooked_crt_function",
+                    function_name: func
+                });
             }
         });
     },
@@ -658,7 +760,12 @@
         // Initialize process start time
         if (!this.processStartTimes[processName]) {
             this.processStartTimes[processName] = Date.now();
-            console.log("[Time Defuser] Tracking time for process: " + processName);
+            send({
+                type: "info",
+                target: "time_bomb_defuser_advanced",
+                action: "tracking_process_time",
+                process_name: processName
+            });
         }
         
         // Hook process creation to track child processes
@@ -677,7 +784,12 @@
                         if (match) {
                             var childProcess = match[1] + ".exe";
                             self.processStartTimes[childProcess] = Date.now();
-                            console.log("[Time Defuser] Tracking child process: " + childProcess);
+                            send({
+                                type: "info",
+                                target: "time_bomb_defuser_advanced",
+                                action: "tracking_child_process",
+                                child_process: childProcess
+                            });
                         }
                     }
                 }
@@ -700,10 +812,17 @@
             }
             
             // Log statistics
-            console.log("[Time Defuser] Stats - Time calls: " + self.statistics.timeCalls +
-                      ", NTP blocked: " + self.statistics.ntpBlocked +
-                      ", Certs patched: " + self.statistics.certsPatched +
-                      ", .NET calls: " + self.statistics.dotNetCalls);
+            send({
+                type: "summary",
+                target: "time_bomb_defuser_advanced",
+                action: "statistics_report",
+                stats: {
+                    time_calls: self.statistics.timeCalls,
+                    ntp_blocked: self.statistics.ntpBlocked,
+                    certs_patched: self.statistics.certsPatched,
+                    dotnet_calls: self.statistics.dotNetCalls
+                }
+            });
                       
         }, 60000); // Every minute
     }

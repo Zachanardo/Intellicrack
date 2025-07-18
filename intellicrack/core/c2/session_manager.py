@@ -68,27 +68,39 @@ class Session:
     """Represents a C2 session with a client."""
 
     def __init__(self, session_id: str, connection_info: Dict[str, Any]):
+        """Initialize a C2 session with client connection information."""
         self.session_id = session_id
         self.connection_info = connection_info
         self.created_at = time.time()
-        self.last_seen = time.time()
+        self.last_seen = self.created_at
         self.status = 'active'
-
+        self.commands_sent = 0
+        self.commands_received = 0
+        self.data_sent = 0
+        self.data_received = 0
+        self.logger = logging.getLogger(__name__)
+        
         # Session metadata
-        self.client_info = {}
-        self.capabilities = []
-        self.tasks = deque(maxlen=1000)  # Task history
-        self.files = {}  # Uploaded/downloaded files
-
-        # Statistics
-        self.stats = {
-            'total_tasks': 0,
-            'successful_tasks': 0,
-            'failed_tasks': 0,
-            'bytes_uploaded': 0,
-            'bytes_downloaded': 0,
-            'last_beacon': None
+        self.metadata = {
+            'os': connection_info.get('os', 'unknown'),
+            'arch': connection_info.get('arch', 'unknown'),
+            'hostname': connection_info.get('hostname', 'unknown'),
+            'user': connection_info.get('user', 'unknown'),
+            'privileges': connection_info.get('privileges', 'user'),
+            'ip_address': connection_info.get('ip', 'unknown'),
+            'user_agent': connection_info.get('user_agent', 'unknown')
         }
+        
+        # Command history
+        self.command_history: List[Dict[str, Any]] = []
+        
+        # Active tasks
+        self.active_tasks: Dict[str, Any] = {}
+        
+        self.logger.info(f"New session created: {session_id}")
+        
+        # Update last seen
+        self.update_last_seen()
 
     def update_last_seen(self):
         """Update last seen timestamp."""
@@ -147,39 +159,52 @@ class SessionManager:
     """
 
     def __init__(self, db_path: str = None):
-        self.logger = logging.getLogger("IntellicrackLogger.SessionManager")
-
-        # Run migration checks first
-        migrate_resource_if_needed("c2_sessions.db", DB_PATH)
-        migrate_resource_if_needed("c2_uploads", UPLOAD_DIR)
-        migrate_resource_if_needed("c2_downloads", DOWNLOAD_DIR)
-
-        # Session storage
-        self.sessions = {}
-        self.session_history = deque(maxlen=10000)  # Historical sessions
-
-        # Task management
-        self.task_queue = asyncio.Queue()
-        self.task_results = {}
-        self.pending_tasks = defaultdict(list)
-
-        # File management
-        self.upload_directory = str(UPLOAD_DIR)
-        self.download_directory = str(DOWNLOAD_DIR)
-        self._ensure_directories()
-
-        # Database for persistence
-        self.db_path = str(db_path or DB_PATH)
-        self._initialize_database()
-
+        """Initialize the session manager with database and directory configuration."""
+        self.db_path = db_path or os.path.join(
+            os.path.dirname(__file__), '..', '..', 'data', 'sessions.db'
+        )
+        self.logger = logging.getLogger(__name__)
+        
+        # Ensure database directory exists
+        db_dir = os.path.dirname(self.db_path)
+        if not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
+        
+        # Active sessions
+        self.sessions: Dict[str, Session] = {}
+        
+        # Session configuration
+        self.config = {
+            'session_timeout': 3600,  # 1 hour
+            'max_sessions': 1000,
+            'cleanup_interval': 300,  # 5 minutes
+            'heartbeat_interval': 60,  # 1 minute
+            'max_command_history': 100
+        }
+        
+        # Threading
+        self.lock = threading.RLock()
+        self.cleanup_thread = None
+        self.running = False
+        
         # Statistics
         self.stats = {
             'total_sessions': 0,
             'active_sessions': 0,
-            'total_tasks': 0,
-            'total_files': 0,
-            'total_data_transfer': 0
+            'expired_sessions': 0,
+            'total_commands': 0
         }
+        
+        # Initialize database
+        self._initialize_database()
+        
+        # Load existing sessions
+        self._load_sessions()
+        
+        # Start cleanup thread
+        self.start_cleanup()
+        
+        self.logger.info(f"Session manager initialized with database: {self.db_path}")
 
     def _ensure_directories(self):
         """Ensure upload/download directories exist."""

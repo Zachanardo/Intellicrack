@@ -2,10 +2,8 @@
 Simple performance monitor to replace the complex one temporarily.
 """
 
-import functools
 import logging
-from typing import Any, Callable
-
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 

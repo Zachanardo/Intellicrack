@@ -51,6 +51,7 @@ class PluginEditorDialog(QDialog):
     plugin_saved = pyqtSignal(str)  # Emitted when plugin is saved
 
     def __init__(self, parent=None, plugin_path=None):
+        """Initialize the PluginEditorDialog with default values."""
         super().__init__(parent)
         self.plugin_path = plugin_path
         self.test_process = None

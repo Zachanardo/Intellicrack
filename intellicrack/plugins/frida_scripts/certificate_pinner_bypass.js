@@ -69,7 +69,11 @@
     },
     
     run: function() {
-        console.log("[CertPinner] Starting certificate pinning bypass...");
+        send({
+            type: "status",
+            target: "certificate_pinner_bypass",
+            action: "starting_bypass"
+        });
         
         // Detect platform and apply appropriate hooks
         this.detectPlatform();
@@ -100,7 +104,12 @@
         this.hookDotNetCertificateValidation();
         this.hookCustomPinningImplementations();
         
-        console.log("[CertPinner] Installed " + this.stats.hooksInstalled + " hooks");
+        send({
+            type: "info",
+            target: "certificate_pinner_bypass",
+            action: "installation_complete",
+            hooks_installed: this.stats.hooksInstalled
+        });
     },
     
     // Platform detection
@@ -121,7 +130,12 @@
             }
         }, this);
         
-        console.log("[CertPinner] Platform detected: " + JSON.stringify(this.platform));
+        send({
+            type: "info",
+            target: "certificate_pinner_bypass",
+            action: "platform_detected",
+            platform: this.platform
+        });
     },
     
     // Windows certificate API hooks
@@ -139,7 +153,12 @@
                 }
             });
             this.stats.hooksInstalled++;
-            console.log("[CertPinner] Hooked CertVerifyCertificateChainPolicy");
+            send({
+                type: "bypass",
+                target: "certificate_pinner_bypass",
+                action: "hooked_windows_api",
+                api_name: "CertVerifyCertificateChainPolicy"
+            });
         }
         
         // CertGetCertificateChain
@@ -173,7 +192,12 @@
                 }
             });
             this.stats.hooksInstalled++;
-            console.log("[CertPinner] Hooked CertGetCertificateChain");
+            send({
+                type: "bypass",
+                target: "certificate_pinner_bypass",
+                action: "hooked_windows_api",
+                api_name: "CertGetCertificateChain"
+            });
         }
         
         // CertVerifyRevocation
@@ -185,7 +209,12 @@
                 return 1;
             }, 'int', ['int', 'int', 'int', 'pointer', 'int', 'pointer', 'pointer']));
             this.stats.hooksInstalled++;
-            console.log("[CertPinner] Hooked CertVerifyRevocation");
+            send({
+                type: "bypass",
+                target: "certificate_pinner_bypass",
+                action: "hooked_windows_api",
+                api_name: "CertVerifyRevocation"
+            });
         }
     },
     
@@ -209,7 +238,12 @@
                         flags |= 0x00001000; // SECURITY_FLAG_IGNORE_CERT_CN_INVALID
                         flags |= 0x00002000; // SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE
                         args[2].writeU32(flags);
-                        console.log("[CertPinner] Modified WinHTTP security flags");
+                        send({
+                            type: "bypass",
+                            target: "certificate_pinner_bypass",
+                            action: "modified_winhttp_security_flags",
+                            flags: flags
+                        });
                     }
                 }
             });
@@ -258,7 +292,12 @@
                 }
             });
             this.stats.hooksInstalled++;
-            console.log("[CertPinner] Hooked InitializeSecurityContext");
+            send({
+                type: "bypass",
+                target: "certificate_pinner_bypass",
+                action: "hooked_schannel_api",
+                api_name: "InitializeSecurityContext"
+            });
         }
         
         // QueryContextAttributes
@@ -293,13 +332,23 @@
                 var TrustManagerImpl = Java.use("com.android.org.conscrypt.TrustManagerImpl");
                 
                 TrustManagerImpl.verifyChain.implementation = function(untrustedChain, trustAnchorChain, host, clientAuth, ocspData, tlsSctData) {
-                    console.log("[CertPinner] TrustManagerImpl.verifyChain bypassed");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "android_trust_manager_bypassed",
+                        method: "verifyChain"
+                    });
                     self.stats.validationsBypassed++;
                     return untrustedChain;
                 };
                 
                 TrustManagerImpl.checkTrustedRecursive.implementation = function(certs, host, clientAuth, untrustedChain, trustAnchorChain, used) {
-                    console.log("[CertPinner] TrustManagerImpl.checkTrustedRecursive bypassed");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "android_trust_manager_bypassed",
+                        method: "checkTrustedRecursive"
+                    });
                     self.stats.validationsBypassed++;
                     return Java.use("java.util.ArrayList").$new();
                 };
@@ -318,14 +367,26 @@
                             
                             if (TrustManager.checkClientTrusted) {
                                 TrustManager.checkClientTrusted.implementation = function() {
-                                    console.log("[CertPinner] " + className + ".checkClientTrusted bypassed");
+                                    send({
+                                        type: "bypass",
+                                        target: "certificate_pinner_bypass",
+                                        action: "custom_trust_manager_bypassed",
+                                        class_name: className,
+                                        method: "checkClientTrusted"
+                                    });
                                     self.stats.validationsBypassed++;
                                 };
                             }
                             
                             if (TrustManager.checkServerTrusted) {
                                 TrustManager.checkServerTrusted.implementation = function() {
-                                    console.log("[CertPinner] " + className + ".checkServerTrusted bypassed");
+                                    send({
+                                        type: "bypass",
+                                        target: "certificate_pinner_bypass",
+                                        action: "custom_trust_manager_bypassed",
+                                        class_name: className,
+                                        method: "checkServerTrusted"
+                                    });
                                     self.stats.validationsBypassed++;
                                 };
                             }
@@ -355,7 +416,12 @@
                     implements: [HostnameVerifier],
                     methods: {
                         verify: function(hostname, session) {
-                            console.log("[CertPinner] HostnameVerifier bypassed for: " + hostname);
+                            send({
+                                type: "bypass",
+                                target: "certificate_pinner_bypass",
+                                action: "hostname_verifier_bypassed",
+                                hostname: hostname
+                            });
                             self.stats.validationsBypassed++;
                             return true;
                         }
@@ -369,7 +435,12 @@
                             try {
                                 var clazz = Java.use(className);
                                 clazz.verify.implementation = function(hostname, session) {
-                                    console.log("[CertPinner] " + className + ".verify bypassed");
+                                    send({
+                                        type: "bypass",
+                                        target: "certificate_pinner_bypass",
+                                        action: "custom_hostname_verifier_bypassed",
+                                        class_name: className
+                                    });
                                     self.stats.validationsBypassed++;
                                     return true;
                                 };
@@ -381,7 +452,12 @@
                 });
                 
             } catch(e) {
-                console.log("[CertPinner] Failed to hook HostnameVerifier: " + e);
+                send({
+                    type: "error",
+                    target: "certificate_pinner_bypass",
+                    action: "failed_to_hook_hostname_verifier",
+                    error: e.toString()
+                });
             }
         });
     },
@@ -398,12 +474,24 @@
                 var CertificatePinner = Java.use("okhttp3.CertificatePinner");
                 
                 CertificatePinner.check.overload('java.lang.String', 'java.util.List').implementation = function(hostname, peerCertificates) {
-                    console.log("[CertPinner] OkHttp3 CertificatePinner.check bypassed: " + hostname);
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "okhttp3_pinning_bypassed",
+                        method: "List overload",
+                        hostname: hostname
+                    });
                     self.stats.validationsBypassed++;
                 };
                 
                 CertificatePinner.check.overload('java.lang.String', '[Ljava.security.cert.Certificate;').implementation = function(hostname, peerCertificates) {
-                    console.log("[CertPinner] OkHttp3 CertificatePinner.check bypassed: " + hostname);
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "okhttp3_pinning_bypassed",
+                        method: "Certificate array overload",
+                        hostname: hostname
+                    });
                     self.stats.validationsBypassed++;
                 };
                 
@@ -417,7 +505,12 @@
                 var CertificatePinner2 = Java.use("com.squareup.okhttp.CertificatePinner");
                 
                 CertificatePinner2.check.overload('java.lang.String', 'java.util.List').implementation = function(hostname, peerCertificates) {
-                    console.log("[CertPinner] OkHttp2 CertificatePinner.check bypassed: " + hostname);
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "okhttp2_pinning_bypassed",
+                        hostname: hostname
+                    });
                     self.stats.validationsBypassed++;
                 };
                 
@@ -445,7 +538,11 @@
                 
                 // Hook Platform.trustManager
                 Platform.trustManager.implementation = function() {
-                    console.log("[CertPinner] Retrofit Platform.trustManager replaced");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "retrofit_trust_manager_replaced"
+                    });
                     self.stats.validationsBypassed++;
                     return TrustAllManager.$new();
                 };
@@ -468,7 +565,12 @@
                 onEnter: function(args) {
                     // Set mode to SSL_VERIFY_NONE (0)
                     args[1] = ptr(0);
-                    console.log("[CertPinner] SSL_CTX_set_verify mode set to NONE");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "openssl_verify_disabled",
+                        api: "SSL_CTX_set_verify"
+                    });
                 }
             });
             this.stats.hooksInstalled++;
@@ -489,7 +591,12 @@
         var x509_verify_cert = Module.findExportByName(null, "X509_verify_cert");
         if (x509_verify_cert) {
             Interceptor.replace(x509_verify_cert, new NativeCallback(function(ctx) {
-                console.log("[CertPinner] X509_verify_cert bypassed");
+                send({
+                    type: "bypass",
+                    target: "certificate_pinner_bypass",
+                    action: "openssl_cert_verification_bypassed",
+                    api: "X509_verify_cert"
+                });
                 self.stats.validationsBypassed++;
                 return 1; // Success
             }, 'int', ['pointer']));
@@ -500,7 +607,12 @@
         var ssl_get_verify_result = Module.findExportByName(null, "SSL_get_verify_result");
         if (ssl_get_verify_result) {
             Interceptor.replace(ssl_get_verify_result, new NativeCallback(function(ssl) {
-                console.log("[CertPinner] SSL_get_verify_result returning OK");
+                send({
+                    type: "bypass",
+                    target: "certificate_pinner_bypass",
+                    action: "openssl_verify_result_bypassed",
+                    api: "SSL_get_verify_result"
+                });
                 self.stats.validationsBypassed++;
                 return 0; // X509_V_OK
             }, 'long', ['pointer']));
@@ -528,7 +640,12 @@
                 onEnter: function(args) {
                     // Create a delegate that always returns true
                     var alwaysTrue = new NativeCallback(function() {
-                        console.log("[CertPinner] .NET certificate validation bypassed");
+                        send({
+                            type: "bypass",
+                            target: "certificate_pinner_bypass",
+                            action: "dotnet_cert_validation_bypassed",
+                            component: "ServerCertificateValidationCallback"
+                        });
                         self.stats.validationsBypassed++;
                         return 1;
                     }, 'int', ['pointer', 'pointer', 'pointer', 'int']);
@@ -538,7 +655,11 @@
                 }
             });
             this.stats.hooksInstalled++;
-            console.log("[CertPinner] Hooked .NET ServerCertificateValidationCallback");
+            send({
+                type: "bypass",
+                target: "certificate_pinner_bypass",
+                action: "dotnet_server_cert_callback_hooked"
+            });
         }
         
         // Hook SslStream certificate validation
@@ -554,7 +675,11 @@
                 }
             });
             this.stats.hooksInstalled++;
-            console.log("[CertPinner] Hooked .NET SslStream validation");
+            send({
+                type: "bypass",
+                target: "certificate_pinner_bypass",
+                action: "dotnet_sslstream_validation_hooked"
+            });
         }
     },
     
@@ -570,7 +695,11 @@
                 var SSLContext = Java.use("javax.net.ssl.SSLContext");
                 
                 SSLContext.init.overload('[Ljavax.net.ssl.KeyManager;', '[Ljavax.net.ssl.TrustManager;', 'java.security.SecureRandom').implementation = function(keyManager, trustManager, secureRandom) {
-                    console.log("[CertPinner] SSLContext.init intercepted");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "java_sslcontext_init_intercepted"
+                    });
                     
                     // Create custom TrustManager
                     var TrustManager = Java.use("javax.net.ssl.X509TrustManager");
@@ -579,11 +708,21 @@
                         implements: [TrustManager],
                         methods: {
                             checkClientTrusted: function(chain, authType) {
-                                console.log("[CertPinner] Java checkClientTrusted bypassed");
+                                send({
+                                    type: "bypass",
+                                    target: "certificate_pinner_bypass",
+                                    action: "java_trust_manager_bypassed",
+                                    method: "checkClientTrusted"
+                                });
                                 self.stats.validationsBypassed++;
                             },
                             checkServerTrusted: function(chain, authType) {
-                                console.log("[CertPinner] Java checkServerTrusted bypassed");
+                                send({
+                                    type: "bypass",
+                                    target: "certificate_pinner_bypass",
+                                    action: "java_trust_manager_bypassed",
+                                    method: "checkServerTrusted"
+                                });
                                 self.stats.validationsBypassed++;
                             },
                             getAcceptedIssuers: function() {
@@ -598,7 +737,12 @@
                 
                 self.stats.hooksInstalled++;
             } catch(e) {
-                console.log("[CertPinner] Failed to hook Java SSLContext: " + e);
+                send({
+                    type: "error",
+                    target: "certificate_pinner_bypass",
+                    action: "failed_to_hook_java_sslcontext",
+                    error: e.toString()
+                });
             }
             
             // HttpsURLConnection
@@ -606,7 +750,11 @@
                 var HttpsURLConnection = Java.use("javax.net.ssl.HttpsURLConnection");
                 
                 HttpsURLConnection.setDefaultHostnameVerifier.implementation = function(verifier) {
-                    console.log("[CertPinner] HttpsURLConnection.setDefaultHostnameVerifier intercepted");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "java_https_hostname_verifier_intercepted"
+                    });
                     
                     var HostnameVerifier = Java.use("javax.net.ssl.HostnameVerifier");
                     var TrustAllVerifier = Java.registerClass({
@@ -614,7 +762,12 @@
                         implements: [HostnameVerifier],
                         methods: {
                             verify: function(hostname, session) {
-                                console.log("[CertPinner] Hostname verification bypassed: " + hostname);
+                                send({
+                                    type: "bypass",
+                                    target: "certificate_pinner_bypass",
+                                    action: "java_hostname_verification_bypassed",
+                                    hostname: hostname
+                                });
                                 self.stats.validationsBypassed++;
                                 return true;
                             }
@@ -626,7 +779,12 @@
                 
                 self.stats.hooksInstalled++;
             } catch(e) {
-                console.log("[CertPinner] Failed to hook HttpsURLConnection: " + e);
+                send({
+                    type: "error",
+                    target: "certificate_pinner_bypass",
+                    action: "failed_to_hook_https_connection",
+                    error: e.toString()
+                });
             }
         });
     },
@@ -644,7 +802,12 @@
             Interceptor.attach(NSURLSession["- dataTaskWithRequest:completionHandler:"].implementation, {
                 onEnter: function(args) {
                     var request = new ObjC.Object(args[2]);
-                    console.log("[CertPinner] NSURLSession request to: " + request.URL().absoluteString());
+                    send({
+                        type: "info",
+                        target: "certificate_pinner_bypass",
+                        action: "ios_nsurlsession_request",
+                        url: request.URL().absoluteString()
+                    });
                 }
             });
             
@@ -665,7 +828,11 @@
                             // Call completion handler with UseCredential
                             completionHandler.call([NSURLSessionAuthChallengeDisposition.UseCredential, ObjC.classes.NSURLCredential.credentialForTrust_(ptr(0))]);
                             
-                            console.log("[CertPinner] NSURLSessionDelegate challenge bypassed");
+                            send({
+                                type: "bypass",
+                                target: "certificate_pinner_bypass",
+                                action: "ios_nsurlsession_challenge_bypassed"
+                            });
                             self.stats.validationsBypassed++;
                         }
                     });
@@ -673,14 +840,23 @@
                 }
             }
         } catch(e) {
-            console.log("[CertPinner] Failed to hook NSURLSession: " + e);
+            send({
+                type: "error",
+                target: "certificate_pinner_bypass",
+                action: "failed_to_hook_nsurlsession",
+                error: e.toString()
+            });
         }
         
         // SecTrustEvaluate
         var SecTrustEvaluate = Module.findExportByName("Security", "SecTrustEvaluate");
         if (SecTrustEvaluate) {
             Interceptor.replace(SecTrustEvaluate, new NativeCallback(function(trust, result) {
-                console.log("[CertPinner] SecTrustEvaluate bypassed");
+                send({
+                    type: "bypass",
+                    target: "certificate_pinner_bypass",
+                    action: "ios_sectrust_evaluate_bypassed"
+                });
                 Memory.writeU32(result, 1); // kSecTrustResultProceed
                 self.stats.validationsBypassed++;
                 return 0; // errSecSuccess
@@ -692,7 +868,11 @@
         var SecTrustSetAnchorCertificates = Module.findExportByName("Security", "SecTrustSetAnchorCertificates");
         if (SecTrustSetAnchorCertificates) {
             Interceptor.replace(SecTrustSetAnchorCertificates, new NativeCallback(function(trust, anchorCertificates) {
-                console.log("[CertPinner] SecTrustSetAnchorCertificates bypassed");
+                send({
+                    type: "bypass",
+                    target: "certificate_pinner_bypass",
+                    action: "ios_sectrust_anchor_certs_bypassed"
+                });
                 return 0; // errSecSuccess
             }, 'int', ['pointer', 'pointer']));
             self.stats.hooksInstalled++;
@@ -726,7 +906,12 @@
                                         // Assume non-zero is success
                                         if (retval.toInt32() === 0) {
                                             retval.replace(1);
-                                            console.log("[CertPinner] Custom function bypassed: " + exp.name);
+                                            send({
+                                                type: "bypass",
+                                                target: "certificate_pinner_bypass",
+                                                action: "custom_function_bypassed",
+                                                function_name: exp.name
+                                            });
                                             self.stats.validationsBypassed++;
                                         }
                                     }
@@ -746,7 +931,11 @@
     injectTrustedCertificate: function(buffer) {
         // This would contain actual certificate injection logic
         // For now, we'll just mark it as trusted
-        console.log("[CertPinner] Injecting trusted certificate");
+        send({
+            type: "info",
+            target: "certificate_pinner_bypass",
+            action: "injecting_trusted_certificate"
+        });
     },
     
     // Hook AFNetworking (iOS)
@@ -763,7 +952,11 @@
                     onEnter: function(args) {
                         // AFSSLPinningModeNone = 0
                         args[2] = ptr(0);
-                        console.log("[CertPinner] AFSecurityPolicy pinning mode set to None");
+                        send({
+                            type: "bypass",
+                            target: "certificate_pinner_bypass",
+                            action: "ios_afnetworking_pinning_disabled"
+                        });
                     }
                 });
                 
@@ -771,7 +964,11 @@
                 Interceptor.attach(AFSecurityPolicy["- setAllowInvalidCertificates:"].implementation, {
                     onEnter: function(args) {
                         args[2] = ptr(1); // YES
-                        console.log("[CertPinner] AFSecurityPolicy allowing invalid certificates");
+                        send({
+                            type: "bypass",
+                            target: "certificate_pinner_bypass",
+                            action: "ios_afnetworking_invalid_certs_allowed"
+                        });
                     }
                 });
                 
@@ -781,7 +978,11 @@
                     Interceptor.attach(evaluateMethod.implementation, {
                         onLeave: function(retval) {
                             retval.replace(ptr(1)); // YES
-                            console.log("[CertPinner] AFSecurityPolicy evaluation bypassed");
+                            send({
+                                type: "bypass",
+                                target: "certificate_pinner_bypass",
+                                action: "ios_afnetworking_evaluation_bypassed"
+                            });
                             self.stats.validationsBypassed++;
                         }
                     });
@@ -790,7 +991,12 @@
                 self.stats.hooksInstalled += 3;
             }
         } catch(e) {
-            console.log("[CertPinner] Failed to hook AFNetworking: " + e);
+            send({
+                type: "error",
+                target: "certificate_pinner_bypass",
+                action: "failed_to_hook_afnetworking",
+                error: e.toString()
+            });
         }
     },
     
@@ -806,13 +1012,21 @@
                 var CertPinManager = Java.use("com.android.org.conscrypt.CertPinManager");
                 
                 CertPinManager.checkChainPinning.implementation = function(hostname, chain) {
-                    console.log("[CertPinner] Conscrypt CertPinManager.checkChainPinning bypassed");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "android_conscrypt_chain_pinning_bypassed"
+                    });
                     self.stats.validationsBypassed++;
                     return true;
                 };
                 
                 CertPinManager.isChainValid.implementation = function(hostname, chain) {
-                    console.log("[CertPinner] Conscrypt CertPinManager.isChainValid bypassed");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "android_conscrypt_chain_valid_bypassed"
+                    });
                     self.stats.validationsBypassed++;
                     return true;
                 };
@@ -827,7 +1041,11 @@
                 var NetworkSecurityConfig = Java.use("android.security.net.config.NetworkSecurityConfig");
                 
                 NetworkSecurityConfig.getDefaultBuilder.implementation = function(applicationInfo) {
-                    console.log("[CertPinner] NetworkSecurityConfig.getDefaultBuilder intercepted");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinner_bypass",
+                        action: "android_network_security_config_intercepted"
+                    });
                     
                     var builder = this.getDefaultBuilder(applicationInfo);
                     var NetworkSecurityConfigBuilder = Java.use("android.security.net.config.NetworkSecurityConfig$Builder");

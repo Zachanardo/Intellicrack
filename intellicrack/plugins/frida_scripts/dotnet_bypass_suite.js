@@ -98,7 +98,11 @@
     },
     
     run: function() {
-        console.log("[.NET Bypass] Starting .NET bypass suite...");
+        send({
+            type: "status",
+            target: "dotnet_bypass_suite",
+            action: "starting_dotnet_bypass_suite"
+        });
         
         // Detect CLR version
         this.detectCLR();
@@ -119,8 +123,12 @@
         this.hookLicenseChecks();
         this.hookObfuscatorRuntime();
         
-        console.log("[.NET Bypass] Suite initialized - " + 
-                   this.stats.methodsHooked + " methods hooked");
+        send({
+            type: "status",
+            target: "dotnet_bypass_suite",
+            action: "suite_initialized",
+            methods_hooked: this.stats.methodsHooked
+        });
     },
     
     // Detect CLR type and version
@@ -133,14 +141,29 @@
             if (name.includes("clr.dll")) {
                 self.clrModule = module;
                 self.isCoreCLR = false;
-                console.log("[.NET Bypass] Found .NET Framework CLR: " + module.name);
+                send({
+                    type: "info",
+                    target: "dotnet_bypass_suite",
+                    action: "found_net_framework_clr",
+                    module_name: module.name
+                });
             } else if (name.includes("coreclr.dll")) {
                 self.clrModule = module;
                 self.isCoreCLR = true;
-                console.log("[.NET Bypass] Found .NET Core CLR: " + module.name);
+                send({
+                    type: "info",
+                    target: "dotnet_bypass_suite",
+                    action: "found_net_core_clr",
+                    module_name: module.name
+                });
             } else if (name.includes("mono")) {
                 self.monoModule = module;
-                console.log("[.NET Bypass] Found Mono runtime: " + module.name);
+                send({
+                    type: "info",
+                    target: "dotnet_bypass_suite",
+                    action: "found_mono_runtime",
+                    module_name: module.name
+                });
             }
         });
     },
@@ -186,7 +209,11 @@
         if (assemblyLoad) {
             Interceptor.attach(assemblyLoad, {
                 onEnter: function(args) {
-                    console.log("[.NET Bypass] Assembly loading...");
+                    send({
+                        type: "info",
+                        target: "dotnet_bypass_suite",
+                        action: "assembly_loading"
+                    });
                 },
                 onLeave: function(retval) {
                     if (!retval.isNull()) {
@@ -207,7 +234,12 @@
                 onLeave: function(retval) {
                     if (!retval.isNull() && this.assemblyPath) {
                         var path = this.assemblyPath.readUtf16String();
-                        console.log("[.NET Bypass] Loaded assembly: " + path);
+                        send({
+                            type: "info",
+                            target: "dotnet_bypass_suite",
+                            action: "assembly_loaded",
+                            assembly_path: path
+                        });
                         self.assemblies[retval.toString()] = {
                             handle: retval,
                             path: path,
@@ -229,7 +261,12 @@
         var getNameMethod = this.findMethodInVTable(assembly, "GetName");
         if (getNameMethod) {
             var name = new NativeFunction(getNameMethod, 'pointer', ['pointer'])(assembly);
-            console.log("[.NET Bypass] Processing assembly: " + name.readUtf16String());
+            send({
+                type: "info",
+                target: "dotnet_bypass_suite",
+                action: "processing_assembly",
+                assembly_name: name.readUtf16String()
+            });
         }
         
         // Check for known protections
@@ -263,7 +300,12 @@
                             
                             // Check for license-related methods
                             if (methodName && self.isLicenseMethod(methodName)) {
-                                console.log("[.NET Bypass] JIT compiling license method: " + methodName);
+                                send({
+                                    type: "bypass",
+                                    target: "dotnet_bypass_suite",
+                                    action: "jit_compiling_license_method",
+                                    method_name: methodName
+                                });
                                 this.shouldPatch = true;
                                 this.methodInfo = methodInfo;
                             }
@@ -277,7 +319,11 @@
                     }
                 });
                 this.stats.methodsHooked++;
-                console.log("[.NET Bypass] Hooked JIT compiler");
+                send({
+                    type: "info",
+                    target: "dotnet_bypass_suite",
+                    action: "hooked_jit_compiler"
+                });
             }
         }
     },
@@ -314,7 +360,12 @@
                 var filename = args[1].readUtf16String();
                 var openFlags = args[2].toInt32();
                 
-                console.log("[.NET Bypass] Opening metadata scope: " + filename);
+                send({
+                    type: "info",
+                    target: "dotnet_bypass_suite",
+                    action: "opening_metadata_scope",
+                    filename: filename
+                });
                 
                 // Check if it's a protected assembly
                 if (self.isProtectedAssembly(filename)) {
@@ -349,7 +400,12 @@
                             try {
                                 var decrypted = retval.readUtf16String();
                                 if (decrypted && self.isLicenseString(decrypted)) {
-                                    console.log("[.NET Bypass] Decrypted string: " + decrypted);
+                                    send({
+                                        type: "bypass",
+                                        target: "dotnet_bypass_suite",
+                                        action: "decrypted_license_string",
+                                        decrypted_string: decrypted
+                                    });
                                     
                                     // Replace with valid license
                                     var validLicense = self.generateValidLicense(decrypted);
@@ -383,7 +439,12 @@
                     var bindingFlags = args[2].toInt32();
                     
                     if (memberName && self.isLicenseMethod(memberName)) {
-                        console.log("[.NET Bypass] Reflection invoke: " + memberName);
+                        send({
+                            type: "bypass",
+                            target: "dotnet_bypass_suite",
+                            action: "reflection_invoke_license",
+                            member_name: memberName
+                        });
                         this.isLicenseCheck = true;
                     }
                 },
@@ -414,7 +475,12 @@
                     var methodName = self.getMethodName(method);
                     
                     if (methodName && self.isLicenseMethod(methodName)) {
-                        console.log("[.NET Bypass] Method invoke: " + methodName);
+                        send({
+                            type: "bypass",
+                            target: "dotnet_bypass_suite",
+                            action: "method_invoke_license",
+                            method_name: methodName
+                        });
                         this.isLicenseCheck = true;
                         this.returnValue = args[4]; // out parameter
                     }
@@ -439,7 +505,11 @@
         var strongNameVerify = Module.findExportByName("mscoree.dll", "StrongNameSignatureVerificationEx");
         if (strongNameVerify) {
             Interceptor.replace(strongNameVerify, new NativeCallback(function(wszFilePath, fForceVerification, pfWasVerified) {
-                console.log("[.NET Bypass] StrongName verification bypassed");
+                send({
+                    type: "bypass",
+                    target: "dotnet_bypass_suite",
+                    action: "strongname_verification_bypassed"
+                });
                 
                 if (pfWasVerified) {
                     pfWasVerified.writeU8(1);
@@ -458,7 +528,11 @@
                 onLeave: function(retval) {
                     var result = retval.toInt32();
                     if (result !== 0) {
-                        console.log("[.NET Bypass] Authenticode verification bypassed");
+                        send({
+                            type: "bypass",
+                            target: "dotnet_bypass_suite",
+                            action: "authenticode_verification_bypassed"
+                        });
                         retval.replace(0); // ERROR_SUCCESS
                         self.stats.checksumsBypassed++;
                     }
@@ -514,7 +588,11 @@
                     
                     // Check if hashing assembly data
                     if (dwDataLen > 1024 && self.isAssemblyData(pbData, dwDataLen)) {
-                        console.log("[.NET Bypass] Assembly hash computation intercepted");
+                        send({
+                            type: "bypass",
+                            target: "dotnet_bypass_suite",
+                            action: "assembly_hash_computation_intercepted"
+                        });
                         this.shouldModify = true;
                     }
                 }
@@ -532,7 +610,11 @@
                     var cbInput = args[2].toInt32();
                     
                     if (cbInput > 1024 && self.isAssemblyData(pbInput, cbInput)) {
-                        console.log("[.NET Bypass] BCrypt assembly hash intercepted");
+                        send({
+                            type: "bypass",
+                            target: "dotnet_bypass_suite",
+                            action: "bcrypt_assembly_hash_intercepted"
+                        });
                         // Replace with known good hash
                         this.originalData = pbInput.readByteArray(Math.min(cbInput, 64));
                         pbInput.writeByteArray(self.getKnownGoodHash());
@@ -621,7 +703,11 @@
                         // Force integrity check to pass
                         if (retval.toInt32() === 0) {
                             retval.replace(1);
-                            console.log("[.NET Bypass] Runtime integrity check bypassed");
+                            send({
+                                type: "bypass",
+                                target: "dotnet_bypass_suite",
+                                action: "runtime_integrity_check_bypassed"
+                            });
                             self.stats.checksumsBypassed++;
                         }
                     }
@@ -650,7 +736,12 @@
         licensePatterns.forEach(function(pattern) {
             self.hookMethodByName(pattern, function(originalFunc) {
                 return new NativeCallback(function() {
-                    console.log("[.NET Bypass] License check bypassed: " + pattern);
+                    send({
+                        type: "bypass",
+                        target: "dotnet_bypass_suite",
+                        action: "license_check_bypassed",
+                        pattern: pattern
+                    });
                     self.bypassedChecks++;
                     
                     // Return success based on method name
@@ -693,7 +784,12 @@
                     code.putU8(0x90); // NOP
                 }
             });
-            console.log("[.NET Bypass] ConfuserEx anti-tamper disabled at: " + match.address);
+            send({
+                type: "bypass",
+                target: "dotnet_bypass_suite",
+                action: "confuserex_anti_tamper_disabled",
+                address: match.address.toString()
+            });
             self.stats.checksumsBypassed++;
         });
         
@@ -705,7 +801,11 @@
             Interceptor.attach(match.address, {
                 onLeave: function(retval) {
                     // Log decrypted constants
-                    console.log("[.NET Bypass] ConfuserEx constant decrypted");
+                    send({
+                        type: "bypass",
+                        target: "dotnet_bypass_suite",
+                        action: "confuserex_constant_decrypted"
+                    });
                     self.stats.stringsDecrypted++;
                 }
             });
@@ -730,7 +830,12 @@
                         try {
                             var decrypted = retval.readUtf16String();
                             if (self.isLicenseString(decrypted)) {
-                                console.log("[.NET Bypass] Eazfuscator string: " + decrypted);
+                                send({
+                                    type: "bypass",
+                                    target: "dotnet_bypass_suite",
+                                    action: "eazfuscator_string_decrypted",
+                                    decrypted_string: decrypted
+                                });
                                 
                                 // Replace with valid string
                                 var valid = self.generateValidLicense(decrypted);
@@ -758,7 +863,11 @@
                 code.putU8(0x17); // ldc.i4.1
                 code.putU8(0x2A); // ret
             });
-            console.log("[.NET Bypass] Crypto Obfuscator license check patched");
+            send({
+                type: "bypass",
+                target: "dotnet_bypass_suite",
+                action: "crypto_obfuscator_license_check_patched"
+            });
             self.bypassedChecks++;
         });
     },
@@ -788,7 +897,12 @@
                     var replacement = replacementFactory(exp.address);
                     Interceptor.replace(exp.address, replacement);
                     self.stats.methodsHooked++;
-                    console.log("[.NET Bypass] Hooked: " + exp.name);
+                    send({
+                        type: "info",
+                        target: "dotnet_bypass_suite",
+                        action: "method_hooked",
+                        method_name: exp.name
+                    });
                 }
             });
         });
@@ -908,19 +1022,32 @@
         
         Object.keys(signatures).forEach(function(sig) {
             // Check for attributes in metadata
-            console.log("[.NET Bypass] Checking for " + signatures[sig] + " protection");
+            send({
+                type: "info",
+                target: "dotnet_bypass_suite",
+                action: "checking_protection",
+                protection_type: signatures[sig]
+            });
         });
     },
     
     // Helper: Patch anti-tamper checks
     patchAntiTamperChecks: function(assembly) {
-        console.log("[.NET Bypass] Patching anti-tamper checks in assembly");
+        send({
+            type: "status",
+            target: "dotnet_bypass_suite",
+            action: "patching_anti_tamper_checks"
+        });
         // Implementation would patch specific anti-tamper patterns
     },
     
     // Helper: Patch compiled method
     patchCompiledMethod: function(methodInfo) {
-        console.log("[.NET Bypass] Patching compiled license method");
+        send({
+            type: "status",
+            target: "dotnet_bypass_suite",
+            action: "patching_compiled_license_method"
+        });
         
         // Get native code address
         var nativeCode = methodInfo.add(0x20).readPointer();

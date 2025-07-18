@@ -91,6 +91,7 @@ class VMContext:
     flags: Dict[str, bool] = field(default_factory=dict)
 
     def __post_init__(self):
+        """Initialize VM context with default registers and flags if not provided."""
         if not self.registers:
             # Initialize x86 registers
             self.registers = {
@@ -109,54 +110,8 @@ class VMProtectHandler:
     """VMProtect-specific handling"""
 
     def __init__(self):
+        """Initialize VMProtect handler with logging and detection capabilities."""
         self.logger = logging.getLogger(f"{__name__}.VMProtect")
-
-        # VMProtect opcode mappings (simplified)
-        self.opcode_map = {
-            # Stack operations
-            0x00: ("VPUSH", VMInstructionType.STACK),
-            0x01: ("VPOP", VMInstructionType.STACK),
-
-            # Arithmetic
-            0x02: ("VADD", VMInstructionType.ARITHMETIC),
-            0x03: ("VSUB", VMInstructionType.ARITHMETIC),
-            0x04: ("VMUL", VMInstructionType.ARITHMETIC),
-            0x05: ("VDIV", VMInstructionType.ARITHMETIC),
-            0x06: ("VMOD", VMInstructionType.ARITHMETIC),
-
-            # Logical
-            0x07: ("VAND", VMInstructionType.LOGICAL),
-            0x08: ("VOR", VMInstructionType.LOGICAL),
-            0x09: ("VXOR", VMInstructionType.LOGICAL),
-            0x0A: ("VNOT", VMInstructionType.LOGICAL),
-            0x0B: ("VSHL", VMInstructionType.LOGICAL),
-            0x0C: ("VSHR", VMInstructionType.LOGICAL),
-
-            # Memory
-            0x0D: ("VLOAD", VMInstructionType.MEMORY),
-            0x0E: ("VSTORE", VMInstructionType.MEMORY),
-
-            # Control flow
-            0x0F: ("VJMP", VMInstructionType.CONTROL_FLOW),
-            0x10: ("VJCC", VMInstructionType.CONTROL_FLOW),
-            0x11: ("VCALL", VMInstructionType.CONTROL_FLOW),
-            0x12: ("VRET", VMInstructionType.CONTROL_FLOW),
-
-            # Register operations
-            0x13: ("VMOV", VMInstructionType.REGISTER),
-            0x14: ("VXCHG", VMInstructionType.REGISTER),
-
-            # Special
-            0x15: ("VNOP", VMInstructionType.CUSTOM),
-            0x16: ("VEXIT", VMInstructionType.CUSTOM),
-        }
-
-        # Key schedules for different versions
-        self.key_schedules = {
-            ProtectionType.VMPROTECT_1X: self._vmprotect_1x_key_schedule,
-            ProtectionType.VMPROTECT_2X: self._vmprotect_2x_key_schedule,
-            ProtectionType.VMPROTECT_3X: self._vmprotect_3x_key_schedule
-        }
 
     def identify_version(self, vm_data: bytes) -> ProtectionType:
         """Identify VMProtect version"""
@@ -359,33 +314,8 @@ class ThemidaHandler:
     """Themida-specific handling"""
 
     def __init__(self):
+        """Initialize Themida handler with logging and opcode mapping."""
         self.logger = logging.getLogger(f"{__name__}.Themida")
-
-        # Themida VM opcodes
-        self.opcode_map = {
-            0x00: ("TH_PUSH", VMInstructionType.STACK),
-            0x01: ("TH_POP", VMInstructionType.STACK),
-            0x02: ("TH_MOV", VMInstructionType.REGISTER),
-            0x03: ("TH_ADD", VMInstructionType.ARITHMETIC),
-            0x04: ("TH_SUB", VMInstructionType.ARITHMETIC),
-            0x05: ("TH_MUL", VMInstructionType.ARITHMETIC),
-            0x06: ("TH_XOR", VMInstructionType.LOGICAL),
-            0x07: ("TH_AND", VMInstructionType.LOGICAL),
-            0x08: ("TH_OR", VMInstructionType.LOGICAL),
-            0x09: ("TH_NOT", VMInstructionType.LOGICAL),
-            0x0A: ("TH_SHL", VMInstructionType.LOGICAL),
-            0x0B: ("TH_SHR", VMInstructionType.LOGICAL),
-            0x0C: ("TH_LOAD", VMInstructionType.MEMORY),
-            0x0D: ("TH_STORE", VMInstructionType.MEMORY),
-            0x0E: ("TH_JMP", VMInstructionType.CONTROL_FLOW),
-            0x0F: ("TH_JZ", VMInstructionType.CONTROL_FLOW),
-            0x10: ("TH_JNZ", VMInstructionType.CONTROL_FLOW),
-            0x11: ("TH_CALL", VMInstructionType.CONTROL_FLOW),
-            0x12: ("TH_RET", VMInstructionType.CONTROL_FLOW),
-            0x13: ("TH_CMP", VMInstructionType.ARITHMETIC),
-            0x14: ("TH_TEST", VMInstructionType.LOGICAL),
-            0x15: ("TH_EXIT", VMInstructionType.CUSTOM),
-        }
 
     def decrypt_themida_vm(self, vm_data: bytes, key: bytes) -> bytes:
         """Decrypt Themida VM code"""
@@ -412,21 +342,10 @@ class VMEmulator:
     """VM instruction emulator"""
 
     def __init__(self, protection_type: ProtectionType):
+        """Initialize VM emulator with protection type and Unicorn engine."""
         self.protection_type = protection_type
         self.context = VMContext()
         self.logger = logging.getLogger(f"{__name__}.VMEmulator")
-
-        # Initialize handlers
-        self.handlers = {
-            ProtectionType.VMPROTECT_1X: VMProtectHandler(),
-            ProtectionType.VMPROTECT_2X: VMProtectHandler(),
-            ProtectionType.VMPROTECT_3X: VMProtectHandler(),
-            ProtectionType.THEMIDA: ThemidaHandler(),
-        }
-
-        # Unicorn engine for native execution
-        self.uc = unicorn.Uc(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)
-        self._setup_unicorn()
 
     def _setup_unicorn(self):
         """Setup Unicorn engine"""
@@ -645,6 +564,7 @@ class VMAnalyzer:
     """VM code analyzer and pattern detector"""
 
     def __init__(self):
+        """Initialize VM analyzer with logging and protection patterns."""
         self.logger = logging.getLogger(f"{__name__}.VMAnalyzer")
         self.patterns = self._load_vm_patterns()
 
@@ -844,17 +764,10 @@ class VMProtectionUnwrapper:
     """Main VM protection unwrapper"""
 
     def __init__(self):
+        """Initialize VM protection unwrapper with analyzer, emulators, and statistics tracking."""
         self.logger = logging.getLogger(__name__)
         self.analyzer = VMAnalyzer()
         self.emulators = {}
-
-        # Statistics
-        self.stats = {
-            'files_processed': 0,
-            'successful_unwraps': 0,
-            'failed_unwraps': 0,
-            'protection_types_detected': defaultdict(int)
-        }
 
     def unwrap_file(self, input_file: str, output_file: str) -> Dict[str, Any]:
         """Unwrap VM-protected file"""

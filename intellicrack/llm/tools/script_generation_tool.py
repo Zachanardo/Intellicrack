@@ -18,7 +18,12 @@ class ScriptGenerationTool:
     """LLM tool for generating analysis scripts"""
 
     def __init__(self):
-        """Initialize script generation tool"""
+        """Initialize the script generation tool.
+        
+        Sets up the AI-powered script generation system for creating Frida
+        and Ghidra analysis scripts. Loads template libraries and configures
+        generation parameters for automated reverse engineering workflows.
+        """
         self.frida_templates = self._load_frida_templates()
         self.ghidra_templates = self._load_ghidra_templates()
 
@@ -284,11 +289,11 @@ deobfuscate_strings()'''
                     script_parts.append(f"// Hooks for {protection_type} protection")
                     script_parts.append(f"// Details: {details}")
                     script_parts.append(self._generate_packer_hooks(protection_type))
-                    
+
                 elif protection_type.lower() in ['licensing', 'trial', 'serial']:
                     script_parts.append(f"// License/trial bypass hooks for {protection_type}")
                     script_parts.append(self._generate_license_hooks(details))
-                    
+
                 elif protection_type.lower() in ['anti_debug', 'anti_vm']:
                     script_parts.append(f"// Anti-analysis bypass for {protection_type}")
                     script_parts.append(self._generate_anti_analysis_hooks(protection_type))
@@ -305,7 +310,7 @@ deobfuscate_strings()'''
         else:
             # Native hook - target specific functions based on protection info
             target_functions = self._get_target_functions_from_protection(protection_info)
-            
+
             script_parts.append(f'''// Hook native functions based on protection analysis
 var targetModule = Process.enumerateModules().filter(function(m) {{
     return m.name.toLowerCase().indexOf('{target.lower()}') !== -1;
@@ -359,7 +364,7 @@ if (targetModule) {{
 
         # Customize API tracing based on protection_info
         apis_to_trace = self._get_apis_to_trace(protection_info)
-        
+
         # Add protection-specific tracing
         if protection_info:
             for protection_type, details in protection_info.items():
@@ -372,7 +377,7 @@ if (targetModule) {{
                         ("wininet.dll", "HttpSendRequestW")
                     ]
                     apis_to_trace.extend(license_apis)
-                    
+
                 elif protection_type.lower() in ['anti_debug', 'anti_vm']:
                     script_parts.append("// Anti-analysis API tracing")
                     debug_apis = [
@@ -382,7 +387,7 @@ if (targetModule) {{
                         ("kernel32.dll", "GetSystemFirmwareTable")
                     ]
                     apis_to_trace.extend(debug_apis)
-                    
+
                 elif protection_type.lower() in ['packing', 'upx', 'vmprotect']:
                     script_parts.append("// Unpacking/protection API tracing")
                     packer_apis = [
@@ -433,14 +438,14 @@ if (targetModule) {{
                         ("kernel32.dll", "CreateThread"),
                         ("kernel32.dll", "TerminateProcess")
                     ])
-                    
+
                 script_parts.append(f"// Requirement: {req}")
-            
+
             # Remove duplicates after adding requirement-based APIs
             apis_to_trace = list(set(apis_to_trace))
 
         return "\n".join(script_parts)
-    
+
     def _get_apis_to_trace(self, protection_info: Dict) -> List[tuple]:
         """Get list of APIs to trace based on protection info"""
         # Base APIs always traced
@@ -450,7 +455,7 @@ if (targetModule) {{
             ("kernel32.dll", "WriteFile"),
             ("user32.dll", "MessageBoxW")
         ]
-        
+
         # Add protection-specific APIs
         if protection_info:
             protections = protection_info.keys()
@@ -466,7 +471,7 @@ if (targetModule) {{
                     ("advapi32.dll", "RegQueryValueExW"),
                     ("advapi32.dll", "RegSetValueExW")
                 ])
-                
+
         return base_apis
 
     def _generate_frida_bypass(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
@@ -579,7 +584,7 @@ if (targetModule) {{
             });
         }
     });''')
-                    
+
                 script_parts.append(f"// Custom requirement: {req}")
 
         if bypass_code_parts:
@@ -615,7 +620,7 @@ Interceptor.attach(targetAddr, {
 
         # Generate protection-specific patches based on protection_info
         patch_code_parts = []
-        
+
         if protection_info:
             for protection_type, details in protection_info.items():
                 if protection_type.lower() in ['anti_debug', 'debugger']:
@@ -625,7 +630,7 @@ Interceptor.attach(targetAddr, {
         addr.add(index).writeU8(opcode);
     });
     console.log("[*] Patched anti-debug at " + addr);''')
-                    
+
                 elif protection_type.lower() in ['license', 'trial', 'registration']:
                     patch_code_parts.append('''    // Patch license/trial checks
     var licenseBypassOpcodes = [0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3]; // mov eax, 1; ret
@@ -633,7 +638,7 @@ Interceptor.attach(targetAddr, {
         addr.add(index).writeU8(opcode);
     });
     console.log("[*] Patched license check at " + addr);''')
-                    
+
                 elif protection_type.lower() in ['integrity', 'checksum', 'crc']:
                     patch_code_parts.append('''    // Patch integrity/checksum verification
     var integrityBypassOpcodes = [0x90, 0x90, 0x90, 0x90, 0x90]; // NOP sled
@@ -641,7 +646,7 @@ Interceptor.attach(targetAddr, {
         addr.add(index).writeU8(opcode);
     });
     console.log("[*] Patched integrity check at " + addr);''')
-                    
+
         # Add requirements-based patches
         if requirements:
             script_parts.append("// Custom requirement-based patches")
@@ -658,7 +663,7 @@ Interceptor.attach(targetAddr, {
     callPatchOpcodes.forEach(function(opcode, index) {
         addr.add(index).writeU8(opcode);
     });''')
-                    
+
                 script_parts.append(f"// Requirement: {req}")
 
         # Use combined patch code or default
@@ -691,7 +696,7 @@ Interceptor.attach(targetAddr, {
 
         # Build protection-aware patterns based on protection_info
         patterns = ["check", "verify", "validate", "auth", "license"]
-        
+
         if protection_info:
             for protection_type in protection_info.keys():
                 if protection_type.lower() in ['anti_debug', 'debugger']:
@@ -707,7 +712,7 @@ Interceptor.attach(targetAddr, {
 
         # Remove duplicates and convert to JavaScript array format
         patterns = list(set(patterns))
-        
+
         # Add requirements-based patterns
         if requirements:
             for req in requirements:
@@ -717,7 +722,7 @@ Interceptor.attach(targetAddr, {
                     patterns.extend(["file", "read", "write", "open", "close"])
                 elif any(keyword in req.lower() for keyword in ['memory', 'alloc', 'heap']):
                     patterns.extend(["alloc", "malloc", "free", "heap"])
-                    
+
         patterns_js = str(patterns).replace("'", '"')
 
         # Basic structure with protection-aware patterns
@@ -794,8 +799,23 @@ var upxEntryPoint = Module.findBaseAddress("main_module").add(0x1000);
 Interceptor.attach(upxEntryPoint, {
     onEnter: function(args) {
         console.log("[+] UPX entry point reached");
+        // Monitor for OEP jump
+        this.context = args[0];
+    },
+    onLeave: function(retval) {
+        console.log("[+] UPX unpacking complete, OEP likely at: " + retval);
     }
-});'''
+});
+
+// Hook decompression routine
+var decompress = Module.findExportByName(null, "decompress");
+if (decompress) {
+    Interceptor.attach(decompress, {
+        onEnter: function(args) {
+            console.log("[+] UPX decompression started");
+        }
+    });
+}'''
         elif protection_type.lower() == 'vmprotect':
             return '''
 // VMProtect VM entry hooks
@@ -804,17 +824,234 @@ vmEntryPoints.forEach(function(symbol) {
     Interceptor.attach(symbol.address, {
         onEnter: function(args) {
             console.log("[+] VMProtect VM entry: " + symbol.name);
+            // Log VM context
+            this.vmContext = args[0];
+        },
+        onLeave: function(retval) {
+            console.log("[+] VM handler executed, result: " + retval);
+        }
+    });
+});
+
+// Hook virtualized code patterns
+var vmPatterns = ["push", "pop", "mov", "jmp"];
+Process.enumerateRanges('r-x').forEach(function(range) {
+    Memory.scan(range.base, range.size, "48 8B ?? ?? ?? ?? ?? 48 89", {
+        onMatch: function(address, size) {
+            console.log("[+] Found potential VM handler at: " + address);
         }
     });
 });'''
+        elif protection_type.lower() == 'themida':
+            return '''
+// Themida/WinLicense hooks
+var themidaChecks = ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "OutputDebugString"];
+themidaChecks.forEach(function(funcName) {
+    var funcAddr = Module.findExportByName(null, funcName);
+    if (funcAddr) {
+        Interceptor.attach(funcAddr, {
+            onLeave: function(retval) {
+                console.log("[+] Bypassing Themida check: " + funcName);
+                retval.replace(0);
+            }
+        });
+    }
+});
+
+// Hook Themida VM entry
+var vmEntry = Module.findBaseAddress("main_module").add(0x10000); // Common offset
+Interceptor.attach(vmEntry, {
+    onEnter: function(args) {
+        console.log("[+] Themida VM entry detected");
+    }
+});
+
+// Hook anti-dump protection
+var virtualProtect = Module.findExportByName("kernel32.dll", "VirtualProtect");
+Interceptor.attach(virtualProtect, {
+    onEnter: function(args) {
+        var protection = args[2].toInt32();
+        if (protection & 0x100) { // PAGE_GUARD
+            console.log("[+] Blocking Themida anti-dump");
+            args[2] = ptr(0x40); // PAGE_EXECUTE_READWRITE
+        }
+    }
+});'''
+        elif protection_type.lower() == 'aspack':
+            return '''
+// ASPack unpacking hooks
+var aspackOEP = null;
+var virtualAlloc = Module.findExportByName("kernel32.dll", "VirtualAlloc");
+Interceptor.attach(virtualAlloc, {
+    onLeave: function(retval) {
+        if (!retval.isNull()) {
+            console.log("[+] ASPack allocated memory at: " + retval);
+            // Monitor for code execution in allocated region
+            Memory.protect(retval, 0x1000, 'rwx');
+            aspackOEP = retval;
+        }
+    }
+});
+
+// Hook common ASPack patterns
+var loadLibrary = Module.findExportByName("kernel32.dll", "LoadLibraryA");
+Interceptor.attach(loadLibrary, {
+    onEnter: function(args) {
+        var lib = args[0].readCString();
+        if (lib && lib.indexOf("aspack") !== -1) {
+            console.log("[+] ASPack loading: " + lib);
+        }
+    }
+});'''
+        elif protection_type.lower() == 'mpress':
+            return '''
+// MPRESS unpacking hooks
+var mpressDecrypt = Module.findExportByName(null, "decrypt");
+if (mpressDecrypt) {
+    Interceptor.attach(mpressDecrypt, {
+        onEnter: function(args) {
+            console.log("[+] MPRESS decryption started");
+            this.encData = args[0];
+            this.size = args[1].toInt32();
+        },
+        onLeave: function(retval) {
+            console.log("[+] MPRESS decrypted " + this.size + " bytes");
+        }
+    });
+}
+
+// Hook MPRESS decompression
+var rtlDecompressBuffer = Module.findExportByName("ntdll.dll", "RtlDecompressBuffer");
+if (rtlDecompressBuffer) {
+    Interceptor.attach(rtlDecompressBuffer, {
+        onEnter: function(args) {
+            console.log("[+] MPRESS decompression, format: " + args[0]);
+        }
+    });
+}'''
+        elif protection_type.lower() == 'enigma':
+            return '''
+// Enigma Protector hooks
+var enigmaChecks = ["CheckSum", "CRC32", "VerifySignature"];
+enigmaChecks.forEach(function(funcName) {
+    var funcAddr = Module.findExportByName(null, funcName);
+    if (funcAddr) {
+        Interceptor.attach(funcAddr, {
+            onLeave: function(retval) {
+                console.log("[+] Bypassing Enigma check: " + funcName);
+                retval.replace(1); // Return valid
+            }
+        });
+    }
+});
+
+// Hook Enigma registration check
+var regCheck = Module.findExportByName(null, "IsRegistered");
+if (regCheck) {
+    Interceptor.attach(regCheck, {
+        onLeave: function(retval) {
+            console.log("[+] Bypassing Enigma registration");
+            retval.replace(1);
+        }
+    });
+}'''
+        elif protection_type.lower() == 'armadillo':
+            return '''
+// Armadillo protection hooks
+var armadilloAPIs = ["GetSystemTime", "GetLocalTime", "GetTickCount"];
+armadilloAPIs.forEach(function(funcName) {
+    var funcAddr = Module.findExportByName("kernel32.dll", funcName);
+    if (funcAddr) {
+        Interceptor.attach(funcAddr, {
+            onEnter: function(args) {
+                console.log("[+] Armadillo timing check: " + funcName);
+            }
+        });
+    }
+});
+
+// Hook CopyMem checks
+var rtlMoveMemory = Module.findExportByName("ntdll.dll", "RtlMoveMemory");
+if (rtlMoveMemory) {
+    Interceptor.attach(rtlMoveMemory, {
+        onEnter: function(args) {
+            var size = args[2].toInt32();
+            if (size > 0x10000) { // Large memory moves indicate unpacking
+                console.log("[+] Armadillo unpacking detected, size: " + size);
+            }
+        }
+    });
+}'''
+        elif protection_type.lower() == 'obsidium':
+            return '''
+// Obsidium protection hooks
+var obsidiumChecks = Module.enumerateExports("obsidium.dll");
+obsidiumChecks.forEach(function(exp) {
+    if (exp.name.indexOf("Check") !== -1 || exp.name.indexOf("Verify") !== -1) {
+        Interceptor.attach(exp.address, {
+            onLeave: function(retval) {
+                console.log("[+] Bypassing Obsidium: " + exp.name);
+                retval.replace(1);
+            }
+        });
+    }
+});
+
+// Hook Obsidium anti-debug
+var ntQueryInfoProcess = Module.findExportByName("ntdll.dll", "NtQueryInformationProcess");
+Interceptor.attach(ntQueryInfoProcess, {
+    onEnter: function(args) {
+        if (args[1].toInt32() === 7) { // ProcessDebugPort
+            this.bypass = true;
+        }
+    },
+    onLeave: function(retval) {
+        if (this.bypass) {
+            console.log("[+] Bypassing Obsidium debug check");
+            retval.replace(0);
+        }
+    }
+});'''
         else:
-            return f'// Hooks for {protection_type} not implemented yet'
+            return f'''
+// Generic packer hooks for {protection_type}
+var suspiciousFuncs = ["unpack", "decrypt", "decompress", "decode"];
+Process.enumerateModules().forEach(function(module) {{
+    module.enumerateExports().forEach(function(exp) {{
+        suspiciousFuncs.forEach(function(pattern) {{
+            if (exp.name.toLowerCase().indexOf(pattern) !== -1) {{
+                console.log("[+] Found packer function: " + exp.name);
+                Interceptor.attach(exp.address, {{
+                    onEnter: function(args) {{
+                        console.log("[+] Packer function called: " + exp.name);
+                    }},
+                    onLeave: function(retval) {{
+                        console.log("[+] Packer function completed");
+                    }}
+                }});
+            }}
+        }});
+    }});
+}});
+
+// Monitor memory allocations for unpacking
+var virtualAlloc = Module.findExportByName("kernel32.dll", "VirtualAlloc");
+if (virtualAlloc) {{
+    Interceptor.attach(virtualAlloc, {{
+        onLeave: function(retval) {{
+            if (!retval.isNull()) {{
+                var size = this.context.r8 || this.context.edx;
+                console.log("[+] Memory allocated for unpacking at: " + retval + " size: " + size);
+            }}
+        }}
+    }});
+}}'''
 
     def _generate_license_hooks(self, details: str) -> str:
         """Generate license/trial bypass hooks based on protection details"""
         # Parse details to customize license hooks
         base_functions = ["CheckLicense", "VerifySerial", "ValidateKey", "IsTrialExpired"]
-        
+
         # Add detail-specific functions if details contain hints
         if details and isinstance(details, str):
             details_lower = details.lower()
@@ -826,11 +1063,11 @@ vmEntryPoints.forEach(function(symbol) {
                 base_functions.extend(["ConnectLicenseServer", "ValidateOnline", "CheckServerLicense"])
             if 'hardware' in details_lower or 'hwid' in details_lower:
                 base_functions.extend(["GetHardwareID", "CheckHWID", "ValidateFingerprint"])
-                
+
         # Remove duplicates
         functions_list = list(set(base_functions))
         functions_js = str(functions_list).replace("'", '"')
-        
+
         return f'''
 // License check bypass hooks (based on details: {details})
 var licenseCheckFunctions = {functions_js};
@@ -861,6 +1098,15 @@ antiDebugFunctions.forEach(function(funcName) {
             }
         });
     }
+});
+
+// Additional debug flags
+var peb = Process.findModuleByName("ntdll.dll").base.add(0x60);
+var debugFlags = [0x68, 0x70]; // BeingDebugged, NtGlobalFlag
+debugFlags.forEach(function(offset) {
+    var addr = peb.add(offset);
+    Memory.protect(addr, 1, 'rw-');
+    addr.writeU8(0);
 });'''
         elif protection_type.lower() == 'anti_vm':
             return '''
@@ -878,14 +1124,206 @@ antiVmChecks.forEach(function(funcName) {
             }
         });
     }
+});
+
+// Registry key spoofing for VM detection
+var regQueryValueEx = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
+if (regQueryValueEx) {
+    Interceptor.attach(regQueryValueEx, {
+        onEnter: function(args) {
+            var keyName = args[1].readUtf16String();
+            if (keyName && (keyName.indexOf("VMware") !== -1 || keyName.indexOf("VBox") !== -1)) {
+                this.shouldBlock = true;
+            }
+        },
+        onLeave: function(retval) {
+            if (this.shouldBlock) {
+                retval.replace(0x2); // ERROR_FILE_NOT_FOUND
+            }
+        }
+    });
+}'''
+        elif protection_type.lower() == 'anti_attach':
+            return '''
+// Anti-attach bypass
+var ptrace = Module.findExportByName(null, "ptrace");
+if (ptrace) {
+    Interceptor.attach(ptrace, {
+        onEnter: function(args) {
+            if (args[0].toInt32() === 31) { // PTRACE_TRACEME
+                args[0] = ptr(0); // Change to PTRACE_PEEKTEXT
+            }
+        },
+        onLeave: function(retval) {
+            retval.replace(0); // Success
+        }
+    });
+}
+
+// Windows anti-attach
+var ntSetInformationThread = Module.findExportByName("ntdll.dll", "NtSetInformationThread");
+if (ntSetInformationThread) {
+    Interceptor.attach(ntSetInformationThread, {
+        onEnter: function(args) {
+            if (args[1].toInt32() === 0x11) { // ThreadHideFromDebugger
+                console.log("[+] Blocking ThreadHideFromDebugger");
+                return 0; // Skip call
+            }
+        }
+    });
+}'''
+        elif protection_type.lower() == 'anti_dump':
+            return '''
+// Anti-dump bypass
+var virtualProtect = Module.findExportByName("kernel32.dll", "VirtualProtect");
+if (virtualProtect) {
+    Interceptor.attach(virtualProtect, {
+        onEnter: function(args) {
+            var protection = args[2].toInt32();
+            if (protection & 0x100) { // PAGE_GUARD
+                console.log("[+] Blocking PAGE_GUARD protection");
+                args[2] = ptr(protection & ~0x100);
+            }
+        }
+    });
+}
+
+// Hook memory allocation to prevent anti-dump tricks
+var virtualAlloc = Module.findExportByName("kernel32.dll", "VirtualAlloc");
+if (virtualAlloc) {
+    Interceptor.attach(virtualAlloc, {
+        onEnter: function(args) {
+            var protection = args[3].toInt32();
+            if (protection === 0x40000000) { // SEC_NO_CHANGE
+                console.log("[+] Blocking anti-dump allocation");
+                args[3] = ptr(0x40); // PAGE_EXECUTE_READWRITE
+            }
+        }
+    });
+}'''
+        elif protection_type.lower() == 'anti_tamper':
+            return '''
+// Anti-tamper bypass
+var crcChecks = ["VerifySignature", "CheckIntegrity", "ValidateChecksum", "CalculateCRC"];
+crcChecks.forEach(function(funcName) {
+    var funcAddr = Module.findExportByName(null, funcName);
+    if (funcAddr) {
+        Interceptor.attach(funcAddr, {
+            onLeave: function(retval) {
+                console.log("[+] Bypassing integrity check: " + funcName);
+                retval.replace(1); // Return valid
+            }
+        });
+    }
+});
+
+// Hook common hash functions used for integrity
+var hashFuncs = ["CryptCreateHash", "CryptHashData", "BCryptHashData"];
+hashFuncs.forEach(function(funcName) {
+    var funcAddr = Module.findExportByName(null, funcName);
+    if (funcAddr) {
+        Interceptor.attach(funcAddr, {
+            onEnter: function(args) {
+                console.log("[+] Intercepting hash function: " + funcName);
+            }
+        });
+    }
 });'''
+        elif protection_type.lower() == 'timing_check':
+            return '''
+// Timing check bypass
+var rdtsc = Module.findExportByName(null, "__rdtsc");
+var lastTime = 0;
+if (rdtsc) {
+    Interceptor.attach(rdtsc, {
+        onLeave: function(retval) {
+            if (lastTime === 0) {
+                lastTime = retval.toInt32();
+            } else {
+                // Return consistent time delta
+                retval.replace(lastTime + 1000);
+                lastTime = retval.toInt32();
+            }
+        }
+    });
+}
+
+// Hook timing functions
+var timingFuncs = ["GetTickCount", "GetTickCount64", "QueryPerformanceCounter"];
+timingFuncs.forEach(function(funcName) {
+    var funcAddr = Module.findExportByName("kernel32.dll", funcName);
+    if (funcAddr) {
+        var baseTime = 0;
+        Interceptor.attach(funcAddr, {
+            onLeave: function(retval) {
+                if (baseTime === 0) {
+                    baseTime = retval.toInt32();
+                }
+                // Return predictable timing
+                retval.replace(baseTime + 1000);
+            }
+        });
+    }
+});'''
+        elif protection_type.lower() == 'anti_sandbox':
+            return '''
+// Anti-sandbox bypass
+var sandboxFiles = ["sbiedll.dll", "dbghelp.dll", "api_log.dll", "dir_watch.dll"];
+var getModuleHandle = Module.findExportByName("kernel32.dll", "GetModuleHandleA");
+if (getModuleHandle) {
+    Interceptor.attach(getModuleHandle, {
+        onEnter: function(args) {
+            if (args[0].isNull()) return;
+            var moduleName = args[0].readCString();
+            if (sandboxFiles.some(f => moduleName.toLowerCase().indexOf(f) !== -1)) {
+                console.log("[+] Blocking sandbox DLL check: " + moduleName);
+                this.shouldFail = true;
+            }
+        },
+        onLeave: function(retval) {
+            if (this.shouldFail) {
+                retval.replace(0); // Module not found
+            }
+        }
+    });
+}
+
+// Hook process enumeration
+var createToolhelp32Snapshot = Module.findExportByName("kernel32.dll", "CreateToolhelp32Snapshot");
+if (createToolhelp32Snapshot) {
+    Interceptor.attach(createToolhelp32Snapshot, {
+        onEnter: function(args) {
+            if (args[0].toInt32() & 0x2) { // TH32CS_SNAPPROCESS
+                console.log("[+] Intercepting process enumeration");
+            }
+        }
+    });
+}'''
         else:
-            return f'// Anti-analysis hooks for {protection_type} not implemented'
+            return f'''
+// Generic anti-analysis hooks for {protection_type}
+var suspiciousFuncs = ["detect", "check", "verify", "protect", "guard"];
+Process.enumerateModules().forEach(function(module) {{
+    module.enumerateExports().forEach(function(exp) {{
+        suspiciousFuncs.forEach(function(pattern) {{
+            if (exp.name.toLowerCase().indexOf(pattern) !== -1 && 
+                exp.name.toLowerCase().indexOf("{protection_type.lower().replace('_', '')}") !== -1) {{
+                console.log("[+] Found protection function: " + exp.name);
+                Interceptor.attach(exp.address, {{
+                    onLeave: function(retval) {{
+                        console.log("[+] Bypassing: " + exp.name);
+                        retval.replace(0); // Bypass protection
+                    }}
+                }});
+            }}
+        }});
+    }});
+}});'''
 
     def _get_target_functions_from_protection(self, protection_info: Dict) -> str:
         """Get JavaScript array of target function names based on protection info"""
         target_funcs = ['check', 'verify', 'validate', 'license', 'trial', 'serial']
-        
+
         if protection_info:
             for protection_type in protection_info.keys():
                 if 'license' in protection_type.lower():
@@ -896,7 +1334,7 @@ antiVmChecks.forEach(function(funcName) {
                     target_funcs.extend(['isdebugger', 'debugger', 'antidebug'])
                 elif 'vm' in protection_type.lower():
                     target_funcs.extend(['vm', 'virtual', 'sandbox'])
-                    
+
         return str(target_funcs).replace("'", '"')  # Convert to JavaScript array format
 
 

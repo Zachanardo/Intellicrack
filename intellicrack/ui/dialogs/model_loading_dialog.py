@@ -43,6 +43,7 @@ class ModelLoadingDialog(QDialog):
     model_loaded = pyqtSignal(str)  # model_id
 
     def __init__(self, parent=None):
+        """Initialize the ModelLoadingDialog with default values."""
         super().__init__(parent)
         self.llm_manager = get_llm_manager()
         self.setWindowTitle("Model Loading Manager")

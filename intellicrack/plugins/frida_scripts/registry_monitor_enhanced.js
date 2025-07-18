@@ -120,15 +120,30 @@
     },
     
     run: function() {
-        console.log("[RegMon Enhanced] Starting enhanced registry monitor v3.0...");
+        send({
+            type: "status",
+            target: "registry_monitor_enhanced",
+            action: "starting_enhanced_monitor",
+            version: "3.0"
+        });
         
         this.initializeEncryption();
         this.hookRegistryAPIs();
         this.setupPersistence();
         this.startStatisticsReporter();
         
-        console.log("[RegMon Enhanced] Monitoring " + this.config.criticalPaths.length + " registry paths");
-        console.log("[RegMon Enhanced] " + Object.keys(this.config.spoofingRules).length + " spoofing rules active");
+        send({
+            type: "status",
+            target: "registry_monitor_enhanced",
+            action: "monitoring_paths",
+            path_count: this.config.criticalPaths.length
+        });
+        send({
+            type: "status",
+            target: "registry_monitor_enhanced",
+            action: "spoofing_rules_active",
+            rule_count: Object.keys(this.config.spoofingRules).length
+        });
     },
     
     // Initialize encryption for logs
@@ -155,7 +170,12 @@
                     return result;
                 };
             } catch(e) {
-                console.log("[RegMon Enhanced] Encryption initialization failed: " + e);
+                send({
+                    type: "error",
+                    target: "registry_monitor_enhanced",
+                    action: "encryption_init_failed",
+                    error: e.toString()
+                });
                 this.config.encryptLogs = false;
             }
         }
@@ -189,7 +209,12 @@
                         }
                     }
                 });
-                console.log("[RegMon Enhanced] Hooked " + api);
+                send({
+                    type: "info",
+                    target: "registry_monitor_enhanced",
+                    action: "api_hooked",
+                    api_name: api
+                });
             }
         });
         
@@ -230,7 +255,12 @@
                         }
                     }
                 });
-                console.log("[RegMon Enhanced] Hooked " + api);
+                send({
+                    type: "info",
+                    target: "registry_monitor_enhanced",
+                    action: "api_hooked",
+                    api_name: api
+                });
             }
         });
         
@@ -266,7 +296,12 @@
                         }
                     }
                 });
-                console.log("[RegMon Enhanced] Hooked " + api);
+                send({
+                    type: "info",
+                    target: "registry_monitor_enhanced",
+                    action: "api_hooked",
+                    api_name: api
+                });
             }
         });
         
@@ -293,7 +328,12 @@
                         }
                     }
                 });
-                console.log("[RegMon Enhanced] Hooked " + api);
+                send({
+                    type: "info",
+                    target: "registry_monitor_enhanced",
+                    action: "api_hooked",
+                    api_name: api
+                });
             }
         });
         
@@ -318,7 +358,12 @@
                         }
                     }
                 });
-                console.log("[RegMon Enhanced] Hooked " + api);
+                send({
+                    type: "info",
+                    target: "registry_monitor_enhanced",
+                    action: "api_hooked",
+                    api_name: api
+                });
             }
         });
         
@@ -522,7 +567,12 @@
                     break;
             }
         } catch(e) {
-            console.log("[RegMon Enhanced] Error applying spoofed value: " + e);
+            send({
+                type: "error",
+                target: "registry_monitor_enhanced",
+                action: "spoofed_value_error",
+                error: e.toString()
+            });
             this.statistics.errors++;
         }
     },
@@ -595,7 +645,17 @@
         var logEntry = timestamp + " | " + processName + " | " + action + " | " + path + 
                       (details ? " | " + details : "");
         
-        console.log("[RegMon Enhanced] " + logEntry);
+        send({
+            type: "info",
+            target: "registry_monitor_enhanced",
+            action: "registry_access_log",
+            log_entry: logEntry,
+            timestamp: timestamp,
+            process: processName,
+            registry_action: action,
+            path: path,
+            details: details
+        });
         
         // Buffer logs
         this.logBuffer.push(logEntry);
@@ -627,7 +687,12 @@
             this.logBuffer = [];
             
         } catch(e) {
-            console.log("[RegMon Enhanced] Failed to write logs: " + e);
+            send({
+                type: "error",
+                target: "registry_monitor_enhanced",
+                action: "log_write_failed",
+                error: e.toString()
+            });
         }
     },
     
@@ -638,10 +703,19 @@
             var persistencePath = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
             
             // Note: This is for demonstration. Real persistence would require elevation
-            console.log("[RegMon Enhanced] Persistence mechanism configured");
+            send({
+                type: "info",
+                target: "registry_monitor_enhanced",
+                action: "persistence_configured"
+            });
             
         } catch(e) {
-            console.log("[RegMon Enhanced] Failed to setup persistence: " + e);
+            send({
+                type: "error",
+                target: "registry_monitor_enhanced",
+                action: "persistence_setup_failed",
+                error: e.toString()
+            });
         }
     },
     
@@ -650,10 +724,17 @@
         var self = this;
         
         setInterval(function() {
-            console.log("[RegMon Enhanced] Statistics - Calls: " + self.statistics.totalCalls +
-                      ", Spoofed: " + self.statistics.spoofedValues +
-                      ", Blocked: " + self.statistics.blockedWrites +
-                      ", Errors: " + self.statistics.errors);
+            send({
+                type: "summary",
+                target: "registry_monitor_enhanced",
+                action: "statistics_report",
+                stats: {
+                    total_calls: self.statistics.totalCalls,
+                    spoofed_values: self.statistics.spoofedValues,
+                    blocked_writes: self.statistics.blockedWrites,
+                    errors: self.statistics.errors
+                }
+            });
                       
             // Flush any pending logs
             self.flushLogs();

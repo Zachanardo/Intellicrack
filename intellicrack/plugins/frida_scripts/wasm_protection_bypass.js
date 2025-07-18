@@ -112,7 +112,12 @@
     
     // Initialize the bypass system
     initialize: function() {
-        console.log("[WASM Bypass] Initializing WebAssembly protection bypass...");
+        send({
+            type: "status",
+            target: "wasm_bypass",
+            action: "initializing_webassembly_bypass",
+            timestamp: Date.now()
+        });
         
         // Hook WebAssembly APIs
         this.hookWebAssemblyAPIs();
@@ -126,13 +131,23 @@
         // Monitor for dynamic WASM loading
         this.startMonitoring();
         
-        console.log("[WASM Bypass] Initialization complete!");
+        send({
+            type: "success",
+            target: "wasm_bypass",
+            action: "initialization_complete",
+            timestamp: Date.now()
+        });
     },
     
     // Hook WebAssembly APIs
     hookWebAssemblyAPIs: function() {
         if (typeof WebAssembly === 'undefined') {
-            console.log("[WASM] WebAssembly not available in this environment");
+            send({
+                type: "warning",
+                target: "wasm_environment",
+                action: "webassembly_not_available",
+                environment: "not_supported"
+            });
             return;
         }
         
@@ -155,7 +170,12 @@
         const self = this;
         
         WebAssembly.instantiate = async function(bufferSource, importObject) {
-            console.log("[WASM] WebAssembly.instantiate called");
+            send({
+                type: "info",
+                target: "wasm_api",
+                action: "instantiate_called",
+                api: "WebAssembly.instantiate"
+            });
             
             try {
                 // Analyze the module before instantiation
@@ -171,7 +191,12 @@
                     const analysis = self.analyzeWASMBinary(bufferSource);
                     
                     if (analysis.hasLicenseCheck) {
-                        console.log("[WASM] License check detected in module");
+                        send({
+                        type: "bypass",
+                        target: "wasm_license",
+                        action: "license_check_detected",
+                        module_type: "instantiate"
+                    });
                         
                         if (self.config.bypass.patch_memory) {
                             modifiedBuffer = self.patchWASMBinary(bufferSource, analysis);
@@ -190,7 +215,12 @@
                 return result;
                 
             } catch (e) {
-                console.log("[WASM] Instantiate error:", e);
+                send({
+                type: "error",
+                target: "wasm_bypass",
+                action: "instantiate_error",
+                error: e.message || e.toString()
+            });
                 return original.call(this, bufferSource, importObject);
             }
         };
@@ -202,7 +232,12 @@
         const self = this;
         
         WebAssembly.instantiateStreaming = async function(response, importObject) {
-            console.log("[WASM] WebAssembly.instantiateStreaming called");
+            send({
+                type: "info",
+                target: "wasm_api",
+                action: "instantiate_streaming_called",
+                api: "WebAssembly.instantiateStreaming"
+            });
             
             try {
                 // Clone response to analyze
@@ -213,7 +248,12 @@
                 const analysis = self.analyzeWASMBinary(buffer);
                 
                 if (analysis.hasLicenseCheck) {
-                    console.log("[WASM] License check detected in streamed module");
+                    send({
+                        type: "bypass",
+                        target: "wasm_license",
+                        action: "license_check_detected",
+                        module_type: "streaming"
+                    });
                     
                     // Create modified response if needed
                     if (self.config.bypass.patch_memory) {
@@ -244,7 +284,12 @@
                 return result;
                 
             } catch (e) {
-                console.log("[WASM] InstantiateStreaming error:", e);
+                send({
+                    type: "error",
+                    target: "wasm_bypass",
+                    action: "instantiate_streaming_error",
+                    error: e.message || e.toString()
+                });
                 return original.call(this, response, importObject);
             }
         };
@@ -265,7 +310,11 @@
             // Check WASM magic number
             if (bytes[0] !== 0x00 || bytes[1] !== 0x61 || 
                 bytes[2] !== 0x73 || bytes[3] !== 0x6D) {
-                console.log("[WASM] Invalid WASM magic number");
+                send({
+                    type: "warning",
+                    target: "wasm_bypass",
+                    action: "invalid_wasm_magic_number"
+                });
                 return analysis;
             }
             
@@ -278,7 +327,12 @@
                 if (text.includes(func)) {
                     analysis.hasLicenseCheck = true;
                     analysis.licenseFunctions.push(func);
-                    console.log(`[WASM] Found license function: ${func}`);
+                    send({
+                        type: "info",
+                        target: "wasm_bypass",
+                        action: "license_function_found",
+                        function_name: func
+                    });
                 }
             });
             
@@ -292,7 +346,12 @@
             }
             
         } catch (e) {
-            console.log("[WASM] Binary analysis error:", e);
+            send({
+                type: "error",
+                target: "wasm_bypass",
+                action: "binary_analysis_error",
+                error: e.message || e.toString()
+            });
         }
         
         return analysis;
@@ -351,7 +410,11 @@
     
     // Patch WASM binary
     patchWASMBinary: function(buffer, analysis) {
-        console.log("[WASM] Patching WASM binary...");
+        send({
+            type: "info",
+            target: "wasm_bypass",
+            action: "patching_wasm_binary"
+        });
         
         // For now, return original
         // In a real implementation, we would:
@@ -364,7 +427,11 @@
     
     // Modify import object
     modifyImportObject: function(importObject) {
-        console.log("[WASM] Modifying import object");
+        send({
+            type: "info",
+            target: "wasm_bypass",
+            action: "modifying_import_object"
+        });
         
         const modified = {};
         
@@ -378,7 +445,13 @@
                 if (typeof original === 'function') {
                     // Check if this is a license-related import
                     if (this.isLicenseFunction(name)) {
-                        console.log(`[WASM] Hooking imported function: ${module}.${name}`);
+                        send({
+                            type: "bypass",
+                            target: "wasm_bypass",
+                            action: "hooking_imported_function",
+                            module: module,
+                            function_name: name
+                        });
                         
                         modified[module][name] = this.createLicenseBypass(name, original);
                     } else {
@@ -400,11 +473,22 @@
         const self = this;
         
         return function(...args) {
-            console.log(`[WASM] License function called: ${name}`);
+            send({
+                type: "bypass",
+                target: "wasm_bypass",
+                action: "license_function_called",
+                function_name: name
+            });
             
             // Log arguments
             args.forEach((arg, i) => {
-                console.log(`  arg[${i}]:`, arg);
+                send({
+                    type: "info",
+                    target: "wasm_bypass",
+                    action: "function_argument_logged",
+                    arg_index: i,
+                    arg_value: arg
+                });
             });
             
             // Determine return value based on function name
@@ -413,22 +497,42 @@
             if (lowerName.includes("check") || lowerName.includes("validate") || 
                 lowerName.includes("verify") || lowerName.includes("is")) {
                 // Return true/1 for validation functions
-                console.log(`[WASM] Bypassing ${name} - returning true`);
+                send({
+                    type: "bypass",
+                    target: "wasm_bypass",
+                    action: "function_bypassed_return_true",
+                    function_name: name
+                });
                 self.state.bypass_count++;
                 return 1;
             } else if (lowerName.includes("expire") || lowerName.includes("trial")) {
                 // Return far future date for expiry checks
-                console.log(`[WASM] Bypassing ${name} - returning future date`);
+                send({
+                    type: "bypass",
+                    target: "wasm_bypass",
+                    action: "function_bypassed_return_future_date",
+                    function_name: name
+                });
                 self.state.bypass_count++;
                 return 4102444800; // Year 2100
             } else if (lowerName.includes("decrypt") || lowerName.includes("decode")) {
                 // Return dummy decrypted data
-                console.log(`[WASM] Bypassing ${name} - returning dummy data`);
+                send({
+                    type: "bypass",
+                    target: "wasm_bypass",
+                    action: "function_bypassed_return_dummy_data",
+                    function_name: name
+                });
                 self.state.bypass_count++;
                 return args[0]; // Return input as "decrypted"
             } else {
                 // Call original for unknown functions
-                console.log(`[WASM] Calling original ${name}`);
+                send({
+                    type: "info",
+                    target: "wasm_bypass",
+                    action: "calling_original_function",
+                    function_name: name
+                });
                 return original.apply(this, args);
             }
         };
@@ -439,13 +543,25 @@
         return function(...args) {
             // Only log if it might be license-related
             if (this.isLicenseFunction(name)) {
-                console.log(`[WASM Monitor] ${name} called with ${args.length} args`);
+                send({
+                    type: "info",
+                    target: "wasm_monitor",
+                    action: "function_called",
+                    function_name: name,
+                    arg_count: args.length
+                });
             }
             
             const result = original.apply(this, args);
             
             if (this.isLicenseFunction(name)) {
-                console.log(`[WASM Monitor] ${name} returned:`, result);
+                send({
+                    type: "info",
+                    target: "wasm_monitor",
+                    action: "function_returned",
+                    function_name: name,
+                    result: result
+                });
             }
             
             return result;
@@ -454,7 +570,11 @@
     
     // Hook WASM instance
     hookWASMInstance: function(instance) {
-        console.log("[WASM] Hooking WebAssembly instance");
+        send({
+            type: "info",
+            target: "wasm_bypass",
+            action: "hooking_webassembly_instance"
+        });
         
         const instanceId = Date.now().toString();
         this.state.active_instances.set(instanceId, instance);
@@ -479,22 +599,45 @@
         const original = instance.exports[name];
         
         if (this.isLicenseFunction(name)) {
-            console.log(`[WASM] Hooking exported license function: ${name}`);
+            send({
+                type: "bypass",
+                target: "wasm_bypass",
+                action: "hooking_exported_license_function",
+                function_name: name
+            });
             
             const self = this;
             instance.exports[name] = function(...args) {
-                console.log(`[WASM Export] ${name} called`);
+                send({
+                    type: "bypass",
+                    target: "wasm_export",
+                    action: "license_function_called",
+                    function_name: name
+                });
                 
                 // Call original
                 const result = original.apply(this, args);
                 
-                console.log(`[WASM Export] ${name} returned:`, result);
+                send({
+                    type: "info",
+                    target: "wasm_export",
+                    action: "license_function_returned",
+                    function_name: name,
+                    result: result
+                });
                 
                 // Modify result if needed
                 if (self.config.bypass.fake_returns) {
                     const modifiedResult = self.modifyLicenseResult(name, result);
                     if (modifiedResult !== result) {
-                        console.log(`[WASM Export] Modified result to:`, modifiedResult);
+                        send({
+                            type: "bypass",
+                            target: "wasm_protection_bypass",
+                            action: "modified_export_result",
+                            function_name: name,
+                            original_result: result,
+                            modified_result: modifiedResult
+                        });
                         self.state.bypass_count++;
                         return modifiedResult;
                     }
@@ -539,7 +682,11 @@
     
     // Hook WASM memory
     hookWASMMemory: function(memory) {
-        console.log("[WASM] Monitoring WebAssembly memory");
+        send({
+            type: "info",
+            target: "wasm_protection_bypass",
+            action: "monitoring_wasm_memory"
+        });
         
         // Periodically scan memory for license strings
         setInterval(() => {
@@ -578,7 +725,13 @@
                     }
                     
                     if (match) {
-                        console.log(`[WASM Memory] Found pattern "${pattern}" at offset ${i}`);
+                        send({
+                            type: "info",
+                            target: "wasm_protection_bypass",
+                            action: "found_memory_pattern",
+                            pattern: pattern,
+                            offset: i
+                        });
                         
                         // Patch it if configured
                         if (this.config.bypass.patch_memory) {
@@ -605,7 +758,13 @@
         
         const replacement = replacements[pattern];
         if (replacement) {
-            console.log(`[WASM Memory] Patching "${pattern}" with "${replacement}"`);
+            send({
+                type: "bypass",
+                target: "wasm_protection_bypass",
+                action: "patching_memory_pattern",
+                pattern: pattern,
+                replacement: replacement
+            });
             
             const encoder = new TextEncoder();
             const replBytes = encoder.encode(replacement);
@@ -629,7 +788,12 @@
         window.fetch = async function(url, options) {
             // Check if this is a WASM file
             if (self.isWASMURL(url)) {
-                console.log(`[WASM Load] Fetching WASM module: ${url}`);
+                send({
+                    type: "info",
+                    target: "wasm_protection_bypass",
+                    action: "fetching_wasm_module",
+                    url: url
+                });
                 
                 // Call original
                 const response = await originalFetch.apply(this, arguments);
@@ -642,7 +806,13 @@
                 const analysis = self.analyzeWASMBinary(buffer);
                 
                 if (analysis.hasLicenseCheck) {
-                    console.log(`[WASM Load] License checks found in ${url}`);
+                    send({
+                        type: "info",
+                        target: "wasm_protection_bypass",
+                        action: "license_checks_detected",
+                        url: url,
+                        checks_count: analysis.licenseChecks.length
+                    });
                     
                     // Store module info
                     self.state.wasm_modules.set(url.toString(), {
@@ -690,7 +860,12 @@
         
         XMLHttpRequest.prototype.send = function() {
             if (this._wasmURL && self.isWASMURL(this._wasmURL)) {
-                console.log(`[WASM XHR] Loading WASM via XHR: ${this._wasmURL}`);
+                send({
+                    type: "info",
+                    target: "wasm_protection_bypass",
+                    action: "loading_wasm_via_xhr",
+                    url: this._wasmURL
+                });
                 
                 const originalOnload = this.onload;
                 this.onload = function() {
@@ -699,7 +874,12 @@
                         const analysis = self.analyzeWASMBinary(this.response);
                         
                         if (analysis.hasLicenseCheck) {
-                            console.log(`[WASM XHR] License checks found`);
+                            send({
+                                type: "info",
+                                target: "wasm_protection_bypass",
+                                action: "xhr_license_checks_found",
+                                checks_count: analysis.licenseChecks.length
+                            });
                         }
                     }
                     
@@ -715,7 +895,11 @@
     
     // Hook Emscripten runtime
     hookEmscriptenRuntime: function() {
-        console.log("[Emscripten] Hooking Emscripten runtime...");
+        send({
+            type: "info",
+            target: "wasm_protection_bypass",
+            action: "hooking_emscripten_runtime"
+        });
         
         // Common Emscripten functions
         const emscriptenFuncs = [
@@ -750,7 +934,13 @@
                 const name = args[0];
                 
                 if (self.isLicenseFunction(name)) {
-                    console.log(`[Emscripten] ${funcName} called for license function: ${name}`);
+                    send({
+                        type: "info",
+                        target: "wasm_protection_bypass",
+                        action: "emscripten_license_function_call",
+                        function_type: funcName,
+                        function_name: name
+                    });
                     
                     if (funcName === 'ccall') {
                         // ccall(name, returnType, argTypes, args)
@@ -758,11 +948,23 @@
                         
                         // Return success value based on type
                         if (returnType === 'number' || returnType === 'boolean') {
-                            console.log(`[Emscripten] Bypassing ${name} - returning 1`);
+                            send({
+                                type: "bypass",
+                                target: "wasm_protection_bypass",
+                                action: "bypassing_emscripten_function",
+                                function_name: name,
+                                return_value: 1
+                            });
                             self.state.bypass_count++;
                             return 1;
                         } else if (returnType === 'string') {
-                            console.log(`[Emscripten] Bypassing ${name} - returning "LICENSED"`);
+                            send({
+                                type: "bypass",
+                                target: "wasm_protection_bypass",
+                                action: "bypassing_emscripten_function",
+                                function_name: name,
+                                return_value: "LICENSED"
+                            });
                             self.state.bypass_count++;
                             return "LICENSED";
                         }
@@ -776,7 +978,12 @@
             return original.apply(this, args);
         };
         
-        console.log(`[Emscripten] Hooked ${funcName}`);
+        send({
+            type: "info",
+            target: "wasm_protection_bypass",
+            action: "emscripten_function_hooked",
+            function_name: funcName
+        });
     },
     
     // Create Emscripten bypass function
@@ -784,7 +991,13 @@
         const self = this;
         
         return function(...args) {
-            console.log(`[Emscripten Bypass] ${name} called`);
+            send({
+                type: "bypass",
+                target: "wasm_protection_bypass",
+                action: "emscripten_bypass_function_called",
+                function_name: name,
+                args_count: args.length
+            });
             
             self.state.bypass_count++;
             
@@ -806,14 +1019,22 @@
     
     // Hook Emscripten Module
     hookEmscriptenModule: function() {
-        console.log("[Emscripten] Hooking Module object");
+        send({
+            type: "info",
+            target: "wasm_protection_bypass",
+            action: "hooking_emscripten_module"
+        });
         
         // Hook onRuntimeInitialized
         const originalInit = Module.onRuntimeInitialized;
         const self = this;
         
         Module.onRuntimeInitialized = function() {
-            console.log("[Emscripten] Runtime initialized");
+            send({
+                type: "info",
+                target: "wasm_protection_bypass",
+                action: "emscripten_runtime_initialized"
+            });
             
             // Hook exported functions
             if (Module.asm) {
@@ -842,16 +1063,35 @@
         const self = this;
         
         Module.asm[name] = function(...args) {
-            console.log(`[Module] ${name} called`);
+            send({
+                type: "info",
+                target: "wasm_protection_bypass",
+                action: "module_function_called",
+                function_name: name,
+                args_count: args.length
+            });
             
             const result = original.apply(this, args);
             
-            console.log(`[Module] ${name} returned:`, result);
+            send({
+                type: "info",
+                target: "wasm_protection_bypass",
+                action: "module_function_returned",
+                function_name: name,
+                result: result
+            });
             
             // Modify result if needed
             const modified = self.modifyLicenseResult(name, result);
             if (modified !== result) {
-                console.log(`[Module] Bypassed - returning:`, modified);
+                send({
+                    type: "bypass",
+                    target: "wasm_protection_bypass",
+                    action: "module_function_bypassed",
+                    function_name: name,
+                    original_result: result,
+                    modified_result: modified
+                });
                 self.state.bypass_count++;
                 return modified;
             }
@@ -859,7 +1099,12 @@
             return result;
         };
         
-        console.log(`[Module] Hooked ${name}`);
+        send({
+            type: "info",
+            target: "wasm_protection_bypass",
+            action: "module_function_hooked",
+            function_name: name
+        });
     },
     
     // Hook memory allocation
@@ -873,7 +1118,13 @@
             
             // Track large allocations (potential license data)
             if (size > 1024) {
-                console.log(`[Memory] Large allocation: ${size} bytes at ${ptr}`);
+                send({
+                    type: "info",
+                    target: "wasm_protection_bypass",
+                    action: "large_memory_allocation",
+                    size: size,
+                    pointer: ptr.toString()
+                });
             }
             
             return ptr;
@@ -886,7 +1137,11 @@
     
     // Start monitoring
     startMonitoring: function() {
-        console.log("[Monitor] Starting WASM monitoring...");
+        send({
+            type: "info",
+            target: "wasm_protection_bypass",
+            action: "starting_wasm_monitoring"
+        });
         
         // Periodic module scan
         setInterval(() => {
@@ -914,7 +1169,12 @@
         for (const key in window) {
             if (key.includes('wasm') || key.includes('WASM')) {
                 if (!this.state.wasm_modules.has(key)) {
-                    console.log(`[Monitor] Found potential WASM object: ${key}`);
+                    send({
+                        type: "info",
+                        target: "wasm_protection_bypass",
+                        action: "potential_wasm_object_found",
+                        object_key: key
+                    });
                     this.analyzeWindowObject(key, window[key]);
                 }
             }
@@ -938,7 +1198,12 @@
             }
             
             if (hasWASMPattern) {
-                console.log(`[Monitor] ${name} appears to be a WASM module`);
+                send({
+                    type: "info",
+                    target: "wasm_protection_bypass",
+                    action: "wasm_module_identified",
+                    module_name: name
+                });
                 this.state.wasm_modules.set(name, {
                     name: name,
                     object: obj,
@@ -961,14 +1226,25 @@
         const self = this;
         
         obj[funcName] = function(...args) {
-            console.log(`[Object] ${funcName} called`);
+            send({
+                type: "info",
+                target: "wasm_protection_bypass",
+                action: "object_function_called",
+                function_name: funcName
+            });
             
             const result = original.apply(this, args);
             
             // Apply bypass if needed
             const modified = self.modifyLicenseResult(funcName, result);
             if (modified !== result) {
-                console.log(`[Object] Bypassed - returning:`, modified);
+                send({
+                    type: "bypass",
+                    target: "wasm_protection_bypass",
+                    action: "object_function_bypassed",
+                    function_name: funcName,
+                    modified_result: modified
+                });
                 self.state.bypass_count++;
                 return modified;
             }
@@ -988,7 +1264,12 @@
         window.eval = function(code) {
             if (typeof code === 'string' && 
                 (code.includes('WebAssembly') || code.includes('wasm'))) {
-                console.log("[Dynamic] WASM-related eval detected");
+                send({
+                    type: "info",
+                    target: "wasm_protection_bypass",
+                    action: "dynamic_wasm_eval_detected",
+                    code_snippet: code.substring(0, 100)
+                });
             }
             
             return originalEval.apply(this, arguments);
@@ -1000,7 +1281,12 @@
             construct(target, args) {
                 const code = args.join('');
                 if (code.includes('WebAssembly') || code.includes('wasm')) {
-                    console.log("[Dynamic] WASM-related Function constructor");
+                    send({
+                        type: "info",
+                        target: "wasm_protection_bypass",
+                        action: "dynamic_wasm_function_constructor",
+                        code_snippet: code.substring(0, 100)
+                    });
                 }
                 
                 return new target(...args);
@@ -1010,17 +1296,23 @@
     
     // Print statistics
     printStats: function() {
-        console.log("\n[Stats] WASM Protection Bypass Statistics:");
-        console.log(`  WASM modules detected: ${this.state.wasm_modules.size}`);
-        console.log(`  Hooked functions: ${this.state.hooked_functions.size}`);
-        console.log(`  License functions found: ${this.state.license_functions.size}`);
-        console.log(`  Bypass operations: ${this.state.bypass_count}`);
-        console.log(`  Active instances: ${this.state.active_instances.size}`);
+        send({
+            type: "summary",
+            target: "wasm_protection_bypass",
+            action: "statistics_report",
+            wasm_modules_detected: this.state.wasm_modules.size,
+            hooked_functions: this.state.hooked_functions.size,
+            license_functions_found: this.state.license_functions.size,
+            bypass_operations: this.state.bypass_count,
+            active_instances: this.state.active_instances.size
+        });
         
         if (this.state.license_functions.size > 0) {
-            console.log("\n  License functions:");
-            Array.from(this.state.license_functions).slice(0, 10).forEach(func => {
-                console.log(`    - ${func}`);
+            send({
+                type: "info",
+                target: "wasm_protection_bypass", 
+                action: "license_functions_list",
+                functions: Array.from(this.state.license_functions).slice(0, 10)
             });
         }
     },
@@ -1032,14 +1324,24 @@
         
         WebAssembly.Module = new Proxy(OriginalModule, {
             construct(target, args) {
-                console.log("[WASM] WebAssembly.Module constructor called");
+                send({
+                    type: "info",
+                    target: "wasm_protection_bypass",
+                    action: "webassembly_module_constructor_called",
+                    args_length: args.length
+                });
                 
                 // Analyze the module
                 if (args[0]) {
                     const analysis = self.analyzeWASMBinary(args[0]);
                     
                     if (analysis.hasLicenseCheck) {
-                        console.log("[WASM] License check detected in new module");
+                        send({
+                            type: "info",
+                            target: "wasm_protection_bypass",
+                            action: "license_check_detected_in_new_module",
+                            checks_count: analysis.licenseChecks.length
+                        });
                     }
                 }
                 
@@ -1054,13 +1356,23 @@
         const self = this;
         
         WebAssembly.compile = async function(bytes) {
-            console.log("[WASM] WebAssembly.compile called");
+            send({
+                type: "info",
+                target: "wasm_protection_bypass",
+                action: "webassembly_compile_called",
+                bytes_length: bytes.byteLength
+            });
             
             // Analyze before compilation
             const analysis = self.analyzeWASMBinary(bytes);
             
             if (analysis.hasLicenseCheck) {
-                console.log("[WASM] License check detected in compiled module");
+                send({
+                    type: "info",
+                    target: "wasm_protection_bypass",
+                    action: "license_check_detected_in_compiled_module",
+                    checks_count: analysis.licenseChecks.length
+                });
             }
             
             return original.call(this, bytes);
@@ -1069,10 +1381,18 @@
     
     // Entry point
     run: function() {
-        console.log("=====================================");
-        console.log("WebAssembly Protection Bypass v2.0.0");
-        console.log("WASM License Validation Bypass");
-        console.log("=====================================\n");
+        send({
+            type: "info",
+            target: "wasm_protection_bypass",
+            action: "initialization_started",
+            version: "2.0.0"
+        });
+        send({
+            type: "info",
+            target: "wasm_protection_bypass",
+            action: "initialization_banner",
+            description: "WASM License Validation Bypass"
+        });
         
         this.initialize();
     }
@@ -1084,7 +1404,11 @@ rpc.exports = {
         if (typeof window !== 'undefined') {
             wasmBypass.run();
         } else {
-            console.log("[WASM] Not in browser environment");
+            send({
+                type: "info",
+                target: "wasm_protection_bypass",
+                action: "not_in_browser_environment"
+            });
         }
     }
 };
@@ -1095,5 +1419,9 @@ if (typeof window !== 'undefined') {
 } else if (typeof global !== 'undefined') {
     // Node.js environment
     global.wasmBypass = wasmBypass;
-    console.log("[WASM] Loaded in Node.js environment");
+    send({
+        type: "info",
+        target: "wasm_protection_bypass",
+        action: "loaded_in_nodejs_environment"
+    });
 }

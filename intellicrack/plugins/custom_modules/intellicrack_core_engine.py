@@ -230,6 +230,7 @@ class LoggingManager:
     """Advanced logging manager with structured logging and multiple outputs"""
 
     def __init__(self, config: Dict[str, Any]):
+        """Initialize advanced logging manager with configuration."""
         self.config = config
         self.loggers: Dict[str, logging.Logger] = {}
         self.handlers: Dict[str, logging.Handler] = {}
@@ -416,6 +417,7 @@ class ConfigurationManager:
     """Configuration management with validation and hot reloading"""
 
     def __init__(self, config_path: Optional[str] = None):
+        """Initialize configuration manager with optional config path."""
         self.config_path = Path(config_path) if config_path else Path("config/intellicrack.json")
         self.config: Dict[str, Any] = {}
         self.schema: Dict[str, Any] = {}
@@ -650,6 +652,7 @@ class AbstractPlugin(ABC):
     """Abstract base class for all plugins"""
 
     def __init__(self, name: str, version: str = "1.0.0"):
+        """Initialize abstract plugin with name and version."""
         self.name = name
         self.version = version
         self.status = PluginStatus.DISCOVERED
@@ -743,6 +746,7 @@ class GhidraPlugin(AbstractPlugin):
     """Base class for Ghidra script plugins"""
 
     def __init__(self, name: str, script_path: str, version: str = "1.0.0"):
+        """Initialize Ghidra plugin with name, script path, and version."""
         super().__init__(name, version)
         self.script_path = Path(script_path)
         self.java_process: Optional[subprocess.Popen] = None
@@ -983,6 +987,7 @@ class FridaPlugin(AbstractPlugin):
     """Base class for Frida script plugins"""
 
     def __init__(self, name: str, script_path: str, version: str = "1.0.0"):
+        """Initialize Frida plugin with name, script path, and version."""
         super().__init__(name, version)
         self.script_path = Path(script_path)
         self.frida_session = None
@@ -1269,6 +1274,7 @@ class PythonPlugin(AbstractPlugin):
     """Base class for Python module plugins"""
 
     def __init__(self, name: str, module_path: str, version: str = "1.0.0"):
+        """Initialize Python plugin with name, module path, and version."""
         super().__init__(name, version)
         self.module_path = Path(module_path)
         self.module = None
@@ -1461,6 +1467,7 @@ class EventBus:
     """Async event bus for inter-component communication"""
 
     def __init__(self, max_queue_size: int = 10000):
+        """Initialize event bus with maximum queue size."""
         self.subscribers: Dict[str, List[Callable]] = {}
         self.event_queue: asyncio.Queue = asyncio.Queue(maxsize=max_queue_size)
         self.running = False
@@ -1671,6 +1678,7 @@ class PluginManager:
     """Plugin discovery, loading, and lifecycle management"""
 
     def __init__(self, config: Dict[str, Any], event_bus: EventBus, logger: logging.Logger):
+        """Initialize plugin manager with configuration, event bus, and logger."""
         self.config = config
         self.event_bus = event_bus
         self.logger = logger
@@ -2221,6 +2229,7 @@ class WorkflowEngine:
     """Configurable workflow execution engine"""
 
     def __init__(self, plugin_manager: PluginManager, event_bus: EventBus, logger: logging.Logger):
+        """Initialize workflow engine with plugin manager, event bus, and logger."""
         self.plugin_manager = plugin_manager
         self.event_bus = event_bus
         self.logger = logger
@@ -2685,6 +2694,7 @@ class AnalysisCoordinator:
 
     def __init__(self, plugin_manager: PluginManager, workflow_engine: WorkflowEngine,
                  event_bus: EventBus, logger: logging.Logger):
+        """Initialize analysis coordinator with plugin manager, workflow engine, event bus, and logger."""
         self.plugin_manager = plugin_manager
         self.workflow_engine = workflow_engine
         self.event_bus = event_bus
@@ -3014,6 +3024,7 @@ class ResourceManager:
     """System resource monitoring and management"""
 
     def __init__(self, config: Dict[str, Any], logger: logging.Logger):
+        """Initialize resource manager with configuration and logger."""
         self.config = config
         self.logger = logger
 
@@ -3249,6 +3260,7 @@ class IntellicrackcoreEngine:
     """Main Intellicrack core engine - orchestrates all components"""
 
     def __init__(self, config_path: Optional[str] = None):
+        """Initialize Intellicrack core engine with optional configuration path."""
         # Initialize configuration
         self.config_manager = ConfigurationManager(config_path)
         self.config = self.config_manager.config

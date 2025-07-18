@@ -167,6 +167,7 @@ class CertificateManager:
     """Manages SSL certificates for HTTPS interception"""
 
     def __init__(self, config: InterceptorConfig):
+        """Initialize with configuration and network interception capabilities."""
         self.config = config
         self.logger = logging.getLogger(f"{__name__}.CertManager")
         self.ca_cert = None
@@ -348,6 +349,7 @@ class RequestClassifier:
     """Classifies and analyzes intercepted requests"""
 
     def __init__(self):
+        """Initialize request classifier with cloud provider and license patterns."""
         self.logger = logging.getLogger(f"{__name__}.RequestClassifier")
 
         # Cloud provider patterns
@@ -493,7 +495,7 @@ class RequestClassifier:
         if body:
             try:
                 body_str = body.decode('utf-8', errors='ignore').lower()
-                
+
                 # Look for JSON/XML fields that indicate request type
                 if 'licensekey' in body_str or 'license_key' in body_str:
                     body_hints.add('license')
@@ -507,7 +509,7 @@ class RequestClassifier:
                     body_hints.add('refresh')
                 if 'heartbeat' in body_str or 'ping' in body_str or 'status' in body_str:
                     body_hints.add('heartbeat')
-                    
+
             except UnicodeDecodeError:
                 pass  # Body is binary, continue with URL/header analysis
 
@@ -585,6 +587,7 @@ class AuthenticationManager:
     """Manages authentication tokens and credentials"""
 
     def __init__(self):
+        """Initialize authentication manager with token caching and signing capabilities."""
         self.logger = logging.getLogger(f"{__name__}.AuthManager")
         self.token_cache = {}
         self.signing_keys = {}
@@ -704,12 +707,12 @@ class AuthenticationManager:
             'usage_limit': 999999,
             'features': ['all', 'premium', 'enterprise'],
             'permissions': ['read', 'write', 'admin', 'full_access'],
-            
+
             # Auth type specific claims
             'auth_method': auth_type.value,
             'auth_provider': provider.value
         }
-        
+
         # Add auth_type-specific fields
         if auth_type == AuthenticationType.BEARER:
             payload.update({
@@ -782,6 +785,7 @@ class ResponseModifier:
     """Modifies responses to bypass license validation"""
 
     def __init__(self, auth_manager: AuthenticationManager):
+        """Initialize response generator with authentication manager and response templates."""
         self.auth_manager = auth_manager
         self.logger = logging.getLogger(f"{__name__}.ResponseModifier")
 
@@ -909,7 +913,7 @@ class ResponseModifier:
                     'bandwidth': 999999
                 }
             }
-            
+
             # Customize features based on request provider
             if request.provider == CloudProvider.AWS:
                 feature_data['features'].update({
@@ -929,7 +933,7 @@ class ResponseModifier:
                     'big_query': True,
                     'cloud_functions': True
                 })
-                
+
             # Customize based on auth type
             if request.auth_type == AuthenticationType.OAUTH:
                 feature_data['oauth_scope'] = 'full_access'
@@ -1009,7 +1013,7 @@ class ResponseModifier:
                     'usage_tier': 'unlimited'
                 }
             }
-            
+
             # Add provider-specific usage data
             if request.provider == CloudProvider.AWS:
                 usage_data['aws_specific'] = {
@@ -1046,6 +1050,7 @@ class CacheManager:
     """Manages response caching with TTL"""
 
     def __init__(self, config: InterceptorConfig):
+        """Initialize with configuration and network interception capabilities."""
         self.config = config
         self.logger = logging.getLogger(f"{__name__}.CacheManager")
         self.cache = {}
@@ -1270,6 +1275,7 @@ class LocalLicenseServer:
     """Local license server for fallback scenarios"""
 
     def __init__(self, auth_manager: AuthenticationManager):
+        """Initialize response generator with authentication manager and response templates."""
         self.auth_manager = auth_manager
         self.logger = logging.getLogger(f"{__name__}.LocalServer")
 
@@ -1424,6 +1430,15 @@ class CloudLicenseInterceptor:
     """Main cloud license interceptor service"""
 
     def __init__(self, config: InterceptorConfig = None):
+        """Initialize the cloud license interceptor.
+        
+        Sets up the comprehensive cloud license interception and bypass system.
+        Configures certificate management, request classification, authentication
+        handling, response modification, and local license server components.
+        
+        Args:
+            config: Interceptor configuration. Uses default if None.
+        """
         self.config = config or InterceptorConfig()
         self.logger = logging.getLogger(f"{__name__}.Interceptor")
 

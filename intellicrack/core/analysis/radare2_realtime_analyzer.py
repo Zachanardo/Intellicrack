@@ -97,13 +97,14 @@ class BinaryFileWatcher(FileSystemEventHandler):
     """File system watcher for binary file changes"""
 
     def __init__(self, callback: Callable, watched_files: Set[str]):
+        """Initialize the binary file watcher with callback and file monitoring."""
         self.callback = callback
         self.watched_files = watched_files
         self.logger = logger
 
         # Debouncing to prevent multiple events for same change
         self.last_modified = {}
-        self.debounce_delay = 1.0  # 1 second
+        self.debounce_delay = 1.0  # 1 second  # 1 second
 
     def on_modified(self, event):
         """Handle file modification events."""
@@ -148,6 +149,13 @@ class R2RealtimeAnalyzer:
                  update_mode: UpdateMode = UpdateMode.HYBRID,
                  update_interval: float = 30.0,
                  max_concurrent_analyses: int = 3):
+        """Initialize the Radare2 real-time analyzer.
+        
+        Args:
+            update_mode: The update strategy for real-time analysis.
+            update_interval: The interval in seconds between analysis updates.
+            max_concurrent_analyses: Maximum number of concurrent analysis operations.
+        """
         self.update_mode = update_mode
         self.update_interval = update_interval
         self.max_concurrent_analyses = max_concurrent_analyses

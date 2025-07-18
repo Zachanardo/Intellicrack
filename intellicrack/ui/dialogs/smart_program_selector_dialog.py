@@ -97,6 +97,7 @@ class ProgramDiscoveryWorker(QThread):
     finished = pyqtSignal()
 
     def __init__(self, discovery_paths: List[str]):
+        """Initialize the program discovery worker with specified paths."""
         super().__init__()
         self.discovery_paths = discovery_paths
         self.running = True
@@ -136,6 +137,7 @@ class SmartProgramSelectorDialog(QDialog):
     """Smart program selector dialog with intelligent discovery."""
 
     def __init__(self, parent=None):
+        """Initialize the smart program selector dialog with UI components and discovery functionality."""
         super().__init__(parent)
         self.setWindowTitle("Smart Program Selector")
         self.setModal(True)

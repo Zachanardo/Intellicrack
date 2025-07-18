@@ -69,10 +69,11 @@ class DirectSyscalls:
     """Direct syscall implementation to bypass usermode hooks"""
 
     def __init__(self):
+        """Initialize the syscall manager with syscall number mapping and NTDLL base detection."""
         self.syscall_numbers = {}
         self.ntdll_base = None
-        self.wow64_transition = None
-        self._initialize()
+        self.logger = get_logger(__name__)
+        self._load_syscall_numbers()
 
     def _initialize(self):
         """Initialize syscall numbers and addresses"""

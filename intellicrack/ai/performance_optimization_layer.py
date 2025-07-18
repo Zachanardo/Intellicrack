@@ -117,6 +117,11 @@ class PerformanceOptimizer:
     """Core performance optimizer for AI operations."""
 
     def __init__(self):
+        """Initialize the performance optimizer.
+        
+        Sets up caching, execution profiling, optimization rules, and resource management
+        for AI operation performance optimization.
+        """
         self.optimization_cache: Dict[str, Any] = {}
         self.execution_profiles: Dict[str, PerformanceProfile] = {}
         self.optimization_rules: List[OptimizationRule] = []
@@ -426,6 +431,11 @@ class ResourceManager:
     """Manages system resource allocation and monitoring."""
 
     def __init__(self):
+        """Initialize the resource manager.
+        
+        Sets up resource pools, allocation tracking, system limits detection,
+        and initializes resource management for optimal system utilization.
+        """
         self.resource_pools: Dict[ResourceType, Any] = {}
         self.allocation_history: deque = deque(maxlen=1000)
         self.resource_limits = self._get_system_limits()
@@ -576,6 +586,11 @@ class ParallelExecutor:
     """Manages parallel execution of AI operations."""
 
     def __init__(self):
+        """Initialize the parallel executor for AI operations.
+        
+        Sets up execution statistics tracking for monitoring parallel vs sequential
+        execution performance and calculating speedup metrics.
+        """
         self.execution_stats = {
             "parallel_executions": 0,
             "sequential_executions": 0,
@@ -703,6 +718,11 @@ class CacheManager:
     """Manages intelligent caching for AI operations."""
 
     def __init__(self, max_size_mb: int = 100):
+        """Initialize the cache manager for AI operations.
+        
+        Args:
+            max_size_mb: Maximum cache size in megabytes.
+        """
         self.cache: Dict[str, Dict[str, Any]] = {}
         self.access_times: Dict[str, datetime] = {}
         self.access_counts: Dict[str, int] = defaultdict(int)
@@ -833,6 +853,11 @@ class PerformanceOptimizationLayer:
     """Main performance optimization layer."""
 
     def __init__(self):
+        """Initialize the performance optimization layer.
+        
+        Sets up the optimizer, resource manager, parallel executor, and cache manager
+        components, then starts background optimization processes.
+        """
         self.optimizer = PerformanceOptimizer()
         self.resource_manager = ResourceManager()
         self.parallel_executor = ParallelExecutor()

@@ -22,7 +22,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 # Optional imports for enhanced tutorials
 try:

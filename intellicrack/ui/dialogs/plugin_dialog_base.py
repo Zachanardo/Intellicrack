@@ -35,6 +35,7 @@ class PluginDialogBase(QDialog):
     """Base class for dialogs that work with plugins"""
 
     def __init__(self, parent=None, plugin_path: str = None):
+        """Initialize the PluginDialogBase with default values."""
         super().__init__(parent)
         self.plugin_path = plugin_path
         self.plugin_label = None

@@ -44,6 +44,7 @@ class WindowsContext:
     """Windows CONTEXT structure for both 32-bit and 64-bit architectures."""
 
     def __init__(self):
+        """Initialize Windows context manager."""
         self.kernel32 = None
         if STRUCTURES_AVAILABLE:
             self.kernel32 = ctypes.windll.kernel32

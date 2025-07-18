@@ -50,11 +50,13 @@ def _get_wintypes():
             class DWORD:
                 """Mock DWORD type."""
                 def __init__(self):
-                    self.value = 0
+    """Initialize DWORD mock type with default value."""
+    self.value = 0
             class BOOL:
                 """Mock BOOL type."""
                 def __init__(self):
-                    self.value = 0
+    """Initialize BOOL mock type with default value."""
+    self.value = 0
         return MockWintypes(), False
 
 # Windows memory protection constants
@@ -160,8 +162,8 @@ def create_frida_script():
     // Apply patches
     var patches = {patches_js};
 
-    patches.forEach(function(patch, index) {
-        try {
+    patches.forEach(function(patch, index) {{
+        try {{
             var address = patch.address;
             var newBytes = patch.new_bytes;
             var description = patch.description || 'Patch ' + index;
@@ -178,15 +180,15 @@ def create_frida_script():
             console.log('[+] Applied patch at ' + patchAddr + ': ' + description);
             send('Patch applied: ' + description);
 
-        } catch (e) {
+        }} catch (e) {{
             console.log('[-] Failed to apply patch ' + index + ': ' + e);
             send('Patch failed: ' + description);
-        }
-    });
+        }}
+    }});
 
     console.log('[+] All patches applied');
     send('Memory patching complete');
-    """ % (str(PATCHES).replace("'", '"'), hex(0x400000))  # Default image base
+    """
 
     return script_code
 

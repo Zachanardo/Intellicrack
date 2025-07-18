@@ -124,10 +124,10 @@ def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
     # Serialize object
     data = pickle.dumps(obj)
-    
+
     # Calculate HMAC for integrity
     mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-    
+
     # Write MAC + data
     with open(file_path, 'wb') as f:
         f.write(mac)
@@ -139,12 +139,12 @@ def secure_pickle_load(file_path):
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
         data = f.read()
-    
+
     # Verify integrity
     expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
     if not hmac.compare_digest(stored_mac, expected_mac):
         raise ValueError("Pickle file integrity check failed - possible tampering detected")
-    
+
     # Load object
     return pickle.loads(data)
 
@@ -163,6 +163,7 @@ if not HAS_CTYPES:
     class MockWindll:
         """Mock windll for non-Windows platforms."""
         def __getattr__(self, _name):
+            """Return a mock function for any attribute access."""
             class MockFunc:
                 """Mock function that accepts any arguments."""
                 def __call__(self, *args, **kwargs):
@@ -313,14 +314,42 @@ try:  # pylint: disable=unused-argument
     )
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
-    # Fallback for environments without PyQt5
+    # Fallback for environments without PyQt6
     class QMainWindow:
-        """Fallback QMainWindow class for environments without PyQt5."""
+        """Fallback QMainWindow class for environments without PyQt6."""
+        def __init__(self, parent=None):
+            """Initialize fallback QMainWindow."""
+            pass
+            
+    class DummySignal:
+        """Fallback signal class for environments without PyQt6."""
+        def __init__(self):
+            """Initialize dummy signal."""
+            self.callbacks = []
+            
+        def connect(self, callback):
+            """Connect a callback to the signal."""
+            self.callbacks.append(callback)
+            
+        def disconnect(self, callback=None):
+            """Disconnect a callback from the signal."""
+            if callback:
+                self.callbacks.remove(callback)
+            else:
+                self.callbacks.clear()
+                
+        def emit(self, *args, **kwargs):
+            """Emit the signal to all connected callbacks."""
+            for callback in self.callbacks:
+                try:
+                    callback(*args, **kwargs)
+                except Exception as err:
+                    logger.error("Error in signal callback: %s", err)
+                    
     def pyqtSignal(*args, **kwargs):  # pylint: disable=unused-argument
-        """Fallback pyqtSignal function for environments without PyQt5."""
-        def dummy_signal(*args, **kwargs):  # pylint: disable=unused-argument
-            """Dummy signal function."""
-        return dummy_signal
+        """Fallback pyqtSignal function for environments without PyQt6."""
+        return DummySignal()
+    
     Qt = None
     QMetaObject = None
     QtCore = None
@@ -341,16 +370,19 @@ try:
         EmulatorStatusWidget,
         add_emulator_tooltips,
     )
-    from .tooltip_helper import apply_tooltips_to_buttons, apply_tooltips_to_all_elements, get_tooltip_definitions
-    from .theme_manager import get_theme_manager
-    
+    from .tabs.ai_assistant_tab import AIAssistantTab
+    from .tabs.analysis_tab import AnalysisTab
+
     # Import new modular tab architecture
     from .tabs.dashboard_tab import DashboardTab
-    from .tabs.analysis_tab import AnalysisTab
     from .tabs.exploitation_tab import ExploitationTab
-    from .tabs.ai_assistant_tab import AIAssistantTab
-    from .tabs.tools_tab import ToolsTab
     from .tabs.settings_tab import SettingsTab
+    from .tabs.tools_tab import ToolsTab
+    from .theme_manager import get_theme_manager
+    from .tooltip_helper import (
+        apply_tooltips_to_buttons,
+        get_tooltip_definitions,
+    )
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
     # Define a dummy SplashScreen for environments without PyQt5
@@ -366,7 +398,7 @@ except ImportError as e:
     EmulatorRequiredDecorator = None
     get_tooltip_definitions = None
     apply_tooltips_to_buttons = None
-    
+
     # Fallback tab classes
     DashboardTab = None
     AnalysisTab = None
@@ -2229,26 +2261,115 @@ def _generate_ssl_certificates(cert_store_path):
         server_cert_path = os.path.join(cert_store_path, 'server-cert.pem')
         server_key_path = os.path.join(cert_store_path, 'server-key.pem')
 
-        # Generate CA certificate content (placeholder for real certificate)
-        ca_cert_content = f"""-----BEGIN CERTIFICATE-----
-MIIDXTCCAkWgAwIBAgIJAKL0UG+9lEEGMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
-BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
-aWRnaXRzIFB0eSBMdGQwHhcN{datetime.now().strftime('%y%m%d%H%M%S')}Z
-Mh4V{(datetime.now() + timedelta(days=365)).strftime('%y%m%d%H%M%S')}ZMEUxCzAJBgNV
-BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
-aWRnaXRzIFB0eSBMdGQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC7
-vfKqP7+Fm6LBM5wJjTl0g+iQ8cY3v8Y9mGhHdK9jCt7DpBsJ9LNtF4dZR7gHfN
------END CERTIFICATE-----"""
+        # Generate real CA certificate using cryptography
+        try:
+            from cryptography import x509
+            from cryptography.hazmat.primitives import hashes, serialization
+            from cryptography.hazmat.primitives.asymmetric import rsa
+            from cryptography.x509.oid import NameOID
 
-        # Write certificate files
-        with open(ca_cert_path, 'w') as f:
-            f.write(ca_cert_content)
-        with open(ca_key_path, 'w') as f:
-            f.write("-----BEGIN PRIVATE KEY-----\n[CA Private Key]\n-----END PRIVATE KEY-----")
-        with open(server_cert_path, 'w') as f:
-            f.write(ca_cert_content.replace('CA Certificate', 'Server Certificate'))
-        with open(server_key_path, 'w') as f:
-            f.write("-----BEGIN PRIVATE KEY-----\n[Server Private Key]\n-----END PRIVATE KEY-----")
+            # Generate CA private key
+            ca_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=2048
+            )
+
+            # Generate CA certificate
+            subject = issuer = x509.Name([
+                x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"Security"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, u"Research"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Intellicrack CA"),
+                x509.NameAttribute(NameOID.COMMON_NAME, u"Intellicrack Root CA"),
+            ])
+
+            ca_cert = x509.CertificateBuilder().subject_name(
+                subject
+            ).issuer_name(
+                issuer
+            ).public_key(
+                ca_key.public_key()
+            ).serial_number(
+                x509.random_serial_number()
+            ).not_valid_before(
+                datetime.utcnow()
+            ).not_valid_after(
+                datetime.utcnow() + timedelta(days=3650)
+            ).add_extension(
+                x509.SubjectAlternativeName([
+                    x509.DNSName(u"localhost"),
+                    x509.DNSName(u"*.local"),
+                ]),
+                critical=False,
+            ).add_extension(
+                x509.BasicConstraints(ca=True, path_length=0),
+                critical=True,
+            ).sign(ca_key, hashes.SHA256())
+
+            # Generate server private key
+            server_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=2048
+            )
+
+            # Generate server certificate
+            server_subject = x509.Name([
+                x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"Security"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, u"Research"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Intellicrack"),
+                x509.NameAttribute(NameOID.COMMON_NAME, u"Intellicrack Server"),
+            ])
+
+            server_cert = x509.CertificateBuilder().subject_name(
+                server_subject
+            ).issuer_name(
+                ca_cert.issuer
+            ).public_key(
+                server_key.public_key()
+            ).serial_number(
+                x509.random_serial_number()
+            ).not_valid_before(
+                datetime.utcnow()
+            ).not_valid_after(
+                datetime.utcnow() + timedelta(days=365)
+            ).add_extension(
+                x509.SubjectAlternativeName([
+                    x509.DNSName(u"localhost"),
+                    x509.DNSName(u"127.0.0.1"),
+                ]),
+                critical=False,
+            ).sign(ca_key, hashes.SHA256())
+
+            # Write certificate files
+            with open(ca_cert_path, 'wb') as f:
+                f.write(ca_cert.public_bytes(serialization.Encoding.PEM))
+            with open(ca_key_path, 'wb') as f:
+                f.write(ca_key.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.TraditionalOpenSSL,
+                    encryption_algorithm=serialization.NoEncryption()
+                ))
+            with open(server_cert_path, 'wb') as f:
+                f.write(server_cert.public_bytes(serialization.Encoding.PEM))
+            with open(server_key_path, 'wb') as f:
+                f.write(server_key.private_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PrivateFormat.TraditionalOpenSSL,
+                    encryption_algorithm=serialization.NoEncryption()
+                ))
+
+        except ImportError:
+            logger.warning("cryptography not installed, using placeholder certificates")
+            # Fallback to placeholder certificates
+            with open(ca_cert_path, 'w') as f:
+                f.write("-----BEGIN CERTIFICATE-----\n[Placeholder CA Certificate]\n-----END CERTIFICATE-----")
+            with open(ca_key_path, 'w') as f:
+                f.write("-----BEGIN PRIVATE KEY-----\n[Placeholder CA Key]\n-----END PRIVATE KEY-----")
+            with open(server_cert_path, 'w') as f:
+                f.write("-----BEGIN CERTIFICATE-----\n[Placeholder Server Certificate]\n-----END CERTIFICATE-----")
+            with open(server_key_path, 'w') as f:
+                f.write("-----BEGIN PRIVATE KEY-----\n[Placeholder Server Key]\n-----END PRIVATE KEY-----")
 
         return {
             'ca_cert': ca_cert_path,
@@ -5440,7 +5561,7 @@ def _check_intercepted_traffic(proxy_server):
                     elif processing_frameworks.get('celery', False):
                         # Execute with Celery
                         # Celery would need a broker setup, but we can demonstrate the import usage
-                        self.update_output.emit(log_message("[Distributed] Celery available for task queue processing"))
+                        app.update_output.emit(log_message("[Distributed] Celery available for task queue processing"))
 
                     elif processing_frameworks.get('joblib', False):
                         # Execute with Joblib
@@ -5719,7 +5840,7 @@ def _check_intercepted_traffic(proxy_server):
                 # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
                 import os
                 os.environ['MKL_THREADING_LAYER'] = 'GNU'
-                
+
                 import tensorflow as tf
                 if tf.config.list_physical_devices('GPU'):
                     gpu_frameworks['tensorflow_gpu'] = True
@@ -9353,7 +9474,7 @@ def load_ai_model(model_path):
                 # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
                 import os
                 os.environ['MKL_THREADING_LAYER'] = 'GNU'
-                
+
                 import tensorflow as tf
                 if hasattr(tf, 'keras'):
                     model = tf.keras.models.load_model(model_path)
@@ -9594,6 +9715,7 @@ class WorkerThread(QThread):
     result = pyqtSignal(object)
 
     def __init__(self, func, *args, **kwargs):
+        """Initialize the worker thread with function and arguments."""
         super().__init__()
         self.func = func
         self.args = args
@@ -9624,6 +9746,7 @@ class WorkerThread(QThread):
 class ModelFinetuningDialog(QDialog):
     """Production-grade model finetuning dialog."""
     def __init__(self, parent=None):
+        """Initialize the model finetuning dialog with UI components."""
         super().__init__(parent)
         self.setWindowTitle("Model Fine-tuning")
         self.setModal(True)
@@ -9735,6 +9858,7 @@ except ImportError:
     class Llama:
         """Production-grade Llama fallback class with logging and error handling."""
         def __init__(self, *args, **kwargs):
+            """Initialize the Llama fallback implementation with logging and error handling."""
             _ = args  # Unused fallback class parameters
             self.logger = logging.getLogger("Intellicrack.LlamaFallback")
             self.model_path = kwargs.get('model_path', 'unknown')
@@ -10658,7 +10782,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             'app_context': self.app_context,
             'task_manager': self.task_manager
         }
-        
+
         # Create new modular tabs with lazy loading
         self.dashboard_tab = DashboardTab(shared_context, self) if DashboardTab else QWidget()
         self.analysis_tab = AnalysisTab(shared_context, self) if AnalysisTab else QWidget()
@@ -10666,11 +10790,11 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.ai_assistant_tab = AIAssistantTab(shared_context, self) if AIAssistantTab else QWidget()
         self.tools_tab = ToolsTab(shared_context, self) if ToolsTab else QWidget()
         self.settings_tab = SettingsTab(shared_context, self) if SettingsTab else QWidget()
-        
+
         # Connect theme change signal to handler
         if hasattr(self.settings_tab, 'theme_changed'):
             self.settings_tab.theme_changed.connect(self.on_theme_changed)
-        
+
         # Add new modular tabs to the tab widget
         self.tabs.addTab(self.dashboard_tab, "Dashboard")
         self.tabs.addTab(self.analysis_tab, "Analysis")
@@ -10786,7 +10910,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 self.logger.info("Tooltips applied to all UI elements")
             except Exception as e:
                 self.logger.error("Failed to apply tooltips: %s", e)
-        
+
         self.logger.info("Window configuration complete")
 
     def closeEvent_handler(self, event):
@@ -12697,7 +12821,7 @@ class Plugin:
         custom_dir_layout = QHBoxLayout()
         custom_dir_layout.addWidget(QLabel("Custom Plugins:"))
         custom_dir_edit = QLineEdit()
-        custom_dir_edit.setText(os.path.join(os.path.dirname(__file__), "..", "..", "plugins", "custom_modules"))
+        custom_dir_edit.setText(os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"))
         custom_dir_layout.addWidget(custom_dir_edit)
         dir_layout.addLayout(custom_dir_layout)
 
@@ -12728,10 +12852,10 @@ class Plugin:
         """Find plugin file by name"""
         # Search in common plugin directories
         search_dirs = [
-            get_resource_path('plugins/custom_modules'),
+            get_resource_path('intellicrack/plugins/custom_modules'),
             get_resource_path('plugins/frida_scripts'),
-            get_resource_path('plugins/ghidra_scripts'),
-            "plugins",
+            get_resource_path('intellicrack/plugins/ghidra_scripts'),
+            "intellicrack/plugins",
             "scripts"
         ]
 
@@ -12812,15 +12936,16 @@ class Plugin:
         hex_layout.addLayout(hex_buttons_layout)
         hex_layout.addLayout(binary_hex_buttons_layout)
 
-        # Embedded Hex Viewer placeholder (will be initialized with real HexViewerWidget)
-        hex_viewer_placeholder = QFrame()
-        hex_viewer_placeholder.setFrameShape(QFrame.StyledPanel)
-        hex_viewer_placeholder.setMinimumHeight(300)
+        # Embedded Hex Viewer
+        from intellicrack.ui.widgets.hex_viewer import HexViewerWidget
+        self.hex_viewer_widget = HexViewerWidget()
+        self.hex_viewer_widget.setMinimumHeight(300)
 
-        placeholder_layout = QVBoxLayout(hex_viewer_placeholder)
-        placeholder_layout.addWidget(QLabel("Hex Viewer will be displayed here when a file is loaded"))
+        # Connect hex viewer signals
+        self.hex_viewer_widget.selection_changed.connect(self.on_hex_selection_changed)
+        self.hex_viewer_widget.data_modified.connect(self.on_hex_data_modified)
 
-        hex_layout.addWidget(hex_viewer_placeholder)
+        hex_layout.addWidget(self.hex_viewer_widget)
 
         # 2. Plugin Manager sub-tab
         plugin_layout = QVBoxLayout(plugin_manager_tab)
@@ -13278,6 +13403,14 @@ class Plugin:
         # Add the tab widget to the main layout
         layout.addWidget(tools_subtabs)
 
+    def on_hex_selection_changed(self, start, end):
+        """Handle hex viewer selection changes."""
+        self.logger.info(f"Hex selection: 0x{start:08X} - 0x{end:08X}")
+
+    def on_hex_data_modified(self, offset, data):
+        """Handle hex viewer data modifications."""
+        self.logger.info(f"Hex data modified at 0x{offset:08X}: {data.hex()}")
+
     def setup_binary_tools_tab(self):
         """Sets up the Binary Tools Tab with hex viewer, disassembler, and memory tools."""
         # Create main layout
@@ -13698,15 +13831,10 @@ class Plugin:
         self.binary_tool_stack.addWidget(memory_viewer_widget)
         self.binary_tool_stack.addWidget(memory_patch_widget)
 
-        # Add a placeholder for Memory Dump tool
-        memory_dump_widget = QWidget()
-        memory_dump_layout = QVBoxLayout(memory_dump_widget)
-        memory_dump_layout.addWidget(QLabel("<h2>Memory Dump</h2>"))
-        memory_dump_layout.addWidget(QLabel("Create and analyze memory dumps"))
-        memory_dump_layout.addWidget(QLabel("<i>This tool will be integrated in a future update.</i>"))
-        memory_dump_layout.addStretch(1)
-
-        self.binary_tool_stack.addWidget(memory_dump_widget)
+        # Memory Dump tool
+        from intellicrack.ui.widgets.memory_dumper import MemoryDumperWidget
+        self.memory_dumper_widget = MemoryDumperWidget()
+        self.binary_tool_stack.addWidget(self.memory_dumper_widget)
 
         content_layout.addWidget(self.binary_tool_stack)
 
@@ -16050,7 +16178,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             self.update_output(f"[Plugins] Error with wizard: {e}")
 
         # Fallback to original implementation
-        plugin_dir = "plugins"
+        plugin_dir = "intellicrack/plugins"
 
         # Define templates for different plugin types
         templates = {
@@ -16319,7 +16447,7 @@ def register():
             return
 
         # Create plugin directory if it doesn't exist
-        plugin_dir = "plugins"
+        plugin_dir = "intellicrack/plugins"
         if not os.path.exists(plugin_dir):
             os.makedirs(plugin_dir)
 
@@ -17126,33 +17254,33 @@ def register():
         """Handle binary loaded signal from AppContext."""
         self.binary_path = binary_info['path']
         self.append_output(f"[Binary Loaded] {binary_info['name']} ({binary_info['size']} bytes)")
-        
+
         # Update binary info display if dashboard tab is available
         if hasattr(self, 'dashboard_tab') and hasattr(self.dashboard_tab, 'on_binary_loaded'):
             self.dashboard_tab.on_binary_loaded(binary_info)
-    
+
     def _on_analysis_completed(self, analysis_type, results):
         """Handle analysis completed signal from AppContext."""
         self.append_output(f"[Analysis Complete] {analysis_type}")
-        
+
         # Update analysis tab if available
         if hasattr(self, 'analysis_tab') and hasattr(self.analysis_tab, 'on_analysis_completed'):
             self.analysis_tab.on_analysis_completed(analysis_type, results)
-    
+
     def _on_task_started(self, task_id, description):
         """Handle task started signal from AppContext."""
         self.append_output(f"[Task Started] {description}")
-    
+
     def _on_task_progress(self, task_id, progress):
         """Handle task progress signal from AppContext."""
         # Update progress bar if available
         if hasattr(self, 'progress_bar'):
             self.progress_bar.setValue(progress)
-    
+
     def _on_task_completed(self, task_id, result):
         """Handle task completed signal from AppContext."""
         self.append_output(f"[Task Complete] Task {task_id[:8]}...")
-    
+
     def _on_task_failed(self, task_id, error_message):
         """Handle task failed signal from AppContext."""
         self.append_output(f"[Task Failed] {error_message}")
@@ -17956,7 +18084,7 @@ def register():
     def log_message(self, message: str, level: str = "info") -> None:
         """Log a message to the output panel."""
         timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
-        
+
         # Format message with level
         if level.lower() == "error":
             formatted_msg = f"{timestamp} [ERROR] {message}"
@@ -17964,10 +18092,10 @@ def register():
             formatted_msg = f"{timestamp} [WARNING] {message}"
         else:
             formatted_msg = f"{timestamp} [INFO] {message}"
-        
+
         # Print to console
         print(formatted_msg)
-        
+
         # Append to output widget if available
         if hasattr(self, 'output') and self.output is not None:
             self.output.append(formatted_msg)
@@ -18182,7 +18310,7 @@ def register():
         """Handles switching the main tab view via signal."""
         if hasattr(self, 'tabs'):
             self.tabs.setCurrentIndex(index)
-    
+
     def on_theme_changed(self, theme_name):
         """Handle theme change from SettingsTab"""
         try:
@@ -18192,14 +18320,14 @@ def register():
                 theme_name = 'light'
             else:
                 theme_name = theme_name.lower()
-            
+
             # Apply theme using ThemeManager
             if hasattr(self, 'theme_manager'):
                 self.theme_manager.set_theme(theme_name)
                 print(f"Theme changed to: {theme_name}")
             else:
                 print(f"Warning: ThemeManager not available, cannot change theme to {theme_name}")
-                
+
         except Exception as e:
             print(f"Error changing theme: {e}")
 
@@ -19056,8 +19184,7 @@ def register():
         try:
             if os.path.exists(activator_path):
                 # Use subprocess.Popen to run the batch file with elevated privileges
-                subprocess.Popen([activator_path],
-                                creationflags=subprocess.CREATE_NO_WINDOW)
+                subprocess.Popen([activator_path])
                 self.update_output.emit("✅ Windows Activator launched successfully.")
             else:
                 self.update_output.emit("❌ Windows Activator script not found at: " + activator_path)
@@ -27740,7 +27867,7 @@ def launch():
             # Always use software rendering for Intel Arc due to compatibility issues
             force_software = os.environ.get('INTELLICRACK_FORCE_SOFTWARE', '0') == '1'
             is_intel_arc = 'arc' in gpu_type.lower() or 'b580' in gpu_type.lower()
-            
+
             # Force software rendering for ALL Intel Arc cards and when explicitly requested
             if force_software or is_intel_arc:
                 print(f"[LAUNCH] Intel GPU detected ({gpu_type}) - using SOFTWARE rendering (Intel Arc compatibility)")
@@ -27860,12 +27987,12 @@ def launch():
 
         deps = check_dependencies()
         missing_deps = {k: v for k, v in deps.items() if not v}
-        
+
         # Skip first-run dialog if TensorFlow is the only missing dependency
         # or if INTELLICRACK_SKIP_FIRSTRUN is set
         skip_firstrun = os.environ.get('INTELLICRACK_SKIP_FIRSTRUN', '0') == '1'
         tensorflow_only = len(missing_deps) == 1 and 'TensorFlow' in missing_deps
-        
+
         if missing_deps and not skip_firstrun and not tensorflow_only:
             try:
                 from .dialogs.first_run_setup import FirstRunSetupDialog
@@ -27915,10 +28042,10 @@ def launch():
             logger.info("No splash screen to close")
 
         window.show()
-        
+
         # Log successful launch
         logger.info("🎉 INTELLICRACK LAUNCHED SUCCESSFULLY! Window is now visible.")
-        
+
         # Also write to a file for verification
         import datetime
         with open('LAUNCH_SUCCESS.log', 'w') as f:
@@ -28002,10 +28129,10 @@ def launch():
         if not window.isVisible():
             logger.warning("Window is not visible after event loop start! Trying to show again...")
             window.show()
-        
+
         # Log successful launch
         logger.info("🎉 INTELLICRACK LAUNCHED SUCCESSFULLY! Window is now visible.")
-        
+
         # Also write to a file for verification
         import datetime
         with open('LAUNCH_SUCCESS.log', 'w') as f:

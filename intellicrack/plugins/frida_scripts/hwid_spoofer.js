@@ -20,7 +20,11 @@
 // Spoofs various hardware identifiers to bypass HWID-based license checks
 // Compatible with most Windows applications using standard APIs
 
-console.log("[HWID Spoofer] Starting comprehensive hardware ID spoofing...");
+send({
+    type: "status",
+    message: "Starting comprehensive hardware ID spoofing",
+    category: "hwid_spoofer"
+});
 
 // === VOLUME SERIAL NUMBER SPOOFING ===
 var getVolumeInfo = Module.findExportByName("kernel32.dll", "GetVolumeInformationW");
@@ -32,7 +36,12 @@ if (getVolumeInfo) {
                 var serialPtr = this.context.r8;
                 if (serialPtr && !serialPtr.isNull()) {
                     serialPtr.writeU32(0x12345678); // Spoofed serial
-                    console.log("[HWID] Volume serial spoofed to 0x12345678");
+                    send({
+                        type: "bypass",
+                        target: "volume_serial",
+                        action: "serial_number_spoofed",
+                        spoofed_value: "0x12345678"
+                    });
                 }
             }
         }
@@ -50,7 +59,12 @@ if (getAdaptersInfo) {
                     // Replace MAC address with spoofed one
                     var macAddr = adapterInfo.add(8); // Address offset in IP_ADAPTER_INFO
                     macAddr.writeByteArray([0x00, 0x11, 0x22, 0x33, 0x44, 0x55]);
-                    console.log("[HWID] MAC address spoofed to 00:11:22:33:44:55");
+                    send({
+                        type: "bypass",
+                        target: "mac_address",
+                        action: "mac_address_spoofed",
+                        spoofed_value: "00:11:22:33:44:55"
+                    });
                 }
             }
         }
@@ -67,7 +81,13 @@ if (getSystemInfo) {
                 // Modify processor architecture and count
                 sysInfo.writeU16(9); // PROCESSOR_ARCHITECTURE_AMD64
                 sysInfo.add(4).writeU32(8); // dwNumberOfProcessors
-                console.log("[HWID] Processor information spoofed");
+                send({
+                    type: "bypass",
+                    target: "processor_info",
+                    action: "processor_information_spoofed",
+                    architecture: "AMD64",
+                    processor_count: 8
+                });
             }
         }
     });
@@ -90,11 +110,21 @@ if (regQueryValueExW) {
                     // Write spoofed GUID
                     var spoofedGuid = "{12345678-1234-1234-1234-123456789ABC}";
                     buffer.writeUtf16String(spoofedGuid);
-                    console.log("[HWID] Machine GUID spoofed");
+                    send({
+                        type: "bypass",
+                        target: "machine_guid",
+                        action: "machine_guid_spoofed",
+                        spoofed_value: spoofedGuid
+                    });
                 }
             }
         }
     });
 }
 
-console.log("[HWID Spoofer] Hardware ID spoofing hooks installed successfully!");
+send({
+    type: "status",
+    message: "Hardware ID spoofing hooks installed successfully",
+    category: "hwid_spoofer",
+    hook_count: 4
+});

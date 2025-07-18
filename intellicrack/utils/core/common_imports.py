@@ -97,10 +97,10 @@ try:
     import os
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
-    
+
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     os.environ['MKL_THREADING_LAYER'] = 'GNU'
-    
+
     import tensorflow as tf
     # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
     tf.config.set_visible_devices([], 'GPU')
@@ -161,6 +161,7 @@ except ImportError as e:
 
         class BinaryInfo:
             def __init__(self, path):
+                """Initialize binary info with path and detect binary format."""
                 self.path = path
                 self.valid = os.path.exists(path)
                 self.format = self._detect_format() if self.valid else None
@@ -290,6 +291,7 @@ except ImportError as e:
 
         class PEFile:
             def __init__(self, path):
+                """Initialize PE file parser and parse file if exists."""
                 self.path = path
                 self.valid = False
                 self.architecture = None
@@ -415,6 +417,7 @@ except ImportError as e:
 
         class ELFFile:
             def __init__(self, path):
+                """Initialize ELF file parser and parse file if exists."""
                 self.path = path
                 self.valid = False
                 self.architecture = None
@@ -557,6 +560,7 @@ except ImportError as e:
         # Create a device object with exploitation-relevant info
         class LocalDevice:
             def __init__(self):
+                """Initialize local device with system information and capabilities."""
                 self.id = str(uuid.uuid4())
                 self.name = platform.node() or socket.gethostname()
                 self.type = 'local'
@@ -684,6 +688,7 @@ except ImportError as e:
 
         class Disassembler:
             def __init__(self, arch, mode):
+                """Initialize disassembler with architecture and mode for exploit development."""
                 self.arch = arch
                 self.mode = mode
                 self.instructions = []
@@ -700,28 +705,28 @@ except ImportError as e:
                 # Common exploit opcodes
                 self.exploit_opcodes = {
                     'x86_64': {
-                        'nop': b'\x90',
-                        'ret': b'\xc3',
-                        'int3': b'\xcc',
-                        'syscall': b'\x0f\x05',
-                        'jmp_rsp': b'\xff\xe4',
-                        'pop_rdi': b'\x5f',
-                        'pop_rsi': b'\x5e',
-                        'pop_rdx': b'\x5a',
-                        'pop_rax': b'\x58',
-                        'xor_rax_rax': b'\x48\x31\xc0'
+                        'nop': b'\\x90',
+                        'ret': b'\\xc3',
+                        'int3': b'\\xcc',
+                        'syscall': b'\\x0f\\x05',
+                        'jmp_rsp': b'\\xff\\xe4',
+                        'pop_rdi': b'\\x5f',
+                        'pop_rsi': b'\\x5e',
+                        'pop_rdx': b'\\x5a',
+                        'pop_rax': b'\\x58',
+                        'xor_rax_rax': b'\\x48\\x31\\xc0'
                     },
                     'x86': {
-                        'nop': b'\x90',
-                        'ret': b'\xc3',
-                        'int3': b'\xcc',
-                        'int80': b'\xcd\x80',
-                        'jmp_esp': b'\xff\xe4',
-                        'pop_eax': b'\x58',
-                        'pop_ebx': b'\x5b',
-                        'pop_ecx': b'\x59',
-                        'pop_edx': b'\x5a',
-                        'xor_eax_eax': b'\x31\xc0'
+                        'nop': b'\\x90',
+                        'ret': b'\\xc3',
+                        'int3': b'\\xcc',
+                        'int80': b'\\xcd\\x80',
+                        'jmp_esp': b'\\xff\\xe4',
+                        'pop_eax': b'\\x58',
+                        'pop_ebx': b'\\x5b',
+                        'pop_ecx': b'\\x59',
+                        'pop_edx': b'\\x5a',
+                        'xor_eax_eax': b'\\x31\\xc0'
                     }
                 }
 
@@ -813,6 +818,7 @@ except ImportError as e:
                 return gadgets
         class Instruction:
             def __init__(self, address, bytes_data, mnemonic, op_str, size):
+                """Initialize instruction with disassembly information."""
                 self.address = address
                 self.bytes = bytes_data
                 self.mnemonic = mnemonic
@@ -861,6 +867,7 @@ except ImportError as e:
 
         class Figure:
             def __init__(self, width=10, height=6):
+                """Initialize figure with dimensions and empty plot elements."""
                 self.width = width
                 self.height = height
                 self.subplots = []
@@ -964,6 +971,7 @@ except ImportError as e:
 
         class SimplePlot:
             def __init__(self):
+                """Initialize simple plot with data and display parameters."""
                 self.x_data = x if hasattr(x, '__iter__') else [x]
                 self.y_data = y if hasattr(y, '__iter__') else [y]
                 self.title = title
@@ -1185,6 +1193,7 @@ except ImportError:
     # Create dummy classes to prevent import errors
     class _DummyWidget:
         def __init__(self, *args, **kwargs):
+            """Initialize dummy widget placeholder with no operation."""
             pass
         def __call__(self, *args, **kwargs):
             return self

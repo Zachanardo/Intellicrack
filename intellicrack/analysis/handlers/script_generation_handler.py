@@ -63,6 +63,13 @@ class ScriptGenerationWorker(QRunnable):
     """Worker thread for script generation"""
 
     def __init__(self, file_path: str, script_type: str, protections: list):
+        """Initialize the script generation worker.
+        
+        Args:
+            file_path: Path to the file being analyzed.
+            script_type: Type of script to generate (e.g., 'frida', 'ghidra').
+            protections: List of detected protections to generate scripts for.
+        """
         super().__init__()
         self.file_path = file_path
         self.script_type = script_type
@@ -104,6 +111,12 @@ class ScriptDisplayDialog(QDialog):
     """Dialog for displaying and managing generated scripts"""
 
     def __init__(self, script_data: dict, parent=None):
+        """Initialize the script display dialog.
+        
+        Args:
+            script_data: Dictionary containing the generated script data and metadata.
+            parent: Optional parent widget for Qt integration.
+        """
         super().__init__(parent)
         self.script_data = script_data
         self.init_ui()
@@ -309,6 +322,11 @@ class ScriptGenerationHandler(QObject):
     script_progress = pyqtSignal(str)
 
     def __init__(self, parent=None):
+        """Initialize the script generation handler.
+        
+        Args:
+            parent: Optional parent widget for Qt integration.
+        """
         super().__init__(parent)
         self.thread_pool = QThreadPool.globalInstance()
         self.current_result: Optional[UnifiedProtectionResult] = None

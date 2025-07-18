@@ -32,8 +32,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-import logging
-
 logger = logging.getLogger(__name__)
 
 try:
@@ -73,6 +71,12 @@ class PerformanceMonitor:
     """Comprehensive performance monitoring system."""
 
     def __init__(self, max_history: int = 1000):
+        """Initialize the performance monitoring system.
+        
+        Args:
+            max_history: Maximum number of metrics and profiles to retain
+                        in history
+        """
         self.logger = logging.getLogger(__name__ + ".PerformanceMonitor")
         self.max_history = max_history
         self.metrics: Dict[str, deque] = defaultdict(
@@ -531,7 +535,7 @@ def monitor_memory_usage(threshold_mb: float = 100.0):
             logger.warning(
                 f"High memory usage: {memory_increase:.2f}MB increase")
 
-        performance_monitor.record_metric(
+        get_performance_monitor().record_metric(
             "memory.operation_increase",
             memory_increase,
             "MB"
@@ -542,6 +546,12 @@ class AsyncPerformanceMonitor:
     """Asynchronous performance monitoring for async operations."""
 
     def __init__(self, base_monitor: PerformanceMonitor):
+        """Initialize the async performance monitor.
+        
+        Args:
+            base_monitor: Base performance monitor to delegate synchronous
+                         operations to
+        """
         self.logger = logging.getLogger(__name__ + ".AsyncPerformanceMonitor")
         self.base_monitor = base_monitor
         self.async_operations: Dict[str, Dict[str, Any]] = {}

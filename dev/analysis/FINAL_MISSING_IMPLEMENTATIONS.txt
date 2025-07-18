@@ -1,0 +1,5 @@
+# Missing Implementations That Need Fixing
+# These are actual bugs/incomplete features
+
+intellicrack/ai/learning_engine.py:95 - NotImplementedError: raise NotImplementedError('Actual learning algorithm not implemented yet')
+intellicrack/ui/dialogs/text_editor_dialog.py:358 - TODO: # TODO: Implement export function

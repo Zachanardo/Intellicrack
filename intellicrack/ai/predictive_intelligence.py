@@ -114,9 +114,15 @@ class FeatureExtractor:
     """Extracts features for predictive modeling."""
 
     def __init__(self):
+        """Initialize the feature extractor for predictive modeling.
+        
+        Sets up feature caching, importance tracking, and connects to the learning engine
+        for intelligent feature extraction from binary analysis data.
+        """
         self.logger = logging.getLogger(__name__ + ".FeatureExtractor")
         self.feature_cache: Dict[str, Any] = {}
         self.feature_importance: Dict[str, float] = {}
+        self.learning_engine = get_learning_engine()
 
         logger.info("Feature extractor initialized")
 
@@ -189,7 +195,7 @@ class FeatureExtractor:
     def _get_historical_performance(self, operation_type: str) -> Dict[str, float]:
         """Get historical performance features."""
         try:
-            insights = learning_engine.get_learning_insights()
+            insights = self.learning_engine.get_learning_insights()
 
             # Use operation_type to filter relevant insights
             if operation_type in insights.get('operation_types', {}):
@@ -362,6 +368,11 @@ class PredictiveModel:
     """Base class for predictive models."""
 
     def __init__(self, model_name: str):
+        """Initialize the base predictive model.
+        
+        Args:
+            model_name: Name identifier for the predictive model.
+        """
         self.model_name = model_name
         self.model_version = "1.0"
         self.training_data: List[Dict[str, Any]] = []
@@ -407,6 +418,11 @@ class LinearRegressionModel(PredictiveModel):
     """Simple linear regression model for predictions."""
 
     def __init__(self, model_name: str):
+        """Initialize the linear regression model.
+        
+        Args:
+            model_name: Name identifier for the model.
+        """
         super().__init__(model_name)
         self.weights: Dict[str, float] = {}
         self.bias: float = 0.0
@@ -501,6 +517,11 @@ class SuccessProbabilityPredictor:
     """Predicts success probability for operations."""
 
     def __init__(self):
+        """Initialize the success probability predictor.
+        
+        Sets up a linear regression model and feature extractor for predicting
+        the likelihood of successful exploitation operations.
+        """
         self.model = LinearRegressionModel("success_probability")
         self.feature_extractor = FeatureExtractor()
         self._initialize_model()
@@ -655,6 +676,11 @@ class ExecutionTimePredictor:
     """Predicts execution time for operations."""
 
     def __init__(self):
+        """Initialize the execution time predictor.
+        
+        Sets up a linear regression model and feature extractor for predicting
+        operation execution times based on binary characteristics.
+        """
         self.model = LinearRegressionModel("execution_time")
         self.feature_extractor = FeatureExtractor()
         self._initialize_model()
@@ -766,11 +792,18 @@ class VulnerabilityPredictor:
     """Predicts vulnerability discovery likelihood."""
 
     def __init__(self):
-        self.model = LinearRegressionModel("vulnerability_discovery")
-        self.feature_extractor = FeatureExtractor()
-        self._initialize_model()
-
-        logger.info("Vulnerability predictor initialized")
+        """Initialize the vulnerability discovery predictor.
+        
+        Sets up the predictor for estimating vulnerability discovery likelihood
+        in target binaries based on code patterns and historical data.
+        """
+        super().__init__(
+            "vulnerability_discovery",
+            "Predict vulnerability discovery likelihood"
+        )
+        self.vulnerability_patterns = []
+        self.pattern_weights = {}
+        self.discovery_history = []
 
     def _initialize_model(self):
         """Initialize with vulnerability-specific training data."""
@@ -951,6 +984,7 @@ class PredictiveIntelligenceEngine:
     """Main predictive intelligence engine."""
 
     def __init__(self):
+        """Initialize the predictive intelligence engine with specialized predictors."""
         self.success_predictor = SuccessProbabilityPredictor()
         self.time_predictor = ExecutionTimePredictor()
         self.vulnerability_predictor = VulnerabilityPredictor()

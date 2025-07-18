@@ -34,6 +34,7 @@ class BaseC2:
     """
 
     def __init__(self):
+        """Initialize the base C2 framework with logging and protocol management."""
         self.logger = logging.getLogger(self.__class__.__name__)
         self.protocols = []
         self.running = False

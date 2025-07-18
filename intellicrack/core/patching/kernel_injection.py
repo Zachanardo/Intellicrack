@@ -60,6 +60,7 @@ class KernelInjector:
     """Kernel-level injection using Windows driver"""
 
     def __init__(self):
+        """Initialize the kernel injector with Windows platform validation and driver setup."""
         if not AVAILABLE:
             raise RuntimeError("Kernel injection requires Windows")
 

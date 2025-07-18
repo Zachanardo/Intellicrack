@@ -107,7 +107,11 @@
     },
     
     run: function() {
-        console.log("[HTTP3/QUIC] Starting HTTP/3 and QUIC interceptor...");
+        send({
+            type: "status",
+            target: "http3_quic_interceptor",
+            action: "starting_interceptor"
+        });
         
         // Detect QUIC implementations
         this.detectQuicImplementations();
@@ -132,7 +136,11 @@
         // Hook TLS 1.3 for QUIC handshake
         this.hookTls13ForQuic();
         
-        console.log("[HTTP3/QUIC] Interceptor active");
+        send({
+            type: "status",
+            target: "http3_quic_interceptor",
+            action: "interceptor_active"
+        });
     },
     
     // Detect QUIC implementations
@@ -149,7 +157,13 @@
                 self.config.implementations[impl].patterns.forEach(function(pattern) {
                     if (moduleName.includes(pattern)) {
                         self.detectedImplementations[impl] = module;
-                        console.log("[HTTP3/QUIC] Detected " + impl + " implementation: " + module.name);
+                        send({
+                            type: "detection",
+                            target: "http3_quic_interceptor",
+                            action: "implementation_detected",
+                            implementation: impl,
+                            module_name: module.name
+                        });
                     }
                 });
             });
@@ -164,7 +178,11 @@
         this.findAndHook("*quic*stream*factory*create*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
-                    console.log("[HTTP3/QUIC] Chromium QuicStreamFactory::Create");
+                    send({
+                        type: "info",
+                        target: "http3_quic_interceptor",
+                        action: "chromium_quic_stream_factory_create"
+                    });
                     self.stats.connectionsIntercepted++;
                 }
             });
@@ -175,7 +193,11 @@
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     this.session = args[0];
-                    console.log("[HTTP3/QUIC] QuicSession initializing");
+                    send({
+                        type: "status",
+                        target: "http3_quic_interceptor",
+                        action: "quic_session_initializing"
+                    });
                 },
                 onLeave: function(retval) {
                     if (this.session) {
@@ -219,7 +241,11 @@
         this.findAndHook("*quic*headers*stream*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
-                    console.log("[HTTP3/QUIC] QuicHeadersStream activity");
+                    send({
+                        type: "info",
+                        target: "http3_quic_interceptor",
+                        action: "quic_headers_stream_activity"
+                    });
                     self.stats.streamsIntercepted++;
                 }
             });
@@ -245,7 +271,11 @@
                             conn: conn,
                             streams: {}
                         };
-                        console.log("[HTTP3/QUIC] ngtcp2 connection created");
+                        send({
+                            type: "status",
+                            target: "http3_quic_interceptor",
+                            action: "ngtcp2_connection_created"
+                        });
                         self.stats.connectionsIntercepted++;
                     }
                 }
@@ -269,7 +299,12 @@
                                 id: streamId,
                                 data: []
                             };
-                            console.log("[HTTP3/QUIC] Stream opened: " + streamId);
+                            send({
+                                type: "info",
+                                target: "http3_quic_interceptor",
+                                action: "stream_opened",
+                                stream_id: streamId
+                            });
                             self.stats.streamsIntercepted++;
                         }
                     }
@@ -287,7 +322,12 @@
                     var headers = args[2];
                     var headers_len = args[3].toInt32();
                     
-                    console.log("[HTTP3/QUIC] HTTP/3 response for stream: " + stream_id);
+                    send({
+                        type: "info",
+                        target: "http3_quic_interceptor",
+                        action: "http3_response_for_stream",
+                        stream_id: stream_id
+                    });
                     
                     // Modify headers
                     self.modifyNghttp3Headers(headers, headers_len);
@@ -322,7 +362,12 @@
                         if (totalData.length > 0) {
                             var combined = self.combineBuffers(totalData);
                             if (self.isLicenseRelatedData(combined)) {
-                                console.log("[HTTP3/QUIC] License-related data in stream " + stream_id);
+                                send({
+                                    type: "detection",
+                                    target: "http3_quic_interceptor",
+                                    action: "license_related_data_detected",
+                                    stream_id: stream_id
+                                });
                                 self.interceptedPackets++;
                             }
                         }
@@ -347,7 +392,11 @@
                             conn: retval,
                             streams: {}
                         };
-                        console.log("[HTTP3/QUIC] Quiche connection created");
+                        send({
+                            type: "status",
+                            target: "http3_quic_interceptor",
+                            action: "quiche_connection_created"
+                        });
                         self.stats.connectionsIntercepted++;
                     }
                 }
@@ -371,7 +420,12 @@
                         
                         // Check for HTTP/3 data
                         if (self.isHttp3Data(data)) {
-                            console.log("[HTTP3/QUIC] HTTP/3 data on stream " + this.stream_id);
+                            send({
+                                type: "info",
+                                target: "http3_quic_interceptor",
+                                action: "http3_data_on_stream",
+                                stream_id: this.stream_id
+                            });
                             
                             var modified = self.processHttp3Data(data);
                             if (modified) {
@@ -395,7 +449,11 @@
                     // QUICHE_H3_EVENT_HEADERS = 0
                     // QUICHE_H3_EVENT_DATA = 1
                     if (eventType === 0) {
-                        console.log("[HTTP3/QUIC] HTTP/3 headers event");
+                        send({
+                            type: "info",
+                            target: "http3_quic_interceptor",
+                            action: "http3_headers_event"
+                        });
                         self.stats.headersModified++;
                     }
                 }
@@ -412,7 +470,11 @@
         if (openVersion) {
             Interceptor.attach(openVersion, {
                 onEnter: function(args) {
-                    console.log("[HTTP3/QUIC] MsQuic initializing");
+                    send({
+                        type: "status",
+                        target: "http3_quic_interceptor",
+                        action: "msquic_initializing"
+                    });
                 }
             });
         }
@@ -435,7 +497,11 @@
                             callback: this.callback,
                             context: this.context
                         };
-                        console.log("[HTTP3/QUIC] MsQuic connection opened");
+                        send({
+                            type: "status",
+                            target: "http3_quic_interceptor",
+                            action: "msquic_connection_opened"
+                        });
                         self.stats.connectionsIntercepted++;
                         
                         // Hook the callback
@@ -453,7 +519,12 @@
                     var flags = args[1].toInt32();
                     var handler = args[2];
                     
-                    console.log("[HTTP3/QUIC] MsQuic stream open with flags: 0x" + flags.toString(16));
+                    send({
+                        type: "info",
+                        target: "http3_quic_interceptor",
+                        action: "msquic_stream_open",
+                        flags: "0x" + flags.toString(16)
+                    });
                     self.stats.streamsIntercepted++;
                     
                     // Hook stream handler
@@ -481,14 +552,26 @@
                     // QUIC_CONNECTION_EVENT_TYPE enum values
                     switch(eventType) {
                         case 0: // CONNECTED
-                            console.log("[HTTP3/QUIC] MsQuic connected");
+                            send({
+                                type: "status",
+                                target: "http3_quic_interceptor",
+                                action: "msquic_connected"
+                            });
                             break;
                         case 1: // SHUTDOWN_INITIATED_BY_TRANSPORT
                         case 2: // SHUTDOWN_INITIATED_BY_PEER
-                            console.log("[HTTP3/QUIC] MsQuic shutdown");
+                            send({
+                                type: "info",
+                                target: "http3_quic_interceptor",
+                                action: "msquic_shutdown"
+                            });
                             break;
                         case 5: // STREAMS_AVAILABLE
-                            console.log("[HTTP3/QUIC] MsQuic streams available");
+                            send({
+                                type: "info",
+                                target: "http3_quic_interceptor",
+                                action: "msquic_streams_available"
+                            });
                             break;
                     }
                 }
@@ -512,7 +595,11 @@
                     // QUIC_STREAM_EVENT_TYPE enum values
                     switch(eventType) {
                         case 0: // START_COMPLETE
-                            console.log("[HTTP3/QUIC] Stream start complete");
+                            send({
+                                type: "success",
+                                target: "http3_quic_interceptor",
+                                action: "stream_start_complete"
+                            });
                             break;
                         case 1: // RECEIVE
                             var bufferCount = event.add(8).readU32();
@@ -527,7 +614,11 @@
                                     var content = data.readByteArray(Math.min(length, 1024));
                                     
                                     if (self.isHttp3Data(content)) {
-                                        console.log("[HTTP3/QUIC] HTTP/3 data received");
+                                        send({
+                                            type: "info",
+                                            target: "http3_quic_interceptor",
+                                            action: "http3_data_received"
+                                        });
                                         
                                         var modified = self.processHttp3Data(content);
                                         if (modified) {
@@ -541,7 +632,11 @@
                             }
                             break;
                         case 2: // SEND_COMPLETE
-                            console.log("[HTTP3/QUIC] Stream send complete");
+                            send({
+                                type: "success",
+                                target: "http3_quic_interceptor",
+                                action: "stream_send_complete"
+                            });
                             break;
                     }
                 }
@@ -579,7 +674,12 @@
                                 if (isLongHeader) {
                                     var version = buf.add(1).readU32();
                                     if (self.config.versions.includes(version)) {
-                                        console.log("[HTTP3/QUIC] QUIC packet detected on port " + port);
+                                        send({
+                                            type: "detection",
+                                            target: "http3_quic_interceptor",
+                                            action: "quic_packet_detected",
+                                            port: port
+                                        });
                                         self.interceptedPackets++;
                                     }
                                 }
@@ -614,7 +714,12 @@
                                     var isLongHeader = (firstByte & 0x80) !== 0;
                                     
                                     if (isLongHeader) {
-                                        console.log("[HTTP3/QUIC] QUIC response from port " + port);
+                                        send({
+                                            type: "info",
+                                            target: "http3_quic_interceptor",
+                                            action: "quic_response_from_port",
+                                            port: port
+                                        });
                                         
                                         // Check for HTTP/3 frames
                                         self.checkForHttp3Frames(this.buf, len);
@@ -652,7 +757,11 @@
                                 if (inbuf && inlen > 0) {
                                     var alpn = inbuf.readUtf8String(inlen);
                                     if (alpn && alpn.includes("h3")) {
-                                        console.log("[HTTP3/QUIC] HTTP/3 ALPN negotiation detected");
+                                        send({
+                                            type: "detection",
+                                            target: "http3_quic_interceptor",
+                                            action: "http3_alpn_negotiation_detected"
+                                        });
                                     }
                                 }
                             }
@@ -678,7 +787,12 @@
                 var regex = new RegExp(pattern.replace(/\*/g, '.*'));
                 
                 if (regex.test(name)) {
-                    console.log("[HTTP3/QUIC] Found function: " + exp.name);
+                    send({
+                        type: "info",
+                        target: "http3_quic_interceptor",
+                        action: "function_found",
+                        function_name: exp.name
+                    });
                     hookFunc(exp.address);
                     found = true;
                 }
@@ -744,7 +858,13 @@
             // Check for license-related headers
             this.config.targetHeaders.forEach(function(header) {
                 if (headers[header]) {
-                    console.log("[HTTP3/QUIC] Found header: " + header + " = " + headers[header]);
+                    send({
+                        type: "info",
+                        target: "http3_quic_interceptor",
+                        action: "header_found",
+                        header_name: header,
+                        header_value: headers[header]
+                    });
                     modified = true;
                 }
             });
@@ -754,7 +874,13 @@
                 var status = parseInt(headers[":status"]);
                 if (this.config.responseMods.statusCodes[status]) {
                     headers[":status"] = this.config.responseMods.statusCodes[status].toString();
-                    console.log("[HTTP3/QUIC] Modified status: " + status + " -> " + headers[":status"]);
+                    send({
+                        type: "bypass",
+                        target: "http3_quic_interceptor",
+                        action: "status_modified",
+                        original_status: status,
+                        new_status: headers[":status"]
+                    });
                     modified = true;
                 }
             }
@@ -768,7 +894,12 @@
                 return this.encodeHttp3Headers(headers);
             }
         } catch(e) {
-            console.log("[HTTP3/QUIC] Error processing headers: " + e);
+            send({
+                type: "error",
+                target: "http3_quic_interceptor",
+                action: "header_processing_error",
+                error: String(e)
+            });
         }
         
         return null;
@@ -803,7 +934,11 @@
                 });
                 
                 if (modified) {
-                    console.log("[HTTP3/QUIC] Modified JSON response");
+                    send({
+                        type: "bypass",
+                        target: "http3_quic_interceptor",
+                        action: "json_response_modified"
+                    });
                     return this.stringToBuffer(JSON.stringify(json));
                 }
             }
@@ -870,13 +1005,24 @@
                         header.add(Process.pointerSize).writePointer(newStatusBuf);
                         header.add(Process.pointerSize * 3).writePointer(ptr(newStatus.length));
                         
-                        console.log("[HTTP3/QUIC] Modified status header: " + status + " -> " + newStatus);
+                        send({
+                            type: "bypass",
+                            target: "http3_quic_interceptor",
+                            action: "status_header_modified",
+                            original_status: status,
+                            new_status: newStatus
+                        });
                     }
                 }
                 
                 // Add license headers
                 if (this.config.targetHeaders.includes(nameStr)) {
-                    console.log("[HTTP3/QUIC] Found target header: " + nameStr);
+                    send({
+                        type: "detection",
+                        target: "http3_quic_interceptor",
+                        action: "target_header_found",
+                        header_name: nameStr
+                    });
                 }
             }
         }
@@ -917,7 +1063,11 @@
         if (offset < len - 10) {
             var frameData = buf.add(offset).readByteArray(Math.min(len - offset, 100));
             if (this.isHttp3Data(frameData)) {
-                console.log("[HTTP3/QUIC] Found HTTP/3 frames in QUIC packet");
+                send({
+                    type: "detection",
+                    target: "http3_quic_interceptor",
+                    action: "http3_frames_in_quic_packet_found"
+                });
                 this.stats.payloadsModified++;
             }
         }

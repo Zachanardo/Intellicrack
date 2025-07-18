@@ -57,10 +57,10 @@ def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
     # Serialize object
     data = pickle.dumps(obj)
-    
+
     # Calculate HMAC for integrity
     mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-    
+
     # Write MAC + data
     with open(file_path, 'wb') as f:
         f.write(mac)
@@ -72,12 +72,12 @@ def secure_pickle_load(file_path):
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
         data = f.read()
-    
+
     # Verify integrity
     expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
     if not hmac.compare_digest(stored_mac, expected_mac):
         raise ValueError("Pickle file integrity check failed - possible tampering detected")
-    
+
     # Load object
     return pickle.loads(data)
 
@@ -164,12 +164,19 @@ class HealthMonitor:
     """Monitors system health and detects failures."""
 
     def __init__(self):
+        """Initialize the health monitoring system.
+        
+        Sets up health checks, component status tracking, failure history,
+        and configurable thresholds for CPU usage, memory usage, error rate,
+        response time, and success rate. Starts automated monitoring thread.
+        """
         self.logger = logging.getLogger(__name__ + ".HealthMonitor")
         self.health_checks: Dict[str, Callable] = {}
         self.component_status: Dict[str, HealthStatus] = {}
         self.failure_history: deque = deque(maxlen=1000)
         self.monitoring_enabled = True
         self.check_interval = 30  # seconds
+        self.learning_engine = get_learning_engine()
 
         # Health thresholds
         self.thresholds = {
@@ -281,7 +288,7 @@ class HealthMonitor:
         # Check learning engine
         try:
             start_time = time.time()
-            insights = learning_engine.get_learning_insights()
+            insights = self.learning_engine.get_learning_insights()
             response_time = time.time() - start_time
 
             if response_time > 5.0:
@@ -334,7 +341,7 @@ class HealthMonitor:
     def _check_error_rates(self) -> Dict[str, Any]:
         """Check system error rates."""
         try:
-            insights = learning_engine.get_learning_insights()
+            insights = self.learning_engine.get_learning_insights()
             success_rate = insights.get("success_rate", 0.8) * 100
             error_rate = 100 - success_rate
 
@@ -525,8 +532,15 @@ class RecoverySystem:
     """Handles system recovery and self-healing."""
 
     def __init__(self, health_monitor: HealthMonitor):
+        """Initialize the recovery system for self-healing.
+        
+        Args:
+            health_monitor: Health monitor instance for bidirectional
+                communication and failure detection.
+        """
         self.health_monitor = health_monitor
         self.health_monitor.recovery_system = self  # Bidirectional reference
+        self.learning_engine = get_learning_engine()
 
         self.recovery_strategies: Dict[FailureType, List[RecoveryAction]] = {}
         self.recovery_history: deque = deque(maxlen=500)
@@ -747,7 +761,7 @@ class RecoverySystem:
             failure.recovery_strategy = strategy.strategy
 
             # Record learning experience
-            learning_engine.record_experience(
+            self.learning_engine.record_experience(
                 task_type="system_recovery",
                 input_data={
                     "failure_type": failure.failure_type.value,
@@ -827,8 +841,8 @@ class RecoverySystem:
         """Execute resource cleanup."""
         try:
             # Clear caches
-            if hasattr(learning_engine, 'clear_caches'):
-                learning_engine.clear_caches()
+            if hasattr(self.learning_engine, 'clear_caches'):
+                self.learning_engine.clear_caches()
 
             # Force garbage collection
             import gc
@@ -956,6 +970,12 @@ class StateManager:
     """Manages system state persistence and recovery."""
 
     def __init__(self):
+        """Initialize the state management system.
+        
+        Sets up state persistence with history tracking, checkpoint
+        intervals, and file-based state storage. Automatically starts
+        the state persistence thread for periodic checkpointing.
+        """
         self.logger = logging.getLogger(__name__ + ".StateManager")
         self.state_history: deque = deque(maxlen=100)
         self.checkpoint_interval = 300  # 5 minutes
@@ -1126,6 +1146,12 @@ class ResilienceSelfHealingSystem:
     """Main resilience and self-healing system."""
 
     def __init__(self):
+        """Initialize the resilience and self-healing system.
+        
+        Provides comprehensive system resilience through health monitoring,
+        automated recovery, and state management to ensure system stability
+        and continuous operation.
+        """
         self.health_monitor = HealthMonitor()
         self.recovery_system = RecoverySystem(self.health_monitor)
         self.state_manager = StateManager()

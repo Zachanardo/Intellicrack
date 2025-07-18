@@ -76,6 +76,7 @@ class R2AnalysisWorker(QThread):
     error_occurred = pyqtSignal(str)
 
     def __init__(self, binary_path: str, analysis_type: str, options: Dict[str, Any]):
+        """Initialize the radare2 analysis worker with binary path and analysis options."""
         super().__init__()
         self.binary_path = binary_path
         self.analysis_type = analysis_type
@@ -218,6 +219,7 @@ class R2ConfigurationDialog(QDialog):
     """Dialog for configuring radare2 analysis options"""
 
     def __init__(self, parent=None):
+        """Initialize the radare2 configuration dialog with UI setup."""
         super().__init__(parent)
         self.setWindowTitle("Radare2 Analysis Configuration")
         self.setMinimumSize(500, 600)
@@ -326,6 +328,7 @@ class R2ResultsViewer(QWidget):
     """Widget for displaying comprehensive radare2 analysis results"""
 
     def __init__(self, parent=None):
+        """Initialize the radare2 results viewer with UI components."""
         super().__init__(parent)
         self.results_data = {}
         self._setup_ui()
@@ -646,6 +649,7 @@ class R2IntegrationWidget(QWidget):
     """Main widget for radare2 integration UI"""
 
     def __init__(self, parent=None):
+        """Initialize the radare2 integration widget with UI components and analysis functionality."""
         super().__init__(parent)
         self.logger = logging.getLogger(__name__)
         self.binary_path = None

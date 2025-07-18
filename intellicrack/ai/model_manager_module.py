@@ -66,7 +66,7 @@ try:
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     import os
     os.environ['MKL_THREADING_LAYER'] = 'GNU'
-    
+
     import tensorflow as tf
     from tensorflow import keras
     HAS_TENSORFLOW = True
@@ -340,6 +340,13 @@ class ModelCache:
     """Model caching system for efficient model management."""
 
     def __init__(self, cache_dir: str = None, max_cache_size: int = 5):
+        """Initialize the model cache system.
+        
+        Args:
+            cache_dir: Directory for storing cached models. 
+                      Defaults to ~/.intellicrack/model_cache if not provided.
+            max_cache_size: Maximum number of models to keep in cache.
+        """
         self.logger = logging.getLogger(__name__ + ".ModelCache")
         self.cache_dir = cache_dir or os.path.join(
             os.path.expanduser('~'), '.intellicrack', 'model_cache')
@@ -418,6 +425,13 @@ class ModelManager:
     """Comprehensive AI model manager for Intellicrack."""
 
     def __init__(self, models_dir: str = None, cache_size: int = 5):
+        """Initialize the AI model manager.
+        
+        Args:
+            models_dir: Directory containing AI models. If None, defaults to
+                        ../models relative to this file
+            cache_size: Maximum number of models to keep in cache
+        """
         self.models_dir = models_dir or os.path.join(
             os.path.dirname(__file__), '..', 'models')
         self.cache = ModelCache(max_cache_size=cache_size)
@@ -892,14 +906,260 @@ class ModelManager:
                     return False
 
             elif model_type.lower() == 'pytorch':
-                # PyTorch training would go here
-                logger.info("PyTorch training not implemented in this demo")
-                return False
+                # PyTorch training implementation
+                try:
+                    import torch
+                    import torch.nn as nn
+                    import torch.optim as optim
+                    from torch.utils.data import DataLoader, TensorDataset
+
+                    logger.info("Starting PyTorch model training")
+
+                    # Prepare data
+                    if isinstance(training_data, dict):
+                        X = training_data.get('features', [])
+                        y = training_data.get('labels', [])
+                    else:
+                        # Assume tuple of (features, labels)
+                        X, y = training_data
+
+                    # Convert to tensors
+                    X_tensor = torch.FloatTensor(X)
+                    y_tensor = torch.LongTensor(y)
+
+                    # Split data
+                    train_size = int(0.8 * len(X_tensor))
+                    val_size = len(X_tensor) - train_size
+                    train_dataset, val_dataset = torch.utils.data.random_split(
+                        TensorDataset(X_tensor, y_tensor), [train_size, val_size]
+                    )
+
+                    # Create data loaders
+                    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+                    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+
+                    # Define simple neural network
+                    class SimpleNN(nn.Module):
+                    """Simple neural network for basic classification tasks."""
+                    
+                    def __init__(self, input_size, num_classes):
+                        """Initialize simple neural network with specified input size and number of classes.
+                        
+                        Args:
+                            input_size: Number of input features
+                            num_classes: Number of output classes
+                        """
+                        super(SimpleNN, self).__init__()
+                        self.fc1 = nn.Linear(input_size, 128)
+                        self.fc2 = nn.Linear(128, 64)
+                        self.fc3 = nn.Linear(64, num_classes)
+                        self.dropout = nn.Dropout(0.2)
+                        
+                    def forward(self, x):
+                        x = torch.relu(self.fc1(x))
+                        x = self.dropout(x)
+                        x = torch.relu(self.fc2(x))
+                        x = self.dropout(x)
+                        x = self.fc3(x)
+                        return x
+
+                    # Initialize model
+                    input_size = X_tensor.shape[1]
+                    num_classes = len(torch.unique(y_tensor))
+                    model = SimpleNN(input_size, num_classes)
+
+                    # Loss and optimizer
+                    criterion = nn.CrossEntropyLoss()
+                    optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+                    # Training loop
+                    num_epochs = 10
+                    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                    model.to(device)
+
+                    best_val_acc = 0.0
+                    for epoch in range(num_epochs):
+                        # Training
+                        model.train()
+                        train_loss = 0.0
+                        train_correct = 0
+                        train_total = 0
+
+                        for batch_X, batch_y in train_loader:
+                            batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+
+                            optimizer.zero_grad()
+                            outputs = model(batch_X)
+                            loss = criterion(outputs, batch_y)
+                            loss.backward()
+                            optimizer.step()
+
+                            train_loss += loss.item()
+                            _, predicted = torch.max(outputs.data, 1)
+                            train_total += batch_y.size(0)
+                            train_correct += (predicted == batch_y).sum().item()
+
+                        # Validation
+                        model.eval()
+                        val_correct = 0
+                        val_total = 0
+
+                        with torch.no_grad():
+                            for batch_X, batch_y in val_loader:
+                                batch_X, batch_y = batch_X.to(device), batch_y.to(device)
+                                outputs = model(batch_X)
+                                _, predicted = torch.max(outputs.data, 1)
+                                val_total += batch_y.size(0)
+                                val_correct += (predicted == batch_y).sum().item()
+
+                        train_acc = 100 * train_correct / train_total
+                        val_acc = 100 * val_correct / val_total
+
+                        logger.info(f"Epoch [{epoch+1}/{num_epochs}], "
+                                  f"Train Loss: {train_loss/len(train_loader):.4f}, "
+                                  f"Train Acc: {train_acc:.2f}%, "
+                                  f"Val Acc: {val_acc:.2f}%")
+
+                        if val_acc > best_val_acc:
+                            best_val_acc = val_acc
+
+                    # Store trained model
+                    model_id = f"trained_pytorch_model_{len(self.cache.cache)}"
+                    model_data = {
+                        'model': model,
+                        'backend': 'pytorch',
+                        'last_used': time.time(),
+                        'metadata': {
+                            'type': 'pytorch',
+                            'trained': True,
+                            'training_samples': train_size,
+                            'validation_samples': val_size,
+                            'best_validation_accuracy': best_val_acc,
+                            'num_epochs': num_epochs,
+                            'device': str(device)
+                        }
+                    }
+                    self.cache.put(model_id, model_data)
+
+                    logger.info(f"PyTorch model training completed: {model_id}")
+                    return True
+
+                except ImportError:
+                    logger.warning("PyTorch not available for training")
+                    return False
+                except Exception as e:
+                    logger.error(f"PyTorch training error: {e}")
+                    return False
 
             elif model_type.lower() == 'tensorflow':
-                # TensorFlow training would go here
-                logger.info("TensorFlow training not implemented in this demo")
-                return False
+                # TensorFlow/Keras training implementation
+                try:
+                    import tensorflow as tf
+                    from tensorflow import keras
+                    from tensorflow.keras import layers
+
+                    logger.info("Starting TensorFlow model training")
+
+                    # Prepare data
+                    if isinstance(training_data, dict):
+                        X = training_data.get('features', [])
+                        y = training_data.get('labels', [])
+                    else:
+                        X, y = training_data
+
+                    # Convert to numpy arrays
+                    X = np.array(X, dtype=np.float32)
+                    y = np.array(y, dtype=np.int32)
+
+                    # Split data
+                    from sklearn.model_selection import train_test_split
+                    X_train, X_val, y_train, y_val = train_test_split(
+                        X, y, test_size=0.2, random_state=42
+                    )
+
+                    # Determine number of classes
+                    num_classes = len(np.unique(y))
+
+                    # One-hot encode labels if multi-class
+                    if num_classes > 2:
+                        y_train = tf.keras.utils.to_categorical(y_train, num_classes)
+                        y_val = tf.keras.utils.to_categorical(y_val, num_classes)
+
+                    # Build model
+                    model = keras.Sequential([
+                        layers.Dense(128, activation='relu', input_shape=(X.shape[1],)),
+                        layers.Dropout(0.2),
+                        layers.Dense(64, activation='relu'),
+                        layers.Dropout(0.2),
+                        layers.Dense(num_classes if num_classes > 2 else 1,
+                                   activation='softmax' if num_classes > 2 else 'sigmoid')
+                    ])
+
+                    # Compile model
+                    if num_classes > 2:
+                        model.compile(
+                            optimizer='adam',
+                            loss='categorical_crossentropy',
+                            metrics=['accuracy']
+                        )
+                    else:
+                        model.compile(
+                            optimizer='adam',
+                            loss='binary_crossentropy',
+                            metrics=['accuracy']
+                        )
+
+                    # Early stopping callback
+                    early_stopping = keras.callbacks.EarlyStopping(
+                        monitor='val_loss',
+                        patience=3,
+                        restore_best_weights=True
+                    )
+
+                    # Train model
+                    history = model.fit(
+                        X_train, y_train,
+                        validation_data=(X_val, y_val),
+                        epochs=20,
+                        batch_size=32,
+                        callbacks=[early_stopping],
+                        verbose=1
+                    )
+
+                    # Get final validation accuracy
+                    val_loss, val_acc = model.evaluate(X_val, y_val, verbose=0)
+
+                    logger.info(f"TensorFlow training completed - "
+                              f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
+
+                    # Store trained model
+                    model_id = f"trained_tensorflow_model_{len(self.cache.cache)}"
+                    model_data = {
+                        'model': model,
+                        'backend': 'tensorflow',
+                        'last_used': time.time(),
+                        'metadata': {
+                            'type': 'tensorflow',
+                            'trained': True,
+                            'training_samples': len(X_train),
+                            'validation_samples': len(X_val),
+                            'validation_loss': float(val_loss),
+                            'validation_accuracy': float(val_acc),
+                            'num_epochs': len(history.history['loss']),
+                            'num_classes': num_classes
+                        }
+                    }
+                    self.cache.put(model_id, model_data)
+
+                    logger.info(f"TensorFlow model training completed: {model_id}")
+                    return True
+
+                except ImportError:
+                    logger.warning("TensorFlow not available for training")
+                    return False
+                except Exception as e:
+                    logger.error(f"TensorFlow training error: {e}")
+                    return False
 
             else:
                 logger.error(
@@ -1107,6 +1367,11 @@ class AsyncModelManager:
     """Asynchronous wrapper for model operations."""
 
     def __init__(self, model_manager: ModelManager):
+        """Initialize the asynchronous model manager wrapper.
+        
+        Args:
+            model_manager: The underlying ModelManager instance to wrap with async capabilities.
+        """
         self.logger = logging.getLogger(__name__ + ".AsyncModelManager")
         self.model_manager = model_manager
         self.thread_pool = {}
@@ -1182,6 +1447,11 @@ class ModelFineTuner:
     """Fine-tuning support for AI models."""
 
     def __init__(self, model_manager: ModelManager):
+        """Initialize the model fine-tuner.
+        
+        Args:
+            model_manager: The ModelManager instance for accessing and managing models.
+        """
         self.logger = logging.getLogger(__name__ + ".ModelFineTuner")
         self.model_manager = model_manager
         self.training_history = {}

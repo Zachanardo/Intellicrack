@@ -30,8 +30,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor, QFont
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QBrush, QColor, QFont
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -67,6 +66,7 @@ class C2ServerThread(QThread):
     error = pyqtSignal(str)
 
     def __init__(self, server_config):
+        """Initialize the C2ServerThread with default values."""
         super().__init__()
         self.server_config = server_config
         self.server = None
@@ -136,19 +136,24 @@ class C2ManagementDialog(QDialog):
     command_executed = pyqtSignal(str, str)
 
     def __init__(self, parent=None):
+        """Initialize C2 management dialog with command and control server management capabilities."""
         super().__init__(parent)
-        self.logger = logging.getLogger("IntellicrackLogger.C2ManagementDialog")
-
+        self.setWindowTitle("C2 Server Management")
+        self.setMinimumSize(900, 600)
+        
+        # Server management
         self.server_thread = None
-        self.active_sessions = {}
-        self.selected_session = None
-
-        # Update timer
-        self.update_timer = QTimer()
-        self.update_timer.timeout.connect(self.update_statistics)
-        self.update_timer.start(5000)  # Update every 5 seconds
-
+        self.servers = {}
+        self.active_connections = []
+        
+        # Setup UI
         self.setup_ui()
+        self.setup_connections()
+        
+        # Load server configurations
+        self.load_server_configs()
+        
+        logger.info("C2 Management Dialog initialized")
 
     @staticmethod
     def finalize_widget_layout(widget, layout):

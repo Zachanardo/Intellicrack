@@ -326,7 +326,7 @@ class QilingEmulator:
     def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int):
         """Hook for memory access monitoring with detailed memory analysis."""
         access_type = "READ" if access == 1 else "WRITE"
-        
+
         # Extract current CPU state from Qiling object
         cpu_state = {}
         try:
@@ -337,7 +337,7 @@ class QilingEmulator:
                     cpu_state['pc'] = hex(ql.arch.regs.rip)
                 elif hasattr(ql.arch.regs, 'pc'):  # ARM
                     cpu_state['pc'] = hex(ql.arch.regs.pc)
-                    
+
                 # Get stack pointer
                 if hasattr(ql.arch.regs, 'esp'):
                     cpu_state['sp'] = hex(ql.arch.regs.esp)
@@ -347,7 +347,7 @@ class QilingEmulator:
                     cpu_state['sp'] = hex(ql.arch.regs.sp)
         except (AttributeError, Exception) as e:
             self.logger.debug(f"Failed to extract CPU state: {e}")
-            
+
         # Try to read memory content around the access
         memory_content = None
         try:
@@ -355,7 +355,7 @@ class QilingEmulator:
                 memory_content = ql.mem.read(address, size).hex()
         except (OSError, AttributeError, Exception) as e:
             self.logger.debug(f"Failed to read memory at {hex(address)}: {e}")
-            
+
         # Check if this is a stack access
         is_stack_access = False
         if cpu_state.get('sp'):

@@ -48,15 +48,14 @@ class BinarySimilaritySearch:
     """
 
     def __init__(self, database_path: str = "binary_database.json"):
-        """
-        Initialize the binary similarity search engine.
-
-        Args:
-            database_path: Path to the binary database file
-        """
+        """Initialize the binary similarity search engine with database configuration."""
         self.database_path = database_path
-        self.logger = logging.getLogger(__name__)
-        self.database = self._load_database()
+        self.database = {}
+        self.hash_functions = []
+        self.feature_extractors = []
+        self.logger = logging.getLogger("IntellicrackLogger.BinarySearch")
+        
+        self.load_database()
 
     def _load_database(self) -> Dict[str, Any]:
         """

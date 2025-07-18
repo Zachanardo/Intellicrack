@@ -51,6 +51,7 @@ class ProcessHollowing(BaseWindowsPatcher):
     """Process Hollowing - replace process memory with malicious code"""
 
     def __init__(self):
+        """Initialize the process hollowing injector with Windows and pefile validation."""
         if not AVAILABLE:
             raise RuntimeError("Process hollowing requires Windows and pefile")
 

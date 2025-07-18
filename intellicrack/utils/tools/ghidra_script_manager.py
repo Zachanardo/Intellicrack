@@ -39,6 +39,11 @@ class GhidraScript:
     """Represents a single Ghidra script with metadata."""
 
     def __init__(self, path: str):
+        """Initialize Ghidra script with metadata extraction.
+        
+        Args:
+            path: Path to the Ghidra script file
+        """
         self.path = os.path.abspath(path)
         self.filename = os.path.basename(path)
         self.name = os.path.splitext(self.filename)[0]

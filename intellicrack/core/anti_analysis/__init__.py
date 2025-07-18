@@ -37,6 +37,7 @@ class AntiAnalysisEngine:
     """Engine for anti-analysis and evasion techniques."""
 
     def __init__(self):
+        """Initialize the anti-analysis engine with detection components."""
         self.debugger_detector = DebuggerDetector()
         self.vm_detector = VMDetector()
         self.sandbox_detector = SandboxDetector()

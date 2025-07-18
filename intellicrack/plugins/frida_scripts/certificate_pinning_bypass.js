@@ -79,7 +79,11 @@
     },    
     // Initialize the bypass system
     initialize: function() {
-        console.log("[SSL Bypass] Initializing certificate pinning bypass...");
+        send({
+            type: "status",
+            message: "Initializing certificate pinning bypass",
+            category: "ssl_bypass"
+        });
         
         // Detect platform and capabilities
         this.detectPlatform();
@@ -104,26 +108,47 @@
         // Start monitoring and integration
         this.startMonitoring();
         
-        console.log(`[SSL Bypass] Initialization complete for ${this.state.platform} platform`);
-        console.log(`[SSL Bypass] Active bypasses: ${this.state.active_bypasses.size}`);
+        send({
+            type: "success",
+            message: "SSL bypass initialization complete",
+            platform: this.state.platform,
+            active_bypasses: this.state.active_bypasses.size,
+            category: "ssl_bypass"
+        });
     },
     
     // Detect current platform
     detectPlatform: function() {
         if (Java.available) {
             this.state.platform = 'android';
-            console.log("[Platform] Android environment detected");
+            send({
+                type: "info",
+                message: "Android environment detected",
+                category: "platform_detection"
+            });
         } else if (ObjC.available) {
             this.state.platform = 'ios';
-            console.log("[Platform] iOS environment detected");
+            send({
+                type: "info",
+                message: "iOS environment detected",
+                category: "platform_detection"
+            });
         } else {
             this.state.platform = 'unknown';
-            console.log("[Platform] Unknown platform, using cross-platform bypasses only");
+            send({
+                type: "warning",
+                message: "Unknown platform detected - using cross-platform bypasses only",
+                category: "platform_detection"
+            });
         }
     },    
     // Initialize certificate management
     initializeCertificates: function() {
-        console.log("[Certs] Initializing certificate management...");
+        send({
+            type: "info",
+            message: "Initializing certificate management",
+            category: "certificate_management"
+        });
         
         // Generate custom CA certificate
         if (this.config.custom_ca_enabled) {
@@ -133,7 +158,11 @@
         // Initialize trusted certificate store
         this.initializeTrustedStore();
         
-        console.log("[Certs] Certificate management initialized");
+        send({
+            type: "success",
+            message: "Certificate management initialized",
+            category: "certificate_management"
+        });
     },
     
     // Generate custom Certificate Authority
@@ -148,7 +177,12 @@
             public_key: "-----BEGIN CERTIFICATE-----\nMIIC..." // Truncated for space
         };
         
-        console.log("[Certs] Custom CA certificate generated");
+        send({
+            type: "bypass",
+            target: "certificate_generation",
+            action: "custom_ca_generated",
+            validity_period: "10_years"
+        });
     },
     
     // Initialize trusted certificate store
@@ -168,11 +202,21 @@
             this.certificates.trusted_certs.add(cert);
         });
         
-        console.log(`[Certs] Initialized trust store with ${commonCerts.length} certificates`);
+        send({
+            type: "info",
+            target: "trust_store",
+            action: "trust_store_initialized",
+            certificate_count: commonCerts.length
+        });
     },    
     // Initialize Android-specific bypasses
     initializeAndroidBypasses: function() {
-        console.log("[Android] Initializing Android SSL bypasses...");
+        send({
+            type: "status",
+            target: "android_bypass",
+            action: "initializing_android_ssl_bypasses",
+            platform: "android"
+        });
         
         try {
             // OkHttp Certificate Pinner bypass
@@ -190,10 +234,20 @@
             // Apache HttpClient bypass
             this.bypassApacheHttpClient();
             
-            console.log("[Android] Android bypasses initialized successfully");
+            send({
+                type: "success",
+                target: "android_bypasses",
+                action: "initialization_complete",
+                message: "Android bypasses initialized successfully"
+            });
             
         } catch (e) {
-            console.log("[Android] Error initializing Android bypasses: " + e.message);
+            send({
+                type: "error",
+                target: "android_bypasses",
+                action: "initialization_failed",
+                error: e.message
+            });
         }
     },
     
@@ -204,25 +258,45 @@
             const CertificatePinner = Java.use("okhttp3.CertificatePinner");
             
             CertificatePinner.check.overload('java.lang.String', 'java.util.List').implementation = function(hostname, peerCertificates) {
-                console.log(`[OkHttp] Certificate pinning check bypassed for: ${hostname}`);
+                send({
+                    type: "bypass",
+                    target: "okhttp_certificate_pinner",
+                    action: "check_bypassed",
+                    hostname: hostname
+                });
                 this.state.bypassed_validations++;
                 this.state.active_bypasses.add('okhttp_check');
                 
                 // Log certificate details if verbose
                 if (this.config.verbose_logging) {
-                    console.log(`[OkHttp] Peer certificates: ${peerCertificates.size()}`);
+                    send({
+                        type: "info",
+                        target: "okhttp_certificate_pinner",
+                        action: "peer_certificates_logged",
+                        count: peerCertificates.size()
+                    });
                 }
                 
                 // Always return without throwing exception
                 return;
             }.bind(this);
             
-            console.log("[OkHttp] CertificatePinner.check() hooked successfully");
+            send({
+                type: "success",
+                target: "okhttp_certificate_pinner",
+                action: "check_method_hooked",
+                message: "CertificatePinner.check() hooked successfully"
+            });
             this.state.hooked_functions.set('okhttp_check', 'CertificatePinner.check');
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[OkHttp] CertificatePinner not found or already hooked: " + e.message);
+                send({
+                    type: "warning",
+                    target: "okhttp_certificate_pinner",
+                    action: "hook_failed",
+                    error: e.message
+                });
             }
         }        
         try {
@@ -230,17 +304,32 @@
             const Pin = Java.use("okhttp3.CertificatePinner$Pin");
             
             Pin.matches.overload('java.lang.String').implementation = function(hostname) {
-                console.log(`[OkHttp] Pin matching bypassed for: ${hostname}`);
+                send({
+                    type: "bypass",
+                    target: "okhttp_pin_matching",
+                    action: "pin_matching_bypassed", 
+                    hostname: hostname
+                });
                 this.state.bypassed_validations++;
                 return true; // Always return true to bypass pinning
             }.bind(this);
             
-            console.log("[OkHttp] CertificatePinner$Pin.matches() hooked successfully");
+            send({
+                type: "success",
+                target: "okhttp_pin_matching",
+                action: "pin_matches_hooked",
+                message: "CertificatePinner$Pin.matches() hooked successfully"
+            });
             this.state.hooked_functions.set('okhttp_pin_matches', 'Pin.matches');
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[OkHttp] Pin.matches not found: " + e.message);
+                send({
+                    type: "warning",
+                    target: "okhttp_pin_matching",
+                    action: "pin_matches_not_found",
+                    error: e.message
+                });
             }
         }
         
@@ -250,25 +339,43 @@
             
             const originalConnectTls = RealConnection.connectTls.implementation;
             RealConnection.connectTls.implementation = function(connectionSpecSelector) {
-                console.log("[OkHttp] TLS connection bypass applied");
+                send({
+                    type: "bypass",
+                    target: "okhttp_tls_connection",
+                    action: "tls_connection_bypass_applied"
+                });
                 
                 // Remove certificate pinning from connection spec
                 try {
                     return originalConnectTls.call(this, connectionSpecSelector);
                 } catch (e) {
                     // If original throws due to pinning, create permissive connection
-                    console.log("[OkHttp] Creating permissive TLS connection");
+                    send({
+                        type: "bypass",
+                        target: "okhttp_tls_connection",
+                        action: "permissive_connection_created"
+                    });
                     this.state.bypassed_validations++;
                     return;
                 }
             }.bind(this);
             
-            console.log("[OkHttp] RealConnection.connectTls() hooked successfully");
+            send({
+                type: "success",
+                target: "okhttp_tls_connection",
+                action: "connect_tls_hooked",
+                message: "RealConnection.connectTls() hooked successfully"
+            });
             this.state.hooked_functions.set('okhttp_connect_tls', 'RealConnection.connectTls');
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[OkHttp] RealConnection.connectTls not found: " + e.message);
+                send({
+                    type: "warning",
+                    target: "okhttp_tls_connection",
+                    action: "connect_tls_not_found",
+                    error: e.message
+                });
             }
         }
     },    
@@ -281,15 +388,30 @@
             const TrustManagerImpl = Java.use("com.android.org.conscrypt.TrustManagerImpl");
             
             TrustManagerImpl.checkServerTrusted.overload('[Ljava.security.cert.X509Certificate;', 'java.lang.String').implementation = function(chain, authType) {
-                console.log("[TrustManager] Server certificate validation bypassed");
-                console.log(`[TrustManager] Auth type: ${authType}, Chain length: ${chain.length}`);
+                send({
+                    type: "bypass",
+                    target: "trust_manager",
+                    action: "server_validation_bypassed"
+                });
+                send({
+                    type: "info",
+                    target: "trust_manager",
+                    action: "certificate_chain_info",
+                    auth_type: authType,
+                    chain_length: chain.length
+                });
                 
                 this.state.bypassed_validations++;
                 this.state.active_bypasses.add('trust_manager_server');
                 
                 // Log certificate details if verbose
                 if (this.config.verbose_logging && chain.length > 0) {
-                    console.log(`[TrustManager] Server certificate subject: ${chain[0].getSubjectDN()}`);
+                    send({
+                        type: "info",
+                        target: "trust_manager", 
+                        action: "certificate_subject_logged",
+                        subject: chain[0].getSubjectDN().toString()
+                    });
                 }
                 
                 // Always return without throwing exception
@@ -297,17 +419,32 @@
             }.bind(this);
             
             TrustManagerImpl.checkClientTrusted.overload('[Ljava.security.cert.X509Certificate;', 'java.lang.String').implementation = function(chain, authType) {
-                console.log("[TrustManager] Client certificate validation bypassed");
+                send({
+                    type: "bypass",
+                    target: "trust_manager",
+                    action: "client_validation_bypassed"
+                });
                 this.state.bypassed_validations++;
                 this.state.active_bypasses.add('trust_manager_client');
                 return;
             }.bind(this);
             
-            console.log("[TrustManager] TrustManagerImpl hooks applied successfully");
+            send({
+                type: "success",
+                target: "trust_manager",
+                action: "trust_manager_impl_hooked",
+                message: "TrustManagerImpl hooks applied successfully"
+            });
             this.state.hooked_functions.set('trust_manager_impl', 'TrustManagerImpl');
             
         } catch (e) {
-            console.log("[TrustManager] TrustManagerImpl not found, trying alternatives: " + e.message);
+            send({
+                type: "warning",
+                target: "trust_manager",
+                action: "trust_manager_impl_not_found",
+                error: e.message,
+                fallback: "trying_alternatives"
+            });
             this.bypassAlternativeTrustManagers();
         }
     },
@@ -326,18 +463,34 @@
                 // Hook checkServerTrusted methods
                 if (TrustManagerClass.checkServerTrusted) {
                     TrustManagerClass.checkServerTrusted.overload('[Ljava.security.cert.X509Certificate;', 'java.lang.String').implementation = function(chain, authType) {
-                        console.log(`[TrustManager] ${className} server validation bypassed`);
+                        send({
+                            type: "bypass",
+                            target: "alternative_trust_manager",
+                            action: "server_validation_bypassed",
+                            class_name: className
+                        });
                         this.state.bypassed_validations++;
                         return;
                     }.bind(this);
                     
-                    console.log(`[TrustManager] Hooked ${className}.checkServerTrusted`);
+                    send({
+                        type: "success",
+                        target: "alternative_trust_manager",
+                        action: "check_server_trusted_hooked",
+                        class_name: className
+                    });
                     this.state.hooked_functions.set(`trust_${className}`, className);
                 }
                 
             } catch (e) {
                 if (this.config.verbose_logging) {
-                    console.log(`[TrustManager] ${className} not found: ${e.message}`);
+                    send({
+                        type: "info",
+                        target: "alternative_trust_manager",
+                        action: "class_not_found",
+                        class_name: className,
+                        error: e.message
+                    });
                 }
             }
         });
@@ -349,7 +502,11 @@
             const SSLContext = Java.use("javax.net.ssl.SSLContext");
             
             SSLContext.init.overload('[Ljavax.net.ssl.KeyManager;', '[Ljavax.net.ssl.TrustManager;', 'java.security.SecureRandom').implementation = function(keyManagers, trustManagers, secureRandom) {
-                console.log("[SSLContext] SSL context initialization intercepted");
+                send({
+                    type: "bypass",
+                    target: "ssl_context",
+                    action: "initialization_intercepted"
+                });
                 
                 // Create permissive TrustManager
                 const TrustManager = Java.use("javax.net.ssl.TrustManager");
@@ -360,10 +517,18 @@
                     implements: [X509TrustManager],
                     methods: {
                         checkClientTrusted: function(chain, authType) {
-                            console.log("[PermissiveTM] Client trust check bypassed");
+                            send({
+                                type: "bypass",
+                                target: "permissive_trust_manager",
+                                action: "client_trust_bypassed"
+                            });
                         },
                         checkServerTrusted: function(chain, authType) {
-                            console.log("[PermissiveTM] Server trust check bypassed");
+                            send({
+                                type: "bypass",
+                                target: "permissive_trust_manager",
+                                action: "server_trust_bypassed"
+                            });
                         },
                         getAcceptedIssuers: function() {
                             return [];
@@ -382,17 +547,31 @@
                 this.state.bypassed_validations++;
                 this.state.active_bypasses.add('ssl_context');
                 
-                console.log("[SSLContext] Injected permissive TrustManager");
+                send({
+                    type: "success",
+                    target: "ssl_context",
+                    action: "permissive_trust_manager_injected"
+                });
                 
                 // Call original with permissive trust managers
                 return this.init(keyManagers, permissiveTrustManagers, secureRandom);
             }.bind(this);
             
-            console.log("[SSLContext] SSLContext.init() hooked successfully");
+            send({
+                type: "success",
+                target: "ssl_context",
+                action: "ssl_context_init_hooked",
+                message: "SSLContext.init() hooked successfully"
+            });
             this.state.hooked_functions.set('ssl_context_init', 'SSLContext.init');
             
         } catch (e) {
-            console.log("[SSLContext] Failed to hook SSLContext: " + e.message);
+            send({
+                type: "error",
+                target: "ssl_context",
+                action: "hook_failed",
+                error: e.message
+            });
         }
     },
     
@@ -403,7 +582,11 @@
             const NetworkSecurityPolicy = Java.use("android.security.NetworkSecurityPolicy");
             
             NetworkSecurityPolicy.getInstance.implementation = function() {
-                console.log("[NSC] Network Security Policy bypassed");
+                send({
+                    type: "bypass",
+                    target: "network_security_config",
+                    action: "security_policy_bypassed"
+                });
                 
                 // Create permissive policy
                 const policy = this.getInstance();
@@ -411,7 +594,12 @@
                 // Hook isCertificateTransparencyVerificationRequired
                 if (policy.isCertificateTransparencyVerificationRequired) {
                     policy.isCertificateTransparencyVerificationRequired.implementation = function(hostname) {
-                        console.log(`[NSC] Certificate transparency verification disabled for: ${hostname}`);
+                        send({
+                            type: "bypass",
+                            target: "network_security_config",
+                            action: "certificate_transparency_disabled",
+                            hostname: hostname
+                        });
                         return false;
                     };
                 }
@@ -419,7 +607,12 @@
                 // Hook isCleartextTrafficPermitted
                 if (policy.isCleartextTrafficPermitted) {
                     policy.isCleartextTrafficPermitted.overload('java.lang.String').implementation = function(hostname) {
-                        console.log(`[NSC] Cleartext traffic permitted for: ${hostname}`);
+                        send({
+                            type: "bypass",
+                            target: "network_security_config",
+                            action: "cleartext_traffic_permitted",
+                            hostname: hostname
+                        });
                         this.state.bypassed_validations++;
                         return true;
                     }.bind(this);
@@ -428,12 +621,22 @@
                 this.state.active_bypasses.add('network_security_config');
                 return policy;
             }.bind(this);            
-            console.log("[NSC] NetworkSecurityPolicy hooked successfully");
+            send({
+                type: "success",
+                target: "network_security_config",
+                action: "network_security_policy_hooked",
+                message: "NetworkSecurityPolicy hooked successfully"
+            });
             this.state.hooked_functions.set('network_security_policy', 'NetworkSecurityPolicy');
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[NSC] NetworkSecurityPolicy not found: " + e.message);
+                send({
+                    type: "warning",
+                    target: "network_security_config",
+                    action: "network_security_policy_not_found",
+                    error: e.message
+                });
             }
         }
     },
@@ -445,19 +648,34 @@
             const AbstractVerifier = Java.use("org.apache.http.conn.ssl.AbstractVerifier");
             
             AbstractVerifier.verify.overload('java.lang.String', 'java.security.cert.X509Certificate').implementation = function(host, cert) {
-                console.log(`[Apache] Hostname verification bypassed for: ${host}`);
+                send({
+                    type: "bypass",
+                    target: "apache_http_client",
+                    action: "hostname_verification_bypassed",
+                    hostname: host
+                });
                 this.state.bypassed_validations++;
                 this.state.active_bypasses.add('apache_hostname_verifier');
                 // Always return without throwing exception
                 return;
             }.bind(this);
             
-            console.log("[Apache] AbstractVerifier.verify() hooked successfully");
+            send({
+                type: "success",
+                target: "apache_http_client",
+                action: "abstract_verifier_hooked",
+                message: "AbstractVerifier.verify() hooked successfully"
+            });
             this.state.hooked_functions.set('apache_verifier', 'AbstractVerifier.verify');
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[Apache] AbstractVerifier not found: " + e.message);
+                send({
+                    type: "warning",
+                    target: "apache_http_client",
+                    action: "abstract_verifier_not_found",
+                    error: e.message
+                });
             }
         }
         
@@ -466,23 +684,41 @@
             const AllowAllHostnameVerifier = Java.use("org.apache.http.conn.ssl.AllowAllHostnameVerifier");
             
             AllowAllHostnameVerifier.verify.overload('java.lang.String', 'javax.net.ssl.SSLSession').implementation = function(hostname, session) {
-                console.log(`[Apache] AllowAllHostnameVerifier bypass for: ${hostname}`);
+                send({
+                    type: "bypass",
+                    target: "apache_http_client",
+                    action: "allow_all_hostname_verifier_bypass",
+                    hostname: hostname
+                });
                 this.state.bypassed_validations++;
                 return;
             }.bind(this);
             
-            console.log("[Apache] AllowAllHostnameVerifier hooked successfully");
+            send({
+                type: "success",
+                target: "apache_http_client",
+                action: "allow_all_hostname_verifier_hooked"
+            });
             this.state.hooked_functions.set('apache_allow_all', 'AllowAllHostnameVerifier');
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[Apache] AllowAllHostnameVerifier not found: " + e.message);
+                send({
+                    type: "warning",
+                    target: "apache_http_client",
+                    action: "allow_all_hostname_verifier_not_found",
+                    error: e.message
+                });
             }
         }
     },    
     // Initialize iOS-specific bypasses
     initializeIOSBypasses: function() {
-        console.log("[iOS] Initializing iOS SSL bypasses...");
+        send({
+            type: "info",
+            target: "ios_ssl_bypass",
+            action: "initializing_ios_ssl_bypasses"
+        });
         
         try {
             // NSURLSession bypasses
@@ -497,10 +733,19 @@
             // Network.framework bypasses (iOS 12+)
             this.bypassNetworkFramework();
             
-            console.log("[iOS] iOS bypasses initialized successfully");
+            send({
+                type: "success",
+                target: "ios_ssl_bypass",
+                action: "ios_bypasses_initialized"
+            });
             
         } catch (e) {
-            console.log("[iOS] Error initializing iOS bypasses: " + e.message);
+            send({
+                type: "error",
+                target: "ios_ssl_bypass",
+                action: "ios_bypass_initialization_error",
+                error: e.message
+            });
         }
     },
     
@@ -515,13 +760,26 @@
                 const originalDidReceiveChallenge = NSURLSessionDelegate['- URLSession:didReceiveChallenge:completionHandler:'];
                 
                 NSURLSessionDelegate['- URLSession:didReceiveChallenge:completionHandler:'] = function(session, challenge, completionHandler) {
-                    console.log("[NSURLSession] Authentication challenge intercepted");
+                    send({
+                        type: "bypass",
+                        target: "nsurlsession",
+                        action: "authentication_challenge_intercepted"
+                    });
                     
                     const authMethod = challenge.protectionSpace().authenticationMethod().toString();
-                    console.log(`[NSURLSession] Auth method: ${authMethod}`);
+                    send({
+                        type: "info",
+                        target: "nsurlsession",
+                        action: "auth_method_detected",
+                        method: authMethod
+                    });
                     
                     if (authMethod === "NSURLAuthenticationMethodServerTrust") {
-                        console.log("[NSURLSession] Server trust challenge bypassed");
+                        send({
+                            type: "bypass",
+                            target: "nsurlsession",
+                            action: "server_trust_challenge_bypassed"
+                        });
                         
                         // Create credential with server trust
                         const serverTrust = challenge.protectionSpace().serverTrust();
@@ -539,12 +797,21 @@
                     return originalDidReceiveChallenge.call(this, session, challenge, completionHandler);
                 }.bind(this);
                 
-                console.log("[NSURLSession] NSURLSessionDelegate.didReceiveChallenge hooked");
+                send({
+                    type: "success",
+                    target: "nsurlsession",
+                    action: "delegate_did_receive_challenge_hooked"
+                });
                 this.state.hooked_functions.set('nsurlsession_delegate', 'NSURLSessionDelegate');
             }
             
         } catch (e) {
-            console.log("[NSURLSession] Failed to hook NSURLSessionDelegate: " + e.message);
+            send({
+                type: "error",
+                target: "nsurlsession",
+                action: "failed_to_hook_delegate",
+                error: e.message
+            });
         }        
         try {
             // Hook NSURLConnection delegate methods
@@ -554,11 +821,19 @@
                 const originalCanAuthenticateAgainstProtectionSpace = NSURLConnectionDelegate['- connection:canAuthenticateAgainstProtectionSpace:'];
                 
                 NSURLConnectionDelegate['- connection:canAuthenticateAgainstProtectionSpace:'] = function(connection, protectionSpace) {
-                    console.log("[NSURLConnection] Can authenticate against protection space");
+                    send({
+                        type: "info",
+                        target: "nsurlconnection",
+                        action: "can_authenticate_protection_space"
+                    });
                     const authMethod = protectionSpace.authenticationMethod().toString();
                     
                     if (authMethod === "NSURLAuthenticationMethodServerTrust") {
-                        console.log("[NSURLConnection] Server trust authentication enabled");
+                        send({
+                            type: "bypass",
+                            target: "nsurlconnection",
+                            action: "server_trust_authentication_enabled"
+                        });
                         return true;
                     }
                     
@@ -568,7 +843,11 @@
                 const originalDidReceiveAuthenticationChallenge = NSURLConnectionDelegate['- connection:didReceiveAuthenticationChallenge:'];
                 
                 NSURLConnectionDelegate['- connection:didReceiveAuthenticationChallenge:'] = function(connection, challenge) {
-                    console.log("[NSURLConnection] Authentication challenge bypassed");
+                    send({
+                        type: "bypass",
+                        target: "nsurlconnection",
+                        action: "authentication_challenge_bypassed"
+                    });
                     
                     const sender = challenge.sender();
                     const serverTrust = challenge.protectionSpace().serverTrust();
@@ -580,13 +859,22 @@
                     this.state.active_bypasses.add('nsurlconnection_challenge');
                 }.bind(this);
                 
-                console.log("[NSURLConnection] NSURLConnectionDelegate hooks applied");
+                send({
+                    type: "success",
+                    target: "nsurlconnection",
+                    action: "delegate_hooks_applied"
+                });
                 this.state.hooked_functions.set('nsurlconnection_delegate', 'NSURLConnectionDelegate');
             }
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[NSURLConnection] Failed to hook NSURLConnectionDelegate: " + e.message);
+                send({
+                    type: "error",
+                    target: "nsurlconnection",
+                    action: "failed_to_hook_delegate",
+                    error: e.message
+                });
             }
         }
     },    
@@ -602,7 +890,11 @@
             
             if (SecTrustEvaluate) {
                 Interceptor.replace(SecTrustEvaluate, new NativeCallback(function(trust, result) {
-                    console.log("[SecTrust] SecTrustEvaluate intercepted and bypassed");
+                    send({
+                        type: "bypass",
+                        target: "sec_trust",
+                        action: "sec_trust_evaluate_bypassed"
+                    });
                     
                     // Set result to kSecTrustResultProceed (1) 
                     if (result && !result.isNull()) {
@@ -615,12 +907,21 @@
                     return 0; // errSecSuccess
                 }.bind(this), "int", ["pointer", "pointer"]));
                 
-                console.log("[SecTrust] SecTrustEvaluate hooked successfully");
+                send({
+                    type: "success",
+                    target: "sec_trust",
+                    action: "sec_trust_evaluate_hooked"
+                });
                 this.state.hooked_functions.set('sectrust_evaluate', 'SecTrustEvaluate');
             }
             
         } catch (e) {
-            console.log("[SecTrust] Failed to hook SecTrustEvaluate: " + e.message);
+            send({
+                type: "error",
+                target: "sec_trust",
+                action: "failed_to_hook_sec_trust_evaluate",
+                error: e.message
+            });
         }
         
         try {
@@ -633,7 +934,11 @@
             
             if (SecTrustEvaluateWithError) {
                 Interceptor.replace(SecTrustEvaluateWithError, new NativeCallback(function(trust, error) {
-                    console.log("[SecTrust] SecTrustEvaluateWithError intercepted and bypassed");
+                    send({
+                        type: "bypass",
+                        target: "sec_trust",
+                        action: "sec_trust_evaluate_with_error_bypassed"
+                    });
                     
                     // Clear any error
                     if (error && !error.isNull()) {
@@ -646,13 +951,22 @@
                     return true; // Success
                 }.bind(this), "bool", ["pointer", "pointer"]));
                 
-                console.log("[SecTrust] SecTrustEvaluateWithError hooked successfully");
+                send({
+                    type: "success",
+                    target: "sec_trust",
+                    action: "sec_trust_evaluate_with_error_hooked"
+                });
                 this.state.hooked_functions.set('sectrust_evaluate_error', 'SecTrustEvaluateWithError');
             }
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[SecTrust] SecTrustEvaluateWithError not available: " + e.message);
+                send({
+                    type: "warning",
+                    target: "sec_trust",
+                    action: "sec_trust_evaluate_with_error_not_available",
+                    error: e.message
+                });
             }
         }        
         try {
@@ -665,7 +979,11 @@
             
             if (SecTrustSetAnchorCertificates) {
                 Interceptor.replace(SecTrustSetAnchorCertificates, new NativeCallback(function(trust, anchorCertificates) {
-                    console.log("[SecTrust] SecTrustSetAnchorCertificates intercepted");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinning_bypass",
+                        action: "sectrust_setanchorcertificates_intercepted"
+                    });
                     
                     // Allow the call but log it
                     this.state.bypassed_validations++;
@@ -674,13 +992,22 @@
                     return 0; // errSecSuccess
                 }.bind(this), "int", ["pointer", "pointer"]));
                 
-                console.log("[SecTrust] SecTrustSetAnchorCertificates hooked successfully");
+                send({
+                    type: "info",
+                    target: "certificate_pinning_bypass",
+                    action: "sectrust_setanchorcertificates_hooked"
+                });
                 this.state.hooked_functions.set('sectrust_anchors', 'SecTrustSetAnchorCertificates');
             }
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[SecTrust] SecTrustSetAnchorCertificates hook failed: " + e.message);
+                send({
+                    type: "error",
+                    target: "certificate_pinning_bypass",
+                    action: "sectrust_setanchorcertificates_hook_failed",
+                    error: e.message
+                });
             }
         }
     },
@@ -697,12 +1024,22 @@
             
             if (SSLSetSessionOption) {
                 Interceptor.replace(SSLSetSessionOption, new NativeCallback(function(context, option, value) {
-                    console.log(`[CFNetwork] SSLSetSessionOption intercepted - option: ${option}, value: ${value}`);
+                    send({
+                        type: "info",
+                        target: "certificate_pinning_bypass",
+                        action: "cfnetwork_sslsetsessionoption_intercepted",
+                        option: option,
+                        value: value
+                    });
                     
                     // kSSLSessionOptionBreakOnServerAuth = 0
                     // kSSLSessionOptionBreakOnCertRequested = 1
                     if (option === 0 || option === 1) {
-                        console.log("[CFNetwork] SSL authentication break option disabled");
+                        send({
+                            type: "bypass",
+                            target: "certificate_pinning_bypass",
+                            action: "cfnetwork_ssl_auth_break_disabled"
+                        });
                         this.state.bypassed_validations++;
                         this.state.active_bypasses.add('cfnetwork_ssl_option');
                         return 0; // errSecSuccess
@@ -711,13 +1048,22 @@
                     return SSLSetSessionOption(context, option, value);
                 }.bind(this), "int", ["pointer", "int", "bool"]));
                 
-                console.log("[CFNetwork] SSLSetSessionOption hooked successfully");
+                send({
+                    type: "info",
+                    target: "certificate_pinning_bypass",
+                    action: "cfnetwork_sslsetsessionoption_hooked"
+                });
                 this.state.hooked_functions.set('cfnetwork_ssl_option', 'SSLSetSessionOption');
             }
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[CFNetwork] SSLSetSessionOption hook failed: " + e.message);
+                send({
+                    type: "error",
+                    target: "certificate_pinning_bypass",
+                    action: "cfnetwork_sslsetsessionoption_hook_failed",
+                    error: e.message
+                });
             }
         }        
         try {
@@ -730,13 +1076,22 @@
             
             if (SSLHandshake) {
                 Interceptor.replace(SSLHandshake, new NativeCallback(function(context) {
-                    console.log("[CFNetwork] SSLHandshake intercepted");
+                    send({
+                        type: "info",
+                        target: "certificate_pinning_bypass",
+                        action: "cfnetwork_sslhandshake_intercepted"
+                    });
                     
                     const result = SSLHandshake(context);
                     
                     // If handshake failed due to certificate issues, pretend it succeeded
                     if (result !== 0) {
-                        console.log(`[CFNetwork] SSLHandshake failed with error ${result}, bypassing`);
+                        send({
+                            type: "bypass",
+                            target: "certificate_pinning_bypass",
+                            action: "cfnetwork_sslhandshake_bypass",
+                            error_code: result
+                        });
                         this.state.bypassed_validations++;
                         this.state.active_bypasses.add('cfnetwork_handshake');
                         return 0; // errSecSuccess
@@ -745,13 +1100,22 @@
                     return result;
                 }.bind(this), "int", ["pointer"]));
                 
-                console.log("[CFNetwork] SSLHandshake hooked successfully");
+                send({
+                    type: "success",
+                    target: "certificate_pinning_bypass",
+                    action: "cfnetwork_sslhandshake_hooked"
+                });
                 this.state.hooked_functions.set('cfnetwork_handshake', 'SSLHandshake');
             }
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[CFNetwork] SSLHandshake hook failed: " + e.message);
+                send({
+                    type: "error",
+                    target: "certificate_pinning_bypass",
+                    action: "cfnetwork_sslhandshake_hook_failed",
+                    error: e.message
+                });
             }
         }
     },
@@ -763,23 +1127,40 @@
             const nw_parameters_set_tls_verify_block = Module.findExportByName("Network", "nw_parameters_set_tls_verify_block");
             
             if (nw_parameters_set_tls_verify_block) {
-                console.log("[Network] Network.framework TLS verification bypass available");
+                send({
+                    type: "info",
+                    target: "certificate_pinning_bypass",
+                    action: "network_framework_bypass_available"
+                });
                 
                 // This would require more complex implementation for iOS 12+
                 // For now, we'll log that it's available
                 this.state.active_bypasses.add('network_framework');
-                console.log("[Network] Network.framework bypass markers set");
+                send({
+                    type: "success",
+                    target: "certificate_pinning_bypass",
+                    action: "network_framework_bypass_markers_set"
+                });
             }
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[Network] Network.framework not available: " + e.message);
+                send({
+                    type: "warning",
+                    target: "certificate_pinning_bypass",
+                    action: "network_framework_not_available",
+                    error: e.message
+                });
             }
         }
     },    
     // Initialize cross-platform bypasses
     initializeCrossPlatformBypasses: function() {
-        console.log("[CrossPlatform] Initializing cross-platform SSL bypasses...");
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "initializing_cross_platform_bypasses"
+        });
         
         try {
             // OpenSSL bypasses
@@ -794,10 +1175,19 @@
             // Trust store modification
             this.initializeTrustStoreModification();
             
-            console.log("[CrossPlatform] Cross-platform bypasses initialized successfully");
+            send({
+                type: "success",
+                target: "certificate_pinning_bypass",
+                action: "cross_platform_bypasses_initialized"
+            });
             
         } catch (e) {
-            console.log("[CrossPlatform] Error initializing cross-platform bypasses: " + e.message);
+            send({
+                type: "error",
+                target: "certificate_pinning_bypass",
+                action: "cross_platform_bypasses_error",
+                error: e.message
+            });
         }
     },
     
@@ -813,8 +1203,18 @@
                 const originalSSL_CTX_set_verify = new NativeFunction(SSL_CTX_set_verify, "void", ["pointer", "int", "pointer"]);
                 
                 Interceptor.replace(SSL_CTX_set_verify, new NativeCallback(function(ctx, mode, callback) {
-                    console.log("[OpenSSL] SSL_CTX_set_verify intercepted");
-                    console.log(`[OpenSSL] Original mode: ${mode}, setting to SSL_VERIFY_NONE (0)`);
+                    send({
+                        type: "info",
+                        target: "certificate_pinning_bypass",
+                        action: "openssl_ctx_set_verify_intercepted"
+                    });
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinning_bypass",
+                        action: "openssl_verify_mode_changed",
+                        original_mode: mode,
+                        new_mode: 0
+                    });
                     
                     // Set mode to SSL_VERIFY_NONE (0) and callback to NULL
                     originalSSL_CTX_set_verify(ctx, 0, ptr(0));
@@ -823,13 +1223,22 @@
                     this.state.active_bypasses.add('openssl_ctx_verify');
                 }.bind(this), "void", ["pointer", "int", "pointer"]));
                 
-                console.log("[OpenSSL] SSL_CTX_set_verify hooked successfully");
+                send({
+                    type: "success",
+                    target: "certificate_pinning_bypass",
+                    action: "openssl_ctx_set_verify_hooked"
+                });
                 this.state.hooked_functions.set('openssl_ctx_verify', 'SSL_CTX_set_verify');
             }
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[OpenSSL] SSL_CTX_set_verify hook failed: " + e.message);
+                send({
+                    type: "error",
+                    target: "certificate_pinning_bypass",
+                    action: "openssl_ctx_set_verify_hook_failed",
+                    error: e.message
+                });
             }
         }        
         try {
@@ -840,7 +1249,11 @@
             
             if (SSL_get_verify_result) {
                 Interceptor.replace(SSL_get_verify_result, new NativeCallback(function(ssl) {
-                    console.log("[OpenSSL] SSL_get_verify_result intercepted and bypassed");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinning_bypass",
+                        action: "openssl_get_verify_result_bypassed"
+                    });
                     
                     this.state.bypassed_validations++;
                     this.state.active_bypasses.add('openssl_verify_result');
@@ -848,13 +1261,22 @@
                     return 0; // X509_V_OK
                 }.bind(this), "long", ["pointer"]));
                 
-                console.log("[OpenSSL] SSL_get_verify_result hooked successfully");
+                send({
+                    type: "success",
+                    target: "certificate_pinning_bypass",
+                    action: "openssl_get_verify_result_hooked"
+                });
                 this.state.hooked_functions.set('openssl_verify_result', 'SSL_get_verify_result');
             }
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[OpenSSL] SSL_get_verify_result hook failed: " + e.message);
+                send({
+                    type: "error",
+                    target: "certificate_pinning_bypass",
+                    action: "openssl_get_verify_result_hook_failed",
+                    error: e.message
+                });
             }
         }
         
@@ -866,7 +1288,11 @@
             
             if (X509_verify_cert) {
                 Interceptor.replace(X509_verify_cert, new NativeCallback(function(ctx) {
-                    console.log("[OpenSSL] X509_verify_cert intercepted and bypassed");
+                    send({
+                        type: "bypass",
+                        target: "certificate_pinning_bypass",
+                        action: "openssl_x509_verify_cert_bypassed"
+                    });
                     
                     this.state.bypassed_validations++;
                     this.state.active_bypasses.add('openssl_x509_verify');
@@ -874,13 +1300,22 @@
                     return 1; // Success
                 }.bind(this), "int", ["pointer"]));
                 
-                console.log("[OpenSSL] X509_verify_cert hooked successfully");
+                send({
+                    type: "success",
+                    target: "certificate_pinning_bypass",
+                    action: "openssl_x509_verify_cert_hooked"
+                });
                 this.state.hooked_functions.set('openssl_x509_verify', 'X509_verify_cert');
             }
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[OpenSSL] X509_verify_cert hook failed: " + e.message);
+                send({
+                    type: "error",
+                    target: "certificate_pinning_bypass",
+                    action: "openssl_x509_verify_cert_hook_failed",
+                    error: e.message
+                });
             }
         }
     },    
@@ -902,7 +1337,12 @@
                     
                     if (SSL_CTX_set_custom_verify) {
                         Interceptor.replace(SSL_CTX_set_custom_verify, new NativeCallback(function(ctx, mode, callback) {
-                            console.log(`[BoringSSL] SSL_CTX_set_custom_verify intercepted in ${lib}`);
+                            send({
+                                type: "info",
+                                target: "certificate_pinning_bypass",
+                                action: "boringssl_ctx_set_custom_verify_intercepted",
+                                library: lib
+                            });
                             
                             // Disable custom verification
                             this.state.bypassed_validations++;
@@ -912,7 +1352,12 @@
                             return;
                         }.bind(this), "void", ["pointer", "int", "pointer"]));
                         
-                        console.log(`[BoringSSL] SSL_CTX_set_custom_verify hooked in ${lib}`);
+                        send({
+                            type: "success",
+                            target: "certificate_pinning_bypass",
+                            action: "boringssl_ctx_set_custom_verify_hooked",
+                            library: lib
+                        });
                         this.state.hooked_functions.set(`boringssl_custom_verify_${lib}`, lib);
                     }
                     
@@ -923,14 +1368,23 @@
             
         } catch (e) {
             if (this.config.verbose_logging) {
-                console.log("[BoringSSL] BoringSSL bypass failed: " + e.message);
+                send({
+                    type: "error",
+                    target: "certificate_pinning_bypass",
+                    action: "boringssl_bypass_failed",
+                    error: e.message
+                });
             }
         }
     },
     
     // Initialize certificate injection capabilities
     initializeCertificateInjection: function() {
-        console.log("[CertInject] Initializing certificate injection...");
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "initializing_certificate_injection"
+        });
         
         // Set up certificate injection for cloud interceptor integration
         if (this.config.cloud_interceptor_integration) {
@@ -942,7 +1396,11 @@
             this.setupLocalCertificateServer();
         }
         
-        console.log("[CertInject] Certificate injection initialized");
+        send({
+            type: "success",
+            target: "certificate_pinning_bypass",
+            action: "certificate_injection_initialized"
+        });
     },    
     // Setup integration with cloud license interceptor
     setupCloudInterceptorIntegration: function() {
@@ -955,7 +1413,12 @@
         
         // Register certificate injection handler
         this.injectCustomCertificate = function(hostname, certificate) {
-            console.log(`[CertInject] Injecting custom certificate for ${hostname}`);
+            send({
+                type: "info",
+                target: "certificate_pinning_bypass",
+                action: "injecting_custom_certificate",
+                hostname: hostname
+            });
             
             // Store certificate for hostname
             this.certificates.server_certs.set(hostname, certificate);
@@ -963,22 +1426,41 @@
             // Add to trusted certificates
             this.certificates.trusted_certs.add(hostname);
             
-            console.log(`[CertInject] Certificate injected for ${hostname}`);
+            send({
+                type: "success",
+                target: "certificate_pinning_bypass",
+                action: "certificate_injected",
+                hostname: hostname
+            });
             return true;
         }.bind(this);
         
-        console.log("[CertInject] Cloud interceptor integration configured");
+        send({
+            type: "success",
+            target: "certificate_pinning_bypass",
+            action: "cloud_interceptor_configured"
+        });
     },
     
     // Setup local certificate server
     setupLocalCertificateServer: function() {
         // Simple certificate validation bypass for any hostname
         this.validateCertificate = function(hostname, certificate) {
-            console.log(`[CertInject] Validating certificate for ${hostname}`);
+            send({
+                type: "info",
+                target: "certificate_pinning_bypass",
+                action: "validating_certificate",
+                hostname: hostname
+            });
             
             // Check if hostname is in trusted certificates
             if (this.certificates.trusted_certs.has(hostname)) {
-                console.log(`[CertInject] Certificate trusted for ${hostname}`);
+                send({
+                    type: "success",
+                    target: "certificate_pinning_bypass",
+                    action: "certificate_trusted",
+                    hostname: hostname
+                });
                 return true;
             }
             
@@ -987,23 +1469,42 @@
                 if (trustedCert.startsWith('*.')) {
                     const domain = trustedCert.substring(2);
                     if (hostname.endsWith(domain)) {
-                        console.log(`[CertInject] Certificate matched wildcard ${trustedCert} for ${hostname}`);
+                        send({
+                            type: "success",
+                            target: "certificate_pinning_bypass",
+                            action: "certificate_matched_wildcard",
+                            wildcard: trustedCert,
+                            hostname: hostname
+                        });
                         return true;
                     }
                 }
             }
             
             // Default: trust all certificates in bypass mode
-            console.log(`[CertInject] Certificate auto-trusted for ${hostname}`);
+            send({
+                type: "success",
+                target: "certificate_pinning_bypass",
+                action: "certificate_auto_trusted",
+                hostname: hostname
+            });
             this.certificates.trusted_certs.add(hostname);
             return true;
         }.bind(this);
         
-        console.log("[CertInject] Local certificate server configured");
+        send({
+            type: "success",
+            target: "certificate_pinning_bypass",  
+            action: "local_certificate_server_configured"
+        });
     },    
     // Initialize trust store modification
     initializeTrustStoreModification: function() {
-        console.log("[TrustStore] Initializing trust store modification...");
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "initializing_trust_store_modification"
+        });
         
         // Monitor certificate validation attempts
         this.monitorCertificateValidation();
@@ -1011,7 +1512,11 @@
         // Set up dynamic trust store updates
         this.setupDynamicTrustStore();
         
-        console.log("[TrustStore] Trust store modification initialized");
+        send({
+            type: "success",
+            target: "certificate_pinning_bypass",
+            action: "trust_store_modification_initialized"
+        });
     },
     
     // Monitor certificate validation attempts
@@ -1036,7 +1541,14 @@
             }
             
             if (this.config.verbose_logging) {
-                console.log(`[Monitor] Validation attempt: ${hostname} -> ${result} (${method})`);
+                send({
+                    type: "info",
+                    target: "certificate_pinning_bypass",
+                    action: "validation_attempt",
+                    hostname: hostname,
+                    result: result,
+                    method: method
+                });
             }
         }.bind(this);
     },
@@ -1045,7 +1557,12 @@
     setupDynamicTrustStore: function() {
         // Allow runtime addition of trusted certificates
         this.addTrustedCertificate = function(hostname, certificate) {
-            console.log(`[TrustStore] Adding trusted certificate for ${hostname}`);
+            send({
+                type: "info",
+                target: "certificate_pinning_bypass",
+                action: "adding_trusted_certificate",
+                hostname: hostname
+            });
             
             this.certificates.trusted_certs.add(hostname);
             
@@ -1058,7 +1575,12 @@
         
         // Allow runtime removal of trusted certificates
         this.removeTrustedCertificate = function(hostname) {
-            console.log(`[TrustStore] Removing trusted certificate for ${hostname}`);
+            send({
+                type: "info",
+                target: "certificate_pinning_bypass",
+                action: "removing_trusted_certificate",
+                hostname: hostname
+            });
             
             this.certificates.trusted_certs.delete(hostname);
             this.certificates.server_certs.delete(hostname);
@@ -1068,7 +1590,11 @@
     },    
     // Start monitoring and integration services
     startMonitoring: function() {
-        console.log("[Monitor] Starting monitoring services...");
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "starting_monitoring_services"
+        });
         
         // Start periodic statistics reporting
         this.startStatisticsReporting();
@@ -1083,7 +1609,11 @@
             this.startAntiDetection();
         }
         
-        console.log("[Monitor] Monitoring services started");
+        send({
+            type: "success",
+            target: "certificate_pinning_bypass",
+            action: "monitoring_services_started"
+        });
     },
     
     // Start periodic statistics reporting
@@ -1095,7 +1625,11 @@
     
     // Start stealth monitoring
     startStealthMonitoring: function() {
-        console.log("[Stealth] Stealth monitoring enabled");
+        send({
+            type: "success",
+            target: "certificate_pinning_bypass",
+            action: "stealth_monitoring_enabled"
+        });
         
         // Monitor for detection attempts
         this.detectDetectionAttempts = function() {
@@ -1110,7 +1644,11 @@
             
             // This would be expanded with real detection monitoring
             if (this.config.verbose_logging) {
-                console.log("[Stealth] Monitoring for detection attempts...");
+                send({
+                    type: "info",
+                    target: "certificate_pinning_bypass",
+                    action: "monitoring_detection_attempts"
+                });
             }
         }.bind(this);
         
@@ -1120,7 +1658,11 @@
     
     // Start anti-detection measures
     startAntiDetection: function() {
-        console.log("[AntiDetect] Anti-detection measures enabled");
+        send({
+            type: "success",
+            target: "certificate_pinning_bypass",
+            action: "anti_detection_enabled"
+        });
         
         // Randomize timing if enabled
         if (this.config.random_delays) {
@@ -1132,12 +1674,12 @@
     },    
     // Add random delays to avoid timing-based detection
     addRandomDelays: function() {
-        const originalLog = console.log;
-        console.log = function(...args) {
-            // Add random delay before logging
+        const originalSend = send;
+        send = function(data) {
+            // Add random delay before sending
             const delay = Math.random() * 100;
             setTimeout(() => {
-                originalLog.apply(console, args);
+                originalSend.call(this, data);
             }, delay);
         };
     },
@@ -1145,41 +1687,134 @@
     // Hide Frida-related artifacts
     hideFridaArtifacts: function() {
         // This would include more sophisticated anti-detection measures
-        console.log("[AntiDetect] Frida artifact hiding enabled");
+        send({
+            type: "success",
+            target: "certificate_pinning_bypass",
+            action: "frida_artifact_hiding_enabled"
+        });
     },
     
     // Print bypass statistics
     printStatistics: function() {
-        console.log("\n==========================================");
-        console.log("SSL Certificate Pinning Bypass Statistics");
-        console.log("==========================================");
-        console.log(`Platform: ${this.state.platform}`);
-        console.log(`Total Bypassed Validations: ${this.state.bypassed_validations}`);
-        console.log(`Failed Bypasses: ${this.state.failed_bypasses}`);
-        console.log(`Active Bypasses: ${this.state.active_bypasses.size}`);
-        console.log(`Hooked Functions: ${this.state.hooked_functions.size}`);
-        console.log(`Trusted Certificates: ${this.certificates.trusted_certs.size}`);
-        console.log(`Injected Certificates: ${this.certificates.server_certs.size}`);
-        
-        console.log("\nActive Bypass Methods:");
-        Array.from(this.state.active_bypasses).forEach(bypass => {
-            console.log(`  - ${bypass}`);
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "statistics_separator",
+            message: "
+=========================================="
+        });
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "statistics_title",
+            message: "SSL Certificate Pinning Bypass Statistics"
+        });
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "statistics_separator",
+            message: "=========================================="
+        });
+        send({
+            type: "status",
+            target: "certificate_pinning_bypass",
+            action: "statistics_platform",
+            platform: this.state.platform
+        });
+        send({
+            type: "status",
+            target: "certificate_pinning_bypass",
+            action: "statistics_bypassed_validations",
+            count: this.state.bypassed_validations
+        });
+        send({
+            type: "status",
+            target: "certificate_pinning_bypass",
+            action: "statistics_failed_bypasses",
+            count: this.state.failed_bypasses
+        });
+        send({
+            type: "status",
+            target: "certificate_pinning_bypass",
+            action: "statistics_active_bypasses",
+            count: this.state.active_bypasses.size
+        });
+        send({
+            type: "status",
+            target: "certificate_pinning_bypass",
+            action: "statistics_hooked_functions",
+            count: this.state.hooked_functions.size
+        });
+        send({
+            type: "status",
+            target: "certificate_pinning_bypass",
+            action: "statistics_trusted_certificates",
+            count: this.certificates.trusted_certs.size
+        });
+        send({
+            type: "status",
+            target: "certificate_pinning_bypass",
+            action: "statistics_injected_certificates",
+            count: this.certificates.server_certs.size
         });
         
-        console.log("\nHooked Functions:");
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "statistics_active_bypass_methods_header"
+        });
+        Array.from(this.state.active_bypasses).forEach(bypass => {
+            send({
+                type: "info",
+                target: "certificate_pinning_bypass",
+                action: "statistics_bypass_method",
+                method: bypass
+            });
+        });
+        
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "statistics_hooked_functions_header"
+        });
         this.state.hooked_functions.forEach((func, key) => {
-            console.log(`  - ${key}: ${func}`);
+            send({
+                type: "info",
+                target: "certificate_pinning_bypass",
+                action: "statistics_hooked_function",
+                key: key,
+                function: func
+            });
         });
         
         if (this.validationAttempts && this.validationAttempts.length > 0) {
-            console.log(`\nRecent Validation Attempts: ${this.validationAttempts.length}`);
+            send({
+                type: "info",
+                target: "certificate_pinning_bypass",
+                action: "statistics_validation_attempts_header",
+                count: this.validationAttempts.length
+            });
             this.validationAttempts.slice(-5).forEach(attempt => {
                 const date = new Date(attempt.timestamp);
-                console.log(`  - ${attempt.hostname} (${attempt.method}) -> ${attempt.result} at ${date.toLocaleTimeString()}`);
+                send({
+                    type: "info",
+                    target: "certificate_pinning_bypass",
+                    action: "statistics_validation_attempt",
+                    hostname: attempt.hostname,
+                    method: attempt.method,
+                    result: attempt.result,
+                    time: date.toLocaleTimeString()
+                });
             });
         }
         
-        console.log("==========================================\n");
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "statistics_separator",
+            message: "==========================================
+"
+        });
     },    
     // Utility function to check if certificate should be trusted
     shouldTrustCertificate: function(hostname, certificate) {
@@ -1196,7 +1831,14 @@
     logBypassAttempt: function(method, hostname, success) {
         if (this.config.bypass_logging) {
             const status = success ? "SUCCESS" : "FAILED";
-            console.log(`[Bypass] ${method} -> ${hostname} -> ${status}`);
+            send({
+                type: success ? "bypass" : "error",
+                target: "certificate_pinning_bypass",
+                action: "validation_logged",
+                method: method,
+                hostname: hostname,
+                status: status
+            });
             
             if (success) {
                 this.state.bypassed_validations++;
@@ -1213,7 +1855,11 @@
     
     // Cleanup function
     cleanup: function() {
-        console.log("[Cleanup] Cleaning up certificate pinning bypass...");
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "cleanup_starting"
+        });
         
         // Clear statistics
         this.state.bypassed_validations = 0;
@@ -1225,15 +1871,40 @@
         this.certificates.server_certs.clear();
         this.certificates.trusted_certs.clear();
         
-        console.log("[Cleanup] Cleanup complete");
+        send({
+            type: "success",
+            target: "certificate_pinning_bypass",
+            action: "cleanup_complete"
+        });
     },
     
     // Main entry point
     run: function() {
-        console.log("===========================================");
-        console.log("Certificate Pinning Bypass v2.0.0");
-        console.log("Comprehensive SSL/TLS Pinning Bypass");
-        console.log("===========================================\n");
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "startup_separator",
+            message: "=========================================="
+        });
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "startup_title",
+            version: "v2.0.0"
+        });
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "startup_description",
+            message: "Comprehensive SSL/TLS Pinning Bypass"
+        });
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "startup_separator",
+            message: "===========================================
+"
+        });
         
         this.initialize();
         
@@ -1289,7 +1960,11 @@ sslBypass.run();
 // Also run on Java.available (for Android apps that load Java later)
 if (typeof Java !== 'undefined' && Java.available) {
     Java.perform(function() {
-        console.log("[AutoRun] Java environment detected, re-initializing Android bypasses...");
+        send({
+            type: "info",
+            target: "certificate_pinning_bypass",
+            action: "autorun_java_detected"
+        });
         sslBypass.initializeAndroidBypasses();
     });
 } else if (typeof Java !== 'undefined') {
@@ -1298,7 +1973,11 @@ if (typeof Java !== 'undefined' && Java.available) {
         if (Java.available) {
             clearInterval(javaCheckInterval);
             Java.perform(function() {
-                console.log("[AutoRun] Java environment became available, initializing Android bypasses...");
+                send({
+                    type: "info",
+                    target: "certificate_pinning_bypass",
+                    action: "autorun_java_became_available"
+                });
                 sslBypass.initializeAndroidBypasses();
             });
         }

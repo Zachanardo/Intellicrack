@@ -138,6 +138,7 @@ class MemoryPool:
     """Advanced memory pool for binary data processing"""
 
     def __init__(self, initial_buffers: int = 10, buffer_size: int = 1024 * 1024):
+        """Initialize memory pool with pre-allocated buffers for reuse."""
         self.buffer_size = buffer_size
         self.available_buffers = deque()
         self.in_use_buffers = set()
@@ -212,6 +213,7 @@ class CacheManager:
     """Intelligent caching system with LRU and popularity scoring"""
 
     def __init__(self, max_size: int = 1000, max_memory: int = 512 * 1024 * 1024):
+        """Initialize cache manager with size and memory limits."""
         self.max_size = max_size
         self.max_memory = max_memory
         self.cache = {}
@@ -340,6 +342,7 @@ class ThreadPoolOptimizer:
     """Dynamic thread pool optimization using Little's Law"""
 
     def __init__(self, initial_workers: int = None):
+        """Initialize thread pool optimizer with adaptive worker management."""
         self.initial_workers = initial_workers or mp.cpu_count()
         self.min_workers = max(1, self.initial_workers // 4)
         self.max_workers = self.initial_workers * 4
@@ -422,6 +425,7 @@ class GPUOptimizer:
     """GPU memory and computation optimizer"""
 
     def __init__(self):
+        """Initialize GPU optimizer with device detection and memory tracking."""
         self.gpu_available = TORCH_AVAILABLE and torch.cuda.is_available()
         self.device_count = torch.cuda.device_count() if self.gpu_available else 0
         self.memory_usage = {}
@@ -493,6 +497,7 @@ class IOOptimizer:
     """I/O operations optimizer with read-ahead and compression detection"""
 
     def __init__(self):
+        """Initialize IO optimizer with read-ahead caching and pattern analysis."""
         self.read_ahead_size = 64 * 1024  # 64KB default
         self.compression_cache = {}
         self.file_access_patterns = defaultdict(list)
@@ -594,6 +599,7 @@ class DatabaseOptimizer:
     """Database performance optimizer for SQLite"""
 
     def __init__(self, db_path: str):
+        """Initialize database optimizer with connection pooling and query caching."""
         self.db_path = db_path
         self.connection_pool = []
         self.max_connections = 10
@@ -736,6 +742,7 @@ class PerformanceProfiler:
     """Real-time performance profiler"""
 
     def __init__(self):
+        """Initialize performance profiler with metrics tracking and system monitoring."""
         self.metrics_history = defaultdict(deque)
         self.profiling_active = False
         self.profile_data = {}
@@ -887,6 +894,7 @@ class AdaptiveOptimizer:
     """Machine learning-based adaptive optimizer"""
 
     def __init__(self):
+        """Initialize adaptive optimizer with learning-based configuration tuning."""
         self.optimization_history = []
         self.current_config = {
             'memory_pool_size': 10,
@@ -983,6 +991,7 @@ class PerformanceOptimizer:
     """Main performance optimization engine"""
 
     def __init__(self, config: Dict[str, Any] = None):
+        """Initialize performance optimizer with all optimization components."""
         self.config = config or {}
         self.optimization_level = PerformanceLevel(
             self.config.get('optimization_level', 'balanced')

@@ -67,6 +67,7 @@ class PayloadGenerationThread(QThread):
     error = pyqtSignal(str)
 
     def __init__(self, engine, config):
+        """Initialize the PayloadGenerationThread with default values."""
         super().__init__()
         self.engine = engine
         self.config = config
@@ -100,6 +101,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
     payload_generated = pyqtSignal(dict)
 
     def __init__(self, parent=None):
+        """Initialize the PayloadGeneratorDialog with default values."""
         super().__init__(parent)
         self.logger = logging.getLogger("IntellicrackLogger.PayloadGeneratorDialog")
 

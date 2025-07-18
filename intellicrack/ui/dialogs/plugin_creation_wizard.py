@@ -56,6 +56,7 @@ class PluginCreationWizard(QWizard):
     plugin_created = pyqtSignal(dict)  # Emitted when plugin is created
 
     def __init__(self, parent=None, plugin_type="custom"):
+        """Initialize the PluginCreationWizard with default values."""
         super().__init__(parent)
         self.plugin_type = plugin_type
         self.setWindowTitle("Plugin Creation Wizard")
@@ -392,6 +393,7 @@ class PluginInfoPage(QWizardPage):
     """Page for basic plugin information"""
 
     def __init__(self):
+        """Initialize the PluginInfoPage with default values."""
         super().__init__()
         self.setTitle("Plugin Information")
         self.setSubTitle("Enter basic information about your plugin")
@@ -447,6 +449,7 @@ class TemplateSelectionPage(QWizardPage):
     """Page for selecting plugin template"""
 
     def __init__(self, plugin_type):
+        """Initialize the TemplateSelectionPage with default values."""
         super().__init__()
         self.plugin_type = plugin_type
         self.setTitle("Select Template")
@@ -555,6 +558,7 @@ class PluginFeaturesPage(QWizardPage):
     """Page for selecting plugin features"""
 
     def __init__(self):
+        """Initialize the PluginFeaturesPage with default values."""
         super().__init__()
         self.setTitle("Plugin Features")
         self.setSubTitle("Select the features you want to include")
@@ -610,6 +614,7 @@ class CodeGenerationPage(QWizardPage):
     """Page showing generated code"""
 
     def __init__(self):
+        """Initialize the CodeGenerationPage with default values."""
         super().__init__()
         self.setTitle("Generated Code")
         self.setSubTitle("Review and edit the generated plugin code")
@@ -686,6 +691,7 @@ class SummaryPage(QWizardPage):
     """Summary page showing all selections"""
 
     def __init__(self):
+        """Initialize the SummaryPage with default values."""
         super().__init__()
         self.setTitle("Summary")
         self.setSubTitle("Review your plugin configuration")

@@ -76,6 +76,13 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
                  preload_small_models: bool = True,
                  small_model_threshold_mb: int = 100,
                  preload_api_models: bool = True):
+        """Initialize the smart loading strategy with configurable preloading options.
+        
+        Args:
+            preload_small_models: Whether to preload models below the size threshold.
+            small_model_threshold_mb: Size threshold in MB for considering a model "small".
+            preload_api_models: Whether to preload API-based models.
+        """
         self.logger = logging.getLogger(__name__ + ".SmartLoadingStrategy")
         self.preload_small_models = preload_small_models
         self.small_model_threshold_mb = small_model_threshold_mb
@@ -129,6 +136,14 @@ class LazyModelWrapper:
                  config: LLMConfig,
                  preload: bool = False,
                  load_callback: Optional[Callable[[str, bool], None]] = None):
+        """Initialize a lazy-loading wrapper for an LLM backend.
+        
+        Args:
+            backend_class: The LLM backend class to instantiate lazily.
+            config: Configuration for the LLM backend.
+            preload: Whether to start loading the model in the background immediately.
+            load_callback: Optional callback function called with (model_name, success) after loading.
+        """
         self.logger = logging.getLogger(__name__ + ".LazyModelWrapper")
         self.backend_class = backend_class
         self.config = config
@@ -298,6 +313,12 @@ class LazyModelManager:
     """
 
     def __init__(self, loading_strategy: Optional[ModelLoadingStrategy] = None):
+        """Initialize the lazy model manager with optional loading strategy.
+        
+        Args:
+            loading_strategy: Strategy for determining model loading behavior.
+                            Defaults to DefaultLoadingStrategy if not provided.
+        """
         self.loading_strategy = loading_strategy or DefaultLoadingStrategy()
         self.models: Dict[str, LazyModelWrapper] = {}
         self._access_lock = threading.Lock()

@@ -613,7 +613,7 @@ class PDFReportGenerator:
                 "technical": "Technical Analysis Report",
                 "executive": "Executive Summary Report"
             }
-            
+
             report_title = report_titles.get(report_type, "Analysis Report")
             css_class = f"report-{report_type.replace('_', '-')}"
 
@@ -655,7 +655,7 @@ class PDFReportGenerator:
                 if license_checks:
                     html_content += f"<li>Licensing: {len(license_checks)} license validation routines identified</li>"
                 html_content += "</ul>"
-                
+
             elif report_type == "summary":
                 # Summary report provides condensed technical details
                 html_content += """
@@ -666,7 +666,7 @@ class PDFReportGenerator:
                     for vuln in vulnerabilities[:3]:  # Show first 3
                         vuln_type = vuln.get('type', 'Unknown')
                         html_content += f"<p>• {vuln_type}</p>"
-                        
+
             elif report_type == "technical":
                 # Technical report includes detailed analysis data
                 html_content += """
@@ -678,7 +678,7 @@ class PDFReportGenerator:
                     html_content += f"<p>File Type: {file_info.get('type', 'Unknown')}</p>"
                     html_content += f"<p>Architecture: {file_info.get('arch', 'Unknown')}</p>"
                     html_content += f"<p>Size: {file_info.get('size', 'Unknown')} bytes</p>"
-                    
+
             # Default comprehensive report includes all sections (no special handling needed)
 
             # Add visualization if matplotlib is available

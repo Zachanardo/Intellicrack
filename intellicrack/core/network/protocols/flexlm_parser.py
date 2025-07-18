@@ -99,6 +99,7 @@ class FlexLMProtocolParser:
     }
 
     def __init__(self):
+        """Initialize the FlexLM protocol parser with license tracking and server features."""
         self.logger = get_logger(__name__)
         self.active_checkouts = {}  # Track active license checkouts
         self.server_features = {}   # Available features on server

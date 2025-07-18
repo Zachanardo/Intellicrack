@@ -218,7 +218,7 @@ class PlaceholderAnalyzer:
                     start_line = node.lineno
                     end_line = node.end_lineno if hasattr(
                         node, 'end_lineno') else start_line + 10
-                    body_lines = lines[start_line-1:end_line]
+                    body_lines = lines[start_line - 1:end_line]
 
                     analysis = self.analyze_function_body(
                         filepath, node.name, body_lines, start_line)

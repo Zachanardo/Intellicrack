@@ -58,6 +58,13 @@ class LLMAnalysisWorker(QRunnable):
     """Worker thread for LLM analysis operations"""
 
     def __init__(self, operation: str, analysis_result: UnifiedProtectionResult, **kwargs):
+        """Initialize the LLM analysis worker.
+        
+        Args:
+            operation: The type of LLM operation to perform.
+            analysis_result: The unified protection result to analyze.
+            **kwargs: Additional keyword arguments for the operation.
+        """
         super().__init__()
         self.operation = operation
         self.analysis_result = analysis_result
@@ -197,6 +204,11 @@ class LLMHandler(QObject):
     llm_progress = pyqtSignal(str)
 
     def __init__(self, parent=None):
+        """Initialize the LLM handler.
+        
+        Args:
+            parent: Optional parent widget for Qt integration.
+        """
         super().__init__(parent)
         self.thread_pool = QThreadPool.globalInstance()
         self.current_result: Optional[UnifiedProtectionResult] = None

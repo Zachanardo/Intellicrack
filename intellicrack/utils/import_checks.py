@@ -29,8 +29,9 @@ class ImportChecker:
     """
 
     def __init__(self):
-        self._import_cache = {}
-        self._failed_imports = set()
+    """Initialize the import checker with empty caches."""
+    self._import_cache = {}
+    self._failed_imports = set()
 
     def check_import(self, module_name: str, package_name: Optional[str] = None) -> bool:
         """

@@ -38,6 +38,7 @@ class BypassEngine:
     """Engine for exploit mitigation bypass techniques."""
 
     def __init__(self):
+        """Initialize the bypass engine with available mitigation bypass capabilities."""
         self.cfi_bypass = CFIBypass() if HAS_CFI_BYPASS else None
 
     def analyze_bypass_capabilities(self, target_info):

@@ -58,7 +58,7 @@ if os.name == 'nt':
     # Force software rendering for Windows (especially Intel Arc compatibility)
     if 'QT_OPENGL' not in os.environ:
         os.environ['QT_OPENGL'] = 'software'
-    
+
     # Additional Intel Arc compatibility settings
     gpu_vendor = os.environ.get('INTELLICRACK_GPU_VENDOR', 'Unknown')
     if gpu_vendor == 'Intel':

@@ -22,19 +22,35 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 # Import analysis utilities
 from .analysis_exporter import AnalysisExporter
 from .binary_analysis import (
-    analyze_binary, analyze_binary_optimized, analyze_pe, analyze_elf, analyze_macho,
-    analyze_patterns, analyze_traffic, identify_binary_format, extract_binary_info,
-    extract_binary_features, extract_patterns_from_binary, scan_binary,
-    get_quick_disassembly, disassemble_with_objdump
+    analyze_binary,
+    analyze_binary_optimized,
+    analyze_elf,
+    analyze_macho,
+    analyze_patterns,
+    analyze_pe,
+    analyze_traffic,
+    disassemble_with_objdump,
+    extract_binary_features,
+    extract_binary_info,
+    extract_patterns_from_binary,
+    get_quick_disassembly,
+    identify_binary_format,
+    scan_binary,
 )
 from .entropy_utils import (
-    calculate_entropy, calculate_byte_entropy, calculate_string_entropy,
-    safe_entropy_calculation, calculate_frequency_distribution, is_high_entropy,
-    analyze_entropy_sections
+    analyze_entropy_sections,
+    calculate_byte_entropy,
+    calculate_entropy,
+    calculate_frequency_distribution,
+    calculate_string_entropy,
+    is_high_entropy,
+    safe_entropy_calculation,
 )
 from .pattern_search import (
-    find_all_pattern_occurrences, search_patterns_in_binary,
-    find_function_prologues, find_license_patterns
+    find_all_pattern_occurrences,
+    find_function_prologues,
+    find_license_patterns,
+    search_patterns_in_binary,
 )
 
 __all__ = ['binary_analysis', 'entropy_utils', 'pattern_search', 'analysis_exporter']

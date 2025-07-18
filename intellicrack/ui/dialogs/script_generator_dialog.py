@@ -66,6 +66,7 @@ class PythonHighlighter(QSyntaxHighlighter):
     """Simple Python syntax highlighter."""
 
     def __init__(self, parent=None):
+        """Initialize the PythonHighlighter with default values."""
         super().__init__(parent)
         self.highlighting_rules = []
 
@@ -84,7 +85,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         # Strings
         string_format = QTextCharFormat()
         string_format.setColor(QColor(0, 128, 0))
-        self.highlighting_rules.append(('".*"', string_format))
+        self.highlighting_rules.append(('\".*\"', string_format))
         self.highlighting_rules.append("'.*'", string_format)
 
         # Comments
@@ -108,6 +109,7 @@ class ScriptGeneratorWorker(QThread):
     error_occurred = pyqtSignal(str)
 
     def __init__(self, binary_path: str, script_type: str, **kwargs):
+        """Initialize the ScriptGeneratorWorker with default values."""
         super().__init__()
         self.binary_path = binary_path
         self.script_type = script_type
@@ -197,6 +199,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
     """Script Generation Dialog with multiple script types."""
 
     def __init__(self, parent=None, binary_path: str = ""):
+        """Initialize the ScriptGeneratorDialog with default values."""
 
         # Initialize UI attributes
         self.analysis_depth = None

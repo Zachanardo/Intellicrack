@@ -49,6 +49,7 @@ class ExportWorker(QThread):
     progress_update = pyqtSignal(int, str)    # progress, status
 
     def __init__(self, export_config: Dict[str, Any]):
+        """Initialize the ExportWorker with default values."""
         super().__init__()
         self.export_config = export_config
 
@@ -432,6 +433,7 @@ class ExportDialog(QDialog):
     """Export dialog for ICP analysis results"""
 
     def __init__(self, analysis_results: Optional[Dict[str, Any]] = None, parent=None):
+        """Initialize the ExportDialog with default values."""
         super().__init__(parent)
         self.setWindowTitle("Export ICP Analysis Results")
         self.setModal(True)

@@ -97,6 +97,7 @@ class ModelDownloadThread(QThread):
     log_message = pyqtSignal(str)
 
     def __init__(self, model_url: str, model_name: str):
+        """Initialize the ModelDownloadThread with default values."""
         super().__init__()
         self.model_url = model_url
         self.model_name = model_name
@@ -150,6 +151,7 @@ class ModelManagerDialog(QDialog):
     """Dialog for managing local GGUF models."""
 
     def __init__(self, parent=None):
+        """Initialize the ModelManagerDialog with default values."""
         super().__init__(parent)
         self.setWindowTitle("Local GGUF Model Manager")
         self.setMinimumSize(900, 700)
@@ -165,7 +167,7 @@ class ModelManagerDialog(QDialog):
         # Setup timer for server status updates
         self.status_timer = QTimer()
         self.status_timer.timeout.connect(self.update_server_status)
-        self.status_timer.start(5000)  # Update every 5 seconds
+        self.status_timer.start(5000)  # Update every 5 seconds  # Update every 5 seconds
 
     def setup_ui(self):
         """Setup the user interface."""

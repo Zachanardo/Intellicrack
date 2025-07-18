@@ -80,6 +80,7 @@ class WindowsAPIHooker:
     """Hooks and neutralizes anti-debug Windows APIs"""
 
     def __init__(self):
+        """Initialize Windows API hooker for anti-debug function interception."""
         self.logger = logging.getLogger(f"{__name__}.APIHooker")
         self.hooked_functions = {}
         self.original_functions = {}
@@ -294,6 +295,7 @@ class PEBManipulator:
     """Manipulates Process Environment Block to hide debugging"""
 
     def __init__(self):
+        """Initialize PEB manipulator for process environment block modification."""
         self.logger = logging.getLogger(f"{__name__}.PEBManipulator")
         self.kernel32 = ctypes.windll.kernel32
         self.ntdll = ctypes.windll.ntdll
@@ -503,6 +505,7 @@ class HardwareDebugProtector:
     """Manages hardware debug registers to prevent detection"""
 
     def __init__(self):
+        """Initialize hardware debug register protection and manipulation."""
         self.logger = logging.getLogger(f"{__name__}.HardwareDebugProtector")
         self.kernel32 = ctypes.windll.kernel32
         self.saved_context = None
@@ -638,6 +641,7 @@ class TimingNormalizer:
     """Normalizes timing to prevent timing-based detection"""
 
     def __init__(self):
+        """Initialize timing attack protection and normalization system."""
         self.logger = logging.getLogger(f"{__name__}.TimingNormalizer")
         self.kernel32 = ctypes.windll.kernel32
         self.timing_hooks = {}
@@ -721,6 +725,7 @@ class MemoryPatcher:
     """Patches anti-debug code patterns in target memory"""
 
     def __init__(self):
+        """Initialize memory patcher for anti-debug pattern modification."""
         self.logger = logging.getLogger(f"{__name__}.MemoryPatcher")
         self.kernel32 = ctypes.windll.kernel32
         self.patches_applied = []
@@ -729,24 +734,24 @@ class MemoryPatcher:
         self.patterns = {
             # IsDebuggerPresent patterns
             'IsDebuggerPresent_call': [
-                b'\xFF\x15',  # call dword ptr [addr]
-                b'\xFF\x25',  # jmp dword ptr [addr]
+                b'\\xFF\\x15',  # call dword ptr [addr]
+                b'\\xFF\\x25',  # jmp dword ptr [addr]
             ],
 
             # INT 3 breakpoint detection
             'int3_detection': [
-                b'\xCC',  # int 3
+                b'\\xCC',  # int 3
             ],
 
             # Debug trap flag
             'trap_flag': [
-                b'\x9C\x58\x25\x00\x01\x00\x00',  # pushfd; pop eax; and eax, 100h
+                b'\\x9C\\x58\\x25\\x00\\x01\\x00\\x00',  # pushfd; pop eax; and eax, 100h
             ],
 
             # VM detection patterns
             'vm_detection': [
-                b'\x0F\x01\x0D\x00\x00\x00\x00',  # sidt
-                b'\x0F\x01\x4D\x00',  # sgdt
+                b'\\x0F\\x01\\x0D\\x00\\x00\\x00\\x00',  # sidt
+                b'\\x0F\\x01\\x4D\\x00',  # sgdt
             ]
         }
 
@@ -916,6 +921,7 @@ class ExceptionHandler:
     """Manages exception handling to prevent anti-debug detection"""
 
     def __init__(self):
+        """Initialize exception handler for anti-debug exception bypass."""
         self.logger = logging.getLogger(f"{__name__}.ExceptionHandler")
         self.kernel32 = ctypes.windll.kernel32
         self.original_handler = None
@@ -934,22 +940,22 @@ class ExceptionHandler:
             if exception_info:
                 # Check for common anti-debug exception patterns
                 exception_str = str(exception_info).lower()
-                
+
                 if 'debug' in exception_str or 'breakpoint' in exception_str:
                     self.logger.info(f"Anti-debug exception detected: {exception_info}")
                     # Mask debugging-related exceptions
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
-                    
+
                 elif 'single_step' in exception_str or 'trap' in exception_str:
                     self.logger.info(f"Single-step/trap exception: {exception_info}")
                     # Continue execution to bypass step detection
                     return 0  # EXCEPTION_CONTINUE_EXECUTION
-                    
+
                 elif 'access_violation' in exception_str:
                     self.logger.warning(f"Access violation detected: {exception_info}")
                     # Let access violations through normally
                     return 1  # EXCEPTION_EXECUTE_HANDLER
-                    
+
                 else:
                     self.logger.debug(f"Standard exception handling for: {exception_info}")
 
@@ -993,6 +999,7 @@ class EnvironmentSanitizer:
     """Sanitizes process environment to remove debugging artifacts"""
 
     def __init__(self):
+        """Initialize environment sanitizer for debugger artifact removal."""
         self.logger = logging.getLogger(f"{__name__}.EnvironmentSanitizer")
         self.original_values = {}
 
@@ -1144,6 +1151,7 @@ class TargetAnalyzer:
     """Analyzes target application to determine anti-debug techniques in use"""
 
     def __init__(self):
+        """Initialize target analyzer for anti-debug technique detection."""
         self.logger = logging.getLogger(f"{__name__}.TargetAnalyzer")
         self.detected_techniques = set()
 
@@ -1336,6 +1344,12 @@ class AntiAntiDebugSuite:
     """Main anti-anti-debug suite orchestrator"""
 
     def __init__(self):
+        """Initialize the anti-anti-debug suite.
+        
+        Sets up the comprehensive anti-debugging detection bypass system.
+        Initializes all component modules including API hookers, PEB manipulation,
+        hardware debug protection, timing normalization, and environment sanitization.
+        """
         self.logger = logging.getLogger(__name__)
 
         # Initialize all components

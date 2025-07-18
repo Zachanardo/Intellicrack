@@ -41,6 +41,7 @@ class SandboxDetector(BaseDetector):
     """
 
     def __init__(self):
+        """Initialize the sandbox detector with detection methods and signatures."""
         super().__init__()
         self.logger = logging.getLogger("IntellicrackLogger.SandboxDetector")
 

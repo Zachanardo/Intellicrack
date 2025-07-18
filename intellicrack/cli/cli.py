@@ -87,7 +87,6 @@ except ImportError as e:
 try:
     from intellicrack.ai.vulnerability_research_integration import VulnerabilityResearchAI
     from intellicrack.core.c2.c2_manager import C2Manager
-    from intellicrack.core.exploitation.lateral_movement import LateralMovementManager
     from intellicrack.core.exploitation.payload_engine import PayloadEngine as AdvancedPayloadEngine
     from intellicrack.core.exploitation.persistence_manager import PersistenceManager
     from intellicrack.core.exploitation.privilege_escalation import PrivilegeEscalationManager
@@ -1210,47 +1209,6 @@ def escalate(target_platform: str, method: str):
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
         logger.error("Privilege escalation failed: %s", e, exc_info=True)
-        click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
-
-
-@post_exploit.command()
-@click.option('--method', type=click.Choice(['auto', 'smb', 'ssh', 'wmi', 'psexec']),
-              default='auto', help='Lateral movement method')
-@click.option('--target', help='Specific target IP (optional)')
-def lateral(method: str, target: Optional[str]):
-    """Perform lateral movement to other systems"""
-    try:
-        manager = LateralMovementManager()
-
-        if target:
-            click.echo(
-                f"Attempting lateral movement to {target} using {method}...")
-            result = manager.move_to_target(target, method=method)
-        else:
-            click.echo("Discovering targets for lateral movement...")
-            result = manager.discover_targets()
-
-            if result['success']:
-                targets = result['targets']
-                click.echo(f"✓ Discovered {len(targets)} potential targets:")
-
-                for target_info in targets[:10]:  # Show first 10
-                    click.echo(
-                        f"  • {target_info['ip']} - {target_info['hostname']} ({target_info['os']})")
-
-                return
-
-        if result['success']:
-            click.echo("✓ Lateral movement successful!")
-            click.echo(f"  Target: {result['target']}")
-            click.echo(f"  Method: {result['method']}")
-        else:
-            click.echo(f"✗ Lateral movement failed: {result.get('error')}")
-            sys.exit(1)
-
-    except (OSError, ValueError, RuntimeError, AttributeError, KeyError, ImportError, TypeError, ConnectionError, TimeoutError) as e:
-        logger.error("Lateral movement failed: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 

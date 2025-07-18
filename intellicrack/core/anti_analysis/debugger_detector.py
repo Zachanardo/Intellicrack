@@ -44,6 +44,7 @@ class DebuggerDetector(BaseDetector):
     """
 
     def __init__(self):
+        """Initialize the debugger detector with platform-specific detection methods."""
         super().__init__()
         self.logger = logging.getLogger("IntellicrackLogger.DebuggerDetector")
 

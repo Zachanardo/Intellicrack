@@ -114,7 +114,7 @@ def migrate_env_files():
         # Check both root and config directory
         env_path = project_root / env_file
         config_env_path = config_dir / env_file
-        
+
         if env_path.exists():
             found_env_files.append(env_path)
         elif config_env_path.exists():

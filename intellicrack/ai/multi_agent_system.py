@@ -135,6 +135,13 @@ class BaseAgent(ABC):
     """Base class for all specialized agents."""
 
     def __init__(self, agent_id: str, role: AgentRole, llm_manager: Optional[LLMManager] = None):
+        """Initialize the base agent.
+        
+        Args:
+            agent_id: Unique identifier for the agent
+            role: Role of the agent from AgentRole enum
+            llm_manager: Optional LLM manager for AI capabilities
+        """
         self.logger = logging.getLogger(__name__ + ".BaseAgent")
         self.agent_id = agent_id
         self.role = role
@@ -161,6 +168,9 @@ class BaseAgent(ABC):
         # Communication
         self.collaboration_system: Optional['MultiAgentSystem'] = None
         self.trusted_agents: Set[str] = set()
+
+        # Learning engine
+        self.learning_engine = get_learning_engine()
 
         # Initialize capabilities
         self._initialize_capabilities()
@@ -266,7 +276,7 @@ class BaseAgent(ABC):
             self.last_activity = datetime.now()
 
             # Record learning experience
-            learning_engine.record_experience(
+            self.learning_engine.record_experience(
                 task_type=f"agent_{self.role.value}_{task.task_type}",
                 input_data=task.input_data,
                 output_data=result,
@@ -286,7 +296,7 @@ class BaseAgent(ABC):
             self.tasks_failed += 1
 
             # Record learning experience for failure
-            learning_engine.record_experience(
+            self.learning_engine.record_experience(
                 task_type=f"agent_{self.role.value}_{task.task_type}",
                 input_data=task.input_data,
                 output_data={},
@@ -917,6 +927,12 @@ class MultiAgentSystem:
     """Multi-agent collaboration system."""
 
     def __init__(self, llm_manager: Optional[LLMManager] = None):
+        """Initialize the multi-agent collaboration system.
+        
+        Args:
+            llm_manager: Optional LLM manager instance. If None, creates a new
+                        default LLMManager
+        """
         self.llm_manager = llm_manager or LLMManager()
         self.agents: Dict[str, BaseAgent] = {}
         self.message_router = MessageRouter()
@@ -1274,6 +1290,7 @@ class MessageRouter:
     """Routes messages between agents."""
 
     def __init__(self):
+        """Initialize the message router for agent communication."""
         self.agent_queues: Dict[str, Queue] = {}
         self.message_log: deque = deque(maxlen=1000)
 
@@ -1305,6 +1322,12 @@ class TaskDistributor:
     """Distributes tasks among agents."""
 
     def __init__(self, multi_agent_system: MultiAgentSystem):
+        """Initialize the task distributor.
+        
+        Args:
+            multi_agent_system: The parent multi-agent system that manages
+                              agents and coordination
+        """
         self.system = multi_agent_system
         self.task_queue: PriorityQueue = PriorityQueue()
         self.load_balancer = LoadBalancer()
@@ -1392,6 +1415,7 @@ class LoadBalancer:
     """Load balancer for agent tasks."""
 
     def __init__(self):
+        """Initialize the load balancer for distributing tasks among agents."""
         self.agent_loads: Dict[str, float] = {}
         self.load_history: deque = deque(maxlen=100)
 
@@ -1425,6 +1449,7 @@ class KnowledgeManager:
     """Manages shared knowledge between agents."""
 
     def __init__(self):
+        """Initialize the knowledge manager for sharing information between agents."""
         self.shared_knowledge: Dict[str, Dict[str, Any]] = {}
         self.knowledge_graph: Dict[str, Set[str]] = defaultdict(set)
         self.access_patterns: Dict[str, int] = defaultdict(int)

@@ -86,6 +86,7 @@ class SystemUtilitiesWorker(QThread):
     error_occurred = pyqtSignal(str)
 
     def __init__(self, operation: str, **kwargs):
+        """Initialize the system utilities worker with operation type and parameters."""
         super().__init__()
         self.operation = operation
         self.kwargs = kwargs
@@ -206,6 +207,7 @@ class SystemUtilitiesDialog(QDialog):
     """System Utilities Dialog with various system tools."""
 
     def __init__(self, parent=None):
+        """Initialize the system utilities dialog with UI components and system monitoring capabilities."""
 
         # Initialize UI attributes
         self.close_btn = None

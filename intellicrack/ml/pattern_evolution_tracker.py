@@ -29,9 +29,11 @@ License: GPL v3
 """
 
 import hashlib
+import hmac
 import json
 import logging
 import multiprocessing as mp
+import os
 import pickle
 import random
 import re
@@ -47,9 +49,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from sklearn.cluster import DBSCAN
 
-import hmac
-import os
-
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get('INTELLICRACK_PICKLE_KEY', 'default-key-change-me').encode()
 
@@ -57,10 +56,10 @@ def secure_pickle_dumps(obj):
     """Securely serialize object with integrity check."""
     # Serialize object
     data = pickle.dumps(obj)
-    
+
     # Calculate HMAC for integrity
     mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-    
+
     # Return MAC + data as bytes
     return mac + data
 
@@ -69,12 +68,12 @@ def secure_pickle_loads(data):
     # Split MAC and data
     stored_mac = data[:32]  # SHA256 produces 32 bytes
     obj_data = data[32:]
-    
+
     # Verify integrity
     expected_mac = hmac.new(PICKLE_SECURITY_KEY, obj_data, hashlib.sha256).digest()
     if not hmac.compare_digest(stored_mac, expected_mac):
         raise ValueError("Pickle data integrity check failed - possible tampering detected")
-    
+
     # Deserialize object
     return pickle.loads(obj_data)
 
@@ -116,6 +115,7 @@ class PatternGene:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
+        """Initialize pattern gene with generated ID if not provided."""
         if not self.id:
             self.id = self.generate_id()
 
@@ -194,12 +194,12 @@ class PatternGene:
 
         # Apply mutation rate - number of mutations to perform
         num_mutations = max(1, int(len(api_list) * rate))
-        
+
         for _ in range(num_mutations):
             # Only proceed if random chance based on rate allows it
             if random.random() > rate:
                 continue
-                
+
             if mutation_type == MutationType.INSERTION and api_pool:
                 insert_pos = random.randint(0, len(api_list))
                 api_list.insert(insert_pos, random.choice(api_pool))
@@ -245,12 +245,12 @@ class PatternGene:
 
         # Apply mutation rate - number of mutations to perform
         num_mutations = max(1, int(len(opcode_list) * rate))
-        
+
         for _ in range(num_mutations):
             # Only proceed if random chance based on rate allows it
             if random.random() > rate:
                 continue
-                
+
             if mutation_type == MutationType.INSERTION and opcode_pool:
                 insert_pos = random.randint(0, len(opcode_list))
                 opcode_list.insert(insert_pos, random.choice(opcode_pool))
@@ -258,7 +258,7 @@ class PatternGene:
             elif mutation_type == MutationType.DELETION and len(opcode_list) > 1:
                 del_pos = random.randint(0, len(opcode_list) - 1)
                 del opcode_list[del_pos]
-                
+
             elif mutation_type == MutationType.SUBSTITUTION and opcode_list and opcode_pool:
                 sub_pos = random.randint(0, len(opcode_list) - 1)
                 opcode_list[sub_pos] = random.choice(opcode_pool)
@@ -675,7 +675,7 @@ class PatternMatcher:
         """Match opcode sequence by analyzing binary data for instruction patterns"""
         if not pattern or not data:
             return 0.0
-            
+
         # Simple heuristic matching based on common opcode byte patterns
         # In real implementation, this would use a disassembler like Capstone
         opcode_bytes = {
@@ -694,10 +694,10 @@ class PatternMatcher:
             'ret': [0xC3, 0xC2],
             'nop': [0x90]
         }
-        
+
         matches = 0
         data_bytes = list(data)
-        
+
         for opcode in pattern:
             if opcode.lower() in opcode_bytes:
                 byte_patterns = opcode_bytes[opcode.lower()]
@@ -706,13 +706,13 @@ class PatternMatcher:
                     if byte_val in data_bytes:
                         matches += 1
                         break
-        
+
         # Return confidence as ratio of matched opcodes
         confidence = matches / len(pattern) if pattern else 0.0
-        
+
         # Add some data-based scoring - longer data might have more patterns
         data_factor = min(1.0, len(data) / 1000.0)  # Normalize by data size
-        
+
         return min(1.0, confidence * data_factor)
 
 
@@ -724,7 +724,19 @@ class PatternEvolutionTracker:
                  elite_size: int = 10,
                  mutation_rate: float = 0.1,
                  crossover_rate: float = 0.7):
-
+        """Initialize the pattern evolution tracker.
+        
+        Sets up the evolutionary machine learning system for tracking and 
+        evolving binary analysis patterns. Configures genetic algorithm
+        parameters, Q-learning agent, and pattern storage backend.
+        
+        Args:
+            db_path: Path to the pattern database.
+            population_size: Size of pattern population for evolution.
+            elite_size: Number of elite patterns to preserve.
+            mutation_rate: Rate of pattern mutations.
+            crossover_rate: Rate of pattern crossover operations.
+        """
         self.logger = logging.getLogger(__name__)
 
         # Configuration
@@ -916,47 +928,47 @@ class PatternEvolutionTracker:
         """Evaluate pattern fitness using stored metrics and pattern characteristics"""
         if not pattern or not pattern.pattern_data:
             return 0.0
-            
+
         # Base fitness from pattern complexity and type
         complexity_score = 0.0
-        
+
         if pattern.type == PatternType.BYTE_SEQUENCE:
             # Longer byte sequences are generally more specific
             if isinstance(pattern.pattern_data, bytes):
                 complexity_score = min(1.0, len(pattern.pattern_data) / 100.0)
-            
+
         elif pattern.type == PatternType.API_SEQUENCE:
             # More API calls suggest more complex behavior
             if isinstance(pattern.pattern_data, list):
                 complexity_score = min(1.0, len(pattern.pattern_data) / 20.0)
-                
+
         elif pattern.type == PatternType.STRING_PATTERN:
             # Regex complexity as a proxy for pattern sophistication
             if isinstance(pattern.pattern_data, str):
                 regex_features = ['[', ']', '*', '+', '?', '|', '(', ')']
                 feature_count = sum(pattern.pattern_data.count(f) for f in regex_features)
                 complexity_score = min(1.0, feature_count / 10.0)
-                
+
         elif pattern.type == PatternType.OPCODE_SEQUENCE:
             # Instruction sequence diversity
             if isinstance(pattern.pattern_data, list):
                 unique_opcodes = len(set(pattern.pattern_data))
                 complexity_score = min(1.0, unique_opcodes / 15.0)
-        
+
         # Factor in generation (older patterns that survived are likely better)
         generation_bonus = min(0.3, pattern.generation * 0.01)
-        
+
         # Factor in previous fitness if available
         historical_fitness = getattr(pattern, 'fitness', 0.0)
-        
+
         # Combine scores with weights
-        final_fitness = (complexity_score * 0.5 + 
-                        generation_bonus * 0.2 + 
+        final_fitness = (complexity_score * 0.5 +
+                        generation_bonus * 0.2 +
                         historical_fitness * 0.3)
-        
+
         # Add some randomness for exploration
         final_fitness += random.random() * 0.1
-        
+
         return min(1.0, final_fitness)
 
     def _tournament_selection(self, population: List[PatternGene],

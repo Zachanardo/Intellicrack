@@ -40,6 +40,7 @@ class ComprehensiveR2Integration:
     """
 
     def __init__(self):
+        """Initialize the ComprehensiveR2Integration with default values."""
         self.logger = logger
         self.ui_manager = None
         self.integrated_apps = []

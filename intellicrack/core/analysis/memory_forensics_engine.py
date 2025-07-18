@@ -174,21 +174,24 @@ class MemoryForensicsEngine:
     """
 
     def __init__(self, cache_directory: Optional[str] = None):
-        """
-        Initialize memory forensics engine
+        """Initialize the memory forensics engine with cache configuration and plugin detection."""
+        self.logger = logging.getLogger("IntellicrackLogger.MemoryForensics")
         
-        Args:
-            cache_directory: Optional cache directory for analysis results
-        """
-        self.logger = logger
-        self.cache_directory = cache_directory or tempfile.gettempdir()
-        self.analyzed_dumps: Set[str] = set()
-
-        # Initialize Volatility3 if available
-        if VOLATILITY3_AVAILABLE:
-            self._init_volatility()
+        # Set up cache directory
+        if cache_directory:
+            self.cache_directory = Path(cache_directory)
         else:
-            logger.warning("Volatility3 not available - using fallback implementation")
+            self.cache_directory = Path("./cache/memory_forensics")
+        
+        self.cache_directory.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize Volatility if available
+        self.volatility_available = VOLATILITY_AVAILABLE
+        if not self.volatility_available:
+            self.logger.warning("Volatility not available - memory analysis will be limited")
+        
+        # Results storage
+        self.analysis_results = {}
 
     def _init_volatility(self):
         """Initialize Volatility3 framework"""
@@ -468,9 +471,9 @@ class MemoryForensicsEngine:
                     unsatisfied_requirements.append(f"Required layer '{plugin_requirements.name}' not available")
 
                 # Check if the plugin's requirements can be satisfied
-                automagics_list = [automagic() for automagic in automagics.available(self.vol_context)]
-                for automagic in automagics_list:
-                    automagic.run(self.vol_context, self.vol_config)
+                automagics_list = [automagic() for automagic in automagic.available(self.vol_context)]
+                for automagic_instance in automagics_list:
+                    automagic_instance.run(self.vol_context, self.vol_config)
 
                 # Verify translation layer requirement is satisfied again after automagics
                 if not self.vol_context.layers.get(plugin_requirements.name):
@@ -944,16 +947,383 @@ class MemoryForensicsEngine:
                     "analysis_status": "completed"
                 }
             else:
-                # Live process memory analysis (not implemented in this version)
-                return {
-                    "process_id": process_id,
-                    "error": "Live process memory analysis not implemented",
-                    "suggestion": "Use memory dump analysis instead"
-                }
+                # Live process memory analysis implementation
+                import platform
+
+                if platform.system() == "Windows":
+                    return self._analyze_live_process_windows(process_id)
+                elif platform.system() == "Linux":
+                    return self._analyze_live_process_linux(process_id)
+                else:
+                    return {
+                        "process_id": process_id,
+                        "error": f"Live process analysis not supported on {platform.system()}",
+                        "suggestion": "Use memory dump analysis instead"
+                    }
 
         except Exception as e:
             logger.error(f"Process memory analysis failed: {e}")
             return {"error": str(e)}
+
+    def _analyze_live_process_windows(self, process_id: int) -> Dict[str, Any]:
+        """Analyze live process memory on Windows."""
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            import win32api
+            import win32process
+            import win32security
+
+            # Enable debug privilege
+            priv_flags = win32security.TOKEN_ADJUST_PRIVILEGES | win32security.TOKEN_QUERY
+            h_token = win32security.OpenProcessToken(win32api.GetCurrentProcess(), priv_flags)
+            privilege_id = win32security.LookupPrivilegeValue(None, win32security.SE_DEBUG_NAME)
+            win32security.AdjustTokenPrivileges(h_token, 0, [(privilege_id, win32security.SE_PRIVILEGE_ENABLED)])
+
+            # Open target process
+            PROCESS_ALL_ACCESS = 0x1F0FFF
+            h_process = win32api.OpenProcess(PROCESS_ALL_ACCESS, False, process_id)
+
+            if not h_process:
+                return {"error": f"Failed to open process {process_id}"}
+
+            # Get process information
+            modules = win32process.EnumProcessModules(h_process)
+            module_info = []
+
+            for module in modules:
+                try:
+                    module_name = win32process.GetModuleFileNameEx(h_process, module)
+                    module_info.append({
+                        "base": hex(module),
+                        "name": module_name,
+                        "path": module_name
+                    })
+                except:
+                    continue
+
+            # Memory regions analysis
+            memory_regions = []
+            address = 0
+
+            # Define MEMORY_BASIC_INFORMATION structure
+            class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+                _fields_ = [
+                    ("BaseAddress", ctypes.c_void_p),
+                    ("AllocationBase", ctypes.c_void_p),
+                    ("AllocationProtect", wintypes.DWORD),
+                    ("RegionSize", ctypes.c_size_t),
+                    ("State", wintypes.DWORD),
+                    ("Protect", wintypes.DWORD),
+                    ("Type", wintypes.DWORD)
+                ]
+
+            mbi = MEMORY_BASIC_INFORMATION()
+            kernel32 = ctypes.windll.kernel32
+
+            while address < 0x7FFFFFFF0000:  # User space limit on x64
+                result = kernel32.VirtualQueryEx(
+                    h_process,
+                    ctypes.c_void_p(address),
+                    ctypes.byref(mbi),
+                    ctypes.sizeof(mbi)
+                )
+
+                if result == 0:
+                    break
+
+                if mbi.State == 0x1000:  # MEM_COMMIT
+                    # Read memory region
+                    buffer = ctypes.create_string_buffer(mbi.RegionSize)
+                    bytes_read = ctypes.c_size_t()
+
+                    if kernel32.ReadProcessMemory(
+                        h_process,
+                        ctypes.c_void_p(address),
+                        buffer,
+                        mbi.RegionSize,
+                        ctypes.byref(bytes_read)
+                    ):
+                        # Analyze memory content
+                        memory_data = buffer.raw[:bytes_read.value]
+                        strings = self.extract_strings(memory_data)
+
+                        memory_regions.append({
+                            "address": hex(address),
+                            "size": mbi.RegionSize,
+                            "protection": self._get_protection_string(mbi.Protect),
+                            "type": self._get_memory_type(mbi.Type),
+                            "strings_found": len(strings),
+                            "interesting_strings": [s for s in strings if any(
+                                keyword in s.lower() for keyword in
+                                ['password', 'token', 'key', 'secret', 'api', 'credential']
+                            )][:10]  # Limit to 10 interesting strings
+                        })
+
+                address += mbi.RegionSize
+
+            # Get handles
+            handles = []
+            try:
+                import psutil
+                proc = psutil.Process(process_id)
+
+                # Get process handles information
+                try:
+                    open_files = proc.open_files()
+                    for file_obj in open_files:
+                        handles.append({
+                            "type": "file",
+                            "path": file_obj.path,
+                            "fd": getattr(file_obj, 'fd', 'N/A')
+                        })
+                except (psutil.AccessDenied, AttributeError):
+                    pass
+
+                # Get memory map handles
+                try:
+                    memory_maps = proc.memory_maps()
+                    for mmap in memory_maps:
+                        if hasattr(mmap, 'path') and mmap.path:
+                            handles.append({
+                                "type": "memory_map",
+                                "path": mmap.path,
+                                "size": getattr(mmap, 'rss', 0)
+                            })
+                except (psutil.AccessDenied, AttributeError):
+                    pass
+
+            except Exception:
+                # Fallback to empty handles list
+                handles = []
+
+            # Network connections
+            connections = []
+            try:
+                import psutil
+                proc = psutil.Process(process_id)
+                for conn in proc.connections():
+                    connections.append({
+                        "local": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A",
+                        "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
+                        "status": conn.status
+                    })
+            except:
+                pass
+
+            # Close handle
+            win32api.CloseHandle(h_process)
+
+            return {
+                "process_id": process_id,
+                "status": "success",
+                "analysis_type": "live",
+                "modules": module_info,
+                "memory_regions": memory_regions,
+                "handles": handles,
+                "connections": connections,
+                "total_regions": len(memory_regions),
+                "total_handles": len(handles),
+                "suspicious_strings": sum(len(r.get("interesting_strings", [])) for r in memory_regions)
+            }
+
+        except Exception as e:
+            return {
+                "process_id": process_id,
+                "error": f"Windows live analysis failed: {str(e)}",
+                "suggestion": "Ensure running with administrator privileges"
+            }
+
+    def _analyze_live_process_linux(self, process_id: int) -> Dict[str, Any]:
+        """Analyze live process memory on Linux."""
+        try:
+            import os
+            import re
+
+            # Check if we have permission
+            if os.geteuid() != 0:
+                return {
+                    "process_id": process_id,
+                    "error": "Root privileges required for live process analysis",
+                    "suggestion": "Run with sudo or as root user"
+                }
+
+            # Read process maps
+            maps_path = f"/proc/{process_id}/maps"
+            mem_path = f"/proc/{process_id}/mem"
+
+            if not os.path.exists(maps_path):
+                return {"error": f"Process {process_id} not found"}
+
+            memory_regions = []
+            modules = []
+
+            with open(maps_path, 'r') as f:
+                for line in f:
+                    # Parse memory mapping
+                    match = re.match(r'([0-9a-f]+)-([0-9a-f]+) ([-rwxp]{4}) ([0-9a-f]+) ([\d:]+) (\d+)\s*(.*)?', line)
+                    if match:
+                        start = int(match.group(1), 16)
+                        end = int(match.group(2), 16)
+                        perms = match.group(3)
+                        offset = match.group(4)
+                        dev = match.group(5)
+                        inode = match.group(6)
+                        pathname = match.group(7) if match.group(7) else ""
+
+                        # Skip non-readable regions
+                        if 'r' not in perms:
+                            continue
+
+                        region_info = {
+                            "address": hex(start),
+                            "end": hex(end),
+                            "size": end - start,
+                            "permissions": perms,
+                            "offset": offset,
+                            "device": dev,
+                            "inode": inode,
+                            "pathname": pathname
+                        }
+
+                        # Read memory content
+                        try:
+                            with open(mem_path, 'rb') as mem_file:
+                                mem_file.seek(start)
+                                memory_data = mem_file.read(min(end - start, 0x10000))  # Read up to 64KB
+
+                                # Extract strings
+                                strings = self.extract_strings(memory_data)
+                                region_info["strings_found"] = len(strings)
+                                region_info["interesting_strings"] = [s for s in strings if any(
+                                    keyword in s.lower() for keyword in
+                                    ['password', 'token', 'key', 'secret', 'api', 'credential', 'ssh', 'private']
+                                )][:10]
+
+                                # Look for specific patterns
+                                if pathname and (".so" in pathname or "lib" in pathname):
+                                    modules.append({
+                                        "base": hex(start),
+                                        "name": os.path.basename(pathname),
+                                        "path": pathname,
+                                        "size": end - start
+                                    })
+                        except:
+                            region_info["read_error"] = True
+
+                        memory_regions.append(region_info)
+
+            # Get process info
+            status_info = {}
+            try:
+                with open(f"/proc/{process_id}/status", 'r') as f:
+                    for line in f:
+                        if ':' in line:
+                            key, value = line.split(':', 1)
+                            status_info[key.strip()] = value.strip()
+            except:
+                pass
+
+            # Get network connections
+            connections = []
+            try:
+                # Parse /proc/net/tcp and /proc/net/tcp6
+                for proto, path in [("tcp", "/proc/net/tcp"), ("tcp6", "/proc/net/tcp6")]:
+                    if os.path.exists(path):
+                        with open(path, 'r') as f:
+                            lines = f.readlines()[1:]  # Skip header
+                            for line in lines:
+                                fields = line.split()
+                                if len(fields) >= 10:
+                                    inode = fields[9]
+                                    # Check if this inode belongs to our process
+                                    fd_path = f"/proc/{process_id}/fd"
+                                    if os.path.exists(fd_path):
+                                        for fd in os.listdir(fd_path):
+                                            try:
+                                                link = os.readlink(f"{fd_path}/{fd}")
+                                                if f"socket:[{inode}]" in link:
+                                                    local_addr = self._parse_linux_addr(fields[1])
+                                                    remote_addr = self._parse_linux_addr(fields[2])
+                                                    connections.append({
+                                                        "protocol": proto,
+                                                        "local": local_addr,
+                                                        "remote": remote_addr,
+                                                        "state": fields[3]
+                                                    })
+                                            except:
+                                                continue
+            except:
+                pass
+
+            # Look for injected code
+            injected_regions = []
+            for region in memory_regions:
+                if not region.get("pathname") and "x" in region.get("permissions", ""):
+                    # Executable region without file backing - possibly injected
+                    injected_regions.append(region["address"])
+
+            return {
+                "process_id": process_id,
+                "status": "success",
+                "analysis_type": "live",
+                "process_name": status_info.get("Name", "unknown"),
+                "state": status_info.get("State", "unknown"),
+                "modules": modules,
+                "memory_regions": memory_regions,
+                "connections": connections,
+                "total_regions": len(memory_regions),
+                "suspicious_strings": sum(len(r.get("interesting_strings", [])) for r in memory_regions),
+                "possible_injections": injected_regions
+            }
+
+        except Exception as e:
+            return {
+                "process_id": process_id,
+                "error": f"Linux live analysis failed: {str(e)}",
+                "suggestion": "Ensure running with root privileges"
+            }
+
+    def _get_protection_string(self, protect: int) -> str:
+        """Convert Windows protection flags to string."""
+        protections = {
+            0x10: "PAGE_EXECUTE",
+            0x20: "PAGE_EXECUTE_READ",
+            0x40: "PAGE_EXECUTE_READWRITE",
+            0x80: "PAGE_EXECUTE_WRITECOPY",
+            0x01: "PAGE_NOACCESS",
+            0x02: "PAGE_READONLY",
+            0x04: "PAGE_READWRITE",
+            0x08: "PAGE_WRITECOPY"
+        }
+        return protections.get(protect & 0xFF, f"0x{protect:X}")
+
+    def _get_memory_type(self, mem_type: int) -> str:
+        """Convert Windows memory type to string."""
+        types = {
+            0x1000000: "MEM_IMAGE",
+            0x40000: "MEM_MAPPED",
+            0x20000: "MEM_PRIVATE"
+        }
+        return types.get(mem_type, f"0x{mem_type:X}")
+
+    def _parse_linux_addr(self, addr_str: str) -> str:
+        """Parse Linux /proc/net address format."""
+        try:
+            host, port = addr_str.split(':')
+            # Convert from hex and reverse byte order
+            host_bytes = bytes.fromhex(host)
+            if len(host_bytes) == 4:
+                # IPv4
+                host_ip = '.'.join(str(b) for b in reversed(host_bytes))
+            else:
+                # IPv6
+                host_ip = ':'.join(host[i:i+4] for i in range(0, len(host), 4))
+            port_num = int(port, 16)
+            return f"{host_ip}:{port_num}"
+        except:
+            return addr_str
 
     def extract_strings(self, memory_data: bytes, min_length: int = 4) -> List[str]:
         """

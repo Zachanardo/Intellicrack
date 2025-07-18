@@ -131,6 +131,7 @@ class BypassStrategy:
         return all(dep in completed_protections for dep in self.dependencies)
 
     def __repr__(self):
+        """Return string representation of the bypass strategy."""
         return f"BypassStrategy({self.protection_type.value}, scripts={self.scripts})"
 
 

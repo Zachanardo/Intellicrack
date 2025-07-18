@@ -525,6 +525,7 @@ class {script_class_name}(GhidraScript):
     """
 
     def __init__(self):
+        """Initialize Ghidra script instance with analysis results container."""
         super().__init__()
         self.analysis_results = {{
             "target": "{target_binary}",
@@ -896,6 +897,11 @@ class ScriptTemplateEngine:
     """Engine for rendering script templates with dynamic content."""
 
     def __init__(self):
+        """Initialize the script template engine.
+        
+        Sets up template managers for Frida and Ghidra script
+        generation with dynamic content rendering capabilities.
+        """
         self.frida_templates = FridaTemplates()
         self.ghidra_templates = GhidraTemplates()
 

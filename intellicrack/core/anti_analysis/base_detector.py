@@ -36,6 +36,7 @@ class BaseDetector(ABC):
     """
 
     def __init__(self):
+        """Initialize the base detector with logging and detection methods registry."""
         self.logger = logging.getLogger("IntellicrackLogger.AntiAnalysis")
         self.detection_methods = {}
 

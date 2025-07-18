@@ -19,8 +19,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 # Import all functions from the templates network_api_common module
 from .templates.network_api_common import (
-    analyze_network_apis, process_network_api_results, get_scapy_layers,
-    detect_network_apis, get_network_api_categories, summarize_network_capabilities
+    analyze_network_apis,
+    detect_network_apis,
+    get_network_api_categories,
+    get_scapy_layers,
+    process_network_api_results,
+    summarize_network_capabilities,
 )
 
 __all__ = ['analyze_network_apis', 'process_network_api_results', 'get_scapy_layers',

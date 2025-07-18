@@ -36,18 +36,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class ProgressCallback:
-    """Base class for progress callbacks."""
-
-    def on_progress(self, progress: LoadingProgress):
-        """Called when progress is updated."""
-        pass
-
-    def on_completed(self, model_id: str, success: bool, error: Optional[str] = None):
-        """Called when loading is completed."""
-        pass
-
-
 class ConsoleProgressCallback(ProgressCallback):
     """Console-based progress callback for debugging."""
 
@@ -66,6 +54,11 @@ class QueuedProgressCallback(ProgressCallback):
     """Queue-based progress callback for GUI integration."""
 
     def __init__(self):
+        """Initialize the queue-based progress callback.
+        
+        Sets up queues for progress updates and completion notifications
+        for thread-safe communication with GUI components.
+        """
         self.progress_queue = queue.Queue()
         self.completion_queue = queue.Queue()
         self.logger = logging.getLogger(__name__ + ".QueuedProgressCallback")
@@ -108,6 +101,15 @@ class LoadingTask:
                  config: 'LLMConfig',
                  priority: int = 0,
                  callback: Optional[ProgressCallback] = None):
+        """Initialize a model loading task.
+        
+        Args:
+            model_id: Unique identifier for the model
+            backend_class: Backend class to instantiate for this model
+            config: Configuration for the LLM backend
+            priority: Loading priority (higher numbers loaded first)
+            callback: Optional progress callback for status updates
+        """
         self.model_id = model_id
         self.backend_class = backend_class
         self.config = config
@@ -176,6 +178,11 @@ class BackgroundModelLoader:
     """
 
     def __init__(self, max_concurrent_loads: int = 2):
+        """Initialize the background model loader.
+        
+        Args:
+            max_concurrent_loads: Maximum number of models to load simultaneously
+        """
         self.logger = logging.getLogger(__name__ + ".BackgroundModelLoader")
         self.max_concurrent_loads = max_concurrent_loads
         self.pending_tasks: List[LoadingTask] = []
@@ -402,6 +409,12 @@ class IntegratedBackgroundLoader:
     """
 
     def __init__(self, llm_manager, max_concurrent_loads: int = 2):
+        """Initialize the integrated background loader.
+        
+        Args:
+            llm_manager: LLM manager instance for model registration
+            max_concurrent_loads: Maximum number of concurrent model loads
+        """
         self.llm_manager = llm_manager
         self.background_loader = BackgroundModelLoader(max_concurrent_loads)
         self.progress_callbacks: List[ProgressCallback] = []
@@ -426,6 +439,7 @@ class IntegratedBackgroundLoader:
         # Create a callback that notifies all registered callbacks
         class MultiCallback(ProgressCallback):
             def __init__(self, callbacks):
+                """Initialize multi-callback handler with list of callbacks."""
                 self.callbacks = callbacks
 
             def on_progress(self, progress):

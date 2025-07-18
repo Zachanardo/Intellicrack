@@ -45,6 +45,7 @@ class ExecutionResult:
     timestamp: datetime = None
 
     def __post_init__(self):
+        """Initialize timestamp if not provided."""
         if self.timestamp is None:
             self.timestamp = datetime.now()
 
@@ -88,6 +89,12 @@ class AutonomousAgent:
     """
 
     def __init__(self, orchestrator=None, cli_interface=None):
+        """Initialize the autonomous agent with orchestrator and CLI interface.
+        
+        Args:
+            orchestrator: The orchestrator instance for managing AI operations
+            cli_interface: The command-line interface for user interaction
+        """
         self.orchestrator = orchestrator
         self.cli_interface = cli_interface
         self.script_generator = AIScriptGenerator(orchestrator)

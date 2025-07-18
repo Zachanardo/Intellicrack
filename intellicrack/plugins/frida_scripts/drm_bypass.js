@@ -121,12 +121,21 @@
     spoofedLicenses: 0,
     
     onAttach: function(pid) {
-        console.log("[DRM Bypass] Attaching to process: " + pid);
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "attaching_to_process",
+            pid: pid
+        });
         this.processId = pid;
     },
     
     run: function() {
-        console.log("[DRM Bypass] Installing comprehensive DRM bypass hooks...");
+        send({
+            type: "status",
+            target: "drm_bypass",
+            action: "installing_drm_bypass_hooks"
+        });
         
         // Initialize DRM bypass components
         this.hookHdcpProtection();
@@ -145,7 +154,11 @@
     
     // === HDCP PROTECTION BYPASS ===
     hookHdcpProtection: function() {
-        console.log("[DRM Bypass] Installing HDCP protection bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_hdcp_bypass"
+        });
         
         if (!this.config.hdcp.enabled) return;
         
@@ -163,7 +176,11 @@
     },
     
     hookHdcpAuthentication: function() {
-        console.log("[DRM Bypass] Installing HDCP authentication hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_hdcp_auth_hooks"
+        });
         
         // Hook HDCP authentication APIs
         var hdcpFunctions = [
@@ -195,7 +212,12 @@
                             // Make HDCP operations always succeed
                             retval.replace(0); // S_OK / SUCCESS
                             this.parent.parent.bypassedChecks++;
-                            console.log("[DRM Bypass] HDCP function bypassed: " + functionName);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "hdcp_function_bypassed",
+                                function_name: functionName
+                            });
                         }
                     }
                 });
@@ -208,7 +230,11 @@
     },
     
     hookHdcpCapabilities: function() {
-        console.log("[DRM Bypass] Installing HDCP capability hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_hdcp_capability_hooks"
+        });
         
         // Hook display capability queries
         var getDisplayConfig = Module.findExportByName("user32.dll", "GetDisplayConfigBufferSizes");
@@ -216,7 +242,12 @@
             Interceptor.attach(getDisplayConfig, {
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // ERROR_SUCCESS
-                        console.log("[DRM Bypass] Display configuration query - potential HDCP check");
+                        send({
+                            type: "info",
+                            target: "drm_bypass",
+                            action: "display_config_query",
+                            description: "Potential HDCP check detected"
+                        });
                     }
                 }
             });
@@ -236,7 +267,12 @@
                 Interceptor.attach(dxgiFunc, {
                     onLeave: function(retval) {
                         if (retval.toInt32() === 0) { // S_OK
-                            console.log("[DRM Bypass] DXGI factory created - monitoring for HDCP queries");
+                            send({
+                                type: "info",
+                                target: "drm_bypass",
+                                action: "dxgi_factory_created",
+                                description: "Monitoring for HDCP queries"
+                            });
                         }
                     }
                 });
@@ -247,7 +283,11 @@
     },
     
     hookHdcpEncryption: function() {
-        console.log("[DRM Bypass] Installing HDCP encryption bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_hdcp_encryption_bypass"
+        });
         
         // Hook cryptographic functions used by HDCP
         var cryptFunctions = [
@@ -267,7 +307,11 @@
                         if (this.isHdcpCrypto && retval.toInt32() !== 0) {
                             var config = this.parent.parent.config;
                             if (config.hdcp.forceEncryptionBypass) {
-                                console.log("[DRM Bypass] HDCP cryptographic operation bypassed");
+                                send({
+                                    type: "bypass",
+                                    target: "drm_bypass",
+                                    action: "hdcp_crypto_bypassed"
+                                });
                                 this.parent.parent.bypassedChecks++;
                             }
                         }
@@ -286,7 +330,11 @@
     },
     
     hookHdcpRevocation: function() {
-        console.log("[DRM Bypass] Installing HDCP revocation bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_hdcp_revocation_bypass"
+        });
         
         // Hook network requests to HDCP revocation servers
         var winHttpSendRequest = Module.findExportByName("winhttp.dll", "WinHttpSendRequest");
@@ -297,7 +345,11 @@
                     if (this.isHdcpRevocationRequest(requestDetails)) {
                         var config = this.parent.parent.config;
                         if (config.hdcp.bypassRevocationList) {
-                            console.log("[DRM Bypass] HDCP revocation check blocked");
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "hdcp_revocation_blocked"
+                            });
                             this.blockRequest = true;
                         }
                     }
@@ -337,7 +389,11 @@
     
     // === PLAYREADY DRM BYPASS ===
     hookPlayReadyDRM: function() {
-        console.log("[DRM Bypass] Installing PlayReady DRM bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_playready_bypass"
+        });
         
         if (!this.config.playready.enabled) return;
         
@@ -355,7 +411,11 @@
     },
     
     hookPlayReadyInitialization: function() {
-        console.log("[DRM Bypass] Installing PlayReady initialization hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_playready_init_hooks"
+        });
         
         // Hook PlayReady initialization functions
         var playreadyFunctions = [
@@ -385,7 +445,12 @@
                         // Make PlayReady operations succeed
                         if (retval.toInt32() !== 0) { // DRM_SUCCESS = 0
                             retval.replace(0);
-                            console.log("[DRM Bypass] PlayReady function bypassed: " + functionName);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "playready_function_bypassed",
+                                function_name: functionName
+                            });
                             this.parent.parent.bypassedChecks++;
                         }
                     }
@@ -399,7 +464,11 @@
     },
     
     hookPlayReadyLicenseAcquisition: function() {
-        console.log("[DRM Bypass] Installing PlayReady license acquisition hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_playready_license_hooks"
+        });
         
         // Hook license request functions
         var licenseFunctions = [
@@ -427,7 +496,11 @@
                     onEnter: function(args) {
                         var config = this.parent.parent.config;
                         if (config.playready.bypassLicenseAcquisition) {
-                            console.log("[DRM Bypass] PlayReady license acquisition intercepted");
+                            send({
+                                type: "info",
+                                target: "drm_bypass",
+                                action: "playready_license_intercepted"
+                            });
                             this.spoofLicense = true;
                         }
                     },
@@ -437,7 +510,11 @@
                             // Provide spoofed license
                             retval.replace(0); // DRM_SUCCESS
                             this.parent.parent.spoofedLicenses++;
-                            console.log("[DRM Bypass] PlayReady license spoofed");
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "playready_license_spoofed"
+                            });
                         }
                     }
                 });
@@ -450,7 +527,11 @@
     },
     
     hookPlayReadyDecryption: function() {
-        console.log("[DRM Bypass] Installing PlayReady decryption hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_playready_decryption_hooks"
+        });
         
         // Hook content decryption functions
         var decryptFunctions = [
@@ -484,11 +565,19 @@
                     onLeave: function(retval) {
                         var config = this.parent.parent.config;
                         if (config.decryption.enabled && retval.toInt32() === 0) {
-                            console.log("[DRM Bypass] PlayReady content decrypted successfully");
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "playready_content_decrypted"
+                            });
                             
                             if (config.decryption.interceptEncryptedContent) {
                                 // Log or save decrypted content (for analysis)
-                                console.log("[DRM Bypass] Decrypted content intercepted");
+                                send({
+                                    type: "info",
+                                    target: "drm_bypass",
+                                    action: "decrypted_content_intercepted"
+                                });
                             }
                         }
                     }
@@ -502,7 +591,11 @@
     },
     
     hookPlayReadySecurityLevel: function() {
-        console.log("[DRM Bypass] Installing PlayReady security level hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_playready_security_hooks"
+        });
         
         // Hook security level validation functions
         var securityFunctions = [
@@ -534,13 +627,21 @@
                             // Spoof maximum security level
                             if (retval.toInt32() !== config.playready.spoofSecurityLevel) {
                                 retval.replace(config.playready.spoofSecurityLevel);
-                                console.log("[DRM Bypass] PlayReady security level spoofed to: " + 
-                                          config.playready.spoofSecurityLevel);
+                                send({
+                                    type: "bypass",
+                                    target: "drm_bypass",
+                                    action: "playready_security_level_spoofed",
+                                    security_level: config.playready.spoofSecurityLevel
+                                });
                             }
                         } else if (functionName.includes("ValidateSecurityLevel")) {
                             // Make validation always succeed
                             retval.replace(0); // DRM_SUCCESS
-                            console.log("[DRM Bypass] PlayReady security level validation bypassed");
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "playready_security_validation_bypassed"
+                            });
                         }
                         
                         this.parent.parent.bypassedChecks++;
@@ -556,7 +657,11 @@
     
     // === WIDEVINE DRM BYPASS ===
     hookWidevineDRM: function() {
-        console.log("[DRM Bypass] Installing Widevine DRM bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_widevine_drm_bypass"
+        });
         
         if (!this.config.widevine.enabled) return;
         
@@ -574,7 +679,11 @@
     },
     
     hookWidevineInitialization: function() {
-        console.log("[DRM Bypass] Installing Widevine initialization hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_widevine_initialization_hooks"
+        });
         
         // Hook Widevine CDM functions
         var widevineFunctions = [
@@ -610,7 +719,12 @@
                         var successCodes = [0, 1]; // Various success codes
                         if (!successCodes.includes(retval.toInt32())) {
                             retval.replace(0);
-                            console.log("[DRM Bypass] Widevine function bypassed: " + functionName);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "widevine_function_bypassed",
+                                function_name: functionName
+                            });
                             this.parent.parent.bypassedChecks++;
                         }
                     }
@@ -624,7 +738,11 @@
     },
     
     hookWidevineProvisioning: function() {
-        console.log("[DRM Bypass] Installing Widevine provisioning hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_widevine_provisioning_hooks"
+        });
         
         // Hook provisioning-related functions
         var provisioningFunctions = [
@@ -666,7 +784,12 @@
                                 retval.replace(0); // SUCCESS
                             }
                             
-                            console.log("[DRM Bypass] Widevine provisioning bypassed: " + functionName);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "widevine_provisioning_bypassed",
+                                function_name: functionName
+                            });
                             this.parent.parent.bypassedChecks++;
                         }
                     }
@@ -680,7 +803,11 @@
     },
     
     hookWidevineLicenseRequests: function() {
-        console.log("[DRM Bypass] Installing Widevine license request hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_widevine_license_request_hooks"
+        });
         
         // Hook license request functions
         var licenseFunctions = [
@@ -708,7 +835,11 @@
                     onEnter: function(args) {
                         var config = this.parent.parent.config;
                         if (config.widevine.bypassLicenseRequest) {
-                            console.log("[DRM Bypass] Widevine license request intercepted");
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "widevine_license_request_intercepted"
+                            });
                             this.spoofWidevineLicense = true;
                         }
                     },
@@ -717,7 +848,11 @@
                         if (this.spoofWidevineLicense) {
                             retval.replace(0); // SUCCESS
                             this.parent.parent.spoofedLicenses++;
-                            console.log("[DRM Bypass] Widevine license spoofed");
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "widevine_license_spoofed"
+                            });
                         }
                     }
                 });
@@ -730,7 +865,11 @@
     },
     
     hookWidevineDecryption: function() {
-        console.log("[DRM Bypass] Installing Widevine decryption hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_widevine_decryption_hooks"
+        });
         
         // Hook Widevine decryption functions
         var decryptFunctions = [
@@ -768,10 +907,18 @@
                     onLeave: function(retval) {
                         var config = this.parent.parent.config;
                         if (config.decryption.enabled && retval.toInt32() === 0) {
-                            console.log("[DRM Bypass] Widevine content decrypted successfully");
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "widevine_content_decrypted_successfully"
+                            });
                             
                             if (config.decryption.interceptEncryptedContent) {
-                                console.log("[DRM Bypass] Widevine decrypted content intercepted");
+                                send({
+                                    type: "bypass",
+                                    target: "drm_bypass",
+                                    action: "widevine_decrypted_content_intercepted"
+                                });
                             }
                         }
                     }
@@ -786,7 +933,11 @@
     
     // === STREAMING DRM BYPASS ===
     hookStreamingDRM: function() {
-        console.log("[DRM Bypass] Installing streaming DRM bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_streaming_drm_bypass"
+        });
         
         if (!this.config.streaming.enabled) return;
         
@@ -804,7 +955,11 @@
     },
     
     hookTimeBasedProtection: function() {
-        console.log("[DRM Bypass] Installing time-based protection bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_time_based_protection_bypass"
+        });
         
         // Hook time-related functions
         var timeFunctions = [
@@ -826,7 +981,12 @@
                     var config = this.parent.parent.config;
                     if (config.streaming.bypassTimeBasedProtection) {
                         // Optionally manipulate time values for bypass
-                        console.log("[DRM Bypass] Time function intercepted: " + functionName);
+                        send({
+                            type: "bypass",
+                            target: "drm_bypass",
+                            action: "time_function_intercepted",
+                            function_name: functionName
+                        });
                     }
                 }
             });
@@ -836,7 +996,11 @@
     },
     
     hookGeoLocationBypass: function() {
-        console.log("[DRM Bypass] Installing geo-location bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_geo_location_bypass"
+        });
         
         // Hook geo-location APIs
         var geoFunctions = [
@@ -854,7 +1018,11 @@
                             // Spoof to US location (typically unrestricted)
                             if (functionName === "GetUserGeoID") {
                                 retval.replace(244); // US geo ID
-                                console.log("[DRM Bypass] Geo-location spoofed to US");
+                                send({
+                                    type: "bypass",
+                                    target: "drm_bypass",
+                                    action: "geo_location_spoofed_to_us"
+                                });
                             }
                         }
                     }
@@ -866,7 +1034,11 @@
     },
     
     hookDomainRestrictions: function() {
-        console.log("[DRM Bypass] Installing domain restriction bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_domain_restriction_bypass"
+        });
         
         // Hook HTTP requests to check for domain restrictions
         var winHttpSendRequest = Module.findExportByName("winhttp.dll", "WinHttpSendRequest");
@@ -878,7 +1050,11 @@
                         var config = this.parent.parent.config;
                         if (config.streaming.bypassDomainRestrictions) {
                             this.spoofHeaders = true;
-                            console.log("[DRM Bypass] Domain-restricted request detected");
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "domain_restricted_request_detected"
+                            });
                         }
                     }
                 },
@@ -907,7 +1083,11 @@
     },
     
     hookTelemetryBlocking: function() {
-        console.log("[DRM Bypass] Installing telemetry blocking...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_telemetry_blocking"
+        });
         
         // Hook telemetry/analytics requests
         var httpFunctions = [
@@ -939,7 +1119,11 @@
                         var requestDetails = this.analyzeTelemetryRequest(args);
                         if (requestDetails.isTelemetry) {
                             this.blockTelemetryRequest = true;
-                            console.log("[DRM Bypass] Telemetry request blocked");
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "telemetry_request_blocked"
+                            });
                         }
                     }
                 },
@@ -971,7 +1155,11 @@
     
     // === HARDWARE DRM BYPASS ===
     hookHardwareDRM: function() {
-        console.log("[DRM Bypass] Installing hardware DRM bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_hardware_drm_bypass"
+        });
         
         if (!this.config.hardware.enabled) return;
         
@@ -986,7 +1174,11 @@
     },
     
     hookTpmDrm: function() {
-        console.log("[DRM Bypass] Installing TPM DRM bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_tpm_drm_bypass"
+        });
         
         // Hook TPM functions
         var tpmFunctions = [
@@ -1004,7 +1196,12 @@
                         if (config.hardware.spoofTpmCredentials) {
                             // Make TPM operations succeed
                             retval.replace(0); // TBS_SUCCESS
-                            console.log("[DRM Bypass] TPM DRM operation bypassed: " + funcName);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "tpm_drm_operation_bypassed",
+                                function_name: funcName
+                            });
                             this.parent.parent.bypassedChecks++;
                         }
                     }
@@ -1016,7 +1213,11 @@
     },
     
     hookTrustedExecutionEnvironment: function() {
-        console.log("[DRM Bypass] Installing TEE bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_tee_bypass"
+        });
         
         // Hook TEE-related functions
         var teeFunctions = [
@@ -1036,7 +1237,12 @@
                             var config = this.parent.parent.config;
                             if (config.hardware.bypassTrustedExecutionEnvironment) {
                                 retval.replace(0); // SUCCESS
-                                console.log("[DRM Bypass] TEE operation bypassed: " + funcName);
+                                send({
+                                    type: "bypass",
+                                    target: "drm_bypass",
+                                    action: "tee_operation_bypassed",
+                                    function_name: funcName
+                                });
                                 this.parent.parent.bypassedChecks++;
                             }
                         }
@@ -1049,7 +1255,11 @@
     },
     
     hookHardwareSecurityFeatures: function() {
-        console.log("[DRM Bypass] Installing hardware security feature bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_hardware_security_feature_bypass"
+        });
         
         // Hook CPU security features
         var isProcessorFeaturePresent = Module.findExportByName("kernel32.dll", "IsProcessorFeaturePresent");
@@ -1072,7 +1282,12 @@
                         
                         if (securityFeatures.includes(this.feature)) {
                             retval.replace(1); // TRUE - feature present
-                            console.log("[DRM Bypass] CPU security feature spoofed: " + this.feature);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "cpu_security_feature_spoofed",
+                                feature: this.feature
+                            });
                         }
                     }
                 }
@@ -1084,7 +1299,11 @@
     
     // === EME (ENCRYPTED MEDIA EXTENSIONS) BYPASS ===
     hookEMEAPIs: function() {
-        console.log("[DRM Bypass] Installing EME API bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_eme_api_bypass"
+        });
         
         if (!this.config.eme.enabled) return;
         
@@ -1099,7 +1318,11 @@
     },
     
     hookMediaKeysCreation: function() {
-        console.log("[DRM Bypass] Installing MediaKeys creation hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_mediakeys_creation_hooks"
+        });
         
         // Hook browser EME functions (if running in browser context)
         var emeFunctions = [
@@ -1139,12 +1362,21 @@
                         if (functionName === "RequestMediaKeySystemAccess") {
                             if (config.eme.spoofMediaKeySystemAccess) {
                                 // Always grant access
-                                console.log("[DRM Bypass] MediaKeySystemAccess granted");
+                                send({
+                                    type: "bypass",
+                                    target: "drm_bypass",
+                                    action: "mediakey_system_access_granted"
+                                });
                                 this.parent.parent.bypassedChecks++;
                             }
                         } else {
                             // Make other EME operations succeed
-                            console.log("[DRM Bypass] EME function bypassed: " + functionName);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "eme_function_bypassed",
+                                function_name: functionName
+                            });
                         }
                     }
                 });
@@ -1157,7 +1389,11 @@
     },
     
     hookKeySessionManagement: function() {
-        console.log("[DRM Bypass] Installing key session management hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_key_session_management_hooks"
+        });
         
         // Hook key session functions
         var sessionFunctions = [
@@ -1186,7 +1422,12 @@
                         var config = this.parent.parent.config;
                         if (config.eme.bypassKeySessionLimits) {
                             // Allow unlimited key sessions
-                            console.log("[DRM Bypass] Key session operation bypassed: " + functionName);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "key_session_operation_bypassed",
+                                function_name: functionName
+                            });
                             this.parent.parent.bypassedChecks++;
                         }
                     }
@@ -1200,15 +1441,27 @@
     },
     
     hookMediaKeySystemAccess: function() {
-        console.log("[DRM Bypass] Installing MediaKeySystemAccess hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_mediakey_system_access_hooks"
+        });
         
         // This would integrate with the EME hooks above
-        console.log("[DRM Bypass] MediaKeySystemAccess hooks integrated with EME functions");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "mediakey_system_access_hooks_integrated"
+        });
     },
     
     // === CONTENT DECRYPTION BYPASS ===
     hookContentDecryption: function() {
-        console.log("[DRM Bypass] Installing content decryption bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_content_decryption_bypass"
+        });
         
         if (!this.config.decryption.enabled) return;
         
@@ -1223,7 +1476,11 @@
     },
     
     hookGenericDecryption: function() {
-        console.log("[DRM Bypass] Installing generic decryption hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_generic_decryption_hooks"
+        });
         
         // Hook common decryption APIs
         var decryptFunctions = [
@@ -1253,7 +1510,11 @@
                         if (this.isDrmDecryption) {
                             var config = this.parent.parent.config;
                             if (config.decryption.interceptEncryptedContent) {
-                                console.log("[DRM Bypass] DRM decryption operation intercepted");
+                                send({
+                                    type: "bypass",
+                                    target: "drm_bypass",
+                                    action: "drm_decryption_operation_intercepted"
+                                });
                             }
                         }
                     },
@@ -1271,7 +1532,11 @@
     },
     
     hookKeyDerivation: function() {
-        console.log("[DRM Bypass] Installing key derivation hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_key_derivation_hooks"
+        });
         
         // Hook key derivation functions
         var kdfFunctions = [
@@ -1288,7 +1553,11 @@
                     onLeave: function(retval) {
                         var config = this.parent.parent.config;
                         if (config.decryption.spoofDecryptionKeys) {
-                            console.log("[DRM Bypass] Key derivation operation monitored");
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "key_derivation_operation_monitored"
+                            });
                         }
                     }
                 });
@@ -1299,7 +1568,11 @@
     },
     
     hookContentKeyHandling: function() {
-        console.log("[DRM Bypass] Installing content key handling hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_content_key_handling_hooks"
+        });
         
         // Hook key export/import functions
         var keyFunctions = [
@@ -1323,7 +1596,12 @@
                             // Ensure key operations succeed
                             if (retval.toInt32() === 0) { // Failed
                                 retval.replace(1); // Success
-                                console.log("[DRM Bypass] Key operation forced to succeed: " + funcName);
+                                send({
+                                    type: "bypass",
+                                    target: "drm_bypass",
+                                    action: "key_operation_forced_to_succeed",
+                                    function_name: funcName
+                                });
                             }
                         }
                     }
@@ -1336,7 +1614,11 @@
     
     // === DRM COMMUNICATION BYPASS ===
     hookDrmCommunication: function() {
-        console.log("[DRM Bypass] Installing DRM communication bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_drm_communication_bypass"
+        });
         
         // Hook network communications to DRM servers
         this.hookDrmNetworkCommunication();
@@ -1346,7 +1628,11 @@
     },
     
     hookDrmNetworkCommunication: function() {
-        console.log("[DRM Bypass] Installing DRM network communication hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_drm_network_communication_hooks"
+        });
         
         // Hook HTTP requests to DRM servers
         var winHttpSendRequest = Module.findExportByName("winhttp.dll", "WinHttpSendRequest");
@@ -1355,7 +1641,11 @@
                 onEnter: function(args) {
                     var requestDetails = this.analyzeRequest(args);
                     if (this.isDrmRequest(requestDetails)) {
-                        console.log("[DRM Bypass] DRM network request intercepted");
+                        send({
+                            type: "bypass",
+                            target: "drm_bypass",
+                            action: "drm_network_request_intercepted"
+                        });
                         this.interceptedRequests++;
                         
                         // Optionally block or modify the request
@@ -1368,7 +1658,11 @@
                 onLeave: function(retval) {
                     if (this.blockRequest) {
                         retval.replace(0); // Block the request
-                        console.log("[DRM Bypass] DRM request blocked");
+                        send({
+                            type: "bypass",
+                            target: "drm_bypass",
+                            action: "drm_request_blocked"
+                        });
                     }
                 },
                 
@@ -1401,7 +1695,11 @@
     },
     
     hookLocalDrmServices: function() {
-        console.log("[DRM Bypass] Installing local DRM service hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_local_drm_service_hooks"
+        });
         
         // Hook Windows services related to DRM
         var openService = Module.findExportByName("advapi32.dll", "OpenServiceW");
@@ -1419,7 +1717,12 @@
                         ];
                         
                         if (drmServices.includes(serviceName)) {
-                            console.log("[DRM Bypass] DRM-related service access: " + serviceName);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "drm_related_service_access",
+                                service_name: serviceName
+                            });
                         }
                     }
                 }
@@ -1431,7 +1734,11 @@
     
     // === LICENSE VALIDATION BYPASS ===
     hookLicenseValidation: function() {
-        console.log("[DRM Bypass] Installing license validation bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_license_validation_bypass"
+        });
         
         // Hook license validation functions
         this.hookLicenseCheckFunctions();
@@ -1444,7 +1751,11 @@
     },
     
     hookLicenseCheckFunctions: function() {
-        console.log("[DRM Bypass] Installing license check function hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_license_check_function_hooks"
+        });
         
         // Hook common license validation function names
         var licenseFunctions = [
@@ -1474,7 +1785,12 @@
                         // Make license validation always succeed
                         if (retval.toInt32() === 0 || retval.toInt32() === -1) { // Failed
                             retval.replace(1); // Success
-                            console.log("[DRM Bypass] License validation bypassed: " + functionName);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "license_validation_bypassed",
+                                function_name: functionName
+                            });
                             this.parent.parent.bypassedChecks++;
                         }
                     }
@@ -1488,7 +1804,11 @@
     },
     
     hookLicenseFileAccess: function() {
-        console.log("[DRM Bypass] Installing license file access hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_license_file_access_hooks"
+        });
         
         // Hook file access to license files
         var createFile = Module.findExportByName("kernel32.dll", "CreateFileW");
@@ -1504,7 +1824,12 @@
                         ];
                         
                         if (licenseFileIndicators.some(indicator => fileName.includes(indicator))) {
-                            console.log("[DRM Bypass] License file access detected: " + fileName);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "license_file_access_detected",
+                                file_name: fileName
+                            });
                             this.isLicenseFileAccess = true;
                         }
                     }
@@ -1513,7 +1838,11 @@
                 onLeave: function(retval) {
                     if (this.isLicenseFileAccess && retval.toInt32() === -1) { // INVALID_HANDLE_VALUE
                         // Optionally create fake license file handle
-                        console.log("[DRM Bypass] License file access failed - could spoof");
+                        send({
+                            type: "bypass",
+                            target: "drm_bypass",
+                            action: "license_file_access_failed_could_spoof"
+                        });
                     }
                 }
             });
@@ -1523,7 +1852,11 @@
     },
     
     hookRegistryLicenseChecks: function() {
-        console.log("[DRM Bypass] Installing registry license check hooks...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_registry_license_check_hooks"
+        });
         
         // Hook registry access for license information
         var regQueryValue = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
@@ -1539,7 +1872,12 @@
                         ];
                         
                         if (licenseRegistryValues.some(value => valueName.includes(value))) {
-                            console.log("[DRM Bypass] License registry query: " + valueName);
+                            send({
+                                type: "bypass",
+                                target: "drm_bypass",
+                                action: "license_registry_query",
+                                value_name: valueName
+                            });
                             this.isLicenseRegistryQuery = true;
                         }
                     }
@@ -1548,7 +1886,11 @@
                 onLeave: function(retval) {
                     if (this.isLicenseRegistryQuery && retval.toInt32() !== 0) { // Failed
                         // Optionally spoof license registry values
-                        console.log("[DRM Bypass] License registry query failed - could spoof");
+                        send({
+                            type: "bypass",
+                            target: "drm_bypass",
+                            action: "license_registry_query_failed_could_spoof"
+                        });
                     }
                 }
             });
@@ -1559,7 +1901,11 @@
     
     // === CERTIFICATE VALIDATION BYPASS ===
     hookCertificateValidation: function() {
-        console.log("[DRM Bypass] Installing certificate validation bypass...");
+        send({
+            type: "info",
+            target: "drm_bypass",
+            action: "installing_certificate_validation_bypass"
+        });
         
         // Hook certificate validation for DRM
         var certVerifyChain = Module.findExportByName("crypt32.dll", "CertVerifyCertificateChainPolicy");
@@ -1571,7 +1917,11 @@
                     this.policyPara = args[2];
                     this.policyStatus = args[3];
                     
-                    console.log("[DRM Bypass] Certificate chain verification for DRM");
+                    send({
+                        type: "bypass",
+                        target: "drm_bypass",
+                        action: "certificate_chain_verification_for_drm"
+                    });
                 },
                 
                 onLeave: function(retval) {
@@ -1579,7 +1929,11 @@
                         // Force certificate validation to succeed
                         this.policyStatus.writeU32(0); // No errors
                         this.policyStatus.add(4).writeU32(0); // No chain errors
-                        console.log("[DRM Bypass] DRM certificate validation forced to succeed");
+                        send({
+                            type: "bypass",
+                            target: "drm_bypass",
+                            action: "drm_certificate_validation_forced_to_succeed"
+                        });
                         this.parent.parent.bypassedChecks++;
                     }
                 }
@@ -1591,11 +1945,8 @@
     
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
-        setTimeout(() => {
-            console.log("\n[DRM Bypass] ========================================");
-            console.log("[DRM Bypass] Advanced DRM Bypass Summary:");
-            console.log("[DRM Bypass] ========================================");
-            
+        var self = this;
+        setTimeout(function() {
             var categories = {
                 "HDCP Protection": 0,
                 "PlayReady DRM": 0,
@@ -1609,7 +1960,7 @@
                 "Certificate Validation": 0
             };
             
-            for (var hook in this.hooksInstalled) {
+            for (var hook in self.hooksInstalled) {
                 if (hook.includes('HDCP') || hook.includes('Hdcp')) {
                     categories["HDCP Protection"]++;
                 } else if (hook.includes('PlayReady') || hook.includes('PR_') || hook.includes('DRM_')) {
@@ -1633,47 +1984,45 @@
                 }
             }
             
-            for (var category in categories) {
-                if (categories[category] > 0) {
-                    console.log("[DRM Bypass]   ✓ " + category + ": " + categories[category] + " hooks");
-                }
-            }
-            
-            console.log("[DRM Bypass] ========================================");
-            console.log("[DRM Bypass] Active Protection Systems:");
-            
-            var config = this.config;
+            var activeSystems = [];
+            var config = self.config;
             if (config.hdcp.enabled) {
-                console.log("[DRM Bypass]   ✓ HDCP Bypass (Version: " + config.hdcp.spoofHdcpVersion + ")");
+                activeSystems.push({ name: "HDCP Bypass", version: config.hdcp.spoofHdcpVersion });
             }
             if (config.playready.enabled) {
-                console.log("[DRM Bypass]   ✓ PlayReady DRM Bypass (Security Level: " + config.playready.spoofSecurityLevel + ")");
+                activeSystems.push({ name: "PlayReady DRM Bypass", security_level: config.playready.spoofSecurityLevel });
             }
             if (config.widevine.enabled) {
-                console.log("[DRM Bypass]   ✓ Widevine DRM Bypass (Security Level: " + config.widevine.spoofSecurityLevel + ")");
+                activeSystems.push({ name: "Widevine DRM Bypass", security_level: config.widevine.spoofSecurityLevel });
             }
             if (config.streaming.enabled) {
-                console.log("[DRM Bypass]   ✓ Streaming DRM Bypass");
+                activeSystems.push({ name: "Streaming DRM Bypass" });
             }
             if (config.hardware.enabled) {
-                console.log("[DRM Bypass]   ✓ Hardware-based DRM Bypass");
+                activeSystems.push({ name: "Hardware-based DRM Bypass" });
             }
             if (config.eme.enabled) {
-                console.log("[DRM Bypass]   ✓ EME (Encrypted Media Extensions) Bypass");
+                activeSystems.push({ name: "EME (Encrypted Media Extensions) Bypass" });
             }
             if (config.decryption.enabled) {
-                console.log("[DRM Bypass]   ✓ Content Decryption Bypass");
+                activeSystems.push({ name: "Content Decryption Bypass" });
             }
             
-            console.log("[DRM Bypass] ========================================");
-            console.log("[DRM Bypass] Runtime Statistics:");
-            console.log("[DRM Bypass]   • Intercepted Requests: " + this.interceptedRequests);
-            console.log("[DRM Bypass]   • Bypassed Checks: " + this.bypassedChecks);
-            console.log("[DRM Bypass]   • Spoofed Licenses: " + this.spoofedLicenses);
-            console.log("[DRM Bypass] ========================================");
-            console.log("[DRM Bypass] Total hooks installed: " + Object.keys(this.hooksInstalled).length);
-            console.log("[DRM Bypass] ========================================");
-            console.log("[DRM Bypass] Advanced DRM bypass system is now ACTIVE!");
+            send({
+                type: "summary",
+                target: "drm_bypass",
+                action: "advanced_drm_bypass_summary",
+                hook_categories: categories,
+                active_protection_systems: activeSystems,
+                runtime_statistics: {
+                    intercepted_requests: self.interceptedRequests,
+                    bypassed_checks: self.bypassedChecks,
+                    spoofed_licenses: self.spoofedLicenses,
+                    total_hooks_installed: Object.keys(self.hooksInstalled).length
+                },
+                status: "ACTIVE",
+                description: "Advanced DRM bypass system is now active and operational"
+            });
         }, 100);
     }
 }

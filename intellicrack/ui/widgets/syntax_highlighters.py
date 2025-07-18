@@ -24,81 +24,90 @@ from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
 class PythonHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for Python code"""
 
-    def __init__(self, document):
-        super().__init__(document)
-
+    def __init__(self, parent=None):
+        """Initialize Python syntax highlighter with comprehensive language support."""
+        super().__init__(parent)
+        
         # Define highlighting rules
         self.highlighting_rules = []
-
-        # Keywords
+        
+        # Keyword format
         keyword_format = QTextCharFormat()
-        keyword_format.setForeground(QColor(86, 156, 214))
-        keyword_format.setFontWeight(QFont.Bold)
+        keyword_format.setForeground(QColor("#569CD6"))  # Blue
+        keyword_format.setFontWeight(QFont.Weight.Bold)
+        
         keywords = [
-            "and",
-            "as",
-            "assert",
-            "break",
-            "class",
-            "continue",
-            "def",
-            "del",
-            "elif",
-            "else",
-            "except",
-            "False",
-            "finally",
-            "for",
-            "from",
-            "global",
-            "if",
-            "import",
-            "in",
-            "is",
-            "lambda",
-            "None",
-            "nonlocal",
-            "not",
-            "or",
-            "pass",
-            "raise",
-            "return",
-            "True",
-            "try",
-            "while",
-            "with",
-            "yield",
+            'and', 'as', 'assert', 'break', 'class', 'continue', 'def',
+            'del', 'elif', 'else', 'except', 'exec', 'finally', 'for',
+            'from', 'global', 'if', 'import', 'in', 'is', 'lambda',
+            'not', 'or', 'pass', 'print', 'raise', 'return', 'try',
+            'while', 'with', 'yield', 'None', 'True', 'False'
         ]
+        
         for keyword in keywords:
-            pattern = QRegularExpression(f"\\b{keyword}\\b")
+            pattern = QRegularExpression(f'\\b{keyword}\\b')
             self.highlighting_rules.append((pattern, keyword_format))
-
-        # Strings
+        
+        # String format (single and double quotes)
         string_format = QTextCharFormat()
-        string_format.setForeground(QColor(214, 157, 133))
-        self.highlighting_rules.append((QRegularExpression('"[^"]*"'), string_format))
-        self.highlighting_rules.append((QRegularExpression("'[^']*'"), string_format))
-
-        # Comments
+        string_format.setForeground(QColor("#CE9178"))  # Orange
+        self.highlighting_rules.append((QRegularExpression('".*"'), string_format))
+        self.highlighting_rules.append((QRegularExpression("'.*'"), string_format))
+        
+        # Triple-quoted strings
+        self.highlighting_rules.append((QRegularExpression('""".*"""'), string_format))
+        self.highlighting_rules.append((QRegularExpression("'''.*'''"), string_format))
+        
+        # Comment format
         comment_format = QTextCharFormat()
-        comment_format.setForeground(QColor(106, 153, 85))
-        self.highlighting_rules.append((QRegularExpression("#.*"), comment_format))
-
-        # Functions
-        function_format = QTextCharFormat()
-        function_format.setForeground(QColor(220, 220, 170))
-        self.highlighting_rules.append((QRegularExpression("\\b[A-Za-z0-9_]+(?=\\()"), function_format))
-
-        # Numbers
+        comment_format.setForeground(QColor("#6A9955"))  # Green
+        comment_format.setFontItalic(True)
+        self.highlighting_rules.append((QRegularExpression('#[^\\n]*'), comment_format))
+        
+        # Number format
         number_format = QTextCharFormat()
-        number_format.setForeground(QColor(181, 206, 168))
-        self.highlighting_rules.append((QRegularExpression("\\b[0-9]+\\b"), number_format))
-
-        # Multi-line strings
-        self.triple_single_quote_format = QTextCharFormat()
-        self.triple_single_quote_format.setForeground(QColor(214, 157, 133))
-        self.triple_double_quote_format = QTextCharFormat()
-        self.triple_double_quote_format.setForeground(QColor(214, 157, 133))
+        number_format.setForeground(QColor("#B5CEA8"))  # Light green
+        self.highlighting_rules.append((QRegularExpression('\\b[0-9]+\\.?[0-9]*\\b'), number_format))
+        
+        # Function format
+        function_format = QTextCharFormat()
+        function_format.setForeground(QColor("#DCDCAA"))  # Yellow
+        self.highlighting_rules.append((QRegularExpression('\\b[A-Za-z_][A-Za-z0-9_]*(?=\\()'), function_format))
+        
+        # Class format
+        class_format = QTextCharFormat()
+        class_format.setForeground(QColor("#4EC9B0"))  # Cyan
+        class_format.setFontWeight(QFont.Weight.Bold)
+        self.highlighting_rules.append((QRegularExpression('\\bclass\\s+[A-Za-z_][A-Za-z0-9_]*'), class_format))
+        
+        # Self format
+        self_format = QTextCharFormat()
+        self_format.setForeground(QColor("#9CDCFE"))  # Light blue
+        self.highlighting_rules.append((QRegularExpression('\\bself\\b'), self_format))
+        
+        # Decorator format
+        decorator_format = QTextCharFormat()
+        decorator_format.setForeground(QColor("#FFD700"))  # Gold
+        self.highlighting_rules.append((QRegularExpression('@[A-Za-z_][A-Za-z0-9_]*'), decorator_format))
+        
+        # Built-in functions
+        builtin_format = QTextCharFormat()
+        builtin_format.setForeground(QColor("#4FC1FF"))  # Bright blue
+        builtins = [
+            'abs', 'all', 'any', 'bin', 'bool', 'bytearray', 'bytes', 'callable',
+            'chr', 'classmethod', 'compile', 'complex', 'delattr', 'dict', 'dir',
+            'divmod', 'enumerate', 'eval', 'filter', 'float', 'format', 'frozenset',
+            'getattr', 'globals', 'hasattr', 'hash', 'help', 'hex', 'id', 'input',
+            'int', 'isinstance', 'issubclass', 'iter', 'len', 'list', 'locals',
+            'map', 'max', 'memoryview', 'min', 'next', 'object', 'oct', 'open',
+            'ord', 'pow', 'print', 'property', 'range', 'repr', 'reversed',
+            'round', 'set', 'setattr', 'slice', 'sorted', 'staticmethod',
+            'str', 'sum', 'super', 'tuple', 'type', 'vars', 'zip'
+        ]
+        
+        for builtin in builtins:
+            pattern = QRegularExpression(f'\\b{builtin}\\b')
+            self.highlighting_rules.append((pattern, builtin_format))
 
     def highlightBlock(self, text):
         """Apply syntax highlighting to block"""
@@ -133,7 +142,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         while start_index >= 0:
             match = expression.match(text, start_index + add)
             end_index = match.capturedStart() if match.hasMatch() else -1
-            
+
             if end_index == -1:
                 self.setCurrentBlockState(state)
                 comment_length = len(text) - start_index
@@ -148,105 +157,117 @@ class PythonHighlighter(QSyntaxHighlighter):
 class JavaScriptHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for JavaScript/Frida code"""
 
-    def __init__(self, document):
-        super().__init__(document)
-
+    def __init__(self, parent=None):
+        """Initialize JavaScript syntax highlighter with ES6+ language support."""
+        super().__init__(parent)
+        
         # Define highlighting rules
         self.highlighting_rules = []
-
-        # Keywords
+        
+        # Keyword format
         keyword_format = QTextCharFormat()
-        keyword_format.setForeground(QColor(86, 156, 214))
-        keyword_format.setFontWeight(QFont.Bold)
+        keyword_format.setForeground(QColor("#569CD6"))  # Blue
+        keyword_format.setFontWeight(QFont.Weight.Bold)
+        
         keywords = [
-            "break",
-            "case",
-            "catch",
-            "class",
-            "const",
-            "continue",
-            "debugger",
-            "default",
-            "delete",
-            "do",
-            "else",
-            "export",
-            "extends",
-            "finally",
-            "for",
-            "function",
-            "if",
-            "import",
-            "in",
-            "instanceof",
-            "let",
-            "new",
-            "return",
-            "super",
-            "switch",
-            "this",
-            "throw",
-            "try",
-            "typeof",
-            "var",
-            "void",
-            "while",
-            "with",
-            "yield",
+            'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
+            'default', 'delete', 'do', 'else', 'export', 'extends', 'finally',
+            'for', 'function', 'if', 'import', 'in', 'instanceof', 'let', 'new',
+            'return', 'super', 'switch', 'this', 'throw', 'try', 'typeof', 'var',
+            'void', 'while', 'with', 'yield', 'async', 'await', 'static'
         ]
+        
         for keyword in keywords:
-            pattern = QRegularExpression(f"\\b{keyword}\\b")
+            pattern = QRegularExpression(f'\\b{keyword}\\b')
             self.highlighting_rules.append((pattern, keyword_format))
-
-        # Frida API objects (optional highlighting)
-        frida_format = QTextCharFormat()
-        frida_format.setForeground(QColor(156, 220, 254))
-        frida_format.setFontWeight(QFont.Bold)
-        frida_api = [
-            "Interceptor",
-            "Module",
-            "Memory",
-            "Process",
-            "Thread",
-            "NativePointer",
-            "NativeFunction",
-            "send",
-            "recv",
-            "console",
-            "Java",
-            "ObjC",
-            "Stalker",
-            "ApiResolver",
-            "DebugSymbol",
-        ]
-        for api in frida_api:
-            pattern = QRegularExpression(f"\\b{api}\\b")
-            self.highlighting_rules.append((pattern, frida_format))
-
-        # Strings
+        
+        # Literal values
+        literal_format = QTextCharFormat()
+        literal_format.setForeground(QColor("#569CD6"))  # Blue
+        literals = ['true', 'false', 'null', 'undefined']
+        
+        for literal in literals:
+            pattern = QRegularExpression(f'\\b{literal}\\b')
+            self.highlighting_rules.append((pattern, literal_format))
+        
+        # String format (single, double quotes, and template literals)
         string_format = QTextCharFormat()
-        string_format.setForeground(QColor(214, 157, 133))
-        self.highlighting_rules.append((QRegularExpression('"[^"]*"'), string_format))
-        self.highlighting_rules.append((QRegularExpression("'[^']*'"), string_format))
-
-        # Comments
+        string_format.setForeground(QColor("#CE9178"))  # Orange
+        self.highlighting_rules.append((QRegularExpression('".*?"'), string_format))
+        self.highlighting_rules.append((QRegularExpression("'.*?'"), string_format))
+        self.highlighting_rules.append((QRegularExpression('`.*?`'), string_format))
+        
+        # Comment format
         comment_format = QTextCharFormat()
-        comment_format.setForeground(QColor(106, 153, 85))
-        self.highlighting_rules.append((QRegularExpression("//.*"), comment_format))
-
-        # Functions
-        function_format = QTextCharFormat()
-        function_format.setForeground(QColor(220, 220, 170))
-        self.highlighting_rules.append((QRegularExpression("\\b[A-Za-z0-9_]+(?=\\()"), function_format))
-
-        # Numbers
+        comment_format.setForeground(QColor("#6A9955"))  # Green
+        comment_format.setFontItalic(True)
+        self.highlighting_rules.append((QRegularExpression('//[^\\n]*'), comment_format))
+        self.highlighting_rules.append((QRegularExpression('/\\*.*\\*/'), comment_format))
+        
+        # Number format
         number_format = QTextCharFormat()
-        number_format.setForeground(QColor(181, 206, 168))
-        self.highlighting_rules.append((QRegularExpression("\\b[0-9]+\\b"), number_format))
-
-        # Multi-line comments
-        self.multiline_comment_format = QTextCharFormat()
-        self.multiline_comment_format.setForeground(QColor(106, 153, 85))
+        number_format.setForeground(QColor("#B5CEA8"))  # Light green
+        self.highlighting_rules.append((QRegularExpression('\\b[0-9]+\\.?[0-9]*\\b'), number_format))
+        self.highlighting_rules.append((QRegularExpression('\\b0x[0-9a-fA-F]+\\b'), number_format))
+        
+        # Function format
+        function_format = QTextCharFormat()
+        function_format.setForeground(QColor("#DCDCAA"))  # Yellow
+        self.highlighting_rules.append((QRegularExpression('\\b[A-Za-z_$][A-Za-z0-9_$]*(?=\\()'), function_format))
+        
+        # Object/Class format
+        class_format = QTextCharFormat()
+        class_format.setForeground(QColor("#4EC9B0"))  # Cyan
+        class_format.setFontWeight(QFont.Weight.Bold)
+        self.highlighting_rules.append((QRegularExpression('\\bclass\\s+[A-Za-z_$][A-Za-z0-9_$]*'), class_format))
+        
+        # Built-in objects
+        builtin_format = QTextCharFormat()
+        builtin_format.setForeground(QColor("#4FC1FF"))  # Bright blue
+        builtins = [
+            'Array', 'Boolean', 'Date', 'Error', 'Function', 'JSON', 'Math',
+            'Number', 'Object', 'RegExp', 'String', 'Symbol', 'Promise',
+            'Set', 'Map', 'WeakSet', 'WeakMap', 'Proxy', 'Reflect',
+            'console', 'window', 'document', 'alert', 'confirm', 'prompt'
+        ]
+        
+        for builtin in builtins:
+            pattern = QRegularExpression(f'\\b{builtin}\\b')
+            self.highlighting_rules.append((pattern, builtin_format))
+        
+        # Operators
+        operator_format = QTextCharFormat()
+        operator_format.setForeground(QColor("#D4D4D4"))  # Light gray
+        operators = [
+            '\\+', '-', '\\*', '/', '%', '\\+\\+', '--', '=', '\\+=', '-=',
+            '\\*=', '/=', '%=', '==', '!=', '===', '!==', '<', '>', '<=', '>=',
+            '&&', '\\|\\|', '!', '&', '\\|', '\\^', '~', '<<', '>>', '>>>'
+        ]
+        
+        for operator in operators:
+            pattern = QRegularExpression(operator)
+            self.highlighting_rules.append((pattern, operator_format))
+        
+        # Regex literals
+        regex_format = QTextCharFormat()
+        regex_format.setForeground(QColor("#FF6B6B"))  # Red
+        self.highlighting_rules.append((QRegularExpression('/.*?/[gimuy]*'), regex_format))
+        
+        # Template literal expressions
+        template_expr_format = QTextCharFormat()
+        template_expr_format.setForeground(QColor("#FFD700"))  # Gold
+        self.highlighting_rules.append((QRegularExpression('\\$\\{[^}]*\\}'), template_expr_format))
+        
+        # Arrow functions
+        arrow_format = QTextCharFormat()
+        arrow_format.setForeground(QColor("#C586C0"))  # Purple
+        self.highlighting_rules.append((QRegularExpression('=>'), arrow_format))
+        
+        # Destructuring
+        destructure_format = QTextCharFormat()
+        destructure_format.setForeground(QColor("#9CDCFE"))  # Light blue
+        self.highlighting_rules.append((QRegularExpression('\\[.*?\\]\\s*='), destructure_format))
+        self.highlighting_rules.append((QRegularExpression('\\{.*?\\}\\s*='), destructure_format))
 
     def highlightBlock(self, text):
         """Apply syntax highlighting to block"""

@@ -258,6 +258,11 @@ class ROPBasedBypass(MitigationBypassBase):
     """Base class for bypasses that can use ROP techniques."""
 
     def __init__(self, mitigation_name: str):
+        """Initialize the ROP-based bypass with mitigation name and ROP technique list.
+        
+        Args:
+            mitigation_name: Name of the mitigation being bypassed.
+        """
         super().__init__(mitigation_name)
         self.rop_techniques = ["rop_chain", "jop_chain", "ret2libc"]
 

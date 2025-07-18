@@ -475,29 +475,31 @@ class ConcolicExecutionEngine:
     """
 
     def __init__(self, binary_path: str, max_iterations: int = 100, timeout: int = 300):
-        """
-        Initialize the concolic execution engine.
-
-        Args:
-            binary_path: Path to the binary to analyze
-            max_iterations: Maximum number of iterations (default: 100)
-            timeout: Maximum execution time in seconds (default: 300)
-        """
+        """Initialize the concolic execution engine with binary analysis configuration."""
         self.binary_path = binary_path
         self.max_iterations = max_iterations
         self.timeout = timeout
-        self.logger = logging.getLogger(__name__)
-        self.manticore_available = MANTICORE_AVAILABLE
-
-        # Check for required dependencies
-        if MANTICORE_AVAILABLE:
-            self.logger.info("Concolic execution dependencies available")
-        else:
-            import platform
-            if platform.system() == 'Windows':
-                self.logger.info("Concolic execution via manticore not available on Windows - use Symbolic Execution (angr) instead")
-            else:
-                self.logger.error("Concolic execution dependency missing: manticore not installed")
+        self.logger = logging.getLogger("IntellicrackLogger.ConcolicExecution")
+        
+        # Analysis configuration
+        self.exploration_depth = 10
+        self.memory_limit = 1024 * 1024 * 1024  # 1GB memory limit
+        
+        # Results storage
+        self.execution_paths = []
+        self.discovered_bugs = []
+        self.code_coverage = {}
+        self.symbolic_variables = []
+        
+        # Check if binary exists
+        if not os.path.exists(binary_path):
+            raise FileNotFoundError(f"Binary file not found: {binary_path}")
+        
+        # Initialize execution engine based on availability
+        self.engine = None
+        self._initialize_execution_engine()
+        
+        self.logger.info(f"Concolic execution engine initialized for {binary_path}")
 
     def explore_paths(self, target_address: Optional[int] = None, avoid_addresses: Optional[List[int]] = None) -> Dict[str, Any]:
         """
@@ -539,6 +541,7 @@ class ConcolicExecutionEngine:
                 Adds hooks for target and avoid addresses to guide execution paths.
                 """
                 def __init__(self):
+                    """Initialize the path exploration plugin."""
                     super().__init__()
                     self.logger = logging.getLogger(__name__)
 
@@ -686,6 +689,7 @@ class ConcolicExecutionEngine:
                     address locations for effective targeting.
                 """
                 def __init__(self):
+                    """Initialize the license check plugin."""
                     super().__init__()
                     self.logger = logging.getLogger(__name__)
 
@@ -902,6 +906,7 @@ class ConcolicExecutionEngine:
                 """Plugin for comprehensive concolic analysis."""
 
                 def __init__(self, analysis_data):
+                    """Initialize the comprehensive analysis plugin."""
                     super().__init__()
                     self.analysis_data = analysis_data
                     self.logger = logging.getLogger(__name__)

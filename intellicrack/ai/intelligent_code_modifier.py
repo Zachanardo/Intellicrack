@@ -110,6 +110,11 @@ class CodeAnalyzer:
     """Analyzes code to extract context and dependencies."""
 
     def __init__(self):
+        """Initialize the code analyzer.
+        
+        Sets up supported file extensions and their corresponding
+        programming languages for code analysis.
+        """
         self.supported_extensions = {
             '.py': 'python',
             '.js': 'javascript',
@@ -421,6 +426,11 @@ class IntelligentCodeModifier:
     """Main class for intelligent code modification."""
 
     def __init__(self, llm_manager: Optional[LLMManager] = None):
+        """Initialize the intelligent code modifier.
+        
+        Args:
+            llm_manager: Optional LLM manager for AI-powered code modifications
+        """
         self.llm_manager = llm_manager or LLMManager()
         self.analyzer = CodeAnalyzer()
         self.diff_generator = DiffGenerator()

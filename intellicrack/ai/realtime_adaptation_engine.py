@@ -29,7 +29,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
-from .performance_monitor_simple import get_performance_monitor, profile_ai_operation
+from .performance_monitor_simple import profile_ai_operation
 
 logger = get_logger(__name__)
 
@@ -110,6 +110,11 @@ class RuntimeMonitor:
     """Real-time monitoring system."""
 
     def __init__(self):
+        """Initialize the real-time monitoring system.
+        
+        Monitors system metrics, detects anomalies, and triggers adaptation
+        rules in response to performance issues.
+        """
         self.active = False
         self.metrics_buffer: deque = deque(maxlen=10000)
         self.metric_aggregates: Dict[str, Dict[str, float]] = defaultdict(dict)
@@ -365,6 +370,13 @@ class AnomalyDetector:
     """Anomaly detection for metrics."""
 
     def __init__(self, metric_name: str, sensitivity: float = 2.0):
+        """Initialize the anomaly detector for a specific metric.
+        
+        Args:
+            metric_name: Name of the metric to monitor for anomalies.
+            sensitivity: Detection sensitivity factor (default: 2.0).
+                Higher values reduce false positives but may miss anomalies.
+        """
         self.metric_name = metric_name
         self.sensitivity = sensitivity
         self.baseline_values: deque = deque(maxlen=100)
@@ -418,6 +430,12 @@ class DynamicHookManager:
     """Manages dynamic code hooks for adaptation."""
 
     def __init__(self):
+        """Initialize the dynamic hook manager.
+        
+        Sets up hook tracking structures for active hooks, registry,
+        and statistics collection. Manages dynamic code hooks for
+        runtime adaptation.
+        """
         self.active_hooks: Dict[str, Dict[str, Any]] = {}
         self.hook_registry: Dict[str, Callable] = {}
         self.hook_statistics: Dict[str, Dict[str, int]] = defaultdict(
@@ -626,6 +644,12 @@ class LiveDebuggingSystem:
     """AI-assisted live debugging system."""
 
     def __init__(self, runtime_monitor: RuntimeMonitor):
+        """Initialize the AI-assisted live debugging system.
+        
+        Args:
+            runtime_monitor: Runtime monitor instance to subscribe to
+                for receiving metrics and performance data.
+        """
         self.runtime_monitor = runtime_monitor
         self.active_debug_sessions: Dict[str, Dict[str, Any]] = {}
         self.debug_history: deque = deque(maxlen=1000)
@@ -840,9 +864,16 @@ class RealTimeAdaptationEngine:
     """Main real-time adaptation engine."""
 
     def __init__(self):
+        """Initialize the real-time adaptation engine.
+        
+        Provides comprehensive real-time adaptation capabilities including
+        runtime monitoring, dynamic code hooking, live debugging, and automated
+        adaptation based on system performance metrics.
+        """
         self.runtime_monitor = RuntimeMonitor()
         self.hook_manager = DynamicHookManager()
         self.debug_system = LiveDebuggingSystem(self.runtime_monitor)
+        self.learning_engine = get_learning_engine()
 
         # Adaptation configuration
         self.adaptation_rules: List[AdaptationRule] = []
@@ -1023,7 +1054,7 @@ class RealTimeAdaptationEngine:
             self.adaptation_history.append(event)
 
             # Record learning experience
-            learning_engine.record_experience(
+            self.learning_engine.record_experience(
                 task_type=f"adaptation_{rule.adaptation_type.value}",
                 input_data={
                     "rule_id": rule.rule_id,

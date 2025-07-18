@@ -28,6 +28,8 @@ This module provides a unified interface for symbolic execution using:
 import logging
 from typing import Any, Dict, List, Optional
 
+logger = logging.getLogger(__name__)
+
 # Try to import symbolic execution engines in priority order
 SYMBOLIC_ENGINE = None
 SYMBOLIC_ENGINE_NAME = None
@@ -78,6 +80,17 @@ class ConcolicExecutionEngine:
     """Unified concolic execution engine supporting multiple backends."""
 
     def __init__(self, binary_path: str, max_iterations: int = 100, timeout: int = 300):
+        """Initialize the concolic execution engine.
+        
+        Sets up the unified concolic execution engine with support for multiple
+        symbolic execution backends including angr, manticore, and simconcolic.
+        Automatically selects the best available engine for the platform.
+        
+        Args:
+            binary_path: Path to the binary to analyze
+            max_iterations: Maximum number of exploration iterations
+            timeout: Execution timeout in seconds
+        """
         self.binary_path = binary_path
         self.max_iterations = max_iterations
         self.timeout = timeout

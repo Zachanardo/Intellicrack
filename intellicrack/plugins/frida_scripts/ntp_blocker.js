@@ -94,7 +94,11 @@
     blockedIPs: new Set(),
     
     run: function() {
-        console.log("[NTP Blocker] Starting comprehensive time sync blocking...");
+        send({
+            type: "status",
+            target: "ntp_blocker",
+            action: "starting_time_sync_blocking"
+        });
         
         // DNS blocking
         if (this.config.methods.dns) {
@@ -125,7 +129,11 @@
         // Start monitoring
         this.startMonitoring();
         
-        console.log("[NTP Blocker] Time synchronization blocking active");
+        send({
+            type: "status",
+            target: "ntp_blocker",
+            action: "time_sync_blocking_active"
+        });
     },
     
     // Hook DNS resolution
@@ -140,7 +148,12 @@
                     var hostname = args[0].readUtf8String();
                     
                     if (self.isTimeServer(hostname)) {
-                        console.log("[NTP Blocker] DNS blocked: " + hostname);
+                        send({
+                            type: "bypass",
+                            target: "ntp_blocker",
+                            action: "dns_blocked",
+                            hostname: hostname
+                        });
                         this.shouldBlock = true;
                         self.stats.dnsBlocked++;
                         self.stats.totalBlocked++;
@@ -152,7 +165,11 @@
                     }
                 }
             });
-            console.log("[NTP Blocker] Hooked getaddrinfo");
+            send({
+                type: "info",
+                target: "ntp_blocker",
+                action: "hooked_getaddrinfo"
+            });
         }
         
         // gethostbyname
@@ -163,7 +180,12 @@
                     var hostname = args[0].readUtf8String();
                     
                     if (self.isTimeServer(hostname)) {
-                        console.log("[NTP Blocker] DNS blocked: " + hostname);
+                        send({
+                            type: "bypass",
+                            target: "ntp_blocker",
+                            action: "dns_blocked",
+                            hostname: hostname
+                        });
                         this.shouldBlock = true;
                         self.stats.dnsBlocked++;
                         self.stats.totalBlocked++;
@@ -186,7 +208,12 @@
                         var hostname = args[0].readUtf16String();
                         
                         if (self.isTimeServer(hostname)) {
-                            console.log("[NTP Blocker] Windows DNS blocked: " + hostname);
+                            send({
+                                type: "bypass",
+                                target: "ntp_blocker",
+                                action: "windows_dns_blocked",
+                                hostname: hostname
+                            });
                             this.shouldBlock = true;
                             self.stats.dnsBlocked++;
                             self.stats.totalBlocked++;
@@ -226,7 +253,13 @@
                                        ((ip >> 16) & 0xFF) + "." + ((ip >> 24) & 0xFF);
                             
                             if (self.isNTPPort(port) || self.isBlockedIP(ipStr)) {
-                                console.log("[NTP Blocker] Connection blocked: " + ipStr + ":" + port);
+                                send({
+                                    type: "bypass",
+                                    target: "ntp_blocker",
+                                    action: "connection_blocked",
+                                    ip: ipStr,
+                                    port: port
+                                });
                                 this.shouldBlock = true;
                                 self.stats.connectionsBlocked++;
                                 self.stats.totalBlocked++;
@@ -236,7 +269,12 @@
                             port = ((port & 0xFF) << 8) | ((port & 0xFF00) >> 8);
                             
                             if (self.isNTPPort(port)) {
-                                console.log("[NTP Blocker] IPv6 connection blocked on port: " + port);
+                                send({
+                                    type: "bypass",
+                                    target: "ntp_blocker",
+                                    action: "ipv6_connection_blocked",
+                                    port: port
+                                });
                                 this.shouldBlock = true;
                                 self.stats.connectionsBlocked++;
                                 self.stats.totalBlocked++;
@@ -257,7 +295,11 @@
                     }
                 }
             });
-            console.log("[NTP Blocker] Hooked connect");
+            send({
+                type: "info",
+                target: "ntp_blocker",
+                action: "hooked_connect"
+            });
         }
         
         // WSAConnect (Windows)
@@ -274,7 +316,12 @@
                                 port = ((port & 0xFF) << 8) | ((port & 0xFF00) >> 8);
                                 
                                 if (self.isNTPPort(port)) {
-                                    console.log("[NTP Blocker] WSAConnect blocked on port: " + port);
+                                    send({
+                                        type: "bypass",
+                                        target: "ntp_blocker",
+                                        action: "wsa_connect_blocked",
+                                        port: port
+                                    });
                                     this.shouldBlock = true;
                                     self.stats.connectionsBlocked++;
                                     self.stats.totalBlocked++;
@@ -314,7 +361,13 @@
                                        ((ip >> 16) & 0xFF) + "." + ((ip >> 24) & 0xFF);
                             
                             if (self.isNTPPort(port) || self.isBlockedIP(ipStr)) {
-                                console.log("[NTP Blocker] UDP sendto blocked: " + ipStr + ":" + port);
+                                send({
+                                    type: "bypass",
+                                    target: "ntp_blocker",
+                                    action: "udp_sendto_blocked",
+                                    ip: ipStr,
+                                    port: port
+                                });
                                 
                                 // Check if it's NTP packet format
                                 var buf = args[1];
@@ -323,7 +376,12 @@
                                     // NTP packet: LI (2 bits), VN (3 bits), Mode (3 bits)
                                     var mode = li_vn_mode & 0x07;
                                     if (mode === 3 || mode === 4) { // Client or Server mode
-                                        console.log("[NTP Blocker] NTP packet detected and blocked");
+                                        send({
+                                            type: "bypass",
+                                            target: "ntp_blocker",
+                                            action: "ntp_packet_blocked",
+                                            mode: mode
+                                        });
                                         this.shouldBlock = true;
                                         self.stats.connectionsBlocked++;
                                         self.stats.totalBlocked++;
@@ -339,7 +397,11 @@
                     }
                 }
             });
-            console.log("[NTP Blocker] Hooked sendto");
+            send({
+                type: "info",
+                target: "ntp_blocker",
+                action: "sendto_hooked"
+            });
         }
         
         // recvfrom (UDP receive)
@@ -361,7 +423,12 @@
                                 port = ((port & 0xFF) << 8) | ((port & 0xFF00) >> 8);
                                 
                                 if (self.isNTPPort(port)) {
-                                    console.log("[NTP Blocker] NTP response blocked from port: " + port);
+                                    send({
+                                        type: "bypass",
+                                        target: "ntp_blocker",
+                                        action: "ntp_response_blocked",
+                                        port: port
+                                    });
                                     retval.replace(-1);
                                     self.stats.connectionsBlocked++;
                                     self.stats.totalBlocked++;
@@ -405,7 +472,12 @@
                         var server = args[1].readUtf16String();
                         
                         if (self.isTimeServer(server)) {
-                            console.log("[NTP Blocker] HTTP connection blocked: " + server);
+                            send({
+                                type: "bypass",
+                                target: "ntp_blocker",
+                                action: "http_connection_blocked",
+                                server: server
+                            });
                             this.shouldBlock = true;
                             self.stats.httpBlocked++;
                             self.stats.totalBlocked++;
@@ -427,7 +499,12 @@
                         var url = args[1].readUtf16String();
                         
                         if (self.isTimeURL(url)) {
-                            console.log("[NTP Blocker] HTTP URL blocked: " + url);
+                            send({
+                                type: "bypass",
+                                target: "ntp_blocker",
+                                action: "http_url_blocked",
+                                url: url
+                            });
                             this.shouldBlock = true;
                             self.stats.httpBlocked++;
                             self.stats.totalBlocked++;
@@ -452,7 +529,12 @@
                         var url = args[1].toString();
                         
                         if (self.isTimeURL(url)) {
-                            console.log("[NTP Blocker] XHR blocked: " + url);
+                            send({
+                                type: "bypass",
+                                target: "ntp_blocker",
+                                action: "xhr_blocked",
+                                url: url
+                            });
                             args[1] = Memory.allocUtf8String("http://127.0.0.1:1/blocked");
                             self.stats.httpBlocked++;
                             self.stats.totalBlocked++;
@@ -474,7 +556,11 @@
         if (w32TimeSetConfig) {
             Interceptor.attach(w32TimeSetConfig, {
                 onEnter: function(args) {
-                    console.log("[NTP Blocker] Windows Time Service configuration blocked");
+                    send({
+                        type: "bypass",
+                        target: "ntp_blocker",
+                        action: "windows_time_service_config_blocked"
+                    });
                     this.shouldBlock = true;
                     self.stats.serviceBlocked++;
                     self.stats.totalBlocked++;
@@ -491,7 +577,11 @@
         var w32TimeSyncNow = Module.findExportByName("w32time.dll", "W32TimeSyncNow");
         if (w32TimeSyncNow) {
             Interceptor.replace(w32TimeSyncNow, new NativeCallback(function() {
-                console.log("[NTP Blocker] Windows Time sync blocked");
+                send({
+                    type: "bypass",
+                    target: "ntp_blocker",
+                    action: "windows_time_sync_blocked"
+                });
                 self.stats.serviceBlocked++;
                 self.stats.totalBlocked++;
                 return 0; // S_OK but don't sync
@@ -507,7 +597,11 @@
                     var openService = Module.findExportByName("advapi32.dll", "OpenServiceW");
                     if (openService) {
                         // This is simplified - would need to track service handles
-                        console.log("[NTP Blocker] Monitoring service start");
+                        send({
+                            type: "info",
+                            target: "ntp_blocker",
+                            action: "monitoring_service_start"
+                        });
                     }
                 }
             });
@@ -523,7 +617,13 @@
                     
                     if (appName.toLowerCase().includes("w32tm.exe") || 
                         cmdLine.toLowerCase().includes("w32tm")) {
-                        console.log("[NTP Blocker] w32tm.exe execution blocked");
+                        send({
+                            type: "bypass",
+                            target: "ntp_blocker",
+                            action: "w32tm_execution_blocked",
+                            app_name: appName,
+                            cmd_line: cmdLine
+                        });
                         this.shouldBlock = true;
                         self.stats.serviceBlocked++;
                         self.stats.totalBlocked++;
@@ -562,7 +662,12 @@
                         // Check if it's time-related
                         if (valueName && (valueName.toLowerCase().includes("time") ||
                                          valueName.toLowerCase().includes("ntp"))) {
-                            console.log("[NTP Blocker] Registry time update blocked: " + valueName);
+                            send({
+                                type: "bypass",
+                                target: "ntp_blocker",
+                                action: "registry_time_update_blocked",
+                                value_name: valueName
+                            });
                             this.shouldBlock = true;
                             self.stats.registryBlocked++;
                             self.stats.totalBlocked++;
@@ -666,12 +771,19 @@
         
         // Log statistics periodically
         setInterval(function() {
-            console.log("[NTP Blocker] Statistics - Total blocked: " + self.stats.totalBlocked +
-                      " (DNS: " + self.stats.dnsBlocked +
-                      ", Connections: " + self.stats.connectionsBlocked +
-                      ", HTTP: " + self.stats.httpBlocked +
-                      ", Service: " + self.stats.serviceBlocked +
-                      ", Registry: " + self.stats.registryBlocked + ")");
+            send({
+                type: "summary",
+                target: "ntp_blocker",
+                action: "statistics_report",
+                stats: {
+                    total_blocked: self.stats.totalBlocked,
+                    dns_blocked: self.stats.dnsBlocked,
+                    connections_blocked: self.stats.connectionsBlocked,
+                    http_blocked: self.stats.httpBlocked,
+                    service_blocked: self.stats.serviceBlocked,
+                    registry_blocked: self.stats.registryBlocked
+                }
+            });
         }, 60000); // Every minute
         
         // Monitor for new time server patterns
@@ -692,7 +804,12 @@
                         var msg = args[0].readUtf16String();
                         if (msg && msg.toLowerCase().includes("time") && 
                             (msg.includes("sync") || msg.includes("server"))) {
-                            console.log("[NTP Blocker] Potential time sync detected in debug: " + msg);
+                            send({
+                                type: "info",
+                                target: "ntp_blocker",
+                                action: "potential_time_sync_detected",
+                                message: msg
+                            });
                         }
                     }
                 });

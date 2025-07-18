@@ -5,10 +5,12 @@ Provides secure alternatives to common operations
 
 import hashlib
 import json
-import subprocess
 import shlex
-from typing import Any, Dict, List, Optional, Union
+import subprocess
+from typing import Any, List, Optional, Union
+
 import yaml
+
 
 class SecurityError(Exception):
     """Raised when a security policy is violated"""
@@ -27,7 +29,7 @@ def secure_hash(data: Union[str, bytes], algorithm: str = 'sha256') -> str:
     """
     if isinstance(data, str):
         data = data.encode('utf-8')
-    
+
     if algorithm == 'md5':
         # MD5 only for non-security purposes
         return hashlib.md5(data, usedforsecurity=False).hexdigest()
@@ -38,7 +40,7 @@ def secure_hash(data: Union[str, bytes], algorithm: str = 'sha256') -> str:
     else:
         raise ValueError(f"Unsupported algorithm: {algorithm}")
 
-def secure_subprocess(command: Union[str, List[str]], 
+def secure_subprocess(command: Union[str, List[str]],
                      shell: bool = False,
                      timeout: Optional[int] = 30,
                      **kwargs) -> subprocess.CompletedProcess:
@@ -62,11 +64,11 @@ def secure_subprocess(command: Union[str, List[str]],
             "shell=True is not allowed for security reasons. "
             "Use a list of arguments instead."
         )
-    
+
     if isinstance(command, str):
         # Parse command string into list safely
         command = shlex.split(command)
-    
+
     return subprocess.run(
         command,
         shell=False,
@@ -115,17 +117,17 @@ def validate_file_path(path: str, allowed_extensions: Optional[List[str]] = None
         SecurityError: If path is invalid or insecure
     """
     import os
-    
+
     # Prevent path traversal
     if '..' in path or path.startswith('/'):
         raise SecurityError(f"Potentially malicious path: {path}")
-    
+
     # Check file extension
     if allowed_extensions:
         ext = os.path.splitext(path)[1].lower()
         if ext not in allowed_extensions:
             raise SecurityError(f"File extension not allowed: {ext}")
-    
+
     return True
 
 def sanitize_input(text: str, max_length: int = 1024) -> str:
@@ -141,12 +143,12 @@ def sanitize_input(text: str, max_length: int = 1024) -> str:
     """
     # Remove null bytes
     text = text.replace('\x00', '')
-    
+
     # Limit length
     text = text[:max_length]
-    
+
     # Remove control characters
     import re
     text = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', text)
-    
+
     return text.strip()

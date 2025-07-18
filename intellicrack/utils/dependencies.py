@@ -191,14 +191,14 @@ def setup_required_environment() -> Dict[str, Any]:
 
     # Check GUI availability
     try:
-        import PyQt6
-        # Get PyQt5 version for logging
-        pyqt_version = getattr(PyQt5.QtCore, 'PYQT_VERSION_STR', 'unknown')
+        import PyQt6.QtCore
+        # Get PyQt6 version for logging
+        pyqt_version = getattr(PyQt6.QtCore, 'PYQT_VERSION_STR', 'unknown')
         env_status["gui_available"] = True
-        logger.info(f"✓ GUI interface available (PyQt5 {pyqt_version})")
+        logger.info(f"✓ GUI interface available (PyQt6 {pyqt_version})")
     except ImportError:
         logger.warning("✗ GUI interface not available - running in CLI mode")
-        env_status["missing_dependencies"].append("PyQt5")
+        env_status["missing_dependencies"].append("PyQt6")
 
     # Check ML availability
     try:

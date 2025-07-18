@@ -1,69 +1,34 @@
-#!/usr/bin/env python3
-"""Intellicrack - Security Research Framework.
-
-Copyright (C) 2025 Zachary Flint
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
-# Configuration file for the Sphinx documentation builder.
-# For the full list of built-in configuration values, see:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+Sphinx configuration for Intellicrack documentation.
+"""
 
 import os
 import sys
 from datetime import datetime
 
-# Add project root to path for autodoc
+# Add project root to Python path
 sys.path.insert(0, os.path.abspath('..'))
 
-# -- Project information -----------------------------------------------------
+# Project information
 project = 'Intellicrack'
 copyright = f'{datetime.now().year}, Zachary Flint'
 author = 'Zachary Flint'
+version = '1.0.0'
 release = '1.0.0'
 
-# -- General configuration ---------------------------------------------------
+# General configuration
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.autosummary',
-    'sphinx_autodoc_typehints',
-    'myst_parser',
+    'sphinx.ext.autodoc',           # Auto-generate docs from docstrings
+    'sphinx.ext.napoleon',          # Support Google/NumPy docstrings
+    'sphinx.ext.viewcode',          # Add [source] links
+    'sphinx.ext.intersphinx',       # Link to other project docs
+    'sphinx.ext.todo',              # Support TODO directives
+    'sphinx.ext.coverage',          # Coverage reports
+    'sphinx.ext.autosummary',       # Generate summary tables
+    'sphinx.ext.inheritance_diagram', # Class inheritance diagrams
+    'sphinx_autodoc_typehints',     # Better type hint support
+    'myst_parser',                  # Support Markdown files
 ]
-
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
-# Napoleon settings
-napoleon_google_docstring = True
-napoleon_numpy_docstring = True
-napoleon_include_init_with_doc = True
-napoleon_include_private_with_doc = False
-napoleon_include_special_with_doc = True
-napoleon_use_admonition_for_examples = True
-napoleon_use_admonition_for_notes = True
-napoleon_use_admonition_for_references = True
-napoleon_use_ivar = False
-napoleon_use_param = True
-napoleon_use_rtype = True
-napoleon_preprocess_types = True
 
 # Autodoc settings
 autodoc_default_options = {
@@ -73,54 +38,140 @@ autodoc_default_options = {
     'undoc-members': True,
     'exclude-members': '__weakref__'
 }
-autodoc_mock_imports = [
-    'frida',
-    'lief',
-    'angr',
-    'unicorn',
-    'keystone',
-    'capstone',
-    'pefile',
-    'torch',
-    'tensorflow',
-    'transformers',
-    'PyQt5',
-    'PyQt6',
-]
 
-# MyST settings
+# Autosummary settings
+autosummary_generate = True
+autosummary_imported_members = True
+
+# Napoleon settings (for Google/NumPy style docstrings)
+napoleon_google_docstring = True
+napoleon_numpy_docstring = True
+napoleon_include_init_with_doc = True
+napoleon_include_private_with_doc = False
+napoleon_include_special_with_doc = True
+napoleon_use_admonition_for_examples = True
+napoleon_use_admonition_for_notes = True
+napoleon_use_admonition_for_references = False
+napoleon_use_ivar = False
+napoleon_use_param = True
+napoleon_use_rtype = True
+napoleon_type_aliases = None
+
+# MyST parser for Markdown support
 myst_enable_extensions = [
-    "tasklist",
     "deflist",
+    "tasklist",
     "html_image",
+    "colon_fence",
+    "smartquotes",
+    "replacements",
+    "linkify",
+    "strikethrough",
 ]
 
-# -- Options for HTML output -------------------------------------------------
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
-html_favicon = '../assets/icon.ico'
-html_logo = '../assets/icon_preview.png'
-
-# Theme options
-html_theme_options = {
-    'logo_only': False,
-    'display_version': True,
-    'prev_next_buttons_location': 'bottom',
-    'style_external_links': False,
-    'style_nav_header_background': '#2a7ae4',
-    'collapse_navigation': True,
-    'sticky_navigation': True,
-    'navigation_depth': 4,
-    'includehidden': True,
-    'titles_only': False
+# Source file parsers
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
 }
 
-# -- Options for intersphinx extension ---------------------------------------
+# Master document
+master_doc = 'index'
+
+# Language
+language = 'en'
+
+# Exclude patterns
+exclude_patterns = [
+    '_build', 
+    'Thumbs.db', 
+    '.DS_Store',
+    '**/__pycache__',
+    '**/test_*',
+    '**/tests/*',
+]
+
+# HTML output settings
+html_theme = 'sphinx_rtd_theme'
+html_theme_options = {
+    'navigation_depth': 4,
+    'collapse_navigation': False,
+    'sticky_navigation': True,
+    'includehidden': True,
+    'titles_only': False,
+    'display_version': True,
+    'prev_next_buttons_location': 'bottom',
+}
+
+html_static_path = ['_static'] if os.path.exists('_static') else []
+html_css_files = ['custom.css'] if os.path.exists('_static/custom.css') else []
+
+# Output file base name
+htmlhelp_basename = 'Intellicrackdoc'
+
+# LaTeX output settings
+latex_elements = {
+    'papersize': 'letterpaper',
+    'pointsize': '10pt',
+    'preamble': '',
+    'figure_align': 'htbp',
+}
+
+latex_documents = [
+    (master_doc, 'Intellicrack.tex', 'Intellicrack Documentation',
+     'Zachary Flint', 'manual'),
+]
+
+# Man page output
+man_pages = [
+    (master_doc, 'intellicrack', 'Intellicrack Documentation',
+     [author], 1)
+]
+
+# Texinfo output
+texinfo_documents = [
+    (master_doc, 'Intellicrack', 'Intellicrack Documentation',
+     author, 'Intellicrack', 'Advanced binary analysis framework.',
+     'Miscellaneous'),
+]
+
+# Intersphinx mappings
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
-    'torch': ('https://pytorch.org/docs/stable/', None),
+    'PyQt6': ('https://www.riverbankcomputing.com/static/Docs/PyQt6/', None),
 }
 
-# -- Options for todo extension ----------------------------------------------
+# TODO extension settings
 todo_include_todos = True
+
+# Type hints settings
+typehints_fully_qualified = False
+always_document_param_types = True
+typehints_document_rtype = True
+
+# Autodoc type hints
+autodoc_typehints = 'description'
+autodoc_type_aliases = {
+    'ArrayLike': 'numpy.typing.ArrayLike',
+}
+
+# Mock imports for modules that might not be available
+autodoc_mock_imports = [
+    'capstone',
+    'keystone',
+    'unicorn',
+    'pefile',
+    'pyelftools',
+    'frida',
+    'r2pipe',
+    'angr',
+    'qiling',
+    'scapy',
+    'yara',
+    'volatility3',
+    'miasm',
+]
+
+# Suppress specific warnings
+suppress_warnings = ['autosummary', 'autodoc.import_object']

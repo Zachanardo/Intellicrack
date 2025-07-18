@@ -77,12 +77,14 @@ class SearchResult:
     """Represents a single search result."""
 
     def __init__(self, offset: int, length: int, data: bytes, context: bytes = None):
+        """Initialize the SearchResult with offset, length, data, and context."""
         self.offset = offset
         self.length = length
         self.data = data
         self.context = context or b''
 
     def __str__(self):
+        """Return string representation of the search result."""
         return f"SearchResult(offset=0x{self.offset:X}, length={self.length})"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -109,6 +111,7 @@ class SearchHistory:
     """Manages search history persistence."""
 
     def __init__(self, max_entries: int = 50):
+        """Initialize the SearchHistory with maximum entries limit."""
         self.max_entries = max_entries
         self.history_file = Path.home() / '.intellicrack' / 'hex_search_history.json'
         self.entries: List[Dict[str, Any]] = []
@@ -168,8 +171,9 @@ class SearchEngine:
     """Core search engine for finding patterns in binary data."""
 
     def __init__(self, file_handler):
+        """Initialize the SearchEngine with file handler and chunk size."""
         self.file_handler = file_handler
-        self.chunk_size = 1024 * 1024  # 1MB chunks
+        self.chunk_size = 1024 * 1024  # 1MB chunks  # 1MB chunks  # 1MB chunks
 
     def search(self, pattern: Union[str, bytes], search_type: SearchType,
                start_offset: int = 0, case_sensitive: bool = True,
@@ -482,6 +486,7 @@ class SearchThread(QThread if PYQT5_AVAILABLE else object):
 
     def __init__(self, search_engine: SearchEngine, pattern: str, search_type: SearchType,
                  find_all: bool = False, **kwargs):
+        """Initialize the SearchThread with search parameters."""
         if PYQT5_AVAILABLE:
             super().__init__()
         self.search_engine = search_engine

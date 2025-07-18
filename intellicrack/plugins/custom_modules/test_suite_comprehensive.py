@@ -157,9 +157,9 @@ class TestDataGenerator:
     """Generate test data for various scenarios"""
     
     def __init__(self):
+        """Initialize test data generator with deterministic random seed and temporary directory."""
         self.random = random.Random(42)  # Deterministic for reproducible tests
         self.temp_dir = tempfile.mkdtemp(prefix="intellicrack_test_")
-        self.db_connection = None
     
     def generate_binary_data(self, size: int) -> bytes:
         """Generate random binary data"""
@@ -378,6 +378,7 @@ class PerformanceMonitor:
     """Monitor performance during tests"""
     
     def __init__(self):
+        """Initialize performance monitor with psutil process and timing variables."""
         self.process = psutil.Process()
         self.start_time = None
         self.start_memory = None
@@ -405,6 +406,7 @@ class TestFixtures:
     """Test fixtures and sample data"""
     
     def __init__(self):
+        """Initialize test fixtures with temporary directory and data generator."""
         self.temp_dir = None
         self.data_generator = TestDataGenerator()
     
@@ -1552,6 +1554,7 @@ class TestRunner:
     """Custom test runner with comprehensive reporting"""
     
     def __init__(self, output_dir: Path = None):
+        """Initialize test runner with output directory and logging setup."""
         self.output_dir = output_dir or Path("test_results")
         self.output_dir.mkdir(exist_ok=True)
         

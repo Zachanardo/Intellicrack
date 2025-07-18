@@ -121,11 +121,12 @@ class HASPSentinelParser:
     }
 
     def __init__(self):
+        """Initialize the HASP Sentinel parser with session tracking and license management."""
         self.logger = get_logger(__name__)
         self.active_sessions = {}  # Track active sessions
-        self.hardware_fingerprint = self._generate_hardware_fingerprint()
-        self.encryption_keys = {}  # Store encryption keys per session
-        self._load_default_features()
+        self.license_pool = self._generate_license_pool()
+        self.protection_keys = self._load_default_keys()
+        self._initialize_hasp_features()
 
     def _load_default_features(self):
         """Load default HASP features for common applications"""

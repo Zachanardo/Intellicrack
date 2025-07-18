@@ -1369,6 +1369,10 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
         data_array = da.from_array(np.frombuffer(binary_data, dtype=np.uint8),
                                   chunks=chunk_size)
 
+        # Perform basic analysis on the Dask array
+        results['array_shape'] = data_array.shape
+        results['array_chunks'] = len(data_array.chunks[0])
+
         if n_partitions is None:
             n_partitions = max(1, len(binary_data) // chunk_size)
 

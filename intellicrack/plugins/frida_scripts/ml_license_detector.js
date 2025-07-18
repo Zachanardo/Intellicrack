@@ -199,13 +199,22 @@
     bypass_results: {},
     
     onAttach: function(pid) {
-        console.log("[ML License Detector] Attaching to process: " + pid);
+        send({
+            type: "info",
+            target: "ml_license_detector",
+            action: "attaching_to_process",
+            process_id: pid
+        });
         this.processId = pid;
         this.initializeModel();
     },
     
     run: function() {
-        console.log("[ML License Detector] Starting ML-based license function detection...");
+        send({
+            type: "status",
+            target: "ml_license_detector",
+            action: "starting_ml_detection"
+        });
         
         // Initialize ML detection system
         this.initializeMLDetection();
@@ -224,7 +233,11 @@
     
     // === ML MODEL INITIALIZATION ===
     initializeModel: function() {
-        console.log("[ML License Detector] Initializing ML model...");
+        send({
+            type: "status",
+            target: "ml_license_detector",
+            action: "initializing_ml_model"
+        });
         
         // Initialize feature weights based on configuration
         var config = this.config.ml.features;
@@ -243,12 +256,20 @@
         // Load any previously saved model
         this.loadSavedModel();
         
-        console.log("[ML License Detector] Model initialized with " + 
-                  Object.keys(this.model.weights).length + " features");
+        send({
+            type: "info",
+            target: "ml_license_detector",
+            action: "model_initialized",
+            feature_count: Object.keys(this.model.weights).length
+        });
     },
     
     initializeMLDetection: function() {
-        console.log("[ML License Detector] Setting up ML detection pipeline...");
+        send({
+            type: "status",
+            target: "ml_license_detector",
+            action: "setting_up_ml_detection_pipeline"
+        });
         
         // Set up function discovery hooks
         this.hookFunctionDiscovery();
@@ -262,7 +283,11 @@
     
     // === FUNCTION ENUMERATION AND ANALYSIS ===
     enumerateAndAnalyzeFunctions: function() {
-        console.log("[ML License Detector] Enumerating and analyzing functions...");
+        send({
+            type: "status",
+            target: "ml_license_detector",
+            action: "enumerating_analyzing_functions"
+        });
         
         try {
             var modules = Process.enumerateModules();
@@ -276,7 +301,12 @@
                     continue;
                 }
                 
-                console.log("[ML License Detector] Analyzing module: " + module.name);
+                send({
+                    type: "info",
+                    target: "ml_license_detector",
+                    action: "analyzing_module",
+                    module_name: module.name
+                });
                 var functionCount = this.analyzeModuleFunctions(module);
                 totalFunctions += functionCount;
                 
@@ -293,7 +323,12 @@
             }
             
         } catch(e) {
-            console.log("[ML License Detector] Function enumeration error: " + e);
+            send({
+                type: "error",
+                target: "ml_license_detector",
+                action: "function_enumeration_error", 
+                error: String(e)
+            });
         }
     },
     
@@ -313,7 +348,13 @@
             
             return functionCount;
         } catch(e) {
-            console.log("[ML License Detector] Module analysis error for " + module.name + ": " + e);
+            send({
+                type: "error",
+                target: "ml_license_detector",
+                action: "module_analysis_error",
+                module_name: module.name,
+                error: String(e)
+            });
             return 0;
         }
     },
@@ -346,7 +387,12 @@
             this.evaluateHookPlacement(detectionResult);
             
         } catch(e) {
-            console.log("[ML License Detector] Function analysis error: " + e);
+            send({
+                type: "error",
+                target: "ml_license_detector",
+                action: "function_analysis_error",
+                error: String(e)
+            });
         }
     },
     
@@ -377,7 +423,12 @@
             features.combined_score = this.combineFeatures(features);
             
         } catch(e) {
-            console.log("[ML License Detector] Feature extraction error: " + e);
+            send({
+                type: "error",
+                target: "ml_license_detector",
+                action: "feature_extraction_error",
+                error: String(e)
+            });
         }
         
         return features;
@@ -494,7 +545,12 @@
             };
             
         } catch(e) {
-            console.log("[ML License Detector] Prediction error: " + e);
+            send({
+                type: "error",
+                target: "ml_license_detector",
+                action: "prediction_error",
+                error: String(e)
+            });
             return {
                 confidence: 0.0,
                 is_license_function: false
@@ -531,7 +587,12 @@
             }
             
         } catch(e) {
-            console.log("[ML License Detector] Hook evaluation error: " + e);
+            send({
+                type: "error",
+                target: "ml_license_detector",
+                action: "hook_evaluation_error",
+                error: String(e)
+            });
         }
     },
     
@@ -545,7 +606,12 @@
             scheduled_time: Date.now()
         };
         
-        console.log("[ML License Detector] Scheduled hook for " + detectionResult.name + 
+        send({
+            type: "status",
+            target: "ml_license_detector",
+            action: "scheduled_hook",
+            function_name: detectionResult.name,
+            confidence: detectionResult.confidence 
                   " (confidence: " + detectionResult.confidence.toFixed(3) + ", priority: " + priority + ")");
         
         // Actually place the hook
@@ -562,7 +628,12 @@
             call_count: 0
         };
         
-        console.log("[ML License Detector] Scheduled monitoring for " + detectionResult.name + 
+        send({
+            type: "status", 
+            target: "ml_license_detector",
+            action: "scheduled_monitoring",
+            function_name: detectionResult.name,
+            confidence: detectionResult.confidence 
                   " (confidence: " + detectionResult.confidence.toFixed(3) + ")");
     },
     
@@ -574,13 +645,23 @@
             var moduleName = detectionResult.module;
             
             if (!funcAddr || funcAddr.isNull()) {
-                console.log("[ML License Detector] Invalid function address for " + funcName);
+                send({
+                    type: "error",
+                    target: "ml_license_detector",
+                    action: "invalid_function_address",
+                    function_name: funcName
+                });
                 return;
             }
             
             Interceptor.attach(funcAddr, {
                 onEnter: function(args) {
-                    console.log("[ML License Detector] License function called: " + funcName + 
+                    send({
+                        type: "detection",
+                        target: "ml_license_detector",
+                        action: "license_function_called",
+                        function_name: funcName,
+                        timestamp: new Date().toISOString() 
                               " in " + moduleName);
                     
                     this.functionName = funcName;
@@ -595,7 +676,12 @@
                     var exitTime = Date.now();
                     var duration = exitTime - this.enterTime;
                     
-                    console.log("[ML License Detector] License function returned: " + this.functionName + 
+                    send({
+                        type: "info",
+                        target: "ml_license_detector",
+                        action: "license_function_returned",
+                        function_name: this.functionName,
+                        return_value: retval 
                               " (duration: " + duration + "ms, result: " + retval + ")");
                     
                     // Apply bypass if needed
@@ -603,7 +689,13 @@
                     
                     if (bypassResult.applied) {
                         retval.replace(bypassResult.new_value);
-                        console.log("[ML License Detector] Bypass applied to " + this.functionName + 
+                        send({
+                            type: "bypass",
+                            target: "ml_license_detector",
+                            action: "bypass_applied",
+                            function_name: this.functionName,
+                            original_value: original,
+                            bypassed_value: retval 
                                   ": " + bypassResult.old_value + " -> " + bypassResult.new_value);
                     }
                     
@@ -619,10 +711,22 @@
                 this.hooked_functions[key].hook_time = Date.now();
             }
             
-            console.log("[ML License Detector] Hook placed for " + funcName + " in " + moduleName);
+            send({
+                type: "success",
+                target: "ml_license_detector",
+                action: "hook_placed",
+                function_name: funcName,
+                module_name: moduleName
+            });
             
         } catch(e) {
-            console.log("[ML License Detector] Hook placement error for " + detectionResult.name + ": " + e);
+            send({
+                type: "error",
+                target: "ml_license_detector",
+                action: "hook_placement_error",
+                function_name: detectionResult.name,
+                error: String(e)
+            });
         }
     },
     
@@ -662,7 +766,12 @@
             }
             
         } catch(e) {
-            console.log("[ML License Detector] Bypass application error: " + e);
+            send({
+                type: "error",
+                target: "ml_license_detector",
+                action: "bypass_application_error",
+                error: String(e)
+            });
         }
         
         return result;
@@ -695,7 +804,11 @@
     
     // === BEHAVIORAL MONITORING ===
     setupBehavioralMonitoring: function() {
-        console.log("[ML License Detector] Setting up behavioral monitoring...");
+        send({
+            type: "status",
+            target: "ml_license_detector",
+            action: "setting_up_behavioral_monitoring"
+        });
         
         // Monitor API calls that are commonly used by license functions
         this.monitorRegistryAccess();
@@ -776,11 +889,19 @@
     // === LEARNING SYSTEM ===
     startLearningLoop: function() {
         if (!this.config.learning.enabled) {
-            console.log("[ML License Detector] Learning disabled");
+            send({
+                type: "warning",
+                target: "ml_license_detector",
+                action: "learning_disabled"
+            });
             return;
         }
         
-        console.log("[ML License Detector] Starting learning loop...");
+        send({
+            type: "status",
+            target: "ml_license_detector",
+            action: "starting_learning_loop"
+        });
         
         // Set up periodic model updates
         setTimeout(() => {
@@ -791,13 +912,21 @@
     
     updateModel: function() {
         try {
-            console.log("[ML License Detector] Updating ML model...");
+            send({
+                type: "status",
+                target: "ml_license_detector",
+                action: "updating_ml_model"
+            });
             
             // Collect training data from recent predictions and bypass results
             var trainingData = this.collectTrainingData();
             
             if (trainingData.length === 0) {
-                console.log("[ML License Detector] No training data available");
+                send({
+                    type: "warning",
+                    target: "ml_license_detector",
+                    action: "no_training_data_available"
+                });
                 return;
             }
             
@@ -812,10 +941,20 @@
                 this.saveModel();
             }
             
-            console.log("[ML License Detector] Model updated with " + trainingData.length + " samples");
+            send({
+                type: "success",
+                target: "ml_license_detector",
+                action: "model_updated",
+                samples_count: trainingData.length
+            });
             
         } catch(e) {
-            console.log("[ML License Detector] Model update error: " + e);
+            send({
+                type: "error",
+                target: "ml_license_detector",
+                action: "model_update_error",
+                error: String(e)
+            });
         }
     },
     
@@ -898,7 +1037,13 @@
         }
         
         var accuracy = total > 0 ? correct / total : 0.0;
-        console.log("[ML License Detector] Model accuracy: " + (accuracy * 100).toFixed(1) + "% (" + 
+        send({
+            type: "info",
+            target: "ml_license_detector",
+            action: "model_accuracy_report",
+            accuracy_percent: (accuracy * 100).toFixed(1),
+            correct_predictions: correctPredictions,
+            total_predictions: totalPredictions 
                   correct + "/" + total + ")");
     },
     
@@ -941,7 +1086,12 @@
         var timestamp = Date.now();
         
         // This could be used to build behavioral profiles
-        console.log("[ML License Detector] API call recorded: " + apiName);
+        send({
+            type: "info",
+            target: "ml_license_detector",
+            action: "api_call_recorded",
+            api_name: apiName
+        });
     },
     
     updateModelWithResult: function(functionKey, bypassResult) {
@@ -964,7 +1114,11 @@
     processBatch: function() {
         // Process pending hook placements
         setTimeout(() => {
-            console.log("[ML License Detector] Processing function batch...");
+            send({
+                type: "status",
+                target: "ml_license_detector",
+                action: "processing_function_batch"
+            });
         }, this.config.hook_strategy.delay_ms);
     },
     
@@ -980,17 +1134,29 @@
     
     loadSavedModel: function() {
         // In a real implementation, this would load from persistent storage
-        console.log("[ML License Detector] No saved model found, using default initialization");
+        send({
+            type: "warning",
+            target: "ml_license_detector",
+            action: "no_saved_model_found_using_default"
+        });
     },
     
     saveModel: function() {
         // In a real implementation, this would save to persistent storage
-        console.log("[ML License Detector] Model state saved");
+        send({
+            type: "success",
+            target: "ml_license_detector",
+            action: "model_state_saved"
+        });
     },
     
     // === FUNCTION DISCOVERY HOOKS ===
     hookFunctionDiscovery: function() {
-        console.log("[ML License Detector] Setting up function discovery hooks...");
+        send({
+            type: "status",
+            target: "ml_license_detector",
+            action: "setting_up_function_discovery_hooks"
+        });
         
         // Hook LoadLibrary to detect new modules
         var loadLibrary = Module.findExportByName("kernel32.dll", "LoadLibraryW");
@@ -999,7 +1165,12 @@
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var libraryName = args[0].readUtf16String();
-                        console.log("[ML License Detector] New library loaded: " + libraryName);
+                        send({
+                            type: "info",
+                            target: "ml_license_detector",
+                            action: "new_library_loaded",
+                            library_name: libraryName
+                        });
                     }
                 },
                 
@@ -1033,36 +1204,81 @@
             // Get module information
             var module = Process.findModuleByAddress(moduleHandle);
             if (module && !this.isSystemModule(module.name)) {
-                console.log("[ML License Detector] Analyzing newly loaded module: " + module.name);
+                send({
+                    type: "status",
+                    target: "ml_license_detector",
+                    action: "analyzing_newly_loaded_module",
+                    module_name: module.name
+                });
                 this.analyzeModuleFunctions(module);
             }
         } catch(e) {
-            console.log("[ML License Detector] New module analysis error: " + e);
+            send({
+                type: "error",
+                target: "ml_license_detector",
+                action: "new_module_analysis_error",
+                error: String(e)
+            });
         }
     },
     
     setupPatternMatching: function() {
-        console.log("[ML License Detector] Pattern matching system ready");
+        send({
+            type: "success",
+            target: "ml_license_detector",
+            action: "pattern_matching_system_ready"
+        });
     },
     
     initializeFeatureExtraction: function() {
-        console.log("[ML License Detector] Feature extraction system initialized");
+        send({
+            type: "success",
+            target: "ml_license_detector",
+            action: "feature_extraction_system_initialized"
+        });
     },
     
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
-            console.log("\n[ML License Detector] ========================================");
-            console.log("[ML License Detector] ML License Detection Summary:");
-            console.log("[ML License Detector] ========================================");
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "summary_separator"
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "summary_header"
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "summary_separator"
+            });
             
             var totalDetected = Object.keys(this.detected_functions).length;
             var totalHooked = Object.keys(this.hooked_functions).length;
             var totalMonitored = Object.keys(this.monitored_functions).length;
             
-            console.log("[ML License Detector] Functions analyzed: " + totalDetected);
-            console.log("[ML License Detector] Functions hooked: " + totalHooked);
-            console.log("[ML License Detector] Functions monitored: " + totalMonitored);
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "summary_functions_analyzed",
+                count: totalDetected
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "summary_functions_hooked",
+                count: totalHooked
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "summary_functions_monitored",
+                count: totalMonitored
+            });
             
             // Show confidence distribution
             var highConf = 0, medConf = 0, lowConf = 0;
@@ -1073,22 +1289,75 @@
                 else lowConf++;
             }
             
-            console.log("[ML License Detector] ========================================");
-            console.log("[ML License Detector] Confidence Distribution:");
-            console.log("[ML License Detector]   • High confidence: " + highConf);
-            console.log("[ML License Detector]   • Medium confidence: " + medConf);
-            console.log("[ML License Detector]   • Low confidence: " + lowConf);
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "summary_separator"
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "confidence_distribution_header"
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "confidence_high",
+                count: highConf
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "confidence_medium",
+                count: medConf
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "confidence_low",
+                count: lowConf
+            });
             
-            console.log("[ML License Detector] ========================================");
-            console.log("[ML License Detector] ML Model Status:");
-            console.log("[ML License Detector]   • Features: " + Object.keys(this.model.weights).length);
-            console.log("[ML License Detector]   • Learning: " + (this.config.learning.enabled ? "Enabled" : "Disabled"));
-            console.log("[ML License Detector]   • Strategy: " + 
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "summary_separator"
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "ml_model_status_header"
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "model_features_count",
+                count: Object.keys(this.model.weights).length
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "learning_status",
+                enabled: this.config.learning.enabled
+            });
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "detection_strategy",
+                strategy: this.config.strategy 
                       (this.config.hook_strategy.aggressive ? "Aggressive" : 
                        this.config.hook_strategy.conservative ? "Conservative" : "Adaptive"));
             
-            console.log("[ML License Detector] ========================================");
-            console.log("[ML License Detector] ML-based license detection system is now ACTIVE!");
+            send({
+                type: "info",
+                target: "ml_license_detector",
+                action: "summary_separator"
+            });
+            send({
+                type: "success",
+                target: "ml_license_detector",
+                action: "system_active"
+            });
         }, 100);
     }
 }

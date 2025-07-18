@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Enhanced AI Model Selection**: Support for 16+ AI providers with dynamic model fetching
+  - Comprehensive provider support: OpenAI, Anthropic, Google Gemini, Local (Ollama), Azure OpenAI, AWS Bedrock, Cohere, Hugging Face, OpenRouter, Together AI, Perplexity, Groq, Replicate, DeepInfra, Anyscale, LM Studio
+  - Dynamic model fetching: Automatically retrieves latest available models when API key is provided
+  - Auto-refresh feature: Models update automatically 1 second after entering API key
+  - Manual refresh button for on-demand model list updates
+  - Comprehensive fallback model lists with latest models (GPT-4o, Claude 3.5, Gemini 2.0, etc.)
+- **New Documentation**:
+  - AI Assistant User Guide (docs/usage/ai_assistant.md) with comprehensive provider setup instructions
+  - AI Models Quick Reference (docs/AI_MODELS_QUICK_REFERENCE.md) with API key requirements and model recommendations
+  - Updated main documentation index to include AI guides
+
 ### Fixed
+- **Theme Manager Error**: Fixed AttributeError where `theme_manager.apply_theme()` was called instead of correct `theme_manager.set_theme()` method
 - Fixed F405 linting errors by replacing star imports with explicit imports across multiple modules
 - Resolved import resolution issues in utils/additional_runners.py
 - Fixed import resolution in utils/analysis/__init__.py

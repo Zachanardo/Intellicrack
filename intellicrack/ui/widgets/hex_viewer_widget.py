@@ -670,19 +670,88 @@ class HexViewerWidget(QWidget):
             QMessageBox.information(self, "No Selection", "Please select bytes to export")
             return
 
-        # Calculate byte range from selection
-        # This is simplified - actual implementation would parse the hex display
+        # Get selected text
+        selected_text = cursor.selectedText()
+        
+        # Parse hex values from selected text
+        try:
+            hex_bytes = []
+            lines = selected_text.split('\n')
+            
+            for line in lines:
+                # Skip empty lines
+                if not line.strip():
+                    continue
+                    
+                # Find the colon that separates offset from hex data
+                colon_pos = line.find(':')
+                if colon_pos == -1:
+                    # No offset, assume entire line is hex data
+                    hex_part = line
+                else:
+                    # Skip offset and extract hex part
+                    hex_part = line[colon_pos + 1:]
+                
+                # Remove all spaces and extract hex pairs
+                hex_part = hex_part.replace(' ', '')
+                
+                # Process hex pairs (2 characters at a time)
+                for i in range(0, len(hex_part), 2):
+                    if i + 1 < len(hex_part):
+                        hex_pair = hex_part[i:i+2]
+                        # Validate hex characters
+                        if all(c in '0123456789ABCDEFabcdef' for c in hex_pair):
+                            hex_bytes.append(hex_pair)
+            
+            if not hex_bytes:
+                QMessageBox.warning(self, "No Valid Data", "No valid hex data found in selection")
+                return
+            
+            # Convert hex strings to bytes
+            binary_data = bytes.fromhex(''.join(hex_bytes))
+            
+            # Get save file path
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Export Selection",
+                "selection.bin",
+                "Binary Files (*.bin);;All Files (*.*)"
+            )
 
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Export Selection",
-            "selection.bin",
-            "Binary Files (*.bin);;All Files (*.*)"
-        )
-
-        if file_path:
-            # Export selected bytes
-            pass  # Implementation needed
+            if file_path:
+                # Write bytes to file
+                with open(file_path, 'wb') as f:
+                    f.write(binary_data)
+                
+                # Show success message
+                QMessageBox.information(
+                    self,
+                    "Export Successful",
+                    f"Exported {len(binary_data)} bytes to:\n{file_path}"
+                )
+                
+                # Log the export
+                self.logger.info(f"Exported {len(binary_data)} bytes to {file_path}")
+                
+        except ValueError as e:
+            QMessageBox.critical(
+                self,
+                "Export Error",
+                f"Invalid hex data: {str(e)}"
+            )
+        except IOError as e:
+            QMessageBox.critical(
+                self,
+                "Export Error",
+                f"Failed to write file: {str(e)}"
+            )
+        except Exception as e:
+            self.logger.error(f"Export error: {e}")
+            QMessageBox.critical(
+                self,
+                "Export Error",
+                f"Unexpected error: {str(e)}"
+            )  # Implementation needed
 
     def clear_highlights(self):
         """Clear all highlighting"""

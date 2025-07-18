@@ -68,6 +68,7 @@ class PipelineThread(QThread):
     error = pyqtSignal(str)
 
     def __init__(self, plugin_path: str):
+        """Initialize the PipelineThread with default values."""
         super().__init__()
         self.plugin_path = plugin_path
         self.pipeline = CICDPipeline(plugin_path)
@@ -105,6 +106,7 @@ class CICDDialog(PluginDialogBase):
     """CI/CD Pipeline Management Dialog"""
 
     def __init__(self, parent=None, plugin_path=None):
+        """Initialize the CICDDialog with default values."""
         self.pipeline_thread = None
         self.stage_widgets = {}
         super().__init__(parent, plugin_path)

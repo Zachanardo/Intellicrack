@@ -37,6 +37,13 @@ class ProtectionAwareScriptGenerator:
     """Generate targeted scripts based on detected protection schemes"""
 
     def __init__(self):
+        """Initialize the protection-aware script generator.
+        
+        Sets up the generator with protection-specific script templates
+        for various software protection systems including Sentinel HASP,
+        FlexLM, WinLicense, Steam CEG, VMProtect, Denuvo, and Microsoft
+        activation systems.
+        """
         self.logger = logging.getLogger(
             __name__ + ".ProtectionAwareScriptGenerator")
         self.unified_engine = get_unified_engine()

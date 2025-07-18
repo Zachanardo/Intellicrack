@@ -18,8 +18,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 # Import the main configuration
-from ..config import (
-    CONFIG, ConfigManager, get_config, load_config, save_config, DEFAULT_CONFIG
-)
+from ..config import CONFIG, DEFAULT_CONFIG, ConfigManager, get_config, load_config, save_config
 
 __all__ = ['CONFIG', 'ConfigManager', 'get_config', 'load_config', 'save_config', 'DEFAULT_CONFIG']

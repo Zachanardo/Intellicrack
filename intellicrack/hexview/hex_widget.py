@@ -82,7 +82,15 @@ class HexViewerWidget(QAbstractScrollArea):
     view_mode_changed = pyqtSignal(ViewMode)  # Current view mode
 
     def __init__(self, parent=None):
-        """Initialize the hex viewer widget."""
+        """Initialize the hex viewer widget.
+        
+        Sets up the hexadecimal file viewer with support for multiple view modes,
+        file handling, editing capabilities, and AI-driven analysis integration.
+        Configures the scrollable interface and rendering components.
+        
+        Args:
+            parent: Parent widget for the hex viewer.
+        """
         super().__init__(parent)
 
         # Initialize members
@@ -1640,14 +1648,20 @@ class HexViewerWidget(QAbstractScrollArea):
         if key == Qt.Key_Home:
             if ctrl_pressed:
                 # Ctrl+Home: Jump to very beginning of file
-                self.jump_to_offset(0)
-                self.verticalScrollBar().setValue(0)
+                target_offset = 0
             else:
                 # Home: Jump to start of current line
                 current_offset = getattr(self, 'current_offset', 0)
-                line_start = (current_offset // 16) * 16
-                self.jump_to_offset(line_start)
-                
+                target_offset = (current_offset // 16) * 16
+
+            if shift_pressed:
+                # Shift+Home: Select from current position to target
+                self._extend_selection_to_offset(target_offset)
+            else:
+                self.jump_to_offset(target_offset)
+                if ctrl_pressed:
+                    self.verticalScrollBar().setValue(0)
+
         elif key == Qt.Key_End:
             if ctrl_pressed:
                 # Ctrl+End: Jump to very end of file
@@ -1658,7 +1672,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 current_offset = getattr(self, 'current_offset', 0)
                 line_end = min(file_size - 1, ((current_offset // 16) + 1) * 16 - 1)
                 self.jump_to_offset(line_end)
-                
+
         elif key == Qt.Key_PageUp:
             # Page Up: Move up one page
             current_row = self.verticalScrollBar().value()
@@ -1668,7 +1682,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 page_size *= 5
             new_row = max(0, current_row - page_size)
             self.verticalScrollBar().setValue(new_row)
-            
+
         elif key == Qt.Key_PageDown:
             # Page Down: Move down one page
             current_row = self.verticalScrollBar().value()

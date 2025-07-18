@@ -29,9 +29,11 @@ from typing import Optional
 from .common_imports import (
     HAS_PYQT,
     QCheckBox,
+    QComboBox,
     QDialog,
     QFileDialog,
     QFont,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -44,15 +46,7 @@ from .common_imports import (
 )
 
 try:
-    from PyQt6.QtCore import QFileSystemWatcher
-    from PyQt6.QtGui import (
-        QColor,
-        QKeySequence,
-        QSyntaxHighlighter,
-        QTextCharFormat,
-        QTextCursor,
-        QTextDocument,
-    )
+    from PyQt6.QtCore import QDateTime, QFileSystemWatcher, Qt
     from PyQt6.QtGui import (
         QAction,
         QColor,
@@ -78,6 +72,7 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for Python code."""
 
     def __init__(self, document: QTextDocument):
+        """Initialize the Python syntax highlighter with formatting rules for keywords, strings, comments, and functions."""
         if not HAS_PYQT:
             return
 
@@ -142,6 +137,7 @@ class FindReplaceDialog(QDialog):
     """Find and replace dialog."""
 
     def __init__(self, parent=None):
+        """Initialize the find and replace dialog for text search and replacement functionality."""
         if not HAS_PYQT:
             return
 
@@ -241,30 +237,37 @@ class TextEditorDialog(QDialog):
     file_saved = pyqtSignal(str)  # Emitted when file is saved
     content_changed = pyqtSignal(bool)  # Emitted when content changes
 
-    def __init__(self, parent=None, file_path: Optional[str] = None):
-        if not HAS_PYQT:
-            logger.warning("PyQt5 not available, cannot create text editor dialog")
-            return
-
+    def __init__(self, title="Text Editor", content="", syntax="python", parent=None):
+        """Initialize text editor dialog with syntax highlighting and advanced editing features."""
         super().__init__(parent)
-        self.file_path = file_path
-        self.original_content = ""
+        self.setWindowTitle(title)
+        self.setMinimumSize(800, 600)
+        
+        # Editor state
+        self.current_file = None
         self.is_modified = False
-        self.file_watcher = QFileSystemWatcher()
+        self.syntax_mode = syntax
         self.find_replace_dialog = None
-
+        
+        # Setup UI
         self.setup_ui()
-        self.setup_actions()
-        self.setup_toolbar()
-        self.setup_status_bar()
-
-        if file_path and os.path.exists(file_path):
-            self.load_file(file_path)
-
-        # Watch for external file changes
-        if self.file_path:
-            self.file_watcher.addPath(self.file_path)
-            self.file_watcher.fileChanged.connect(self.on_file_changed_externally)
+        self.setup_connections()
+        self.setup_shortcuts()
+        
+        # Set content and syntax highlighting
+        self.set_content(content)
+        self.set_syntax_highlighting(syntax)
+        
+        # Configure editor
+        self.configure_editor()
+        
+        # Load settings
+        self.load_settings()
+        
+        # Track modifications
+        self.text_edit.textChanged.connect(self.on_text_changed)
+        
+        logger.info(f"Text Editor Dialog initialized with syntax: {syntax}")
 
     def setup_ui(self):
         """Set up the user interface."""
@@ -295,6 +298,9 @@ class TextEditorDialog(QDialog):
         self.save_as_btn = QPushButton("Save As...")
         self.save_as_btn.clicked.connect(self.save_file_as)
 
+        self.export_btn = QPushButton("Export...")
+        self.export_btn.clicked.connect(self.export_file)
+
         self.reload_btn = QPushButton("Reload")
         self.reload_btn.clicked.connect(self.reload_file)
         self.reload_btn.setEnabled(bool(self.file_path))
@@ -304,6 +310,7 @@ class TextEditorDialog(QDialog):
 
         button_layout.addWidget(self.save_btn)
         button_layout.addWidget(self.save_as_btn)
+        button_layout.addWidget(self.export_btn)
         button_layout.addWidget(self.reload_btn)
         button_layout.addStretch()
         button_layout.addWidget(self.close_btn)
@@ -329,6 +336,10 @@ class TextEditorDialog(QDialog):
         self.save_as_action = QAction("Save As...", self)
         self.save_as_action.setShortcut(QKeySequence.SaveAs)
         self.save_as_action.triggered.connect(self.save_file_as)
+
+        self.export_action = QAction("Export...", self)
+        self.export_action.setShortcut(QKeySequence("Ctrl+E"))
+        self.export_action.triggered.connect(self.export_file)
 
         # Edit actions
         self.undo_action = QAction("Undo", self)
@@ -371,6 +382,7 @@ class TextEditorDialog(QDialog):
         self.addAction(self.open_action)
         self.addAction(self.save_action)
         self.addAction(self.save_as_action)
+        self.addAction(self.export_action)
         self.addAction(self.undo_action)
         self.addAction(self.redo_action)
         self.addAction(self.cut_action)
@@ -390,6 +402,7 @@ class TextEditorDialog(QDialog):
         self.toolbar.addAction(self.open_action)
         self.toolbar.addAction(self.save_action)
         self.toolbar.addAction(self.save_as_action)
+        self.toolbar.addAction(self.export_action)
         self.toolbar.addSeparator()
 
         # Edit buttons
@@ -558,6 +571,317 @@ class TextEditorDialog(QDialog):
             self.file_path = file_path
             self.save_file()
             self.reload_btn.setEnabled(True)
+
+    def export_file(self):
+        """Export the file to various formats."""
+        export_dialog = QDialog(self)
+        export_dialog.setWindowTitle("Export File")
+        export_dialog.setModal(True)
+
+        layout = QVBoxLayout()
+
+        # Format selection
+        format_label = QLabel("Select export format:")
+        layout.addWidget(format_label)
+
+        format_combo = QComboBox()
+        format_combo.addItems([
+            "HTML (.html)",
+            "PDF (.pdf)",
+            "Rich Text Format (.rtf)",
+            "Markdown (.md)",
+            "Plain Text (.txt)",
+            "CSV (.csv)",
+            "JSON (.json)"
+        ])
+        layout.addWidget(format_combo)
+
+        # Options
+        options_group = QGroupBox("Export Options")
+        options_layout = QVBoxLayout()
+
+        include_highlighting = QCheckBox("Include syntax highlighting (HTML/PDF only)")
+        include_highlighting.setChecked(True)
+        options_layout.addWidget(include_highlighting)
+
+        include_line_numbers = QCheckBox("Include line numbers")
+        include_line_numbers.setChecked(False)
+        options_layout.addWidget(include_line_numbers)
+
+        options_group.setLayout(options_layout)
+        layout.addWidget(options_group)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        export_btn = QPushButton("Export")
+        cancel_btn = QPushButton("Cancel")
+        button_layout.addWidget(export_btn)
+        button_layout.addWidget(cancel_btn)
+        layout.addLayout(button_layout)
+
+        export_dialog.setLayout(layout)
+
+        # Connect buttons
+        export_btn.clicked.connect(lambda: self._perform_export(
+            format_combo.currentText(),
+            include_highlighting.isChecked(),
+            include_line_numbers.isChecked(),
+            export_dialog
+        ))
+        cancel_btn.clicked.connect(export_dialog.reject)
+
+        export_dialog.exec()
+
+    def _perform_export(self, format_type, include_highlighting, include_line_numbers, dialog):
+        """Perform the actual export operation."""
+        # Determine file extension
+        format_map = {
+            "HTML (.html)": ("html", "HTML Files (*.html)"),
+            "PDF (.pdf)": ("pdf", "PDF Files (*.pdf)"),
+            "Rich Text Format (.rtf)": ("rtf", "RTF Files (*.rtf)"),
+            "Markdown (.md)": ("md", "Markdown Files (*.md)"),
+            "Plain Text (.txt)": ("txt", "Text Files (*.txt)"),
+            "CSV (.csv)": ("csv", "CSV Files (*.csv)"),
+            "JSON (.json)": ("json", "JSON Files (*.json)")
+        }
+
+        ext, file_filter = format_map.get(format_type, ("txt", "Text Files (*.txt)"))
+
+        # Get save path
+        default_name = os.path.splitext(self.file_path or "untitled")[0] + f".{ext}"
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            f"Export as {format_type}",
+            default_name,
+            file_filter
+        )
+
+        if not file_path:
+            dialog.reject()
+            return
+
+        try:
+            content = self.text_edit.toPlainText()
+
+            if ext == "html":
+                self._export_to_html(file_path, content, include_highlighting, include_line_numbers)
+            elif ext == "pdf":
+                self._export_to_pdf(file_path, content, include_highlighting, include_line_numbers)
+            elif ext == "rtf":
+                self._export_to_rtf(file_path, content, include_line_numbers)
+            elif ext == "md":
+                self._export_to_markdown(file_path, content)
+            elif ext == "csv":
+                self._export_to_csv(file_path, content)
+            elif ext == "json":
+                self._export_to_json(file_path, content)
+            else:
+                # Plain text export
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    if include_line_numbers:
+                        lines = content.split('\n')
+                        numbered_content = '\n'.join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
+                        f.write(numbered_content)
+                    else:
+                        f.write(content)
+
+            QMessageBox.information(self, "Export Successful", f"File exported to:\n{file_path}")
+            dialog.accept()
+
+        except Exception as e:
+            logger.error(f"Export failed: {e}")
+            QMessageBox.critical(self, "Export Failed", f"Failed to export file:\n{str(e)}")
+
+    def _export_to_html(self, file_path, content, include_highlighting, include_line_numbers):
+        """Export content to HTML format."""
+        html_content = """<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{title}</title>
+    <style>
+        body {{ font-family: 'Consolas', 'Monaco', monospace; background: #f5f5f5; padding: 20px; }}
+        pre {{ background: white; padding: 15px; border-radius: 5px; overflow-x: auto; }}
+        .line-number {{ color: #999; margin-right: 10px; user-select: none; }}
+        .keyword {{ color: #0000ff; font-weight: bold; }}
+        .string {{ color: #008000; }}
+        .comment {{ color: #808080; font-style: italic; }}
+        .function {{ color: #795E26; }}
+        .number {{ color: #098658; }}
+    </style>
+</head>
+<body>
+    <h1>{title}</h1>
+    <pre>{content}</pre>
+</body>
+</html>"""
+
+        title = os.path.basename(self.file_path or "Untitled")
+
+        if include_highlighting and self.file_path and self.file_path.endswith('.py'):
+            # Simple Python syntax highlighting
+            formatted_content = self._apply_python_highlighting(content, include_line_numbers)
+        else:
+            if include_line_numbers:
+                lines = content.split('\n')
+                formatted_content = '\n'.join(
+                    f'<span class="line-number">{i+1:4d}:</span> {self._escape_html(line)}'
+                    for i, line in enumerate(lines)
+                )
+            else:
+                formatted_content = self._escape_html(content)
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(html_content.format(title=title, content=formatted_content))
+
+    def _export_to_pdf(self, file_path, content, include_highlighting, include_line_numbers):
+        """Export content to PDF format."""
+        try:
+            from PyQt6.QtGui import QTextCursor, QTextDocument
+            from PyQt6.QtPrintSupport import QPrinter
+
+            printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+            printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
+            printer.setOutputFileName(file_path)
+
+            document = QTextDocument()
+
+            # Set font
+            font = QFont("Consolas", 10)
+            document.setDefaultFont(font)
+
+            # Format content
+            if include_line_numbers:
+                lines = content.split('\n')
+                formatted_content = '\n'.join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
+            else:
+                formatted_content = content
+
+            # Apply highlighting if requested
+            if include_highlighting and self.file_path and self.file_path.endswith('.py'):
+                document.setHtml(self._get_highlighted_html(formatted_content))
+            else:
+                document.setPlainText(formatted_content)
+
+            document.print(printer)
+
+        except ImportError:
+            # Fallback if PyQt6.QtPrintSupport is not available
+            QMessageBox.warning(self, "PDF Export",
+                               "PDF export requires PyQt6.QtPrintSupport. Saving as text instead.")
+            with open(file_path.replace('.pdf', '.txt'), 'w', encoding='utf-8') as f:
+                f.write(content)
+
+    def _export_to_rtf(self, file_path, content, include_line_numbers):
+        """Export content to RTF format."""
+        rtf_header = r"{\rtf1\ansi\deff0 {\fonttbl{\f0 Courier New;}}\f0\fs20 "
+        rtf_footer = "}"
+
+        # Escape RTF special characters
+        rtf_content = content.replace('\\', '\\\\').replace('{', '\\{').replace('}', '\\}')
+        rtf_content = rtf_content.replace('\n', '\\par\n')
+
+        if include_line_numbers:
+            lines = rtf_content.split('\\par\n')
+            rtf_content = '\\par\n'.join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(rtf_header + rtf_content + rtf_footer)
+
+    def _export_to_markdown(self, file_path, content):
+        """Export content to Markdown format."""
+        # Detect language for code block
+        lang = ""
+        if self.file_path:
+            ext = os.path.splitext(self.file_path)[1].lower()
+            lang_map = {
+                '.py': 'python', '.js': 'javascript', '.java': 'java',
+                '.cpp': 'cpp', '.c': 'c', '.cs': 'csharp',
+                '.html': 'html', '.css': 'css', '.json': 'json'
+            }
+            lang = lang_map.get(ext, '')
+
+        md_content = f"# {os.path.basename(self.file_path or 'Code Export')}\n\n"
+        md_content += f"```{lang}\n{content}\n```\n"
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(md_content)
+
+    def _export_to_csv(self, file_path, content):
+        """Export content to CSV format (line by line)."""
+        import csv
+
+        lines = content.split('\n')
+        with open(file_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Line Number', 'Content'])
+            for i, line in enumerate(lines, 1):
+                writer.writerow([i, line])
+
+    def _export_to_json(self, file_path, content):
+        """Export content to JSON format."""
+        import json
+
+        data = {
+            'filename': os.path.basename(self.file_path or 'untitled'),
+            'content': content,
+            'lines': content.split('\n'),
+            'line_count': len(content.split('\n')),
+            'character_count': len(content),
+            'export_date': QDateTime.currentDateTime().toString(Qt.DateFormat.ISODate)
+        }
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+    def _escape_html(self, text):
+        """Escape HTML special characters."""
+        return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+    def _apply_python_highlighting(self, content, include_line_numbers):
+        """Apply simple Python syntax highlighting for HTML export."""
+        import re
+
+        # Escape HTML first
+        content = self._escape_html(content)
+
+        # Python keywords
+        keywords = r'\b(and|as|assert|break|class|continue|def|del|elif|else|except|' \
+                  r'finally|for|from|global|if|import|in|is|lambda|not|or|pass|raise|' \
+                  r'return|try|while|with|yield|None|True|False)\b'
+
+        # Apply highlighting
+        content = re.sub(keywords, r'<span class="keyword">\1</span>', content)
+        content = re.sub(r'#.*$', lambda m: f'<span class="comment">{m.group()}</span>', content, flags=re.MULTILINE)
+        content = re.sub(r'"[^"]*"|\'[^\']*\'', lambda m: f'<span class="string">{m.group()}</span>', content)
+        content = re.sub(r'\b\d+\b', lambda m: f'<span class="number">{m.group()}</span>', content)
+        content = re.sub(r'\bdef\s+(\w+)', r'def <span class="function">\1</span>', content)
+
+        if include_line_numbers:
+            lines = content.split('\n')
+            content = '\n'.join(
+                f'<span class="line-number">{i+1:4d}:</span> {line}'
+                for i, line in enumerate(lines)
+            )
+
+        return content
+
+    def _get_highlighted_html(self, content):
+        """Get HTML with syntax highlighting for PDF export."""
+        html = f"""<html>
+<head>
+<style>
+    body {{ font-family: Consolas, monospace; }}
+    .keyword {{ color: blue; }}
+    .string {{ color: green; }}
+    .comment {{ color: gray; }}
+</style>
+</head>
+<body>
+<pre>{self._apply_python_highlighting(content, False)}</pre>
+</body>
+</html>"""
+        return html
 
     def reload_file(self):
         """Reload the file from disk."""

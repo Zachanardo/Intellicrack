@@ -110,6 +110,11 @@ class AISharedContext:
     """Shared context and memory for AI workflows."""
 
     def __init__(self):
+        """Initialize the shared context for AI workflows.
+        
+        Creates a thread-safe context store for sharing data between AI components,
+        including binary metadata, analysis results, model predictions, and workflow state.
+        """
         self._context = {
             "current_binary": None,
             "binary_metadata": {},
@@ -162,6 +167,11 @@ class AIEventBus:
     """Event bus for AI component communication."""
 
     def __init__(self):
+        """Initialize the AI event bus for component communication.
+        
+        Creates a thread-safe publish-subscribe system for AI components
+        to communicate through events.
+        """
         self._subscribers = {}
         self._lock = threading.RLock()
         logger.info("AI Event Bus initialized")
@@ -235,6 +245,11 @@ class AIOrchestrator:
     """
 
     def __init__(self):
+        """Initialize the AI orchestrator.
+        
+        Sets up the shared context, event bus, task queue, and starts the task processing
+        thread for coordinating AI component workflows.
+        """
         self.logger = logging.getLogger(__name__ + ".AIOrchestrator")
         logger.info("Initializing AI Orchestrator...")
 

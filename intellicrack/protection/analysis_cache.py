@@ -31,10 +31,10 @@ def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
     # Serialize object
     data = pickle.dumps(obj)
-    
+
     # Calculate HMAC for integrity
     mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
-    
+
     # Write MAC + data
     with open(file_path, 'wb') as f:
         f.write(mac)
@@ -46,12 +46,12 @@ def secure_pickle_load(file_path):
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
         data = f.read()
-    
+
     # Verify integrity
     expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
     if not hmac.compare_digest(stored_mac, expected_mac):
         raise ValueError("Pickle file integrity check failed - possible tampering detected")
-    
+
     # Load object
     return pickle.loads(data)
 

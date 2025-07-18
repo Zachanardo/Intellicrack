@@ -134,6 +134,12 @@ class NLPCodeProcessor:
     """Natural Language Processing for code analysis."""
 
     def __init__(self):
+        """Initialize the NLP code processor.
+        
+        Sets up vocabulary, semantic patterns, intent keywords,
+        and business keywords for natural language processing
+        of code analysis tasks.
+        """
         self.vocabulary = self._build_code_vocabulary()
         self.semantic_patterns = self._load_semantic_patterns()
         self.intent_keywords = self._load_intent_keywords()
@@ -397,6 +403,12 @@ class SemanticCodeAnalyzer:
     """Deep semantic code analysis system."""
 
     def __init__(self, llm_manager: Optional[LLMManager] = None):
+        """Initialize the semantic code analyzer.
+        
+        Args:
+            llm_manager: Optional language model manager instance.
+                If not provided, creates a new instance.
+        """
         self.logger = logging.getLogger(__name__ + ".SemanticCodeAnalyzer")
         self.llm_manager = llm_manager or LLMManager()
         self.nlp_processor = NLPCodeProcessor()
@@ -1135,6 +1147,11 @@ class SemanticKnowledgeBase:
     """Knowledge base for semantic patterns and rules."""
 
     def __init__(self):
+        """Initialize the semantic knowledge base.
+        
+        Sets up pattern storage, rule definitions, and anti-pattern
+        tracking for semantic code analysis and pattern recognition.
+        """
         self.patterns: Dict[str, Dict[str, Any]] = {}
         self.rules: Dict[str, Dict[str, Any]] = {}
         self.anti_patterns: Dict[str, Dict[str, Any]] = {}

@@ -36,6 +36,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
     """Early Bird injection - inject code before main thread executes"""
 
     def __init__(self):
+        """Initialize the Early Bird injector with Windows platform validation and logging setup."""
         if not AVAILABLE:
             raise RuntimeError("Early Bird injection requires Windows")
 

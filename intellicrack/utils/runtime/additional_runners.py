@@ -876,7 +876,7 @@ def create_sample_plugins() -> Dict[str, Any]:
     Returns:
         Dict containing created plugin information
     """
-    plugin_dir = os.path.join(os.getcwd(), "plugins", "samples")
+    plugin_dir = os.path.join(os.getcwd(), "intellicrack", "plugins", "samples")
     os.makedirs(plugin_dir, exist_ok=True)
 
     results = {
@@ -1492,7 +1492,7 @@ def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
 
         # Detect TPM
         tpm = detect_tpm_protection(binary_path)
-        if tmp.get("tpm_detected"):
+        if tpm.get("tpm_detected"):
             results["protections"]["tpm"] = tpm
 
         # Summary
@@ -2607,70 +2607,6 @@ def run_weak_crypto_detection(binary_path: str) -> Dict[str, Any]:
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in weak crypto detection: %s", e)
-        return {"status": "error", "message": str(e)}
-
-
-def run_local_protection_scan(binary_path: str) -> Dict[str, Any]:
-    """
-    Run comprehensive protection scan.
-
-    Args:
-        binary_path: Path to the binary file
-
-    Returns:
-        Dict containing all protection mechanisms found
-    """
-    try:
-        from ...core.analysis.core_analysis import detect_packing
-        from ..protection.protection_detection import (
-            detect_anti_debugging,
-            detect_commercial_protections,
-            detect_tpm_protection,
-            detect_vm_detection,
-        )
-
-        results = {
-            "status": "success",
-            "protections": {}
-        }
-
-        # Detect packing
-        packing = detect_packing(binary_path)
-        if packing.get("packing_detected"):
-            results["protections"]["packing"] = packing
-
-        # Detect commercial protections
-        commercial = detect_commercial_protections(binary_path)
-        if commercial.get("protections_found"):
-            results["protections"]["commercial"] = commercial
-
-        # Detect anti-debugging
-        anti_debug = detect_anti_debugging(binary_path)
-        if anti_debug.get("techniques_found"):
-            results["protections"]["anti_debugging"] = anti_debug
-
-        # Detect VM detection
-        vm_detect = detect_vm_detection(binary_path)
-        if vm_detect.get("vm_detection_found"):
-            results["protections"]["vm_detection"] = vm_detect
-
-        # Detect TPM
-        tpm = detect_tpm_protection(binary_path)
-        if tpm.get("tpm_detected"):
-            results["protections"]["tpm"] = tpm
-
-        # Summary
-        results["summary"] = {
-            "total_protections": len(results["protections"]),
-            "protection_types": list(results["protections"].keys()),
-            "protection_level": "high" if len(results["protections"]) > 3 else
-                              ("medium" if len(results["protections"]) > 1 else "low")
-        }
-
-        return results
-
-    except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in protection scan: %s", e)
         return {"status": "error", "message": str(e)}
 
 

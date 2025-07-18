@@ -36,18 +36,19 @@ class AdvancedDynamicAnalyzer:
     """
 
     def __init__(self, binary_path: Union[str, Path]):
-        """
-        Initialize dynamic analyzer with target binary.
-
-        Sets up the dynamic analysis environment for the specified binary,
-        preparing for runtime analysis, API hooking, and behavior monitoring.
-
-        Args:
-            binary_path: Path to the target binary executable to analyze
-        """
-        self.binary_path = str(binary_path)
-        self.logger = get_logger(f"{__name__}.{self.__class__.__name__}")
-        self.logger.info("AdvancedDynamicAnalyzer initialized with binary_path: %s", binary_path)
+        """Initialize the advanced dynamic analyzer with binary path configuration."""
+        self.binary_path = Path(binary_path)
+        self.logger = logging.getLogger("IntellicrackLogger.DynamicAnalyzer")
+        
+        # Ensure the binary file exists
+        if not self.binary_path.exists() or not self.binary_path.is_file():
+            raise FileNotFoundError(f"Binary file not found: {self.binary_path}")
+        
+        # Analysis results storage
+        self.api_calls = []
+        self.memory_access = []
+        self.network_activity = []
+        self.file_operations = []
 
     def run_comprehensive_analysis(self, payload: Optional[bytes] = None) -> Dict[str, Any]:
         """

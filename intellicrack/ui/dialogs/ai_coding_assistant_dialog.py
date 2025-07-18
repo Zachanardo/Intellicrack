@@ -27,8 +27,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from PyQt6.QtCore import QFileSystemWatcher, Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QColor, QFont, QSyntaxHighlighter, QTextCharFormat
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -65,6 +64,7 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for Python code."""
 
     def __init__(self, parent=None):
+        """Initialize the PythonSyntaxHighlighter with default values."""
         super().__init__(parent)
         self.highlighting_rules = []
 
@@ -115,6 +115,7 @@ class JavaScriptSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for JavaScript code."""
 
     def __init__(self, parent=None):
+        """Initialize the JavaScriptSyntaxHighlighter with default values."""
         super().__init__(parent)
         self.highlighting_rules = []
 
@@ -169,6 +170,7 @@ class FileTreeWidget(QTreeWidget):
     file_selected = pyqtSignal(str)
 
     def __init__(self, parent=None):
+        """Initialize the FileTreeWidget with default values."""
         super().__init__(parent)
         self.setHeaderLabel("Project Files")
         self.setRootIsDecorated(True)
@@ -311,6 +313,7 @@ class CodeEditor(QPlainTextEdit):
     content_changed = pyqtSignal(str)  # Emits file path when content changes
 
     def __init__(self, parent=None):
+        """Initialize the CodeEditor with default values."""
         super().__init__(parent)
         self.current_file = None
         self.is_modified = False
@@ -406,6 +409,7 @@ class ChatWidget(QWidget):
     message_sent = pyqtSignal(str)
 
     def __init__(self, parent=None):
+        """Initialize the ChatWidget with default values."""
         super().__init__(parent)
         self.setup_ui()
         self.conversation_history = []
@@ -505,26 +509,30 @@ class AICodingAssistantDialog(QDialog):
     """AI Coding Assistant with three-panel layout similar to Claude Code."""
 
     def __init__(self, parent=None):
+        """Initialize the AICodingAssistantDialog with development environment features."""
         super().__init__(parent)
         self.setWindowTitle("AI Coding Assistant")
         self.setMinimumSize(1200, 800)
         self.resize(1400, 900)
-
-        # Initialize components
-        self.ai_assistant = IntellicrackAIAssistant()
-        self.ai_tools = AIAssistant()  # Initialize AI tools for code analysis
-        self.llm_manager = LLMManager()
-
-        # Configure LLM with system prompt
-        self.system_prompt = self.ai_assistant.get_system_prompt()
-        self.current_project = None
-        self.modified_files = set()
-
+        
+        # Main state
+        self.current_project_dir = None
+        self.current_file = None
+        self.llm_enabled = True
+        
+        # Threading
+        self.worker_thread = None
+        self.generation_thread = None
+        
+        # Setup UI
         self.setup_ui()
         self.setup_connections()
-
-        # Auto-load Intellicrack project
-        self.load_intellicrack_project()
+        self.setup_shortcuts()
+        
+        # Load initial state
+        self.load_initial_project()
+        
+        logger.info("AI Coding Assistant Dialog initialized")
 
     def setup_ui(self):
         """Set up the three-panel UI layout."""

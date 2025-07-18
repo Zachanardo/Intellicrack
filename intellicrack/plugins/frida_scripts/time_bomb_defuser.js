@@ -109,7 +109,12 @@
     
     // Initialize
     run: function() {
-        console.log("[Time Bomb] Initializing Time Bomb Defuser v" + this.version);
+        send({
+            type: "status",
+            target: "time_bomb_defuser",
+            action: "initializing",
+            version: this.version
+        });
         
         // Detect platform
         this.detectPlatform();
@@ -137,7 +142,12 @@
             this.startPolymorphicEngine();
         }
         
-        console.log("[Time Bomb] Initialization complete - " + this.stats.hooksInstalled + " hooks installed");
+        send({
+            type: "status",
+            target: "time_bomb_defuser",
+            action: "initialization_complete",
+            hooks_installed: this.stats.hooksInstalled
+        });
     },
     
     // Platform detection with enhanced capabilities
@@ -166,7 +176,12 @@
         // Detect containerization
         this.detectContainer();
         
-        console.log("[Time Bomb] Platform detected: " + JSON.stringify(this.platform));
+        send({
+            type: "info",
+            target: "time_bomb_defuser",
+            action: "platform_detected",
+            platform: this.platform
+        });
     },
     
     // Windows environment detection
@@ -269,7 +284,11 @@
     initializeML: function() {
         var self = this;
         
-        console.log("[Time Bomb] Initializing ML-based detection...");
+        send({
+            type: "status",
+            target: "time_bomb_defuser",
+            action: "initializing_ml_detection"
+        });
         
         this.mlModel = {
             patterns: [],
@@ -327,7 +346,11 @@
     initializeKernelHooks: function() {
         var self = this;
         
-        console.log("[Time Bomb] Initializing kernel-level hooks...");
+        send({
+            type: "status",
+            target: "time_bomb_defuser",
+            action: "initializing_kernel_hooks"
+        });
         
         if (Process.platform === 'windows') {
             this.initializeWindowsKernelHooks();
@@ -376,7 +399,11 @@
     initializeWASM: function() {
         var self = this;
         
-        console.log("[Time Bomb] Initializing WebAssembly acceleration...");
+        send({
+            type: "status",
+            target: "time_bomb_defuser",
+            action: "initializing_wasm_acceleration"
+        });
         
         // WASM module for time calculations
         var wasmCode = new Uint8Array([
@@ -696,7 +723,11 @@
     installMLGuidedHooks: function() {
         var self = this;
         
-        console.log("[Time Bomb] Installing ML-guided hooks...");
+        send({
+            type: "status",
+            target: "time_bomb_defuser",
+            action: "installing_ml_guided_hooks"
+        });
         
         // Monitor code execution patterns
         Process.enumerateThreads().forEach(function(thread) {
@@ -731,7 +762,12 @@
                 
                 // Use ML to predict if this is time-related
                 if (self.mlModel && self.mlModel.predict(context)) {
-                    console.log("[Time Bomb] ML detected potential time check at: " + target);
+                    send({
+                        type: "bypass",
+                        target: "time_bomb_defuser",
+                        action: "ml_detected_time_check",
+                        address: target.toString()
+                    });
                     
                     // Dynamically hook the function
                     self.dynamicHook(target);
@@ -775,7 +811,11 @@
     startPolymorphicEngine: function() {
         var self = this;
         
-        console.log("[Time Bomb] Starting polymorphic code engine...");
+        send({
+            type: "status",
+            target: "time_bomb_defuser",
+            action: "starting_polymorphic_engine"
+        });
         
         // Periodically mutate hook code
         setInterval(function() {
@@ -984,7 +1024,11 @@
         
         if (!clrModule) return;
         
-        console.log("[Time Bomb] Installing .NET time hooks...");
+        send({
+            type: "status",
+            target: "time_bomb_defuser",
+            action: "installing_dotnet_time_hooks"
+        });
         
         // DateTime.Now pattern
         var dateTimeNowPattern = "48 8B C4 48 89 58 ?? 48 89 70 ?? 48 89 78 ?? 4C 89 60";
@@ -1038,7 +1082,11 @@
     installCertificateTimeHooks: function() {
         var self = this;
         
-        console.log("[Time Bomb] Installing certificate time validation hooks...");
+        send({
+            type: "status",
+            target: "time_bomb_defuser",
+            action: "installing_certificate_time_hooks"
+        });
         
         // CertVerifyTimeValidity
         this.hookWithCache("crypt32.dll", "CertVerifyTimeValidity", function(original) {
@@ -1074,7 +1122,11 @@
     installRegistryTimeHooks: function() {
         var self = this;
         
-        console.log("[Time Bomb] Installing registry time hooks...");
+        send({
+            type: "status",
+            target: "time_bomb_defuser",
+            action: "installing_registry_time_hooks"
+        });
         
         // RegQueryValueEx hooks
         ["RegQueryValueExW", "RegQueryValueExA"].forEach(function(func) {
@@ -1189,7 +1241,12 @@
     
     // Performance optimization
     optimizeHook: function(hookName) {
-        console.log("[Time Bomb] Optimizing hook: " + hookName);
+        send({
+            type: "info",
+            target: "time_bomb_defuser",
+            action: "optimizing_hook",
+            hook_name: hookName
+        });
         
         // Implement batch processing
         if (this.config.performance.batchOperations) {

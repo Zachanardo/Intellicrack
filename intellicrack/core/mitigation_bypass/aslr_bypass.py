@@ -34,6 +34,7 @@ class ASLRBypass(MitigationBypassBase):
     """Real ASLR bypass implementation with multiple techniques."""
 
     def __init__(self):
+        """Initialize the ASLR bypass engine with logging and base mitigation setup."""
         super().__init__("ASLR")
         self.logger = logging.getLogger("IntellicrackLogger.ASLRBypass")
 

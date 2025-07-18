@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-This file is part of Intellicrack.
+"""This file is part of Intellicrack.
 Copyright (C) 2025 Zachary Flint
 
 This program is free software: you can redistribute it and/or modify
@@ -30,23 +29,24 @@ from pathlib import Path
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Disable GPU for TensorFlow
 os.environ['MKL_THREADING_LAYER'] = 'GNU'  # Fix PyTorch + TensorFlow import conflict
+os.environ['CUPY_CUDA_COMPILER_PATH'] = ''  # Suppress CuPy CUDA detection warnings
+os.environ['PYTORCH_ENABLE_XPU_FALLBACK'] = '1'  # Enable XPU fallback for unsupported ops
 
 
 def detect_and_configure_gpu():
-    """
-    Auto-detect GPU and configure environment for optimal performance.
-    
+    """Auto-detect GPU and configure environment for optimal performance.
+
     This function performs comprehensive GPU detection across multiple backends
     (OpenCL, PyTorch, DirectML) and applies vendor-specific optimizations for
     Intel, NVIDIA, and AMD GPUs. It configures environment variables for optimal
     performance based on the detected hardware.
-    
+
     Returns:
         tuple: A tuple containing:
             - gpu_detected (bool): Whether a GPU was successfully detected
             - gpu_type (str): Description of the detected GPU (e.g., "Intel Arc A770")
             - gpu_vendor (str): GPU vendor name ("Intel", "NVIDIA", "AMD", or "Unknown")
-    
+
     Side Effects:
         Sets multiple environment variables for GPU optimization including:
         - MKL and OpenMP settings for CPU optimization
@@ -54,6 +54,7 @@ def detect_and_configure_gpu():
         - PyTorch backend settings
         - Qt rendering backend configuration
         - Vendor-specific GPU optimizations
+
     """
     print("=" * 60)
     print("INTELLICRACK GPU AUTO-DETECTION")
@@ -106,12 +107,12 @@ def detect_and_configure_gpu():
                 # Check if this is a discrete GPU (prefer over integrated)
                 # More specific detection - exclude integrated Intel Arc
                 gpu_lower = gpu_name.lower()
-                
+
                 # Intel discrete GPUs - exclude generic "arc graphics" (integrated)
                 intel_discrete = any(keyword in gpu_lower for keyword in [
                     'a770', 'a750', 'a580', 'a380', 'b580', 'b770'  # Specific Arc models
                 ]) and 'arc' in gpu_lower
-                
+
                 # Enhanced Intel Arc detection for B580 and other models
                 if any(model in gpu_lower for model in ['b580', 'b770', 'b570']):
                     intel_discrete = True
@@ -119,16 +120,16 @@ def detect_and_configure_gpu():
                     intel_discrete = True
                 elif gpu_lower == 'intel(r) arc(tm) graphics':
                     intel_discrete = False  # This is integrated
-                
+
                 # NVIDIA and AMD discrete detection
                 nvidia_discrete = any(keyword in gpu_lower for keyword in [
                     'rtx', 'gtx', 'titan', 'quadro'
                 ])
-                
+
                 amd_discrete = any(keyword in gpu_lower for keyword in [
                     'rx', 'radeon rx', 'vega', 'navi'
                 ])
-                
+
                 is_discrete = intel_discrete or nvidia_discrete or amd_discrete
 
                 all_gpus.append({
@@ -219,20 +220,22 @@ def detect_and_configure_gpu():
         os.environ['SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS'] = '1'
         os.environ['INTEL_COMPUTE_BACKEND'] = 'level_zero,opencl'
 
-        # Qt settings for Intel Arc Graphics - prioritize software rendering
-        os.environ['QT_OPENGL'] = 'software'  # Force software rendering for Intel Arc
+        # Qt settings for Intel Arc Graphics - use WARP for stability
+        os.environ['QT_OPENGL'] = 'software'  # Software rendering
+        os.environ['QT_ANGLE_PLATFORM'] = 'warp'  # Use WARP (Windows Advanced Rasterization Platform)
+        os.environ['QT_D3D_ADAPTER_INDEX'] = '1'  # Try different adapter
         os.environ['QT_QUICK_BACKEND'] = 'software'  # Software backend for QtQuick
         os.environ['QT_QPA_PLATFORM'] = 'windows'  # Use Windows platform
-        
+
         # Disable OpenGL hardware acceleration entirely
         os.environ['QT_OPENGL_BUGLIST'] = '1'  # Enable bug workarounds
         os.environ['QT_DISABLE_WINDOWSCOMPOSITION'] = '1'  # Disable Aero composition
-        
+
         # High DPI settings for consistency
         os.environ['QT_ENABLE_HIGHDPI_SCALING'] = '0'
         os.environ['QT_AUTO_SCREEN_SCALE_FACTOR'] = '0'
         os.environ['QT_SCALE_FACTOR'] = '1'
-        
+
         # Intel-specific driver workarounds
         os.environ['INTEL_DEBUG'] = 'nofc,sync'  # Disable fast clear, enable sync
 
@@ -240,6 +243,10 @@ def detect_and_configure_gpu():
         os.environ['CUPY_CUDA_PATH'] = ''  # Suppress CUDA path detection
         os.environ['CUDA_VISIBLE_DEVICES'] = ''  # Hide CUDA devices
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # Suppress TensorFlow CUDA warnings
+
+        # Suppress XPU operator warnings
+        os.environ['PYTORCH_ENABLE_XPU_FALLBACK'] = '1'  # Enable fallback for unsupported XPU ops
+        os.environ['IPEX_VERBOSE'] = '0'  # Reduce IPEX verbosity
 
     elif gpu_vendor == "NVIDIA":
         print("Applying NVIDIA GPU optimizations...")
@@ -271,14 +278,13 @@ def detect_and_configure_gpu():
 
 
 def main():
-    """
-    Main entry point for the Intellicrack launcher.
-    
+    """Main entry point for the Intellicrack launcher.
+
     This function sets up the Python path, detects and configures GPU settings,
     and launches the main Intellicrack application. It includes special handling
     for Intel Arc Graphics crashes and can automatically restart in software
     rendering mode if needed.
-    
+
     The function performs the following steps:
     1. Adds the project root to Python path for module imports
     2. Detects and configures GPU settings via detect_and_configure_gpu()
@@ -286,19 +292,20 @@ def main():
     4. Checks for forced software rendering mode
     5. Imports and runs the main Intellicrack application
     6. Handles Intel Arc Graphics crash recovery with user prompt
-    
+
     Returns:
         int: Exit code from the main application or recursive call result
-    
+
     Environment Variables Set:
         - INTELLICRACK_GPU_DETECTED: "True" or "False" string
         - INTELLICRACK_GPU_TYPE: GPU description string
         - INTELLICRACK_GPU_VENDOR: Vendor name string
         - INTELLICRACK_FORCE_SOFTWARE: "1" to force software rendering
-    
+
     Raises:
         ImportError: If Intellicrack modules cannot be imported
         Exception: For any other startup errors
+
     """
     # Add the intellicrack package to Python path
     project_root = Path(__file__).parent
@@ -323,6 +330,13 @@ def main():
         os.environ.pop('QSG_RENDER_LOOP', None)
 
     try:
+        # Suppress known warnings
+        import warnings
+        warnings.filterwarnings('ignore', message='Overriding a previously registered kernel')
+        warnings.filterwarnings('ignore', message='pkg_resources is deprecated as an API')
+        warnings.filterwarnings('ignore', message='.*XPU.*operator.*override.*', category=UserWarning)
+        warnings.filterwarnings('ignore', message='.*XPU.*not implemented.*', category=UserWarning)
+
         # Import and run the main application
         print("Importing intellicrack.main...")
         from intellicrack.main import main as intellicrack_main
@@ -342,7 +356,7 @@ def main():
             print("This is a known issue with Intel Arc Graphics drivers and Qt applications.")
             print("")
             print("Automatically restarting in software rendering mode...")
-            
+
             # Don't prompt user, just restart in software mode automatically
             os.environ['INTELLICRACK_FORCE_SOFTWARE'] = '1'
             print("Restarting with software rendering enabled...")

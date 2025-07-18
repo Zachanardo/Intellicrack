@@ -76,6 +76,7 @@ class QEMUExecutionThread(QThread):
 
     def __init__(self, qemu_manager: QEMUTestManager, snapshot_id: str,
                  script_content: str, binary_path: str, script_type: str):
+        """Initialize the QEMUExecutionThread with default values."""
         super().__init__()
         self.qemu_manager = qemu_manager
         self.snapshot_id = snapshot_id
@@ -198,6 +199,7 @@ class QEMUTestResultsDialog(QDialog):
     """Dialog showing real QEMU test execution results."""
 
     def __init__(self, parent=None, script_info=None, qemu_manager=None):
+        """Initialize the QEMUTestResultsDialog with default values."""
         super().__init__(parent)
         self.script_info = script_info or {}
         self.qemu_manager = qemu_manager or QEMUTestManager()

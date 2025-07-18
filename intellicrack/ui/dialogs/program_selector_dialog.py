@@ -75,6 +75,7 @@ class ProgramDiscoveryThread(QThread):
     discovery_complete = pyqtSignal()
 
     def __init__(self, discovery_engine, search_paths=None):
+        """Initialize the ProgramDiscoveryThread with default values."""
         super().__init__()
         self.discovery_engine = discovery_engine
         self.search_paths = search_paths or []
@@ -136,22 +137,30 @@ class ProgramSelectorDialog(QDialog):
     """
 
     def __init__(self, parent=None):
+        """Initialize program selector dialog with binary file discovery and analysis capabilities."""
         super().__init__(parent)
-        self.discovery_engine = ProgramDiscoveryEngine()
-        self.discovery_thread = None
+        self.setWindowTitle("Select Program to Analyze")
+        self.setMinimumSize(800, 600)
+        
+        # State management
         self.selected_program = None
-        self.installation_folder = None
-        self.licensing_files = []
-
-        self.setWindowTitle("Program Selector - Intellicrack")
-        self.setMinimumSize(1000, 700)
-        self.resize(1200, 800)
-
+        self.discovered_programs = []
+        self.analysis_results = {}
+        
+        # Threading
+        self.discovery_thread = None
+        
+        # Filters and search
+        self.file_filters = {
+            'All Executables': ['*.exe', '*.dll', '*.so', '*.dylib', '*.bin'],
+            'Windows': ['*.exe', '*.dll', '*.sys'],
+            'Linux': ['*.so', '*.bin'],
+            'macOS': ['*.dylib', '*.app']
+        }
+        
+        # Setup UI
         self.setup_ui()
-        self.connect_signals()
-
-        # Auto-scan desktop for shortcuts on startup
-        QTimer.singleShot(100, self.scan_desktop_shortcuts)
+        self.setup_connections()
 
     def setup_ui(self):
         """Set up the user interface."""
@@ -603,7 +612,7 @@ Description: {program_data.get('description', 'No description available')}"""
                 'rescue': 6, 'safe': 5, 'secure': 6,
 
                 # Version and update control
-                'version': 4, 'update': 4, 'patch': 6, 'hotfix': 5,
+                'version': 4, 'update': 4, 'software_patch': 6, 'hotfix': 5,
                 'upgrade': 5, 'migration': 5, 'transfer': 5,
 
                 # Obscure extensions and patterns
@@ -613,7 +622,7 @@ Description: {program_data.get('description', 'No description available')}"""
 
                 # Network licensing
                 'network': 5, 'floating': 6, 'concurrent': 6, 'node': 5,
-                'seat': 6, 'user': 4, 'machine': 5, 'hardware': 5,
+                'seat': 6, 'user': 4, 'machine': 5, 'hardware_binding': 5,
 
                 # Cryptographic elements
                 'rsa': 6, 'dsa': 6, 'ecc': 6, 'aes': 6, 'des': 6,
@@ -629,7 +638,7 @@ Description: {program_data.get('description', 'No description available')}"""
                 'force': 5, 'revenge': 6, 'paradox': 6, 'prophet': 6,
 
                 # Database and storage
-                'sqlite': 5, 'mysql': 5, 'postgres': 5, 'oracle': 6,
+                'sqlite': 5, 'mysql': 5, 'postgres': 5, 'oracle_db': 6,
                 'access': 5, 'firebird': 5, 'derby': 5,
 
                 # Virtualization and sandboxing

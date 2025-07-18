@@ -63,19 +63,19 @@ class EmulatorManager(QObject):
     emulator_error = pyqtSignal(str, str)  # emulator_type, error_message
 
     def __init__(self):
+        """Initialize the emulator manager with signal handling and emulator setup."""
         super().__init__()
         self.logger = logging.getLogger(__name__)
-
-        # Emulator instances
-        self.qemu_instance: Optional[QemuEmulator] = None
-        self.qiling_instances: Dict[str, QilingEmulator] = {}
-
-        # Status tracking
-        self.qemu_running = False
-        self.qemu_starting = False
-
-        # Thread safety
-        self.lock = threading.Lock()
+        self.emulators = {}
+        self.is_running = False
+        self.stats = {
+            'total_executions': 0,
+            'successful_executions': 0,
+            'failed_executions': 0,
+            'qiling_executions': 0,
+            'qemu_executions': 0,
+            'unicorn_executions': 0
+        }
 
     def ensure_qemu_running(self, binary_path: str, config: Optional[Dict[str, Any]] = None) -> bool:
         """

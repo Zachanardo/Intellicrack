@@ -151,13 +151,22 @@
     },
     
     onAttach: function(pid) {
-        console.log("[Success Tracker] Attaching to process: " + pid);
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "attaching_to_process",
+            pid: pid
+        });
         this.processId = pid;
         this.startTime = Date.now();
     },
     
     run: function() {
-        console.log("[Success Tracker] Starting bypass success rate tracking system...");
+        send({
+            type: "status",
+            target: "bypass_success_tracker",
+            action: "starting_tracking_system"
+        });
         
         // Initialize tracking components
         this.initializeTracker();
@@ -171,7 +180,11 @@
     
     // === TRACKER INITIALIZATION ===
     initializeTracker: function() {
-        console.log("[Success Tracker] Initializing success rate tracker...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "initializing_tracker"
+        });
         
         // Initialize tracking maps
         this.tracker.attempts.clear();
@@ -190,7 +203,11 @@
         // Initialize categories
         this.initializeCategories();
         
-        console.log("[Success Tracker] Tracker initialized");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "tracker_initialized"
+        });
     },
     
     resetStatistics: function() {
@@ -227,7 +244,11 @@
     
     // === BYPASS TRACKING SETUP ===
     setupBypassTracking: function() {
-        console.log("[Success Tracker] Setting up bypass tracking hooks...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "setting_up_bypass_tracking_hooks"
+        });
         
         // Set up tracking for different bypass types
         this.setupAntiDebugTracking();
@@ -241,13 +262,21 @@
         this.setupMemoryTracking();
         this.setupRegistryTracking();
         
-        console.log("[Success Tracker] Bypass tracking setup complete");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "bypass_tracking_setup_complete"
+        });
     },
     
     setupAntiDebugTracking: function() {
         if (!this.config.categories.antiDebugBypass) return;
         
-        console.log("[Success Tracker] Setting up anti-debug bypass tracking...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "setting_up_anti_debug_tracking"
+        });
         
         // Hook common anti-debug APIs to track bypass attempts
         var antiDebugAPIs = [
@@ -264,7 +293,11 @@
     setupLicensingTracking: function() {
         if (!this.config.categories.licensingBypass) return;
         
-        console.log("[Success Tracker] Setting up licensing bypass tracking...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "setting_up_licensing_tracking"
+        });
         
         // Track license validation function attempts
         var licensingMethods = [
@@ -280,7 +313,11 @@
     setupDrmTracking: function() {
         if (!this.config.categories.drmBypass) return;
         
-        console.log("[Success Tracker] Setting up DRM bypass tracking...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "setting_up_drm_tracking"
+        });
         
         // Track DRM-related bypass attempts
         var drmMethods = [
@@ -296,7 +333,11 @@
     setupIntegrityTracking: function() {
         if (!this.config.categories.integrityBypass) return;
         
-        console.log("[Success Tracker] Setting up integrity bypass tracking...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "setting_up_integrity_tracking"
+        });
         
         // Track integrity check bypass attempts
         var integrityAPIs = [
@@ -312,7 +353,11 @@
     setupVirtualizationTracking: function() {
         if (!this.config.categories.virtualizationBypass) return;
         
-        console.log("[Success Tracker] Setting up virtualization bypass tracking...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "setting_up_virtualization_tracking"
+        });
         
         // Track VM detection bypass attempts
         var vmDetectionMethods = [
@@ -328,7 +373,11 @@
     setupHardwareTracking: function() {
         if (!this.config.categories.hardwareBypass) return;
         
-        console.log("[Success Tracker] Setting up hardware bypass tracking...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "setting_up_hardware_tracking"
+        });
         
         // Track hardware-related bypass attempts
         var hardwareAPIs = [
@@ -343,7 +392,11 @@
     setupNetworkTracking: function() {
         if (!this.config.categories.networkBypass) return;
         
-        console.log("[Success Tracker] Setting up network bypass tracking...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "setting_up_network_tracking"
+        });
         
         // Track network-related bypass attempts
         var networkAPIs = [
@@ -359,7 +412,11 @@
     setupCryptographyTracking: function() {
         if (!this.config.categories.cryptographyBypass) return;
         
-        console.log("[Success Tracker] Setting up cryptography bypass tracking...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "setting_up_cryptography_tracking"
+        });
         
         // Track cryptographic bypass attempts
         var cryptoAPIs = [
@@ -375,7 +432,11 @@
     setupMemoryTracking: function() {
         if (!this.config.categories.memoryBypass) return;
         
-        console.log("[Success Tracker] Setting up memory bypass tracking...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "setting_up_memory_tracking"
+        });
         
         // Track memory protection bypass attempts
         var memoryAPIs = [
@@ -390,7 +451,11 @@
     setupRegistryTracking: function() {
         if (!this.config.categories.registryBypass) return;
         
-        console.log("[Success Tracker] Setting up registry bypass tracking...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "setting_up_registry_tracking"
+        });
         
         // Track registry bypass attempts
         var registryAPIs = [
@@ -435,7 +500,12 @@
                 }
             });
             
-            console.log("[Success Tracker] Tracking bypass for: " + trackingKey);
+            send({
+                type: "info",
+                target: "bypass_success_tracker",
+                action: "tracking_bypass",
+                tracking_key: trackingKey
+            });
             
         } catch(e) {
             // API not found
@@ -459,7 +529,12 @@
             });
         }
         
-        console.log("[Success Tracker] Registered generic bypass tracking: " + trackingKey);
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "registered_generic_bypass_tracking",
+            tracking_key: trackingKey
+        });
     },
     
     recordBypassAttempt: function(category, method, args) {
@@ -491,7 +566,13 @@
             bypassMethod.lastAttempt = timestamp;
         }
         
-        console.log("[Success Tracker] Recorded bypass attempt: " + category + "." + method);
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "recorded_bypass_attempt",
+            category: category,
+            method: method
+        });
     },
     
     recordBypassResult: function(category, method, success, duration, returnValue) {
@@ -565,8 +646,15 @@
         // Check for alerts
         this.checkSuccessRateAlerts(category, method);
         
-        console.log("[Success Tracker] Recorded bypass result: " + category + "." + method + 
-                  " = " + (success ? "SUCCESS" : "FAILURE") + " (" + duration + "ms)");
+        send({
+            type: success ? "success" : "warning",
+            target: "bypass_success_tracker",
+            action: "recorded_bypass_result",
+            category: category,
+            method: method,
+            success: success,
+            duration_ms: duration
+        });
     },
     
     evaluateBypassSuccess: function(category, method, args, returnValue, duration) {
@@ -737,7 +825,13 @@
             this.reports.alerts.shift();
         }
         
-        console.log("[Success Tracker] ALERT (" + alert.severity + "): " + alert.message);
+        send({
+            type: "warning",
+            target: "bypass_success_tracker",
+            action: "alert_generated",
+            severity: alert.severity,
+            message: alert.message
+        });
     },
     
     getAlertSeverity: function(successRate) {
@@ -763,7 +857,11 @@
     
     // === ANALYSIS ENGINE ===
     startAnalysisEngine: function() {
-        console.log("[Success Tracker] Starting analysis engine...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "starting_analysis_engine"
+        });
         
         // Start periodic analysis
         setInterval(() => {
@@ -784,7 +882,11 @@
             }, 600000); // Every 10 minutes
         }
         
-        console.log("[Success Tracker] Analysis engine started");
+        send({
+            type: "status",
+            target: "bypass_success_tracker",
+            action: "analysis_engine_started"
+        });
     },
     
     performPeriodicAnalysis: function() {
@@ -804,7 +906,12 @@
             this.cleanupOldData();
             
         } catch(e) {
-            console.log("[Success Tracker] Analysis error: " + e);
+            send({
+                type: "error",
+                target: "bypass_success_tracker",
+                action: "analysis_error",
+                error: e.toString()
+            });
         }
     },
     
@@ -917,7 +1024,11 @@
     },
     
     performTrendAnalysis: function() {
-        console.log("[Success Tracker] Performing trend analysis...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "performing_trend_analysis"
+        });
         
         this.statistics.byCategory.forEach((categoryStats, category) => {
             var trend = this.calculateTrend(category);
@@ -966,7 +1077,11 @@
     },
     
     performStatisticalAnalysis: function() {
-        console.log("[Success Tracker] Performing statistical analysis...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "performing_statistical_analysis"
+        });
         
         // Perform comparative analysis between categories
         this.performComparativeAnalysis();
@@ -1130,7 +1245,12 @@
         this.reports.recommendations = recommendations.slice(-20); // Keep latest 20
         
         if (recommendations.length > 0) {
-            console.log("[Success Tracker] Generated " + recommendations.length + " optimization recommendations");
+            send({
+                type: "info",
+                target: "bypass_success_tracker",
+                action: "generated_optimization_recommendations",
+                count: recommendations.length
+            });
         }
     },
     
@@ -1171,7 +1291,11 @@
     initializeMachineLearning: function() {
         if (!this.config.analytics.enableMachineLearning) return;
         
-        console.log("[Success Tracker] Initializing machine learning components...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "initializing_ml_components"
+        });
         
         this.mlComponents.successPredictor = this.createSuccessPredictor();
         this.mlComponents.anomalyDetector = this.createAnomalyDetector();
@@ -1183,7 +1307,11 @@
             this.updateMLModels();
         }, this.config.analytics.modelUpdateInterval);
         
-        console.log("[Success Tracker] Machine learning components initialized");
+        send({
+            type: "status",
+            target: "bypass_success_tracker",
+            action: "ml_components_initialized"
+        });
     },
     
     createSuccessPredictor: function() {
@@ -1238,10 +1366,20 @@
                 // Update pattern classifier
                 this.updatePatternClassifier(trainingData);
                 
-                console.log("[Success Tracker] ML models updated with " + trainingData.length + " samples");
+                send({
+                    type: "info",
+                    target: "bypass_success_tracker",
+                    action: "ml_models_updated",
+                    sample_count: trainingData.length
+                });
             }
         } catch(e) {
-            console.log("[Success Tracker] ML update error: " + e);
+            send({
+                type: "error",
+                target: "bypass_success_tracker",
+                action: "ml_update_error",
+                error: e.toString()
+            });
         }
     },
     
@@ -1427,7 +1565,11 @@
     
     // === REPORTING SYSTEM ===
     startReportingSystem: function() {
-        console.log("[Success Tracker] Starting reporting system...");
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "starting_reporting_system"
+        });
         
         // Start real-time reporting
         if (this.config.reporting.enableAutoReporting) {
@@ -1446,7 +1588,11 @@
             this.generateSummaryReport();
         }, this.config.reporting.summaryReportInterval);
         
-        console.log("[Success Tracker] Reporting system started");
+        send({
+            type: "status",
+            target: "bypass_success_tracker",
+            action: "reporting_system_started"
+        });
     },
     
     generateRealtimeReport: function() {
@@ -1463,9 +1609,13 @@
         this.reports.realTime = report;
         
         if (this.config.tracking.enableDetailedAnalysis) {
-            console.log("[Success Tracker] Real-time Report: Overall Success Rate: " + 
-                      (report.overall.overallSuccessRate * 100).toFixed(1) + "% (" + 
-                      report.overall.totalAttempts + " attempts)");
+            send({
+                type: "info",
+                target: "bypass_success_tracker",
+                action: "realtime_report_generated",
+                overall_success_rate: report.overall.overallSuccessRate,
+                total_attempts: report.overall.totalAttempts
+            });
         }
     },
     
@@ -1490,8 +1640,13 @@
             this.reports.periodic.shift();
         }
         
-        console.log("[Success Tracker] Detailed report generated - Categories analyzed: " + 
-                  report.byCategory.length + ", Methods: " + report.byMethod.length);
+        send({
+            type: "info",
+            target: "bypass_success_tracker",
+            action: "detailed_report_generated",
+            categories_analyzed: report.byCategory.length,
+            methods_analyzed: report.byMethod.length
+        });
     },
     
     generateSummaryReport: function() {
@@ -1512,7 +1667,11 @@
         
         this.reports.summary = report;
         
-        console.log("[Success Tracker] Summary Report Generated");
+        send({
+            type: "status",
+            target: "bypass_success_tracker",
+            action: "summary_report_generated"
+        });
         this.logSummaryReport(report);
     },
     
@@ -1669,61 +1828,59 @@
     },
     
     logSummaryReport: function(report) {
-        console.log("\n[Success Tracker] ========================================");
-        console.log("[Success Tracker] Bypass Success Rate Summary Report");
-        console.log("[Success Tracker] ========================================");
-        
-        console.log("[Success Tracker] Overall Performance:");
-        console.log("[Success Tracker]   • Total Attempts: " + report.overall.totalAttempts);
-        console.log("[Success Tracker]   • Total Successes: " + report.overall.totalSuccesses);
-        console.log("[Success Tracker]   • Total Failures: " + report.overall.totalFailures);
-        console.log("[Success Tracker]   • Overall Success Rate: " + (report.overall.overallSuccessRate * 100).toFixed(1) + "%");
-        
-        console.log("[Success Tracker] Performance by Timeframe:");
-        var perf = report.performanceSummary;
-        console.log("[Success Tracker]   • Hourly: " + (perf.hourly.successRate * 100).toFixed(1) + "% (" + perf.hourly.totalAttempts + " attempts)");
-        console.log("[Success Tracker]   • Daily: " + (perf.daily.successRate * 100).toFixed(1) + "% (" + perf.daily.totalAttempts + " attempts)");
-        console.log("[Success Tracker]   • Weekly: " + (perf.weekly.successRate * 100).toFixed(1) + "% (" + perf.weekly.totalAttempts + " attempts)");
-        
-        console.log("[Success Tracker] Trend Analysis:");
-        var trends = report.trendAnalysis;
-        console.log("[Success Tracker]   • Improving: " + trends.improving + " categories");
-        console.log("[Success Tracker]   • Declining: " + trends.declining + " categories");
-        console.log("[Success Tracker]   • Stable: " + trends.stable + " categories");
-        
-        if (report.topPerformers.length > 0) {
-            console.log("[Success Tracker] Top Performers:");
-            for (var i = 0; i < Math.min(3, report.topPerformers.length); i++) {
-                var performer = report.topPerformers[i];
-                console.log("[Success Tracker]   • " + performer.method + ": " + 
-                          (performer.successRate * 100).toFixed(1) + "%");
-            }
-        }
-        
-        if (report.criticalAlerts.length > 0) {
-            console.log("[Success Tracker] Critical Alerts:");
-            for (var i = 0; i < report.criticalAlerts.length; i++) {
-                var alert = report.criticalAlerts[i];
-                console.log("[Success Tracker]   ⚠ " + alert.message);
-            }
-        }
-        
-        if (report.highPriorityRecommendations.length > 0) {
-            console.log("[Success Tracker] High Priority Recommendations:");
-            for (var i = 0; i < report.highPriorityRecommendations.length; i++) {
-                var rec = report.highPriorityRecommendations[i];
-                console.log("[Success Tracker]   → " + rec.suggestion);
-            }
-        }
+        var summaryData = {
+            type: "summary",
+            target: "bypass_success_tracker", 
+            action: "summary_report",
+            overall_performance: {
+                total_attempts: report.overall.totalAttempts,
+                total_successes: report.overall.totalSuccesses,
+                total_failures: report.overall.totalFailures,
+                overall_success_rate: report.overall.overallSuccessRate
+            },
+            performance_by_timeframe: {
+                hourly: {
+                    success_rate: report.performanceSummary.hourly.successRate,
+                    attempts: report.performanceSummary.hourly.totalAttempts
+                },
+                daily: {
+                    success_rate: report.performanceSummary.daily.successRate,
+                    attempts: report.performanceSummary.daily.totalAttempts
+                },
+                weekly: {
+                    success_rate: report.performanceSummary.weekly.successRate,
+                    attempts: report.performanceSummary.weekly.totalAttempts
+                }
+            },
+            trend_analysis: {
+                improving: report.trendAnalysis.improving,
+                declining: report.trendAnalysis.declining,
+                stable: report.trendAnalysis.stable
+            },
+            top_performers: report.topPerformers.slice(0, 3).map(function(performer) {
+                return {
+                    method: performer.method,
+                    success_rate: performer.successRate
+                };
+            }),
+            critical_alerts: report.criticalAlerts.map(function(alert) {
+                return alert.message;
+            }),
+            high_priority_recommendations: report.highPriorityRecommendations.map(function(rec) {
+                return rec.suggestion;
+            })
+        };
         
         if (report.mlModelStatus.enabled) {
-            console.log("[Success Tracker] Machine Learning Status:");
-            console.log("[Success Tracker]   • Model Accuracy: " + (report.mlModelStatus.modelAccuracy * 100).toFixed(1) + "%");
-            console.log("[Success Tracker]   • Success Predictor: " + report.mlModelStatus.successPredictorStatus);
-            console.log("[Success Tracker]   • Anomaly Detector: " + report.mlModelStatus.anomalyDetectorStatus);
+            summaryData.ml_status = {
+                enabled: true,
+                model_accuracy: report.mlModelStatus.modelAccuracy,
+                success_predictor_status: report.mlModelStatus.successPredictorStatus,
+                anomaly_detector_status: report.mlModelStatus.anomalyDetectorStatus
+            };
         }
         
-        console.log("[Success Tracker] ========================================");
+        send(summaryData);
     },
     
     // === API METHODS ===
@@ -1773,17 +1930,19 @@
         this.recordBypassAttempt(category, method, {});
         this.recordBypassResult(category, method, success, duration, success ? 1 : 0);
         
-        console.log("[Success Tracker] Manual bypass recorded: " + category + "." + method + 
-                  " = " + (success ? "SUCCESS" : "FAILURE"));
+        send({
+            type: success ? "success" : "info",
+            target: "bypass_success_tracker",
+            action: "manual_bypass_recorded",
+            category: category,
+            method: method,
+            success: success
+        });
     },
     
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
-            console.log("\n[Success Tracker] ========================================");
-            console.log("[Success Tracker] Bypass Success Rate Tracker Summary:");
-            console.log("[Success Tracker] ========================================");
-            
             var activeFeatures = [];
             
             if (this.config.tracking.enabled) {
@@ -1805,59 +1964,59 @@
                 activeFeatures.push("Automated Reporting");
             }
             
-            for (var i = 0; i < activeFeatures.length; i++) {
-                console.log("[Success Tracker]   ✓ " + activeFeatures[i]);
-            }
-            
-            console.log("[Success Tracker] ========================================");
-            console.log("[Success Tracker] Tracked Categories:");
-            
+            var enabledCategories = [];
             var categories = Object.keys(this.config.categories);
             for (var i = 0; i < categories.length; i++) {
                 var category = categories[i];
                 if (this.config.categories[category]) {
-                    console.log("[Success Tracker]   • " + category + ": enabled");
+                    enabledCategories.push(category);
                 }
             }
             
-            console.log("[Success Tracker] ========================================");
-            console.log("[Success Tracker] Analysis Configuration:");
-            console.log("[Success Tracker]   • Minimum Success Rate: " + (this.config.thresholds.minimumSuccessRate * 100) + "%");
-            console.log("[Success Tracker]   • Warning Threshold: " + (this.config.thresholds.warningSuccessRate * 100) + "%");
-            console.log("[Success Tracker]   • Critical Threshold: " + (this.config.thresholds.criticalSuccessRate * 100) + "%");
-            console.log("[Success Tracker]   • Confidence Interval: " + (this.config.thresholds.confidenceInterval * 100) + "%");
-            console.log("[Success Tracker]   • Significance Level: " + this.config.thresholds.significanceLevel);
-            
-            console.log("[Success Tracker] ========================================");
-            console.log("[Success Tracker] Reporting Settings:");
-            console.log("[Success Tracker]   • Real-time Reports: " + this.config.reporting.enableAutoReporting);
-            console.log("[Success Tracker]   • Report Interval: " + (this.config.reporting.reportInterval / 1000) + "s");
-            console.log("[Success Tracker]   • Detailed Interval: " + (this.config.reporting.detailedReportInterval / 1000) + "s");
-            console.log("[Success Tracker]   • Summary Interval: " + (this.config.reporting.summaryReportInterval / 1000) + "s");
-            console.log("[Success Tracker]   • Alert Threshold: " + (this.config.reporting.alertThreshold * 100) + "%");
-            
-            console.log("[Success Tracker] ========================================");
-            console.log("[Success Tracker] Machine Learning:");
+            var mlStatus = null;
             if (this.config.analytics.enableMachineLearning) {
-                console.log("[Success Tracker]   • Success Predictor: Neural Network");
-                console.log("[Success Tracker]   • Anomaly Detection: Baseline Tracking");
-                console.log("[Success Tracker]   • Pattern Classifier: Feature Analysis");
-                console.log("[Success Tracker]   • Model Update Interval: " + (this.config.analytics.modelUpdateInterval / 1000) + "s");
-            } else {
-                console.log("[Success Tracker]   • Machine Learning: disabled");
+                mlStatus = {
+                    enabled: true,
+                    success_predictor: "Neural Network",
+                    anomaly_detection: "Baseline Tracking",
+                    pattern_classifier: "Feature Analysis",
+                    model_update_interval_s: this.config.analytics.modelUpdateInterval / 1000
+                };
             }
             
-            console.log("[Success Tracker] ========================================");
-            console.log("[Success Tracker] Current Statistics:");
-            console.log("[Success Tracker]   • Total Attempts: " + this.statistics.overall.totalAttempts);
-            console.log("[Success Tracker]   • Total Successes: " + this.statistics.overall.totalSuccesses);
-            console.log("[Success Tracker]   • Overall Success Rate: " + (this.statistics.overall.overallSuccessRate * 100).toFixed(1) + "%");
-            console.log("[Success Tracker]   • Tracked Categories: " + this.statistics.byCategory.size);
-            console.log("[Success Tracker]   • Tracked Methods: " + this.statistics.byMethod.size);
+            var summaryData = {
+                type: "summary",
+                target: "bypass_success_tracker",
+                action: "installation_summary",
+                active_features: activeFeatures,
+                tracked_categories: enabledCategories,
+                analysis_configuration: {
+                    minimum_success_rate: this.config.thresholds.minimumSuccessRate,
+                    warning_threshold: this.config.thresholds.warningSuccessRate,
+                    critical_threshold: this.config.thresholds.criticalSuccessRate,
+                    confidence_interval: this.config.thresholds.confidenceInterval,
+                    significance_level: this.config.thresholds.significanceLevel
+                },
+                reporting_settings: {
+                    realtime_reports: this.config.reporting.enableAutoReporting,
+                    report_interval_s: this.config.reporting.reportInterval / 1000,
+                    detailed_interval_s: this.config.reporting.detailedReportInterval / 1000,
+                    summary_interval_s: this.config.reporting.summaryReportInterval / 1000,
+                    alert_threshold: this.config.reporting.alertThreshold
+                },
+                machine_learning: mlStatus,
+                current_statistics: {
+                    total_attempts: this.statistics.overall.totalAttempts,
+                    total_successes: this.statistics.overall.totalSuccesses,
+                    overall_success_rate: this.statistics.overall.overallSuccessRate,
+                    tracked_categories_count: this.statistics.byCategory.size,
+                    tracked_methods_count: this.statistics.byMethod.size
+                },
+                status: "ACTIVE",
+                description: "Bypass success rate tracking system is now actively monitoring and analyzing bypass effectiveness"
+            };
             
-            console.log("[Success Tracker] ========================================");
-            console.log("[Success Tracker] Bypass success rate tracking system is now ACTIVE!");
-            console.log("[Success Tracker] Continuously monitoring and analyzing bypass effectiveness...");
+            send(summaryData);
         }, 100);
     }
 }

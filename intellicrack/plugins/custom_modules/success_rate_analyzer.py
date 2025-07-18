@@ -103,6 +103,7 @@ class AnalysisEvent:
     error_details: str = ""
 
     def __post_init__(self):
+        """Initialize analysis event with generated ID if not provided."""
         if not self.event_id:
             self.event_id = self.generate_event_id()
 
@@ -163,6 +164,7 @@ class BayesianAnalyzer:
     """Bayesian analysis for success rates"""
 
     def __init__(self, prior_alpha: float = 1.0, prior_beta: float = 1.0):
+        """Initialize Bayesian analyzer with Beta distribution prior parameters."""
         self.prior_alpha = prior_alpha
         self.prior_beta = prior_beta
 
@@ -198,6 +200,7 @@ class SurvivalAnalyzer:
     """Kaplan-Meier survival analysis for bypass longevity"""
 
     def __init__(self):
+        """Initialize survival analyzer for Kaplan-Meier analysis."""
         self.survival_data = []
 
     def add_observation(self, duration: float, censored: bool = False):
@@ -259,6 +262,7 @@ class TimeSeriesAnalyzer:
     """Time series analysis and forecasting"""
 
     def __init__(self):
+        """Initialize time series analyzer with component history tracking."""
         self.history = defaultdict(list)
 
     def add_data_point(self, component: str, timestamp: float, value: float):
@@ -494,6 +498,7 @@ class EventTracker:
     """Event tracking and database management"""
 
     def __init__(self, db_path: str = "intellicrack_success_rates.db"):
+        """Initialize event tracker with SQLite database and threading support."""
         self.db_path = db_path
         self.lock = threading.Lock()
         self.initialize_database()
@@ -642,6 +647,7 @@ class MLPredictor:
     """Machine learning-based success rate predictor"""
 
     def __init__(self):
+        """Initialize machine learning predictor with ensemble models and feature scaling."""
         self.models = {
             'random_forest': RandomForestRegressor(n_estimators=100, random_state=42),
             'gradient_boosting': GradientBoostingRegressor(n_estimators=100, random_state=42),
@@ -768,6 +774,7 @@ class ReportGenerator:
     """Statistical report generation"""
 
     def __init__(self, output_dir: str = "reports"):
+        """Initialize report generator with configurable output directory."""
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
 
@@ -935,6 +942,7 @@ class SuccessRateAnalyzer:
     """Main success rate analysis engine"""
 
     def __init__(self, db_path: str = "intellicrack_success_rates.db"):
+        """Initialize comprehensive success rate analyzer with all statistical components."""
         self.event_tracker = EventTracker(db_path)
         self.bayesian_analyzer = BayesianAnalyzer()
         self.survival_analyzer = SurvivalAnalyzer()

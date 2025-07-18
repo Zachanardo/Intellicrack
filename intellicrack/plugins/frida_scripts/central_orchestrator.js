@@ -177,8 +177,19 @@
     messageHandlers: {},
     
     run: function() {
-        console.log("[Orchestrator] Initializing Central Orchestrator v" + this.version);
-        console.log("[Orchestrator] Process: " + Process.id + " - " + Process.getCurrentThreadId());
+        send({
+            type: "status",
+            target: "central_orchestrator",
+            action: "initializing",
+            version: this.version
+        });
+        send({
+            type: "info",
+            target: "central_orchestrator",
+            action: "process_info",
+            process_id: Process.id,
+            thread_id: Process.getCurrentThreadId()
+        });
         
         // Initialize components
         this.initializeMonitoring();
@@ -196,7 +207,10 @@
             this.startDashboard();
         }
         
-        console.log("[Orchestrator] Initialization complete - " + 
+        send({
+            type: "status",
+            target: "central_orchestrator",
+            action: "initialization_complete" 
                    this.globalStats.activeScripts + " scripts loaded");
     },
     
@@ -237,7 +251,11 @@
             }, this.config.monitoring.statsInterval);
         }
         
-        console.log("[Orchestrator] Monitoring initialized");
+        send({
+            type: "info",
+            target: "central_orchestrator",
+            action: "monitoring_initialized"
+        });
     },
     
     // Initialize communication
@@ -256,21 +274,34 @@
         
         // Global error handler
         Process.setExceptionHandler(function(details) {
-            console.error("[Orchestrator] Exception: " + JSON.stringify(details));
+            send({
+                type: "error",
+                target: "central_orchestrator",
+                action: "exception_caught",
+                details: details
+            });
             self.globalStats.totalFailures++;
             
             // Attempt recovery
             self.attemptRecovery(details);
         });
         
-        console.log("[Orchestrator] Communication initialized");
+        send({
+            type: "info",
+            target: "central_orchestrator",
+            action: "communication_initialized"
+        });
     },
     
     // Detect environment
     detectEnvironment: function() {
         var self = this;
         
-        console.log("[Orchestrator] Detecting environment...");
+        send({
+            type: "info",
+            target: "central_orchestrator",
+            action: "detecting_environment"
+        });
         
         // Detect platform
         this.platform = {
@@ -293,8 +324,18 @@
         // Detect target application
         this.detectTargetApp();
         
-        console.log("[Orchestrator] Environment: " + JSON.stringify(this.platform));
-        console.log("[Orchestrator] Runtime: " + JSON.stringify(this.runtime));
+        send({
+            type: "info",
+            target: "central_orchestrator",
+            action: "environment_detected",
+            platform: this.platform
+        });
+        send({
+            type: "info",
+            target: "central_orchestrator",
+            action: "runtime_detected",
+            runtime: this.runtime
+        });
     },
     
     // Detect protections
@@ -331,13 +372,23 @@
             protections.forEach(function(protection) {
                 if (moduleName.includes(protection.module)) {
                     self.detectedProtections.push(protection.name);
-                    console.log("[Orchestrator] Detected protection: " + protection.name);
+                    send({
+                        type: "info",
+                        target: "central_orchestrator",
+                        action: "protection_detected",
+                        protection_name: protection.name
+                    });
                 }
             });
         });
         
         if (this.detectedProtections.length > 0) {
-            console.log("[Orchestrator] Protections detected: " + this.detectedProtections.join(", "));
+            send({
+                type: "info",
+                target: "central_orchestrator",
+                action: "all_protections_detected",
+                protections: this.detectedProtections
+            });
         }
     },
     
@@ -418,7 +469,12 @@
         
         knownApps.forEach(function(app) {
             if (mainModule.name.match(app.pattern)) {
-                console.log("[Orchestrator] Detected known application type");
+                send({
+                    type: "info",
+                    target: "central_orchestrator",
+                    action: "known_application_detected",
+                    app_pattern: app.pattern.toString()
+                });
                 
                 // Enable recommended scripts
                 app.scripts.forEach(function(scriptName) {
@@ -455,7 +511,12 @@
         if (!scriptConfig || !scriptConfig.enabled) return;
         
         try {
-            console.log("[Orchestrator] Loading script: " + scriptConfig.name);
+            send({
+                type: "info",
+                target: "central_orchestrator",
+                action: "loading_script",
+                script_name: scriptConfig.name
+            });
             
             // Create script instance
             var instance = {
@@ -475,7 +536,12 @@
             this.scriptInstances[name] = instance;
             this.globalStats.activeScripts++;
             
-            console.log("[Orchestrator] Script loaded: " + scriptConfig.name);
+            send({
+                type: "status",
+                target: "central_orchestrator",
+                action: "script_loaded",
+                script_name: scriptConfig.name
+            });
             
             // Send initialization message
             this.sendToScript(name, {
@@ -489,7 +555,13 @@
             });
             
         } catch(e) {
-            console.error("[Orchestrator] Failed to load script " + name + ": " + e);
+            send({
+                type: "error",
+                target: "central_orchestrator",
+                action: "script_load_failed",
+                script_name: name,
+                error: e.toString()
+            });
             this.globalStats.totalFailures++;
         }
     },
@@ -505,7 +577,13 @@
                 self.globalStats.totalBypasses++;
                 
                 if (self.config.monitoring.logLevel === "debug") {
-                    console.log("[Orchestrator] " + scriptName + " bypass: " + JSON.stringify(details));
+                    send({
+                        type: "bypass",
+                        target: "central_orchestrator",
+                        action: "script_bypass_success",
+                        script_name: scriptName,
+                        details: details
+                    });
                 }
                 
                 // Trigger automation rules
@@ -517,7 +595,13 @@
                 self.scriptInstances[scriptName].stats.failures++;
                 self.globalStats.totalFailures++;
                 
-                console.warn("[Orchestrator] " + scriptName + " failure: " + JSON.stringify(details));
+                send({
+                    type: "warning",
+                    target: "central_orchestrator",
+                    action: "script_bypass_failure",
+                    script_name: scriptName,
+                    details: details
+                });
                 
                 // Check alert threshold
                 if (self.scriptInstances[scriptName].stats.failures >= self.config.monitoring.alerts.failedBypass) {
@@ -567,7 +651,11 @@
     startAutomation: function() {
         var self = this;
         
-        console.log("[Orchestrator] Starting automation engine");
+        send({
+            type: "status",
+            target: "central_orchestrator",
+            action: "starting_automation_engine"
+        });
         
         // Process automation queue
         this.automationProcessor = setInterval(function() {
@@ -595,7 +683,12 @@
             try {
                 this.executeAutomationTask(task);
             } catch(e) {
-                console.error("[Orchestrator] Automation error: " + e);
+                send({
+                    type: "error",
+                    target: "central_orchestrator",
+                    action: "automation_error",
+                    error: e.toString()
+                });
             }
         }
     },
@@ -656,7 +749,13 @@
             this.scriptInstances.registry.stats.bypasses > 0) {
             
             if (!this.scriptInstances.timeBomb) {
-                console.log("[Orchestrator] Behavioral rule: Enabling time bomb defuser");
+                send({
+                    type: "info",
+                    target: "central_orchestrator",
+                    action: "behavioral_rule_triggered",
+                    rule: "registry_to_time",
+                    enabled_script: "timeBomb"
+                });
                 this.automationQueue.push({
                     type: "enableScript",
                     script: "timeBomb"
@@ -676,7 +775,13 @@
             }, this);
             
             if (networkActivity && !this.scriptInstances.certPinner) {
-                console.log("[Orchestrator] Behavioral rule: Enabling certificate bypass");
+                send({
+                    type: "info",
+                    target: "central_orchestrator",
+                    action: "behavioral_rule_triggered",
+                    rule: "network_to_cert",
+                    enabled_script: "certPinner"
+                });
                 this.automationQueue.push({
                     type: "enableScript",
                     script: "certPinner"
@@ -689,7 +794,13 @@
             this.detectedProtections.includes("hardware")) {
             
             if (!this.scriptInstances.tpmEmulator) {
-                console.log("[Orchestrator] Behavioral rule: Enabling TPM emulator");
+                send({
+                    type: "info",
+                    target: "central_orchestrator",
+                    action: "behavioral_rule_triggered",
+                    rule: "tpm_to_hardware",
+                    enabled_script: "tpmEmulator"
+                });
                 this.automationQueue.push({
                     type: "enableScript",
                     script: "tpmEmulator"
@@ -721,7 +832,13 @@
     
     // Coordinate between scripts
     coordinate: function(requester, action, params) {
-        console.log("[Orchestrator] Coordination request from " + requester + ": " + action);
+        send({
+            type: "info",
+            target: "central_orchestrator",
+            action: "coordination_request",
+            requester: requester,
+            requested_action: action
+        });
         
         switch(action) {
             case "syncLicense":
@@ -769,7 +886,13 @@
     sendToScript: function(scriptName, message) {
         if (this.scriptInstances[scriptName]) {
             // In real implementation, would use actual messaging
-            console.log("[Orchestrator] Message to " + scriptName + ": " + JSON.stringify(message));
+            send({
+                type: "info",
+                target: "central_orchestrator",
+                action: "message_sent_to_script",
+                script_name: scriptName,
+                message: message
+            });
         }
     },
     
@@ -799,7 +922,12 @@
     // Unload script
     unloadScript: function(name) {
         if (this.scriptInstances[name]) {
-            console.log("[Orchestrator] Unloading script: " + name);
+            send({
+                type: "info",
+                target: "central_orchestrator",
+                action: "unloading_script",
+                script_name: name
+            });
             
             // Send shutdown message
             this.sendToScript(name, { type: "shutdown" });
@@ -867,7 +995,12 @@
         
         // Log or send stats
         if (this.config.monitoring.logLevel === "debug") {
-            console.log("[Orchestrator] Statistics: " + JSON.stringify(stats));
+            send({
+                type: "info",
+                target: "central_orchestrator",
+                action: "statistics_report",
+                stats: stats
+            });
         }
         
         // Check for anomalies
@@ -894,7 +1027,12 @@
     
     // Alert
     alert: function(message) {
-        console.warn("[Orchestrator] ALERT: " + message);
+        send({
+            type: "warning",
+            target: "central_orchestrator",
+            action: "alert",
+            alert_message: message
+        });
         
         // Send alert through IPC if enabled
         if (this.config.communication.ipc.enabled) {
@@ -908,7 +1046,11 @@
     
     // Attempt recovery
     attemptRecovery: function(details) {
-        console.log("[Orchestrator] Attempting recovery...");
+        send({
+            type: "warning",
+            target: "central_orchestrator",
+            action: "attempting_recovery"
+        });
         
         // Identify failed component
         var failedScript = null;
@@ -920,7 +1062,12 @@
         }, this);
         
         if (failedScript) {
-            console.log("[Orchestrator] Restarting failed script: " + failedScript);
+            send({
+                type: "info",
+                target: "central_orchestrator",
+                action: "restarting_failed_script",
+                script_name: failedScript
+            });
             this.unloadScript(failedScript);
             this.loadScript(failedScript);
         }
@@ -939,7 +1086,12 @@
         if (alternatives[failedScript]) {
             alternatives[failedScript].forEach(function(alt) {
                 if (!this.scriptInstances[alt]) {
-                    console.log("[Orchestrator] Trying alternative: " + alt);
+                    send({
+                        type: "info",
+                        target: "central_orchestrator",
+                        action: "trying_alternative_script",
+                        alternative_script: alt
+                    });
                     this.automationQueue.push({
                         type: "enableScript",
                         script: alt
@@ -974,22 +1126,34 @@
     
     // Start dashboard
     startDashboard: function() {
-        console.log("[Orchestrator] Dashboard would start on port " + 
-                   this.config.communication.dashboard.port);
+        send({
+            type: "info",
+            target: "central_orchestrator",
+            action: "dashboard_starting",
+            port: this.config.communication.dashboard.port
+        });
         
         // In real implementation, would start web server
         // For now, just log status periodically
         setInterval(function() {
             var status = this.getStatus();
-            console.log("[Orchestrator] Dashboard update: " + 
-                       status.scripts.length + " scripts, " +
-                       status.stats.totalBypasses + " bypasses");
+            send({
+                type: "info",
+                target: "central_orchestrator",
+                action: "dashboard_update",
+                scripts_count: status.scripts.length,
+                total_bypasses: status.stats.totalBypasses
+            });
         }.bind(this), 30000);
     },
     
     // Reload all scripts
     reloadAllScripts: function() {
-        console.log("[Orchestrator] Reloading all scripts");
+        send({
+            type: "info",
+            target: "central_orchestrator",
+            action: "reloading_all_scripts"
+        });
         
         var scripts = Object.keys(this.scriptInstances);
         scripts.forEach(function(name) {
@@ -1019,6 +1183,10 @@
             };
         }, this);
         
-        console.log("[Orchestrator] Statistics reset");
+        send({
+            type: "info",
+            target: "central_orchestrator",
+            action: "statistics_reset"
+        });
     }
 }

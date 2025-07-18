@@ -40,6 +40,7 @@ class BeaconManager:
     """
 
     def __init__(self):
+        """Initialize the beacon manager with session tracking and health monitoring."""
         self.logger = logging.getLogger("IntellicrackLogger.BeaconManager")
 
         # Session tracking

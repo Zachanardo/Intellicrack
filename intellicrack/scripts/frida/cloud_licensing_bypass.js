@@ -121,12 +121,12 @@
     spoofedResponses: 0,
     
     onAttach: function(pid) {
-        console.log("[Cloud License] Attaching to process: " + pid);
+        send({type: 'status', target: 'cloud_license', action: 'attach_process', data: {pid: pid, message: 'Attaching to process: ' + pid}});
         this.processId = pid;
     },
     
     run: function() {
-        console.log("[Cloud License] Installing cloud license bypass hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_hooks', data: {message: 'Installing cloud license bypass hooks...'}});
         
         // Initialize bypass components
         this.hookHttpRequests();
@@ -143,7 +143,7 @@
     
     // === HTTP REQUEST HOOKS ===
     hookHttpRequests: function() {
-        console.log("[Cloud License] Installing HTTP request hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_http_hooks', data: {message: 'Installing HTTP request hooks...'}});
         
         // Hook WinHTTP functions
         this.hookWinHttpFunctions();
@@ -159,7 +159,7 @@
     },
     
     hookWinHttpFunctions: function() {
-        console.log("[Cloud License] Installing WinHTTP hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_winhttp_hooks', data: {message: 'Installing WinHTTP hooks...'}});
         
         // Hook WinHttpSendRequest
         var winHttpSendRequest = Module.findExportByName("winhttp.dll", "WinHttpSendRequest");
@@ -177,12 +177,12 @@
                     this.requestDetails = this.getRequestDetails();
                     
                     if (this.isLicenseRequest(this.requestDetails)) {
-                        console.log("[Cloud License] WinHTTP license request intercepted");
+                        send({type: 'intercept', target: 'cloud_license', action: 'winhttp_request_intercepted', data: {url: urlPtr.readUtf16String(), method: 'WinHTTP'}});
                         this.isLicenseReq = true;
                         this.parent.parent.interceptedRequests++;
                         
                         if (this.parent.parent.config.networkInterception.blockLicenseChecks) {
-                            console.log("[Cloud License] Blocking license request");
+                            send({type: 'block', target: 'cloud_license', action: 'license_request_blocked', data: {url: urlPtr.readUtf16String(), reason: 'License server in blacklist'}});
                             this.blockRequest = true;
                         }
                     }
@@ -193,9 +193,9 @@
                         // Block the request by returning failure
                         retval.replace(0); // FALSE
                         this.parent.parent.blockedRequests++;
-                        console.log("[Cloud License] WinHTTP license request blocked");
+                        send({type: 'block', target: 'cloud_license', action: 'winhttp_request_blocked', data: {url: urlPtr.readUtf16String(), method: 'WinHTTP'}});
                     } else if (this.isLicenseReq) {
-                        console.log("[Cloud License] WinHTTP license request allowed (will spoof response)");
+                        send({type: 'allow', target: 'cloud_license', action: 'winhttp_request_allowed', data: {url: urlPtr.readUtf16String(), will_spoof: true}});
                     }
                 },
                 
@@ -263,7 +263,7 @@
                     if (retval.toInt32() !== 0) {
                         var config = this.parent.parent.config;
                         if (config.networkInterception.spoofResponses) {
-                            console.log("[Cloud License] WinHTTP response received - ready for spoofing");
+                            send({type: 'spoof', target: 'cloud_license', action: 'winhttp_response_ready', data: {status: 'ready_for_spoofing', method: 'WinHTTP'}});
                         }
                     }
                 }
@@ -310,12 +310,11 @@
                                 this.lpdwNumberOfBytesRead.writeU32(spoofedResponse.length);
                                 
                                 this.parent.parent.spoofedResponses++;
-                                console.log("[Cloud License] WinHTTP response spoofed: " + 
-                                          spoofedResponse.substring(0, 100) + "...");
+                                send({type: 'spoof', target: 'cloud_license', action: 'winhttp_response_spoofed', data: {response: spoofedResponse.substring(0, 100) + "...", method: 'WinHTTP', status: 'success'}});
                             }
                         }
                     } catch(e) {
-                        console.log("[Cloud License] WinHTTP response spoofing error: " + e);
+                        send({type: 'error', target: 'cloud_license', action: 'winhttp_spoof_error', data: {error: e.toString(), method: 'WinHTTP'}});
                     }
                 },
                 
@@ -397,7 +396,7 @@
     },
     
     hookWinINetFunctions: function() {
-        console.log("[Cloud License] Installing WinINet hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_wininet_hooks', data: {message: 'Installing WinINet hooks...'}});
         
         // Hook HttpSendRequest
         var httpSendRequest = Module.findExportByName("wininet.dll", "HttpSendRequestW");
@@ -414,7 +413,7 @@
                         try {
                             var headers = this.lpszHeaders.readUtf16String();
                             if (this.isLicenseRequestByHeaders(headers)) {
-                                console.log("[Cloud License] WinINet license request detected");
+                                send({type: 'intercept', target: 'cloud_license', action: 'wininet_request_detected', data: {url: lpszUrl.readUtf8String(), method: 'WinINet'}});
                                 this.isLicenseReq = true;
                                 this.parent.parent.interceptedRequests++;
                             }
@@ -473,11 +472,11 @@
                                 this.lpdwNumberOfBytesRead.writeU32(spoofedResponse.length);
                                 
                                 this.parent.parent.spoofedResponses++;
-                                console.log("[Cloud License] WinINet response spoofed");
+                                send({type: 'spoof', target: 'cloud_license', action: 'wininet_response_spoofed', data: {method: 'WinINet', status: 'success'}});
                             }
                         }
                     } catch(e) {
-                        console.log("[Cloud License] WinINet response spoofing error: " + e);
+                        send({type: 'error', target: 'cloud_license', action: 'wininet_spoof_error', data: {error: e.toString(), method: 'WinINet'}});
                     }
                 },
                 
@@ -511,7 +510,7 @@
     },
     
     hookCurlFunctions: function() {
-        console.log("[Cloud License] Installing cURL hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_curl_hooks', data: {message: 'Installing cURL hooks...'}});
         
         // Hook curl_easy_setopt for URL monitoring
         var curlSetopt = Module.findExportByName(null, "curl_easy_setopt");
@@ -527,7 +526,7 @@
                         try {
                             var url = this.parameter.readUtf8String();
                             if (this.isLicenseUrl(url)) {
-                                console.log("[Cloud License] cURL license URL detected: " + url);
+                                send({type: 'intercept', target: 'cloud_license', action: 'curl_license_url_detected', data: {url: url, method: 'cURL'}});
                                 this.parent.parent.interceptedRequests++;
                             }
                         } catch(e) {
@@ -557,7 +556,7 @@
                     // 0 = CURLE_OK
                     if (retval.toInt32() !== 0) {
                         // Curl failed - could be our blocking
-                        console.log("[Cloud License] cURL request result: " + retval.toInt32());
+                        send({type: 'result', target: 'cloud_license', action: 'curl_request_result', data: {result: retval.toInt32(), method: 'cURL'}});
                     }
                 }
             });
@@ -567,7 +566,7 @@
     },
     
     hookGenericHttpLibraries: function() {
-        console.log("[Cloud License] Installing generic HTTP library hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_generic_http_hooks', data: {message: 'Installing generic HTTP library hooks...'}});
         
         // Hook common HTTP functions across modules
         var modules = Process.enumerateModules();
@@ -610,14 +609,13 @@
             if (httpFunc) {
                 Interceptor.attach(httpFunc, {
                     onEnter: function(args) {
-                        console.log("[Cloud License] Generic HTTP function called: " + 
-                                  functionName + " in " + moduleName);
+                        send({type: 'intercept', target: 'cloud_license', action: 'generic_http_function_called', data: {function: functionName, module: moduleName}});
                         this.parent.parent.parent.interceptedRequests++;
                     }
                 });
                 
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
-                console.log("[Cloud License] Hooked " + functionName + " in " + moduleName);
+                send({type: 'status', target: 'cloud_license', action: 'hook_installed', data: {function: functionName, module: moduleName, message: 'Hooked ' + functionName + ' in ' + moduleName}});
             }
         } catch(e) {
             // Function not found or hook failed
@@ -626,10 +624,10 @@
     
     // === HTTPS REQUEST HOOKS ===
     hookHttpsRequests: function() {
-        console.log("[Cloud License] Installing HTTPS request hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_https_hooks', data: {message: 'Installing HTTPS request hooks...'}});
         
         if (!this.config.networkInterception.interceptHttps) {
-            console.log("[Cloud License] HTTPS interception disabled");
+            send({type: 'status', target: 'cloud_license', action: 'https_interception_disabled', data: {message: 'HTTPS interception disabled'}});
             return;
         }
         
@@ -644,7 +642,7 @@
     },
     
     hookSslFunctions: function() {
-        console.log("[Cloud License] Installing SSL/TLS hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_ssl_hooks', data: {message: 'Installing SSL/TLS hooks...'}});
         
         // Hook SSL_write for outgoing HTTPS data
         var sslWrite = Module.findExportByName(null, "SSL_write");
@@ -659,7 +657,7 @@
                         try {
                             var data = this.buf.readUtf8String(Math.min(this.num, 1024));
                             if (this.isLicenseHttpsData(data)) {
-                                console.log("[Cloud License] HTTPS license data detected");
+                                send({type: 'intercept', target: 'cloud_license', action: 'https_license_data_detected', data: {method: 'SSL/TLS'}});
                                 this.parent.parent.interceptedRequests++;
                             }
                         } catch(e) {
@@ -710,11 +708,11 @@
                             if (spoofedResponse && spoofedResponse.length <= bytesRead) {
                                 this.buf.writeUtf8String(spoofedResponse);
                                 this.parent.parent.spoofedResponses++;
-                                console.log("[Cloud License] SSL response spoofed");
+                                send({type: 'spoof', target: 'cloud_license', action: 'ssl_response_spoofed', data: {method: 'SSL/TLS', status: 'success'}});
                             }
                         }
                     } catch(e) {
-                        console.log("[Cloud License] SSL response spoofing error: " + e);
+                        send({type: 'error', target: 'cloud_license', action: 'ssl_spoof_error', data: {error: e.toString(), method: 'SSL/TLS'}});
                     }
                 },
                 
@@ -779,14 +777,14 @@
     },
     
     hookSecureChannelFunctions: function() {
-        console.log("[Cloud License] Installing Secure Channel (Schannel) hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_schannel_hooks', data: {message: 'Installing Secure Channel (Schannel) hooks...'}}); 
         
         // Hook EncryptMessage
         var encryptMessage = Module.findExportByName("secur32.dll", "EncryptMessage");
         if (encryptMessage) {
             Interceptor.attach(encryptMessage, {
                 onEnter: function(args) {
-                    console.log("[Cloud License] Schannel EncryptMessage called");
+                    send({type: 'intercept', target: 'cloud_license', action: 'schannel_encrypt_called', data: {method: 'Schannel'}});
                 }
             });
             
@@ -799,7 +797,7 @@
             Interceptor.attach(decryptMessage, {
                 onLeave: function(retval) {
                     if (retval.toInt32() === 0) { // SEC_E_OK
-                        console.log("[Cloud License] Schannel DecryptMessage successful");
+                        send({type: 'result', target: 'cloud_license', action: 'schannel_decrypt_success', data: {method: 'Schannel', status: 'successful'}});
                     }
                 }
             });
@@ -810,10 +808,10 @@
     
     // === OAUTH TOKEN HOOKS ===
     hookOAuthTokens: function() {
-        console.log("[Cloud License] Installing OAuth token hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_oauth_hooks', data: {message: 'Installing OAuth token hooks...'}});
         
         if (!this.config.oauth.enabled) {
-            console.log("[Cloud License] OAuth token manipulation disabled");
+            send({type: 'status', target: 'cloud_license', action: 'oauth_manipulation_disabled', data: {message: 'OAuth token manipulation disabled'}});
             return;
         }
         
@@ -828,7 +826,7 @@
     },
     
     hookTokenGeneration: function() {
-        console.log("[Cloud License] Installing token generation hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_token_generation_hooks', data: {message: 'Installing token generation hooks...'}});
         
         // Hook common token generation patterns
         var modules = Process.enumerateModules();
@@ -879,7 +877,7 @@
                                 var spoofedToken = config.oauth.customTokens.generic;
                                 tokenPtr.writeUtf8String(spoofedToken);
                                 
-                                console.log("[Cloud License] OAuth token spoofed in " + functionName);
+                                send({type: 'spoof', target: 'cloud_license', action: 'oauth_token_spoofed', data: {function: functionName, method: 'OAuth', status: 'success'}});
                             }
                         } catch(e) {
                             // Token spoofing failed
@@ -902,7 +900,7 @@
     },
     
     hookTokenValidation: function() {
-        console.log("[Cloud License] Installing token validation hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_token_validation_hooks', data: {message: 'Installing token validation hooks...'});
         
         // Hook string comparison functions for token validation
         var strcmp = Module.findExportByName("msvcrt.dll", "strcmp");
@@ -914,7 +912,7 @@
                         var str2 = args[1].readAnsiString();
                         
                         if (this.isTokenComparison(str1, str2)) {
-                            console.log("[Cloud License] Token comparison detected");
+                            send({type: 'intercept', target: 'cloud_license', action: 'token_comparison_detected', data: {method: 'Token Validation'}});
                             this.spoofTokenComparison = true;
                         }
                     } catch(e) {
@@ -926,7 +924,7 @@
                     if (this.spoofTokenComparison) {
                         // Make comparison succeed
                         retval.replace(0);
-                        console.log("[Cloud License] Token comparison forced to succeed");
+                        send({type: 'spoof', target: 'cloud_license', action: 'token_comparison_forced_success', data: {method: 'Token Validation', status: 'forced_success'}});
                     }
                 },
                 
@@ -951,19 +949,19 @@
     },
     
     hookAuthorizationHeaders: function() {
-        console.log("[Cloud License] Installing authorization header hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_auth_header_hooks', data: {message: 'Installing authorization header hooks...'}});
         
         // This integrates with the HTTP hooks above
         // Authorization headers are typically handled in the HTTP request hooks
-        console.log("[Cloud License] Authorization header manipulation integrated with HTTP hooks");
+        send({type: 'status', target: 'cloud_license', action: 'auth_header_integration', data: {message: 'Authorization header manipulation integrated with HTTP hooks'}});
     },
     
     // === JWT TOKEN HOOKS ===
     hookJwtTokens: function() {
-        console.log("[Cloud License] Installing JWT token hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_jwt_hooks', data: {message: 'Installing JWT token hooks...'});
         
         if (!this.config.jwt.enabled) {
-            console.log("[Cloud License] JWT token manipulation disabled");
+            send({type: 'status', target: 'cloud_license', action: 'jwt_manipulation_disabled', data: {message: 'JWT token manipulation disabled'}});
             return;
         }
         
@@ -978,7 +976,7 @@
     },
     
     hookJwtLibraries: function() {
-        console.log("[Cloud License] Installing JWT library hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_jwt_library_hooks', data: {message: 'Installing JWT library hooks...'}});
         
         // Hook common JWT function names
         var jwtFunctions = [
@@ -1010,7 +1008,7 @@
                         if (functionName.includes('verify') || functionName.includes('Verify')) {
                             // Make verification succeed
                             retval.replace(1); // TRUE
-                            console.log("[Cloud License] JWT verification spoofed to success");
+                            send({type: 'spoof', target: 'cloud_license', action: 'jwt_verification_spoofed', data: {method: 'JWT', status: 'forced_success'}});
                         }
                     }
                 });
@@ -1023,7 +1021,7 @@
     },
     
     hookBase64Functions: function() {
-        console.log("[Cloud License] Installing Base64 function hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_base64_hooks', data: {message: 'Installing Base64 function hooks...'}});
         
         // Hook base64 decode functions (used by JWT)
         var base64Functions = [
@@ -1053,7 +1051,7 @@
                         try {
                             var input = args[0].readUtf8String();
                             if (input && input.startsWith('eyJ')) {
-                                console.log("[Cloud License] JWT Base64 decode detected");
+                                send({type: 'intercept', target: 'cloud_license', action: 'jwt_base64_decode_detected', data: {method: 'Base64', token_type: 'JWT'}});
                                 this.isJwtDecode = true;
                             }
                         } catch(e) {
@@ -1081,10 +1079,10 @@
                                 var spoofedPayload = JSON.stringify(jwtPayload);
                                 payloadPtr.writeUtf8String(spoofedPayload);
                                 
-                                console.log("[Cloud License] JWT payload spoofed");
+                                send({type: 'spoof', target: 'cloud_license', action: 'jwt_payload_spoofed', data: {method: 'JWT', payload: 'custom', status: 'success'}});
                             }
                         } catch(e) {
-                            console.log("[Cloud License] JWT payload spoofing error: " + e);
+                            send({type: 'error', target: 'cloud_license', action: 'jwt_payload_spoof_error', data: {error: e.toString(), method: 'JWT'}});
                         }
                     }
                 });
@@ -1097,19 +1095,19 @@
     },
     
     hookJsonParsing: function() {
-        console.log("[Cloud License] Installing JSON parsing hooks for JWT...");
+        send({type: 'status', target: 'cloud_license', action: 'install_json_parsing_hooks', data: {message: 'Installing JSON parsing hooks for JWT...'}});
         
         // Hook JSON parsing functions
         var jsonFunctions = ['json_parse', 'JSON.parse', 'parseJSON', 'ParseJSON'];
         
         // This is complex to hook at the JavaScript level
         // Instead, we'll focus on the HTTP response spoofing which handles most JWT cases
-        console.log("[Cloud License] JSON parsing hooks integrated with HTTP response spoofing");
+        send({type: 'status', target: 'cloud_license', action: 'json_parsing_integration', data: {message: 'JSON parsing hooks integrated with HTTP response spoofing'}});
     },
     
     // === LICENSE API HOOKS ===
     hookLicenseAPIs: function() {
-        console.log("[Cloud License] Installing license API hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_license_api_hooks', data: {message: 'Installing license API hooks...'});
         
         // Hook common license API patterns
         this.hookLicenseValidationAPIs();
@@ -1118,7 +1116,7 @@
     },
     
     hookLicenseValidationAPIs: function() {
-        console.log("[Cloud License] Installing license validation API hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_license_validation_hooks', data: {message: 'Installing license validation API hooks...'}});
         
         var validationFunctions = [
             'validateLicense', 'ValidateLicense', 'checkLicense', 'CheckLicense',
@@ -1146,7 +1144,7 @@
                     onLeave: function(retval) {
                         // Make validation always succeed
                         retval.replace(1); // TRUE
-                        console.log("[Cloud License] License validation spoofed to success: " + functionName);
+                        send({type: 'spoof', target: 'cloud_license', action: 'license_validation_spoofed', data: {function: functionName, method: 'License API', status: 'forced_success'}});
                     }
                 });
                 
@@ -1158,7 +1156,7 @@
     },
     
     hookActivationAPIs: function() {
-        console.log("[Cloud License] Installing activation API hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_activation_hooks', data: {message: 'Installing activation API hooks...'}});
         
         var activationFunctions = [
             'activate', 'Activate', 'activateLicense', 'ActivateLicense',
@@ -1186,7 +1184,7 @@
                     onLeave: function(retval) {
                         // Make activation always succeed
                         retval.replace(1); // TRUE/SUCCESS
-                        console.log("[Cloud License] Activation spoofed to success: " + functionName);
+                        send({type: 'spoof', target: 'cloud_license', action: 'activation_spoofed', data: {function: functionName, method: 'Activation API', status: 'forced_success'}});
                     }
                 });
                 
@@ -1198,7 +1196,7 @@
     },
     
     hookSubscriptionAPIs: function() {
-        console.log("[Cloud License] Installing subscription API hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_subscription_hooks', data: {message: 'Installing subscription API hooks...'});
         
         var subscriptionFunctions = [
             'checkSubscription', 'CheckSubscription', 'verifySubscription', 'VerifySubscription',
@@ -1226,7 +1224,7 @@
                     onLeave: function(retval) {
                         // Make subscription check always succeed
                         retval.replace(1); // TRUE/ACTIVE
-                        console.log("[Cloud License] Subscription check spoofed to success: " + functionName);
+                        send({type: 'spoof', target: 'cloud_license', action: 'subscription_check_spoofed', data: {function: functionName, method: 'Subscription API', status: 'forced_success'}});
                     }
                 });
                 
@@ -1239,7 +1237,7 @@
     
     // === NETWORK CONNECTION HOOKS ===
     hookNetworkConnections: function() {
-        console.log("[Cloud License] Installing network connection hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_network_hooks', data: {message: 'Installing network connection hooks...'}});
         
         // Hook socket creation and connection
         this.hookSocketFunctions();
@@ -1252,7 +1250,7 @@
     },
     
     hookSocketFunctions: function() {
-        console.log("[Cloud License] Installing socket function hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_socket_hooks', data: {message: 'Installing socket function hooks...'}});
         
         // Hook socket creation
         var socket = Module.findExportByName("ws2_32.dll", "socket");
@@ -1260,7 +1258,7 @@
             Interceptor.attach(socket, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== -1) { // INVALID_SOCKET
-                        console.log("[Cloud License] Socket created: " + retval.toInt32());
+                        send({type: 'network', target: 'cloud_license', action: 'socket_created', data: {socket_id: retval.toInt32(), method: 'Socket'}});
                     }
                 }
             });
@@ -1274,7 +1272,7 @@
             Interceptor.attach(wsaSocket, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== -1) {
-                        console.log("[Cloud License] WSASocket created: " + retval.toInt32());
+                        send({type: 'network', target: 'cloud_license', action: 'wsa_socket_created', data: {socket_id: retval.toInt32(), method: 'WSASocket'}});
                     }
                 }
             });
@@ -1284,7 +1282,7 @@
     },
     
     hookConnectFunctions: function() {
-        console.log("[Cloud License] Installing connect function hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_connect_hooks', data: {message: 'Installing connect function hooks...'}});
         
         // Hook connect
         var connect = Module.findExportByName("ws2_32.dll", "connect");
@@ -1299,7 +1297,7 @@
                         this.connectionInfo = this.parseSocketAddress();
                         
                         if (this.isLicenseServerConnection(this.connectionInfo)) {
-                            console.log("[Cloud License] License server connection detected");
+                            send({type: 'network', target: 'cloud_license', action: 'license_server_connection_detected', data: {address: addr, port: port, method: 'Connect'}});
                             this.blockConnection = true;
                         }
                     }
@@ -1309,7 +1307,7 @@
                     if (this.blockConnection) {
                         // Block connection by returning error
                         retval.replace(-1); // SOCKET_ERROR
-                        console.log("[Cloud License] License server connection blocked");
+                        send({type: 'block', target: 'cloud_license', action: 'license_server_connection_blocked', data: {address: addr, port: port, method: 'Connect'}});
                         this.parent.parent.blockedRequests++;
                     }
                 },
@@ -1364,7 +1362,7 @@
     
     // === DNS RESOLUTION HOOKS ===
     hookDnsResolution: function() {
-        console.log("[Cloud License] Installing DNS resolution hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_dns_hooks', data: {message: 'Installing DNS resolution hooks...'}});
         
         // Hook getaddrinfo
         var getaddrinfo = Module.findExportByName("ws2_32.dll", "getaddrinfo");
@@ -1380,7 +1378,7 @@
                         try {
                             this.hostname = this.nodename.readAnsiString();
                             if (this.isLicenseServerHostname(this.hostname)) {
-                                console.log("[Cloud License] License server DNS lookup blocked: " + this.hostname);
+                                send({type: 'block', target: 'cloud_license', action: 'dns_lookup_blocked', data: {hostname: this.hostname, method: 'DNS'}});
                                 this.blockDnsLookup = true;
                             }
                         } catch(e) {
@@ -1394,7 +1392,7 @@
                         // Block DNS lookup by returning error
                         retval.replace(11001); // WSAHOST_NOT_FOUND
                         this.parent.parent.blockedRequests++;
-                        console.log("[Cloud License] DNS lookup blocked for: " + this.hostname);
+                        send({type: 'block', target: 'cloud_license', action: 'dns_lookup_blocked_for', data: {hostname: this.hostname, method: 'DNS'}});
                     }
                 },
                 
@@ -1420,7 +1418,7 @@
                         try {
                             var hostname = args[0].readAnsiString();
                             if (this.isLicenseServerHostname(hostname)) {
-                                console.log("[Cloud License] Legacy DNS lookup blocked: " + hostname);
+                                send({type: 'block', target: 'cloud_license', action: 'legacy_dns_lookup_blocked', data: {hostname: hostname, method: 'Legacy DNS'}});
                                 this.blockLegacyDns = true;
                             }
                         } catch(e) {
@@ -1432,7 +1430,7 @@
                 onLeave: function(retval) {
                     if (this.blockLegacyDns) {
                         retval.replace(ptr(0)); // NULL
-                        console.log("[Cloud License] Legacy DNS lookup blocked");
+                        send({type: 'block', target: 'cloud_license', action: 'legacy_dns_blocked', data: {method: 'Legacy DNS', status: 'blocked'}});
                     }
                 },
                 
@@ -1452,7 +1450,7 @@
     
     // === CERTIFICATE VALIDATION HOOKS ===
     hookCertificateValidation: function() {
-        console.log("[Cloud License] Installing certificate validation hooks...");
+        send({type: 'status', target: 'cloud_license', action: 'install_certificate_hooks', data: {message: 'Installing certificate validation hooks...'}});
         
         // Hook certificate verification functions
         var certVerifyChain = Module.findExportByName("crypt32.dll", "CertVerifyCertificateChainPolicy");
@@ -1464,7 +1462,7 @@
                     this.pPolicyPara = args[2];
                     this.pPolicyStatus = args[3];
                     
-                    console.log("[Cloud License] Certificate chain verification called");
+                    send({type: 'intercept', target: 'cloud_license', action: 'certificate_verification_called', data: {method: 'Certificate Validation'}});
                 },
                 
                 onLeave: function(retval) {
@@ -1472,7 +1470,7 @@
                         // Force certificate validation to succeed
                         this.pPolicyStatus.writeU32(0); // No errors
                         this.pPolicyStatus.add(4).writeU32(0); // No chain errors
-                        console.log("[Cloud License] Certificate validation forced to succeed");
+                        send({type: 'spoof', target: 'cloud_license', action: 'certificate_validation_forced_success', data: {method: 'Certificate Validation', status: 'forced_success'}});
                     }
                 }
             });
@@ -1486,7 +1484,7 @@
             Interceptor.attach(certGetChain, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
-                        console.log("[Cloud License] Certificate chain retrieved");
+                        send({type: 'intercept', target: 'cloud_license', action: 'certificate_chain_retrieved', data: {method: 'Certificate Validation', status: 'retrieved'}});
                     }
                 }
             });
@@ -1498,9 +1496,9 @@
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
-            console.log("\n[Cloud License] ========================================");
-            console.log("[Cloud License] Cloud License Bypass Summary:");
-            console.log("[Cloud License] ========================================");
+            send({type: 'summary', target: 'cloud_license', action: 'summary_start', data: {message: 'Cloud License Bypass Summary Starting...'}});
+            send({type: 'summary', target: 'cloud_license', action: 'bypass_summary_header', data: {message: 'Cloud License Bypass Summary:'}});
+            send({type: 'summary', target: 'cloud_license', action: 'separator', data: {message: '========================================'}});
             
             var categories = {
                 "HTTP/HTTPS Interception": 0,
@@ -1533,40 +1531,40 @@
             
             for (var category in categories) {
                 if (categories[category] > 0) {
-                    console.log("[Cloud License]   ✓ " + category + ": " + categories[category] + " hooks");
+                    send({type: 'summary', target: 'cloud_license', action: 'hook_category_count', data: {category: category, count: categories[category], message: '✓ ' + category + ': ' + categories[category] + ' hooks'}});
                 }
             }
             
-            console.log("[Cloud License] ========================================");
-            console.log("[Cloud License] Active Configuration:");
+            send({type: 'summary', target: 'cloud_license', action: 'separator', data: {message: '========================================'}});
+            send({type: 'summary', target: 'cloud_license', action: 'active_configuration_header', data: {message: 'Active Configuration:'}});
             
             var config = this.config;
             if (config.networkInterception.enabled) {
-                console.log("[Cloud License]   ✓ HTTP/HTTPS Interception");
-                console.log("[Cloud License]   ✓ License Request Blocking: " + config.networkInterception.blockLicenseChecks);
-                console.log("[Cloud License]   ✓ Response Spoofing: " + config.networkInterception.spoofResponses);
+                send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'HTTP/HTTPS Interception', status: 'enabled', message: '✓ HTTP/HTTPS Interception'}});
+                send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'License Request Blocking', status: config.networkInterception.blockLicenseChecks, message: '✓ License Request Blocking: ' + config.networkInterception.blockLicenseChecks}});
+                send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'Response Spoofing', status: config.networkInterception.spoofResponses, message: '✓ Response Spoofing: ' + config.networkInterception.spoofResponses}});
             }
             
             if (config.oauth.enabled) {
-                console.log("[Cloud License]   ✓ OAuth Token Manipulation");
-                console.log("[Cloud License]   ✓ Supported Token Types: " + config.oauth.tokenTypes.join(', '));
+                send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'OAuth Token Manipulation', status: 'enabled', message: '✓ OAuth Token Manipulation'}});
+                send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'Supported Token Types', token_types: config.oauth.tokenTypes, message: '✓ Supported Token Types: ' + config.oauth.tokenTypes.join(', ')}});
             }
             
             if (config.jwt.enabled) {
-                console.log("[Cloud License]   ✓ JWT Token Spoofing");
-                console.log("[Cloud License]   ✓ Supported Algorithms: " + config.jwt.algorithms.join(', '));
+                send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'JWT Token Spoofing', status: 'enabled', message: '✓ JWT Token Spoofing'}});
+                send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'Supported Algorithms', algorithms: config.jwt.algorithms, message: '✓ Supported Algorithms: ' + config.jwt.algorithms.join(', ')}});
             }
             
-            console.log("[Cloud License] ========================================");
-            console.log("[Cloud License] Runtime Statistics:");
-            console.log("[Cloud License]   • Intercepted Requests: " + this.interceptedRequests);
-            console.log("[Cloud License]   • Blocked Requests: " + this.blockedRequests);
-            console.log("[Cloud License]   • Spoofed Responses: " + this.spoofedResponses);
-            console.log("[Cloud License]   • Monitored License Servers: " + config.licenseServers.length);
-            console.log("[Cloud License] ========================================");
-            console.log("[Cloud License] Total hooks installed: " + Object.keys(this.hooksInstalled).length);
-            console.log("[Cloud License] ========================================");
-            console.log("[Cloud License] Advanced cloud license bypass is now ACTIVE!");
+            send({type: 'summary', target: 'cloud_license', action: 'separator', data: {message: '========================================'}});
+            send({type: 'summary', target: 'cloud_license', action: 'runtime_statistics_header', data: {message: 'Runtime Statistics:'}});
+            send({type: 'summary', target: 'cloud_license', action: 'runtime_stat', data: {stat: 'Intercepted Requests', value: this.interceptedRequests, message: '• Intercepted Requests: ' + this.interceptedRequests}});
+            send({type: 'summary', target: 'cloud_license', action: 'runtime_stat', data: {stat: 'Blocked Requests', value: this.blockedRequests, message: '• Blocked Requests: ' + this.blockedRequests}});
+            send({type: 'summary', target: 'cloud_license', action: 'runtime_stat', data: {stat: 'Spoofed Responses', value: this.spoofedResponses, message: '• Spoofed Responses: ' + this.spoofedResponses}});
+            send({type: 'summary', target: 'cloud_license', action: 'runtime_stat', data: {stat: 'Monitored License Servers', value: config.licenseServers.length, message: '• Monitored License Servers: ' + config.licenseServers.length}});
+            send({type: 'summary', target: 'cloud_license', action: 'separator', data: {message: '========================================'}});
+            send({type: 'summary', target: 'cloud_license', action: 'total_hooks', data: {count: Object.keys(this.hooksInstalled).length, message: 'Total hooks installed: ' + Object.keys(this.hooksInstalled).length}});
+            send({type: 'summary', target: 'cloud_license', action: 'separator', data: {message: '========================================'}});
+            send({type: 'summary', target: 'cloud_license', action: 'activation_complete', data: {status: 'ACTIVE', message: 'Advanced cloud license bypass is now ACTIVE!'}});
         }, 100);
     }
 }

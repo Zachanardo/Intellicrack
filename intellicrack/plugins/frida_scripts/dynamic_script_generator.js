@@ -130,13 +130,22 @@
     },
     
     onAttach: function(pid) {
-        console.log("[Script Generator] Attaching to process: " + pid);
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "attaching_to_process",
+            pid: pid
+        });
         this.processId = pid;
         this.startTime = Date.now();
     },
     
     run: function() {
-        console.log("[Script Generator] Starting dynamic script generation system...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "initializing_system"
+        });
         
         // Initialize components
         this.initializeAnalysisEngine();
@@ -152,7 +161,11 @@
     
     // === ANALYSIS ENGINE INITIALIZATION ===
     initializeAnalysisEngine: function() {
-        console.log("[Script Generator] Initializing binary analysis engine...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "initializing_analysis_engine"
+        });
         
         // Initialize analysis components
         this.analysisEngine = {
@@ -231,7 +244,11 @@
     
     // === TEMPLATE SYSTEM INITIALIZATION ===
     initializeTemplateSystem: function() {
-        console.log("[Script Generator] Initializing script template system...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "initializing_template_system"
+        });
         
         this.loadBuiltinTemplates();
         this.loadCustomTemplates();
@@ -239,7 +256,11 @@
     },
     
     loadBuiltinTemplates: function() {
-        console.log("[Script Generator] Loading builtin script templates...");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "loading_builtin_templates"
+        });
         
         // Anti-debug templates
         this.scriptTemplates.antiDebug = {
@@ -377,7 +398,11 @@
     
     // === BINARY ANALYSIS IMPLEMENTATION ===
     analyzeImportTable: function() {
-        console.log("[Script Generator] Analyzing import table...");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "analyzing_import_table"
+        });
         
         try {
             var modules = Process.enumerateModules();
@@ -409,11 +434,20 @@
             this.analysisResults.binaryInfo.imports = importAnalysis;
             this.analyzeImportPatterns(importAnalysis);
             
-            console.log("[Script Generator] Import analysis completed: " + 
-                      importAnalysis.suspiciousImports.length + " suspicious imports found");
+            send({
+                type: "info",
+                target: "dynamic_script_generator",
+                action: "import_analysis_completed",
+                suspicious_imports_count: importAnalysis.suspiciousImports.length
+            });
             
         } catch(e) {
-            console.log("[Script Generator] Import analysis failed: " + e);
+            send({
+                type: "error",
+                target: "dynamic_script_generator",
+                action: "import_analysis_failed",
+                error: e.toString()
+            });
         }
     },
     
@@ -465,7 +499,11 @@
     },
     
     analyzeStringLiterals: function() {
-        console.log("[Script Generator] Analyzing string literals...");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "analyzing_string_literals"
+        });
         
         try {
             var stringAnalysis = {
@@ -496,11 +534,20 @@
             this.analysisResults.stringPatterns = stringAnalysis;
             this.analyzeStringPatterns(stringAnalysis);
             
-            console.log("[Script Generator] String analysis completed: " + 
-                      stringAnalysis.protectionStrings.length + " protection strings found");
+            send({
+                type: "info",
+                target: "dynamic_script_generator",
+                action: "string_analysis_completed",
+                protection_strings_count: stringAnalysis.protectionStrings.length
+            });
             
         } catch(e) {
-            console.log("[Script Generator] String analysis failed: " + e);
+            send({
+                type: "error",
+                target: "dynamic_script_generator",
+                action: "string_analysis_failed",
+                error: e.toString()
+            });
         }
     },
     
@@ -535,7 +582,11 @@
     },
     
     analyzePEStructure: function() {
-        console.log("[Script Generator] Analyzing PE structure...");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "analyzing_pe_structure"
+        });
         
         try {
             var mainModule = Process.enumerateModules()[0];
@@ -560,10 +611,20 @@
             
             this.analysisResults.binaryInfo.peStructure = peAnalysis;
             
-            console.log("[Script Generator] PE analysis completed for " + mainModule.name);
+            send({
+                type: "info",
+                target: "dynamic_script_generator",
+                action: "pe_analysis_completed",
+                module_name: mainModule.name
+            });
             
         } catch(e) {
-            console.log("[Script Generator] PE analysis failed: " + e);
+            send({
+                type: "error",
+                target: "dynamic_script_generator",
+                action: "pe_analysis_failed",
+                error: e.toString()
+            });
         }
     },
     
@@ -621,7 +682,11 @@
     
     // === DYNAMIC ANALYSIS IMPLEMENTATION ===
     traceAPIUsage: function() {
-        console.log("[Script Generator] Starting API usage tracing...");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "starting_api_usage_tracing"
+        });
         
         var apiTrace = {
             calls: [],
@@ -701,10 +766,19 @@
     },
     
     analyzeAPIPatterns: function(trace) {
-        console.log("[Script Generator] Analyzing API usage patterns...");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "analyzing_api_usage_patterns"
+        });
         
         var totalCalls = trace.calls.length;
-        console.log("[Script Generator] Total API calls recorded: " + totalCalls);
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "api_calls_recorded",
+            total_calls: totalCalls
+        });
         
         // Identify hotspots (frequently called APIs)
         for (var key in trace.patterns) {
@@ -742,15 +816,24 @@
                     significance: "high"
                 });
                 
-                console.log("[Script Generator] Suspicious activity detected: " + api + 
-                          " called " + trace.patterns[api].callCount + " times");
+                send({
+                    type: "warning",
+                    target: "dynamic_script_generator",
+                    action: "suspicious_activity_detected",
+                    api: api,
+                    call_count: trace.patterns[api].callCount
+                });
             }
         }
     },
     
     // === PROTECTION DETECTION ===
     startAnalysisPipeline: function() {
-        console.log("[Script Generator] Starting analysis pipeline...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "starting_analysis_pipeline"
+        });
         
         // Perform analyses in sequence
         setTimeout(() => {
@@ -771,7 +854,11 @@
     },
     
     performStaticAnalysis: function() {
-        console.log("[Script Generator] Performing static analysis...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "performing_static_analysis"
+        });
         
         this.analysisState.currentPhase = "static_analysis";
         
@@ -788,11 +875,19 @@
         }
         
         this.analysisState.completedAnalyses.push("static");
-        console.log("[Script Generator] Static analysis completed");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "static_analysis_completed"
+        });
     },
     
     performDynamicAnalysis: function() {
-        console.log("[Script Generator] Performing dynamic analysis...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "performing_dynamic_analysis"
+        });
         
         this.analysisState.currentPhase = "dynamic_analysis";
         
@@ -803,11 +898,19 @@
         }
         
         this.analysisState.completedAnalyses.push("dynamic");
-        console.log("[Script Generator] Dynamic analysis started (ongoing)");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "dynamic_analysis_started"
+        });
     },
     
     performProtectionDetection: function() {
-        console.log("[Script Generator] Performing protection mechanism detection...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "performing_protection_detection"
+        });
         
         this.analysisState.currentPhase = "protection_detection";
         
@@ -821,8 +924,12 @@
         
         this.analysisResults.protectionMechanisms = detectedProtections;
         
-        console.log("[Script Generator] Protection detection completed: " + 
-                  detectedProtections.length + " mechanisms detected");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "protection_detection_completed",
+            mechanisms_detected: detectedProtections.length
+        });
         
         this.analysisState.completedAnalyses.push("protection");
     },
@@ -968,7 +1075,11 @@
     
     // === SCRIPT GENERATION ===
     generateOptimalScript: function() {
-        console.log("[Script Generator] Generating optimal bypass script...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "generating_optimal_bypass_script"
+        });
         
         this.analysisState.currentPhase = "script_generation";
         
@@ -978,12 +1089,20 @@
         this.generatedScripts["optimal_bypass_" + Date.now()] = generatedScript;
         this.stats.scriptsGenerated++;
         
-        console.log("[Script Generator] Optimal script generated successfully");
+        send({
+            type: "success",
+            target: "dynamic_script_generator",
+            action: "optimal_script_generated"
+        });
         this.executeGeneratedScript(generatedScript);
     },
     
     createScriptPlan: function() {
-        console.log("[Script Generator] Creating script execution plan...");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "creating_script_execution_plan"
+        });
         
         var plan = {
             strategies: [],
@@ -1022,8 +1141,13 @@
         var totalConfidence = plan.priorities.reduce((sum, p) => sum + p.confidence, 0);
         plan.metadata.confidenceScore = totalConfidence / plan.priorities.length;
         
-        console.log("[Script Generator] Script plan created with " + plan.strategies.length + 
-                  " strategies (confidence: " + plan.metadata.confidenceScore.toFixed(3) + ")");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "script_plan_created",
+            strategies_count: plan.strategies.length,
+            confidence_score: plan.metadata.confidenceScore
+        });
         
         return plan;
     },
@@ -1139,7 +1263,11 @@
     },
     
     generateScript: function(plan) {
-        console.log("[Script Generator] Generating script from plan...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "generating_script_from_plan"
+        });
         
         var script = {
             metadata: {
@@ -1160,8 +1288,12 @@
         // Combine all parts into final script
         script.fullScript = this.combineScriptParts(script);
         
-        console.log("[Script Generator] Script generation completed (" + 
-                  script.fullScript.length + " characters)");
+        send({
+            type: "success",
+            target: "dynamic_script_generator",
+            action: "script_generation_completed",
+            script_length: script.fullScript.length
+        });
         
         return script;
     },
@@ -1221,7 +1353,12 @@
     generateInitFunction: function(plan) {
         var initCode = `
     onAttach: function(pid) {
-        console.log("[Generated Script] Attaching to process: " + pid);
+        send({
+            type: "status",
+            target: "generated_script",
+            action: "attaching_to_process",
+            process_id: pid
+        });
         this.processId = pid;
         this.startTime = Date.now();
         this.stats = {
@@ -1238,8 +1375,17 @@
     generateRunFunction: function(plan) {
         var runCode = `
     run: function() {
-        console.log("[Generated Script] Starting generated bypass script...");
-        console.log("[Generated Script] Executing " + ${plan.strategies.length} + " bypass strategies...");
+        send({
+            type: "status",
+            target: "generated_script",
+            action: "starting_bypass_script"
+        });
+        send({
+            type: "info",
+            target: "generated_script",
+            action: "executing_strategies",
+            strategy_count: ${plan.strategies.length}
+        });
         
         // Execute strategies in priority order`;
         
@@ -1260,7 +1406,13 @@
     generateStrategyFunction: function(strategy) {
         var functionCode = `
     execute_${strategy.id}: function() {
-        console.log("[Generated Script] Executing strategy: ${strategy.type}");
+        send({
+            type: "status",
+            target: "generated_script",
+            action: "executing_strategy",
+            strategy_type: "${strategy.type}",
+            strategy_id: "${strategy.id}"
+        });
         
         try {`;
         
@@ -1273,10 +1425,21 @@
         functionCode += `
             this.stats.bypassAttempts++;
             this.stats.successfulBypasses++;
-            console.log("[Generated Script] Strategy ${strategy.id} executed successfully");
+            send({
+                type: "success",
+                target: "generated_script",
+                action: "strategy_executed_successfully",
+                strategy_id: "${strategy.id}"
+            });
             
         } catch(e) {
-            console.log("[Generated Script] Strategy ${strategy.id} failed: " + e);
+            send({
+                type: "error",
+                target: "generated_script",
+                action: "strategy_failed",
+                strategy_id: "${strategy.id}",
+                error: e.toString()
+            });
             this.stats.failedBypasses++;
         }
     },`;
@@ -1294,7 +1457,12 @@
             var ${hook.target.toLowerCase()}Func = Module.findExportByName("${hook.module}", "${hook.target}");
             if (${hook.target.toLowerCase()}Func) {
                 Interceptor.replace(${hook.target.toLowerCase()}Func, new NativeCallback(function() {
-                    console.log("[Generated Script] ${hook.target} bypassed");
+                    send({
+                        type: "bypass",
+                        target: "generated_script",
+                        action: "function_bypassed",
+                        function_name: "${hook.target}"
+                    });
                     return ${hook.returnValue};
                 }, 'int', []));
                 this.stats.hooksInstalled++;
@@ -1308,7 +1476,12 @@
             if (${hook.target.toLowerCase()}Func) {
                 Interceptor.attach(${hook.target.toLowerCase()}Func, {
                     onLeave: function(retval) {
-                        console.log("[Generated Script] ${hook.target} output manipulated");
+                        send({
+                            type: "bypass",
+                            target: "generated_script",
+                            action: "output_manipulated",
+                            function_name: "${hook.target}"
+                        });
                         // Manipulation logic would go here
                     }
                 });
@@ -1319,7 +1492,12 @@
             default:
                 hookCode = `
             // Generic hook for ${hook.target}
-            console.log("[Generated Script] Generic hook strategy for ${hook.target}");`;
+            send({
+                type: "info",
+                target: "generated_script",
+                action: "generic_hook_applied",
+                function_name: "${hook.target}"
+            });`;
                 break;
         }
         
@@ -1368,17 +1546,28 @@
     // Installation summary
     installSummary: function() {
         setTimeout(() => {
-            console.log("\\n[Generated Script] =====================================");
-            console.log("[Generated Script] Generated Bypass Script Summary:");
-            console.log("[Generated Script] =====================================");
-            console.log("[Generated Script] Hooks Installed: " + this.stats.hooksInstalled);
-            console.log("[Generated Script] Bypass Attempts: " + this.stats.bypassAttempts);
-            console.log("[Generated Script] Successful Bypasses: " + this.stats.successfulBypasses);
-            console.log("[Generated Script] Failed Bypasses: " + this.stats.failedBypasses);
-            console.log("[Generated Script] Success Rate: " + 
-                      (this.stats.successfulBypasses / Math.max(this.stats.bypassAttempts, 1) * 100).toFixed(1) + "%");
-            console.log("[Generated Script] =====================================");
-            console.log("[Generated Script] Generated bypass script is now ACTIVE!");
+            send({
+                type: "summary",
+                target: "generated_script",
+                action: "installation_summary_start"
+            });
+            send({
+                type: "summary",
+                target: "generated_script",
+                action: "installation_statistics",
+                stats: {
+                    hooks_installed: this.stats.hooksInstalled,
+                    bypass_attempts: this.stats.bypassAttempts,
+                    successful_bypasses: this.stats.successfulBypasses,
+                    failed_bypasses: this.stats.failedBypasses,
+                    success_rate: (this.stats.successfulBypasses / Math.max(this.stats.bypassAttempts, 1) * 100).toFixed(1)
+                }
+            });
+            send({
+                type: "status",
+                target: "generated_script",
+                action: "script_now_active"
+            });
         }, 100);
     }
 }`;
@@ -1398,35 +1587,56 @@
     
     logBypassAttempt: function(target, success, details) {
         var status = success ? "SUCCESS" : "FAILED";
-        console.log("[Generated Script] Bypass attempt: " + target + " - " + status);
-        if (details) {
-            console.log("[Generated Script] Details: " + details);
-        }
+        send({
+            type: success ? "bypass" : "error",
+            target: "generated_script",
+            action: "bypass_attempt",
+            target_function: target,
+            status: status,
+            details: details || null
+        });
     }`;
     },
     
     executeGeneratedScript: function(script) {
-        console.log("[Script Generator] Executing generated script...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "executing_generated_script"
+        });
         
         try {
             // In a real implementation, you would execute the generated script
             // For this demonstration, we'll simulate execution
             
-            console.log("[Script Generator] Generated script execution simulated");
-            console.log("[Script Generator] Script length: " + script.fullScript.length + " characters");
-            console.log("[Script Generator] Confidence score: " + script.metadata.confidence.toFixed(3));
+            send({
+                type: "info",
+                target: "dynamic_script_generator",
+                action: "script_execution_simulated",
+                script_length: script.fullScript.length,
+                confidence_score: script.metadata.confidence
+            });
             
             this.stats.successfulBypass++;
             
         } catch(e) {
-            console.log("[Script Generator] Generated script execution failed: " + e);
+            send({
+                type: "error",
+                target: "dynamic_script_generator",
+                action: "script_execution_failed",
+                error: e.toString()
+            });
             this.stats.failedAttempts++;
         }
     },
     
     // === UTILITY FUNCTIONS ===
     monitorBehaviorPatterns: function() {
-        console.log("[Script Generator] Starting behavior pattern monitoring...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "starting_behavior_pattern_monitoring"
+        });
         
         // This would integrate with the behavioral analyzer
         this.analysisResults.behavioralIndicators = {
@@ -1440,7 +1650,11 @@
     },
     
     analyzeNetworkActivity: function() {
-        console.log("[Script Generator] Analyzing network activity...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "analyzing_network_activity"
+        });
         
         // Hook network functions to detect license/activation traffic
         var networkHooks = ["WinHttpSendRequest", "InternetReadFile", "connect", "send"];
@@ -1459,7 +1673,12 @@
                 if (networkFunc) {
                     Interceptor.attach(networkFunc, {
                         onEnter: function(args) {
-                            console.log("[Script Generator] Network activity detected: " + functionName);
+                            send({
+                                type: "info",
+                                target: "dynamic_script_generator",
+                                action: "network_activity_detected",
+                                function_name: functionName
+                            });
                             this.parent.parent.analysisResults.behavioralIndicators.networkActivity = true;
                         }
                     });
@@ -1574,39 +1793,75 @@
     
     // Placeholder implementations for remaining functions
     initializeScriptGenerator: function() {
-        console.log("[Script Generator] Script generator initialized");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "script_generator_initialized"
+        });
     },
     
     initializeOptimizationEngine: function() {
-        console.log("[Script Generator] Optimization engine initialized");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "optimization_engine_initialized"
+        });
     },
     
     loadCustomTemplates: function() {
-        console.log("[Script Generator] Custom templates loaded");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "custom_templates_loaded"
+        });
     },
     
     initializeTemplateEngine: function() {
-        console.log("[Script Generator] Template engine initialized");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "template_engine_initialized"
+        });
     },
     
     analyzeImportPatterns: function(analysis) {
-        console.log("[Script Generator] Import patterns analyzed");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "import_patterns_analyzed"
+        });
     },
     
     analyzeStringPatterns: function(analysis) {
-        console.log("[Script Generator] String patterns analyzed");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "string_patterns_analyzed"
+        });
     },
     
     analyzeCodeSections: function() {
-        console.log("[Script Generator] Code sections analyzed");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "code_sections_analyzed"
+        });
     },
     
     analyzeEntryPoints: function() {
-        console.log("[Script Generator] Entry points analyzed");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "entry_points_analyzed"
+        });
     },
     
     analyzeResources: function() {
-        console.log("[Script Generator] Resources analyzed");
+        send({
+            type: "info",
+            target: "dynamic_script_generator",
+            action: "resources_analyzed"
+        });
     },
     
     calculateEntropy: function() {
@@ -1614,19 +1869,35 @@
     },
     
     monitorMemoryAccess: function() {
-        console.log("[Script Generator] Memory access monitoring started");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "memory_access_monitoring_started"
+        });
     },
     
     trackRegistryAccess: function() {
-        console.log("[Script Generator] Registry access tracking started");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "registry_access_tracking_started"
+        });
     },
     
     monitorFileOperations: function() {
-        console.log("[Script Generator] File operations monitoring started");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "file_operations_monitoring_started"
+        });
     },
     
     detectRuntimeDecryption: function() {
-        console.log("[Script Generator] Runtime decryption detection started");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "runtime_decryption_detection_started"
+        });
     },
     
     matchProtectionPattern: function(pattern) {
@@ -1668,7 +1939,11 @@
     },
     
     learnFromResults: function(features, result) {
-        console.log("[Script Generator] Learning from results...");
+        send({
+            type: "status",
+            target: "dynamic_script_generator",
+            action: "learning_from_results"
+        });
     },
     
     createUnpackingStrategy: function(mechanism) {
@@ -1726,7 +2001,13 @@
     generateErrorHandling: function() {
         return `
     handleError: function(error, context) {
-        console.log("[Generated Script] Error in " + context + ": " + error);
+        send({
+            type: "error",
+            target: "generated_script",
+            action: "error_occurred",
+            context: context,
+            error: error.toString()
+        });
         // Error recovery logic would go here
     }`;
     },
@@ -1734,9 +2015,11 @@
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
-            console.log("\n[Script Generator] ========================================");
-            console.log("[Script Generator] Dynamic Script Generator Summary:");
-            console.log("[Script Generator] ========================================");
+            send({
+                type: "summary",
+                target: "dynamic_script_generator",
+                action: "final_summary_start"
+            });
             
             var activeComponents = [];
             
@@ -1753,50 +2036,85 @@
                 activeComponents.push("Template System");
             }
             
-            for (var i = 0; i < activeComponents.length; i++) {
-                console.log("[Script Generator]   ✓ " + activeComponents[i]);
-            }
+            send({
+                type: "summary",
+                target: "dynamic_script_generator", 
+                action: "active_components",
+                components: activeComponents
+            });
             
-            console.log("[Script Generator] ========================================");
-            console.log("[Script Generator] Analysis Configuration:");
-            console.log("[Script Generator]   • Static Analysis: " + this.config.analysis.performStaticAnalysis);
-            console.log("[Script Generator]   • Dynamic Analysis: " + this.config.analysis.performDynamicAnalysis);
-            console.log("[Script Generator]   • Import Analysis: " + this.config.analysis.analyzeImports);
-            console.log("[Script Generator]   • String Analysis: " + this.config.analysis.analyzeStrings);
-            console.log("[Script Generator]   • PE Structure Analysis: " + this.config.analysis.analyzePeStructure);
+            send({
+                type: "summary",
+                target: "dynamic_script_generator",
+                action: "analysis_configuration",
+                config: {
+                    static_analysis: this.config.analysis.performStaticAnalysis,
+                    dynamic_analysis: this.config.analysis.performDynamicAnalysis,
+                    import_analysis: this.config.analysis.analyzeImports,
+                    string_analysis: this.config.analysis.analyzeStrings,
+                    pe_structure_analysis: this.config.analysis.analyzePeStructure
+                }
+            });
             
-            console.log("[Script Generator] ========================================");
-            console.log("[Script Generator] Detection Capabilities:");
-            console.log("[Script Generator]   • Anti-Debug Detection: " + this.config.protectionDetection.detectAntiDebug);
-            console.log("[Script Generator]   • Packing Detection: " + this.config.protectionDetection.detectPacking);
-            console.log("[Script Generator]   • DRM Detection: " + this.config.protectionDetection.detectDRM);
-            console.log("[Script Generator]   • License Detection: " + this.config.protectionDetection.detectLicensing);
-            console.log("[Script Generator]   • Virtualization Detection: " + this.config.protectionDetection.detectVirtualization);
+            send({
+                type: "summary", 
+                target: "dynamic_script_generator",
+                action: "detection_capabilities",
+                capabilities: {
+                    anti_debug_detection: this.config.protectionDetection.detectAntiDebug,
+                    packing_detection: this.config.protectionDetection.detectPacking,
+                    drm_detection: this.config.protectionDetection.detectDRM
+                }
+            });
+            send({
+                type: "summary",
+                target: "dynamic_script_generator", 
+                action: "extended_capabilities",
+                capabilities: {
+                    license_detection: this.config.protectionDetection.detectLicensing,
+                    virtualization_detection: this.config.protectionDetection.detectVirtualization
+                }
+            });
             
-            console.log("[Script Generator] ========================================");
-            console.log("[Script Generator] Script Generation:");
-            console.log("[Script Generator]   • Generate Optimized Scripts: " + this.config.scriptGeneration.generateOptimized);
-            console.log("[Script Generator]   • Include Heuristics: " + this.config.scriptGeneration.includeHeuristics);
-            console.log("[Script Generator]   • Combine Strategies: " + this.config.scriptGeneration.combineStrategies);
-            console.log("[Script Generator]   • Modular Scripts: " + this.config.output.generateModularScripts);
+            send({
+                type: "summary",
+                target: "dynamic_script_generator",
+                action: "script_generation_config", 
+                config: {
+                    generate_optimized: this.config.scriptGeneration.generateOptimized,
+                    include_heuristics: this.config.scriptGeneration.includeHeuristics,
+                    combine_strategies: this.config.scriptGeneration.combineStrategies,
+                    modular_scripts: this.config.output.generateModularScripts
+                }
+            });
+            send({
+                type: "summary",
+                target: "dynamic_script_generator",
+                action: "runtime_statistics",
+                stats: {
+                    binaries_analyzed: this.stats.binariesAnalyzed,
+                    scripts_generated: this.stats.scriptsGenerated,
+                    successful_bypasses: this.stats.successfulBypass,
+                    failed_attempts: this.stats.failedAttempts
+                }
+            });
+            send({
+                type: "summary",
+                target: "dynamic_script_generator",
+                action: "current_state",
+                state: {
+                    analysis_phase: this.analysisState.currentPhase,
+                    completed_analyses: this.analysisState.completedAnalyses,
+                    protection_mechanisms_count: this.analysisResults.protectionMechanisms.length,
+                    generated_scripts_count: Object.keys(this.generatedScripts).length
+                }
+            });
             
-            console.log("[Script Generator] ========================================");
-            console.log("[Script Generator] Runtime Statistics:");
-            console.log("[Script Generator]   • Binaries Analyzed: " + this.stats.binariesAnalyzed);
-            console.log("[Script Generator]   • Scripts Generated: " + this.stats.scriptsGenerated);
-            console.log("[Script Generator]   • Successful Bypasses: " + this.stats.successfulBypass);
-            console.log("[Script Generator]   • Failed Attempts: " + this.stats.failedAttempts);
-            
-            console.log("[Script Generator] ========================================");
-            console.log("[Script Generator] Current State:");
-            console.log("[Script Generator]   • Analysis Phase: " + this.analysisState.currentPhase);
-            console.log("[Script Generator]   • Completed Analyses: " + this.analysisState.completedAnalyses.join(", "));
-            console.log("[Script Generator]   • Protection Mechanisms: " + this.analysisResults.protectionMechanisms.length);
-            console.log("[Script Generator]   • Generated Scripts: " + Object.keys(this.generatedScripts).length);
-            
-            console.log("[Script Generator] ========================================");
-            console.log("[Script Generator] Dynamic script generation system is now ACTIVE!");
-            console.log("[Script Generator] Continuously analyzing and generating optimal bypass scripts...");
+            send({
+                type: "status",
+                target: "dynamic_script_generator", 
+                action: "system_now_active"
+            });
         }, 100);
     }
 }

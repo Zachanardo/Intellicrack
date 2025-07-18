@@ -20,9 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 # Import core utilities
-from . import common_imports
-from . import core_utilities
-from . import final_utilities
+from . import common_imports, core_utilities, final_utilities
 
 # Re-export all from each module
 from .common_imports import *

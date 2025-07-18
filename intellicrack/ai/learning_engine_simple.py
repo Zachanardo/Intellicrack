@@ -3,10 +3,9 @@ Simple learning engine to replace the complex one temporarily.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
-
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +52,14 @@ class FailureAnalysis:
 
 class AILearningEngine:
     """Simplified AI learning engine."""
-    
+
     def __init__(self, db_path: Optional[str] = None):
+        """Initialize the simplified AI learning engine.
+        
+        Args:
+            db_path: Optional path to the database file (currently unused in
+                     simplified implementation)
+        """
         self.learning_enabled = True
         self.learning_stats = {
             "records_processed": 0,
@@ -63,27 +68,27 @@ class AILearningEngine:
             "success_rate": 0.0
         }
         logger.info("Simplified AI learning engine initialized")
-    
+
     def record_experience(self, **kwargs) -> bool:
         """Record a learning experience."""
         return True
-    
+
     def learn_from_vulnerability_analysis(self, *args, **kwargs) -> bool:
         """Learn from vulnerability analysis."""
         return True
-    
+
     def learn_from_exploit_development(self, *args, **kwargs) -> bool:
         """Learn from exploit development."""
         return True
-    
+
     def learn_from_payload_generation(self, *args, **kwargs) -> bool:
         """Learn from payload generation."""
         return True
-    
+
     def learn_from_evasion_technique(self, *args, **kwargs) -> bool:
         """Learn from evasion technique."""
         return True
-    
+
     def learn_from_exploit_chain(self, *args, **kwargs) -> bool:
         """Learn from exploit chain."""
         return True

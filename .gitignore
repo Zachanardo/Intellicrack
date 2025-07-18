@@ -170,7 +170,8 @@ conda-env/
 # ==============================================================================
 # INTELLICRACK SPECIFIC
 # ==============================================================================
-# Configuration files
+# Configuration files and directories
+config/
 intellicrack_config.json
 security.ini
 
@@ -544,6 +545,7 @@ run_vulture_windows.py
 *_wsl.*
 run_*_wsl.sh
 run_intellicrack_wsl.sh
+ClaudeCodeWSL.ps1
 
 # Docker and containerization
 .docker/

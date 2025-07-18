@@ -89,11 +89,21 @@
     originalValues: {},
     
     onAttach: function(pid) {
-        console.log("[Enhanced HWID] Attaching to process: " + pid);
+        send({
+            type: "info",
+            target: "enhanced_hardware_spoofer",
+            action: "attaching_to_process",
+            pid: pid
+        });
     },
     
     run: function() {
-        console.log("[Enhanced HWID] Installing comprehensive hardware spoofing hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_hooks",
+            message: "Installing comprehensive hardware spoofing hooks..."
+        });
         
         this.hookWmiQueries();
         this.hookRegistryQueries();
@@ -109,7 +119,12 @@
     
     // === WMI QUERY HOOKS ===
     hookWmiQueries: function() {
-        console.log("[Enhanced HWID] Installing WMI query hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_hooks",
+            category: "wmi_query"
+        });
         
         // Hook WMI COM interface calls
         this.hookWmiComInterface();
@@ -120,7 +135,11 @@
         // Hook WMI variant data retrieval
         this.hookWmiVariantData();
         
-        console.log("[Enhanced HWID] WMI query hooks installed");
+        send({
+            type: "success",
+            target: "enhanced_hardware_spoofer",
+            action: "wmi_query_hooks_installed"
+        });
     },
     
     hookWmiComInterface: function() {
@@ -136,7 +155,11 @@
                         
                         // WbemLocator CLSID: {4590f811-1d3a-11d0-891f-00aa004b2e24}
                         if (guidStr && guidStr.toLowerCase().includes("4590f811")) {
-                            console.log("[Enhanced HWID] WMI WbemLocator creation detected");
+                            send({
+                                type: "detection",
+                                target: "enhanced_hardware_spoofer",
+                                action: "wmi_wbemlocator_creation"
+                            });
                             this.isWmiCall = true;
                         }
                     }
@@ -167,7 +190,12 @@
     hookWbemExecQuery: function() {
         // Hook IWbemServices::ExecQuery method
         // This is more complex as it involves COM vtable hooking
-        console.log("[Enhanced HWID] Setting up WbemServices ExecQuery hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "setting_up_hooks",
+            category: "wbemservices_execquery"
+        });
         
         // We'll hook the actual query parsing instead
         this.hookWmiQueryParsing();
@@ -177,7 +205,12 @@
         // Hook common WMI query functions in wbemprox.dll
         var wbemprox = Module.findBaseAddress("wbemprox.dll");
         if (wbemprox) {
-            console.log("[Enhanced HWID] WMI proxy DLL found, installing query hooks");
+            send({
+                type: "info",
+                target: "enhanced_hardware_spoofer",
+                action: "wmi_proxy_found",
+                operation: "installing_query_hooks"
+            });
             
             // Hook string comparison functions used in WMI queries
             this.hookWmiStringComparisons();
@@ -198,7 +231,13 @@
                             this.isHwidQuery = this.isHardwareQuery(str1) || this.isHardwareQuery(str2);
                             
                             if (this.isHwidQuery) {
-                                console.log("[Enhanced HWID] WMI hardware query detected: " + str1 + " vs " + str2);
+                                send({
+                                    type: "detection",
+                                    target: "enhanced_hardware_spoofer",
+                                    action: "wmi_hardware_query",
+                                    query1: str1,
+                                    query2: str2
+                                });
                             }
                         }
                     } catch(e) {
@@ -224,7 +263,12 @@
     },
     
     hookWmiVariantData: function() {
-        console.log("[Enhanced HWID] Installing WMI variant data hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_hooks",
+            category: "wmi_variant_data"
+        });
         
         // Hook VariantClear and VariantCopy for WMI result manipulation
         var variantClear = Module.findExportByName("oleaut32.dll", "VariantClear");
@@ -255,7 +299,13 @@
                                 
                                 if (spoofed && spoofed !== str) {
                                     this.writeBstr(bstrPtr, spoofed);
-                                    console.log("[Enhanced HWID] Spoofed WMI value: " + str + " -> " + spoofed);
+                                    send({
+                                        type: "bypass",
+                                        target: "enhanced_hardware_spoofer",
+                                        action: "wmi_value_spoofed",
+                                        original: str,
+                                        spoofed: spoofed
+                                    });
                                 }
                             }
                         }
@@ -307,7 +357,12 @@
                             }
                         }
                     } catch(e) {
-                        console.log("[Enhanced HWID] BSTR update failed: " + e);
+                        send({
+                            type: "error",
+                            target: "enhanced_hardware_spoofer",
+                            action: "bstr_update_failed",
+                            error: e.toString()
+                        });
                     }
                 }
             });
@@ -318,7 +373,12 @@
     
     // === REGISTRY QUERY HOOKS ===
     hookRegistryQueries: function() {
-        console.log("[Enhanced HWID] Installing registry query hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_hooks",
+            category: "registry_query"
+        });
         
         var regQueryValueEx = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
         if (regQueryValueEx) {
@@ -363,10 +423,21 @@
                             Memory.copy(this.data, utf16Data, Math.min(dataSize, this.dataSize.readU32()));
                             this.dataSize.writeU32(dataSize);
                             
-                            console.log("[Enhanced HWID] Spoofed registry value: " + this.valueNameStr + " -> " + spoofedValue);
+                            send({
+                                type: "bypass",
+                                target: "enhanced_hardware_spoofer",
+                                action: "registry_value_spoofed",
+                                value_name: this.valueNameStr,
+                                spoofed_value: spoofedValue
+                            });
                         }
                     } catch(e) {
-                        console.log("[Enhanced HWID] Registry spoofing error: " + e);
+                        send({
+                            type: "error",
+                            target: "enhanced_hardware_spoofer",
+                            action: "registry_spoofing_error",
+                            error: e.toString()
+                        });
                     }
                 },
                 
@@ -397,7 +468,12 @@
     
     // === VOLUME INFORMATION HOOKS ===
     hookVolumeInformation: function() {
-        console.log("[Enhanced HWID] Installing volume information hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_hooks",
+            category: "volume_information"
+        });
         
         var getVolumeInfo = Module.findExportByName("kernel32.dll", "GetVolumeInformationW");
         if (getVolumeInfo) {
@@ -408,7 +484,12 @@
                         if (serialPtr && !serialPtr.isNull()) {
                             var spoofedSerial = 0x12345678;
                             serialPtr.writeU32(spoofedSerial);
-                            console.log("[Enhanced HWID] Spoofed volume serial to: 0x" + spoofedSerial.toString(16));
+                            send({
+                                type: "info",
+                                target: "enhanced_hardware_spoofer",
+                                action: "volume_serial_spoofed",
+                                spoofed_value: "0x" + spoofedSerial.toString(16)
+                            });
                         }
                     }
                 }
@@ -420,7 +501,12 @@
     
     // === SYSTEM INFORMATION HOOKS ===
     hookSystemInformation: function() {
-        console.log("[Enhanced HWID] Installing system information hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_hooks",
+            category: "system_information"
+        });
         
         var getSystemInfo = Module.findExportByName("kernel32.dll", "GetSystemInfo");
         if (getSystemInfo) {
@@ -431,7 +517,11 @@
                         // Modify processor information
                         sysInfo.writeU16(9); // PROCESSOR_ARCHITECTURE_AMD64
                         sysInfo.add(4).writeU32(this.parent.config.cpu.cores); // dwNumberOfProcessors
-                        console.log("[Enhanced HWID] Spoofed system processor information");
+                        send({
+                            type: "info",
+                            target: "enhanced_hardware_spoofer",
+                            action: "system_processor_spoofed"
+                        });
                     }
                 }
             });
@@ -454,7 +544,12 @@
                             if (sizePtr && !sizePtr.isNull()) {
                                 sizePtr.writeU32(spoofedName.length);
                             }
-                            console.log("[Enhanced HWID] Spoofed computer name to: " + spoofedName);
+                            send({
+                                type: "info",
+                                target: "enhanced_hardware_spoofer",
+                                action: "computer_name_spoofed",
+                                spoofed_name: spoofedName
+                            });
                         }
                     }
                 }
@@ -466,7 +561,12 @@
     
     // === NETWORK ADAPTER HOOKS ===
     hookNetworkAdapters: function() {
-        console.log("[Enhanced HWID] Installing comprehensive network adapter hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_hooks",
+            category: "network_adapters"
+        });
         
         // Hook legacy GetAdaptersInfo (Windows 2000/XP era)
         this.hookGetAdaptersInfo();
@@ -528,8 +628,13 @@
                                 }
                                 
                                 address.writeByteArray(spoofedMac);
-                                console.log("[Enhanced HWID] Spoofed adapter " + adapterIndex + 
-                                          " MAC: " + spoofedMac.map(b => b.toString(16).padStart(2, '0')).join(':'));
+                                send({
+                                    type: "info",
+                                    target: "enhanced_hardware_spoofer",
+                                    action: "adapter_mac_spoofed",
+                                    adapter_index: adapterIndex,
+                                    spoofed_mac: spoofedMac.map(b => b.toString(16).padStart(2, '0')).join(':')
+                                });
                             }
                             
                             // Spoof adapter description if configured
@@ -542,7 +647,12 @@
                             adapterIndex++;
                         }
                     } catch(e) {
-                        console.log("[Enhanced HWID] GetAdaptersInfo spoofing error: " + e);
+                        send({
+                            type: "error",
+                            target: "enhanced_hardware_spoofer",
+                            action: "getadaptersinfo_spoofing_error",
+                            error: e.toString()
+                        });
                     }
                 }
             });
@@ -592,8 +702,13 @@
                                 }
                                 
                                 physicalAddress.writeByteArray(spoofedMac);
-                                console.log("[Enhanced HWID] Spoofed modern adapter " + adapterIndex + 
-                                          " MAC: " + spoofedMac.map(b => b.toString(16).padStart(2, '0')).join(':'));
+                                send({
+                                    type: "info",
+                                    target: "enhanced_hardware_spoofer",
+                                    action: "modern_adapter_mac_spoofed",
+                                    adapter_index: adapterIndex,
+                                    spoofed_mac: spoofedMac.map(b => b.toString(16).padStart(2, '0')).join(':')
+                                });
                             }
                             
                             // Adapter name spoofing (wide string)
@@ -626,7 +741,12 @@
                             adapterIndex++;
                         }
                     } catch(e) {
-                        console.log("[Enhanced HWID] GetAdaptersAddresses spoofing error: " + e);
+                        send({
+                            type: "error",
+                            target: "enhanced_hardware_spoofer",
+                            action: "getadaptersaddresses_spoofing_error",
+                            error: e.toString()
+                        });
                     }
                 }
             });
@@ -636,7 +756,12 @@
     },
     
     hookRawSocketAccess: function() {
-        console.log("[Enhanced HWID] Installing raw socket MAC access hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_hooks",
+            category: "raw_socket_mac_access"
+        });
         
         // Hook WSASocket for raw socket creation
         var wsaSocket = Module.findExportByName("ws2_32.dll", "WSASocketW");
@@ -651,7 +776,12 @@
                 onLeave: function(retval) {
                     // Check for raw socket creation (AF_PACKET on Linux, raw sockets on Windows)
                     if (this.type === 3) { // SOCK_RAW
-                        console.log("[Enhanced HWID] Raw socket creation detected - MAC spoofing active");
+                        send({
+                            type: "detection",
+                            target: "enhanced_hardware_spoofer",
+                            action: "raw_socket_detected",
+                            socket_type: this.type
+                        });
                         this.isRawSocket = true;
                     }
                 }
@@ -691,7 +821,11 @@
                             buffer.add(6 + i).writeU8(sourceMac[i]);
                         }
                         
-                        console.log("[Enhanced HWID] Spoofed MAC in raw Ethernet frame");
+                        send({
+                            type: "info",
+                            target: "enhanced_hardware_spoofer",
+                            action: "ethernet_frame_mac_spoofed"
+                        });
                     } catch(e) {
                         // Frame spoofing failed - not all packets are Ethernet
                     }
@@ -703,7 +837,12 @@
     },
     
     hookWmiNetworkQueries: function() {
-        console.log("[Enhanced HWID] Installing WMI network adapter query hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_hooks",
+            category: "wmi_network_queries"
+        });
         
         // This integrates with our existing WMI hooks
         // We'll add network-specific spoofing to the WMI variant manipulation
@@ -716,11 +855,20 @@
         // The WMI hooks we already implemented will catch these queries
         // and our getSpoofedValue function will handle MAC address spoofing
         
-        console.log("[Enhanced HWID] WMI network hooks integrated with existing WMI system");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "wmi_network_hooks_integrated"
+        });
     },
     
     hookNdisOidQueries: function() {
-        console.log("[Enhanced HWID] Installing NDIS OID query hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_hooks",
+            category: "ndis_oid_queries"
+        });
         
         // Hook NdisRequest and related NDIS functions for driver-level MAC spoofing
         // This is more advanced and requires hooking into NDIS.sys
@@ -739,10 +887,20 @@
                     // Check for MAC address OID queries
                     if (this.oid === 0x01010102) { // OID_802_3_CURRENT_ADDRESS
                         this.isMacQuery = true;
-                        console.log("[Enhanced HWID] NDIS MAC address query detected");
+                        send({
+                            type: "detection",
+                            target: "enhanced_hardware_spoofer",
+                            action: "ndis_mac_query_detected",
+                            oid: "0x01010102"
+                        });
                     } else if (this.oid === 0x01010101) { // OID_802_3_PERMANENT_ADDRESS
                         this.isPermanentMacQuery = true;
-                        console.log("[Enhanced HWID] NDIS permanent MAC address query detected");
+                        send({
+                            type: "detection",
+                            target: "enhanced_hardware_spoofer",
+                            action: "ndis_permanent_mac_query_detected",
+                            oid: "0x01010101"
+                        });
                     }
                 },
                 
@@ -764,23 +922,41 @@
                                 this.bytesWritten.writeU32(6);
                             }
                             
-                            console.log("[Enhanced HWID] Spoofed NDIS MAC address: " + 
-                                      spoofedMac.map(b => b.toString(16).padStart(2, '0')).join(':'));
+                            send({
+                                type: "info",
+                                target: "enhanced_hardware_spoofer",
+                                action: "ndis_mac_spoofed",
+                                spoofed_mac: spoofedMac.map(b => b.toString(16).padStart(2, '0')).join(':')
+                            });
                         }
                     } catch(e) {
-                        console.log("[Enhanced HWID] NDIS MAC spoofing error: " + e);
+                        send({
+                            type: "error",
+                            target: "enhanced_hardware_spoofer",
+                            action: "ndis_mac_spoofing_error",
+                            error: e.toString()
+                        });
                     }
                 }
             });
             
             this.hooksInstalled['NdisQueryInformation'] = true;
         } else {
-            console.log("[Enhanced HWID] NDIS.sys not accessible - using user-mode hooks only");
+            send({
+                type: "warning",
+                target: "enhanced_hardware_spoofer",
+                action: "ndis_fallback_usermode"
+            });
         }
     },
     
     hookNetworkRegistryAccess: function() {
-        console.log("[Enhanced HWID] Installing network registry access hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_hooks",
+            category: "network_registry_access"
+        });
         
         // Hook registry queries for network adapter information
         var regQueryValueEx = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
@@ -829,11 +1005,21 @@
                                 Memory.copy(this.data, utf16Data, Math.min(dataSize, this.dataSize.readU32()));
                                 this.dataSize.writeU32(dataSize);
                                 
-                                console.log("[Enhanced HWID] Spoofed network registry value: " + 
-                                          this.valueNameStr + " -> " + spoofedValue);
+                                send({
+                                    type: "bypass",
+                                    target: "enhanced_hardware_spoofer",
+                                    action: "network_registry_spoofed",
+                                    value_name: this.valueNameStr,
+                                    spoofed_value: spoofedValue
+                                });
                             }
                         } catch(e) {
-                            console.log("[Enhanced HWID] Network registry spoofing error: " + e);
+                            send({
+                                type: "error",
+                                target: "enhanced_hardware_spoofer",
+                                action: "network_registry_spoofing_error",
+                                error: e.toString()
+                            });
                         }
                     },
                     
@@ -874,7 +1060,12 @@
                         
                         // Check if this is a network adapter key enumeration
                         if (keyName && this.isNetworkAdapterKey(keyName)) {
-                            console.log("[Enhanced HWID] Network adapter key enumeration: " + keyName);
+                            send({
+                                type: "detection",
+                                target: "enhanced_hardware_spoofer",
+                                action: "network_adapter_key_enumeration",
+                                key_name: keyName
+                            });
                             // The actual spoofing happens when values are queried
                         }
                     }
@@ -895,7 +1086,11 @@
     
     // === CPUID INSTRUCTION HOOKS ===
     hookCpuidInstructions: function() {
-        console.log("[Enhanced HWID] Installing CPUID instruction hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_cpuid_hooks"
+        });
         
         // Hook both wrapper functions and direct CPUID usage
         this.hookCpuidWrappers();
@@ -914,7 +1109,12 @@
                     // Always report standard x64 features as present
                     if (feature === 10) { // PF_NX_ENABLED
                         retval.replace(1);
-                        console.log("[Enhanced HWID] Spoofed processor feature: NX_ENABLED");
+                        send({
+                            type: "bypass",
+                            target: "enhanced_hardware_spoofer",
+                            action: "processor_feature_spoofed",
+                            feature: "NX_ENABLED"
+                        });
                     }
                 }
             });
@@ -944,7 +1144,11 @@
                         var mask = (1 << config.cpu.cores) - 1; // Set bits for all cores
                         sysInfo.add(16).writePointer(ptr(mask));
                         
-                        console.log("[Enhanced HWID] Spoofed native system info");
+                        send({
+                            type: "bypass",
+                            target: "enhanced_hardware_spoofer",
+                            action: "native_system_info_spoofed"
+                        });
                     }
                 }
             });
@@ -954,7 +1158,11 @@
     },
     
     hookDirectCpuidUsage: function() {
-        console.log("[Enhanced HWID] Installing direct CPUID usage hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_direct_cpuid_usage_hooks"
+        });
         
         // Hook __cpuid and __cpuidex intrinsics used by MSVC compiled code
         this.hookMsvcCpuidIntrinsics();
@@ -999,7 +1207,13 @@
             
             for (var j = 0; j < Math.min(matches.length, 10); j++) { // Limit to first 10 matches
                 var match = matches[j];
-                console.log("[Enhanced HWID] Found CPUID at: " + match.address + " in " + module.name);
+                send({
+                    type: "detection",
+                    target: "enhanced_hardware_spoofer",
+                    action: "cpuid_instruction_found",
+                    address: match.address.toString(),
+                    module: module.name
+                });
                 
                 // Hook this specific CPUID instruction
                 this.hookSpecificCpuid(match.address, module.name);
@@ -1024,9 +1238,14 @@
                     var leaf = this.context.eax.toInt32();
                     var subleaf = this.context.ecx.toInt32();
                     
-                    console.log("[Enhanced HWID] CPUID called with EAX=" + 
-                              leaf.toString(16) + ", ECX=" + subleaf.toString(16) + 
-                              " from " + moduleName);
+                    send({
+                        type: "detection",
+                        target: "enhanced_hardware_spoofer",
+                        action: "cpuid_called",
+                        eax: leaf.toString(16),
+                        ecx: subleaf.toString(16),
+                        module: moduleName
+                    });
                 },
                 
                 onLeave: function(retval) {
@@ -1061,8 +1280,12 @@
                             
                         default:
                             // For unknown leaves, just log them
-                            console.log("[Enhanced HWID] CPUID leaf 0x" + leaf.toString(16) + 
-                                      " not specifically handled");
+                            send({
+                                type: "info",
+                                target: "enhanced_hardware_spoofer",
+                                action: "cpuid_leaf_not_handled",
+                                leaf: "0x" + leaf.toString(16)
+                            });
                             break;
                     }
                 },
@@ -1087,7 +1310,12 @@
                     var stdFeatures = 0xBFEBFBFF; // Common x86-64 features
                     this.context.edx = ptr(stdFeatures);
                     
-                    console.log("[Enhanced HWID] Spoofed basic CPU info (leaf 1)");
+                    send({
+                        type: "bypass",
+                        target: "enhanced_hardware_spoofer",
+                        action: "basic_cpu_info_spoofed",
+                        leaf: "1"
+                    });
                 },
                 
                 spoofProcessorSerial: function(config) {
@@ -1098,7 +1326,12 @@
                     this.context.ecx = ptr(0);
                     this.context.edx = ptr(0);
                     
-                    console.log("[Enhanced HWID] Spoofed processor serial number (leaf 3)");
+                    send({
+                        type: "bypass",
+                        target: "enhanced_hardware_spoofer",
+                        action: "processor_serial_spoofed",
+                        leaf: "3"
+                    });
                 },
                 
                 spoofCpuNameString: function(leaf, config) {
@@ -1120,8 +1353,13 @@
                     this.context.ecx = ptr((chars[11] << 24) | (chars[10] << 16) | (chars[9] << 8) | chars[8]);
                     this.context.edx = ptr((chars[15] << 24) | (chars[14] << 16) | (chars[13] << 8) | chars[12]);
                     
-                    console.log("[Enhanced HWID] Spoofed CPU name string (leaf 0x" + 
-                              leaf.toString(16) + "): " + nameSegment.trim());
+                    send({
+                        type: "bypass",
+                        target: "enhanced_hardware_spoofer",
+                        action: "cpu_name_string_spoofed",
+                        leaf: "0x" + leaf.toString(16),
+                        segment: nameSegment.trim()
+                    });
                 },
                 
                 spoofAddressSizes: function() {
@@ -1136,16 +1374,31 @@
                     this.context.ecx = ptr(0);
                     this.context.edx = ptr(0);
                     
-                    console.log("[Enhanced HWID] Spoofed address sizes (leaf 0x80000008)");
+                    send({
+                        type: "bypass",
+                        target: "enhanced_hardware_spoofer",
+                        action: "address_sizes_spoofed",
+                        leaf: "0x80000008"
+                    });
                 }
             });
         } catch(e) {
-            console.log("[Enhanced HWID] Failed to hook CPUID at " + address + ": " + e);
+            send({
+                type: "error",
+                target: "enhanced_hardware_spoofer",
+                action: "cpuid_hook_failed",
+                address: address.toString(),
+                error: e.toString()
+            });
         }
     },
     
     hookAssemblyCpuidPatterns: function() {
-        console.log("[Enhanced HWID] Hooking assembly CPUID patterns...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "hooking_assembly_cpuid_patterns"
+        });
         
         // Hook common assembly patterns that precede CPUID usage
         this.hookCpuidPreparationCode();
@@ -1195,22 +1448,41 @@
         try {
             Interceptor.attach(address, {
                 onEnter: function(args) {
-                    console.log("[Enhanced HWID] CPUID sequence (" + sequenceType + 
-                              ") detected at " + address + " in " + moduleName);
+                    send({
+                        type: "detection",
+                        target: "enhanced_hardware_spoofer",
+                        action: "cpuid_sequence_detected",
+                        sequence_type: sequenceType,
+                        address: address.toString(),
+                        module: moduleName
+                    });
                 },
                 
                 onLeave: function(retval) {
                     // The CPUID instruction hooks will handle the actual spoofing
-                    console.log("[Enhanced HWID] CPUID sequence completed");
+                    send({
+                        type: "info",
+                        target: "enhanced_hardware_spoofer",
+                        action: "cpuid_sequence_completed"
+                    });
                 }
             });
         } catch(e) {
-            console.log("[Enhanced HWID] Failed to hook CPUID sequence: " + e);
+            send({
+                type: "error",
+                target: "enhanced_hardware_spoofer",
+                action: "cpuid_sequence_hook_failed",
+                error: e.toString()
+            });
         }
     },
     
     hookLowLevelProcessorQueries: function() {
-        console.log("[Enhanced HWID] Installing low-level processor query hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_low_level_processor_hooks"
+        });
         
         // Hook RDTSC (Read Time-Stamp Counter) which is sometimes used for timing
         this.hookRdtscInstructions();
@@ -1262,11 +1534,21 @@
                     this.context.eax = ptr(currentTime & 0xFFFFFFFF);
                     this.context.edx = ptr((currentTime >>> 32) & 0xFFFFFFFF);
                     
-                    console.log("[Enhanced HWID] Spoofed RDTSC in " + moduleName);
+                    send({
+                        type: "bypass",
+                        target: "enhanced_hardware_spoofer",
+                        action: "rdtsc_spoofed",
+                        module: moduleName
+                    });
                 }
             });
         } catch(e) {
-            console.log("[Enhanced HWID] Failed to hook RDTSC: " + e);
+            send({
+                type: "error",
+                target: "enhanced_hardware_spoofer",
+                action: "rdtsc_hook_failed",
+                error: e.toString()
+            });
         }
     },
     
@@ -1274,11 +1556,19 @@
         // Hook RDMSR/WRMSR instructions if present (rare in user-mode)
         // These are privileged instructions but some applications might try them
         
-        console.log("[Enhanced HWID] MSR access hooks installed (user-mode limited)");
+        send({
+            type: "info",
+            target: "enhanced_hardware_spoofer",
+            action: "msr_access_hooks_installed"
+        });
     },
     
     hookCpuidRelatedFunctions: function() {
-        console.log("[Enhanced HWID] Installing CPUID-related function hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_cpuid_related_hooks"
+        });
         
         // Hook QueryPerformanceCounter which might be used alongside CPUID
         var queryPerfCounter = Module.findExportByName("kernel32.dll", "QueryPerformanceCounter");
@@ -1293,7 +1583,11 @@
                             var currentCounter = baseCounter + (Date.now() * 1000);
                             
                             counterPtr.writeU64(currentCounter);
-                            console.log("[Enhanced HWID] Spoofed QueryPerformanceCounter");
+                            send({
+                                type: "bypass",
+                                target: "enhanced_hardware_spoofer",
+                                action: "query_performance_counter_spoofed"
+                            });
                         }
                     }
                 }
@@ -1318,7 +1612,11 @@
     
     // === DEVICE QUERY HOOKS ===
     hookDeviceQueries: function() {
-        console.log("[Enhanced HWID] Installing device query hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_device_query_hooks"
+        });
         
         // Hook SetupDiGetDeviceRegistryProperty for hardware enumeration
         var setupDiGetDeviceProperty = Module.findExportByName("setupapi.dll", "SetupDiGetDeviceRegistryPropertyW");
@@ -1355,10 +1653,20 @@
                             var dataSize = (spoofedValue.length + 1) * 2;
                             
                             Memory.copy(this.buffer, utf16Data, Math.min(dataSize, this.bufferSize.readU32()));
-                            console.log("[Enhanced HWID] Spoofed device property: " + spoofedValue);
+                            send({
+                                type: "bypass",
+                                target: "enhanced_hardware_spoofer",
+                                action: "device_property_spoofed",
+                                value: spoofedValue
+                            });
                         }
                     } catch(e) {
-                        console.log("[Enhanced HWID] Device property spoofing error: " + e);
+                        send({
+                            type: "error",
+                            target: "enhanced_hardware_spoofer",
+                            action: "device_property_spoof_error",
+                            error: e.toString()
+                        });
                     }
                 }
             });
@@ -1372,7 +1680,11 @@
     
     // === DEVICEIOCONTROL HOOKS ===
     hookDeviceIoControl: function() {
-        console.log("[Enhanced HWID] Installing DeviceIoControl hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_deviceiocontrol_hooks"
+        });
         
         var deviceIoControl = Module.findExportByName("kernel32.dll", "DeviceIoControl");
         if (deviceIoControl) {
@@ -1391,8 +1703,12 @@
                     this.isHardwareQuery = this.checkHardwareIoctl(this.dwIoControlCode);
                     
                     if (this.isHardwareQuery) {
-                        console.log("[Enhanced HWID] Hardware IOCTL detected: 0x" + 
-                                  this.dwIoControlCode.toString(16).toUpperCase());
+                        send({
+                            type: "detection",
+                            target: "enhanced_hardware_spoofer",
+                            action: "hardware_ioctl_detected",
+                            ioctl_code: "0x" + this.dwIoControlCode.toString(16).toUpperCase()
+                        });
                     }
                 },
                 
@@ -1463,12 +1779,21 @@
                                 break;
                                 
                             default:
-                                console.log("[Enhanced HWID] Unknown hardware IOCTL: 0x" + 
-                                          this.dwIoControlCode.toString(16));
+                                send({
+                                    type: "info",
+                                    target: "enhanced_hardware_spoofer",
+                                    action: "unknown_hardware_ioctl",
+                                    ioctl_code: "0x" + this.dwIoControlCode.toString(16)
+                                });
                                 break;
                         }
                     } catch(e) {
-                        console.log("[Enhanced HWID] DeviceIoControl spoofing error: " + e);
+                        send({
+                            type: "error",
+                            target: "enhanced_hardware_spoofer",
+                            action: "deviceiocontrol_spoof_error",
+                            error: e.toString()
+                        });
                     }
                 },
                 
@@ -1492,7 +1817,11 @@
                         // BytesPerSector (4 bytes)
                         geometry.add(20).writeU32(512);
                         
-                        console.log("[Enhanced HWID] Spoofed drive geometry");
+                        send({
+                            type: "bypass",
+                            target: "enhanced_hardware_spoofer",
+                            action: "drive_geometry_spoofed"
+                        });
                     }
                 },
                 
@@ -1520,7 +1849,11 @@
                         // BootIndicator (1 byte)
                         partition.add(25).writeU8(0x80); // Active
                         
-                        console.log("[Enhanced HWID] Spoofed partition information");
+                        send({
+                            type: "bypass",
+                            target: "enhanced_hardware_spoofer",
+                            action: "partition_information_spoofed"
+                        });
                     }
                 },
                 
@@ -1538,7 +1871,11 @@
                         // PartitionNumber (4 bytes)
                         deviceNumber.add(8).writeU32(1);
                         
-                        console.log("[Enhanced HWID] Spoofed storage device number");
+                        send({
+                            type: "bypass",
+                            target: "enhanced_hardware_spoofer",
+                            action: "storage_device_number_spoofed"
+                        });
                     }
                 },
                 
@@ -1607,7 +1944,12 @@
                     descriptor.add(productRevisionOffset).writeAnsiString(revision);
                     descriptor.add(serialNumberOffset).writeAnsiString(serial);
                     
-                    console.log("[Enhanced HWID] Spoofed storage device descriptor: " + model);
+                    send({
+                        type: "bypass",
+                        target: "enhanced_hardware_spoofer",
+                        action: "storage_device_descriptor_spoofed",
+                        model: model
+                    });
                 },
                 
                 spoofMediaSerialNumber: function() {
@@ -1622,8 +1964,12 @@
                         // Write serial number
                         serialData.add(4).writeAnsiString(config.storage.drives[0].serialNumber);
                         
-                        console.log("[Enhanced HWID] Spoofed media serial number: " + 
-                                  config.storage.drives[0].serialNumber);
+                        send({
+                            type: "bypass",
+                            target: "enhanced_hardware_spoofer",
+                            action: "media_serial_number_spoofed",
+                            serial_number: config.storage.drives[0].serialNumber
+                        });
                     }
                 },
                 
@@ -1664,7 +2010,11 @@
                         // Product revision (4 bytes)
                         inquiry.add(32).writeAnsiString("1.0 ");
                         
-                        console.log("[Enhanced HWID] Spoofed SCSI inquiry data");
+                        send({
+                            type: "bypass",
+                            target: "enhanced_hardware_spoofer",
+                            action: "scsi_inquiry_data_spoofed"
+                        });
                     }
                 },
                 
@@ -1691,7 +2041,11 @@
                         smartData.add(6).writeU8(100);  // Worst value
                         smartData.add(7).writeU32(1000); // Raw value (1000 hours)
                         
-                        console.log("[Enhanced HWID] Spoofed S.M.A.R.T. data");
+                        send({
+                            type: "bypass",
+                            target: "enhanced_hardware_spoofer",
+                            action: "smart_data_spoofed"
+                        });
                     }
                 }
             });
@@ -1702,7 +2056,11 @@
     
     // === BIOS INFORMATION HOOKS ===
     hookBiosInformation: function() {
-        console.log("[Enhanced HWID] Installing BIOS information hooks...");
+        send({
+            type: "status",
+            target: "enhanced_hardware_spoofer",
+            action: "installing_bios_information_hooks"
+        });
         
         // Hook SMBIOS reading functions
         var getSystemFirmwareTable = Module.findExportByName("kernel32.dll", "GetSystemFirmwareTable");
@@ -1726,7 +2084,11 @@
                 
                 spoofSmbiosData: function() {
                     try {
-                        console.log("[Enhanced HWID] SMBIOS data access detected - spoofing enabled");
+                        send({
+                            type: "detection",
+                            target: "enhanced_hardware_spoofer",
+                            action: "smbios_data_access_detected"
+                        });
                         
                         // Basic SMBIOS spoofing - would need more detailed implementation
                         // for production use. This is a placeholder for the concept.
@@ -1735,9 +2097,18 @@
                         // You would implement detailed SMBIOS table parsing and modification here
                         // This is a complex task requiring knowledge of SMBIOS table structure
                         
-                        console.log("[Enhanced HWID] SMBIOS spoofing applied (basic)");
+                        send({
+                            type: "bypass",
+                            target: "enhanced_hardware_spoofer",
+                            action: "smbios_spoofing_applied"
+                        });
                     } catch(e) {
-                        console.log("[Enhanced HWID] SMBIOS spoofing error: " + e);
+                        send({
+                            type: "error",
+                            target: "enhanced_hardware_spoofer",
+                            action: "smbios_spoofing_error",
+                            error: e.toString()
+                        });
                     }
                 }
             });
@@ -1749,22 +2120,36 @@
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
-            console.log("\n[Enhanced HWID] =================================");
-            console.log("[Enhanced HWID] Hardware Spoofing Summary:");
-            console.log("[Enhanced HWID] =================================");
+            send({
+                type: "success",
+                target: "enhanced_hardware_spoofer",
+                action: "installation_summary_start"
+            });
             
             for (var hook in this.hooksInstalled) {
-                console.log("[Enhanced HWID]   ✓ " + hook + " hook installed");
+                send({
+                    type: "info",
+                    target: "enhanced_hardware_spoofer",
+                    action: "hook_installed",
+                    hook_name: hook
+                });
             }
             
-            console.log("[Enhanced HWID] =================================");
-            console.log("[Enhanced HWID] Spoofed Hardware Configuration:");
-            console.log("[Enhanced HWID] CPU: " + this.config.cpu.name);
-            console.log("[Enhanced HWID] Motherboard: " + this.config.motherboard.manufacturer + " " + this.config.motherboard.product);
-            console.log("[Enhanced HWID] MAC Address: " + this.config.network.adapters[0].macAddress);
-            console.log("[Enhanced HWID] BIOS: " + this.config.bios.manufacturer + " " + this.config.bios.version);
-            console.log("[Enhanced HWID] =================================");
-            console.log("[Enhanced HWID] Enhanced hardware spoofing is now ACTIVE!");
+            send({
+                type: "info",
+                target: "enhanced_hardware_spoofer",
+                action: "spoofed_hardware_config",
+                cpu: this.config.cpu.name,
+                motherboard: this.config.motherboard.manufacturer + " " + this.config.motherboard.product,
+                mac_address: this.config.network.adapters[0].macAddress,
+                bios: this.config.bios.manufacturer + " " + this.config.bios.version
+            });
+            
+            send({
+                type: "success",
+                target: "enhanced_hardware_spoofer",
+                action: "hardware_spoofing_active"
+            });
         }, 100);
     }
 }

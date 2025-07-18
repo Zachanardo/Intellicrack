@@ -72,6 +72,7 @@ class ReportGenerationThread(QThread):
     generation_finished = pyqtSignal(bool, str, str)
 
     def __init__(self, report_config: Dict[str, Any], output_path: str):
+        """Initialize the ReportGenerationThread with default values."""
         super().__init__()
         self.report_config = report_config
         self.output_path = output_path
@@ -161,6 +162,7 @@ class ReportManagerDialog(BaseTemplateDialog):
     """Dialog for managing Intellicrack reports."""
 
     def __init__(self, parent=None):
+        """Initialize the ReportManagerDialog with default values."""
 
         # Initialize UI attributes
         self.binary_path_edit = None

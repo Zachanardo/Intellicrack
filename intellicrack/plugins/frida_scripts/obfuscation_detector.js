@@ -87,7 +87,12 @@
     cache: {},
     
     run: function() {
-        console.log("[Obfuscation] Initializing Obfuscation Detector v" + this.version);
+        send({
+            type: "status",
+            target: "obfuscation_detector",
+            action: "initializing_detector",
+            version: this.version
+        });
         
         // Initialize ML model
         if (this.config.ml.enabled) {
@@ -103,12 +108,20 @@
         // Start monitoring
         this.startMonitoring();
         
-        console.log("[Obfuscation] Detector initialized");
+        send({
+            type: "status",
+            target: "obfuscation_detector",
+            action: "detector_initialized"
+        });
     },
     
     // Initialize machine learning
     initializeML: function() {
-        console.log("[Obfuscation] Initializing ML-based detection");
+        send({
+            type: "info",
+            target: "obfuscation_detector",
+            action: "initializing_ml_detection"
+        });
         
         // Create feature extractor
         this.featureExtractor = {
@@ -279,13 +292,22 @@
     analyzeLoadedModules: function() {
         var self = this;
         
-        console.log("[Obfuscation] Analyzing loaded modules...");
+        send({
+            type: "info",
+            target: "obfuscation_detector",
+            action: "analyzing_loaded_modules"
+        });
         
         Process.enumerateModules().forEach(function(module) {
             // Skip system modules
             if (self.isSystemModule(module.name)) return;
             
-            console.log("[Obfuscation] Analyzing module: " + module.name);
+            send({
+                type: "info",
+                target: "obfuscation_detector",
+                action: "analyzing_module",
+                module_name: module.name
+            });
             
             // Analyze exports
             module.enumerateExports().forEach(function(exp) {
@@ -380,8 +402,13 @@
         }
         
         if (result.obfuscations.length > 0) {
-            console.log("[Obfuscation] Detected in " + name + ": " + 
-                       result.obfuscations.map(function(o) { return o.type; }).join(", "));
+            send({
+                type: "warning",
+                target: "obfuscation_detector",
+                action: "obfuscation_detected",
+                function_name: name,
+                obfuscation_types: result.obfuscations.map(function(o) { return o.type; })
+            });
             this.stats.obfuscationsDetected += result.obfuscations.length;
         }
         
@@ -647,7 +674,12 @@
     
     // Bypass control flow flattening
     bypassControlFlow: function(address, obfuscation) {
-        console.log("[Obfuscation] Bypassing control flow flattening at " + address);
+        send({
+            type: "bypass",
+            target: "obfuscation_detector",
+            action: "bypassing_control_flow_flattening",
+            address: address.toString()
+        });
         
         try {
             // Find dispatcher
@@ -676,7 +708,12 @@
     
     // Bypass opaque predicates
     bypassOpaquePredicates: function(address, obfuscation) {
-        console.log("[Obfuscation] Bypassing opaque predicates at " + address);
+        send({
+            type: "bypass",
+            target: "obfuscation_detector",
+            action: "bypassing_opaque_predicates",
+            address: address.toString()
+        });
         
         var patched = 0;
         
@@ -704,13 +741,23 @@
                         break;
                 }
             } catch(e) {
-                console.error("[Obfuscation] Error patching predicate: " + e);
+                send({
+                    type: "error",
+                    target: "obfuscation_detector",
+                    action: "error_patching_predicate",
+                    error: e.toString()
+                });
             }
         }.bind(this));
         
         if (patched > 0) {
             this.stats.obfuscationsBypassed++;
-            console.log("[Obfuscation] Patched " + patched + " opaque predicates");
+            send({
+                type: "success",
+                target: "obfuscation_detector",
+                action: "patched_opaque_predicates",
+                count: patched
+            });
         }
         
         return patched > 0;
@@ -718,7 +765,12 @@
     
     // Bypass virtualization
     bypassVirtualization: function(address, obfuscation) {
-        console.log("[Obfuscation] Bypassing virtualization at " + address);
+        send({
+            type: "bypass",
+            target: "obfuscation_detector",
+            action: "bypassing_virtualization",
+            address: address.toString()
+        });
         
         try {
             switch(obfuscation.vmType) {
@@ -735,7 +787,12 @@
                     return this.bypassGenericVM(address, obfuscation);
             }
         } catch(e) {
-            console.error("[Obfuscation] Error bypassing virtualization: " + e);
+            send({
+                type: "error",
+                target: "obfuscation_detector",
+                action: "error_bypassing_virtualization",
+                error: e.toString()
+            });
         }
         
         return false;
@@ -743,7 +800,12 @@
     
     // Bypass string encryption
     bypassStringEncryption: function(address, obfuscation) {
-        console.log("[Obfuscation] Bypassing string encryption at " + address);
+        send({
+            type: "bypass",
+            target: "obfuscation_detector",
+            action: "bypassing_string_encryption",
+            address: address.toString()
+        });
         
         var decrypted = 0;
         
@@ -767,14 +829,24 @@
                         break;
                 }
             } catch(e) {
-                console.error("[Obfuscation] Error decrypting strings: " + e);
+                send({
+                    type: "error",
+                    target: "obfuscation_detector",
+                    action: "error_decrypting_strings",
+                    error: e.toString()
+                });
             }
         }.bind(this));
         
         if (decrypted > 0) {
             this.stats.stringsDecrypted += decrypted;
             this.stats.obfuscationsBypassed++;
-            console.log("[Obfuscation] Decrypted " + decrypted + " strings");
+            send({
+                type: "success",
+                target: "obfuscation_detector",
+                action: "decrypted_strings",
+                count: decrypted
+            });
         }
         
         return decrypted > 0;
@@ -803,7 +875,12 @@
             this.replaceEncryptedString(loop.dataAddress, plaintext);
             decrypted++;
             
-            console.log("[Obfuscation] Decrypted XOR string: " + plaintext);
+            send({
+                type: "info",
+                target: "obfuscation_detector",
+                action: "decrypted_xor_string",
+                plaintext: plaintext
+            });
         }.bind(this));
         
         return decrypted;
@@ -822,7 +899,13 @@
                         if (!retval.isNull()) {
                             var module = Process.findModuleByAddress(retval);
                             if (module) {
-                                console.log("[Obfuscation] New module loaded: " + module.name);
+                                send({
+                                    type: "info",
+                                    target: "obfuscation_detector",
+                                    action: "new_module_loaded",
+                                    module_name: module.name,
+                                    base_address: module.base.toString()
+                                });
                                 self.analyzeModule(module);
                             }
                         }
@@ -841,7 +924,12 @@
                     },
                     onLeave: function(retval) {
                         if (!retval.isNull() && this.path) {
-                            console.log("[Obfuscation] New module loaded: " + this.path);
+                            send({
+                                type: "info",
+                                target: "obfuscation_detector",
+                                action: "new_module_loaded_dlopen",
+                                module_path: this.path
+                            });
                             var module = Process.findModuleByName(this.path);
                             if (module) {
                                 self.analyzeModule(module);
@@ -881,7 +969,13 @@
                     if (!retval.isNull()) {
                         var protection = this.context.r9.toInt32();
                         if (protection & 0x20) { // PAGE_EXECUTE
-                            console.log("[Obfuscation] Executable memory allocated at " + retval);
+                            send({
+                                type: "info",
+                                target: "obfuscation_detector",
+                                action: "executable_memory_allocated",
+                                address: retval.toString(),
+                                protection: protection.toString(16)
+                            });
                             
                             // Delay analysis to allow code to be written
                             setTimeout(function() {
@@ -944,8 +1038,15 @@
         var prediction = this.mlModel.predict(features);
         
         if (prediction.isObfuscated) {
-            console.log("[Obfuscation] Obfuscated code section in " + moduleName + 
-                       " at " + range.base + " (confidence: " + prediction.confidence + ")");
+            send({
+                type: "info",
+                target: "obfuscation_detector",
+                action: "obfuscated_code_section_detected",
+                module_name: moduleName,
+                address: range.base.toString(),
+                confidence: prediction.confidence,
+                obfuscation_type: prediction.type
+            });
             
             this.detectedObfuscations.push({
                 address: range.base,

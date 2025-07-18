@@ -204,6 +204,7 @@ class CryptoManager:
     """Cryptographic operations for license generation and validation"""
 
     def __init__(self):
+        """Initialize crypto manager with RSA key pair and AES encryption key."""
         self.logger = logging.getLogger(f"{__name__}.CryptoManager")
 
         # Generate RSA key pair for signing
@@ -316,6 +317,7 @@ class FlexLMEmulator:
     """FlexLM license server emulation"""
 
     def __init__(self, crypto_manager: CryptoManager):
+        """Initialize FlexLM license server emulator with crypto manager."""
         self.logger = logging.getLogger(f"{__name__}.FlexLM")
         self.crypto = crypto_manager
         self.server_socket = None
@@ -441,6 +443,7 @@ class HASPEmulator:
     """HASP dongle emulation"""
 
     def __init__(self, crypto_manager: CryptoManager):
+        """Initialize HASP dongle emulator with crypto and simulated memory."""
         self.logger = logging.getLogger(f"{__name__}.HASP")
         self.crypto = crypto_manager
 
@@ -553,6 +556,7 @@ class MicrosoftKMSEmulator:
     """Microsoft KMS server emulation"""
 
     def __init__(self, crypto_manager: CryptoManager):
+        """Initialize Microsoft KMS activation server emulator."""
         self.logger = logging.getLogger(f"{__name__}.KMS")
         self.crypto = crypto_manager
 
@@ -597,6 +601,7 @@ class AdobeEmulator:
     """Adobe license server emulation"""
 
     def __init__(self, crypto_manager: CryptoManager):
+        """Initialize Adobe Creative Cloud license emulator."""
         self.logger = logging.getLogger(f"{__name__}.Adobe")
         self.crypto = crypto_manager
 
@@ -661,6 +666,7 @@ class DatabaseManager:
     """Database operations for license management"""
 
     def __init__(self, db_path: str = "license_server.db"):
+        """Initialize database manager with SQLite engine and session factory."""
         self.logger = logging.getLogger(f"{__name__}.Database")
         self.db_path = db_path
 
@@ -794,6 +800,7 @@ class HardwareFingerprintGenerator:
     """Generate hardware fingerprints for license binding"""
 
     def __init__(self):
+        """Initialize hardware fingerprint generator for license binding."""
         self.logger = logging.getLogger(f"{__name__}.Fingerprint")
 
     def generate_fingerprint(self) -> HardwareFingerprint:
@@ -878,6 +885,7 @@ class LicenseServerEmulator:
     """Main license server emulator class"""
 
     def __init__(self, config: Dict[str, Any] = None):
+        """Initialize comprehensive license server emulator with all protection systems."""
         self.logger = logging.getLogger(f"{__name__}.Server")
 
         # Default configuration

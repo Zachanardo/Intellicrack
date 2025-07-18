@@ -64,6 +64,12 @@ class EnhancedR2Integration:
     """
 
     def __init__(self, binary_path: str, config: Optional[Dict[str, Any]] = None):
+        """Initialize the enhanced Radare2 integration.
+        
+        Args:
+            binary_path: Path to the binary file to analyze.
+            config: Optional configuration dictionary for customizing behavior.
+        """
         self.binary_path = binary_path
         self.config = config or {}
         self.logger = logger

@@ -45,6 +45,7 @@ class PreferencesDialog(QDialog):
     preferences_changed = pyqtSignal()
 
     def __init__(self, parent=None):
+        """Initialize the PreferencesDialog with default values."""
         super().__init__(parent)
         self.settings = QSettings("Intellicrack", "Preferences")
         self.setup_ui()

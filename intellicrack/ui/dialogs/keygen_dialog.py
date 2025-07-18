@@ -68,6 +68,7 @@ class KeygenWorker(QThread):
     error_occurred = pyqtSignal(str)
 
     def __init__(self, binary_path: str, operation: str, **kwargs):
+        """Initialize the KeygenWorker with default values."""
         super().__init__()
         self.binary_path = binary_path
         self.operation = operation
@@ -157,6 +158,7 @@ class KeygenDialog(BinarySelectionDialog):
     """Professional Keygen Dialog with advanced features."""
 
     def __init__(self, parent=None, binary_path: str = ""):
+        """Initialize the KeygenDialog with default values."""
 
         # Initialize UI attributes
         self.analysis_display = None

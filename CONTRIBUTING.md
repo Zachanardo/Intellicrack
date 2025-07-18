@@ -15,7 +15,7 @@ Thank you for your interest in contributing to Intellicrack! This document provi
 
 ## Code of Conduct
 
-Please read and follow our [Code of Conduct](docs/CODE_OF_CONDUCT.md) to ensure a welcoming environment for all contributors.
+Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a welcoming environment for all contributors.
 
 ## Getting Started
 

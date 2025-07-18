@@ -60,6 +60,7 @@ class DiffSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for diff text."""
 
     def __init__(self, parent=None):
+        """Initialize the DiffSyntaxHighlighter with default values."""
         super().__init__(parent)
 
         # Define colors for different diff elements
@@ -113,6 +114,7 @@ class ModificationAnalysisThread(QThread):
     error_occurred = pyqtSignal(str)      # Error message
 
     def __init__(self, modifier: IntelligentCodeModifier, request: ModificationRequest):
+        """Initialize the ModificationAnalysisThread with default values."""
         super().__init__()
         self.modifier = modifier
         self.request = request
@@ -132,6 +134,7 @@ class CodeModificationDialog(QDialog):
     """Dialog for intelligent code modification with diff viewing."""
 
     def __init__(self, project_root: str = None, parent=None):
+        """Initialize the CodeModificationDialog with default values."""
         super().__init__(parent)
         self.setWindowTitle("Intelligent Code Modification")
         self.setMinimumSize(1200, 800)
